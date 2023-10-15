@@ -20,7 +20,6 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
@@ -32,10 +31,12 @@ import {
   equipmentNavLinks,
   shipmentNavLinks,
 } from "@/lib/nav-links";
+import { cn } from "@/lib/utils";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { LinksComponent } from "./nav-links";
 
+// Type Definitions
 type PermissionType = string;
 
 type MenuData = {
@@ -48,7 +49,6 @@ type MenuData = {
 
 type NavigationMenuItemProps = {
   data: MenuData;
-  // menuOpen: string | undefined;
   setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
 
@@ -71,83 +71,71 @@ type MainItem = {
   links: MainLink[];
 };
 
+/**
+ * Check if user has access to the provided menu content.
+ */
 const userHasAccessToMenuContent = (
   content: React.ReactNode,
   userHasPermission: (permission: string) => boolean,
   isAdmin: boolean,
 ): boolean => {
-  // If the user is an admin, immediately grant access
   if (isAdmin) return true;
 
-  // Check if content is a valid React Element and of type LinksComponent
   if (React.isValidElement(content) && content.type === LinksComponent) {
     const linkData = content.props.linkData as MainItem[];
 
-    return linkData.some((mainItem) => {
-      return mainItem.links.some((subItem) => {
+    return linkData.some((mainItem) =>
+      mainItem.links.some((subItem) => {
         if (subItem.subLinks && !subItem.permission) {
           return subItem.subLinks.some(
             (link) => !link.permission || userHasPermission(link.permission),
           );
-        } else {
-          return !subItem.permission || userHasPermission(subItem.permission);
         }
-      });
-    });
+        return !subItem.permission || userHasPermission(subItem.permission);
+      }),
+    );
   }
   return false;
 };
 
-const NavigationMenuItemWithPermission = React.memo(
-  ({ data, setMenuOpen }: NavigationMenuItemProps) => {
+const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> =
+  React.memo(({ data, setMenuOpen }) => {
     const { userHasPermission, isAdmin } = useUserPermissions();
 
-    // Check for permissions and return null if not allowed
     if (data.permission && !userHasPermission(data.permission)) {
       return null;
     }
 
-    // Check if the user has access to the menu content
-    const hasAccess = userHasAccessToMenuContent(
-      data.content,
-      userHasPermission,
-      isAdmin,
-    );
-    if (!hasAccess) {
+    if (!userHasAccessToMenuContent(data.content, userHasPermission, isAdmin)) {
       return null;
     }
 
-    if (data.link) {
-      return (
-        <NavigationMenuItem>
-          <Link to={data.link} onMouseEnter={() => setMenuOpen(undefined)}>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              {data.label}
-            </NavigationMenuLink>
-          </Link>
-        </NavigationMenuItem>
-      );
-    }
     return (
       <NavigationMenuItem>
-        <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
-          {data.label}
-        </NavigationMenuTrigger>
-        <NavigationMenuContent>{data.content}</NavigationMenuContent>
+        {data.link ? (
+          <Link
+            className={navigationMenuTriggerStyle()}
+            to={data.link}
+            onMouseEnter={() => setMenuOpen(undefined)}
+          >
+            {data.label}
+          </Link>
+        ) : (
+          <>
+            <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
+              {data.label}
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>{data.content}</NavigationMenuContent>
+          </>
+        )}
       </NavigationMenuItem>
     );
-  },
-);
+  });
 
 export function NavMenu() {
   const [menuOpen, setMenuOpen] = useState<string | undefined>(undefined);
 
-  const handleValueChange = (newValue: string) => {
-    if (newValue !== "") {
-      setMenuOpen(newValue);
-    }
-  };
-
+  // Define menu items
   const menuItems: MenuData[] = [
     {
       menuKey: "BillingMenu",
@@ -178,24 +166,36 @@ export function NavMenu() {
   ];
 
   return (
-    <NavigationMenu
-      value={menuOpen}
-      onValueChange={handleValueChange}
-      onMouseLeave={() => setMenuOpen(undefined)} // Close the menu on mouse leave
-    >
-      <NavigationMenuList>
-        {/* Organization Logo */}
-        <OrganizationLogo />
+    <div>
+      {/* Hamburger Menu (visible on small screens) */}
+      <button onClick={() => setMenuOpen(menuOpen)} className="md:hidden p-2">
+        🍔
+      </button>
 
-        {/* Navigation Menu Items */}
-        {menuItems.map((item) => (
-          <NavigationMenuItemWithPermission
-            key={item.menuKey}
-            data={item}
-            setMenuOpen={setMenuOpen}
-          />
-        ))}
-      </NavigationMenuList>
-    </NavigationMenu>
+      {/* Navigation Menu */}
+      <NavigationMenu
+        value={menuOpen}
+        onValueChange={(newValue) => newValue && setMenuOpen(newValue)}
+        onMouseLeave={() => setMenuOpen(undefined)}
+        className={cn(
+          menuOpen ? "block" : "hidden", // Show/Hide based on state
+          "md:flex", // Always flex on medium screens and above
+          "md:space-x-8",
+          "lg:space-x-12",
+          "xl:space-x-16",
+        )}
+      >
+        <NavigationMenuList>
+          <OrganizationLogo />
+          {menuItems.map((item) => (
+            <NavigationMenuItemWithPermission
+              key={item.menuKey}
+              data={item}
+              setMenuOpen={setMenuOpen}
+            />
+          ))}
+        </NavigationMenuList>
+      </NavigationMenu>
+    </div>
   );
 }

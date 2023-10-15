@@ -16,6 +16,7 @@
  */
 
 import { IChoiceProps, TDayOfWeekChoiceProps } from "@/types";
+import { TableOptionProps } from "@/types/tables";
 
 /** Type for Account Type Choices */
 export type AccountTypeChoiceProps =
@@ -25,26 +26,30 @@ export type AccountTypeChoiceProps =
   | "REVENUE"
   | "EXPENSE";
 
-export const accountTypeChoices: ReadonlyArray<
-  IChoiceProps<AccountTypeChoiceProps>
-> = [
+export const accountTypeChoices = [
   { value: "ASSET", label: "Asset" },
   { value: "LIABILITY", label: "Liability" },
   { value: "EQUITY", label: "Equity" },
   { value: "REVENUE", label: "Revenue" },
   { value: "EXPENSE", label: "Expense" },
-];
+] satisfies ReadonlyArray<IChoiceProps<AccountTypeChoiceProps>>;
+
+export const tableAccountTypeChoices = [
+  { value: "ASSET", label: "Asset" },
+  { value: "LIABILITY", label: "Liability" },
+  { value: "EQUITY", label: "Equity" },
+  { value: "REVENUE", label: "Revenue" },
+  { value: "EXPENSE", label: "Expense" },
+] satisfies TableOptionProps[];
 
 /** Type for Cash Flow Type Choices */
 export type CashFlowTypeChoiceProps = "OPERATING" | "INVESTING" | "FINANCING";
 
-export const cashFlowTypeChoices: ReadonlyArray<
-  IChoiceProps<CashFlowTypeChoiceProps>
-> = [
+export const cashFlowTypeChoices = [
   { value: "OPERATING", label: "Operating" },
   { value: "INVESTING", label: "Investing" },
   { value: "FINANCING", label: "Financing" },
-];
+] satisfies ReadonlyArray<IChoiceProps<CashFlowTypeChoiceProps>>;
 
 /** Type for Account Sub Type Choices */
 export type AccountSubTypeChoiceProps =
@@ -60,9 +65,7 @@ export type AccountSubTypeChoiceProps =
   | "OTHER_INCOME"
   | "OTHER_EXPENSE";
 
-export const accountSubTypeChoices: ReadonlyArray<
-  IChoiceProps<AccountSubTypeChoiceProps>
-> = [
+export const accountSubTypeChoices = [
   { value: "CURRENT_ASSET", label: "Current Asset" },
   { value: "FIXED_ASSET", label: "Fixed Asset" },
   { value: "OTHER_ASSET", label: "Other Asset" },
@@ -74,7 +77,7 @@ export const accountSubTypeChoices: ReadonlyArray<
   { value: "EXPENSE", label: "Expense" },
   { value: "OTHER_INCOME", label: "Other Income" },
   { value: "OTHER_EXPENSE", label: "Other Expense" },
-];
+] satisfies ReadonlyArray<IChoiceProps<AccountSubTypeChoiceProps>>;
 
 /** Type for Account Classification Choices */
 export type AccountClassificationChoiceProps =
@@ -372,3 +375,17 @@ export const automaticJournalEntryChoices = [
     label: "Auto create entry when an expense is recognized",
   },
 ] satisfies ReadonlyArray<IChoiceProps<AutomaticJournalEntryChoiceType>>;
+
+/**
+ * Returns status choices for a select input.
+ */
+type TStatusChoiceProps = "A" | "I";
+
+/**
+ * Returns status choices for a select input.
+ * @returns An array of status choices.
+ */
+export const statusChoices = [
+  { value: "A", label: "Active" },
+  { value: "I", label: "Inactive" },
+] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;

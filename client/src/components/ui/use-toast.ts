@@ -20,8 +20,8 @@ import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
-const TOAST_LIMIT = 2;
-const TOAST_REMOVE_DELAY = 2_000;
+const TOAST_LIMIT = 1;
+const TOAST_REMOVE_DELAY = 2000;
 
 export type ToasterToast = ToastProps & {
   id: string;
@@ -203,4 +203,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+export { toast, useToast };

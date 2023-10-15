@@ -15,22 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button, Drawer, Group } from "@mantine/core";
-import React from "react";
-import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useGLAccounts } from "@/hooks/useGLAccounts";
+import { useTags } from "@/hooks/useTags";
+import { useUsers } from "@/hooks/useUsers";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
 import {
-  GeneralLedgerAccount,
   GLAccountFormValues as FormValues,
+  GeneralLedgerAccount,
 } from "@/types/accounting";
-import { useFormStyles } from "@/assets/styles/FormStyles";
-import { glAccountSchema } from "@/lib/validations/AccountingSchema";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-import { useUsers } from "@/hooks/useUsers";
-import { useTags } from "@/hooks/useTags";
-import { useGLAccounts } from "@/hooks/useGLAccounts";
+import { Button, Drawer, Group } from "@mantine/core";
+import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import React from "react";
 import { GLAccountForm } from "./CreateGLAccountModal";
 
 export function EditGLAccountModalForm({
@@ -74,7 +74,6 @@ export function EditGLAccountModalForm({
     TableStoreProps<GeneralLedgerAccount>
   >(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -86,6 +85,7 @@ export function EditGLAccountModalForm({
       errorMessage: "Failed to create general ledger account.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {
@@ -123,7 +123,6 @@ export function EditGLAccountModalForm({
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <GLAccountForm
-        form={form}
         users={selectUsersData}
         isUsersError={usersError}
         isUsersLoading={usersLoading}

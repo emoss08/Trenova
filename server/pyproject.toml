@@ -3,16 +3,9 @@ name = "monta"
 version = "0.0.8"
 description = "A comprehensive suite of applications tailored for the transportation and logistics sector."
 readme = "README.md"
-authors = [
-    { name = "Wolfred", email = "wolfred@monta.io" },
-]
-maintainers = [
-    { name = "Wolfred", email = "wolfred@monta.io" },
-]
-classifiers = [
-    "Framework :: Django",
-    "Programming Language :: Python :: 3",
-]
+authors = [{ name = "Wolfred", email = "wolfred@monta.io" }]
+maintainers = [{ name = "Wolfred", email = "wolfred@monta.io" }]
+classifiers = ["Framework :: Django", "Programming Language :: Python :: 3"]
 
 license = { text = "BSL" }
 requires-python = ">=3.11"
@@ -70,6 +63,8 @@ exclude = [
 
 [tool.django-stubs]
 django_settings_module = "backend.settings"
+ignore_missing_settings = true
+ignore_missing_model_attributes = true
 
 [tool.flake8]
 show-source = true
@@ -130,5 +125,5 @@ exclude_dirs = [
     "build",
     "dist",
     "tests",
-    "management"
+    "management",
 ]

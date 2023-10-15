@@ -15,66 +15,69 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Flex, Skeleton, Text } from "@mantine/core";
-import { pathToRegexp } from "path-to-regexp";
-import { upperFirst } from "@mantine/hooks";
+import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
-import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
-
+import { pathToRegexp } from "path-to-regexp";
+import { useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
+import { Skeleton } from "../ui/skeleton";
 export function Breadcrumb() {
   const location = useLocation();
-  const [currentRoute] = useBreadcrumbStore.use("currentRoute");
-  const [loading] = useBreadcrumbStore.use("loading");
-  const { classes } = usePageStyles();
+  const [currentRoute, setCurrentRoute] =
+    useBreadcrumbStore.use("currentRoute");
+  const [loading, setLoading] = useBreadcrumbStore.use("loading");
 
+  // Find the matching route based on the current pathname
   useEffect(() => {
-    useBreadcrumbStore.set("loading", true);
-    const route = routes.find((r) => {
-      if (r.path === "*") {
-        return false;
-      }
+    setLoading(true);
 
-      const re = pathToRegexp(r.path);
-      return re.test(location.pathname);
+    const matchedRoute = routes.find((r) => {
+      if (r.path === "*") return false;
+      return pathToRegexp(r.path).test(location.pathname);
     });
 
-    if (route) {
-      useBreadcrumbStore.set("currentRoute", route);
+    if (matchedRoute) {
+      setCurrentRoute(matchedRoute);
     }
-    useBreadcrumbStore.set("loading", false);
-  }, [location.pathname]);
 
+    setLoading(false);
+  }, [location.pathname, setCurrentRoute, setLoading]);
+
+  // Update document title when the current route changes
   useEffect(() => {
     if (currentRoute) {
       document.title = currentRoute.title;
     }
   }, [currentRoute]);
 
-  return (
-    <div style={{ flex: 1, marginBottom: 10 }}>
-      {loading ? (
-        <>
-          <Skeleton width={200} height={30} />
-          <Skeleton width={250} height={20} mt={5} />
-        </>
-      ) : (
-        <>
-          <Text className={classes.text} fz={20} weight={600}>
-            {currentRoute?.title}
-          </Text>
-          <Flex>
-            <Text color="dimmed" size="sm">
-              {currentRoute?.group && `${upperFirst(currentRoute.group)} - `}
-              {currentRoute?.subMenu &&
-                `${upperFirst(currentRoute.subMenu)} - `}
-              {currentRoute?.title}
-            </Text>
-          </Flex>
-        </>
-      )}
+  // Construct breadcrumb text, memoized to avoid recalculations
+  const breadcrumbText = useMemo(() => {
+    if (!currentRoute) return "";
+    const parts = [
+      currentRoute.group,
+      currentRoute.subMenu,
+      currentRoute.title,
+    ].filter((str: string | undefined): str is string => Boolean(str));
+
+    return parts.map(upperFirst).join(" - ");
+  }, [currentRoute]);
+
+  return loading ? (
+    <>
+      <Skeleton className="w-[200px] h-[30px]" />
+      <Skeleton className="w-[200px] h-[30px] mt-5" />
+    </>
+  ) : (
+    <div className=" pt-5 pb-4 md:pt-4 md:pb-4">
+      <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
+        {currentRoute?.title}
+      </h2>
+      <div className="flex items-center">
+        <a className="text-sm font-medium text-gray-500 hover:text-gray-700">
+          {breadcrumbText}
+        </a>
+      </div>
     </div>
   );
 }

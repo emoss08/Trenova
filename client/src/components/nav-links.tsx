@@ -17,9 +17,13 @@
 
 import { useUserPermissions } from "@/context/user-permissions";
 import { ChevronsLeftIcon } from "lucide-react";
-import React, { memo, useState } from "react";
+import React, { useState } from "react";
 import { ListItem } from "./links-group";
+// Type Definitions
 
+/**
+ * Definition for individual link data.
+ */
 export type LinkData = {
   label: string;
   link: string;
@@ -28,70 +32,79 @@ export type LinkData = {
   subLinks?: LinkData[];
 };
 
+/**
+ * Props for the LinksComponent.
+ */
 export type LinksComponentProps = {
   linkData: {
     links: LinkData[];
   }[];
 };
 
-// Centralized permission check for links
-export const ProtectedLink: React.FC<LinkData & { onClick?: () => void }> = (
-  props,
-) => {
+/**
+ * A ProtectedLink component which checks for permissions before rendering.
+ */
+export const ProtectedLink: React.FC<LinkData & { onClick?: () => void }> = ({
+  label,
+  link,
+  description,
+  permission,
+  onClick,
+}) => {
   const { userHasPermission } = useUserPermissions();
 
-  if (props.permission && !userHasPermission(props.permission)) {
+  if (permission && !userHasPermission(permission)) {
     return null;
   }
 
   return (
-    <ListItem title={props.label} href={props.link} onClick={props.onClick}>
-      {props.description}
+    <ListItem title={label} to={link} onClick={onClick}>
+      {description}
     </ListItem>
   );
 };
-const SingleLink = memo(({ subItem, setActiveSubLinks }: any) => {
-  return (
-    <ProtectedLink
-      {...subItem}
-      onClick={() => {
-        if (subItem.subLinks) {
-          setActiveSubLinks(subItem.subLinks);
-        }
-      }}
-    />
-  );
-});
 
+/**
+ * A SingleLink component which renders an individual link.
+ */
+const SingleLink: React.FC<{
+  subItem: LinkData;
+  setActiveSubLinks: (links: LinkData[] | null) => void;
+}> = ({ subItem, setActiveSubLinks }) => (
+  <ProtectedLink
+    {...subItem}
+    onClick={() => subItem.subLinks && setActiveSubLinks(subItem.subLinks)}
+  />
+);
+
+/**
+ * The LinksComponent renders a list of links.
+ */
 export function LinksComponent({ linkData }: LinksComponentProps) {
-  const [activeSubLinks, setActiveSubLinks] = useState<Array<LinkData> | null>(
-    null,
-  );
+  const [activeSubLinks, setActiveSubLinks] = useState<LinkData[] | null>(null);
   const { userHasPermission } = useUserPermissions();
 
-  const userHasSubLinkPermission = (subLinks: LinkData[]): boolean => {
-    return subLinks.some(
+  // Checks if user has permission to any of the subLinks
+  const userHasSubLinkPermission = (subLinks: LinkData[]): boolean =>
+    subLinks.some(
       (subLink) => !subLink.permission || userHasPermission(subLink.permission),
     );
-  };
 
-  const handleBackClick = () => {
-    setActiveSubLinks(null);
-  };
+  // Handler for the back click, to navigate back from sublinks
+  const handleBackClick = () => setActiveSubLinks(null);
 
-  const permittedLinks = linkData.flatMap((mainItem, mainIndex) =>
-    mainItem.links.flatMap((subItem, subIndex) => {
+  // Filter and map link data to permitted links
+  const permittedLinks = linkData.flatMap((mainItem) =>
+    mainItem.links.flatMap((subItem) => {
       if (subItem.permission && !userHasPermission(subItem.permission)) {
         return [];
       }
-
       if (subItem.subLinks && !userHasSubLinkPermission(subItem.subLinks)) {
         return [];
       }
-
       return (
         <SingleLink
-          key={`link-${mainIndex}-${subIndex}`}
+          key={subItem.label}
           subItem={subItem}
           setActiveSubLinks={setActiveSubLinks}
         />
@@ -115,14 +128,14 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
           >
             <ChevronsLeftIcon className="w-5 h-5" />
           </button>
-          {activeSubLinks.map((subLinkItem) => (
-            <li key={subLinkItem.label}>
+          {activeSubLinks.map((subLink) => (
+            <li key={subLink.label}>
               <ListItem
-                title={subLinkItem.label}
-                href={subLinkItem.link}
-                permission={subLinkItem.permission}
+                title={subLink.label}
+                to={subLink.link}
+                permission={subLink.permission}
               >
-                {subLinkItem.description}
+                {subLink.description}
               </ListItem>
             </li>
           ))}

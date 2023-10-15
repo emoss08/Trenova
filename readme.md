@@ -63,6 +63,7 @@ towards strategic milestones, all without the added weight of extra manpower or 
 - [React](https://reactjs.org/)
 - [Shadcn](https://ui.shadcn.com/)
 - [Tailwind](https://tailwindcss.com/)
+- [React Hook Form](https://react-hook-form.com/)
 - [React Query](https://react-query.tanstack.com/)
 - [React Router](https://reactrouter.com/)
 - [Font Awesome](https://fontawesome.com/)

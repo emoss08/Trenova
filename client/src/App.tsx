@@ -26,9 +26,8 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { BrowserRouter } from "react-router-dom";
 import "./assets/App.css";
-import { Toaster } from "./components/ui/toaster";
 import { UserPermissionsProvider } from "./context/user-permissions";
-
+import { THEME_KEY } from "./lib/constants";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -49,9 +48,8 @@ export default function App() {
     return <LoadingSkeleton />;
   }
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="monta-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey={THEME_KEY}>
       <UserPermissionsProvider>
-        <Toaster />
         <AppImpl />
       </UserPermissionsProvider>
     </ThemeProvider>
@@ -61,7 +59,7 @@ export default function App() {
 const AppImpl = memo(() => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true }}>
         <Suspense fallback={<LoadingSkeleton />}>
           <ProtectedRoutes />
         </Suspense>

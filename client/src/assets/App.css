@@ -19,9 +19,17 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @layer base {
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: 'Inter Variable', sans-serif;
+    }
+
+
     :root {
         --background: 0 0% 100%;
         --foreground: 240 10% 3.9%;
@@ -39,12 +47,10 @@
         --accent-foreground: 240 5.9% 10%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --active: 0, 267, 0;
-        --active-foreground: 0 0% 98%;
         --border: 240 5.9% 90%;
         --input: 240 5.9% 90%;
         --ring: 240 5.9% 10%;
-        --radius: 0.3rem;
+        --radius: 0.5rem;
     }
 
     .dark {
@@ -62,24 +68,16 @@
         --muted-foreground: 240 5% 64.9%;
         --accent: 240 3.7% 15.9%;
         --accent-foreground: 0 0% 98%;
-        --active: 0, 267, 0;
-        --active-foreground: 0 0% 98%;
         --destructive: 0 62.8% 30.6%;
         --destructive-foreground: 0 0% 98%;
         --border: 240 3.7% 15.9%;
         --input: 240 3.7% 15.9%;
         --ring: 240 4.9% 83.9%;
     }
-}
 
-
-@layer base {
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-        font-family: 'Inter Variable', sans-serif;
+    
+    .required:after {
+        content: " *";
+        color: hsl(var(--destructive));
     }
 }

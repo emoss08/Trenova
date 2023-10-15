@@ -15,20 +15,45 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MRT_RowSelectionState } from "mantine-react-table";
+import { Column, ColumnDef, Table } from "@tanstack/react-table";
 
-export interface TableStoreProps<T> {
-  pagination: {
-    pageIndex: number;
-    pageSize: number;
-  };
-  selectedRecord: T | null;
-  globalFilter: string | undefined;
-  drawerOpen: boolean;
-  exportModalOpen: boolean;
-  deleteModalOpen: boolean;
-  columnFilters: boolean;
-  rowSelection: MRT_RowSelectionState;
-  errorCount: number;
-  createModalOpen: boolean;
+export interface DataTableFacetedFilterProps<TData, TValue> {
+  column?: Column<TData, TValue>;
+  title?: string;
+  options: {
+    label: string;
+    value: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[];
 }
+
+export type DataTableProps<K> = {
+  columns: ColumnDef<K>[];
+  name: string;
+  link: string;
+  tableFacetedFilters?: FilterConfig<K>[];
+  filterColumn: string;
+  TableSheet?: React.ComponentType<TableSheetProps>;
+};
+
+export type TableSheetProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export type TableOptionProps = {
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
+};
+
+export type FilterConfig<TData> = {
+  columnName: keyof TData;
+  title: string;
+  options: TableOptionProps[];
+};
+
+export type DataTableFacetedFilterListProps<TData> = {
+  table: Table<TData>;
+  filters: FilterConfig<TData>[];
+};

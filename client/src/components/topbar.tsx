@@ -15,10 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export default function RainbowTopBar() {
+import { useTheme } from "./theme-provider";
+
+export function RainbowTopBar() {
+  const { isRainbowAnimationActive } = useTheme();
+
   return (
-    <div>
-      <div className="h-1 bg-rainbow-gradient-light dark:bg-rainbow-gradient-dark" />
-    </div>
+    <div
+      className={`h-1 bg-rainbow-gradient-light bg-200% ${
+        isRainbowAnimationActive ? "animate-rainbow-flow" : ""
+      }`}
+    />
   );
 }

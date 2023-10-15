@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export interface ApiResponse<T> extends Record<string, unknown> {
+export type ApiResponse<K> = {
   count: number;
-  next?: string;
-  previous?: string;
-  results: T[];
-}
+  next: string | null;
+  previous: string | null;
+  results: K[];
+};
 
 type APIAttrs = "nonFieldErrors" | "validationError" | "All" | "";
 

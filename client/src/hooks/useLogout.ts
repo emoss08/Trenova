@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
+import { useAuthStore } from "@/stores/AuthStore";
+import { useNavigate } from "react-router-dom";
 
 export function useLogout() {
   const navigate = useNavigate();

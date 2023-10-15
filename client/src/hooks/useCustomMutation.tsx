@@ -15,13 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { QueryClient, useMutation, useQueryClient } from "react-query";
-import { AxiosResponse } from "axios";
+import { ToasterToast } from "@/components/ui/use-toast";
 import axios from "@/lib/AxiosConfig";
-import { APIError } from "@/types/server";
 import { StoreType } from "@/lib/useGlobalStore";
 import { QueryKeys } from "@/types";
-import { ToasterToast } from "@/components/ui/use-toast";
+import { APIError } from "@/types/server";
+import { AxiosResponse } from "axios";
+import { UseFormProps } from "react-hook-form";
+import { QueryClient, useMutation, useQueryClient } from "react-query";
 
 type MutationOptions = {
   path: string;
@@ -133,14 +134,14 @@ function handleSuccess<K>(
 function handleError(
   error: any,
   options: MutationOptions,
-  form: UseFormReturnType<any>,
-  notifications: NotificationsEvents,
+  form: UseFormProps<any>,
+  toast: (toast: Toast) => void,
 ) {
   const { data } = error?.response || {};
   if (data?.type === "validationError") {
-    handleValidationErrors(data.errors, form, notifications);
+    handleValidationErrors(data.errors, form, toast);
   } else {
-    showErrorNotification(notifications, options.errorMessage);
+    showErrorNotification(toast, options.errorMessage);
   }
 }
 
