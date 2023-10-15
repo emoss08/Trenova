@@ -14,15 +14,16 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import React from "react";
-import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
-import { SpotlightAction, SpotlightProvider } from "@mantine/spotlight";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useNavigate } from "react-router-dom";
+
+import { useUserPermissions } from "@/context/user-permissions";
 import { routes } from "@/routing/AppRoutes";
+import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { SpotlightAction, SpotlightProvider } from "@mantine/spotlight";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { ActionsWrapper } from "./_Partials/SpotlightActionsWrapper";
 import { SearchControl } from "./_Partials/SpotlightSearchControl";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 interface RouteSpotlightAction extends SpotlightAction {
   path: string;

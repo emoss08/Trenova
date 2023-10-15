@@ -60,7 +60,6 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
   return (
     <Select
       {...rest}
-      {...form.getInputProps(name as string)}
       data={validatedData}
       error={error}
       maxDropdownHeight={200}

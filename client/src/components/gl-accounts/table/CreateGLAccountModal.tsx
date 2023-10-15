@@ -15,36 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button, createStyles, Group, Modal, SimpleGrid } from "@mantine/core";
-import React, { forwardRef } from "react";
-import { notifications } from "@mantine/notifications";
-import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
-import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
-import { useFormStyles } from "@/assets/styles/FormStyles";
-import {
-  GeneralLedgerAccount,
-  GLAccountFormValues as FormValues,
-} from "@/types/accounting";
-import { glAccountSchema } from "@/lib/validations/AccountingSchema";
-import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/lib/constants";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { useGLAccounts } from "@/hooks/useGLAccounts";
+import { useTags } from "@/hooks/useTags";
+import { useUsers } from "@/hooks/useUsers";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
   accountTypeChoices,
   cashFlowTypeChoices,
 } from "@/lib/choices";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { TableStoreProps } from "@/types/tables";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
+import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
 import { TChoiceProps } from "@/types";
-import { useUsers } from "@/hooks/useUsers";
-import { useTags } from "@/hooks/useTags";
-import { useGLAccounts } from "@/hooks/useGLAccounts";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { ValidatedMultiSelect } from "@/components/common/fields/MultiSelect";
-import { SwitchInput } from "@/components/common/fields/SwitchInput";
-import { ValidatedFileInput } from "@/components/common/fields/FileInput";
+import {
+  GLAccountFormValues as FormValues,
+  GeneralLedgerAccount,
+} from "@/types/accounting";
+import React, { forwardRef } from "react";
 
 const useStyles = createStyles((theme) => ({
   modalContent: {
@@ -69,7 +56,6 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export function GLAccountForm({
-  form,
   users,
   isUsersLoading,
   isUsersError,
@@ -80,7 +66,6 @@ export function GLAccountForm({
   isGLAccountsError,
   isGLAccountsLoading,
 }: {
-  form: UseFormReturnType<FormValues>;
   users: TChoiceProps[];
   isUsersLoading: boolean;
   isUsersError: boolean;
@@ -97,7 +82,6 @@ export function GLAccountForm({
     <div className={classes.div}>
       <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         <SelectInput<FormValues>
-          form={form}
           data={statusChoices}
           name="status"
           label="Status"

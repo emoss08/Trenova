@@ -95,29 +95,33 @@ function UserAuthForm() {
     <form onSubmit={handleSubmit(login)}>
       <div className="grid gap-4 mt-5">
         <div className="grid gap-2">
-          <Label htmlFor="username" className="required-label">
+          <Label htmlFor="username" className="required">
             Username
           </Label>
           <InputField
             id="username"
             autoCapitalize="none"
-            type="text"
             autoCorrect="off"
+            type="text"
             placeholder="Username"
+            autoComplete="username"
+            className={cn("h-10")}
             disabled={isLoading}
             error={errors?.username?.message}
             {...register("username")}
           />
         </div>
         <div className="relative grid gap-2">
-          <Label htmlFor="password" className="required-label">
+          <Label htmlFor="password" className="required">
             Password
           </Label>
           <div className="relative">
             <PasswordField
               id="password"
               autoCapitalize="none"
+              className={cn("h-10")}
               type="password"
+              autoComplete="current-password"
               autoCorrect="off"
               placeholder="Password"
               disabled={isLoading}
@@ -146,7 +150,7 @@ function UserAuthForm() {
               Signing In...
             </>
           ) : (
-            "Sign In"
+            "Continue"
           )}
         </Button>
       </div>
@@ -185,12 +189,30 @@ export default function LoginPage() {
           Create an Account
         </a>
       </p>
-      <div className="flex flex-row justify-center items-start">
+      <div className="flex flex-col items-center justify-start space-y-4">
+        {/* Adjusted here */}
         <Card className={cn("w-[420px] shadow-sm")}>
-          <CardContent>
+          <CardContent className="pt-0">
             <UserAuthForm />
           </CardContent>
         </Card>
+        <p className="px-8 text-center text-sm text-muted-foreground w-[350px]">
+          By clicking continue, you agree to our&nbsp;
+          <a
+            className="underline underline-offset-4 hover:text-primary"
+            href="/terms"
+          >
+            Terms of Service
+          </a>
+          &nbsp; and&nbsp;
+          <a
+            className="underline underline-offset-4 hover:text-primary"
+            href="/privacy"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
       </div>
       <div className="absolute bottom-10 right-10">
         <ModeToggle />

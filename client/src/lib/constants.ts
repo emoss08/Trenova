@@ -17,6 +17,8 @@
 
 // User info constants
 import { BChoiceProps, IChoiceProps } from "@/types";
+import { TableOptionProps } from "@/types/tables";
+import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 // Web socket constants
 export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
@@ -29,19 +31,25 @@ export const ENABLE_WEBSOCKETS = import.meta.env
 // API constants
 export const API_URL = import.meta.env.VITE_API_URL as string;
 
-/**
- * Returns status choices for a select input.
- */
-type TStatusChoiceProps = "A" | "I";
+// Theme constants
+export const THEME_KEY = import.meta.env.VITE_THEME_KEY as string;
 
 /**
- * Returns status choices for a select input.
- * @returns An array of status choices.
+ * Returns status choices when using TableFacetedFilters.
+ * @returns An array of table faceted filter choices.
  */
-export const statusChoices: IChoiceProps<TStatusChoiceProps>[] = [
-  { value: "A", label: "Active" },
-  { value: "I", label: "Inactive" },
-];
+export const tableStatusChoices = [
+  {
+    value: "A",
+    label: "Active",
+    icon: CircleIcon,
+  },
+  {
+    value: "I",
+    label: "Inactive",
+    icon: MinusCircledIcon,
+  },
+] satisfies TableOptionProps[];
 
 /**
  * Returns boolean yes & no choices for a select input.

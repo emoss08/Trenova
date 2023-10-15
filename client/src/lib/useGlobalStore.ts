@@ -1,23 +1,11 @@
-/*
- * COPYRIGHT(c) 2023 MONTA
+/**
+ * Credits: Acorn1010 - https://gist.github.com/acorn1010/9f4621d3dfc33052ffd84f6c2a06d4d6.
  *
- * This file is part of Monta.
- *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
+ * Permission was granted by the author to use this code. Please ask for permission before using this code.
  */
+
 import { SetStateAction, useCallback } from "react";
 import { create } from "zustand";
-
-// Credits: Acorn1010 - https://gist.github.com/acorn1010/9f4621d3dfc33052ffd84f6c2a06d4d6.
 
 export type EqualityFn<T> = (
   left: T | null | undefined,
@@ -95,13 +83,18 @@ export const createGlobalStore = <State extends object>(
       if (defaultValue !== undefined && !(key in store.getState())) {
         setter(key, defaultValue);
       }
-      const result = store((state) => state[key], equalityFn);
-      // eslint-disable-next-line react-hooks/rules-of-hooks
+      /* store() was deprecated and replaced with createWithEqualityFn */
+      // const result = createWithEqualityFn(
+      //   (state) => state[key],
+      //   equalityFn,
+      // ) as unknown as State[K];
+
+      const result = store((state) => state[key], equalityFn || Object.is);
       const keySetter = useCallback(
         (value: SetStateAction<State[K]>) => setter(key, value),
         [key],
       );
-      return [result, keySetter];
+      return [result! as State[K], keySetter];
     },
 
     /** Listens on the entire state, causing a re-render when anything in the state changes. */

@@ -15,17 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Index() {
   return (
     <Card>
-      <CardHeader>
+      <CardContent>
         <p className="font-semibold text-lg mb-2 border-b border-dashed">
           Development in progress...
         </p>
-      </CardHeader>
-      <CardContent>
         <p className="text-sm text-gray-400 mt-1">
           Monta is currently undergoing comprehensive development. As a result,
           certain features might not yet be accessible, or they may not perform

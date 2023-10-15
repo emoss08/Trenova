@@ -20,6 +20,8 @@ export type TChoiceProps = {
   label: string;
 };
 
+export type ThemeOptions = "dark" | "light" | "system";
+
 export interface IChoiceProps<T extends string> {
   value: T;
   label: string;

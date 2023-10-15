@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-const colors = require("tailwindcss/colors");
-
 /** @type {import("tailwindcss").Config} */
 module.exports = {
   darkMode: ["class"],
@@ -37,7 +35,7 @@ module.exports = {
     extend: {
       backgroundImage: {
         "rainbow-gradient-light":
-          "linear-gradient(90deg, rgba(129,26,188,0.9) 0%, rgba(219,52,52,0.9) 25%, rgba(241, 196, 15, .9) 50%, rgba(34,230,171,0.9) 75%, rgba(0,60,211,0.9) 100%)",
+          "linear-gradient(90deg, rgba(129,26,188,0.9), rgba(219,52,52,0.9), rgba(241, 196, 15, .9), rgba(34,230,171,0.9), rgba(0,60,211,0.9), rgba(129,26,188,0.9))",
         "rainbow-gradient-dark": "linear-gradient(90deg, white, gray)",
       },
       colors: {
@@ -53,14 +51,6 @@ module.exports = {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-        },
-        active: {
-          DEFAULT: colors.green[500],
-          foreground: colors.green[50],
-        },
-        inactive: {
-          DEFAULT: colors.red[500],
-          foreground: colors.red[50],
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -83,6 +73,9 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      backgroundSize: {
+        "200%": "200% 100%",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -97,12 +90,21 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        "topbar-flow": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "100%": { backgroundPosition: "-200% 50%" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "rainbow-flow": "topbar-flow 5s ease infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };

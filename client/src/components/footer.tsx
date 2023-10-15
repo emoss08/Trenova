@@ -15,21 +15,35 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { GLAccountTable } from "@/components/gl-accounts/table/GLAccountTable";
-
-function GLAccounts(): React.ReactElement {
-  const { classes } = usePageStyles();
-
+export function Footer() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <GLAccountTable />
-      </Card>
-    </Flex>
+    <footer className="flex justify-between items-center py-2 px-10 font-semibold">
+      {/* Copyright */}
+      <div className="text-foreground text-xs">
+        <span className="me-1">2023©</span>
+        <a href="#" target="_blank" rel="noopener noreferrer">
+          Monta Technologies
+        </a>
+      </div>
+
+      {/* Menu */}
+      <ul className="flex space-x-4 text-xs text-foreground">
+        <li>
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            Terms & Conditions
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            Support
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            License
+          </a>
+        </li>
+      </ul>
+    </footer>
   );
 }
-
-export default GLAccounts;

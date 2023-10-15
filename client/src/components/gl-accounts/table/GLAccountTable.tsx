@@ -15,65 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useMemo } from "react";
-import { MRT_ColumnDef } from "mantine-react-table";
-import { Badge } from "@mantine/core";
-import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
-import { GeneralLedgerAccount } from "@/types/accounting";
-import { IChoiceProps, StatusChoiceProps } from "@/types";
-import { truncateText } from "@/lib/utils";
 import { GLAccountDrawer } from "@/components/gl-accounts/table/GLAccountDrawer";
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <Badge
-      color={status === "A" ? "green" : "red"}
-      variant="filled"
-      radius="xs"
-    >
-      {status === "A" ? "Active" : "Inactive"}
-    </Badge>
-  );
-}
+import { generalLedgerTableStore } from "@/stores/AccountingStores";
 
 export function GLAccountTable() {
-  const columns = useMemo<MRT_ColumnDef<GeneralLedgerAccount>[]>(
-    () => [
-      {
-        id: "status",
-        accessorKey: "status",
-        header: "Status",
-        filterFn: "equals",
-        Cell: ({ cell }) => <StatusBadge status={cell.getValue() as string} />,
-        mantineFilterSelectProps: {
-          data: [
-            { value: "", label: "All" },
-            { value: "A", label: "Active" },
-            { value: "I", label: "Inactive" },
-          ] as ReadonlyArray<IChoiceProps<StatusChoiceProps>>,
-        },
-        filterVariant: "select",
-      },
-      {
-        accessorKey: "accountNumber",
-        header: "Account Number",
-      },
-      {
-        id: "description",
-        accessorKey: "description",
-        header: "Description",
-        Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
-      },
-      {
-        accessorKey: "accountType",
-        header: "Account Type",
-      },
-    ],
-    [],
-  );
-
   return (
     <MontaTable
       store={generalLedgerTableStore}

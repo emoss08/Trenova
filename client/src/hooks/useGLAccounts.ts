@@ -14,14 +14,19 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { useQuery, useQueryClient } from "react-query";
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import { GeneralLedgerAccount } from "@/types/accounting";
+import { useQuery, useQueryClient } from "react-query";
 
 export function useGLAccounts(show?: boolean) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, isFetched } = useQuery({
+  const {
+    data: glAccountsData,
+    isLoading,
+    isError,
+    isFetched,
+  } = useQuery({
     queryKey: ["glAccounts"],
     queryFn: async () => getGLAccounts(),
     enabled: show,
@@ -32,10 +37,10 @@ export function useGLAccounts(show?: boolean) {
   });
 
   const selectGLAccounts =
-    data?.map((item: GeneralLedgerAccount) => ({
+    glAccountsData?.map((item: GeneralLedgerAccount) => ({
       value: item.id,
       label: item.accountNumber,
     })) || [];
 
-  return { selectGLAccounts, isLoading, isError, isFetched };
+  return { glAccountsData, selectGLAccounts, isLoading, isError, isFetched };
 }

@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { THEME_KEY } from "@/lib/constants";
+import { ThemeOptions as Theme } from "@/types";
 import { createContext, useContext, useEffect, useState } from "react";
-
-type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -28,11 +28,15 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  isRainbowAnimationActive: boolean;
+  toggleRainbowAnimation: () => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
+  isRainbowAnimationActive: false,
+  toggleRainbowAnimation: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -40,12 +44,20 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "vite-ui-theme",
+  storageKey = THEME_KEY,
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
+
+  const [isRainbowAnimationActive, setIsRainbowAnimationActive] =
+    useState<boolean>(() => {
+      const storedValue = localStorage.getItem(
+        storageKey + "-rainbow-animation",
+      );
+      return storedValue ? JSON.parse(storedValue) : false;
+    });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -63,13 +75,28 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme);
-  }, [theme]);
+
+    if (isRainbowAnimationActive) {
+      root.classList.add("rainbow-animation");
+    } else {
+      root.classList.remove("rainbow-animation");
+    }
+  }, [theme, isRainbowAnimationActive]);
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
+    },
+    isRainbowAnimationActive,
+    toggleRainbowAnimation: () => {
+      const newValue = !isRainbowAnimationActive;
+      localStorage.setItem(
+        storageKey + "-rainbow-animation",
+        JSON.stringify(newValue),
+      );
+      setIsRainbowAnimationActive(newValue);
     },
   };
 

@@ -15,66 +15,85 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import RainbowTopBar from "@/components/topbar";
+import { RainbowTopBar } from "@/components/topbar";
 import { getUserDetails } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { useQuery, useQueryClient } from "react-query";
+import { Breadcrumb } from "./common/BreadCrumbs";
+import { Footer } from "./footer";
 import { NavMenu } from "./navbar";
+import { SiteSearch } from "./site-search";
 import { Skeleton } from "./ui/skeleton";
+import { Toaster } from "./ui/toaster";
 import { UserAvatarMenu } from "./user-avatar-menu";
 
+// Type Definitions
+
+/**
+ * LayoutProps defines the props for the Layout components.
+ */
 type LayoutProps = {
   children: React.ReactNode;
 };
 
-export function Layout({ children }: LayoutProps): React.ReactElement {
+/**
+ * Layout component that provides a common structure for protected pages.
+ * Contains navigation, header, and footer.
+ */
+export function Layout({ children }: LayoutProps) {
   const { userId } = useUserStore.get("user");
   const queryClient = useQueryClient();
 
+  // Fetch user data based on userId
   const { data: userData, isLoading: isUserDataLoading } = useQuery({
     queryKey: ["user", userId],
-    queryFn: () => {
-      if (!userId) {
-        return Promise.resolve(null);
-      }
-      return getUserDetails(userId);
-    },
+    queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
     initialData: () => queryClient.getQueryData(["user", userId]),
     staleTime: Infinity,
   });
 
   return (
-    <div className="relative flex flex-col">
-      <header className="supports-backdrop-blur:bg-background/60 sticky top-0 z-50 w-full border-b background/95 backdrop-blur">
+    <div className="relative flex flex-col h-screen">
+      <header className="bg-background sticky top-0 z-50 w-full border-b">
         <RainbowTopBar />
         <div className="container flex h-14 items-center">
           <NavMenu />
+          <SiteSearch />
           {isUserDataLoading ? (
-            <>
-              <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-                <Skeleton className="h-10 w-10 rounded-full" />
-              </div>
-            </>
+            <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+              <Skeleton className="h-10 w-10 rounded-full" />
+            </div>
           ) : (
             userData && <UserAvatarMenu user={userData} />
           )}
         </div>
       </header>
-      <div className="flex-1 pt-10 pb-4 md:pt-16 md:pb-8">
-        <div className="container relative">{children}</div>
+
+      {/* Main Content Area */}
+      <div className="flex-1">
+        <div className="container relative">
+          <Breadcrumb />
+          {children}
+          <Toaster />
+        </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
 
-export function UnprotectedLayout({
-  children,
-}: LayoutProps): React.ReactElement {
+/**
+ * UnprotectedLayout component for pages that don't require authentication.
+ */
+export function UnprotectedLayout({ children }: LayoutProps): JSX.Element {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <RainbowTopBar />
       <div className="h-screen">{children}</div>
+      <Toaster />
     </div>
   );
 }

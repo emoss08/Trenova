@@ -16,8 +16,9 @@
  */
 import * as React from "react";
 
-import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
+import { Label } from "./label";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -28,7 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
           className,
         )}
         ref={ref}
@@ -41,30 +42,48 @@ Input.displayName = "Input";
 
 export { Input };
 
-interface ExtendedInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+type ExtendedInputProps = InputProps & {
   error?: string;
-  // You can add other custom props if needed
-}
+  description?: string;
+  label?: string;
+  withAsterisk?: boolean;
+};
 
 const InputField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ error, className, ...props }, ref) => {
+  ({ error, className, description, label, withAsterisk, ...props }, ref) => {
     return (
-      <div className="relative">
-        <Input
-          ref={ref}
-          className={cn("pr-10", error && "border-red-600", className)}
-          {...props}
-        />
-        {error && (
-          <>
-            <div className="absolute top-0 right-0 mt-2 mr-3 text-red-600">
-              <AlertTriangle size={20} />
-            </div>
-            <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
-          </>
+      <>
+        {label && (
+          <Label
+            className={cn("text-sm font-medium", withAsterisk && "required")}
+          >
+            {label}
+          </Label>
         )}
-      </div>
+        <div className="relative">
+          <Input
+            ref={ref}
+            className={cn(
+              "pr-10",
+              error &&
+                "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              className,
+            )}
+            {...props}
+          />
+          {description && (
+            <p className="text-xs text-foreground/70">{description}</p>
+          )}
+          {error && (
+            <>
+              <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
+                <AlertTriangle size={20} className="text-red-500" />
+              </div>
+              <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
+            </>
+          )}
+        </div>
+      </>
     );
   },
 );
@@ -79,7 +98,12 @@ const PasswordField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
       <div className="relative">
         <Input
           ref={ref}
-          className={cn("pr-10", error && "border-red-600", className)}
+          className={cn(
+            "pr-10",
+            error &&
+              "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            className,
+          )}
           {...props}
         />
         {error && (
@@ -98,3 +122,45 @@ const PasswordField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
 PasswordField.displayName = "InputField";
 
 export { PasswordField };
+
+const FileField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
+  ({ error, className, label, description, withAsterisk, ...props }, ref) => {
+    return (
+      <div className="relative">
+        {label && (
+          <Label
+            className={cn("text-sm font-medium", withAsterisk && "required")}
+          >
+            {label}
+          </Label>
+        )}
+        <Input
+          ref={ref}
+          type="file"
+          className={cn(
+            "pr-10",
+            error &&
+              "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            className,
+          )}
+          {...props}
+        />
+        {description && (
+          <p className="text-xs text-foreground/70">{description}</p>
+        )}
+        {error && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
+              <AlertTriangle size={20} className="text-red-500" />
+            </div>
+            <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
+          </>
+        )}
+      </div>
+    );
+  },
+);
+
+FileField.displayName = "FileField";
+
+export { FileField };

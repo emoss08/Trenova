@@ -19,15 +19,16 @@ import { NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { useUserPermissions } from "@/context/user-permissions";
 import { cn } from "@/lib/utils";
 import React from "react";
+import { Link } from "react-router-dom";
 
 type PermissionType = string;
 
 export const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & {
+  React.ElementRef<typeof Link>,
+  React.ComponentPropsWithoutRef<typeof Link> & {
     permission?: PermissionType;
   }
->(({ className, title, children, permission, ...props }, ref) => {
+>(({ className, title, children, permission, to, ...props }, ref) => {
   const { userHasPermission } = useUserPermissions();
 
   // If the ListItem has a permission and the user doesn't have it, return null
@@ -37,8 +38,9 @@ export const ListItem = React.forwardRef<
 
   return (
     <NavigationMenuLink asChild>
-      <a
+      <Link
         ref={ref}
+        to={to}
         className={cn(
           "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
           className,
@@ -49,7 +51,7 @@ export const ListItem = React.forwardRef<
         <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
           {children}
         </p>
-      </a>
+      </Link>
     </NavigationMenuLink>
   );
 });

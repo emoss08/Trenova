@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
 import { useQuery, useQueryClient } from "react-query";
@@ -25,7 +26,7 @@ export function OrganizationLogo() {
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
-  const { data: organizationData, isLoading: IsOrgDataLoading } = useQuery({
+  const { data: organizationData, isLoading: isOrgDataLoading } = useQuery({
     queryKey: ["organization", organizationId],
     queryFn: () => {
       if (!organizationId) {
@@ -38,14 +39,8 @@ export function OrganizationLogo() {
     staleTime: Infinity, // never refetch
   });
 
-  if (IsOrgDataLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-lg bg-black dark:bg-white opacity-10 h-10 w-36"></div>
-        </div>
-      </div>
-    );
+  if (isOrgDataLoading) {
+    return <Skeleton className="h-10 w-[150px]" />;
   }
 
   if (organizationData && organizationData.logo) {
