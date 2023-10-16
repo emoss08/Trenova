@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetClose,
@@ -39,54 +39,80 @@ import { FileField, InputField } from "../ui/input";
 import { TChoiceProps } from "@/types";
 import { useGLAccounts } from "@/hooks/useGLAccounts";
 import { TextareaField } from "../ui/textarea";
-import { SelectInput, ComboboxDemo } from "../ui/select";
+import {
+  CreatableSelectField,
+  SelectInput,
+  type Option,
+} from "../ui/select-input";
+import { CheckboxInput } from "../ui/checkbox";
+import { useUsers } from "@/hooks/useUsers";
+import { useTags } from "@/hooks/useTags";
+import axios from "@/lib/AxiosConfig";
+import { useQueryClient } from "react-query";
 
 function GLForm({
   glAccounts,
   isGLAccountsError,
   isGLAccountsLoading,
+  users,
+  isUsersLoading,
+  isUsersError,
+  tags,
+  isTagsLoading,
+  isTagsError,
 }: {
   glAccounts: TChoiceProps[];
   isGLAccountsLoading: boolean;
   isGLAccountsError: boolean;
+  users: TChoiceProps[];
+  isUsersLoading: boolean;
+  isUsersError: boolean;
+  tags: TChoiceProps[];
+  isTagsLoading: boolean;
+  isTagsError: boolean;
 }) {
-  const frameworks = [
-    {
-      value: "next.js",
-      label: "Next.js",
-    },
-    {
-      value: "sveltekit",
-      label: "SvelteKit",
-    },
-    {
-      value: "nuxt.js",
-      label: "Nuxt.js",
-    },
-    {
-      value: "remix",
-      label: "Remix",
-    },
-    {
-      value: "astro",
-      label: "Astro",
-    },
-  ];
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [tagOptions, setTagOptions] = React.useState(tags);
+  const [tagValue, setTagValue] = React.useState<Option | null>();
+
+  const queryClient = useQueryClient();
+
+  const createNewTag = (inputValue: string) => {
+    axios.post("/tags/", { name: inputValue }).then((res) => {
+      setTagOptions((prev) => [
+        ...prev,
+        { label: inputValue, value: res.data.id },
+      ]);
+      setTagValue({ label: inputValue, value: res.data.id });
+    });
+    queryClient.invalidateQueries("tags");
+  };
+
+  React.useEffect(() => {
+    setTagOptions(tags);
+  }, [tags]);
+
+  const handleCreate = (inputValue: string) => {
+    setIsLoading(true);
+    createNewTag(inputValue);
+    setIsLoading(false);
+  };
+
+  const isTagsUpdating = isTagsLoading || isLoading;
 
   return (
-    <div>
-      <div className="grid grid-cols-3 gap-6 my-4">
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          {/* <SelectInput
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-4">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <SelectInput
             label="Status"
-            data={statusChoices}
-            placeholder="Select Status"
-            description="Status of the Account"
+            options={statusChoices}
             withAsterisk
-          /> */}
-          <ComboboxDemo frameworks={frameworks} />
+            placeholder="Select Status"
+            description="Status of the General Ledger Account"
+          />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <InputField
             label="Account Number"
             autoCapitalize="none"
@@ -96,85 +122,115 @@ function GLForm({
             autoComplete="accountNumber"
             description="The account number of the account"
             withAsterisk
-            // disabled={isLoading}
-            // error={errors?.username?.message}
-            // {...register("username")}
           />
         </div>
       </div>
-      <TextareaField
-        label="Description"
-        placeholder="Description"
-        description="The description of the account"
-        withAsterisk
-      />
-      <div className="grid grid-cols-3 gap-6 my-4">
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-4">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             label="Account Type"
-            data={accountTypeChoices}
+            options={accountTypeChoices}
             placeholder="Select Account Type"
             description="The Account Type of GL Account"
             withAsterisk
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             label="Cash Flow Type"
-            data={cashFlowTypeChoices}
+            options={cashFlowTypeChoices}
             placeholder="Select Cash Flow Type"
             description="The Cash Flow Type of the GL Account"
-            withAsterisk
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             label="Account Sub Type"
-            data={accountSubTypeChoices}
+            options={accountSubTypeChoices}
             placeholder="Select Account Sub Type"
             description="The Account Sub Type of the GL Account"
-            withAsterisk
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             label="Account Classification"
-            data={accountClassificationChoices}
+            options={accountClassificationChoices}
             placeholder="Select Account Classification"
             description="The Account Classification of the GL Account"
-            withAsterisk
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          <SelectInput
-            label="Account Classification"
-            data={accountClassificationChoices}
-            placeholder="Select Account Classification"
-            description="The Account Classification of the GL Account"
-            withAsterisk
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             label="Parent Account"
-            data={glAccounts}
+            options={glAccounts}
             isLoading={isGLAccountsLoading}
-            isError={isGLAccountsError}
+            isFetchError={isGLAccountsError}
             placeholder="Select Parent Account"
             description="Parent account for hierarchical accounting"
-            withAsterisk
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <FileField
-            label="Parent Account"
-            placeholder="Select Parent Account"
-            description="Parent account for hierarchical accounting"
-            withAsterisk
+            label="Attachment"
+            description="Attach relevant documents or receipts"
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <SelectInput
+            label="Owner"
+            options={users}
+            isLoading={isUsersLoading}
+            isFetchError={isUsersError}
+            placeholder="Select Owner"
+            description="User responsible for the account"
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <InputField
+            label="Interest Rate"
+            autoCapitalize="none"
+            autoCorrect="off"
+            type="text"
+            placeholder="Interest Rate"
+            autoComplete="interestRate"
+            description="Interest rate associated with the account"
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <CreatableSelectField
+            id="tags"
+            description="Tags or labels associated with the account"
+            label="Tags"
+            onCreateOption={handleCreate}
+            placeholder="Select Tags"
+            options={tagOptions}
+            isLoading={isTagsUpdating}
+            isFetchError={isTagsError}
+            value={tagValue}
+            onChange={(newValue) => setTagValue(newValue as Option)}
+            isMulti
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <CheckboxInput
+            label="Is Reconciled"
+            description="Indicates if the account is reconciled"
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <CheckboxInput
+            label="Is Tax Relevant"
+            description="Indicates if the account is relevant for tax calculations"
           />
         </div>
       </div>
-    </div>
+      <TextareaField
+        label="Notes"
+        placeholder="Notes"
+        description="Additional notes or comments for the account"
+        withAsterisk
+      />
+    </>
   );
 }
 
@@ -185,9 +241,21 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
     isLoading: glAccountsLoading,
   } = useGLAccounts(open);
 
+  const {
+    selectUsersData,
+    isError: usersError,
+    isLoading: usersLoading,
+  } = useUsers(open);
+
+  const {
+    selectTags,
+    isError: tagsError,
+    isLoading: tagsLoading,
+  } = useTags(open);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={cn("w-1/2")}>
+      <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
           <SheetTitle>Add New GL Account</SheetTitle>
           <SheetDescription>
@@ -200,6 +268,12 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
           glAccounts={selectGLAccounts}
           isGLAccountsLoading={glAccountsLoading}
           isGLAccountsError={glAccountsError}
+          users={selectUsersData}
+          isUsersLoading={usersLoading}
+          isUsersError={usersError}
+          tags={selectTags}
+          isTagsLoading={tagsLoading}
+          isTagsError={tagsError}
         />
         <SheetFooter>
           <SheetClose asChild>
