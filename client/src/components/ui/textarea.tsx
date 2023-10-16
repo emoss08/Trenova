@@ -12,7 +12,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-1 focus-visible:outline-none focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
         ref={ref}
@@ -26,7 +26,7 @@ Textarea.displayName = "Textarea";
 export { Textarea };
 
 type ExtendedTextareaProps = TextareaProps & {
-  error?: string;
+  formError?: string;
   description?: string;
   label?: string;
   withAsterisk?: boolean;
@@ -37,7 +37,14 @@ const TextareaField = React.forwardRef<
   ExtendedTextareaProps
 >(
   (
-    { error, className, description, label, withAsterisk = false, ...props },
+    {
+      formError,
+      className,
+      description,
+      label,
+      withAsterisk = false,
+      ...props
+    },
     ref,
   ) => {
     return (
@@ -45,6 +52,7 @@ const TextareaField = React.forwardRef<
         {label && (
           <Label
             className={cn("text-sm font-medium", withAsterisk && "required")}
+            htmlFor={props.id}
           >
             {label}
           </Label>
@@ -54,22 +62,24 @@ const TextareaField = React.forwardRef<
             ref={ref}
             className={cn(
               "pr-10",
-              error &&
-                "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              formError &&
+                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
               className,
             )}
             {...props}
           />
-          {error && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-            </div>
+          {formError && (
+            <>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <p className="text-xs text-red-500">{formError}</p>
+            </>
           )}
         </div>
-        {description && (
+        {description && !formError && (
           <p className="text-xs text-foreground/70">{description}</p>
         )}
-        {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
       </>
     );
   },
