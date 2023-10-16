@@ -42,3 +42,38 @@ const Checkbox = React.forwardRef<
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
 export { Checkbox };
+
+type CheckboxInputProps = CheckboxPrimitive.CheckboxProps &
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> & {
+    formError?: string;
+    description?: string;
+    label?: string;
+  };
+
+const CheckboxInput = React.forwardRef<
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  CheckboxInputProps
+>(({ className, ...props }, ref) => (
+  <div className="items-top flex space-x-2">
+    <Checkbox {...props} ref={ref} className={className} />
+    {props.label && (
+      <div className="grid gap-1.5 leading-none">
+        <label
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor={props.id}
+        >
+          {props.label}
+        </label>
+        {props.description && (
+          <p className="text-sm text-muted-foreground truncate">
+            {props.description}
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+));
+
+CheckboxInput.displayName = "CheckboxInput";
+
+export { CheckboxInput };
