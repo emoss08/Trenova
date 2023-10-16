@@ -29,7 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus:ring-2 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
           className,
         )}
         ref={ref}
@@ -42,15 +42,62 @@ Input.displayName = "Input";
 
 export { Input };
 
-type ExtendedInputProps = InputProps & {
-  error?: string;
+export type ExtendedInputProps = InputProps & {
+  formError?: string;
   description?: string;
   label?: string;
   withAsterisk?: boolean;
 };
 
 const InputField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ error, className, description, label, withAsterisk, ...props }, ref) => {
+  (
+    { formError, className, description, label, withAsterisk, ...props },
+    ref,
+  ) => {
+    return (
+      <>
+        {label && (
+          <Label
+            className={cn("text-sm font-medium", withAsterisk && "required")}
+            htmlFor={props.id}
+          >
+            {label}
+          </Label>
+        )}
+        <div className="relative">
+          <Input
+            ref={ref}
+            className={cn(
+              "pr-10",
+              formError &&
+                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              className,
+            )}
+            {...props}
+          />
+          {formError && (
+            <>
+              <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
+                <AlertTriangle size={20} className="text-red-500" />
+              </div>
+              <p className="text-xs text-red-600">{formError}</p>
+            </>
+          )}
+          {description && !formError && (
+            <p className="text-xs text-foreground/70">{description}</p>
+          )}
+        </div>
+      </>
+    );
+  },
+);
+
+InputField.displayName = "InputField";
+
+export { InputField };
+
+const PasswordField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
+  ({ formError, className, label, withAsterisk, ...props }, ref) => {
     return (
       <>
         {label && (
@@ -65,21 +112,18 @@ const InputField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
             ref={ref}
             className={cn(
               "pr-10",
-              error &&
-                "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              formError &&
+                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
               className,
             )}
             {...props}
           />
-          {description && (
-            <p className="text-xs text-foreground/70">{description}</p>
-          )}
-          {error && (
+          {formError && (
             <>
-              <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
-                <AlertTriangle size={20} className="text-red-500" />
+              <div className="absolute top-0 right-0 mt-2 mr-3 text-red-600">
+                <AlertTriangle size={20} />
               </div>
-              <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
+              <p className="mt-2 px-1 text-xs text-red-600">{formError}</p>
             </>
           )}
         </div>
@@ -88,43 +132,18 @@ const InputField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
   },
 );
 
-InputField.displayName = "InputField";
-
-export { InputField };
-
-const PasswordField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ error, className, ...props }, ref) => {
-    return (
-      <div className="relative">
-        <Input
-          ref={ref}
-          className={cn(
-            "pr-10",
-            error &&
-              "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            className,
-          )}
-          {...props}
-        />
-        {error && (
-          <>
-            <div className="absolute top-0 right-0 mt-2 mr-3 text-red-600">
-              <AlertTriangle size={20} />
-            </div>
-            <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
-          </>
-        )}
-      </div>
-    );
-  },
-);
-
 PasswordField.displayName = "InputField";
 
 export { PasswordField };
 
-const FileField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ error, className, label, description, withAsterisk, ...props }, ref) => {
+const FileField = React.forwardRef<
+  HTMLInputElement,
+  Omit<ExtendedInputProps, "placeholder">
+>(
+  (
+    { formError, className, label, description, withAsterisk, ...props },
+    ref,
+  ) => {
     return (
       <div className="relative">
         {label && (
@@ -139,22 +158,23 @@ const FileField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
           type="file"
           className={cn(
             "pr-10",
-            error &&
-              "ring-2 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            formError &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
             className,
           )}
           {...props}
         />
-        {description && (
-          <p className="text-xs text-foreground/70">{description}</p>
-        )}
-        {error && (
+
+        {formError && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
               <AlertTriangle size={20} className="text-red-500" />
             </div>
-            <p className="mt-2 px-1 text-xs text-red-600">{error}</p>
+            <p className="mt-2 px-1 text-xs text-red-600">{formError}</p>
           </>
+        )}
+        {description && !formError && (
+          <p className="text-xs text-foreground/70">{description}</p>
         )}
       </div>
     );
