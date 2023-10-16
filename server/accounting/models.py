@@ -362,11 +362,6 @@ class GeneralLedgerAccount(GenericModel):
             )
         ],
     )
-    description = models.CharField(
-        _("Description"),
-        max_length=100,
-        help_text=_("The description of the General Ledger Account."),
-    )
     account_type = ChoiceField(
         _("Account Type"),
         choices=AccountTypeChoices.choices,
@@ -484,7 +479,6 @@ class GeneralLedgerAccount(GenericModel):
 
         verbose_name = _("General Ledger Account")
         verbose_name_plural = _("General Ledger Accounts")
-        ordering = ["account_number"]
         db_table = "general_ledger_account"
         constraints = [
             models.UniqueConstraint(
@@ -536,7 +530,6 @@ class Tag(GenericModel):
     class Meta:
         verbose_name = _("Tag")
         verbose_name_plural = _("Tags")
-        ordering = ["name"]
         db_table = "tags"
         constraints = [
             models.UniqueConstraint(
@@ -609,7 +602,6 @@ class RevenueCode(GenericModel):
 
         verbose_name = _("Revenue Code")
         verbose_name_plural = _("Revenue Codes")
-        ordering = ["code"]
         db_table = "revenue_code"
         constraints = [
             models.UniqueConstraint(
@@ -765,7 +757,6 @@ class DivisionCode(GenericModel):
 
         verbose_name = _("Division Code")
         verbose_name_plural = _("Division Codes")
-        ordering = ["code"]
         db_table = "division_code"
         db_table_comment = "Stores division code information for related organization."
         constraints = [
@@ -929,7 +920,6 @@ class FinancialTransaction(GenericModel):
 
         verbose_name = _("Financial Transaction")
         verbose_name_plural = _("Financial Transactions")
-        ordering = ["transaction_type", "amount"]
         db_table = "financial_transaction"
         db_table_comment = "Model representing a financial transaction in the ledger."
         constraints = [
