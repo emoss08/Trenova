@@ -25,9 +25,12 @@ import { memo, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { BrowserRouter } from "react-router-dom";
-import "./assets/App.css";
 import { UserPermissionsProvider } from "./context/user-permissions";
 import { THEME_KEY } from "./lib/constants";
+import "react-datepicker/dist/react-datepicker.css";
+import "@/assets/App.css";
+import "@/assets/Datepicker.css";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
