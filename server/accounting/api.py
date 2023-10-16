@@ -65,15 +65,17 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
             .prefetch_related(
                 Prefetch(
                     "tags",
-                    queryset=models.Tag.objects.only("id", "name", "description"),
+                    queryset=models.Tag.objects.only(
+                        "id",
+                    ),
                 ),
             )
             .only(
                 "organization_id",
+                "business_unit_id",
                 "id",
                 "status",
                 "account_number",
-                "description",
                 "account_type",
                 "cash_flow_type",
                 "account_sub_type",
@@ -90,6 +92,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
                 "is_tax_relevant",
                 "attachment",
                 "interest_rate",
+                "tags",
             )
         )
         return queryset
