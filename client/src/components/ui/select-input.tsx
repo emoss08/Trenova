@@ -32,7 +32,6 @@ import { cn } from "@/lib/utils";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { AlertTriangle } from "lucide-react";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
-import { StateManagerAdditionalProps } from "react-select/dist/declarations/src/useStateManager";
 
 function Option({ ...props }: OptionProps) {
   return (
@@ -229,6 +228,7 @@ export function SelectInput({
     </>
   );
 }
+
 export type Option = {
   readonly label: string;
   readonly value: string;
