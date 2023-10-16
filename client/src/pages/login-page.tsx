@@ -94,11 +94,10 @@ function UserAuthForm() {
   return (
     <form onSubmit={handleSubmit(login)}>
       <div className="grid gap-4 mt-5">
-        <div className="grid gap-2">
-          <Label htmlFor="username" className="required">
-            Username
-          </Label>
+        <div className="grid gap-1">
           <InputField
+            label="Username"
+            withAsterisk
             id="username"
             autoCapitalize="none"
             autoCorrect="off"
@@ -107,28 +106,25 @@ function UserAuthForm() {
             autoComplete="username"
             className={cn("h-10")}
             disabled={isLoading}
-            error={errors?.username?.message}
+            formError={errors?.username?.message}
             {...register("username")}
           />
         </div>
-        <div className="relative grid gap-2">
-          <Label htmlFor="password" className="required">
-            Password
-          </Label>
-          <div className="relative">
-            <PasswordField
-              id="password"
-              autoCapitalize="none"
-              className={cn("h-10")}
-              type="password"
-              autoComplete="current-password"
-              autoCorrect="off"
-              placeholder="Password"
-              disabled={isLoading}
-              error={errors?.password?.message}
-              {...register("password")}
-            />
-          </div>
+        <div className="grid gap-1">
+          <PasswordField
+            label="Password"
+            withAsterisk
+            id="password"
+            autoCapitalize="none"
+            className={cn("h-10")}
+            type="password"
+            autoComplete="current-password"
+            autoCorrect="off"
+            placeholder="Password"
+            disabled={isLoading}
+            formError={errors?.password?.message}
+            {...register("password")}
+          />
         </div>
         <div className="flex items-center justify-between mt-2">
           <div>
