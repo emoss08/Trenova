@@ -44,21 +44,12 @@ export function ProtectedRoutes(): React.ReactElement {
           // route.path === "/logout" ||
           route.path === "/reset-password";
 
-        let element: React.ReactNode;
-        if (isPublicRoute || isAuthenticated) {
-          if (route.permission) {
-            if (userHasPermission(route.permission)) {
-              element = route.element;
-            } else {
-              element = <Navigate to="/error" replace />;
-            }
-          } else {
-            element = route.element;
-          }
-        } else {
+        let element = route.element;
+        if (!isPublicRoute && !isAuthenticated) {
           element = <Navigate to="/login" replace />;
+        } else if (route.permission && !userHasPermission(route.permission)) {
+          element = <Navigate to="/error" replace />;
         }
-
         const wrappedElement = isPublicRoute ? (
           <UnprotectedLayout>{element}</UnprotectedLayout>
         ) : (
