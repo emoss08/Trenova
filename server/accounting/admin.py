@@ -34,14 +34,12 @@ class GeneralLedgerAccountAdmin(GenericAdmin[models.GeneralLedgerAccount]):
     model = models.GeneralLedgerAccount
     list_display: tuple[str, ...] = (
         "account_number",
-        "description",
         "cash_flow_type",
         "account_sub_type",
         "account_classification",
     )
     search_fields: tuple[str, ...] = (
         "account_number",
-        "description",
     )
 
     def get_form(
