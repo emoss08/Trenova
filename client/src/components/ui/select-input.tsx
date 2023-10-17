@@ -17,13 +17,13 @@
 
 import React from "react";
 import Select, {
-  ActionMeta,
   ClearIndicatorProps,
   components,
   DropdownIndicatorProps,
   GroupBase,
   MenuListProps,
   OptionProps,
+  OptionsOrGroups,
   Props,
   ValueContainerProps,
 } from "react-select";
@@ -32,6 +32,12 @@ import { cn } from "@/lib/utils";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { AlertTriangle } from "lucide-react";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
+import {
+  Path,
+  PathValue,
+  useController,
+  UseControllerProps,
+} from "react-hook-form";
 
 function Option({ ...props }: OptionProps) {
   return (
@@ -114,57 +120,46 @@ function MenuList({
   );
 }
 
-export function SelectInput({
+export function SelectInput<T extends Record<string, unknown>>({
   ...props
-}: Props & {
+}: Omit<Props, "name"> & {
   label: string;
   withAsterisk?: boolean;
   description?: string;
   maxOptions?: number;
   isFetchError?: boolean;
-  formError?: string;
-}) {
-  const {
-    label,
-    withAsterisk,
-    description,
-    placeholder,
-    maxOptions = 10,
-    isClearable = true,
-    isMulti,
-    isLoading,
-    isDisabled,
-    isFetchError,
-    formError,
-  } = props;
-
-  const dataLoading = isLoading || isDisabled;
-
-  const errorOccurred = isFetchError || !!formError;
+} & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
+  const dataLoading = props.isLoading || props.isDisabled;
+  const errorOccurred = props.isFetchError || !!fieldState.error?.message;
 
   return (
     <>
-      {label && (
+      {props.label && (
         <Label
-          className={cn("text-sm font-medium", withAsterisk && "required")}
+          className={cn(
+            "text-sm font-medium",
+            props.withAsterisk && "required",
+          )}
           htmlFor={props.id}
         >
-          {label}
+          {props.label}
         </Label>
       )}
       <div className="relative">
         <Select
-          closeMenuOnSelect={!isMulti}
+          aria-invalid={fieldState.invalid}
+          closeMenuOnSelect={!props.isMulti}
           hideSelectedOptions={false}
           unstyled
-          isMulti={isMulti}
-          isLoading={isLoading}
-          isDisabled={dataLoading || errorOccurred}
-          isClearable={isClearable}
-          maxOptions={maxOptions}
-          placeholder={placeholder || "Select"}
-          isFetchError={isFetchError}
-          formError={formError}
+          isMulti={props.isMulti}
+          isLoading={props.isLoading}
+          isDisabled={dataLoading || props.isFetchError}
+          isClearable={props.isClearable || true}
+          maxOptions={props.maxOptions || 10}
+          placeholder={props.placeholder || "Select"}
+          isFetchError={props.isFetchError}
+          formError={fieldState.error?.message}
           styles={{
             input: (base) => ({
               ...base,
@@ -192,12 +187,16 @@ export function SelectInput({
                   : "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
               ),
-            placeholder: () => "text-muted-foreground pl-1 py-0.5 truncate",
+            placeholder: () =>
+              cn(
+                "text-muted-foreground pl-1 py-0.5 truncate",
+                errorOccurred && "text-red-500",
+              ),
             input: () => "pl-1 py-0.5",
             valueContainer: () => "p-1 gap-1",
             singleValue: () => "leading-7 ml-1",
             multiValue: () =>
-              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-1.5 h-6",
+              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
             multiValueLabel: () => "text-xs leading-4",
             multiValueRemove: () =>
               "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
@@ -213,16 +212,17 @@ export function SelectInput({
               "text-muted-foreground p-2 bg-background rounded-sm",
           }}
           {...props}
+          {...field}
         />
         {errorOccurred && (
           <p className="text-xs text-red-500">
-            {isFetchError
+            {props.isFetchError
               ? "An error has occured! Please try again later."
-              : formError}
+              : fieldState.error?.message}
           </p>
         )}
-        {description && !errorOccurred && (
-          <p className="text-xs text-foreground/70">{description}</p>
+        {props.description && !errorOccurred && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -233,47 +233,137 @@ export type Option = {
   readonly label: string;
   readonly value: string;
 };
-
-type isMulti = boolean;
-
-export function CreatableSelectField({
-  ...props
-}: CreatableProps<Option, isMulti, GroupBase<Option>> & {
-  onCreateOption: (inputValue: string) => void;
-  onChange: (newValue: unknown, actionMeta: ActionMeta<unknown>) => void;
+interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
+  extends UseControllerProps<T>,
+    Omit<
+      CreatableProps<Option, boolean, GroupBase<Option>>,
+      "defaultValue" | "name"
+    > {
   label: string;
   withAsterisk?: boolean;
   description?: string;
   isFetchError?: boolean;
+  isLoading?: boolean;
+  isDisabled?: boolean;
+  isClearable?: boolean;
+  isMulti?: boolean;
+  placeholder?: string;
+  formError?: string;
+  options: OptionsOrGroups<Option, GroupBase<Option>>;
+  onCreate: (inputValue: string) => Promise<K>;
+}
+
+function getLabelByValue<T extends Record<string, unknown>>(
+  value: PathValue<T, Path<T>>,
+  options: OptionsOrGroups<Option, GroupBase<Option>>,
+) {
+  const option = options.find((opt) => opt.value === value);
+  return option?.label || value;
+}
+
+function ValueProcessor<T extends Record<string, unknown>>(
+  value: PathValue<T, Path<T>>,
+  options: OptionsOrGroups<Option, GroupBase<Option>>,
+) {
+  if (Array.isArray(value)) {
+    return value.map((val) => ({
+      value: val,
+      label: getLabelByValue(val, options),
+    }));
+  }
+
+  return {
+    value,
+    label: getLabelByValue(value, options),
+  };
+}
+
+function ErrorMessage({
+  isFetchError,
+  formError,
+}: {
+  isFetchError?: boolean;
   formError?: string;
 }) {
-  const errorOccurred = props.isFetchError || !!props.formError;
-  const dataLoading = props.isLoading || props.isDisabled;
+  return (
+    <p className="text-xs text-red-500">
+      {isFetchError
+        ? "An error has occured! Please try again later."
+        : formError}
+    </p>
+  );
+}
+
+function Description({ description }: { description: string }) {
+  return <p className="text-xs text-foreground/70">{description}</p>;
+}
+
+export function CreatableSelectField<T extends Record<string, unknown>, K>(
+  props: CreatableSelectFieldProps<T, K>,
+) {
+  const {
+    label,
+    withAsterisk,
+    description,
+    isFetchError,
+    isLoading,
+    isDisabled,
+    isClearable,
+    isMulti,
+    placeholder,
+    formError,
+    options,
+    onCreate,
+    ...controllerProps
+  } = props;
+
+  const { field, fieldState } = useController(controllerProps);
+  const errorOccurred = isFetchError || !!formError;
+  const dataLoading = isLoading || isDisabled;
+  const processedValue = ValueProcessor(field.value, options);
 
   return (
     <>
-      {props.label && (
+      {label && (
         <Label
-          className={cn(
-            "text-sm font-medium",
-            props.withAsterisk && "required",
-          )}
-          htmlFor={props.id}
+          className={cn("text-sm font-medium", withAsterisk && "required")}
+          htmlFor={controllerProps.id}
         >
-          {props.label}
+          {label}
         </Label>
       )}
       <div className="relative">
         <CreatableSelect
-          isMulti={props.isMulti}
-          isLoading={props.isLoading}
-          isDisabled={dataLoading || errorOccurred}
-          isClearable={props.isClearable}
-          placeholder={props.placeholder || "Select"}
-          closeMenuOnSelect={!props.isMulti}
-          isFetchError={props.isFetchError}
-          formError={props.formError}
           unstyled
+          aria-invalid={fieldState.invalid}
+          isMulti={isMulti}
+          isLoading={isLoading}
+          isDisabled={dataLoading || errorOccurred}
+          isClearable={isClearable}
+          placeholder={placeholder || "Select"}
+          closeMenuOnSelect={!isMulti}
+          options={options}
+          value={processedValue}
+          onCreateOption={async (inputValue) => {
+            const newOption = await onCreate(inputValue);
+            const currentValues = Array.isArray(processedValue)
+              ? processedValue
+              : [];
+            const updatedValues = [...currentValues, newOption];
+            field.onChange(
+              (updatedValues as Array<{ value: string }>).map(
+                (opt) => opt.value,
+              ),
+            );
+          }}
+          onChange={(selected) => {
+            if (isMulti) {
+              const values = (selected as Option[]).map((opt) => opt.value);
+              field.onChange(values);
+            } else {
+              field.onChange((selected as Option).value);
+            }
+          }}
           components={{
             ClearIndicator: ClearIndicator,
             ValueContainer: CustomValueContainer,
@@ -289,19 +379,19 @@ export function CreatableSelectField({
                   : "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
               ),
-            placeholder: () => "text-muted-foreground pl-1 py-0.5 truncate",
+            placeholder: () =>
+              cn(
+                "text-muted-foreground pl-1 py-0.5 truncate",
+                errorOccurred && "text-red-500",
+              ),
             input: () => "pl-1 py-0.5",
             valueContainer: () => "p-1 gap-1",
             singleValue: () => "leading-7 ml-1",
             multiValue: () =>
-              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-1.5 h-6",
-            multiValueLabel: () => "text-xs leading-4 text-foreground",
-            multiValueRemove: ({ isFocused }) =>
-              cn(
-                isFocused
-                  ? "bg-accent pr-1 h-6"
-                  : "bg-accent hover:text-foreground/50 p-0",
-              ),
+              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+            multiValueLabel: () => "text-xs leading-4",
+            multiValueRemove: () =>
+              "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
             indicatorsContainer: () => "p-1 gap-1",
             clearIndicator: () =>
               "text-foreground/50 p-1 hover:text-foreground",
@@ -313,20 +403,11 @@ export function CreatableSelectField({
             noOptionsMessage: () =>
               "text-muted-foreground p-2 bg-background rounded-sm",
           }}
-          onChange={props.onChange}
-          onCreateOption={props.onCreateOption}
-          options={props.options}
-          value={props.value}
         />
-        {errorOccurred && (
-          <p className="text-xs text-red-500">
-            {props.isFetchError
-              ? "An error has occured! Please try again later."
-              : props.formError}
-          </p>
-        )}
-        {props.description && !errorOccurred && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+        {errorOccurred ? (
+          <ErrorMessage isFetchError={isFetchError} formError={formError} />
+        ) : (
+          <Description description={description!} />
         )}
       </div>
     </>
