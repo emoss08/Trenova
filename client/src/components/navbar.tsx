@@ -32,9 +32,10 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { LinksComponent } from "./nav-links";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 // Type Definitions
 type PermissionType = string;
@@ -133,7 +134,7 @@ const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> =
   });
 
 export function NavMenu() {
-  const [menuOpen, setMenuOpen] = useState<string | undefined>(undefined);
+  const [menuOpen, setMenuOpen] = useHeaderStore.use("menuOpen");
 
   // Define menu items
   const menuItems: MenuData[] = [

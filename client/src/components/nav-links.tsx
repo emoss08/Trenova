@@ -19,6 +19,7 @@ import { useUserPermissions } from "@/context/user-permissions";
 import { ChevronsLeftIcon } from "lucide-react";
 import React, { useState } from "react";
 import { ListItem } from "./links-group";
+import { useHeaderStore } from "@/stores/HeaderStore";
 // Type Definitions
 
 /**
@@ -83,7 +84,6 @@ const SingleLink: React.FC<{
 export function LinksComponent({ linkData }: LinksComponentProps) {
   const [activeSubLinks, setActiveSubLinks] = useState<LinkData[] | null>(null);
   const { userHasPermission } = useUserPermissions();
-
   // Checks if user has permission to any of the subLinks
   const userHasSubLinkPermission = (subLinks: LinkData[]): boolean =>
     subLinks.some(
@@ -131,6 +131,7 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
           {activeSubLinks.map((subLink) => (
             <li key={subLink.label}>
               <ListItem
+                onClick={() => useHeaderStore.set("menuOpen", undefined)}
                 title={subLink.label}
                 to={subLink.link}
                 permission={subLink.permission}
