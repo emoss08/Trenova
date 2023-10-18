@@ -19,6 +19,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import { Label } from "./label";
+import {
+  FieldValues,
+  UseControllerProps,
+  useController,
+} from "react-hook-form";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -42,145 +47,105 @@ Input.displayName = "Input";
 
 export { Input };
 
-export type ExtendedInputProps = InputProps & {
-  formError?: string;
+export type ExtendedInputProps = Omit<InputProps, "name"> & {
   description?: string;
   label?: string;
-  withAsterisk?: boolean;
+  ref?: React.ForwardedRef<HTMLInputElement>;
 };
 
-const InputField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  (
-    { formError, className, description, label, withAsterisk, ...props },
-    ref,
-  ) => {
-    return (
-      <>
-        {label && (
-          <Label
-            className={cn("text-sm font-medium", withAsterisk && "required")}
-            htmlFor={props.id}
-          >
-            {label}
-          </Label>
-        )}
-        <div className="relative">
-          <Input
-            ref={ref}
-            className={cn(
-              "pr-10",
-              formError &&
-                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-              className,
-            )}
-            {...props}
-          />
-          {formError && (
-            <>
-              <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
-                <AlertTriangle size={20} className="text-red-500" />
-              </div>
-              <p className="text-xs text-red-600">{formError}</p>
-            </>
+export function InputField<T extends FieldValues>({
+  ...props
+}: ExtendedInputProps & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
+
+  return (
+    <>
+      {props.label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
           )}
-          {description && !formError && (
-            <p className="text-xs text-foreground/70">{description}</p>
-          )}
-        </div>
-      </>
-    );
-  },
-);
-
-InputField.displayName = "InputField";
-
-export { InputField };
-
-const PasswordField = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ formError, className, label, withAsterisk, ...props }, ref) => {
-    return (
-      <>
-        {label && (
-          <Label
-            className={cn("text-sm font-medium", withAsterisk && "required")}
-          >
-            {label}
-          </Label>
-        )}
-        <div className="relative">
-          <Input
-            ref={ref}
-            className={cn(
-              "pr-10",
-              formError &&
-                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-              className,
-            )}
-            {...props}
-          />
-          {formError && (
-            <>
-              <div className="absolute top-0 right-0 mt-2 mr-3 text-red-600">
-                <AlertTriangle size={20} />
-              </div>
-              <p className="mt-2 px-1 text-xs text-red-600">{formError}</p>
-            </>
-          )}
-        </div>
-      </>
-    );
-  },
-);
-
-PasswordField.displayName = "InputField";
-
-export { PasswordField };
-
-const FileField = React.forwardRef<
-  HTMLInputElement,
-  Omit<ExtendedInputProps, "placeholder">
->(
-  (
-    { formError, className, label, description, withAsterisk, ...props },
-    ref,
-  ) => {
-    return (
+          htmlFor={props.id}
+        >
+          {props.label}
+        </Label>
+      )}
       <div className="relative">
-        {label && (
-          <Label
-            className={cn("text-sm font-medium", withAsterisk && "required")}
-          >
-            {label}
-          </Label>
-        )}
         <Input
-          ref={ref}
-          type="file"
+          {...field}
           className={cn(
             "pr-10",
-            formError &&
+            fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            className,
           )}
           {...props}
         />
-
-        {formError && (
+        {fieldState.error?.message && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-2 mr-3">
-              <AlertTriangle size={20} className="text-red-500" />
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+              <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="mt-2 px-1 text-xs text-red-600">{formError}</p>
+            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
           </>
         )}
-        {description && !formError && (
-          <p className="text-xs text-foreground/70">{description}</p>
+        {props.description && !fieldState.error?.message && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
-    );
-  },
-);
+    </>
+  );
+}
 
-FileField.displayName = "FileField";
+export function FileField<T extends FieldValues>({
+  ...props
+}: ExtendedInputProps & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
 
-export { FileField };
+  return (
+    <>
+      {props.label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
+          )}
+        >
+          {props.label}
+        </Label>
+      )}
+      <div className="relative">
+        <Input
+          type="file"
+          className={cn(
+            "pr-10",
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            props.className,
+          )}
+          // value={field.value}
+          onChange={(e) => {
+            const value = e.target.files;
+
+            console.log("Field Value", value);
+            if (value) {
+              field.onChange(value);
+            }
+          }}
+          {...props}
+        />
+        {fieldState.error?.message && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+          </>
+        )}
+        {props.description && !fieldState.error?.message && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
+        )}
+      </div>
+    </>
+  );
+}

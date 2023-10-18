@@ -21,6 +21,7 @@ import Select, {
   components,
   DropdownIndicatorProps,
   GroupBase,
+  IndicatorSeparatorProps,
   MenuListProps,
   OptionProps,
   OptionsOrGroups,
@@ -39,6 +40,11 @@ import {
   UseControllerProps,
 } from "react-hook-form";
 
+type SelectOption = {
+  readonly label: string;
+  readonly value: string;
+};
+
 function Option({ ...props }: OptionProps) {
   return (
     <components.Option
@@ -53,25 +59,26 @@ function Option({ ...props }: OptionProps) {
   );
 }
 
-function DropdownIndicator(
-  props: DropdownIndicatorProps & {
-    selectProps?: {
-      isFetchError?: boolean;
-      formError?: string;
-    };
-  },
-) {
-  const errorOccurred =
-    props.selectProps?.isFetchError || props.selectProps?.formError;
-
+function DropdownIndicator(props: DropdownIndicatorProps) {
   return (
     <components.DropdownIndicator {...props}>
-      {errorOccurred ? (
+      {props.selectProps["aria-invalid"] ? (
         <AlertTriangle size={15} className="text-red-500" />
       ) : (
         <CaretSortIcon className="h-4 w-4 shrink-0" />
       )}
     </components.DropdownIndicator>
+  );
+}
+
+function IndicatorSeparator(props: IndicatorSeparatorProps) {
+  return (
+    <span
+      className={cn(
+        "bg-foreground/30 h-6 w-px",
+        props.selectProps["aria-invalid"] && "bg-red-500",
+      )}
+    />
   );
 }
 
@@ -83,7 +90,7 @@ function ClearIndicator(props: ClearIndicatorProps) {
   );
 }
 
-function CustomValueContainer({ children, ...rest }: ValueContainerProps) {
+function ValueContainer({ children, ...rest }: ValueContainerProps) {
   const selectedCount = rest.getValue().length;
   const conditional = selectedCount < 3;
   const { ValueContainer } = components;
@@ -100,6 +107,10 @@ function CustomValueContainer({ children, ...rest }: ValueContainerProps) {
       {!conditional && ` and ${selectedCount - 1} others`}
     </ValueContainer>
   );
+}
+
+function Description({ description }: { description: string }) {
+  return <p className="text-xs text-foreground/70">{description}</p>;
 }
 
 function MenuList({
@@ -120,45 +131,113 @@ function MenuList({
   );
 }
 
-export function SelectInput<T extends Record<string, unknown>>({
-  ...props
-}: Omit<Props, "name"> & {
-  label: string;
-  withAsterisk?: boolean;
-  description?: string;
-  maxOptions?: number;
+function getLabelByValue<T extends Record<string, unknown>>(
+  value: PathValue<T, Path<T>>,
+  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
+) {
+  const option = options.find((opt) => opt.value === value);
+  return option?.label || value;
+}
+
+function ValueProcessor<T extends Record<string, unknown>>(
+  value: PathValue<T, Path<T>>,
+  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
+  isMulti?: boolean,
+) {
+  if (isMulti) {
+    const valuesArray = Array.isArray(value) ? value : [];
+    return valuesArray.map((val) => ({
+      value: val,
+      label: getLabelByValue(val, options),
+    }));
+  }
+
+  if (!value) return undefined;
+
+  return {
+    value: value,
+    label: getLabelByValue(value, options),
+  };
+}
+
+function ErrorMessage({
+  isFetchError,
+  formError,
+}: {
   isFetchError?: boolean;
-} & UseControllerProps<T>) {
+  formError?: string;
+}) {
+  return (
+    <p className="text-xs text-red-500">
+      {isFetchError
+        ? "An error has occured! Please try again later."
+        : formError}
+    </p>
+  );
+}
+
+interface SelectInputProps<T extends Record<string, unknown>>
+  extends UseControllerProps<T>,
+    Omit<
+      Props<SelectOption, boolean, GroupBase<SelectOption>>,
+      "defaultValue" | "name"
+    > {
+  label: string;
+  description?: string;
+  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
+}
+
+export function SelectInput<T extends Record<string, unknown>>(
+  props: SelectInputProps<T>,
+) {
   const { field, fieldState } = useController(props);
   const dataLoading = props.isLoading || props.isDisabled;
   const errorOccurred = props.isFetchError || !!fieldState.error?.message;
+  const processedValue = ValueProcessor(
+    field.value,
+    props.options,
+    props.isMulti,
+  );
+  const {
+    label,
+    description,
+    isFetchError,
+    isLoading,
+    isClearable,
+    isMulti,
+    placeholder,
+    options,
+    maxOptions,
+    ...controllerProps
+  } = props;
 
   return (
     <>
-      {props.label && (
+      {label && (
         <Label
           className={cn(
             "text-sm font-medium",
-            props.withAsterisk && "required",
+            controllerProps.rules?.required && "required",
           )}
-          htmlFor={props.id}
+          htmlFor={controllerProps.id}
         >
-          {props.label}
+          {label}
         </Label>
       )}
       <div className="relative">
         <Select
-          aria-invalid={fieldState.invalid}
+          aria-invalid={fieldState.invalid || props.isFetchError}
           closeMenuOnSelect={!props.isMulti}
           hideSelectedOptions={false}
           unstyled
-          isMulti={props.isMulti}
-          isLoading={props.isLoading}
-          isDisabled={dataLoading || props.isFetchError}
-          isClearable={props.isClearable || true}
-          maxOptions={props.maxOptions || 10}
-          placeholder={props.placeholder || "Select"}
-          isFetchError={props.isFetchError}
+          options={options}
+          isMulti={isMulti}
+          isLoading={isLoading}
+          isDisabled={dataLoading || isFetchError}
+          isClearable={isClearable}
+          maxOptions={maxOptions}
+          placeholder={placeholder}
+          isFetchError={isFetchError}
           formError={fieldState.error?.message}
           styles={{
             input: (base) => ({
@@ -174,8 +253,9 @@ export function SelectInput<T extends Record<string, unknown>>({
           }}
           components={{
             ClearIndicator: ClearIndicator,
-            ValueContainer: CustomValueContainer,
+            ValueContainer: ValueContainer,
             DropdownIndicator: DropdownIndicator,
+            IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
           }}
@@ -203,7 +283,6 @@ export function SelectInput<T extends Record<string, unknown>>({
             indicatorsContainer: () => "p-1 gap-1",
             clearIndicator: () =>
               "text-foreground/50 p-1 hover:text-foreground",
-            indicatorSeparator: () => "bg-foreground/20 mt-1 h-6 w-px",
             dropdownIndicator: () =>
               "p-1 text-foreground/50 rounded-md hover:text-foreground",
             menu: () => "mt-2 p-1 border rounded-md bg-background shadow-lg",
@@ -211,32 +290,37 @@ export function SelectInput<T extends Record<string, unknown>>({
             noOptionsMessage: () =>
               "text-muted-foreground p-2 bg-background rounded-sm",
           }}
-          {...props}
-          {...field}
+          value={processedValue}
+          onChange={(selected) => {
+            if (props.isMulti) {
+              const values = (selected as SelectOption[]).map(
+                (opt) => opt.value,
+              );
+              field.onChange(values);
+            } else {
+              field.onChange(
+                selected ? (selected as SelectOption).value : undefined,
+              );
+            }
+          }}
         />
-        {errorOccurred && (
-          <p className="text-xs text-red-500">
-            {props.isFetchError
-              ? "An error has occured! Please try again later."
-              : fieldState.error?.message}
-          </p>
-        )}
-        {props.description && !errorOccurred && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+        {errorOccurred ? (
+          <ErrorMessage
+            isFetchError={isFetchError}
+            formError={fieldState.error?.message}
+          />
+        ) : (
+          <Description description={description!} />
         )}
       </div>
     </>
   );
 }
 
-export type Option = {
-  readonly label: string;
-  readonly value: string;
-};
 interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   extends UseControllerProps<T>,
     Omit<
-      CreatableProps<Option, boolean, GroupBase<Option>>,
+      CreatableProps<SelectOption, boolean, GroupBase<SelectOption>>,
       "defaultValue" | "name"
     > {
   label: string;
@@ -249,53 +333,8 @@ interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   isMulti?: boolean;
   placeholder?: string;
   formError?: string;
-  options: OptionsOrGroups<Option, GroupBase<Option>>;
+  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
   onCreate: (inputValue: string) => Promise<K>;
-}
-
-function getLabelByValue<T extends Record<string, unknown>>(
-  value: PathValue<T, Path<T>>,
-  options: OptionsOrGroups<Option, GroupBase<Option>>,
-) {
-  const option = options.find((opt) => opt.value === value);
-  return option?.label || value;
-}
-
-function ValueProcessor<T extends Record<string, unknown>>(
-  value: PathValue<T, Path<T>>,
-  options: OptionsOrGroups<Option, GroupBase<Option>>,
-) {
-  if (Array.isArray(value)) {
-    return value.map((val) => ({
-      value: val,
-      label: getLabelByValue(val, options),
-    }));
-  }
-
-  return {
-    value,
-    label: getLabelByValue(value, options),
-  };
-}
-
-function ErrorMessage({
-  isFetchError,
-  formError,
-}: {
-  isFetchError?: boolean;
-  formError?: string;
-}) {
-  return (
-    <p className="text-xs text-red-500">
-      {isFetchError
-        ? "An error has occured! Please try again later."
-        : formError}
-    </p>
-  );
-}
-
-function Description({ description }: { description: string }) {
-  return <p className="text-xs text-foreground/70">{description}</p>;
 }
 
 export function CreatableSelectField<T extends Record<string, unknown>, K>(
@@ -320,7 +359,7 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
   const { field, fieldState } = useController(controllerProps);
   const errorOccurred = isFetchError || !!formError;
   const dataLoading = isLoading || isDisabled;
-  const processedValue = ValueProcessor(field.value, options);
+  const processedValue = ValueProcessor(field.value, options, isMulti);
 
   return (
     <>
@@ -335,10 +374,10 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
       <div className="relative">
         <CreatableSelect
           unstyled
-          aria-invalid={fieldState.invalid}
+          aria-invalid={fieldState.invalid || isFetchError}
           isMulti={isMulti}
           isLoading={isLoading}
-          isDisabled={dataLoading || errorOccurred}
+          isDisabled={dataLoading || isFetchError}
           isClearable={isClearable}
           placeholder={placeholder || "Select"}
           closeMenuOnSelect={!isMulti}
@@ -358,16 +397,19 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
           }}
           onChange={(selected) => {
             if (isMulti) {
-              const values = (selected as Option[]).map((opt) => opt.value);
+              const values = (selected as SelectOption[]).map(
+                (opt) => opt.value,
+              );
               field.onChange(values);
             } else {
-              field.onChange((selected as Option).value);
+              field.onChange((selected as SelectOption).value);
             }
           }}
           components={{
             ClearIndicator: ClearIndicator,
-            ValueContainer: CustomValueContainer,
+            ValueContainer: ValueContainer,
             DropdownIndicator: DropdownIndicator,
+            IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
           }}
@@ -395,7 +437,6 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             indicatorsContainer: () => "p-1 gap-1",
             clearIndicator: () =>
               "text-foreground/50 p-1 hover:text-foreground",
-            indicatorSeparator: () => "bg-foreground/20 mt-1 h-6 w-px",
             dropdownIndicator: () =>
               "p-1 text-foreground/50 rounded-md hover:text-foreground",
             menu: () => "mt-2 p-1 border rounded-md bg-background shadow-lg",
@@ -405,7 +446,10 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
           }}
         />
         {errorOccurred ? (
-          <ErrorMessage isFetchError={isFetchError} formError={formError} />
+          <ErrorMessage
+            isFetchError={isFetchError}
+            formError={fieldState.error?.message}
+          />
         ) : (
           <Description description={description!} />
         )}
