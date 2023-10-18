@@ -86,7 +86,11 @@ export async function getRevenueCodeDetail(id: string): Promise<RevenueCode> {
  * @returns A promise that resolves to an array of tags.
  */
 export async function getTags(): Promise<Tag[]> {
-  const response = await axios.get("/tags/");
+  const response = await axios.get("/tags/", {
+    params: {
+      limit: 1000,
+    },
+  });
   return response.data.results;
 }
 
