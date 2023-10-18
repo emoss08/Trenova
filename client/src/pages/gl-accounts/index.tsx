@@ -97,6 +97,7 @@ export default function GLAccounts() {
     <Card>
       <CardContent>
         <DataTable
+          queryKey="glAccounts"
           columns={columns}
           link="/gl_accounts"
           name="Gl Account"
