@@ -19,14 +19,13 @@ import { ModeToggle } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { InputField, PasswordField } from "@/components/ui/input";
+import { InputField } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "@/lib/AxiosConfig";
 import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/accounts";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -46,12 +45,8 @@ function UserAuthForm() {
   const [, setUserDetails] = useUserStore.use("user");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(userAuthSchema),
+  const { control, handleSubmit } = useForm<LoginFormValues>({
+    resolver: yupResolver<LoginFormValues>(userAuthSchema),
   });
 
   const fetchUserDetails = async () => {
@@ -96,34 +91,32 @@ function UserAuthForm() {
       <div className="grid gap-4 mt-5">
         <div className="grid gap-1">
           <InputField
+            name="username"
+            rules={{ required: true }}
+            control={control}
             label="Username"
-            withAsterisk
             id="username"
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
             placeholder="Username"
             autoComplete="username"
-            className={cn("h-10")}
             disabled={isLoading}
-            formError={errors?.username?.message}
-            {...register("username")}
           />
         </div>
         <div className="grid gap-1">
-          <PasswordField
+          <InputField
+            name="password"
+            rules={{ required: true }}
+            control={control}
             label="Password"
-            withAsterisk
             id="password"
             autoCapitalize="none"
-            className={cn("h-10")}
             type="password"
             autoComplete="current-password"
             autoCorrect="off"
             placeholder="Password"
             disabled={isLoading}
-            formError={errors?.password?.message}
-            {...register("password")}
           />
         </div>
         <div className="flex items-center justify-between mt-2">
@@ -139,15 +132,12 @@ function UserAuthForm() {
             </Link>
           </div>
         </div>
-        <Button disabled={isLoading} className="w-full my-2">
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing In...
-            </>
-          ) : (
-            "Continue"
-          )}
+        <Button
+          className="w-full my-2"
+          isLoading={isLoading}
+          loadingText="Signing In..."
+        >
+          Continue
         </Button>
       </div>
     </form>
