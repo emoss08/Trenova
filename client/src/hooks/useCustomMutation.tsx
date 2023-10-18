@@ -18,10 +18,11 @@
 import { ToasterToast } from "@/components/ui/use-toast";
 import axios from "@/lib/AxiosConfig";
 import { StoreType } from "@/lib/useGlobalStore";
+import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
 import { AxiosResponse } from "axios";
-import { UseFormProps } from "react-hook-form";
+import { Control, ErrorOption, FieldValues, Path } from "react-hook-form";
 import { QueryClient, useMutation, useQueryClient } from "react-query";
 
 type MutationOptions = {
@@ -37,8 +38,8 @@ type MutationOptions = {
 const DEFAULT_ERROR_MESSAGE = "An error occurred.";
 type Toast = Omit<ToasterToast, "id">;
 
-export function useCustomMutation<T, K>(
-  form: UseFormReturnType<T>,
+export function useCustomMutation<T extends FieldValues, K>(
+  control: Control<T>,
   toast: (toast: Toast) => void,
   options: MutationOptions,
   onMutationSettled?: () => void,
@@ -50,7 +51,7 @@ export function useCustomMutation<T, K>(
     (values: T) => executeApiMethod(options.method, options.path, values),
     {
       onSuccess: () => handleSuccess(options, toast, queryClient, store),
-      onError: (error: Error) => handleError(error, options, form, toast),
+      onError: (error: Error) => handleError(error, options, control, toast),
       onSettled: onMutationSettled,
     },
   );
@@ -75,7 +76,6 @@ async function executeApiMethod(
 
   const response = await axios(axiosConfig);
 
-  // If there's a file to send and the JSON data was sent successfully
   if (fileData) {
     const newPath = method === "POST" ? `${path}${response.data.id}/` : path;
     await sendFileData(newPath, fileData);
@@ -83,17 +83,25 @@ async function executeApiMethod(
 
   return response;
 }
+
 function extractFileFromData(
   data: any,
 ): { fieldName: string; file: File | Blob } | null {
-  // eslint-disable-next-line no-restricted-syntax
   for (const key of Object.keys(data)) {
-    if (data[key] instanceof File || data[key] instanceof Blob) {
-      const file = data[key];
-      // eslint-disable-next-line no-param-reassign
+    const item = data[key];
+
+    if (item instanceof File || item instanceof Blob) {
+      delete data[key];
+      return { fieldName: key, file: item };
+    } else if (item instanceof FileList && item.length > 0) {
+      const file = item[0]; // Assuming you're only allowing one file per input
       delete data[key];
       return { fieldName: key, file };
     }
+    // if no file exist, then delete the key
+    // else if (item.length === 0) {
+    // delete data[key];
+    // }
   }
   return null;
 }
@@ -106,6 +114,7 @@ function sendFileData(
   formData.append(fileData.fieldName, fileData.file);
   return axios.patch(path, formData);
 }
+
 function handleSuccess<K>(
   options: MutationOptions,
   toast: (toast: Toast) => void,
@@ -126,20 +135,22 @@ function handleSuccess<K>(
   invalidateQueries(options.additionalInvalidateQueries);
 
   const modalKey = options.method === "POST" ? "createModalOpen" : "drawerOpen";
+  useTableStore.set("sheetOpen", false);
+
   if (options.closeModal) {
     store && store.set(modalKey as keyof K, false as any);
   }
 }
 
-function handleError(
+function handleError<T extends FieldValues>(
   error: any,
   options: MutationOptions,
-  form: UseFormProps<any>,
+  control: Control<T>,
   toast: (toast: Toast) => void,
 ) {
   const { data } = error?.response || {};
   if (data?.type === "validationError") {
-    handleValidationErrors(data.errors, form, toast);
+    handleValidationErrors(data.errors, control, toast);
   } else {
     showErrorNotification(toast, options.errorMessage);
   }
@@ -163,13 +174,19 @@ function showErrorNotification(
   showNotification(toast, "Error", errorMessage || DEFAULT_ERROR_MESSAGE);
 }
 
-function handleValidationErrors<T>(
+function handleValidationErrors<T extends FieldValues>(
   errors: APIError[],
-  form: UseFormReturnType<T>,
+  control: Control<T>,
   toast: (toast: Toast) => void,
 ) {
   errors.forEach((e: APIError) => {
-    form.setFieldError(e.attr, e.detail);
+    control.setError(
+      e.attr as Path<T>,
+      {
+        type: "manual",
+        message: e.detail,
+      } as ErrorOption,
+    );
     if (e.attr === "nonFieldErrors") {
       showErrorNotification(toast, e.detail);
     }
