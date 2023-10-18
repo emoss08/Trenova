@@ -16,6 +16,7 @@
  */
 
 import { Column, ColumnDef, Table } from "@tanstack/react-table";
+import { QueryKeys } from "./index";
 
 export interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -31,6 +32,7 @@ export type DataTableProps<K> = {
   columns: ColumnDef<K>[];
   name: string;
   link: string;
+  queryKey: QueryKeys;
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;
   TableSheet?: React.ComponentType<TableSheetProps>;
