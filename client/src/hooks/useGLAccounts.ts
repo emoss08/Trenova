@@ -16,7 +16,7 @@
  */
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import { GeneralLedgerAccount } from "@/types/accounting";
-import { useQuery, useQueryClient } from "react-query";
+import { QueryKey, useQuery, useQueryClient } from "react-query";
 
 export function useGLAccounts(show?: boolean) {
   const queryClient = useQueryClient();
@@ -30,7 +30,7 @@ export function useGLAccounts(show?: boolean) {
     queryKey: ["glAccounts"],
     queryFn: async () => getGLAccounts(),
     enabled: show,
-    initialData: () => queryClient.getQueryData("glAccounts"),
+    initialData: () => queryClient.getQueryData("glAccounts" as QueryKey),
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,
