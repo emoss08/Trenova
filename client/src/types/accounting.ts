@@ -58,7 +58,6 @@ export interface GeneralLedgerAccount extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   accountNumber: string;
-  description: string;
   accountType: AccountTypeChoiceProps | "";
   cashFlowType?: CashFlowTypeChoiceProps | "" | null;
   accountSubType?: AccountSubTypeChoiceProps | "" | null;
@@ -67,12 +66,12 @@ export interface GeneralLedgerAccount extends BaseModel {
   openingBalance: number;
   closingBalance: number;
   parentAccount?: string | null;
-  isReconciled: boolean;
-  dateOpened: Date;
+  isReconciled?: boolean;
+  dateOpened?: Date | null;
   dateClosed?: Date | null;
   notes?: string | null;
   owner?: string | null;
-  isTaxRelevant: boolean;
+  isTaxRelevant?: boolean;
   attachment?: any | null;
   interestRate?: number | null;
   tags?: string[] | null | "";
