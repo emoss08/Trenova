@@ -3,6 +3,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "./label";
 import { AlertTriangle } from "lucide-react";
+import {
+  FieldValues,
+  UseControllerProps,
+  useController,
+} from "react-hook-form";
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
@@ -26,65 +31,52 @@ Textarea.displayName = "Textarea";
 export { Textarea };
 
 type ExtendedTextareaProps = TextareaProps & {
-  formError?: string;
   description?: string;
   label?: string;
-  withAsterisk?: boolean;
+  ref?: React.ForwardedRef<HTMLTextAreaElement>;
 };
 
-const TextareaField = React.forwardRef<
-  HTMLTextAreaElement,
-  ExtendedTextareaProps
->(
-  (
-    {
-      formError,
-      className,
-      description,
-      label,
-      withAsterisk = false,
-      ...props
-    },
-    ref,
-  ) => {
-    return (
-      <>
-        {label && (
-          <Label
-            className={cn("text-sm font-medium", withAsterisk && "required")}
-            htmlFor={props.id}
-          >
-            {label}
-          </Label>
-        )}
-        <div className="relative">
-          <Textarea
-            ref={ref}
-            className={cn(
-              "pr-10",
-              formError &&
-                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-              className,
-            )}
-            {...props}
-          />
-          {formError && (
-            <>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-              </div>
-              <p className="text-xs text-red-500">{formError}</p>
-            </>
+export function TextareaField<T extends FieldValues>({
+  ...props
+}: ExtendedTextareaProps & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
+  const { label, id, className } = props;
+  return (
+    <>
+      {label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
           )}
-        </div>
-        {description && !formError && (
-          <p className="text-xs text-foreground/70">{description}</p>
+          htmlFor={id}
+        >
+          {label}
+        </Label>
+      )}
+      <div className="relative">
+        <Textarea
+          className={cn(
+            "pr-10",
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            className,
+          )}
+          {...props}
+          {...field}
+        />
+        {fieldState.error?.message && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+          </>
         )}
-      </>
-    );
-  },
-);
-
-TextareaField.displayName = "TextareaField";
-
-export { TextareaField };
+        {props.description && !fieldState.error?.message && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
+        )}
+      </div>
+    </>
+  );
+}
