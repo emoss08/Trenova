@@ -34,3 +34,11 @@ export const useNavbarStore = createGlobalStore<HeaderStoreType>({
   linksOpen: false,
   clickCount: 0,
 });
+
+type HeaderStoreProps = {
+  menuOpen?: string;
+};
+
+export const useHeaderStore = createGlobalStore<HeaderStoreProps>({
+  menuOpen: undefined,
+});
