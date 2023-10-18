@@ -19,6 +19,11 @@ import { Check } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import {
+  FieldValues,
+  UseControllerProps,
+  useController,
+} from "react-hook-form";
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -50,30 +55,36 @@ type CheckboxInputProps = CheckboxPrimitive.CheckboxProps &
     label?: string;
   };
 
-const CheckboxInput = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  CheckboxInputProps
->(({ className, ...props }, ref) => (
-  <div className="items-top flex space-x-2">
-    <Checkbox {...props} ref={ref} className={className} />
-    {props.label && (
-      <div className="grid gap-1.5 leading-none">
-        <label
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          htmlFor={props.id}
-        >
-          {props.label}
-        </label>
-        {props.description && (
-          <p className="text-sm text-muted-foreground truncate">
-            {props.description}
-          </p>
-        )}
-      </div>
-    )}
-  </div>
-));
+export function CheckboxInput<T extends FieldValues>({
+  ...props
+}: CheckboxInputProps & UseControllerProps<T>) {
+  const { field } = useController(props);
 
-CheckboxInput.displayName = "CheckboxInput";
+  const { label, description, id } = props;
 
-export { CheckboxInput };
+  return (
+    <div className="items-top flex space-x-2">
+      <Checkbox
+        {...field}
+        onCheckedChange={(e) => {
+          field.onChange(e);
+        }}
+      />
+      {label && (
+        <div className="grid gap-1.5 leading-none">
+          <label
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            htmlFor={id}
+          >
+            {label}
+          </label>
+          {description && (
+            <p className="text-sm text-muted-foreground truncate">
+              {description}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
