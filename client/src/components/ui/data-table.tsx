@@ -55,6 +55,7 @@ import { DataTablePagination } from "./data-table-pagination";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { Input } from "./input";
 import { Skeleton } from "./skeleton";
+import { cn } from "@/lib/utils";
 
 function DataTableFacetedFilterList<TData>({
   table,
@@ -161,9 +162,10 @@ function DataTableTopBar<K>({
   );
 }
 
-export function DataTable<K>({
+export function DataTable<K extends Record<string, any>>({
   columns,
   link,
+  queryKey,
   name,
   filterColumn,
   tableFacetedFilters,
@@ -180,7 +182,7 @@ export function DataTable<K>({
   const [drawerOpen, setDrawerOpen] = useTableStore.use("sheetOpen");
 
   const dataQuery = useQuery<ApiResponse<K>, Error>(
-    [link, pageIndex, pageSize],
+    [queryKey, pageIndex, pageSize],
     async () => {
       const fetchURL = new URL(`${API_URL}${link}/`);
       fetchURL.searchParams.set("limit", pageSize.toString());
@@ -290,7 +292,13 @@ export function DataTable<K>({
                     data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={cn("cursor-pointer")}
+                        onDoubleClick={() =>
+                          useTableStore.set("currentRecord", row.original)
+                        }
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
