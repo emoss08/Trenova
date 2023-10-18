@@ -19,7 +19,6 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -27,7 +26,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { TableSheetProps } from "@/types/tables";
+import { DataTableProps, TableSheetProps } from "@/types/tables";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
@@ -39,16 +38,18 @@ import { FileField, InputField } from "../ui/input";
 import { TChoiceProps } from "@/types";
 import { useGLAccounts } from "@/hooks/useGLAccounts";
 import { TextareaField } from "../ui/textarea";
-import {
-  CreatableSelectField,
-  SelectInput,
-  type Option,
-} from "../ui/select-input";
+import { CreatableSelectField, SelectInput } from "../ui/select-input";
 import { CheckboxInput } from "../ui/checkbox";
 import { useUsers } from "@/hooks/useUsers";
 import { useTags } from "@/hooks/useTags";
 import axios from "@/lib/AxiosConfig";
 import { useQueryClient } from "react-query";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { glAccountSchema } from "@/lib/validations/accounting";
+import { GLAccountFormValues, GeneralLedgerAccount } from "@/types/accounting";
+import { useForm } from "react-hook-form";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { toast } from "../ui/use-toast";
 
 function GLForm({
   glAccounts,
@@ -73,163 +74,253 @@ function GLForm({
 }) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [tagOptions, setTagOptions] = React.useState(tags);
-  const [tagValue, setTagValue] = React.useState<Option | null>();
-
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
+  const isTagsUpdating = isTagsLoading || isLoading;
 
-  const createNewTag = (inputValue: string) => {
-    axios.post("/tags/", { name: inputValue }).then((res) => {
-      setTagOptions((prev) => [
-        ...prev,
-        { label: inputValue, value: res.data.id },
-      ]);
-      setTagValue({ label: inputValue, value: res.data.id });
-    });
-    queryClient.invalidateQueries("tags");
+  const createNewTag = async (inputValue: string) => {
+    setIsLoading(true);
+    try {
+      const res = await axios.post("/tags/", { name: inputValue });
+      const newOption = { label: inputValue, value: res.data.id };
+
+      // Appending the new tag to the form's current value
+      const currentTags = getValues("tags");
+      const tagsArray = Array.isArray(currentTags) ? currentTags : [];
+      setValue("tags", [...tagsArray, newOption.value]);
+
+      setTagOptions((prev) => [...prev, newOption]);
+
+      return newOption;
+    } catch (err) {
+      console.log(err);
+    } finally {
+      queryClient.invalidateQueries("tags");
+      setIsLoading(false);
+    }
   };
 
   React.useEffect(() => {
     setTagOptions(tags);
   }, [tags]);
 
-  const handleCreate = (inputValue: string) => {
-    setIsLoading(true);
-    createNewTag(inputValue);
-    setIsLoading(false);
-  };
+  const { handleSubmit, control, getValues, setValue } =
+    useForm<GLAccountFormValues>({
+      resolver: yupResolver(glAccountSchema),
+      defaultValues: {
+        status: "A",
+        accountNumber: "",
+        accountType: "",
+        cashFlowType: "",
+        accountSubType: "",
+        accountClassification: "",
+        parentAccount: "",
+        attachment: null,
+        owner: "",
+        interestRate: null,
+        isReconciled: false,
+        isTaxRelevant: false,
+        notes: "",
+      },
+    });
 
-  const isTagsUpdating = isTagsLoading || isLoading;
+  const mutation = useCustomMutation<
+    GLAccountFormValues,
+    DataTableProps<GeneralLedgerAccount>
+  >(
+    control,
+    toast,
+    {
+      method: "POST",
+      path: "/gl_accounts/",
+      successMessage: "General Ledger Account created successfully.",
+      queryKeysToInvalidate: ["gl-account-table-data"],
+      additionalInvalidateQueries: ["glAccounts"],
+      closeModal: true,
+      errorMessage: "Failed to create general ledger account.",
+    },
+    () => setIsSubmitting(false),
+  );
+
+  const onSubmit = (values: GLAccountFormValues) => {
+    setIsSubmitting(true);
+    console.log(values);
+    mutation.mutate(values);
+  };
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-4">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Status"
-            options={statusChoices}
-            withAsterisk
-            placeholder="Select Status"
-            description="Status of the General Ledger Account"
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col h-full overflow-y-auto"
+      >
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-4">
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="status"
+                rules={{ required: true }}
+                control={control}
+                label="Status"
+                options={statusChoices}
+                placeholder="Select Status"
+                description="Status of the General Ledger Account."
+                isClearable={false}
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <InputField
+                control={control}
+                rules={{ required: true }}
+                name="accountNumber"
+                label="Account Number"
+                autoCapitalize="none"
+                autoCorrect="off"
+                type="text"
+                placeholder="Account Number"
+                autoComplete="accountNumber"
+                description="Account Number for GL Account. ex: XXXX-XX"
+                maxLength={7}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-4">
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="accountType"
+                control={control}
+                rules={{ required: true }}
+                label="Account Type"
+                options={accountTypeChoices}
+                placeholder="Select Account Type"
+                description="The Account Type of GL Account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                control={control}
+                name="cashFlowType"
+                label="Cash Flow Type"
+                options={cashFlowTypeChoices}
+                placeholder="Select Cash Flow Type"
+                description="The Cash Flow Type of the GL Account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="accountSubType"
+                control={control}
+                label="Account Sub Type"
+                options={accountSubTypeChoices}
+                placeholder="Select Account Sub Type"
+                description="The Account Sub Type of the GL Account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="accountClassification"
+                control={control}
+                label="Account Classification"
+                options={accountClassificationChoices}
+                placeholder="Select Account Classification"
+                description="The Account Classification of the GL Account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="parentAccount"
+                control={control}
+                label="Parent Account"
+                options={glAccounts}
+                isLoading={isGLAccountsLoading}
+                isFetchError={isGLAccountsError}
+                placeholder="Select Parent Account"
+                description="Parent account for hierarchical accounting"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <FileField
+                name="attachment"
+                control={control}
+                label="Attachment"
+                description="Attach relevant documents or receipts"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <SelectInput
+                name="owner"
+                control={control}
+                label="Owner"
+                options={users}
+                isLoading={isUsersLoading}
+                isFetchError={isUsersError}
+                placeholder="Select Owner"
+                description="User responsible for the account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <InputField
+                control={control}
+                name="interestRate"
+                label="Interest Rate"
+                autoCapitalize="none"
+                autoCorrect="off"
+                type="text"
+                placeholder="Interest Rate"
+                autoComplete="interestRate"
+                description="Interest rate associated with the account"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <CreatableSelectField
+                name="tags"
+                control={control}
+                description="Tags or labels associated with the account"
+                label="Tags"
+                onCreate={createNewTag}
+                placeholder="Select Tags"
+                options={tagOptions}
+                isLoading={isTagsUpdating}
+                isFetchError={isTagsError}
+                isMulti
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <CheckboxInput
+                control={control}
+                label="Is Reconciled"
+                name="isReconciled"
+                description="Indicates if the account is reconciled"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-0.5">
+              <CheckboxInput
+                control={control}
+                label="Is Tax Relevant"
+                name="isTaxRelevant"
+                description="Indicates if the account is relevant for tax calculations"
+              />
+            </div>
+          </div>
+          <TextareaField
+            name="notes"
+            control={control}
+            label="Notes"
+            placeholder="Notes"
+            description="Additional notes or comments for the account"
           />
         </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <InputField
-            label="Account Number"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder="Account Number"
-            autoComplete="accountNumber"
-            description="The account number of the account"
-            withAsterisk
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-4">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Account Type"
-            options={accountTypeChoices}
-            placeholder="Select Account Type"
-            description="The Account Type of GL Account"
-            withAsterisk
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Cash Flow Type"
-            options={cashFlowTypeChoices}
-            placeholder="Select Cash Flow Type"
-            description="The Cash Flow Type of the GL Account"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Account Sub Type"
-            options={accountSubTypeChoices}
-            placeholder="Select Account Sub Type"
-            description="The Account Sub Type of the GL Account"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Account Classification"
-            options={accountClassificationChoices}
-            placeholder="Select Account Classification"
-            description="The Account Classification of the GL Account"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Parent Account"
-            options={glAccounts}
-            isLoading={isGLAccountsLoading}
-            isFetchError={isGLAccountsError}
-            placeholder="Select Parent Account"
-            description="Parent account for hierarchical accounting"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <FileField
-            label="Attachment"
-            description="Attach relevant documents or receipts"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            label="Owner"
-            options={users}
-            isLoading={isUsersLoading}
-            isFetchError={isUsersError}
-            placeholder="Select Owner"
-            description="User responsible for the account"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <InputField
-            label="Interest Rate"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder="Interest Rate"
-            autoComplete="interestRate"
-            description="Interest rate associated with the account"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <CreatableSelectField
-            id="tags"
-            description="Tags or labels associated with the account"
-            label="Tags"
-            onCreateOption={handleCreate}
-            placeholder="Select Tags"
-            options={tagOptions}
-            isLoading={isTagsUpdating}
-            isFetchError={isTagsError}
-            value={tagValue}
-            onChange={(newValue) => setTagValue(newValue as Option)}
-            isMulti
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <CheckboxInput
-            label="Is Reconciled"
-            description="Indicates if the account is reconciled"
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <CheckboxInput
-            label="Is Tax Relevant"
-            description="Indicates if the account is relevant for tax calculations"
-          />
-        </div>
-      </div>
-      <TextareaField
-        label="Notes"
-        placeholder="Notes"
-        description="Additional notes or comments for the account"
-        withAsterisk
-      />
+
+        <SheetFooter className="mb-12">
+          <Button
+            type="submit"
+            isLoading={isSubmitting}
+            loadingText="Saving Changes..."
+          >
+            Save Changes
+          </Button>
+        </SheetFooter>
+      </form>
     </>
   );
 }
@@ -259,9 +350,7 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>Add New GL Account</SheetTitle>
           <SheetDescription>
-            <SheetDescription>
-              Use this form to add a new general ledger account to the system.
-            </SheetDescription>
+            Use this form to add a new general ledger account to the system.
           </SheetDescription>
         </SheetHeader>
         <GLForm
@@ -275,11 +364,6 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
           isTagsLoading={tagsLoading}
           isTagsError={tagsError}
         />
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Save changes</Button>
-          </SheetClose>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
