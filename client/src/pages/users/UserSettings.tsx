@@ -15,31 +15,39 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { useQuery, useQueryClient } from "react-query";
-import { useNavigate, useParams } from "react-router-dom";
-import { Skeleton, Stack } from "@mantine/core";
-import { getUserDetails } from "@/services/UserRequestService";
+import { cn } from "@/lib/utils";
 import { getJobTitleDetails } from "@/services/OrganizationRequestService";
-import { EditUserProfileDetails } from "@/components/users/EditUserProfileDetails";
-import { ViewUserProfileDetails } from "@/components/users/ViewUserProfileDetails";
-import { SignInMethod } from "@/components/users/SignInMethod";
+import { getUserDetails } from "@/services/UserRequestService";
+import { useUserStore } from "@/stores/AuthStore";
+import { UserCircleIcon } from "lucide-react";
+import { useQuery, useQueryClient } from "react-query";
+import { useNavigate } from "react-router-dom";
+import { ThemeSwitcher } from "./appearance/theme-switcher";
+
+const secondaryNavigation = [
+  { name: "Preferences", href: "#", icon: UserCircleIcon, current: true },
+  { name: "Security", href: "#", icon: UserCircleIcon, current: false },
+  { name: "Notifications", href: "#", icon: UserCircleIcon, current: false },
+  { name: "Plan", href: "#", icon: UserCircleIcon, current: false },
+  { name: "Billing", href: "#", icon: UserCircleIcon, current: false },
+  { name: "Team members", href: "#", icon: UserCircleIcon, current: false },
+];
 
 export default function UserSettings() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { userId } = useUserStore.get("user");
 
   const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery({
-    queryKey: ["user", id],
+    queryKey: ["user", userId],
     queryFn: () => {
-      if (!id) {
+      if (!userId) {
         return Promise.resolve(null);
       }
-      return getUserDetails(id);
+      return getUserDetails(userId);
     },
     onError: () => navigate("/error"),
-    initialData: () => queryClient.getQueryData(["user", id]),
+    initialData: () => queryClient.getQueryData(["user", userId]),
   });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery({
@@ -57,19 +65,59 @@ export default function UserSettings() {
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;
 
-  return isLoading ? (
-    <Stack>
-      <Skeleton height={250} />
-      <Skeleton height={500} />
-      <Skeleton height={100} />
-    </Stack>
-  ) : (
-    <Stack>
-      {userDetails && jobTitleData && (
-        <ViewUserProfileDetails user={userDetails} jobTitle={jobTitleData} />
-      )}
-      {userDetails && <EditUserProfileDetails user={userDetails} />}
-      {userDetails && <SignInMethod user={userDetails} />}
-    </Stack>
+  return (
+    <div className="max-w-7xl lg:flex lg:gap-x-16">
+      <aside className="flex overflow-x-auto border-b border-gray-900/5 py-4 lg:block lg:w-64 lg:flex-none lg:border-0">
+        <nav className="flex-none px-4 sm:px-6 lg:px-0">
+          <ul
+            role="list"
+            className="flex gap-x-3 gap-y-1 whitespace-nowrap lg:flex-col"
+          >
+            {secondaryNavigation.map((item) => (
+              <li key={item.name}>
+                <a
+                  href={item.href}
+                  className={cn(
+                    item.current
+                      ? "bg-foreground/5 text-foreground"
+                      : "text-accent-foreground hover:text-foreground hover:bg-accent-foreground/5",
+                    "group flex gap-x-3 rounded-md py-2 pl-2 pr-3 text-sm leading-6 font-semibold",
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      item.current
+                        ? "text-foreground"
+                        : "text-muted-foreground group-hover:text-foreground",
+                      "h-6 w-6 shrink-0",
+                    )}
+                    aria-hidden="true"
+                  />
+                  {item.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+      <main className="px-4 sm:px-6 lg:flex-auto lg:px-0">
+        <div className="mx-auto max-w-2xl space-y-16 sm:space-y-20 lg:mx-0 lg:max-w-none">
+          <div>
+            <h2 className="font-extrabold text-3xl md:text-4xl tracking-tight">
+              Preferences
+            </h2>
+            <p className="text-ld text-muted-foreground">
+              This information will be displayed publicly so be careful what you
+              share.
+            </p>
+          </div>
+          <div className="flex-1 lg:max-w-2xl">
+            <div className="space-y-8">
+              <ThemeSwitcher />
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
