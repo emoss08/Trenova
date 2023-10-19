@@ -15,21 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import "@/assets/App.css";
+import "@/assets/Datepicker.css";
 import LoadingSkeleton from "@/components/loading-skeleton";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useAuthStore } from "@/stores/AuthStore";
 import "@fontsource-variable/inter";
-import { memo, Suspense } from "react";
+import { Suspense, memo } from "react";
+import "react-datepicker/dist/react-datepicker.css";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { BrowserRouter } from "react-router-dom";
 import { UserPermissionsProvider } from "./context/user-permissions";
 import { THEME_KEY } from "./lib/constants";
-import "react-datepicker/dist/react-datepicker.css";
-import "@/assets/App.css";
-import "@/assets/Datepicker.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
