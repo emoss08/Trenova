@@ -15,14 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
+import { TExportModelFormValues } from "@/types/forms";
+import * as yup from "yup";
 
 /**
- * A Yup object schema for validating data related to exporting a model.
+ * A yup object schema for validating data related to exporting a model.
  * @property file_format - A required string.
  * @property columns - A required array of strings.
  */
-export const ExportModelSchema = Yup.object().shape({
-  fileFormat: Yup.string().required("File format is required"),
-  columns: Yup.array().of(Yup.string()).required("Columns are required"),
-});
+export const ExportModelSchema: yup.ObjectSchema<TExportModelFormValues> = yup
+  .object()
+  .shape({
+    fileFormat: yup.string().required("File format is required"),
+    columns: yup
+      .array()
+      .of(yup.string().required("Columns are required"))
+      .required("Columns are required"),
+  });

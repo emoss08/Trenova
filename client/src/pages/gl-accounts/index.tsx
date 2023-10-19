@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DataTable, StatusBadge } from "@/components/ui/data-table";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { tableAccountTypeChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
 import { GeneralLedgerAccount } from "@/types/accounting";
@@ -102,6 +102,7 @@ export default function GLAccounts() {
           columns={columns}
           link="/gl_accounts"
           name="Gl Account"
+          exportModelName="GeneralLedgerAccount"
           filterColumn="accountNumber"
           tableFacetedFilters={filters}
           TableSheet={GLTableSheet}
