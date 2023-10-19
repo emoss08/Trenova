@@ -17,7 +17,6 @@
 
 import { ToasterToast } from "@/components/ui/use-toast";
 import axios from "@/lib/AxiosConfig";
-import { StoreType } from "@/lib/useGlobalStore";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
@@ -38,19 +37,18 @@ type MutationOptions = {
 const DEFAULT_ERROR_MESSAGE = "An error occurred.";
 type Toast = Omit<ToasterToast, "id">;
 
-export function useCustomMutation<T extends FieldValues, K>(
+export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   toast: (toast: Toast) => void,
   options: MutationOptions,
   onMutationSettled?: () => void,
-  store?: StoreType<K>,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation(
     (values: T) => executeApiMethod(options.method, options.path, values),
     {
-      onSuccess: () => handleSuccess(options, toast, queryClient, store),
+      onSuccess: () => handleSuccess(options, toast, queryClient),
       onError: (error: Error) => handleError(error, options, control, toast),
       onSettled: onMutationSettled,
     },
@@ -115,11 +113,10 @@ function sendFileData(
   return axios.patch(path, formData);
 }
 
-function handleSuccess<K>(
+function handleSuccess(
   options: MutationOptions,
   toast: (toast: Toast) => void,
   queryClient: QueryClient,
-  store?: StoreType<K>,
 ) {
   const notifySuccess = () => {
     showNotification(toast, "Success", options.successMessage);
@@ -134,11 +131,11 @@ function handleSuccess<K>(
   invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
   invalidateQueries(options.additionalInvalidateQueries);
 
-  const modalKey = options.method === "POST" ? "createModalOpen" : "drawerOpen";
-  useTableStore.set("sheetOpen", false);
+  // Close the sheet depending on the method. If the sheet is not open, this will do nothing.
+  const sheetKey = options.method === "POST" ? "sheetOpen" : "editSheetOpen";
 
   if (options.closeModal) {
-    store && store.set(modalKey as keyof K, false as any);
+    useTableStore.set(sheetKey, false as any);
   }
 }
 
