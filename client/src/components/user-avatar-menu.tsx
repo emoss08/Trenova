@@ -20,6 +20,7 @@ import { ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
@@ -27,7 +28,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
@@ -45,7 +45,13 @@ type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
 
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
   ({ user, ...props }, ref) => (
-    <Avatar ref={ref} {...props}>
+    <Avatar
+      ref={ref}
+      {...props}
+      style={{
+        outline: "none",
+      }}
+    >
       <AvatarImage
         className="w-full h-full rounded-full"
         src={user.profile?.profilePicture}
@@ -61,15 +67,14 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
 
 UserAvatar.displayName = "UserAvatar";
 
-function UserAvatarMenuContent() {
+function UserAvatarMenuContent({ user }: { user: User }) {
   const logout = useLogout();
   const { theme, setTheme, isRainbowAnimationActive, toggleRainbowAnimation } =
     useTheme();
   const { toast } = useToast();
-  // 1. Adjust the state to store both previous and current theme
-  // Separate state variables for current and previous themes
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
+  const navigate = useNavigate();
 
   const switchTheme = (selectedTheme: ThemeOptions) => {
     // If the selected theme is the same as the current one, just return
@@ -121,12 +126,18 @@ function UserAvatarMenuContent() {
       description: "Your theme change was undone.",
     });
   };
+
   return (
     <DropdownMenuContent className="w-56">
-      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <div className="px-2">
+        <p className="text-sm">Signed in as</p>
+        <p className="truncate text-sm font-medium text-accent-foreground">
+          {user.email}
+        </p>
+      </div>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
           Profile
           <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
         </DropdownMenuItem>
@@ -176,7 +187,7 @@ export function UserAvatarMenu({ user }: { user: User }) {
         <DropdownMenuTrigger>
           <UserAvatar user={user} />
         </DropdownMenuTrigger>
-        <UserAvatarMenuContent />
+        <UserAvatarMenuContent user={user} />
       </DropdownMenu>
     </div>
   );

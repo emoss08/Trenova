@@ -208,6 +208,7 @@ export function SelectInput<T extends Record<string, unknown>>(
     placeholder,
     options,
     maxOptions,
+    hideSelectedOptions = false,
     ...controllerProps
   } = props;
 
@@ -228,7 +229,7 @@ export function SelectInput<T extends Record<string, unknown>>(
         <Select
           aria-invalid={fieldState.invalid || props.isFetchError}
           closeMenuOnSelect={!props.isMulti}
-          hideSelectedOptions={false}
+          hideSelectedOptions={hideSelectedOptions}
           unstyled
           options={options}
           isMulti={isMulti}
