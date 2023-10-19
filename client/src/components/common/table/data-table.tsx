@@ -51,12 +51,13 @@ import { DownloadIcon } from "@radix-ui/react-icons";
 import { Plus, X } from "lucide-react";
 import React from "react";
 import { useQuery } from "react-query";
-import { Button } from "./button";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
-import { DataTablePagination } from "./data-table-pagination";
+import { Button } from "@/components/ui/button";
 import { DataTableViewOptions } from "./data-table-view-options";
-import { Input } from "./input";
-import { Skeleton } from "./skeleton";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTablePagination } from "./data-table-pagination";
+import { TableExportModal } from "./data-table-export-modal";
 
 function DataTableFacetedFilterList<TData>({
   table,
@@ -149,7 +150,11 @@ function DataTableTopBar<K>({
         )}
       </div>
       <DataTableViewOptions table={table} />
-      <Button variant="default" className="hidden h-8 lg:flex">
+      <Button
+        variant="default"
+        className="hidden h-8 lg:flex"
+        onClick={() => store.set("exportModalOpen", true)}
+      >
         <DownloadIcon className="mr-2 h-4 w-4" /> Export
       </Button>
       <Button
@@ -172,6 +177,7 @@ export function DataTable<K extends Record<string, any>>({
   tableFacetedFilters,
   TableSheet,
   TableEditSheet,
+  exportModelName,
 }: DataTableProps<K>) {
   const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
@@ -323,6 +329,7 @@ export function DataTable<K extends Record<string, any>>({
         </div>
         <DataTablePagination table={table} pagination={pagination} />
       </div>
+      <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableSheet && (
         <TableSheet open={drawerOpen} onOpenChange={setDrawerOpen} />
       )}
