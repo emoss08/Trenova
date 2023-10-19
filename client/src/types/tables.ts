@@ -36,11 +36,13 @@ export type DataTableProps<K> = {
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;
   TableSheet?: React.ComponentType<TableSheetProps>;
+  TableEditSheet?: React.ComponentType<TableSheetProps>;
 };
 
 export type TableSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  currentRecord?: Record<string, any>;
 };
 
 export type TableOptionProps = {
