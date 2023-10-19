@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -104,6 +105,7 @@ export default function GLAccounts() {
           filterColumn="accountNumber"
           tableFacetedFilters={filters}
           TableSheet={GLTableSheet}
+          TableEditSheet={GLTableEditSheet}
         />
       </CardContent>
     </Card>
