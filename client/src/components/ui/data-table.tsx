@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import {
   ColumnDef,
   flexRender,
@@ -38,7 +39,8 @@ import {
 } from "@/components/ui/table";
 import axios from "@/lib/AxiosConfig";
 import { API_URL } from "@/lib/constants";
-import { useTableStore } from "@/stores/TableStore";
+import { cn } from "@/lib/utils";
+import { useTableStore as store } from "@/stores/TableStore";
 import { ApiResponse } from "@/types/server";
 import {
   DataTableFacetedFilterListProps,
@@ -55,7 +57,6 @@ import { DataTablePagination } from "./data-table-pagination";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { Input } from "./input";
 import { Skeleton } from "./skeleton";
-import { cn } from "@/lib/utils";
 
 function DataTableFacetedFilterList<TData>({
   table,
@@ -128,7 +129,7 @@ function DataTableTopBar<K>({
           onChange={(event) =>
             table.getColumn(filterColumn)?.setFilterValue(event.target.value)
           }
-          className="w-[150px] lg:w-[250px]"
+          className="w-[150px] lg:w-[250px] h-8"
         />
         {tableFacetedFilters && (
           <DataTableFacetedFilterList
@@ -153,7 +154,7 @@ function DataTableTopBar<K>({
       </Button>
       <Button
         variant={buttonVariant}
-        onClick={() => useTableStore.set("sheetOpen", true)}
+        onClick={() => store.set("sheetOpen", true)}
         className="ml-2 hidden h-8 lg:flex"
       >
         <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
@@ -170,16 +171,16 @@ export function DataTable<K extends Record<string, any>>({
   filterColumn,
   tableFacetedFilters,
   TableSheet,
+  TableEditSheet,
 }: DataTableProps<K>) {
-  const [{ pageIndex, pageSize }, setPagination] =
-    useTableStore.use("pagination");
-  const [rowSelection, setRowSelection] = useTableStore.use("rowSelection");
-
-  const [columnVisibility, setColumnVisibility] =
-    useTableStore.use("columnVisibility");
-  const [columnFilters, setColumnFilters] = useTableStore.use("columnFilters");
-  const [sorting, setSorting] = useTableStore.use("sorting");
-  const [drawerOpen, setDrawerOpen] = useTableStore.use("sheetOpen");
+  const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
+  const [rowSelection, setRowSelection] = store.use("rowSelection");
+  const [currentRecord, setCurrentRecord] = store.use("currentRecord");
+  const [columnVisibility, setColumnVisibility] = store.use("columnVisibility");
+  const [columnFilters, setColumnFilters] = store.use("columnFilters");
+  const [sorting, setSorting] = store.use("sorting");
+  const [drawerOpen, setDrawerOpen] = store.use("sheetOpen");
+  const [editDrawerOpen, setEditDrawerOpen] = store.use("editSheetOpen");
 
   const dataQuery = useQuery<ApiResponse<K>, Error>(
     [queryKey, pageIndex, pageSize],
@@ -236,7 +237,6 @@ export function DataTable<K extends Record<string, any>>({
       rowSelection,
       columnFilters,
     },
-    debugTable: true,
     manualPagination: true,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -295,9 +295,10 @@ export function DataTable<K extends Record<string, any>>({
                       <TableCell
                         key={cell.id}
                         className={cn("cursor-pointer")}
-                        onDoubleClick={() =>
-                          useTableStore.set("currentRecord", row.original)
-                        }
+                        onDoubleClick={() => {
+                          setCurrentRecord(row.original);
+                          setEditDrawerOpen(true);
+                        }}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -324,6 +325,13 @@ export function DataTable<K extends Record<string, any>>({
       </div>
       {TableSheet && (
         <TableSheet open={drawerOpen} onOpenChange={setDrawerOpen} />
+      )}
+      {TableEditSheet && (
+        <TableEditSheet
+          open={editDrawerOpen}
+          onOpenChange={setEditDrawerOpen}
+          currentRecord={currentRecord}
+        />
       )}
     </>
   );
