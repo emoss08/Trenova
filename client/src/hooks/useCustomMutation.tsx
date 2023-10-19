@@ -96,10 +96,6 @@ function extractFileFromData(
       delete data[key];
       return { fieldName: key, file };
     }
-    // if no file exist, then delete the key
-    // else if (item.length === 0) {
-    // delete data[key];
-    // }
   }
   return null;
 }
