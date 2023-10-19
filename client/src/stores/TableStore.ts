@@ -11,10 +11,11 @@ export type TableStoreProps = {
   pagination: PaginationState;
   columnVisibility: VisibilityState;
   rowSelection: RowSelectionState;
-  currentRecord: Record<string, any> | null;
+  currentRecord: Record<string, unknown> | undefined;
   columnFilters: ColumnFiltersState;
   sorting: SortingState;
   sheetOpen: boolean;
+  editSheetOpen: boolean;
 };
 
 export const useTableStore = createGlobalStore<TableStoreProps>({
@@ -23,9 +24,10 @@ export const useTableStore = createGlobalStore<TableStoreProps>({
     pageSize: 10,
   },
   columnVisibility: {},
-  currentRecord: null,
+  currentRecord: undefined,
   rowSelection: {},
   columnFilters: [],
   sorting: [],
   sheetOpen: false,
+  editSheetOpen: false,
 });
