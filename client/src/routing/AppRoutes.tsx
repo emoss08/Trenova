@@ -115,7 +115,7 @@ export const routes: RouteObjectWithPermission[] = [
   {
     title: "User Settings",
     group: "user",
-    path: "/account/settings/:id",
+    path: "/account/settings/",
     element: <UserSettingsPage />,
     excludeFromMenu: true,
   },
