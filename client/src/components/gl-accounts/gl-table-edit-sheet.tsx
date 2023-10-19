@@ -42,9 +42,11 @@ import { GLForm } from "./gl-table-sheet";
 function GLEditForm({
   glAccount,
   open,
+  onOpenChange,
 }: {
   glAccount: Record<string, any>;
   open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const {
     selectGLAccounts,
@@ -129,6 +131,13 @@ function GLEditForm({
       />
       <SheetFooter className="mb-12">
         <Button
+          type="reset"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+        >
+          Cancel
+        </Button>
+        <Button
           type="submit"
           isLoading={isSubmitting}
           loadingText="Saving Changes..."
@@ -152,7 +161,13 @@ export function GLTableEditSheet({ onOpenChange, open }: TableSheetProps) {
             Use this form to edit a general ledger account.
           </SheetDescription>
         </SheetHeader>
-        {glAccount && <GLEditForm glAccount={glAccount} open={open} />}
+        {glAccount && (
+          <GLEditForm
+            glAccount={glAccount}
+            open={open}
+            onOpenChange={onOpenChange}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );

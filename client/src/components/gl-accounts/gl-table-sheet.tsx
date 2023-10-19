@@ -369,11 +369,18 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
           />
           <SheetFooter className="mb-12">
             <Button
+              type="reset"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
               type="submit"
               isLoading={isSubmitting}
               loadingText="Saving Changes..."
             >
-              Save Changes
+              Save
             </Button>
           </SheetFooter>
         </form>
