@@ -9,6 +9,7 @@ import {
 
 export type TableStoreProps = {
   pagination: PaginationState;
+  exportModalOpen: boolean;
   columnVisibility: VisibilityState;
   rowSelection: RowSelectionState;
   currentRecord: Record<string, unknown> | undefined;
@@ -23,6 +24,7 @@ export const useTableStore = createGlobalStore<TableStoreProps>({
     pageIndex: 0,
     pageSize: 10,
   },
+  exportModalOpen: false,
   columnVisibility: {},
   currentRecord: undefined,
   rowSelection: {},

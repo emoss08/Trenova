@@ -37,6 +37,7 @@ export type DataTableProps<K> = {
   filterColumn: string;
   TableSheet?: React.ComponentType<TableSheetProps>;
   TableEditSheet?: React.ComponentType<TableSheetProps>;
+  exportModelName: string;
 };
 
 export type TableSheetProps = {
