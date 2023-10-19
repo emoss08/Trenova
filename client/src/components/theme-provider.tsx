@@ -30,6 +30,7 @@ type ThemeProviderState = {
   setTheme: (theme: Theme) => void;
   isRainbowAnimationActive: boolean;
   toggleRainbowAnimation: () => void;
+  setIsRainbowAnimationActive: (isRainbowAnimationActive: boolean) => void;
 };
 
 const initialState: ThemeProviderState = {
@@ -37,6 +38,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
   isRainbowAnimationActive: false,
   toggleRainbowAnimation: () => null,
+  setIsRainbowAnimationActive: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -90,6 +92,7 @@ export function ThemeProvider({
       setTheme(theme);
     },
     isRainbowAnimationActive,
+    setIsRainbowAnimationActive,
     toggleRainbowAnimation: () => {
       const newValue = !isRainbowAnimationActive;
       localStorage.setItem(
