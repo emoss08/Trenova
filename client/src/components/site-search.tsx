@@ -1,6 +1,7 @@
 import { useUserPermissions } from "@/context/user-permissions";
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
+import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -76,7 +77,15 @@ export function SiteSearch() {
       />
       <CommandList>
         {Object.entries(filteredGroups).length === 0 && (
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>
+            <AlertCircle className="mx-auto h-6 w-6 text-accent-foreground" />
+            <p className="mt-4 font-semibold text-accent-foreground">
+              No results found
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              No pages found for this search term. Please try again.
+            </p>
+          </CommandEmpty>
         )}
         {Object.entries(filteredGroups).map(([group, groupCommands]) => (
           <CommandGroup key={group} heading={upperFirst(group)}>
@@ -95,11 +104,9 @@ export function SiteSearch() {
           </CommandGroup>
         ))}
       </CommandList>
-      <div className="sticky bg-inherit flex items-center justify-between border-t py-2">
+      <div className="sticky bg-muted-foreground/5 flex items-center justify-between border-t py-2">
         <div>
-          <p className="text-xs text-muted-foreground ml-2">
-            Search powered by Monta
-          </p>
+          <p className="text-xs ml-2">Search powered by Monta</p>
         </div>
         <div>
           <a
