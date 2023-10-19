@@ -18,8 +18,8 @@ import { CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 
 import { cn } from "@/lib/utils";
 import { DataTableFacetedFilterProps } from "@/types/tables";
-import { Badge } from "./badge";
-import { Button } from "./button";
+import { Badge } from "../../ui/badge";
+import { Button } from "../../ui/button";
 import {
   Command,
   CommandEmpty,
@@ -28,9 +28,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "./command";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Separator } from "./separator";
+} from "../../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
+import { Separator } from "../../ui/separator";
 
 export function DataTableFacetedFilter<TData, TValue>({
   column,
