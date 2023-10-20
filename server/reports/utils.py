@@ -206,7 +206,7 @@ def generate_report(
     # Convert timezone aware datetime columns to naive datetime
     df = pd.DataFrame.from_records(queryset)
     for column in df.columns:
-        if pd.api.types.is_datetime64tz_dtype(df[column]):
+        if isinstance(df[column].dtype, pd.DatetimeTZDtype):
             df[column] = df[column].dt.tz_convert(None)
 
     # Extract 'value' and 'label' from each dictionary in the 'allowed_fields' list
