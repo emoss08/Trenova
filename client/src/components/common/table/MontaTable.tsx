@@ -18,7 +18,6 @@
 import { DeleteRecordModal } from "@/components/common/table/DeleteRecordModal";
 import { montaTableIcons } from "@/components/common/table/Icons";
 import { TableTopToolbar } from "@/components/common/table/TableTopToolbar";
-import axios from "@/lib/AxiosConfig";
 import { API_URL } from "@/lib/constants";
 import { StoreType } from "@/lib/useGlobalStore";
 import { QueryKeys } from "@/types";
@@ -35,8 +34,9 @@ import {
   useMantineReactTable,
 } from "mantine-react-table";
 import React, { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { TableExportModal } from "./TableExportModal";
+import axios from "@/lib/axiosConfig";
 
 MontaTable.defaultProps = {
   displayDeleteModal: true,

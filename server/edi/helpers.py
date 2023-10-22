@@ -283,7 +283,7 @@ def _get_actual_field(
 
 
 def validate_data_type(*, data_type: str, model_field: str) -> tuple[bool, str]:
-    """Validates that the internal type of a field corresponds to a given data type.
+    """Validates that the internal type of field corresponds to a given data type.
 
     This function extracts the actual field from the 'BillingQueue' model (or a model related to it)
     using a list of field names represented as a string separated by periods ('.'). It then verifies that

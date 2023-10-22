@@ -170,7 +170,7 @@ function ErrorMessage({
   return (
     <p className="text-xs text-red-500">
       {isFetchError
-        ? "An error has occured! Please try again later."
+        ? "An error has occurred! Please try again later."
         : formError}
     </p>
   );

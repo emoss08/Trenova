@@ -33,7 +33,7 @@ import {
 } from "@mantine/core";
 import React, { useState } from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
@@ -45,7 +45,7 @@ import { useClipboard } from "@mantine/hooks";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { JobTitle, UserFormValues } from "@/types/accounts";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import {
   getDepartments,
   getJobTitles,

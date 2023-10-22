@@ -37,8 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import axios from "@/lib/AxiosConfig";
-import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useTableStore as store } from "@/stores/TableStore";
 import { ApiResponse } from "@/types/server";
@@ -48,16 +46,18 @@ import {
   FilterConfig,
 } from "@/types/tables";
 import { DownloadIcon } from "@radix-ui/react-icons";
-import { Plus, X } from "lucide-react";
+import { AlertTriangle, Plus, X } from "lucide-react";
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
 import { DataTableViewOptions } from "./data-table-view-options";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/common/fields/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTablePagination } from "./data-table-pagination";
 import { TableExportModal } from "./data-table-export-modal";
+import { API_URL } from "@/lib/constants";
+import axios from "@/lib/axiosConfig";
 
 function DataTableFacetedFilterList<TData>({
   table,
@@ -188,9 +188,9 @@ export function DataTable<K extends Record<string, any>>({
   const [drawerOpen, setDrawerOpen] = store.use("sheetOpen");
   const [editDrawerOpen, setEditDrawerOpen] = store.use("editSheetOpen");
 
-  const dataQuery = useQuery<ApiResponse<K>, Error>(
-    [queryKey, pageIndex, pageSize],
-    async () => {
+  const dataQuery = useQuery<ApiResponse<K>, Error>({
+    queryKey: [queryKey, link, pageIndex, pageSize],
+    queryFn: async () => {
       const fetchURL = new URL(`${API_URL}${link}/`);
       fetchURL.searchParams.set("limit", pageSize.toString());
       fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
@@ -201,9 +201,8 @@ export function DataTable<K extends Record<string, any>>({
       }
       return response.data;
     },
-
-    { keepPreviousData: true, staleTime: Infinity },
-  );
+    staleTime: Infinity,
+  });
 
   const placeholderData: K[] = React.useMemo(
     () =>
@@ -257,6 +256,21 @@ export function DataTable<K extends Record<string, any>>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  if (dataQuery.isError) {
+    return (
+      <div className="text-center">
+        <AlertTriangle className="mx-auto h-6 w-6 text-accent-foreground" />
+        <p className="mt-2 font-semibold text-accent-foreground">
+          Well, this is embarrassing...
+        </p>
+        <p className="mt-2 text-muted-foreground">
+          We were unable to load the data for this table. Please try again
+          later.
+        </p>
+      </div>
+    );
+  }
 
   const selectedRowCount = Object.keys(rowSelection).length;
 

@@ -21,12 +21,12 @@ import { UseFormReturnType } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { CreateCustomerFormValues } from "@/types/customer";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedMultiSelect } from "@/components/common/fields/MultiSelect";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { APIError } from "@/types/server";
 import { TChoiceProps } from "@/types";
 

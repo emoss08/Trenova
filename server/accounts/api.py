@@ -281,7 +281,9 @@ class JobTitleViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related(
                 Prefetch(
                     "profile__user",
-                    queryset=models.User.objects.only("username"),
+                    queryset=models.User.objects.filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
+                    ).only("username", "organization_id"),
                 )
             )
 

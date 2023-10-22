@@ -28,6 +28,7 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
@@ -865,7 +866,7 @@ class FinancialTransaction(GenericModel):
         auto_now_add=True,
         help_text=_("Date and time of the transaction"),
     )
-    ledger_account = models.ForeignKey(
+    general_ledger_account = models.ForeignKey(
         GeneralLedgerAccount,
         on_delete=models.CASCADE,
         related_name="transactions",

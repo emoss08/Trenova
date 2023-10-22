@@ -24,11 +24,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useGLAccounts";
 import { useTags } from "@/hooks/useTags";
 import { useUsers } from "@/hooks/useUsers";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
@@ -45,16 +44,20 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import {
   Control,
+  useForm,
   UseFormGetValues,
   UseFormSetValue,
-  useForm,
 } from "react-hook-form";
-import { useQueryClient } from "react-query";
-import { CheckboxInput } from "../ui/checkbox";
-import { FileField, InputField } from "../ui/input";
-import { CreatableSelectField, SelectInput } from "../ui/select-input";
-import { TextareaField } from "../ui/textarea";
-import { toast } from "../ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckboxInput } from "../common/fields/checkbox";
+import { FileField, InputField } from "../common/fields/input";
+import {
+  CreatableSelectField,
+  SelectInput,
+} from "../common/fields/select-input";
+import { TextareaField } from "../common/fields/textarea";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { toast } from "@/components/ui/use-toast";
 
 export function GLForm({
   glAccounts,
@@ -103,7 +106,9 @@ export function GLForm({
     } catch (err) {
       console.log(err);
     } finally {
-      queryClient.invalidateQueries("tags");
+      await queryClient.invalidateQueries({
+        queryKey: ["tags"],
+      });
       setIsLoading(false);
     }
   };
@@ -279,7 +284,6 @@ export function GLForm({
 
 export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const {
     selectGLAccounts,
     isError: glAccountsError,
@@ -336,7 +340,6 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
 
   const onSubmit = (values: GLAccountFormValues) => {
     setIsSubmitting(true);
-    console.log(values);
     mutation.mutate(values);
   };
 
@@ -370,8 +373,9 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
           <SheetFooter className="mb-12">
             <Button
               type="reset"
-              variant="outline"
+              variant="secondary"
               onClick={() => onOpenChange(false)}
+              className="w-full"
             >
               Cancel
             </Button>
@@ -379,6 +383,7 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
               type="submit"
               isLoading={isSubmitting}
               loadingText="Saving Changes..."
+              className="w-full"
             >
               Save
             </Button>

@@ -21,8 +21,9 @@ import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "./theme-provider";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTheme } from "@/components/ui/theme-provider";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,9 +36,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { ToastAction } from "./ui/toast";
-import { useToast } from "./ui/use-toast";
+} from "@/components/ui/dropdown-menu";
+import { ToastAction } from "@/components/ui/toast";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;

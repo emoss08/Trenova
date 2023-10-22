@@ -18,7 +18,7 @@
 import React from "react";
 import { Grid } from "@mantine/core";
 import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCustomerDetailsWithMetrics } from "@/services/CustomerRequestService";
 
 export default function EditCustomer() {

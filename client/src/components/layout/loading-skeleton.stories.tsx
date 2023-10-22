@@ -14,32 +14,16 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import type { Meta, StoryObj } from "@storybook/react";
+import LoadingSkeleton from "@/components/layout/loading-skeleton";
 
-import React from "react";
-import { PasswordInput } from "@mantine/core";
-import { PasswordInputProps } from "@mantine/core/lib/PasswordInput/PasswordInput";
-import { UseFormReturnType } from "@mantine/form";
-import { useFormStyles } from "@/assets/styles/FormStyles";
+const meta: Meta<typeof LoadingSkeleton> = {
+  component: LoadingSkeleton,
+};
 
-interface ValidatedPasswordInputProps<TFormValues>
-  extends Omit<PasswordInputProps, "form"> {
-  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-}
+export default meta;
+type Story = StoryObj<typeof LoadingSkeleton>;
 
-export function ValidatedPasswordInput<TFormValues extends object>({
-  form,
-  name,
-  ...rest
-}: ValidatedPasswordInputProps<TFormValues>) {
-  const { classes } = useFormStyles();
-  const error = form.errors[name as string];
-
-  return (
-    <PasswordInput
-      {...rest}
-      {...form.getInputProps(name as string)}
-      error={error}
-      className={classes.fields}
-    />
-  );
-}
+export const Default: Story = {
+  args: {},
+};

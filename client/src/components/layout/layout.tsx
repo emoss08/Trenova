@@ -15,20 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RainbowTopBar } from "@/components/topbar";
+import { RainbowTopBar } from "@/components/layout/topbar";
 import { getUserDetails } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
-import { useQuery, useQueryClient } from "react-query";
-import { Breadcrumb } from "./common/BreadCrumbs";
-import { Footer } from "./footer";
-import { NavMenu } from "./navbar";
-import { SiteSearch } from "./site-search";
-import { Skeleton } from "./ui/skeleton";
-import { Toaster } from "./ui/toaster";
-import { UserAvatarMenu } from "./user-avatar-menu";
-
-// Type Definitions
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { NavMenu } from "@/components/layout/navbar";
+import { SiteSearch } from "@/components/layout/site-search";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
+import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { Toaster } from "@/components/ui/toaster";
+import { Footer } from "@/components/layout/footer";
 
 /**
  * LayoutProps defines the props for the Layout components.
@@ -56,9 +54,12 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="relative flex flex-col h-screen">
       <header className="bg-background sticky top-0 z-50 w-full border-b">
+        {/* Rainbow Header */}
         <RainbowTopBar />
         <div className="container flex h-14 items-center">
+          {/* Navigation Menu */}
           <NavMenu />
+          {/* Site Search Combobox Dialog */}
           <SiteSearch />
           {isUserDataLoading ? (
             <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -73,8 +74,10 @@ export function Layout({ children }: LayoutProps) {
       {/* Main Content Area */}
       <div className="flex-1">
         <div className="container relative">
+          {/* Breadcrumb */}
           <Breadcrumb />
           {children}
+          {/* Toaster */}
           <Toaster />
         </div>
       </div>

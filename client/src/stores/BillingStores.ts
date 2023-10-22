@@ -15,51 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MRT_Row } from "mantine-react-table";
 import { createGlobalStore } from "@/lib/useGlobalStore";
-import { TableStoreProps } from "@/types/tables";
-import {
-  AccessorialCharge,
-  ChargeType,
-  OrdersReadyProps,
-} from "@/types/billing";
+import { OrdersReadyProps } from "@/types/billing";
 import { WebSocketMessageProps } from "@/lib/websockets";
-
-export const chargeTypeTableStore = createGlobalStore<
-  TableStoreProps<ChargeType>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  drawerOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
-
-export const accessorialChargeTableStore = createGlobalStore<
-  TableStoreProps<AccessorialCharge>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  selectedRecord: null,
-  globalFilter: "",
-  drawerOpen: false,
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+import { Row } from "@tanstack/react-table";
 
 interface BillingClientStoreProps {
   step: number;
@@ -67,7 +26,7 @@ interface BillingClientStoreProps {
   exceptionModalOpen: boolean;
   transferConfirmModalOpen: boolean;
   approveTransfer: boolean;
-  invalidOrders: MRT_Row<OrdersReadyProps>[];
+  invalidOrders: Row<OrdersReadyProps>[];
 }
 
 export const billingClientStore = createGlobalStore<BillingClientStoreProps>({

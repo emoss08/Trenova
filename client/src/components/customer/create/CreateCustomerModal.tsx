@@ -24,14 +24,14 @@ import {
   Stepper,
   useMantineTheme,
 } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { customerTableStore as store } from "@/stores/CustomerStore";
 import { CreateCustomerFormValues } from "@/types/customer";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { APIError } from "@/types/server";
 import { DeliverySlotForm } from "@/components/customer/create/steps/DeliverySlotForm";
 import { CreateCustomerSchema } from "@/lib/validations/CustomerSchema";

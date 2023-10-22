@@ -17,7 +17,7 @@
 
 import React from "react";
 import { createStyles, Divider, Skeleton } from "@mantine/core";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Typed from "typed.js";
 import { WebSocketManager } from "@/lib/websockets";
 import { getBillingQueue } from "@/services/BillingRequestService";

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAccessorialCharges } from "@/services/BillingRequestService";
 import { AccessorialCharge } from "@/types/billing";
 
