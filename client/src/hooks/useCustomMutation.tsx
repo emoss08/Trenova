@@ -21,7 +21,13 @@ import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
 import { AxiosResponse } from "axios";
-import { Control, ErrorOption, FieldValues, Path } from "react-hook-form";
+import {
+  Control,
+  ErrorOption,
+  FieldValues,
+  Path,
+  UseFormReset,
+} from "react-hook-form";
 import {
   QueryClient,
   useMutation,
@@ -40,20 +46,19 @@ type MutationOptions = {
   additionalInvalidateQueries?: QueryKeys[];
 };
 
-const DEFAULT_ERROR_MESSAGE = "An error occurred.";
-
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   toast: (toast: Toast) => void,
   options: MutationOptions,
   onMutationSettled?: () => void,
+  reset?: UseFormReset<T>,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
-    onSuccess: () => handleSuccess(options, toast, queryClient),
+    onSuccess: () => handleSuccess(options, toast, queryClient, reset),
     onError: (error: Error) => handleError(error, options, control, toast),
     onSettled: onMutationSettled,
   });
@@ -113,10 +118,11 @@ function sendFileData(
   return axios.patch(path, formData);
 }
 
-function handleSuccess(
+function handleSuccess<T extends FieldValues>(
   options: MutationOptions,
   toast: (toast: Toast) => void,
   queryClient: QueryClient,
+  reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
     showNotification(toast, "Success", options.successMessage);
@@ -139,6 +145,9 @@ function handleSuccess(
   if (options.closeModal) {
     useTableStore.set(sheetKey, false);
   }
+
+  // Reset the form if `reset` is passed
+  reset?.();
 }
 
 function handleError<T extends FieldValues>(
@@ -170,7 +179,7 @@ function showErrorNotification(
   toast: (toast: Toast) => void,
   errorMessage?: string,
 ) {
-  showNotification(toast, "Error", errorMessage || DEFAULT_ERROR_MESSAGE);
+  showNotification(toast, "Error", errorMessage || "An error occurred.");
 }
 
 function handleValidationErrors<T extends FieldValues>(
