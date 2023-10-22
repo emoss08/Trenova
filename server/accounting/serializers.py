@@ -68,7 +68,6 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
-        extra_read_only_fields = ["created", "modified"]
 
     def validate_account_number(self, value: str) -> str:
         """Validate account number does not exist for the organization. Will only apply to
