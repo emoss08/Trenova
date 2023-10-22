@@ -24,7 +24,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import {
   getDepartmentDetails,

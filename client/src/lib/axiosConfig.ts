@@ -15,31 +15,31 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { rem, Switch, SwitchProps } from "@mantine/core";
-import { UseFormReturnType } from "@mantine/form";
-import { InputFieldNameProp } from "@/types";
+import axios from "axios";
+import { API_URL } from "@/lib/constants";
+import { getCookie } from "@/lib/auth";
 
-interface ValidatedSwitchInputPropsBase
-  extends Omit<SwitchProps, "form" | "name"> {}
+/**
+ * Axios request interceptor.
+ * It sets the base URL and credentials of the request.
+ * It also logs the request details to the console.
+ */
+axios.interceptors.request.use(
+  (req) => {
+    req.baseURL = API_URL;
+    req.withCredentials = true;
 
-type ValidatedSwitchInputProps<TFormValues extends object> =
-  ValidatedSwitchInputPropsBase & {
-    form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-    name: InputFieldNameProp<TFormValues>;
-  };
+    // Set CSRF Token
+    const csrfToken = getCookie("csrftoken");
 
-export function SwitchInput<
-  TFormValues extends Record<string, unknown> = Record<string, unknown>,
->(props: ValidatedSwitchInputProps<TFormValues>) {
-  const { form, name, ...rest } = props;
+    if (csrfToken) {
+      req.headers["X-CSRFToken"] = csrfToken;
+    }
 
-  return (
-    <Switch
-      {...rest}
-      {...form.getInputProps(name as string, { type: "checkbox" })}
-      mt={rem(10)}
-      variant="filled"
-    />
-  );
-}
+    console.info(`Making request to ${req.url}`);
+    return req;
+  },
+  (error: any) => Promise.reject(error),
+);
+
+export default axios;

@@ -20,7 +20,7 @@ import { getJobTitleDetails } from "@/services/OrganizationRequestService";
 import { getUserDetails } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import { UserCircleIcon } from "lucide-react";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ThemeSwitcher } from "./appearance/theme-switcher";
 

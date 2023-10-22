@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
@@ -25,7 +25,7 @@ import { useForm, yupResolver } from "@mantine/form";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { Customer, CustomerFormValues } from "@/types/customer";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices, yesAndNoChoices } from "@/lib/constants";

@@ -17,7 +17,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 
 /**
  * Custom hook to verify the user's token.

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Layout, UnprotectedLayout } from "@/components/layout";
+import { Layout, UnprotectedLayout } from "@/components/layout/layout";
 import { useUserPermissions } from "@/context/user-permissions";
 import React, { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";

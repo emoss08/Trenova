@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,7 +23,7 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { customerStore as store } from "@/stores/CustomerStore";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { CustomerRuleProfileFormValues } from "@/types/customer";
 import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

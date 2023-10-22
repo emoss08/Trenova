@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
+import { Logo } from "@/components/layout/logo";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -187,7 +187,7 @@ export function NavMenu() {
         )}
       >
         <NavigationMenuList>
-          <OrganizationLogo />
+          <Logo />
           {menuItems.map((item) => (
             <NavigationMenuItemWithPermission
               key={item.menuKey}

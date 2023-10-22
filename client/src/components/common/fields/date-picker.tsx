@@ -18,9 +18,9 @@
 import DatePicker, { ReactDatePickerProps } from "react-datepicker";
 
 import React from "react";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/common/fields/label";
 import { cn } from "@/lib/utils";
-import { ExtendedInputProps, Input } from "@/components/ui/input";
+import { ExtendedInputProps, Input } from "@/components/common/fields/input";
 
 const DatePickerInput = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
   ({ value, onClick }, ref) => (

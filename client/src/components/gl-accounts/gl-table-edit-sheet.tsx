@@ -38,6 +38,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "../ui/use-toast";
 import { GLForm } from "./gl-table-sheet";
+import { formatDate } from "@/lib/date";
 
 function GLEditForm({
   glAccount,
@@ -132,8 +133,9 @@ function GLEditForm({
       <SheetFooter className="mb-12">
         <Button
           type="reset"
-          variant="outline"
+          variant="secondary"
           onClick={() => onOpenChange(false)}
+          className="w-full"
         >
           Cancel
         </Button>
@@ -141,6 +143,7 @@ function GLEditForm({
           type="submit"
           isLoading={isSubmitting}
           loadingText="Saving Changes..."
+          className="w-full"
         >
           Save Changes
         </Button>
@@ -156,9 +159,9 @@ export function GLTableEditSheet({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>Edit GL Account</SheetTitle>
+          <SheetTitle>{glAccount && glAccount.accountNumber}</SheetTitle>
           <SheetDescription>
-            Use this form to edit a general ledger account.
+            Last updated on {glAccount && formatDate(glAccount.modified)}
           </SheetDescription>
         </SheetHeader>
         {glAccount && (

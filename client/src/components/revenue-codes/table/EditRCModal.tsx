@@ -25,7 +25,7 @@ import {
   Stack,
 } from "@mantine/core";
 import React from "react";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore as store } from "@/stores/AccountingStores";

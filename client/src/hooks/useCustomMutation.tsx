@@ -16,14 +16,20 @@
  */
 
 import { ToasterToast } from "@/components/ui/use-toast";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
 import { AxiosResponse } from "axios";
 import { Control, ErrorOption, FieldValues, Path } from "react-hook-form";
-import { QueryClient, useMutation, useQueryClient } from "react-query";
+import {
+  QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
+type Toast = Omit<ToasterToast, "id">;
+type DataProp = Record<string, unknown> | FormData;
 type MutationOptions = {
   path: string;
   successMessage: string;
@@ -35,7 +41,6 @@ type MutationOptions = {
 };
 
 const DEFAULT_ERROR_MESSAGE = "An error occurred.";
-type Toast = Omit<ToasterToast, "id">;
 
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
@@ -45,14 +50,13 @@ export function useCustomMutation<T extends FieldValues>(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (values: T) => executeApiMethod(options.method, options.path, values),
-    {
-      onSuccess: () => handleSuccess(options, toast, queryClient),
-      onError: (error: Error) => handleError(error, options, control, toast),
-      onSettled: onMutationSettled,
-    },
-  );
+  return useMutation({
+    mutationFn: (data: DataProp) =>
+      executeApiMethod(options.method, options.path, data),
+    onSuccess: () => handleSuccess(options, toast, queryClient),
+    onError: (error: Error) => handleError(error, options, control, toast),
+    onSettled: onMutationSettled,
+  });
 }
 
 async function executeApiMethod(
@@ -120,7 +124,9 @@ function handleSuccess(
 
   const invalidateQueries = async (queries?: string[]) => {
     if (queries) {
-      await queryClient.invalidateQueries(queries);
+      await queryClient.invalidateQueries({
+        queryKey: queries,
+      });
     }
   };
 
@@ -131,7 +137,7 @@ function handleSuccess(
   const sheetKey = options.method === "POST" ? "sheetOpen" : "editSheetOpen";
 
   if (options.closeModal) {
-    useTableStore.set(sheetKey, false as any);
+    useTableStore.set(sheetKey, false);
   }
 }
 

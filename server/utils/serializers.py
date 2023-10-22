@@ -92,7 +92,7 @@ class GenericSerializer(serializers.ModelSerializer):
             fields = {
                 field.name for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
             }
-            fields -= excluded_fields | set(read_only_fields)
+            fields -= excluded_fields
 
         self.Meta.read_only_fields = read_only_fields
         self.Meta.fields = tuple(fields)

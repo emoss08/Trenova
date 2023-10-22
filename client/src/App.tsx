@@ -17,19 +17,19 @@
 
 import "@/assets/App.css";
 import "@/assets/Datepicker.css";
-import LoadingSkeleton from "@/components/loading-skeleton";
-import { ThemeProvider } from "@/components/theme-provider";
+import LoadingSkeleton from "@/components/layout/loading-skeleton";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useAuthStore } from "@/stores/AuthStore";
 import "@fontsource-variable/inter";
-import { Suspense, memo } from "react";
+import { memo, Suspense } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { ReactQueryDevtools } from "react-query/devtools";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import { UserPermissionsProvider } from "./context/user-permissions";
-import { THEME_KEY } from "./lib/constants";
+import { THEME_KEY } from "@/lib/constants";
+import { UserPermissionsProvider } from "@/context/user-permissions";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,7 +67,7 @@ const AppImpl = memo(() => {
           <ProtectedRoutes />
         </Suspense>
       </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} />
+      <ReactQueryDevtools buttonPosition="bottom-left" initialIsOpen={false} />
     </QueryClientProvider>
   );
 });

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { User, UserNotification, UserReportResponse } from "@/types/accounts";
 
 /**
