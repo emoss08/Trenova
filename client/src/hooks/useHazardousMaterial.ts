@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import { HazardousMaterial } from "@/types/commodities";
 import { QueryKeys } from "@/types";

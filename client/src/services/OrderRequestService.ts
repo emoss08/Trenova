@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { OrderType } from "@/types/order";
 
 /**

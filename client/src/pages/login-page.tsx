@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ModeToggle } from "@/components/theme-switcher";
+import { ModeToggle } from "@/components/ui/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { InputField } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import axios from "@/lib/AxiosConfig";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { InputField } from "@/components/common/fields/input";
+import { Label } from "@/components/common/fields/label";
+import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/accounts";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";

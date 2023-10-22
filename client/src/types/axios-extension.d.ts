@@ -14,10 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { API_URL } from "@/lib/constants";
-import { getCookie } from "@/lib/auth";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { API_ENDPOINTS } from "@/types/server";
 
 declare module "axios" {
@@ -59,32 +56,5 @@ declare module "axios" {
       data?: D,
       config?: AxiosRequestConfig<D>,
     ): Promise<R>;
-
-    // ... augment other methods as needed
   }
 }
-
-/**
- * Axios request interceptor.
- * It sets the base URL and credentials of the request.
- * It also logs the request details to the console.
- */
-axios.interceptors.request.use(
-  (req) => {
-    req.baseURL = API_URL;
-    req.withCredentials = true;
-
-    // Set CSRF Token
-    const csrfToken = getCookie("csrftoken");
-
-    if (csrfToken) {
-      req.headers["X-CSRFToken"] = csrfToken;
-    }
-
-    console.info(`Making request to ${req.url}`);
-    return req;
-  },
-  (error: any) => Promise.reject(error),
-);
-
-export default axios;

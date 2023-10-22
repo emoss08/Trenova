@@ -20,7 +20,7 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableAccountTypeChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
 import { GeneralLedgerAccount } from "@/types/accounting";
@@ -98,7 +98,7 @@ export default function GLAccounts() {
     <Card>
       <CardContent>
         <DataTable
-          queryKey="glAccounts"
+          queryKey="gl-account-table-data"
           columns={columns}
           link="/gl_accounts"
           name="Gl Account"

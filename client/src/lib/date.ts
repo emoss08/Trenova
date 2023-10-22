@@ -70,3 +70,23 @@ export function formatTimestamp(timestamp: string) {
   }
   return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
 }
+
+/**
+ * Returns the current date and time in a formatted string.
+ *
+ * The formatted string includes the full weekday name, the full month name, the day of the month,
+ * the year, and the time in 12-hour format with AM/PM.
+ *
+ * @returns {string} The formatted date and time.
+ */
+export const getFormattedDate = (): string => {
+  const today = new Date();
+  return `${today.toLocaleString("en-US", {
+    weekday: "long",
+  })}, ${today.toLocaleString("en-US", {
+    month: "long",
+  })} ${today.getDate()}, ${today.getFullYear()} at ${today.toLocaleString(
+    "en-US",
+    { hour: "numeric", minute: "2-digit", hour12: true },
+  )}`;
+};

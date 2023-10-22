@@ -14,16 +14,17 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import type { Meta, StoryObj } from "@storybook/react";
-import LoadingSkeleton from "@/components/loading-skeleton";
 
-const meta: Meta<typeof LoadingSkeleton> = {
-  component: LoadingSkeleton,
-};
+import { useTheme } from "../ui/theme-provider";
 
-export default meta;
-type Story = StoryObj<typeof LoadingSkeleton>;
+export function RainbowTopBar() {
+  const { isRainbowAnimationActive } = useTheme();
 
-export const Default: Story = {
-  args: {},
-};
+  return (
+    <div
+      className={`h-1 bg-rainbow-gradient-light bg-200% ${
+        isRainbowAnimationActive ? "animate-rainbow-flow" : ""
+      }`}
+    />
+  );
+}

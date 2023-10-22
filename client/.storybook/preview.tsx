@@ -18,7 +18,7 @@
 import type { Preview } from "@storybook/react";
 import React from "react";
 import "../src/assets/App.css";
-import { ThemeProvider, useTheme } from "../src/components/theme-provider";
+import { ThemeProvider, useTheme } from "../src/components/ui/theme-provider";
 
 const withTheme = (Story, context) => {
   const { setTheme } = useTheme();

@@ -17,7 +17,7 @@
 
 import React from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Grid, Tabs } from "@mantine/core";
 import { getCustomerDetailsWithMetrics } from "@/services/CustomerRequestService";
 import { ViewCustomerNavbar } from "@/components/customer/view/_partials/ViewCustomerNavbar";

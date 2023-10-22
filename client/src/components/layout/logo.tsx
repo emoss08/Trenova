@@ -18,10 +18,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
-export function OrganizationLogo() {
+export function Logo() {
   const queryClient = useQueryClient();
 
   // Get User organization data

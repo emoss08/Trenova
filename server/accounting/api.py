@@ -67,6 +67,8 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
                     "tags",
                     queryset=models.Tag.objects.only(
                         "id",
+                    ).filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ),
                 ),
             )
@@ -93,6 +95,8 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
                 "attachment",
                 "interest_rate",
                 "tags",
+                "modified",
+                "created",
             )
         )
         return queryset

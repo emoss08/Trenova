@@ -21,7 +21,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/common/fields/select";
 import { PaginationState, Table } from "@tanstack/react-table";
 import {
   ChevronLeftIcon,

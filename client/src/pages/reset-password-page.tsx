@@ -18,14 +18,14 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ModeToggle } from "@/components/theme-switcher";
+import { ModeToggle } from "@/components/ui/theme-switcher";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { resetPasswordSchema } from "@/lib/validations/accounts";
-import axios from "@/lib/AxiosConfig";
-import { Label } from "@/components/ui/label";
-import { InputField } from "@/components/ui/input";
+import axios from "@/lib/axiosConfig";
+import { Label } from "@/components/common/fields/label";
+import { InputField } from "@/components/common/fields/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";

@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import { OrderType } from "@/types/order";
 import { QueryKeys } from "@/types";

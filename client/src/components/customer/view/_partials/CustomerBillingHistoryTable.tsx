@@ -17,11 +17,11 @@
 
 import React from "react";
 import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { SimpleGrid, TextInput, useMantineTheme } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useContextMenu } from "mantine-contextmenu";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { montaTableIcons } from "@/components/common/table/Icons";
 import { API_URL } from "@/lib/constants";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";

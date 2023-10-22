@@ -16,7 +16,7 @@
  */
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import { GeneralLedgerAccount } from "@/types/accounting";
-import { QueryKey, useQuery, useQueryClient } from "react-query";
+import { QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useGLAccounts(show?: boolean) {
   const queryClient = useQueryClient();

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Button,
@@ -33,7 +33,7 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { APIError } from "@/types/server";
 import { emailControlSchema } from "@/lib/validations/OrganizationSchema";
 import {

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Button,
@@ -35,7 +35,7 @@ import { getBillingControl } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { BillingControl, BillingControlFormValues } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { APIError } from "@/types/server";
 import { billingControlSchema } from "@/lib/validations/BillingSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";

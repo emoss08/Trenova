@@ -16,35 +16,45 @@
  */
 
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { TExportModelFormValues } from "@/types/forms";
 import { getColumns } from "@/services/ReportRequestService";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/lib/axiosConfig";
 import { ExportModelSchema } from "@/lib/validations/GenericSchema";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SelectInput } from "@/components/ui/select-input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { SelectInput } from "@/components/common/fields/select-input";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/common/fields/radio-group";
+import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
+import { StoreType } from "@/lib/useGlobalStore";
+import { TableStoreProps } from "@/stores/TableStore";
+import { Loader2 } from "lucide-react";
 
 interface Props {
-  store: any;
+  store: StoreType<TableStoreProps>;
   modelName: string;
   name: string;
 }
 
-export function TableExportModal({
-  store,
-  modelName,
+function TableExportModalBody({
   name,
-}: Props): React.ReactElement | null {
+  modelName,
+  showExportModal,
+  setShowExportModal,
+}: {
+  name: string;
+  modelName: string;
+  showExportModal: boolean;
+  setShowExportModal: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [showExportModal, setShowExportModal] = store.use("exportModalOpen");
 
   const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
     queryKey: [`${modelName}-Columns`],
@@ -62,10 +72,7 @@ export function TableExportModal({
       },
     });
 
-  // Watch columns to get the length of the array
   const watchedColumns = watch("columns");
-
-  console.log("Columns Length", watchedColumns?.length);
 
   const columns = columnsData?.map((column: any) => ({
     label: column.label,
@@ -100,6 +107,84 @@ export function TableExportModal({
     }
   };
 
+  return isColumnsLoading ? (
+    <>
+      <div className="flex flex-col items-center justify-center space-y-2 h-40 w-full">
+        <Loader2 className="animate-spin h-20 w-20 text-muted" />
+        <p className="text-center">
+          Fetching columns for {name.toLowerCase()}s...
+        </p>
+      </div>
+    </>
+  ) : (
+    <form onSubmit={handleSubmit(submitForm)}>
+      <div className="mb-5">
+        <SelectInput
+          isMulti
+          hideSelectedOptions={true}
+          control={control}
+          rules={{ required: true }}
+          name="columns"
+          options={columns}
+          label="Columns"
+          placeholder="Select columns"
+          description="Fields with underscores are related fields. For example, 'organization__name' is the 'name' field of the organization of the record."
+        />
+      </div>
+      <div>
+        <Label className="required">Export Format</Label>
+        <Controller
+          name="fileFormat"
+          control={control}
+          defaultValue="csv"
+          render={({ field: { onChange, value } }) => (
+            <RadioGroup
+              className="grid grid-cols-3 mt-1"
+              onValueChange={onChange}
+              defaultValue={value}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="csv" id="r1" />
+                <Label htmlFor="r1">CSV</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="xlsx" id="r2" />
+                <Label htmlFor="r2">Excel</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pdf" id="r3" />
+                <Label htmlFor="r3">PDF</Label>
+              </div>
+            </RadioGroup>
+          )}
+        />
+        <p className="text-xs text-foreground/70 mt-1">
+          Select a format to export (CSV, Excel, or PDF).
+        </p>
+        <div className="flex justify-end gap-4 border-t pt-2 mt-5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowExportModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            isLoading={loading}
+            disabled={watchedColumns?.length === 0}
+          >
+            Export
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+export function TableExportModal({ store, modelName, name }: Props) {
+  const [showExportModal, setShowExportModal] = store.use("exportModalOpen");
+
   if (!setShowExportModal) return null;
 
   return (
@@ -108,64 +193,12 @@ export function TableExportModal({
         <DialogHeader>
           <DialogTitle>Export {name}s</DialogTitle>
         </DialogHeader>
-        {isColumnsLoading ? (
-          <Skeleton className="h-96" />
-        ) : (
-          <form onSubmit={handleSubmit(submitForm)}>
-            <div className="mb-5">
-              <SelectInput
-                isMulti
-                hideSelectedOptions={true}
-                control={control}
-                rules={{ required: true }}
-                name="columns"
-                options={columns}
-                label="Columns"
-                placeholder="Select columns"
-                description="Fields with underscores are related fields. For example, 'organization__name' is the 'name' field of the organization of the record."
-              />
-            </div>
-
-            <div>
-              <Label className="required">Export Format</Label>
-              <RadioGroup
-                className="grid grid-cols-3 mt-1"
-                defaultValue="comfortable"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="default" id="r1" />
-                  <Label htmlFor="r1">CSV</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="comfortable" id="r2" />
-                  <Label htmlFor="r2">Excel</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="compact" id="r3" />
-                  <Label htmlFor="r3">PDF</Label>
-                </div>
-              </RadioGroup>
-              <p className="text-xs text-foreground/70 mt-1">
-                Select a format to export (CSV, Excel, or PDF).
-              </p>
-              <div className="flex justify-end gap-4 border-t pt-2 mt-5">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowExportModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  isLoading={loading}
-                  disabled={watchedColumns?.length === 0}
-                >
-                  Export
-                </Button>
-              </div>
-            </div>
-          </form>
-        )}
+        <TableExportModalBody
+          showExportModal={showExportModal}
+          name={name}
+          modelName={modelName}
+          setShowExportModal={setShowExportModal}
+        />
       </DialogContent>
     </Dialog>
   );
