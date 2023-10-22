@@ -145,7 +145,10 @@ ALLOWED_MODELS = {
             {"value": "balance", "label": "Balance"},
             {"value": "opening_balance", "label": "Opening Balance"},
             {"value": "closing_balance", "label": "Closing Balance"},
-            {"value": "parent_account__account_number", "label": "Parent Account Number"},
+            {
+                "value": "parent_account__account_number",
+                "label": "Parent Account Number",
+            },
             {"value": "is_reconciled", "label": "Is Reconciled"},
             {"value": "date_opened", "label": "Date Opened"},
             {"value": "date_closed", "label": "Date Closed"},
@@ -153,7 +156,6 @@ ALLOWED_MODELS = {
             {"value": "owner__username", "label": "Owner"},
             {"value": "is_tax_relevant", "label": "Is Tax Relevant"},
             {"value": "interest_rate", "label": "Interest Rate"},
-            
         ],
     },
     "ChargeType": {

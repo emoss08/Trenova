@@ -38,9 +38,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[models.GeneralLedgerAccount]):
         "account_sub_type",
         "account_classification",
     )
-    search_fields: tuple[str, ...] = (
-        "account_number",
-    )
+    search_fields: tuple[str, ...] = ("account_number",)
 
     def get_form(
         self,
