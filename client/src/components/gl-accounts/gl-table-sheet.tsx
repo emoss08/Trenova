@@ -302,7 +302,7 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
     isLoading: tagsLoading,
   } = useTags(open);
 
-  const { handleSubmit, control, getValues, setValue } =
+  const { handleSubmit, control, getValues, setValue, reset } =
     useForm<GLAccountFormValues>({
       resolver: yupResolver(glAccountSchema),
       defaultValues: {
@@ -336,6 +336,7 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
       errorMessage: "Failed to create general ledger account.",
     },
     () => setIsSubmitting(false),
+    reset,
   );
 
   const onSubmit = (values: GLAccountFormValues) => {
