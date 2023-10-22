@@ -481,6 +481,7 @@ class GeneralLedgerAccount(GenericModel):
         verbose_name = _("General Ledger Account")
         verbose_name_plural = _("General Ledger Accounts")
         db_table = "general_ledger_account"
+        ordering = ["account_number"]
         constraints = [
             models.UniqueConstraint(
                 Lower("account_number"),
