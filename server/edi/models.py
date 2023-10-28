@@ -261,6 +261,15 @@ class EDIBillingProfile(GenericModel):
         X12 = "X12", _("X12")
         EDIFACT = "EDIFACT", _("EDIFACT")
 
+    @final
+    class EDIDirectionChoices(models.TextChoices):
+        """
+        Choices for the EDI Direction field
+        """
+
+        OUTBOUND = "O", _("Outbound")
+        INBOUND = "I", _("Inbound")
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -274,6 +283,19 @@ class EDIBillingProfile(GenericModel):
         related_query_name="edi_billing_profile",
         on_delete=models.RESTRICT,
         help_text=_("The customer this billing profile is for"),
+    )
+    direction = ChoiceField(
+        _("Direction"),
+        choices=EDIDirectionChoices.choices,
+        default=EDIDirectionChoices.OUTBOUND,
+        help_text=_("Whether this billing profile is for inbound or outbound EDI"),
+    )
+    edi_ship_only = models.BooleanField(
+        _("Create Only for EDI Shipments"),
+        default=False,
+        help_text=_(
+            "Whether or not to create EDI invoices only for shipments that were created via EDI"
+        ),
     )
     edi_enabled = models.BooleanField(
         _("EDI Enabled"),
@@ -412,18 +434,11 @@ class EDIBillingProfile(GenericModel):
         verbose_name=_("Validation Settings"),
         help_text=_("JSON dict with data validation rules"),
     )
-    # transmission_log = models.ForeignKey(
-    #     "TransmissionLog",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     verbose_name="Transmission Log",
-    #     help_text="Log of transmission results",
-    # )
-    # history = models.ManyToManyField(
-    #     "EDIDocument", verbose_name="Document History", help_text="Historical EDI documents"
-    # )
-    #
+    notes = models.TextField(
+        _("Notes"),
+        blank=True,
+        help_text=_("Notes about this EDI billing profile"),
+    )
 
     class Meta:
         """
@@ -451,3 +466,249 @@ class EDIBillingProfile(GenericModel):
             str: Absolute URL of the EDI Billing Profile
         """
         return reverse("edi-billing-profile-details", kwargs={"pk": self.pk})
+
+
+class EDILocationMapping(GenericModel):
+    """
+    Stores edi location mapping information related to :model:`edi.EDIBillingProfile`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_location",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this location belongs to"),
+    )
+    location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.RESTRICT,
+        related_name="location",
+        related_query_name="locations",
+        verbose_name=_("Location"),
+        help_text=_("Internal Location code."),
+    )
+    partner_edi_code = models.CharField(
+        max_length=50,
+        verbose_name=_("Partner EDI Code"),
+        help_text=_("Partner EDI Code."),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDILocationMapping model
+        """
+
+        verbose_name = _("EDI Location Mapping")
+        verbose_name_plural = _("EDI Location Mappings")
+        db_table = "edi_mp_location"
+
+    def __str__(self) -> str:
+        """EDI Location string representation
+
+        Returns:
+            str: String representation of the EDI Location Mapping
+        """
+        return textwrap.shorten(
+            f"{self.location} - {self.partner_edi_code}", width=50, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Location Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Location
+        """
+        return reverse("edi-location-mapping-details", kwargs={"pk": self.pk})
+
+
+class EDIBillToMapping(GenericModel):
+    """
+    Stores edi bill to mapping information related to :model:`edi.EDIBillingProfile`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_bill_to",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this bill-to belongs to"),
+    )
+    customer = models.ForeignKey(
+        "customer.Customer",
+        on_delete=models.RESTRICT,
+        related_name="customer",
+        related_query_name="customers",
+        verbose_name=_("Customer"),
+        help_text=_("Internal Customer code."),
+    )
+    partner_edi_code = models.CharField(
+        max_length=50,
+        verbose_name=_("Partner EDI Code"),
+        help_text=_("Partner EDI Code."),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDIBillToMapping model
+        """
+
+        verbose_name = _("EDI Bill To Mapping")
+        verbose_name_plural = _("EDI Bill To Mappings")
+        db_table = "edi_mp_bill_to"
+
+    def __str__(self) -> str:
+        """EDI Bill To string representation
+
+        Returns:
+            str: String representation of the EDI Bill To Mapping
+        """
+        return textwrap.shorten(
+            f"{self.customer} - {self.partner_edi_code}", width=50, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Bill To Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Bill To
+        """
+        return reverse("edi-bill-to-mapping-details", kwargs={"pk": self.pk})
+
+
+class EDICommodityMapping(GenericModel):
+    """
+    Stores edi commodity to mapping information related to :model:`edi.EDIBillingProfile`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_commodity",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this location belongs to"),
+    )
+    commodity = models.ForeignKey(
+        "commodities.Commodity",
+        on_delete=models.RESTRICT,
+        related_name="commodity",
+        related_query_name="commodities",
+        verbose_name=_("Commodity"),
+        help_text=_("Internal Commodity code."),
+    )
+    partner_edi_code = models.CharField(
+        max_length=50,
+        verbose_name=_("Partner EDI Code"),
+        help_text=_("Partner EDI Code."),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDIBillToMapping model
+        """
+
+        verbose_name = _("EDI Commodity Mapping")
+        verbose_name_plural = _("EDI Commodity Mappings")
+        db_table = "edi_mp_commodity_to"
+
+    def __str__(self) -> str:
+        """EDI Commodity Mapping string representation
+
+        Returns:
+            str: String representation of the EDI Commodity Mapping
+        """
+        return textwrap.shorten(
+            f"{self.commodity} - {self.partner_edi_code}", width=50, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Commodity Mapping Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Commodity Mapping
+        """
+        return reverse("edi-commodity-mapping-details", kwargs={"pk": self.pk})
+
+
+class EDIChargeCodeMapping(GenericModel):
+    """
+    Stores edi charge code to mapping information related to :model:`edi.EDIBillingProfile`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_charge_code",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this location belongs to"),
+    )
+    accessorial_charge = models.ForeignKey(
+        "billing.AccessorialCharge",
+        on_delete=models.RESTRICT,
+        related_name="accessorial_charge",
+        related_query_name="accessorial_charges",
+        verbose_name=_("Accessorial Charge Code"),
+        help_text=_("Internal Accessorial Charge code."),
+    )
+    partner_edi_code = models.CharField(
+        max_length=50,
+        verbose_name=_("Partner EDI Code"),
+        help_text=_("Partner EDI Code."),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDIChargeCodeMapping model
+        """
+
+        verbose_name = _("EDI Charge Code Mapping")
+        verbose_name_plural = _("EDI Charge Code Mappings")
+        db_table = "edi_mp_charge_code_to"
+
+    def __str__(self) -> str:
+        """EDI Charge Code Mapping string representation
+
+        Returns:
+            str: String representation of the EDI Charge Code Mapping
+        """
+        return textwrap.shorten(
+            f"{self.accessorial_charge} - {self.partner_edi_code}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Charge Code Mapping Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Charge Code Mapping
+        """
+        return reverse("edi-charge-code-mapping-details", kwargs={"pk": self.pk})
