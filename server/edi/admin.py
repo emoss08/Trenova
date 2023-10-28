@@ -114,3 +114,31 @@ class EDIChargeCodeMappingAdmin(GenericAdmin[models.EDIChargeCodeMapping]):
     )
 
     search_fields = ("accessorial_charge", "partner_edi_code")
+
+
+@admin.register(models.EDIBillingValidation)
+class EDIBillingValidationAdmin(GenericAdmin[models.EDIBillingValidation]):
+    """
+    EDI Billing Validation Admin
+    """
+
+    list_display = (
+        "edi_billing_profile",
+        "description",
+    )
+
+    search_fields = ("edi_billing_profile", "description")
+
+
+@admin.register(models.EDINotification)
+class EDINotificationAdmin(GenericAdmin[models.EDINotification]):
+    """
+    EDI Notification Admin
+    """
+
+    list_display = (
+        "edi_billing_profile",
+        "notification_type",
+    )
+
+    search_fields = ("edi_billing_profile", "notification_type")
