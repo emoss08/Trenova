@@ -356,6 +356,7 @@ class AccessorialCharge(GenericModel):
     code = models.CharField(
         _("Code"),
         max_length=50,
+        help_text=_("Code for the other charge."),
     )
     description = models.TextField(
         _("Description"),
@@ -365,6 +366,7 @@ class AccessorialCharge(GenericModel):
     is_detention = models.BooleanField(
         _("Is Detention"),
         default=False,
+        help_text=_("Whether the other charge is a detention charge."),
     )
     method = ChoiceField(
         _("Method"),
