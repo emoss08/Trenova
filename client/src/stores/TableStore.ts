@@ -28,7 +28,7 @@ export type TableStoreProps = {
   exportModalOpen: boolean;
   columnVisibility: VisibilityState;
   rowSelection: RowSelectionState;
-  currentRecord: Record<string, any> | undefined;
+  currentRecord: any | undefined;
   columnFilters: ColumnFiltersState;
   sorting: SortingState;
   sheetOpen: boolean;
