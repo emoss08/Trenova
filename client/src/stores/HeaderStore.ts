@@ -26,15 +26,6 @@ interface HeaderStoreType {
   clickCount: number; // way to force unmount of hovercard
 }
 
-export const useNavbarStore = createGlobalStore<HeaderStoreType>({
-  downloadMenuOpen: false,
-  themeSwitcherOpen: false,
-  userMenuOpen: false,
-  notificationsMenuOpen: false,
-  linksOpen: false,
-  clickCount: 0,
-});
-
 type HeaderStoreProps = {
   menuOpen?: string;
 };
