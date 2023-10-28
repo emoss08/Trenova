@@ -191,7 +191,7 @@ export function DataTable<K extends Record<string, any>>({
   const dataQuery = useQuery<ApiResponse<K>, Error>({
     queryKey: [queryKey, link, pageIndex, pageSize],
     queryFn: async () => {
-      const fetchURL = new URL(`${API_URL}${link}/`);
+      const fetchURL = new URL(`${API_URL}${link}`);
       fetchURL.searchParams.set("limit", pageSize.toString());
       fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
 
