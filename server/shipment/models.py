@@ -52,6 +52,17 @@ def shipment_documentation_upload_to(
     return f"{instance.organization_id}/shipment/docs/{instance.shipment_id}/{filename}"
 
 
+@final
+class EntryMethodChoices(models.TextChoices):
+    """
+    Entry method choices used for shipments.
+    """
+
+    MANUAL = "MANUAL", _("Manual")
+    EDI = "EDI", _("EDI")
+    API = "API", _("API")
+
+
 class ShipmentControl(GenericModel):
     """Stores the shipment control information for a related :model:`organization.Organization`.
 
@@ -169,7 +180,6 @@ class ShipmentControl(GenericModel):
 
         verbose_name = _("Shipment Control")
         verbose_name_plural = _("Shipment Controls")
-        ordering = ["organization"]
         db_table = "shipment_control"
 
     def __str__(self) -> str:
@@ -241,7 +251,6 @@ class ShipmentType(GenericModel):
 
         verbose_name = _("Shipment Type")
         verbose_name_plural = _("Shipment Types")
-        ordering = ["name"]
         db_table = "shipment_type"
         constraints = [
             models.UniqueConstraint(
@@ -319,7 +328,6 @@ class ServiceType(GenericModel):
 
         verbose_name = _("Service Type")
         verbose_name_plural = _("Service Types")
-        ordering = ["code"]
         db_table = "service_type"
         constraints = [
             models.UniqueConstraint(
@@ -586,7 +594,7 @@ class Shipment(GenericModel):
         related_name="shipments",
         related_query_name="shipment",
         verbose_name=_("User"),
-        help_text=_("Order entered by User"),
+        help_text=_("Shipment entered by User"),
     )
     hazmat = models.ForeignKey(
         "commodities.HazardousMaterial",
@@ -640,13 +648,13 @@ class Shipment(GenericModel):
     auto_rate = models.BooleanField(
         _("Auto Rate"),
         default=True,
-        help_text=_("Determines whether order will be auto-rated by entered rate."),
+        help_text=_("Determines whether shipment will be auto-rated by entered rate."),
     )
     current_suffix = models.CharField(
         _("Current Suffix"),
         max_length=2,
         default="",
-        help_text=_("Current suffix for order in the BillingQueue."),
+        help_text=_("Current suffix for shipment in the BillingQueue."),
         blank=True,
     )
     formula_template = models.ForeignKey(
@@ -657,6 +665,13 @@ class Shipment(GenericModel):
         blank=True,
         help_text=_("Selected formula template for this shipment."),
     )
+    entry_method = ChoiceField(
+        _("Entry Method"),
+        default=EntryMethodChoices.MANUAL,
+        choices=EntryMethodChoices.choices,
+        help_text=_("Method of entry for this shipment."),
+        editable=False,
+    )
 
     class Meta:
         """
@@ -665,7 +680,6 @@ class Shipment(GenericModel):
 
         verbose_name = _("Shipment")
         verbose_name_plural = _("Shipments")
-        ordering = ["pro_number"]
         db_table = "shipment"
         constraints = [
             models.UniqueConstraint(
@@ -693,7 +707,7 @@ class Shipment(GenericModel):
 
         If 'auto_rate' is true, it retrieves and sets the transfer rate details for this shipment.
 
-        If the order's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
+        If the shipment's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
         If the Shipment's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
         piece count and weight for this shipment.
 
@@ -703,7 +717,7 @@ class Shipment(GenericModel):
         If 'origin_location' or 'destination_location' exists but the corresponding addresses do not, it sets
         the address using the location's combined address details.
 
-        If the order has a commodity set and the commodity has a minimum and maximum temperature specification,
+        If the shipment has a commodity set and the commodity has a minimum and maximum temperature specification,
         If the Shipment has a commodity set and the commodity has a minimum and maximum temperature specification,
         these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the shipment.
 
@@ -930,7 +944,7 @@ class ShipmentDocumentation(GenericModel):
         Returns:
             str: Absolute url for the ShipmentDocumentation
         """
-        return reverse("order-documentation-detail", kwargs={"pk": self.pk})
+        return reverse("shipment-documentation-detail", kwargs={"pk": self.pk})
 
 
 class ShipmentComment(GenericModel):
@@ -979,7 +993,6 @@ class ShipmentComment(GenericModel):
 
         verbose_name = _("Shipment Comment")
         verbose_name_plural = _("Shipment Comments")
-        ordering = ["-comment_type"]
         db_table = "shipment_comment"
 
     def __str__(self) -> str:
@@ -1148,7 +1161,6 @@ class ReasonCode(GenericModel):
 
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
-        ordering = ["code"]
         db_table = "reason_code"
         constraints = [
             models.UniqueConstraint(
@@ -1237,7 +1249,7 @@ class FormulaTemplate(GenericModel):
         verbose_name=_("Auto Apply"),
         default=False,
         help_text=_(
-            "Auto apply formula template to orders, based on customer, shipment_type, and template_type."
+            "Auto apply formula template to shipments, based on customer, shipment_type, and template_type."
         ),
     )
     history = AuditlogHistoryField()
@@ -1249,7 +1261,6 @@ class FormulaTemplate(GenericModel):
 
         verbose_name = _("Formula Template")
         verbose_name_plural = _("Formula Templates")
-        ordering = ["name"]
         db_table = "formula_template"
 
     def __str__(self) -> str:
