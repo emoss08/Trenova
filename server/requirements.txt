@@ -3,12 +3,12 @@ celery==5.3.4
 celery-singleton==0.3.1
 channels==4.0.0
 channels_redis==4.1.0
-confluent-kafka==2.2.0
+confluent-kafka==2.3.0
 cssutils==2.9.0
 daphne==4.0.0
 Django==4.2.6
 django-auditlog==2.3.0
-django-cacheops==7.0.1
+django-cacheops==7.0.2
 django-celery-beat==2.5.0
 django-celery-results==2.5.1
 django-compressor==4.4
@@ -30,7 +30,7 @@ djangorestframework~=3.14.0
 djangorestframework-camel-case==1.4.2
 drf-nested-routers==0.93.4
 drf-spectacular==0.26.5
-drf-standardized-errors[openapi]==0.12.5
+drf-standardized-errors[openapi]==0.12.6
 geopy==2.4.0
 googlemaps==4.10.0
 hiredis==2.2.3
