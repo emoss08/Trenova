@@ -18,12 +18,25 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import ErrorBoundary from "./components/layout/error-boundary";
-
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+import { Button } from "./components/ui/button";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          fallbackRender={({ resetErrorBoundary }) => (
+            <div>
+              There was an error!
+              <Button onClick={() => resetErrorBoundary()}>Try again</Button>
+            </div>
+          )}
+        >
+          <App />
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   </React.StrictMode>,
 );
