@@ -24,7 +24,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useUsers } from "@/hooks/useUsers";
 import axios from "@/lib/axiosConfig";
 import {
   accountClassificationChoices,
@@ -56,7 +55,7 @@ import {
 import { TextareaField } from "../common/fields/textarea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { toast } from "@/components/ui/use-toast";
-import { useGLAccounts, useTags } from "@/hooks/useQueries";
+import { useGLAccounts, useTags, useUsers } from "@/hooks/useQueries";
 
 export function GLForm({
   glAccounts,
