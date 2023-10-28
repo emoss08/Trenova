@@ -28,7 +28,7 @@ const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes"),
 );
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
-const GLAccountsPage = lazy(() => import("../pages/gl-accounts"));
+const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));

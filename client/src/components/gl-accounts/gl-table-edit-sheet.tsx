@@ -25,13 +25,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useGLAccounts } from "@/hooks/useGLAccounts";
-import { useTags } from "@/hooks/useTags";
 import { useUsers } from "@/hooks/useUsers";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/accounting";
 import { useTableStore } from "@/stores/TableStore";
-import { GLAccountFormValues } from "@/types/accounting";
+import { GeneralLedgerAccount, GLAccountFormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -39,13 +37,14 @@ import { useForm } from "react-hook-form";
 import { toast } from "../ui/use-toast";
 import { GLForm } from "./gl-table-sheet";
 import { formatDate } from "@/lib/date";
+import { useGLAccounts, useTags } from "@/hooks/useQueries";
 
 function GLEditForm({
   glAccount,
   open,
   onOpenChange,
 }: {
-  glAccount: Record<string, any>;
+  glAccount: GeneralLedgerAccount;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -100,7 +99,7 @@ function GLEditForm({
       queryKeysToInvalidate: ["gl-account-table-data"],
       additionalInvalidateQueries: ["glAccounts"],
       closeModal: true,
-      errorMessage: "Failed to create general ledger account.",
+      errorMessage: "Failed to update general ledger account.",
     },
     () => setIsSubmitting(false),
   );
@@ -154,6 +153,8 @@ function GLEditForm({
 
 export function GLTableEditSheet({ onOpenChange, open }: TableSheetProps) {
   const [glAccount] = useTableStore.use("currentRecord");
+
+  if (!glAccount) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
