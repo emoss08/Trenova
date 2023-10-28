@@ -85,13 +85,9 @@ export type Shipment = {
   originLocation: string;
 };
 
-export type OrderType = {
-  organization: string;
-  businessUnit: string;
+export interface ShipmentType extends BaseModel {
   id: string;
   isActive: boolean;
   name: string;
   description: string;
-  created: string;
-  modified: string;
-};
+}
