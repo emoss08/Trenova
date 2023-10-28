@@ -58,3 +58,59 @@ class EDIBillingProfileAdmin(GenericAdmin[models.EDIBillingProfile]):
     )
 
     search_fields = ("customer", "edi_enabled")
+
+
+@admin.register(models.EDILocationMapping)
+class EDILocationMappingAdmin(GenericAdmin[models.EDILocationMapping]):
+    """
+    EDI Location Mapping Admin
+    """
+
+    list_display = (
+        "location",
+        "partner_edi_code",
+    )
+
+    search_fields = ("location", "partner_edi_code")
+
+
+@admin.register(models.EDIBillToMapping)
+class EDIBillToMappingAdmin(GenericAdmin[models.EDIBillToMapping]):
+    """
+    EDI Bill To Mapping Admin
+    """
+
+    list_display = (
+        "customer",
+        "partner_edi_code",
+    )
+
+    search_fields = ("customer", "partner_edi_code")
+
+
+@admin.register(models.EDICommodityMapping)
+class EDICommodityMappingAdmin(GenericAdmin[models.EDICommodityMapping]):
+    """
+    EDI Commodity Mapping Admin
+    """
+
+    list_display = (
+        "commodity",
+        "partner_edi_code",
+    )
+
+    search_fields = ("commodity", "partner_edi_code")
+
+
+@admin.register(models.EDIChargeCodeMapping)
+class EDIChargeCodeMappingAdmin(GenericAdmin[models.EDIChargeCodeMapping]):
+    """
+    EDI Charge Code Mapping Admin
+    """
+
+    list_display = (
+        "accessorial_charge",
+        "partner_edi_code",
+    )
+
+    search_fields = ("accessorial_charge", "partner_edi_code")
