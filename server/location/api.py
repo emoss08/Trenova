@@ -18,7 +18,7 @@
 from typing import Any
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -57,7 +57,12 @@ class LocationViewSet(viewsets.ModelViewSet):
 
     queryset = models.Location.objects.all()
     serializer_class = serializers.LocationSerializer
-    filterset_fields = ("location_category__name", "depot__name", "is_geocoded")
+    filterset_fields = (
+        "location_category__name",
+        "depot__name",
+        "is_geocoded",
+        "status",
+    )
     permission_classes = [CustomObjectPermissions]
 
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
@@ -84,7 +89,7 @@ class LocationViewSet(viewsets.ModelViewSet):
         for item, obj in zip(data, queryset):
             item["wait_time_avg"] = obj.wait_time_avg
 
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
     def get_queryset(self) -> QuerySet[models.Location]:
         queryset = (
