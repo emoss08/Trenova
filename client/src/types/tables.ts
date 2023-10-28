@@ -17,6 +17,7 @@
 
 import { Column, ColumnDef, Table } from "@tanstack/react-table";
 import { QueryKeys } from "./index";
+import { API_ENDPOINTS } from "./server";
 
 export interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -31,7 +32,7 @@ export interface DataTableFacetedFilterProps<TData, TValue> {
 export type DataTableProps<K> = {
   columns: ColumnDef<K>[];
   name: string;
-  link: string;
+  link: API_ENDPOINTS;
   queryKey: QueryKeys;
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;
@@ -48,7 +49,7 @@ export type TableSheetProps = {
 
 export type TableOptionProps = {
   label: string;
-  value: string;
+  value: string | boolean;
   icon?: React.ComponentType<{ className?: string }>;
 };
 
