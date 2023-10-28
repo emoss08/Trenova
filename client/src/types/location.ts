@@ -14,9 +14,14 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-export type Location = {
+
+import { BaseModel } from "@/types/organization";
+import { StatusChoiceProps } from "@/types/index";
+
+export interface Location extends BaseModel {
   id: string;
   code: string;
+  status: StatusChoiceProps;
   location_category: string;
   depot: string;
   description: string;
@@ -27,4 +32,4 @@ export type Location = {
   latitude: number;
   place_id: string;
   is_geocoded: boolean;
-};
+}
