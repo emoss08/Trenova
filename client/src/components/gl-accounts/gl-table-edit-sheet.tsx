@@ -25,7 +25,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useUsers } from "@/hooks/useUsers";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/accounting";
 import { useTableStore } from "@/stores/TableStore";
@@ -37,7 +36,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "../ui/use-toast";
 import { GLForm } from "./gl-table-sheet";
 import { formatDate } from "@/lib/date";
-import { useGLAccounts, useTags } from "@/hooks/useQueries";
+import { useGLAccounts, useTags, useUsers } from "@/hooks/useQueries";
 
 function GLEditForm({
   glAccount,
