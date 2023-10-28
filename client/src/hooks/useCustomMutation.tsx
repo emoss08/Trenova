@@ -58,8 +58,10 @@ export function useCustomMutation<T extends FieldValues>(
   return useMutation({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
-    onSuccess: () => handleSuccess(options, toast, queryClient, reset),
-    onError: (error: Error) => handleError(error, options, control, toast),
+    onSuccess: async () =>
+      await handleSuccess(options, toast, queryClient, reset),
+    onError: async (error: Error) =>
+      await handleError(error, options, control, toast),
     onSettled: onMutationSettled,
   });
 }
@@ -118,7 +120,7 @@ function sendFileData(
   return axios.patch(path, formData);
 }
 
-function handleSuccess<T extends FieldValues>(
+async function handleSuccess<T extends FieldValues>(
   options: MutationOptions,
   toast: (toast: Toast) => void,
   queryClient: QueryClient,
@@ -150,7 +152,7 @@ function handleSuccess<T extends FieldValues>(
   reset?.();
 }
 
-function handleError<T extends FieldValues>(
+async function handleError<T extends FieldValues>(
   error: any,
   options: MutationOptions,
   control: Control<T>,
