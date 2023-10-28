@@ -22,7 +22,12 @@ import { Location } from "@/types/location";
  * Fetches locations from the server.
  * @returns A promise that resolves to an array of locations.
  */
-export async function getLocations(): Promise<Array<Location>> {
-  const response = await axios.get("/locations/?limit=999999999"); // for the time being, we'll just get all the users
+export async function getLocations(): Promise<Location[]> {
+  const response = await axios.get("/locations/", {
+    params: {
+      status: "A",
+      limit: 1000,
+    },
+  });
   return response.data.results;
 }
