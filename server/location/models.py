@@ -27,7 +27,7 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
 from organization.models import Depot
-from utils.models import GenericModel
+from utils.models import GenericModel, ChoiceField, PrimaryStatusChoices
 
 
 class LocationCategory(GenericModel):
@@ -102,6 +102,12 @@ class Location(GenericModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the General Ledger Account."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(
         _("Code"),
