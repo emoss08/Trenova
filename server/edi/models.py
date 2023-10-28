@@ -20,6 +20,7 @@ import uuid
 from typing import final
 
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -712,3 +713,293 @@ class EDIChargeCodeMapping(GenericModel):
             str: Absolute URL of the EDI Charge Code Mapping
         """
         return reverse("edi-charge-code-mapping-details", kwargs={"pk": self.pk})
+
+
+class EDIBillingValidation(GenericModel):
+    """
+    Stores edi billing validation information related to :model:`edi.EDIBillingProfile`
+    """
+
+    @final
+    class TestPassChoices(models.TextChoices):
+        """
+        Choices for the Test Pass field
+        """
+
+        ALL_RULES = "ALL_RULES", _("All Rules are Satisfied")
+        ANY_RULE = "ANY_RULE", _("Any One Rule Is Satisfied")
+
+    @final
+    class RuleTypeChoices(models.TextChoices):
+        """
+        Choices for the Rule Type field
+        """
+
+        FIELD = "FIELD", _("Field")
+        SEGMENT = "SEGMENT", _("Segment")
+        COMPOSITE = "COMPOSITE", _("Composite")
+        LOOP = "LOOP", _("Loop")
+
+    @final
+    class TableNameChoices(models.TextChoices):
+        """
+        Choices for the Table Name field
+        """
+
+        EDI_BILL = "EDI_BILL", _("EDI Bill")
+        SHIPMENT = "SHIPMENT", _("Shipment")
+        STOP = "STOP", _("Stop")
+
+    @final
+    class OperatorChoices(models.TextChoices):
+        """
+        Choices for the Operator field
+        """
+
+        EQUALS = "EQUALS", _("Equals")
+        LESS_THAN_OR_EQUAL_TO = "LESS_THAN_OR_EQUAL_TO", _("Less Than or Equal To")
+        LESS_THEN = "LESS_THEN", _("Less Than")
+        LESS_THAN_OR_GREATER_THAN = "LESS_THAN_OR_GREATER_THAN", _(
+            "Less Than or Greater Than"
+        )
+        GREATER_THAN_OR_EQUAL_TO = "GREATER_THAN_OR_EQUAL_TO", _(
+            "Greater Than or Equal To"
+        )
+        GREATER_THAN = "GREATER_THAN", _("Greater Than")
+        IS_NULL = "IS_NULL", _("Is Null")
+        IS_NOT_NULL = "IS_NOT_NULL", _("Is Not Null")
+        ENDS_WITH = "ENDS_WITH", _("Ends With")
+        STARTS_WITH = "STARTS_WITH", _("Starts With")
+        CONTAINS = "CONTAINS", _("Contains")
+        DOES_NOT_CONTAIN = "DOES_NOT_CONTAIN", _("Does Not Contain")
+        HAS_LENGTH_OF = "HAS_LENGTH_OF", _("Has Length Of")
+        CONFORMS_TO_REGEX = "CONFORMS_TO_REGEX", _("Conforms to Regex")
+        WITHIN = "WITHIN", _("Within")
+        HAS_NOT_MET = "HAS_NOT_MET", _("Has Not Met")
+
+    @final
+    class RuleActionChoices(models.TextChoices):
+        """
+        Choices for the Rule Action field
+        """
+
+        WARNING = "WARNING", _("Warning")
+        ERROR = "ERROR", _("Error")
+        STOP = "STOP", _("Stop")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_billing_validation",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this validation belongs to"),
+    )
+    test_passes_when = ChoiceField(
+        _("Test Passes When"),
+        choices=TestPassChoices.choices,
+        help_text=_("The condition for a test to pass"),
+    )
+    rule_type = ChoiceField(
+        _("Rule Type"),
+        choices=RuleTypeChoices.choices,
+        help_text=_("The type of rule to use"),
+    )
+    table_name = ChoiceField(
+        _("Table Name"),
+        choices=TableNameChoices.choices,
+        help_text=_("The table to use for this rule"),
+    )
+    operator = ChoiceField(
+        _("Operator"),
+        choices=OperatorChoices.choices,
+        help_text=_("The operator to use for this rule"),
+    )
+    value = models.CharField(
+        _("Value"),
+        max_length=255,
+        help_text=_("The value to compare using the operator"),
+    )
+    description = models.CharField(
+        _("Rule Description"),
+        max_length=255,
+        help_text=_("A descriptive name for this rule"),
+    )
+    data_type = models.CharField(
+        _("Data Type"),
+        max_length=50,
+        choices=[("INTEGER", "Integer"), ("STRING", "String"), ("FLOAT", "Float")],
+        default="STRING",
+    )
+    complex_rules = models.JSONField(
+        _("Complex Rules"),
+        null=True,
+        blank=True,
+        help_text=_("JSON data for complex rule configurations"),
+    )
+    rule_action = ChoiceField(
+        _("Rule Action"),
+        choices=RuleActionChoices.choices,
+        help_text=_("The action to take if this rule is not satisfied"),
+    )
+    error_message = models.CharField(
+        _("Error Message"),
+        max_length=255,
+        help_text=_("The error message to display if this rule is not satisfied"),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDIBillingValidation model
+        """
+
+        verbose_name = _("EDI Billing Validation")
+        verbose_name_plural = _("EDI Billing Validations")
+        db_table = "edi_billing_validation"
+
+    def __str__(self) -> str:
+        """EDI Billing Validation string representation
+
+        Returns:
+            str: String representation of the EDI Billing Validation
+        """
+        return textwrap.shorten(
+            f"{self.description} - {self.rule_action}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Billing Validation Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Billing Validation
+        """
+        return reverse("edi-billing-validation-details", kwargs={"pk": self.pk})
+
+
+class EDINotification(GenericModel):
+    """
+    Stores edi notification information related to :model:`edi.EDIBillingProfile`
+    """
+
+    @final
+    class NotificationTypeChoices(models.TextChoices):
+        """
+        Choices for the Notification Type field
+        """
+
+        ERROR_REPORT = "ERROR_REPORT", _("Error Report")
+        FUNCTIONAL_ACK = "FUNCTIONAL_ACK", _("Functional Acknowledgement")
+        AUTO_RESOLUTION = "AUTO_RESOLUTION", _("Auto Resolution")
+        HISTORY_SNAPSHOT = "HISTORY_SNAPSHOT", _("History Snapshot")
+
+    @final
+    class NotificationFormatChoices(models.TextChoices):
+        """
+        Choices for the Notification Format field
+        """
+
+        EMAIL = "EMAIL", _("Email")
+        SMS = "SMS", _("SMS")
+        WEBHOOK = "WEBHOOK", _("Webhook")
+        PUSH_NOTIFICATION = "PUSH_NOTIFICATION", _("Push Notification")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    edi_billing_profile = models.ForeignKey(
+        EDIBillingProfile,
+        on_delete=models.CASCADE,
+        related_name="edi_notification",
+        verbose_name=_("EDI Billing Profile"),
+        help_text=_("The EDI Billing Profile this validation belongs to"),
+    )
+    notification_type = ChoiceField(
+        _("Notification Type"),
+        choices=NotificationTypeChoices.choices,
+        help_text=_("The type of notification to send"),
+    )
+    notification_format = ChoiceField(
+        _("Notification Format"),
+        choices=NotificationFormatChoices.choices,
+        help_text=_("The format of the notification"),
+    )
+    parameters = models.JSONField(
+        _("Parameters"),
+        null=True,
+        blank=True,
+        help_text=_("JSON data for notification parameters"),
+    )
+    recipients = models.CharField(
+        _("Recipients"),
+        max_length=255,
+        help_text=_("Comma separated list of recipients"),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDINotification model
+        """
+
+        verbose_name = _("EDI Notification")
+        verbose_name_plural = _("EDI Notifications")
+        db_table = "edi_notification"
+
+    def __str__(self) -> str:
+        """EDI Notification string representation
+
+        Returns:
+            str: String representation of the EDI Notification
+        """
+        return textwrap.shorten(
+            f"{self.notification_type} - {self.notification_format}",
+            width=50,
+            placeholder="...",
+        )
+
+    def clean(self) -> None:
+        """EDINotification clean method
+
+        Returns:
+            None: This function does not return anything.
+        """
+        super().clean()
+
+        # Split the recipients by comma to get individual emails
+        emails = [
+            email.strip() for email in self.recipients.split(",") if email.strip()
+        ]
+
+        # Use Django's EmailValidator to validate each email
+        validator = EmailValidator()
+        for email in emails:
+            try:
+                validator(email)
+            except ValidationError as exc:
+                raise ValidationError(
+                    {
+                        "recipients": _(
+                            f"{email} is not a valid email address. Please Try again."
+                        )
+                    },
+                    code="invalid",
+                ) from exc
+
+    def get_absolute_url(self) -> str:
+        """EDI Notification Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Notification
+        """
+        return reverse("edi-notification-details", kwargs={"pk": self.pk})
