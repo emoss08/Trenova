@@ -100,7 +100,7 @@ export default function GLAccounts() {
         <DataTable
           queryKey="gl-account-table-data"
           columns={columns}
-          link="/gl_accounts"
+          link="/gl_accounts/"
           name="Gl Account"
           exportModelName="GeneralLedgerAccount"
           filterColumn="accountNumber"

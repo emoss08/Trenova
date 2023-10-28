@@ -24,8 +24,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useGLAccounts } from "@/hooks/useGLAccounts";
-import { useTags } from "@/hooks/useTags";
 import { useUsers } from "@/hooks/useUsers";
 import axios from "@/lib/axiosConfig";
 import {
@@ -58,6 +56,7 @@ import {
 import { TextareaField } from "../common/fields/textarea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { toast } from "@/components/ui/use-toast";
+import { useGLAccounts, useTags } from "@/hooks/useQueries";
 
 export function GLForm({
   glAccounts,
@@ -333,7 +332,7 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
       queryKeysToInvalidate: ["gl-account-table-data"],
       additionalInvalidateQueries: ["glAccounts"],
       closeModal: true,
-      errorMessage: "Failed to create general ledger account.",
+      errorMessage: "Failed to create new general ledger account.",
     },
     () => setIsSubmitting(false),
     reset,
