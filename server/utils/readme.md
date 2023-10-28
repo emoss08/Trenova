@@ -101,14 +101,3 @@ class RandomModel(GenericModel):
     name = models.CharField(max_length=255)
     status = ChoiceField(choices=Status.choices, default=Status.ACTIVE)
 ```
-
-## Utils
-
-### FormatDocstring <a name="FormatDocstring"></a>
-
-* This is a utility that will format the docstrings in a file to be in the correct format,
-It is not perfect, but will wrap lines longer than 100 characters
-
-```bash
-python format_docstrings.py <path_to_directory> <file_name>
-```
