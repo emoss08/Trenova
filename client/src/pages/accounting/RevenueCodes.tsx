@@ -15,21 +15,76 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { RevenueCodeTable } from "@/components/revenue-codes/table/RevenueCodeTable";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { truncateText } from "@/lib/utils";
+import { ColumnDef } from "@tanstack/react-table";
+import { RCDialog } from "@/components/revenue-codes/rc-table-dialog";
+import { RevenueCode } from "@/types/accounting";
+import { RCTableEditDialog } from "@/components/revenue-codes/rc-table-edit-dialog";
 
-const RevenueCodes: React.FC = () => {
-  const { classes } = usePageStyles();
+const columns: ColumnDef<RevenueCode>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Code" />
+    ),
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 25),
+  },
+  {
+    accessorKey: "expAccountNum",
+    header: "Expense Account",
+    cell: ({ row }) => row.original.expAccountNum || "No Expense Account",
+  },
+  {
+    accessorKey: "revAccountNum",
+    header: "Revenue Account",
+    cell: ({ row }) => row.original.revAccountNum || "No Revenue Account",
+  },
+];
 
+export default function RevenueCodes() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <RevenueCodeTable />
-      </Card>
-    </Flex>
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="revenue-code-table-data"
+          columns={columns}
+          link="/revenue_codes/"
+          name="Revenue Code"
+          exportModelName="RevenueCode"
+          filterColumn="code"
+          TableSheet={RCDialog}
+          TableEditSheet={RCTableEditDialog}
+        />
+      </CardContent>
+    </Card>
   );
-};
-
-export default RevenueCodes;
+}
