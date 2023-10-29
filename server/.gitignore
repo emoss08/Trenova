@@ -42,3 +42,4 @@ machine_learning
 .coverage
 ts_models
 venv/*
+monkeytype.sqlite3
