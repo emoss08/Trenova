@@ -41,7 +41,7 @@ Pillow==10.1.0
 psutil==5.9.6
 psycopg2==2.9.9
 psycopg2cffi==2.9.0
-pypdf==3.16.4
+pypdf==3.17.0
 python-dateutil==2.8.2
 pytz==2023.3.post1
 pyx12==2.3.3
