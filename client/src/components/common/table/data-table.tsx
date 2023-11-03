@@ -45,7 +45,6 @@ import {
   DataTableProps,
   FilterConfig,
 } from "@/types/tables";
-import { DownloadIcon } from "@radix-ui/react-icons";
 import { AlertTriangle, Plus, X } from "lucide-react";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -55,7 +54,10 @@ import { DataTableViewOptions } from "./data-table-view-options";
 import { Input } from "@/components/common/fields/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTablePagination } from "./data-table-pagination";
-import { TableExportModal } from "./data-table-export-modal";
+import {
+  DataTableImportExportOption,
+  TableExportModal,
+} from "./data-table-export-modal";
 import { API_URL } from "@/lib/constants";
 import axios from "@/lib/axiosConfig";
 
@@ -150,13 +152,7 @@ function DataTableTopBar<K>({
         )}
       </div>
       <DataTableViewOptions table={table} />
-      <Button
-        variant="default"
-        className="hidden h-8 lg:flex"
-        onClick={() => store.set("exportModalOpen", true)}
-      >
-        <DownloadIcon className="mr-2 h-4 w-4" /> Export
-      </Button>
+      <DataTableImportExportOption />
       <Button
         variant={buttonVariant}
         onClick={() => store.set("sheetOpen", true)}
