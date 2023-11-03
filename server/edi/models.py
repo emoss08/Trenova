@@ -24,6 +24,7 @@ from django.core.validators import EmailValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from encrypted_model_fields.fields import EncryptedCharField
 
 from utils.models import ChoiceField, GenericModel
 
@@ -308,24 +309,6 @@ class EDIBillingProfile(GenericModel):
         help_text=_("The EDI format to use for this customer"),
         choices=EDIFormatChoices.choices,
     )
-    destination = models.URLField(
-        _("Destination"),
-        max_length=255,
-        help_text=_("The URL to send the EDI file to"),
-        blank=True,
-    )
-    username = models.CharField(
-        _("Username"),
-        max_length=255,
-        blank=True,
-        help_text=_("Username for the destination"),
-    )
-    password = models.CharField(
-        _("Password"),
-        max_length=255,
-        blank=True,
-        help_text=_("Password for the destination"),
-    )
     segments = models.ManyToManyField(
         EDISegment,
         verbose_name=_("Segments"),
@@ -351,6 +334,15 @@ class EDIBillingProfile(GenericModel):
         help_text=_(
             "Represents the version of the EDI standards you're using (e.g., 4010, 5010 for X12)"
         ),
+    )
+    edi_comm_profile = models.ForeignKey(
+        "EDICommProfile",
+        related_name="edi_billing_profiles",
+        related_query_name="edi_billing_profile",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text=_("The communication profile to use for this billing profile"),
     )
     edi_test_mode = models.BooleanField(
         default=False,
@@ -1003,3 +995,205 @@ class EDINotification(GenericModel):
             str: Absolute URL of the EDI Notification
         """
         return reverse("edi-notification-details", kwargs={"pk": self.pk})
+
+
+class EDICommProfile(GenericModel):
+    """
+    Stores edi communication profile information related to :model:`edi.EDIBillingProfile`
+    """
+
+    @final
+    class ProtocolChoices(models.TextChoices):
+        """
+        Choices for the Protocol field
+        """
+
+        FTP = "FTP", _("FTP")
+        HTTP = "HTTP", _("HTTP")
+        AS2 = "AS2", _("AS2")
+        SFTP = "SFTP", _("SFTP")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("ID"),
+    )
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=100,
+        help_text=_("A descriptive name for this communication profile"),
+    )
+    is_active = models.BooleanField(
+        verbose_name=_("Is Active"),
+        default=False,
+        help_text=_("Whether or not this communication profile is active"),
+    )
+    protocol = ChoiceField(
+        _("Protocol"),
+        choices=ProtocolChoices.choices,
+        help_text=_("The protocol to use for this communication profile"),
+    )
+    server_url = models.CharField(
+        verbose_name=_("Server URL"),
+        max_length=255,
+        help_text=_("The URL of the server to use for this communication profile"),
+    )
+    port = models.PositiveIntegerField(
+        verbose_name=_("Port"),
+        help_text=_("The port to use for this communication profile"),
+    )
+    username = models.CharField(
+        verbose_name=_("Username"),
+        max_length=100,
+        help_text=_("The username to use for this communication profile"),
+    )
+    password = EncryptedCharField(
+        verbose_name=_("Password"),
+        max_length=100,
+        help_text=_("The password to use for this communication profile"),
+    )
+    is_secure = models.BooleanField(
+        verbose_name=_("Is Secure"),
+        default=False,
+        help_text=_("Whether or not this communication profile is secure"),
+    )
+    inbound_folder = models.CharField(
+        verbose_name=_("Inbound Folder"),
+        max_length=255,
+        help_text=_("The folder to use for inbound EDI files"),
+    )
+    outbound_folder = models.CharField(
+        verbose_name=_("Outbound Folder"),
+        max_length=255,
+        help_text=_("The folder to use for outbound EDI files"),
+    )
+    ack_folder = models.CharField(
+        verbose_name=_("ACK Folder"),
+        max_length=255,
+        help_text=_("The folder to use for EDI acknowledgments"),
+        blank=True,
+    )
+    retry_count = models.PositiveIntegerField(
+        verbose_name=_("Retry Count"),
+        help_text=_("The number of times to retry sending EDI files"),
+        default=3,
+        blank=True,
+        null=True,
+    )
+    retry_interval = models.PositiveIntegerField(
+        verbose_name=_("Retry Interval"),
+        help_text=_("The number of seconds to wait between retries"),
+        default=5,
+        blank=True,
+        null=True,
+    )
+    timeout = models.PositiveIntegerField(
+        verbose_name=_("Timeout"),
+        help_text=_("The timeout period for the connection in seconds"),
+        default=120,
+    )
+    protocol_specific_settings = models.JSONField(
+        verbose_name=_("Protocol Specific Settings"),
+        blank=True,
+        null=True,
+        help_text=_("JSON dict for protocol-specific settings"),
+    )
+    ssl_certificate = models.FileField(
+        verbose_name=_("SSL Certificate"),
+        blank=True,
+        null=True,
+        upload_to="ssl_certificates/",
+        help_text=_("SSL Certificate for secure connections"),
+    )
+    is_locked = models.BooleanField(
+        verbose_name=_("Is Locked"),
+        default=False,
+        help_text=_(
+            "Whether or not this profile is currently being used, preventing concurrent writes"
+        ),
+    )
+
+    class Meta:
+        """
+        Metaclass for EDICommProfile model
+        """
+
+        verbose_name = _("EDI Communication Profile")
+        verbose_name_plural = _("EDI Communication Profiles")
+        db_table = "edi_comm_profile"
+
+    def __str__(self) -> str:
+        """EDI Communication Profile string representation
+
+        Returns:
+            str: String representation of the EDI Communication Profile
+        """
+        return textwrap.shorten(
+            f"{self.name} - {self.protocol}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """EDI Communication Profile Absolute URL
+
+        Returns:
+            str: Absolute URL of the EDI Communication Profile
+        """
+        return reverse("edi-comm-profile-details", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """EDI Communication Profile clean method
+
+        Returns:
+            None: This function does not return anything.
+        """
+        super().clean()
+
+        if self.protocol == "FTP" and self.is_secure:
+            raise ValidationError(
+                {"is_secure": _("FTP protocol cannot be secure. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "HTTP" and self.is_secure:
+            raise ValidationError(
+                {"is_secure": _("HTTP protocol cannot be secure. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "AS2" and not self.is_secure:
+            raise ValidationError(
+                {"is_secure": _("AS2 protocol must be secure. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "SFTP" and not self.is_secure:
+            raise ValidationError(
+                {"is_secure": _("SFTP protocol must be secure. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "AS2" and self.port != 443:
+            raise ValidationError(
+                {"port": _("AS2 protocol must use port 443. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "SFTP" and self.port != 22:
+            raise ValidationError(
+                {"port": _("SFTP protocol must use port 22. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "FTP" and self.port != 21:
+            raise ValidationError(
+                {"port": _("FTP protocol must use port 21. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "HTTP" and self.port != 80:
+            raise ValidationError(
+                {"port": _("HTTP protocol must use port 80. Please Try again.")},
+                code="invalid",
+            )
+        if self.protocol == "HTTP" and self.is_secure:
+            raise ValidationError(
+                {"is_secure": _("HTTP protocol cannot be secure. Please Try again.")},
+                code="invalid",
+            )

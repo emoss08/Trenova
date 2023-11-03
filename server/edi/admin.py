@@ -142,3 +142,16 @@ class EDINotificationAdmin(GenericAdmin[models.EDINotification]):
     )
 
     search_fields = ("edi_billing_profile", "notification_type")
+
+
+@admin.register(models.EDICommProfile)
+class EDICommProfileAdmin(GenericAdmin[models.EDICommProfile]):
+    """
+    EDI Communication Profile Admin
+    """
+
+    list_display = (
+        "name",
+        "protocol",
+    )
+    search_fields = ("is_active", "name", "protocol")
