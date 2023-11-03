@@ -16,16 +16,16 @@
  */
 
 import { RainbowTopBar } from "@/components/layout/topbar";
-import { getUserDetails } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavMenu } from "@/components/layout/navbar";
-import { SiteSearch } from "@/components/layout/site-search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Toaster } from "@/components/ui/toaster";
+import { User } from "@/types/accounts";
+import { useUser } from "@/hooks/useQueries";
+import { SiteSearch } from "@/components/layout/site-search";
 import { Footer } from "@/components/layout/footer";
 
 /**
@@ -41,39 +41,35 @@ type LayoutProps = {
  */
 export function Layout({ children }: LayoutProps) {
   const { userId } = useUserStore.get("user");
-  const queryClient = useQueryClient();
 
   // Fetch user data based on userId
-  const { data: userData, isLoading: isUserDataLoading } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
-    initialData: () => queryClient.getQueryData(["user", userId]),
-    staleTime: Infinity,
-  });
+  const { data: userData, isLoading: isUserDataLoading } = useUser(userId);
 
   return (
     <div className="relative flex flex-col h-screen">
       <header className="bg-background sticky top-0 z-50 w-full border-b">
         {/* Rainbow Header */}
         <RainbowTopBar />
-        <div className="container flex h-14 items-center">
+        <div className="container mx-0 xl:mx-auto flex h-14 items-center">
           {/* Navigation Menu */}
           <NavMenu />
+
           {/* Site Search Combobox Dialog */}
           <SiteSearch />
-          {isUserDataLoading ? (
-            <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </div>
-          ) : (
-            userData && <UserAvatarMenu user={userData} />
-          )}
+          <div className="ml-auto lg:border-l lg:border-slate-900/15 lg:pl-8">
+            {isUserDataLoading ? (
+              <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+            ) : (
+              (userData as User) && <UserAvatarMenu user={userData as User} />
+            )}
+          </div>
         </div>
       </header>
-
       {/* Main Content Area */}
       <div className="flex-1">
-        <div className="container relative">
+        <div className="container relative mx-0 max-w-full xl:max-w-screen-2xl xl:mx-auto">
           {/* Breadcrumb */}
           <Breadcrumb />
           {children}
@@ -81,7 +77,6 @@ export function Layout({ children }: LayoutProps) {
           <Toaster />
         </div>
       </div>
-
       {/* Footer */}
       <Footer />
     </div>
