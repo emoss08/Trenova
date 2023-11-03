@@ -14,6 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
+import io
+import time
+from functools import wraps
+
+from PIL import Image
 from dateutil.parser import parse
 from django.db import models
 
@@ -44,3 +50,45 @@ def convert_to_date(date_str: str) -> str:
         return parse(date_str).date().isoformat()
     except ValueError:
         return date_str
+
+
+def optimize_image(img: Image.Image, size: tuple[int, int]) -> io.BytesIO:
+    """Optimizes an image by resizing it and converting it to WEBP format.
+
+    Args:
+        img (Image.Image): An opened PIL Image instance.
+        size (tuple[int, int]): A tuple containing the width and height to resize the image to.
+
+    Returns:
+        io.BytesIO: BytesIO object containing the optimized image.
+    """
+
+    # Resize the image.
+    img = img.resize(size, resample=Image.Resampling.BICUBIC)
+
+    # Convert the image to RGB.
+    img = img.convert("RGB")
+
+    # Create a buffer to store the optimized image.
+    output = io.BytesIO()
+
+    # Save the image in WEBP format.
+    img.save(output, "webp")
+
+    # Seek to the beginning of the file.
+    output.seek(0)
+
+    return output
+
+
+def calc_time(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        print(f"Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds")
+        return result
+
+    return timeit_wrapper
