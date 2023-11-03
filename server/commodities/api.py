@@ -74,7 +74,7 @@ class CommodityViewSet(viewsets.ModelViewSet):
 
     queryset = models.Commodity.objects.all()
     serializer_class = serializers.CommoditySerializer
-    filterset_fields = ("name",)
+    filterset_fields = ("status", "name")
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Commodity]:
@@ -95,8 +95,10 @@ class CommodityViewSet(viewsets.ModelViewSet):
             "description",
             "set_point_temp",
             "unit_of_measure",
-            "hazmat__id",
+            "hazardous_material__id",
             "max_temp",
+            "created",
+            "modified",
         )
 
         return queryset
