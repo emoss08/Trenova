@@ -240,6 +240,9 @@ export function SelectInput<T extends Record<string, unknown>>(
           placeholder={placeholder}
           isFetchError={isFetchError}
           formError={fieldState.error?.message}
+          maxMenuHeight={200}
+          menuPlacement="auto"
+          menuPosition="absolute"
           styles={{
             input: (base) => ({
               ...base,
