@@ -34,8 +34,17 @@ import {
 import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
 import { StoreType } from "@/lib/useGlobalStore";
-import { TableStoreProps } from "@/stores/TableStore";
+import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DotsVerticalIcon } from "@radix-ui/react-icons";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -191,7 +200,7 @@ export function TableExportModal({ store, modelName, name }: Props) {
     <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Export {name}s</DialogTitle>
+          <DialogTitle>Export {name}</DialogTitle>
         </DialogHeader>
         <TableExportModalBody
           showExportModal={showExportModal}
@@ -201,5 +210,29 @@ export function TableExportModal({ store, modelName, name }: Props) {
         />
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function DataTableImportExportOption() {
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="default" className="hidden h-8 lg:flex">
+            <DotsVerticalIcon className="mr-2 h-4 w-4" /> Options
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-[150px]">
+          <DropdownMenuLabel>Import/Export</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
+            Import
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
+            Export
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
