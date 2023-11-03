@@ -120,11 +120,7 @@ def check_celery() -> dict[str, str | float]:
         result_time = end - start
         if result.result != 8:
             return {"status": "Offline", "time": result_time}
-    except TimeoutError:
-        end = timer()
-        result_time = end - start
-        return {"status": "Offline", "time": result_time}
-    except TaskRevokedError:
+    except (TimeoutError, TaskRevokedError):
         end = timer()
         result_time = end - start
         return {"status": "Offline", "time": result_time}
