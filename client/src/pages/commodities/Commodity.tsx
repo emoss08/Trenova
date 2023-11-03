@@ -15,19 +15,122 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { CommodityTable } from "@/components/commodities/CommodityTable";
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
+import { truncateText } from "@/lib/utils";
+import { Commodity } from "@/types/commodities";
+import { Badge } from "@/components/ui/badge";
+import { CommodityDialog } from "@/components/commodities/commodity-dialog";
+import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
+
+function HazmatBadge({ isHazmat }: { isHazmat: string }) {
+  return (
+    <Badge variant={isHazmat === "Y" ? "default" : "destructive"}>
+      {isHazmat === "Y" ? "Yes" : "No"}
+    </Badge>
+  );
+}
+
+const columns: ColumnDef<Commodity>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 25),
+  },
+  {
+    id: "temp_range",
+    accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
+    header: "Temperature Range",
+    cell: ({ row, column }) => {
+      if (row.original.minTemp === null && row.original.maxTemp === null) {
+        return "N/A";
+      }
+      return row.getValue(column.id);
+    },
+  },
+  {
+    accessorKey: "isHazmat",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Is Hazmat" />
+    ),
+    cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazmat} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+];
+
+const filters: FilterConfig<Commodity>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+  {
+    columnName: "isHazmat",
+    title: "Is Hazmat",
+    options: yesAndNoChoices,
+  },
+];
 
 export default function CommodityPage() {
-  const { classes } = usePageStyles();
-
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <CommodityTable />
-      </Card>
-    </Flex>
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="commodity-table-data"
+          columns={columns}
+          link="/commodities/"
+          name="Commodity"
+          exportModelName="Commodity"
+          filterColumn="name"
+          tableFacetedFilters={filters}
+          TableSheet={CommodityDialog}
+          TableEditSheet={CommodityEditDialog}
+        />
+      </CardContent>
+    </Card>
   );
 }
