@@ -45,7 +45,11 @@ export async function getCustomerDetails(id: string): Promise<Customer> {
 export async function getCustomerDetailsWithMetrics(
   id: string,
 ): Promise<Customer> {
-  const response = await axios.get(`customers/${id}/?expand_metrics=True`);
+  const response = await axios.get(`customers/${id}/`, {
+    params: {
+      expand_metrics: "True",
+    },
+  });
   return response.data;
 }
 
@@ -68,7 +72,12 @@ export async function getCustomerEmailProfile(
   id: string,
 ): Promise<CustomerEmailProfile> {
   const response = await axios.get(
-    `customer_email_profiles/get_by_customer_id/?customer_id=${id}`,
+    "customer_email_profiles/get_by_customer_id/",
+    {
+      params: {
+        customer_id: id,
+      },
+    },
   );
   return response.data;
 }
@@ -77,7 +86,12 @@ export async function getCustomerRuleProfile(
   id: string,
 ): Promise<CustomerRuleProfile> {
   const response = await axios.get(
-    `customer_rule_profiles/get_by_customer_id/?customer_id=${id}`,
+    "customer_rule_profiles/get_by_customer_id/",
+    {
+      params: {
+        customer_id: id,
+      },
+    },
   );
   return response.data;
 }

@@ -33,7 +33,11 @@ export async function getUserDetails(id: string): Promise<User> {
  * @returns A promise that resolves to an array of users.
  */
 export async function getUsers(): Promise<Array<User>> {
-  const response = await axios.get("/users/?limit=999999999"); // for the time being, we'll just get all the users
+  const response = await axios.get("/users/", {
+    params: {
+      limit: "all",
+    },
+  });
   return response.data.results;
 }
 
@@ -51,6 +55,10 @@ export async function getUserReports(): Promise<UserReportResponse> {
  * @returns A promise that resolves to the user's notifications.
  */
 export async function getUserNotifications(): Promise<UserNotification> {
-  const response = await axios.get("/user/notifications/?max=10");
+  const response = await axios.get("/user/notifications/?max=10", {
+    params: {
+      max: 10,
+    },
+  });
   return response.data;
 }
