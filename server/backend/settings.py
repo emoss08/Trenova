@@ -16,20 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
-import sys
 from pathlib import Path
 
 import django_stubs_ext
 import environ
 
 django_stubs_ext.monkeypatch()
-
-# Check if running on pypy. If so, monkey patch psycopg2cffiq
-if sys.implementation.name == "pypy":
-    from psycopg2cffi import compat
-
-    compat.register()
-
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -64,7 +56,6 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "encrypted_model_fields",
-    "nested_inline",
     "drf_spectacular",
     "auditlog",
     "notifications",
@@ -304,7 +295,7 @@ REST_FRAMEWORK = {
         "user": "20/second",
         "auth": "20/minute",
     },
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.MontaPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
