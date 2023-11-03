@@ -20,41 +20,48 @@ import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { Organization } from "@/types/organization";
+import { QueryKeys } from "@/types";
 
 export function Logo() {
   const queryClient = useQueryClient();
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
-  const { data: organizationData, isLoading: isOrgDataLoading } = useQuery({
-    queryKey: ["organization", organizationId],
+  const { data: organizationData, isLoading } = useQuery({
+    queryKey: ["organization", organizationId] as QueryKeys[],
     queryFn: () => {
       if (!organizationId) {
         return Promise.resolve(null);
       }
       return getOrganizationDetails(organizationId);
     },
-    initialData: () =>
+    initialData: (): Organization | undefined =>
       queryClient.getQueryData(["organization", organizationId]),
     staleTime: Infinity, // never refetch
   });
 
-  if (isOrgDataLoading) {
-    return <Skeleton className="h-10 w-[150px]" />;
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full" />;
   }
 
   if (organizationData && organizationData.logo) {
     return (
       <Link to="/" style={{ textDecoration: "none" }}>
-        <img src={organizationData?.logo} alt="Organization Logo" />
+        <img
+          className="h-[60px] object-contain"
+          src={organizationData?.logo}
+          alt="Organization Logo"
+        />
       </Link>
     );
   }
 
   return (
     <Link
-      className="mr-6 flex items-center space-x-2 font-semibold text-accent-foreground"
+      className="font-semibold text-xl text-accent-foreground max-w-[250px] mr-5 truncate"
       to="/"
+      title={organizationData?.name} // tooltip for truncated text
     >
       {organizationData?.name}
     </Link>
