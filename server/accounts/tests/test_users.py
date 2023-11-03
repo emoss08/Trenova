@@ -15,14 +15,19 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from io import BytesIO
+
 import pytest
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from accounts.models import User
+from accounts.models import User, UserProfile
 from accounts.serializers import UserSerializer
+from accounts.services import generate_thumbnail
 from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.models import BusinessUnit, Organization
 
@@ -566,3 +571,28 @@ def test_validate_password_not_allowed_on_post(
 #     assert response.status_code == 400
 #     assert response.data["errors"][0]["attr"] == "user_id"
 #     assert response.data["errors"][0]["detail"] == "This field is required."
+
+
+def test_create_thumbnail(user_profile: UserProfile) -> None:
+    """Test to ensure when a user uploads a profile picture, that a thumbnail is generated.
+
+    Args:
+        user_profile (UserProfile): User Profile Object
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    image = Image.new("RGB", (100, 100))
+    image_file = BytesIO()
+    image.save(image_file, "png")
+    image_file.seek(0)
+    image = SimpleUploadedFile("test.png", image_file.getvalue())
+
+    # Set the user's profile picture
+    user_profile.profile_picture = image
+    generate_thumbnail(user_profile=user_profile, size=(100, 100))
+
+    # Check that the thumbnail was generated
+    assert user_profile.thumbnail is not None
+    assert user_profile.thumbnail.url is not None
