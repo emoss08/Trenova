@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Column, ColumnDef, Table } from "@tanstack/react-table";
 import { QueryKeys } from "./index";
 import { API_ENDPOINTS } from "./server";
@@ -24,7 +25,7 @@ export interface DataTableFacetedFilterProps<TData, TValue> {
   title?: string;
   options: {
     label: string;
-    value: string;
+    value: string | boolean;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 }
