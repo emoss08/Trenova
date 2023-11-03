@@ -55,7 +55,7 @@ export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
   const response = await axios.get("/gl_accounts/", {
     params: {
       status: "A",
-      limit: 1000,
+      limit: "all",
     },
   });
   return response.data.results;
@@ -88,7 +88,7 @@ export async function getRevenueCodeDetail(id: string): Promise<RevenueCode> {
 export async function getTags(): Promise<Tag[]> {
   const response = await axios.get("/tags/", {
     params: {
-      limit: 1000,
+      limit: "all",
     },
   });
   return response.data.results;

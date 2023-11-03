@@ -26,7 +26,7 @@ export async function getLocations(): Promise<Location[]> {
   const response = await axios.get("/locations/", {
     params: {
       status: "A",
-      limit: 1000,
+      limit: "all",
     },
   });
   return response.data.results;
