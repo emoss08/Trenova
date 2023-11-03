@@ -1150,50 +1150,9 @@ class EDICommProfile(GenericModel):
         Returns:
             None: This function does not return anything.
         """
-        super().clean()
+        from edi.validation import EDICommProfileValidation
 
-        if self.protocol == "FTP" and self.is_secure:
-            raise ValidationError(
-                {"is_secure": _("FTP protocol cannot be secure. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "HTTP" and self.is_secure:
-            raise ValidationError(
-                {"is_secure": _("HTTP protocol cannot be secure. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "AS2" and not self.is_secure:
-            raise ValidationError(
-                {"is_secure": _("AS2 protocol must be secure. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "SFTP" and not self.is_secure:
-            raise ValidationError(
-                {"is_secure": _("SFTP protocol must be secure. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "AS2" and self.port != 443:
-            raise ValidationError(
-                {"port": _("AS2 protocol must use port 443. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "SFTP" and self.port != 22:
-            raise ValidationError(
-                {"port": _("SFTP protocol must use port 22. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "FTP" and self.port != 21:
-            raise ValidationError(
-                {"port": _("FTP protocol must use port 21. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "HTTP" and self.port != 80:
-            raise ValidationError(
-                {"port": _("HTTP protocol must use port 80. Please Try again.")},
-                code="invalid",
-            )
-        if self.protocol == "HTTP" and self.is_secure:
-            raise ValidationError(
-                {"is_secure": _("HTTP protocol cannot be secure. Please Try again.")},
-                code="invalid",
-            )
+        # TODO(Wolfred): Write a test for this.
+
+        EDICommProfileValidation(comm_profile=self).validate()
+        super().clean()
