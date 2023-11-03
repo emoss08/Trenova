@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 import axios from "@/lib/axiosConfig";
-import { OrderType } from "@/types/order";
+import { ShipmentType } from "@/types/order";
 
 /**
  * Fetches order types from the server.
  * @returns A promise that resolves to an array of order types.
  */
-export async function getShipmentTypes(): Promise<ReadonlyArray<OrderType>> {
+export async function getShipmentTypes(): Promise<ReadonlyArray<ShipmentType>> {
   const response = await axios.get("/shipment_types/");
   return response.data.results;
 }
