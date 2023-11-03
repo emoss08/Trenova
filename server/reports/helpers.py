@@ -200,20 +200,29 @@ ALLOWED_MODELS = {
             {"value": "max_temp", "label": "Maximum Temperature"},
             {"value": "set_point_temp", "label": "Set Point Temperature"},
             {"value": "unit_of_measure", "label": "Unit of Measure"},
-            {"value": "hazmat__status", "label": "Hazardous Material Status"},
-            {"value": "hazmat__name", "label": "Hazardous Material Name"},
-            {"value": "hazmat__description", "label": "Hazardous Material Description"},
             {
-                "value": "hazmat__hazard_class",
+                "value": "hazardous_material__status",
+                "label": "Hazardous Material Status",
+            },
+            {"value": "hazardous_material__name", "label": "Hazardous Material Name"},
+            {
+                "value": "hazardous_material__description",
+                "label": "Hazardous Material Description",
+            },
+            {
+                "value": "hazardous_material__hazard_class",
                 "label": "Hazardous Material Hazard Class",
             },
             {
-                "value": "hazmat__packing_group",
+                "value": "hazardous_material__packing_group",
                 "label": "Hazardous Material Packing Group",
             },
-            {"value": "hazmat__erg_number", "label": "Hazardous Material ERG Number"},
             {
-                "value": "hazmat__proper_shipping_name",
+                "value": "hazardous_material__erg_number",
+                "label": "Hazardous Material ERG Number",
+            },
+            {
+                "value": "hazardous_material__proper_shipping_name",
                 "label": "Hazardous Material Proper Shipping Name",
             },
             {"value": "is_hazmat", "label": "Is Hazardous Material"},
