@@ -46,7 +46,7 @@ import { getLocations } from "@/services/LocationRequestService";
 import { Location } from "@/types/location";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import { ShipmentType } from "@/types/order";
-import { getUsers } from "@/services/UserRequestService";
+import { getUserDetails, getUsers } from "@/services/UserRequestService";
 import { User } from "@/types/accounts";
 
 /**
@@ -383,4 +383,16 @@ export function useUsers(show?: boolean) {
     })) || [];
 
   return { selectUsersData, isError, isLoading };
+}
+
+export function useUser(userId: string) {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: ["user", userId] as QueryKeys[],
+    queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
+    initialData: () =>
+      queryClient.getQueryData(["user", userId] as QueryKeys[]),
+    staleTime: Infinity,
+  });
 }
