@@ -27,7 +27,7 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
 from organization.models import Depot
-from utils.models import GenericModel, ChoiceField, PrimaryStatusChoices
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 class LocationCategory(GenericModel):

@@ -56,7 +56,7 @@ class CommodityAdmin(GenericAdmin[models.Commodity]):
                     "max_temp",
                     "set_point_temp",
                     "unit_of_measure",
-                    "hazmat",
+                    "hazardous_material",
                     "is_hazmat",
                 ),
             },
