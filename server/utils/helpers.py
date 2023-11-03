@@ -19,9 +19,9 @@ import io
 import time
 from functools import wraps
 
-from PIL import Image
 from dateutil.parser import parse
 from django.db import models
+from PIL import Image
 
 from organization.models import BusinessUnit
 
