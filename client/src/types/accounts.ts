@@ -31,7 +31,8 @@ export type UserProfile = {
   state: string;
   zipCode: string;
   phoneNumber?: string;
-  profilePicture: string;
+  profilePicture?: string;
+  thumbnail?: string;
   isPhoneVerified: boolean;
 };
 
