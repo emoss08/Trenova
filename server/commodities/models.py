@@ -173,7 +173,7 @@ class Commodity(GenericModel):
         max_temp: A DecimalField that stores the maximum temperature of a commodity.
         set_point_temp: A DecimalField that stores the set point temperature of a commodity.
         unit_of_measure: A ChoiceField that stores the unit of measure of a commodity.
-        hazmat: A ForeignKey that links a commodity to its hazardous material.
+        hazardous_material: A ForeignKey that links a commodity to its hazardous material.
         is_hazmat: A BooleanField that indicates whether a commodity is hazardous.
     """
 
@@ -250,7 +250,7 @@ class Commodity(GenericModel):
         help_text=_("Unit of Measure of the Commodity"),
         blank=True,
     )
-    hazmat = models.ForeignKey(
+    hazardous_material = models.ForeignKey(
         "commodities.HazardousMaterial",
         on_delete=models.PROTECT,
         verbose_name=_("Hazardous Material"),
@@ -303,7 +303,7 @@ class Commodity(GenericModel):
 
         self.full_clean()
 
-        if self.hazmat:
+        if self.hazardous_material:
             self.is_hazmat = "Y"
         super().save(*args, **kwargs)
 
@@ -324,11 +324,23 @@ class Commodity(GenericModel):
         Raises:
             ValidationError: If the commodity is marked as hazardous, but no hazardous material is selected.
         """
-        if self.is_hazmat == "Y" and not self.hazmat:
+
+        # If commodity is marked as hazardous, but no hazardous material is selected, raise a validation error
+        if self.is_hazmat == "Y" and not self.hazardous_material:
             raise ValidationError(
                 {
                     "is_hazmat": _(
                         "Commodity is marked as hazardous, but no hazardous material is selected."
+                    )
+                }
+            )
+
+        # If minimum temperature is greater than maximum temperature, raise a validation error
+        if self.min_temp and self.max_temp and self.min_temp > self.max_temp:
+            raise ValidationError(
+                {
+                    "min_temp": _(
+                        "Minimum temperature cannot be greater than maximum temperature."
                     )
                 }
             )

@@ -44,11 +44,11 @@ export interface Commodity extends BaseModel {
   status: StatusChoiceProps;
   name: string;
   description?: string | null;
-  minTemp?: number | null;
-  maxTemp?: number | null;
+  minTemp?: string | null;
+  maxTemp?: string | null;
   setPointTemp?: number | null;
   unitOfMeasure?: UnitOfMeasureChoiceProps | null;
-  hazmat?: string | null;
+  hazardousMaterial?: string | null;
   isHazmat: YesNoChoiceProps;
 }
 
