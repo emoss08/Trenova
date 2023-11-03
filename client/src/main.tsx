@@ -21,22 +21,21 @@ import App from "./App";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { Button } from "./components/ui/button";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <QueryErrorResetBoundary>
-      {({ reset }) => (
-        <ErrorBoundary
-          onReset={reset}
-          fallbackRender={({ resetErrorBoundary }) => (
-            <div>
-              There was an error!
-              <Button onClick={() => resetErrorBoundary()}>Try again</Button>
-            </div>
-          )}
-        >
-          <App />
-        </ErrorBoundary>
-      )}
-    </QueryErrorResetBoundary>
-  </React.StrictMode>,
+  <QueryErrorResetBoundary>
+    {({ reset }) => (
+      <ErrorBoundary
+        onReset={reset}
+        fallbackRender={({ resetErrorBoundary }) => (
+          <div>
+            There was an error!
+            <Button onClick={() => resetErrorBoundary()}>Try again</Button>
+          </div>
+        )}
+      >
+        <App />
+      </ErrorBoundary>
+    )}
+  </QueryErrorResetBoundary>,
 );
