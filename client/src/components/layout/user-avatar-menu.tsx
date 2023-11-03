@@ -54,7 +54,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
     >
       <AvatarImage
         className="w-full h-full rounded-full"
-        src={user.profile?.profilePicture}
+        src={user.profile?.thumbnail}
         alt={user.username}
       />
       <AvatarFallback>
@@ -137,14 +137,9 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       </div>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
-          Profile
-          <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          Preferences
-          <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        <DropdownMenuItem>Changelog</DropdownMenuItem>
+        <DropdownMenuItem>Support</DropdownMenuItem>
+        <DropdownMenuItem>License</DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuSub>
@@ -170,8 +165,11 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       <DropdownMenuItem onClick={toggleRainbowAnimation}>
         {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
       </DropdownMenuItem>
-      <DropdownMenuItem>Support</DropdownMenuItem>
       <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+        Account Settings
+        <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+      </DropdownMenuItem>
       <DropdownMenuItem onClick={() => logout()}>
         Log out
         <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
