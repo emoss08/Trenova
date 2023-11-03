@@ -36,7 +36,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from accounts import services
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
@@ -187,7 +186,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
     # It will also give proper autocomplete in IDEs.
     profile: UserProfile
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS: list[str] = [
+    REQUIRED_FIELDS = [
         "email",
     ]
 
@@ -266,6 +265,13 @@ class UserProfile(GenericModel):
         null=True,
         blank=True,
     )
+    thumbnail = models.ImageField(
+        _("Thumbnail"),
+        upload_to="user_profiles/thumbnails",
+        help_text=_("The thumbnail of the user's profile picture"),
+        null=True,
+        blank=True,
+    )
     address_line_1 = models.CharField(
         _("Address"),
         max_length=100,
@@ -335,6 +341,7 @@ class UserProfile(GenericModel):
         Returns:
             None
         """
+
         self.first_name = self.first_name.title()
         self.last_name = self.last_name.title()
 
@@ -592,6 +599,8 @@ class Token(models.Model):
         Returns:
             None: This function does not return anything.
         """
+        from accounts import services
+
         if not self.key:
             self.key = services.generate_key()
 
