@@ -22,7 +22,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from accounts.models import Token
-from accounts.tests.factories import TokenFactory, UserFactory
+from accounts.tests.factories import ProfileFactory, TokenFactory, UserFactory
 from organization.factories import BusinessUnitFactory, OrganizationFactory
 
 pytestmark = pytest.mark.django_db
@@ -60,6 +60,14 @@ def user() -> Generator[Any, Any, None]:
     User Fixture
     """
     yield UserFactory()
+
+
+@pytest.fixture
+def user_profile() -> Generator[Any, Any, None]:
+    """
+    User Profile Fixture
+    """
+    yield ProfileFactory()
 
 
 @pytest.fixture
