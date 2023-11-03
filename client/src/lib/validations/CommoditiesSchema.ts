@@ -26,7 +26,7 @@ import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
-} from "@/utils/apps/commodities";
+} from "@/lib/choices";
 
 export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> =
   Yup.object().shape({
@@ -48,14 +48,36 @@ export const commoditySchema: ObjectSchema<CommodityFormValues> =
       .max(100, "Name cannot be longer than 100 characters long.")
       .required("Name is required"),
     description: Yup.string().notRequired(),
-    minTemp: Yup.number()
-      .max(10, "Maximum temperature cannot be more than 10 digits long.")
+    minTemp: Yup.string()
+      .max(
+        Yup.ref("maxTemp"),
+        "Minimum temperature must be less than maximum temperature.",
+      )
+      .test(
+        "is-decimal",
+        "Minimum temperature cannot be more than two decimal places.",
+        (value) => {
+          if (value !== "" && value !== undefined) {
+            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+          }
+          return true;
+        },
+      )
       .notRequired(),
-    maxTemp: Yup.number()
-      .max(10, "Maximum temperature cannot be more than 10 digits long.")
+    maxTemp: Yup.string()
+      .test(
+        "is-decimal",
+        "Maximum temperature cannot be more than two decimal places.",
+        (value) => {
+          if (value !== "" && value !== undefined) {
+            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+          }
+          return true;
+        },
+      )
       .notRequired(),
     setPointTemp: Yup.number().notRequired(),
     unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
-    hazmat: Yup.string().notRequired(),
+    hazardousMaterial: Yup.string().notRequired(),
     isHazmat: Yup.string<YesNoChoiceProps>().required("Is Hazmat is required"),
   });
