@@ -95,6 +95,7 @@ export type QueryKeys =
   | "revenueCodes"
   | "routeControl"
   | "locations"
+  | "location-categories-table-data"
   | "tags"
   | "shipmentTypes"
   | "shipmentControl"
