@@ -51,6 +51,8 @@ class BillingQueueSerializer(GenericSerializer):
     also defines the fields that should be included in the serialized representation of the model.
     """
 
+    customer_name = serializers.CharField(source="customer.name", read_only=True)
+
     class Meta:
         """Metaclass for BillingQueueSerializer
 
@@ -59,11 +61,7 @@ class BillingQueueSerializer(GenericSerializer):
         """
 
         model = models.BillingQueue
-
-    def to_representation(self, instance: Shipment) -> dict[str, Any]:
-        data = super().to_representation(instance)
-        data["customer_name"] = instance.customer.name
-        return data
+        extra_fields = ("customer_name",)
 
 
 class BillingLogEntrySerializer(GenericSerializer):
@@ -264,7 +262,7 @@ class DocumentClassificationSerializer(GenericSerializer):
         return value
 
 
-class shipmentsReadySerializer(serializers.Serializer):
+class ShipmentsReadySerializer(serializers.Serializer):
     id = serializers.UUIDField(read_only=True)
     pro_number = serializers.CharField(
         help_text="Pro Number of the Order", label="Pro Number", read_only=True
