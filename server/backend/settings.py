@@ -747,6 +747,10 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "shipment.ReasonCode",
     "shipment.FormulaTemplate",
 )
+
+# Protect against clickjacking by setting X-Frame-Options header
+X_FRAME_OPTIONS = "DENY"
+
 # Kafka Configurations
 KAFKA_BOOTSTRAP_SERVERS = env("KAFKA_BOOTSTRAP_SERVERS")
 KAFKA_HOST = env("KAFKA_HOST")
@@ -761,9 +765,10 @@ KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
 
 # Development Configurations
 if DEBUG:
-    INSTALLED_APPS += [
-        "silk",
-    ]
+    INSTALLED_APPS.insert(0, "admin_interface")
+    INSTALLED_APPS.insert(1, "colorfield")
+    INSTALLED_APPS += ["silk"]
     MIDDLEWARE += [
         "silk.middleware.SilkyMiddleware",
     ]
+    X_FRAME_OPTIONS = "SAMEORIGIN"
