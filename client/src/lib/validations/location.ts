@@ -14,33 +14,17 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { LocationCategoryFormValues } from "@/types/location";
+import * as yup from "yup";
 
-import { BaseModel } from "@/types/organization";
-import { StatusChoiceProps } from "@/types/index";
-
-export interface Location extends BaseModel {
-  id: string;
-  code: string;
-  status: StatusChoiceProps;
-  location_category: string;
-  depot: string;
-  description: string;
-  address_line_1: string;
-  address_line_2: string;
-  city: string;
-  longitude: number;
-  latitude: number;
-  place_id: string;
-  is_geocoded: boolean;
-}
-
-export interface LocationCategory extends BaseModel {
-  id: string;
-  name: string;
-  description?: string | null;
-}
-
-export type LocationCategoryFormValues = Omit<
-  LocationCategory,
-  "organization" | "created" | "modified" | "id"
->;
+export const locationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues> =
+  yup.object().shape({
+    name: yup
+      .string()
+      .required("Name is required")
+      .max(100, "Name cannot be more than 100 characters"),
+    description: yup
+      .string()
+      .max(500, "Description cannot be more than 500 characters")
+      .notRequired(),
+  });

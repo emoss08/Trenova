@@ -27,6 +27,9 @@ const UserManagementPage = lazy(
 const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes"),
 );
+const LocationCategoryPage = lazy(
+  () => import("../pages/dispatch/LocationCategories"),
+);
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
@@ -266,6 +269,14 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Rate Management",
     element: <RatePage />,
     permission: "view_rate",
+  },
+  {
+    title: "Location Categories",
+    group: "dispatch",
+    path: "/dispatch/location-categories/",
+    description: "Location Categories",
+    element: <LocationCategoryPage />,
+    permission: "location.view_locationcategory",
   },
   {
     title: "Equipment Types",
