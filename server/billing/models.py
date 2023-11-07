@@ -198,6 +198,9 @@ class BillingControl(GenericModel):
         permissions = [
             ("billing.use_billing_client", "Can use the billing client"),
         ]
+        db_table_comment = (
+            "Stores the billing control information for a related organization."
+        )
 
     def __str__(self) -> str:
         """Billing control string representation
@@ -291,6 +294,7 @@ class ChargeType(GenericModel):
         verbose_name_plural = _("Charge Types")
         ordering = ["name"]
         db_table = "charge_type"
+        db_table_comment = "Stores other charge types."
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -391,6 +395,9 @@ class AccessorialCharge(GenericModel):
         verbose_name_plural = _("Accessorial Charges")
         ordering = ["code"]
         db_table = "accessorial_charge"
+        db_table_comment = (
+            "Stores Accessorial charge information for related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
@@ -447,6 +454,9 @@ class DocumentClassification(GenericModel):
         verbose_name_plural = _("Document Classifications")
         ordering = ["name"]
         db_table = "document_classification"
+        db_table_comment = (
+            "Stores document classification information for related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -735,6 +745,9 @@ class BillingQueue(GenericModel):
         verbose_name = _("Billing Queue")
         verbose_name_plural = _("Billing Queues")
         db_table = "billing_queue"
+        db_table_comment = (
+            "Stores Temporary Billing Queue information for related organization."
+        )
         permissions = [
             ("billing.client", "Has access to the billing client"),
         ]
@@ -943,8 +956,10 @@ class BillingLogEntry(GenericModel):
 
         verbose_name = _("Billing Log Entry")
         verbose_name_plural = _("Billing Log Entries")
-        ordering = ["-created"]
         db_table = "billing_log_entry"
+        db_table_comment = (
+            "Stores Billing Log Entry information for related organization."
+        )
 
     def __str__(self) -> str:
         """
@@ -1145,6 +1160,9 @@ class BillingHistory(GenericModel):
         verbose_name_plural = _("Billing Histories")
         ordering = ["shipment"]
         db_table = "billing_history"
+        db_table_comment = (
+            "Stores Billing History information for related organization."
+        )
 
     def __str__(self) -> str:
         """String Representation of the BillingHistory model
@@ -1323,6 +1341,7 @@ class BillingException(GenericModel):
         verbose_name_plural = _("Billing Exceptions")
         ordering = ("shipment",)
         db_table = "billing_exception"
+        db_table_comment = "Stores Billing exception for related organization."
 
     def __str__(self) -> str:
         """String Representation of the BillingException model
