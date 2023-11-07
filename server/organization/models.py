@@ -14,12 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from __future__ import annotations
 
 import textwrap
 import uuid
 from typing import Any, final
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator, FileExtensionValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -31,7 +33,6 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -39,37 +40,162 @@ kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_available_topics()
 
 
+def business_unit_contract_upload_to(instance: BusinessUnit, filename: str) -> str:
+    """Uploads the Business Unit to the correct location.
+
+    Args:
+        instance (BusinessUnit): The BusinessUnit instance.
+        filename (str): The filename of the BusinessUnit contract.
+
+    Returns:
+        str: The path of the contract.
+    """
+    return f"business_units/{instance.entity_key}/{filename}"
+
+
 class BusinessUnit(TimeStampedModel):
     """
     Stores information about the Business Unit.
     """
 
+    @final
+    class BusinessUnitStatusChoices(models.TextChoices):
+        """
+        Business Unit Status Choices
+        """
+
+        ACTIVE = "A", _("Active")
+        INACTIVE = "I", _("Inactive")
+        SUSPENDED = "S", _("Suspended")
+
     id = models.UUIDField(
-        _("Business Unit ID"),
+        verbose_name=_("Business Unit ID"),
         primary_key=True,
         default=uuid.uuid4,
         editable=False,
         unique=True,
     )
+    status = models.CharField(
+        verbose_name=_("Business Unit Status"),
+        choices=BusinessUnitStatusChoices.choices,
+        default=BusinessUnitStatusChoices.ACTIVE,
+        max_length=10,
+    )
     name = models.CharField(
-        _("Business Unit Name"),
+        verbose_name=_("Business Unit Name"),
         max_length=255,
-        unique=True,
+    )
+    entity_key = models.CharField(
+        verbose_name=_("Entity Key"),
+        max_length=10,
+        help_text=_("The entity key of the business unit."),
+        blank=True,
+    )
+    address_line_1 = models.CharField(
+        verbose_name=_("Address Line 1"),
+        max_length=255,
+        blank=True,
+        help_text=_("The address line 1 of the Business Unit."),
+    )
+    address_line_2 = models.CharField(
+        verbose_name=_("Address Line 2"),
+        max_length=255,
+        blank=True,
+        help_text=_("The address line 2 of the Business Unit."),
+    )
+    city = models.CharField(
+        _("City"),
+        max_length=100,
+        help_text=_("The city of the Business Unit."),
+        blank=True,
+    )
+    state = USStateField(
+        verbose_name=_("State"),
+        help_text=_("The state of the Business Unit"),
+        blank=True,
+    )
+    zip_code = USZipCodeField(
+        verbose_name=_("Zip Code"),
+        help_text=_("The zip code of the Business Unit"),
+        blank=True,
+    )
+    contact_email = models.EmailField(
+        verbose_name=_("Contact Email"),
+        max_length=255,
+        blank=True,
+    )
+    contact_phone = models.CharField(
+        _("Phone Number"),
+        max_length=15,
+        blank=True,
+        help_text=_("The phone number of the business unit."),
+        validators=[
+            RegexValidator(
+                regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                message=_("Phone number must be in the format (xxx) xxx-xxxx"),
+            )
+        ],
     )
     description = models.TextField(
-        _("Business Unit Description"),
+        verbose_name=_("Business Unit Description"),
         blank=True,
     )
     paid_until = models.DateField(
-        _("Paid Until"),
+        verbose_name=_("Paid Until"),
         null=True,
         blank=True,
         help_text=_("The date until which the business unit is paid."),
     )
     free_trial = models.BooleanField(
-        _("Free trial"),
+        verbose_name=_("Free trial"),
         default=False,
         help_text=_("Whether the business unit is on free trial."),
+    )
+    billing_info = models.JSONField(
+        verbose_name=_("Billing Info"),
+        null=True,
+        blank=True,
+        help_text=_("The billing information of the business unit."),
+    )
+    tax_id = models.CharField(
+        verbose_name=_("Tax ID"),
+        max_length=255,
+        blank=True,
+        help_text=_("The tax ID of the business unit."),
+    )
+    legal_name = models.CharField(
+        verbose_name=_("Legal Name"),
+        max_length=255,
+        blank=True,
+        help_text=_("The legal name of the business unit."),
+    )
+    metadata = models.JSONField(
+        verbose_name=_("Metadata"),
+        null=True,
+        blank=True,
+        help_text=_("The metadata of the business unit."),
+    )
+    notes = models.TextField(
+        verbose_name=_("Notes"),
+        blank=True,
+        help_text=_("The notes of the business unit."),
+    )
+    is_suspended = models.BooleanField(
+        verbose_name=_("Is Suspended"),
+        default=False,
+        help_text=_("Whether the business unit is suspended."),
+    )
+    suspension_reason = models.TextField(
+        verbose_name=_("Suspension Reason"),
+        blank=True,
+        help_text=_("The reason why the business unit is suspended."),
+    )
+    contract = models.FileField(
+        verbose_name=_("Contract"),
+        upload_to=business_unit_contract_upload_to,
+        validators=[FileExtensionValidator(["pdf"])],
+        blank=True,
+        help_text=_("The contract of the business unit."),
     )
 
     class Meta:
@@ -80,6 +206,13 @@ class BusinessUnit(TimeStampedModel):
         verbose_name = _("Business Unit")
         verbose_name_plural = _("Business Units")
         db_table = "business_unit"
+        db_table_comment = "Stores information about the Business Unit."
+        constraints = [
+            models.UniqueConstraint(
+                Lower("entity_key"),
+                name="unique_business_unit_entity_key",
+            ),
+        ]
 
     def __str__(self) -> str:
         """String representation of the Business Unit.
@@ -88,6 +221,32 @@ class BusinessUnit(TimeStampedModel):
             str: String representation of the Business Unit.
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """BusinessUnit model save method
+
+        Returns:
+            None: This function does not return anything.
+        """
+        # Generate entity_key if it does not exist
+        if not self.entity_key:
+            # Remove spaces from the name and convert to upper case
+            base_key = self.name.replace(" ", "")[
+                :8
+            ].upper()  # Reserve 2 characters for digits
+
+            counter = 1
+            entity_key = f"{base_key}{counter:02d}"  # Start with 01
+
+            # Check for an existing business unit with a similar entity_key
+            while self.__class__.objects.filter(entity_key=entity_key).exists():
+                counter += 1
+                entity_key = f"{base_key}{counter:02d}"
+
+            # Assign the unique entity_key
+            self.entity_key = entity_key
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Absolute URl for the Business Unit.
