@@ -19,7 +19,7 @@ from typing import Any
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import login, logout
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.db.models import Prefetch, QuerySet
 from django.utils import timezone
 from rest_framework import (
@@ -35,6 +35,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
 
 from accounts import models, serializers
+from accounts.models import CustomGroup
 from accounts.permissions import ViewAllUsersPermission
 from core.permissions import CustomObjectPermissions
 
@@ -45,7 +46,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = serializers.GroupSerializer
-    queryset = Group.objects.all()
+    queryset = CustomGroup.objects.all()
     filterset_fields = ["name"]
     ordering_fields = "__all__"
     permission_classes = [CustomObjectPermissions]
@@ -104,7 +105,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 "profiles",
             )
             .prefetch_related(
-                Prefetch("groups", queryset=Group.objects.only("id", "name")),
+                Prefetch("groups", queryset=CustomGroup.objects.only("id", "name")),
                 Prefetch(
                     "user_permissions",
                     queryset=Permission.objects.only(
@@ -117,6 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 "is_superuser",
                 "id",
                 "organization_id",
+                "business_unit_id",
                 "department_id",
                 "is_active",
                 "username",
@@ -130,6 +132,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 "profiles__organization_id",
                 "profiles__id",
                 "profiles__user",
+                "profiles__business_unit_id",
                 "profiles__job_title_id",
                 "profiles__first_name",
                 "profiles__last_name",
@@ -141,6 +144,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 "profiles__zip_code",
                 "profiles__phone_number",
                 "profiles__is_phone_verified",
+                "profiles__thumbnail",
             )
         )
         return queryset

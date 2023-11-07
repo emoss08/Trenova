@@ -23,7 +23,7 @@ from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.admin import sensitive_post_parameters_m
+from django.contrib.auth.admin import sensitive_post_parameters_m, GroupAdmin
 from django.contrib.auth.forms import (
     AdminPasswordChangeForm,
     UserChangeForm,
@@ -358,3 +358,9 @@ class SessionAdmin(ModelAdmin):
         return obj.get_decoded()
 
     list_display = ["session_key", "_session_data", "expire_date"]
+
+
+
+@admin.register(models.CustomGroup)
+class CustomGroupAdmin(GroupAdmin):
+    list_display = ("name", "organization", "business_unit")

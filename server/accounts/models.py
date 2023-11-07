@@ -25,6 +25,8 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
+    Permission,
+    GroupManager,
 )
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
@@ -37,6 +39,90 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
+
+
+class CustomGroup(models.Model):
+    """Stores the groups that a user belongs to.
+
+    Attributes:
+        id (UUIDField): The primary key of the model
+        name (CharField): The name of the group
+        permissions (ManyToManyField): The permissions of the group
+        business_unit (ForeignKey): The business unit that the group belongs to
+        organization (ForeignKey): The organization that the group belongs to
+    """
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique ID for the user."),
+    )
+    name = models.CharField(_("name"), max_length=150)
+    permissions = models.ManyToManyField(
+        Permission,
+        verbose_name=_("permissions"),
+        blank=True,
+    )
+    business_unit = models.ForeignKey(
+        "organization.BusinessUnit",
+        on_delete=models.CASCADE,
+        related_name="groups",
+        related_query_name="group",
+        verbose_name=_("Business Unit"),
+    )
+    organization = models.ForeignKey(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        related_name="groups",
+        related_query_name="group",
+        verbose_name=_("Organization"),
+    )
+
+    objects = GroupManager()
+
+    class Meta:
+        verbose_name = _("Group")
+        verbose_name_plural = _("Groups")
+        db_table = "a_group"
+        db_table_comment = "Stores the groups that a user belongs to."
+
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                "organization",
+                name="unique_group_organization",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def natural_key(self):
+        return (self.name,)
+
+
+class CustomPermissionMixin(PermissionsMixin):
+    """
+    A mixin class that adds the groups field to the User model.
+
+    Attributes:
+        groups (ManyToManyField): The groups that the user belongs to.
+    """
+    groups = models.ManyToManyField(
+        CustomGroup,
+        verbose_name=_("Groups"),
+        blank=True,
+        help_text=_("The groups that the user belongs to."),
+        related_name="user_set",
+        related_query_name="user",
+    )
+
+    class Meta:
+        """
+        Metaclass for the CustomPermissionMixin
+        """
+        abstract = True
 
 
 class UserManager(BaseUserManager):
@@ -104,7 +190,7 @@ class UserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
+class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
     """
     Stores basic user information.
     """
@@ -319,13 +405,10 @@ class UserProfile(GenericModel):
         Metaclass for the Profile model
         """
 
-        ordering = ["-created"]
         verbose_name = _("Profile")
         verbose_name_plural = _("Profiles")
-        indexes = [
-            models.Index(fields=["-created"]),
-        ]
         db_table = "user_profile"
+        db_table_comment = "Stores additional information for a related user."
 
     def __str__(self) -> str:
         """Profile string representation
