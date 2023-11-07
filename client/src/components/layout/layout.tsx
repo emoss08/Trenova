@@ -25,8 +25,8 @@ import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { Toaster } from "@/components/ui/toaster";
 import { User } from "@/types/accounts";
 import { useUser } from "@/hooks/useQueries";
-import { SiteSearch } from "@/components/layout/site-search";
 import { Footer } from "@/components/layout/footer";
+import { SiteSearch } from "@/components/layout/site-search";
 
 /**
  * LayoutProps defines the props for the Layout components.
@@ -50,15 +50,15 @@ export function Layout({ children }: LayoutProps) {
       <header className="bg-background sticky top-0 z-50 w-full border-b">
         {/* Rainbow Header */}
         <RainbowTopBar />
-        <div className="container mx-0 xl:mx-auto flex h-14 items-center">
-          {/* Navigation Menu */}
-          <NavMenu />
-
-          {/* Site Search Combobox Dialog */}
-          <SiteSearch />
-          <div className="ml-auto lg:border-l lg:border-slate-900/15 lg:pl-8">
+        <div className="flex justify-between items-center h-14 w-full px-4">
+          {/* Navigation Menu with a little margin on the left */}
+          <div className="ml-4">
+            <NavMenu />
+          </div>
+          {/* User Avatar Menu with a little margin on the right */}
+          <div className="mr-4">
             {isUserDataLoading ? (
-              <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+              <div className="flex items-center justify-end space-x-2">
                 <Skeleton className="h-10 w-10 rounded-full" />
               </div>
             ) : (
@@ -67,16 +67,20 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
-      {/* Main Content Area */}
-      <div className="flex-1">
-        <div className="container relative mx-0 max-w-full xl:max-w-screen-2xl xl:mx-auto">
-          {/* Breadcrumb */}
-          <Breadcrumb />
-          {children}
-          {/* Toaster */}
-          <Toaster />
+      {/* Main content and aside menu */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="container mx-auto p-4">
+            <Breadcrumb />
+            {/* Site Search Combobox Dialog */}
+            <SiteSearch />
+            {children}
+            <Toaster />
+          </div>
         </div>
       </div>
+
       {/* Footer */}
       <Footer />
     </div>
@@ -86,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
 /**
  * UnprotectedLayout component for pages that don't require authentication.
  */
-export function UnprotectedLayout({ children }: LayoutProps): JSX.Element {
+export function UnprotectedLayout({ children }: LayoutProps) {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <RainbowTopBar />
