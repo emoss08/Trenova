@@ -73,7 +73,7 @@ export type API_ENDPOINTS =
   | "/trailers/"
   | "/equipment_manufacturers/"
   | "/equipment_maintenance_plans/"
-  | "/locations_categories/"
+  | "/location_categories/"
   | "/locations/"
   | "/location_contacts/"
   | "/location_comments/"
