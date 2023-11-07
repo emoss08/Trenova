@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
 
 from rest_framework import serializers
 
@@ -110,6 +109,13 @@ class RevenueCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    rev_account_num = serializers.CharField(
+        source="revenue_account.account_number", read_only=True
+    )
+    exp_account_num = serializers.CharField(
+        source="expense_account.account_number", read_only=True
+    )
+
     class Meta:
         """Metaclass for RevenueCodeSerializer
 
@@ -118,37 +124,7 @@ class RevenueCodeSerializer(GenericSerializer):
         """
 
         model = models.RevenueCode
-
-    def to_representation(self, instance: models.RevenueCode) -> dict[str, typing.Any]:
-        """The to_representation method is used to convert an instance of the models.RevenueCode class into a dictionary
-        representation. It extends the functionality of the GenericSerializer's to_representation method.
-
-        The resulting dictionary will contain the representation of the revenue code instance, including additional
-        fields 'rev_account_num' and 'exp_account_num'. 'rev_account_num' will be set to the revenue account number
-        if it exists, otherwise it will be set to None. 'exp_account_num' will be set to the expense account number.
-
-        Notes:
-            This method does not modify the instance itself, it only converts its data into a dictionary
-            representation.
-
-        Args:
-            instance(RevenueCode): An instance of the models.RevenueCode class representing a revenue code.
-
-        Returns:
-            A dictionary containing the representation of the revenue code instance.
-        """
-        data = super().to_representation(instance=instance)
-        data["rev_account_num"] = (
-            instance.revenue_account.account_number
-            if instance.revenue_account
-            else None
-        )
-        data["exp_account_num"] = (
-            instance.expense_account.account_number
-            if instance.expense_account
-            else None
-        )
-        return data
+        extra_fields = ("rev_account_num", "exp_account_num")
 
     def validate_code(self, value: str) -> str:
         """Validate code does not exist for the organization. Will only apply to

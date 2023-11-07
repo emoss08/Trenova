@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
-from typing import Any
 
 from auditlog.models import LogEntry
 from rest_framework import serializers
@@ -73,6 +72,8 @@ class UserReportSerializer(GenericSerializer):
         `GenericSerializer`
     """
 
+    file_name = serializers.SerializerMethodField()
+
     class Meta:
         """
         A class representing the metadata for the `UserReportSerializer` class.
@@ -86,31 +87,34 @@ class UserReportSerializer(GenericSerializer):
             "report",
             "created",
             "modified",
+            "file_name",
         )
 
-    def to_representation(self, instance: models.UserReport) -> dict[str, Any]:
-        """Transforms the instance's data into a dictionary.
-
-        This method retrieves the data from an instance of `UserReport`, and then
-        transforms it into a dictionary format suitable for serialization.
-        It also adds a new field 'file_name' which extracts the name of the file from
-        the report attribute of the instance.
+    def get_file_name(self, instance: models.UserReport) -> str:
+        """Extracts the name of the file from the report attribute of the instance.
 
         Args:
             instance (models.UserReport): The `UserReport` model instance that will be serialized.
 
         Returns:
-            dict: A dictionary containing the serialized data from the `UserReport` model instance,
-                  along with the file name from the report attribute.
+            str: The name of the file from the report attribute of the instance.
         """
 
-        representation = super().to_representation(instance)
-        representation["file_name"] = os.path.basename(instance.report.name)
-        return representation
+        return os.path.basename(instance.report.name)
 
 
 class LogEntrySerializer(serializers.ModelSerializer):
+    actor = serializers.CharField(
+        source="actor.username", read_only=True, allow_null=True
+    )
+
     class Meta:
+        """Metaclass for LogEntrySerializer
+
+        Attributes:
+            model (models.LogEntry): The model that the serializer.
+        """
+
         model = LogEntry
         fields = (
             "content_type",
@@ -125,8 +129,3 @@ class LogEntrySerializer(serializers.ModelSerializer):
             "timestamp",
             "additional_data",
         )
-
-    def to_representation(self, instance: LogEntry) -> dict[str, Any]:
-        representation = super().to_representation(instance)
-        representation["actor"] = instance.actor.username if instance.actor else None
-        return representation
