@@ -48,6 +48,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
     <Avatar
       ref={ref}
       {...props}
+      className="focus:outline-none"
       style={{
         outline: "none",
       }}
