@@ -132,11 +132,14 @@ class RevenueCodeViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
+            "business_unit_id",
             "code",
             "description",
             "organization_id",
             "expense_account_id",
             "revenue_account_id",
+            "created",
+            "modified",
         )
         return queryset
 
