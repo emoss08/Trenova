@@ -223,7 +223,7 @@ export function DataTableImportExportOption() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[150px]">
-          <DropdownMenuLabel>Import/Export</DropdownMenuLabel>
+          <DropdownMenuLabel>Options</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
             Import
@@ -231,6 +231,8 @@ export function DataTableImportExportOption() {
           <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
             Export
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>View Audit Log</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
