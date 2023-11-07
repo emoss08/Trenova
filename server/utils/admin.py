@@ -40,7 +40,6 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     """
 
     autocomplete: bool = True
-    # exclude: tuple[str, ...] = ("organization", "business_unit")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
@@ -97,7 +96,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         instances = formset.save(commit=False)
         for instance in instances:
             instance.organization = request.user.organization  # type: ignore
-            instance.business_unit = request.user.organization.business_unit  # type: ignore
+            instance.business_unit = request.user.business_unit  # type: ignore
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)

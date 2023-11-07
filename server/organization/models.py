@@ -33,7 +33,6 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -1318,6 +1317,9 @@ class NotificationType(TimeStampedModel):
         verbose_name_plural = _("Notification Types")
         ordering = ("name",)
         db_table = "notification_type"
+        db_table_comment = (
+            "Stores the notification type information for a related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
