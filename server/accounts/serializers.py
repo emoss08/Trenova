@@ -46,7 +46,7 @@ class GroupSerializer(serializers.ModelSerializer):
     """
     Group Serializer
     """
-
+    id = serializers.UUIDField(read_only=True)
     permissions = PermissionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -215,14 +215,9 @@ class UserSerializer(GenericSerializer):
     """
 
     groups = serializers.StringRelatedField(many=True, read_only=True)
-    user_permissions = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="codename"
-    )
+    user_permissions = serializers.SerializerMethodField()
     profile = UserProfileSerializer(required=False)
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-        pk_field=serializers.UUIDField(format="hex_verbose"),
-    )
+    full_name = serializers.CharField(source="profile.get_full_name", read_only=True)
 
     class Meta:
         """
@@ -230,7 +225,7 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        extra_fields = ("profile", "groups", "user_permissions", "organization")
+        extra_fields = ("profile", "full_name")
         extra_read_only_fields = (
             "id",
             "online",
@@ -247,15 +242,13 @@ class UserSerializer(GenericSerializer):
             "date_joined": {"read_only": True},
         }
 
-    def to_representation(self, instance: models.User) -> dict[str, Any]:
-        data = super().to_representation(instance=instance)
-
-        # Check if the instance has a profile
-        if not hasattr(instance, "profile"):
-            data["full_name"] = None
-        else:
-            data["full_name"] = instance.profile.get_full_name
-        return data
+    def get_user_permissions(self, obj):
+        # This method will be called for each User object that is being serialized.
+        # It collects all unique permission codenames from all groups the user is part of.
+        permissions = set()
+        for group in obj.groups.all():
+            permissions.update(group.permissions.values_list('codename', flat=True))
+        return list(permissions)
 
     def create(self, validated_data: Any) -> models.User:  # type: ignore
         """Create a user

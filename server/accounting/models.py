@@ -775,7 +775,9 @@ class DivisionCode(GenericModel):
         Returns:
             str: DivisionCode string representation
         """
-        return textwrap.wrap(self.code, 4)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", width=40, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """DivisionCode absolute url
