@@ -200,7 +200,7 @@ router.register(
 )
 # Location Routing
 router.register(
-    r"locations_categories",
+    r"location_categories",
     location_api.LocationCategoryViewSet,
     basename="location-categories",
 )
