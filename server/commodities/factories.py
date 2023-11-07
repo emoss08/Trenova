@@ -34,7 +34,9 @@ class CommodityFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
-    hazmat = factory.SubFactory("commodities.factories.HazardousMaterialFactory")
+    hazardous_material = factory.SubFactory(
+        "commodities.factories.HazardousMaterialFactory"
+    )
 
 
 class HazardousMaterialFactory(factory.django.DjangoModelFactory):

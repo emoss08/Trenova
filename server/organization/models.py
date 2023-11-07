@@ -21,7 +21,7 @@ import uuid
 from typing import Any, final
 
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator, FileExtensionValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -1317,6 +1317,9 @@ class NotificationType(TimeStampedModel):
         verbose_name_plural = _("Notification Types")
         ordering = ("name",)
         db_table = "notification_type"
+        db_table_comment = (
+            "Stores the notification type information for a related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),

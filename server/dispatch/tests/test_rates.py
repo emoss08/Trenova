@@ -435,3 +435,12 @@ def test_set_rate_number_increment_hook(rate: models.Rate) -> None:
     assert rate.rate_number == "R00001"
     assert rate2.rate_number is not None
     assert rate2.rate_number == "R00002"
+
+
+async def get_field_names():
+    return [field.name for field in models.Rate._meta._get_fields(reverse=False)]
+
+
+@pytest.mark.asyncio
+async def test_rate_notification_validation(rate: models.Rate) -> None:
+    print(await get_field_names())

@@ -137,7 +137,7 @@ function TableExportModalBody({
           options={columns}
           label="Columns"
           placeholder="Select columns"
-          description="Fields with underscores are related fields. For example, 'organization__name' is the 'name' field of the organization of the record."
+          description="A group of columns/fields that will be exported into your specified format."
         />
       </div>
       <div>
@@ -225,9 +225,7 @@ export function DataTableImportExportOption() {
         <DropdownMenuContent align="end" className="w-[150px]">
           <DropdownMenuLabel>Options</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
-            Import
-          </DropdownMenuItem>
+          <DropdownMenuItem>Import</DropdownMenuItem>
           <DropdownMenuItem onClick={() => store.set("exportModalOpen", true)}>
             Export
           </DropdownMenuItem>

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
 from django.apps import apps
+from django.core.cache import cache
 from notifications.helpers import get_notification_list
 from rest_framework import exceptions, generics, status, viewsets
 from rest_framework.decorators import api_view
@@ -157,15 +158,23 @@ def get_model_columns_api(request: Request) -> Response:
             {"error": "Model name not provided."}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    try:
-        allowed_model = ALLOWED_MODELS[model_name]
-    except KeyError:
-        return Response(
-            {"error": f"Not allowed to generate reports for model: {model_name}"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    # Cache key unique to the model
+    cache_key = f"allowed_fields_{model_name}"
 
-    # No need to handle related fields separately anymore
+    # Try to get allowed fields from the cache
+    allowed_model = cache.get(cache_key)
+
+    if not allowed_model:
+        try:
+            allowed_model = ALLOWED_MODELS[model_name]
+            # Store in cache for future requests
+            cache.set(cache_key, allowed_model, timeout=3600)  # Cache for 1 hour
+        except KeyError:
+            return Response(
+                {"error": f"Not allowed to generate reports for model: {model_name}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
     return Response(
         {"results": allowed_model["allowed_fields"]}, status=status.HTTP_200_OK
     )
