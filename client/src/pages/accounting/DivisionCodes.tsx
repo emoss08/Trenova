@@ -15,21 +15,88 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { DivisionCodeTable } from "@/components/division-codes/table/DivisionCodeTable";
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { tableStatusChoices } from "@/lib/constants";
+import { DivisionCode } from "@/types/accounting";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
+import { DCDialog } from "@/components/division-codes/dc-table-dialog";
+import { DCTableEditDialog } from "@/components/division-codes/dc-table-edit-dialog";
 
-const DivisionCodes: React.FC = () => {
-  const { classes } = usePageStyles();
+const columns: ColumnDef<DivisionCode>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Code" />
+    ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+];
 
+const filters: FilterConfig<DivisionCode>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+];
+
+export default function DivisionCodes() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <DivisionCodeTable />
-      </Card>
-    </Flex>
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="division-code-table-data"
+          columns={columns}
+          link="/division_codes/"
+          name="Division Code"
+          exportModelName="DivisionCode"
+          filterColumn="code"
+          tableFacetedFilters={filters}
+          TableSheet={DCDialog}
+          TableEditSheet={DCTableEditDialog}
+        />
+      </CardContent>
+    </Card>
   );
-};
-
-export default DivisionCodes;
+}
