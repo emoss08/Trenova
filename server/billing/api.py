@@ -556,7 +556,7 @@ def transfer_to_billing(request: Request) -> Response:
 @api_view(["GET"])
 def get_shipments_ready(request: Request) -> Response:
     shipments_ready = selectors.get_billable_shipments(organization=request.user.organization)  # type: ignore
-    serializer = serializers.shipmentsReadySerializer(shipments_ready, many=True)
+    serializer = serializers.ShipmentsReadySerializer(shipments_ready, many=True)
     return Response(
         {
             "results": serializer.data,
