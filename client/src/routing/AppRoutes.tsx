@@ -130,7 +130,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/division-codes",
     description: "Manage division codes",
     element: <DivisionCodesPage />,
-    permission: "view_divisioncode",
+    permission: "accounting.view_divisioncode",
   },
   {
     title: "Revenue Codes",
@@ -139,7 +139,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/revenue-codes",
     description: "Manage revenue codes",
     element: <RevenueCodesPage />,
-    permission: "view_revenuecode",
+    permission: "accounting.view_revenuecode",
   },
   {
     title: "General Ledger Accounts",
@@ -148,7 +148,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/gl-accounts",
     description: "Manage general ledger accounts",
     element: <GLAccountsPage />,
-    permission: "view_generalledgeraccount",
+    permission: "accounting.view_generalledgeraccount",
   },
   // Accounts Pages
   {
@@ -158,7 +158,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounts/job-titles",
     description: "Manage job titles",
     element: <JobTitlePage />,
-    permission: "view_jobtitle",
+    permission: "accounts.view_jobtitle",
   },
   // Billing Pages
   {
@@ -168,7 +168,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/charge-types",
     description: "Manage charge types",
     element: <ChargeTypePage />,
-    permission: "view_chargetype",
+    permission: "billing.view_chargetype",
   },
   {
     title: "Accessorial Charges",
@@ -177,7 +177,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/accessorial-charges",
     description: "Manage accessorial charges",
     element: <AccessorialChargePage />,
-    permission: "view_accessorialcharge",
+    permission: "billing.view_accessorialcharge",
   },
   {
     title: "Billing Client",
@@ -195,7 +195,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/commodities/hazardous-material",
     description: "Manage hazardous materials",
     element: <HazardousMaterialPage />,
-    permission: "view_hazardousmaterial",
+    permission: "commodities.view_hazardousmaterial",
   },
   {
     title: "Commodities",
@@ -204,7 +204,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/commodities/",
     description: "Manage commodities",
     element: <CommodityPage />,
-    permission: "view_commodity",
+    permission: "commodities.view_commodity",
   },
   // Customer Page
   {
@@ -214,7 +214,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/",
     description: "Manage customers",
     element: <CustomerPage />,
-    permission: "view_customer",
+    permission: "customer.view_customer",
   },
   {
     title: "View Customer",
@@ -223,7 +223,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/view/:id",
     description: "View customer",
     element: <ViewCustomerPage />,
-    permission: "view_customer",
+    permission: "customer.view_customer",
   },
   {
     title: "Edit Customer",
@@ -232,7 +232,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/edit/:id",
     description: "Edit customer",
     element: <EditCustomerPage />,
-    permission: "view_customer",
+    permission: "customer.view_customer",
   },
   // Dispatch pages
   {
@@ -242,7 +242,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/delay-codes/",
     description: "Delay Codes",
     element: <DelayCodePage />,
-    permission: "view_delaycode",
+    permission: "dispatch.view_delaycode",
   },
   {
     title: "Fleet Codes",
@@ -251,7 +251,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/fleet-codes/",
     description: "Fleet Codes",
     element: <FleetCodePage />,
-    permission: "view_fleetcode",
+    permission: "dispatch.view_fleetcode",
   },
   {
     title: "Comment Types",
@@ -260,7 +260,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/comment-types/",
     description: "Comment Types",
     element: <CommentTypePage />,
-    permission: "view_commenttype",
+    permission: "dispatch.view_commenttype",
   },
   {
     title: "Rate Management",
@@ -268,7 +268,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/rate-management/",
     description: "Rate Management",
     element: <RatePage />,
-    permission: "view_rate",
+    permission: "dispatch.view_rate",
   },
   {
     title: "Location Categories",
@@ -285,7 +285,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/equipment/equipment-types/",
     description: "Equipment Types",
     element: <EquipmentTypePage />,
-    permission: "view_equipmenttype",
+    permission: "equipment.view_equipmenttype",
   },
   {
     title: "Equipment Manufacturer",
@@ -294,7 +294,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/equipment/equipment-manufacturers/",
     description: "Equipment Manufacturer",
     element: <EquipmentManfacturerPage />,
-    permission: "view_equipmentmanufacturer",
+    permission: "equipment.view_equipmentmanufacturer",
   },
   // Error Page
   {
