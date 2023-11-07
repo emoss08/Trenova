@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Control, useForm } from "react-hook-form";
 import { RevenueCodeFormValues as FormValues } from "@/types/accounting";
 import { SelectInput } from "@/components/common/fields/select-input";
