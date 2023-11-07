@@ -19,24 +19,28 @@ import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
+import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
-import { Commodity } from "@/types/commodities";
 import { Badge } from "@/components/ui/badge";
-import { CommodityDialog } from "@/components/commodities/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
+import { DelayCode } from "@/types/dispatch";
+import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
+import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
 
-function HazmatBadge({ isHazmat }: { isHazmat: string }) {
+function CarrierOrDriverBadge({
+  carrierOrDriver,
+}: {
+  carrierOrDriver: boolean;
+}) {
   return (
-    <Badge variant={isHazmat === "Y" ? "default" : "destructive"}>
-      {isHazmat === "Y" ? "Yes" : "No"}
+    <Badge variant={carrierOrDriver ? "default" : "destructive"}>
+      {carrierOrDriver ? "Yes" : "No"}
     </Badge>
   );
 }
 
-const columns: ColumnDef<Commodity>[] = [
+const columns: ColumnDef<DelayCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -69,9 +73,9 @@ const columns: ColumnDef<Commodity>[] = [
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
   },
   {
@@ -80,38 +84,32 @@ const columns: ColumnDef<Commodity>[] = [
     cell: ({ row }) => truncateText(row.original.description as string, 25),
   },
   {
-    id: "temp_range",
-    accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
-    header: "Temperature Range",
-    cell: ({ row, column }) => {
-      if (row.original.minTemp === null && row.original.maxTemp === null) {
-        return "N/A";
-      }
-      return row.getValue(column.id);
-    },
-  },
-  {
-    accessorKey: "isHazmat",
+    accessorKey: "fCarrierOrDriver",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Is Hazmat" />
+      <DataTableColumnHeader
+        column={column}
+        title="Fault of Carrier Or Driver"
+      />
     ),
-    cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazmat} />,
+    cell: ({ row }) => (
+      <CarrierOrDriverBadge carrierOrDriver={row.original.fCarrierOrDriver} />
+    ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
 ];
 
-const filters: FilterConfig<Commodity>[] = [
+const filters: FilterConfig<DelayCode>[] = [
   {
     columnName: "status",
     title: "Status",
     options: tableStatusChoices,
   },
   {
-    columnName: "isHazmat",
-    title: "Is Hazmat",
-    options: yesAndNoChoices,
+    columnName: "fCarrierOrDriver",
+    title: "Fault of Carrier Or Driver",
+    options: yesAndNoChoicesBoolean,
   },
 ];
 
@@ -123,12 +121,12 @@ export default function DelayCodes() {
           queryKey="delay-code-table-data"
           columns={columns}
           link="/delay_codes/"
-          name="DelayCode"
+          name="Delay Code"
           exportModelName="DelayCode"
-          filterColumn="name"
+          filterColumn="code"
           tableFacetedFilters={filters}
-          TableSheet={CommodityDialog}
-          TableEditSheet={CommodityEditDialog}
+          TableSheet={DelayCodeDialog}
+          TableEditSheet={DelayCodeEditDialog}
         />
       </CardContent>
     </Card>

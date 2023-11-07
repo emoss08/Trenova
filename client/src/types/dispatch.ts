@@ -40,6 +40,7 @@ export type DispatchControlFormValues = Omit<
 >;
 
 export interface DelayCode extends BaseModel {
+  id: string;
   status: StatusChoiceProps;
   code: string;
   description: string;
