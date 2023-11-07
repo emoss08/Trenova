@@ -330,7 +330,7 @@ export function DataTable<K extends Record<string, any>>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    No data available to display.
                   </TableCell>
                 </TableRow>
               )}
