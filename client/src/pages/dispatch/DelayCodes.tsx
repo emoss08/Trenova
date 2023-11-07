@@ -15,21 +15,120 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { DelayCodeTable } from "@/components/delay-codes/DelayCodeTable";
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
+import { truncateText } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { DelayCode } from "@/types/dispatch";
+import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
+import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
 
-function DelayCodes(): React.ReactElement {
-  const { classes } = usePageStyles();
-
+function CarrierOrDriverBadge({
+  carrierOrDriver,
+}: {
+  carrierOrDriver: boolean;
+}) {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <DelayCodeTable />
-      </Card>
-    </Flex>
+    <Badge variant={carrierOrDriver ? "default" : "destructive"}>
+      {carrierOrDriver ? "Yes" : "No"}
+    </Badge>
   );
 }
 
-export default DelayCodes;
+const columns: ColumnDef<DelayCode>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Code" />
+    ),
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 25),
+  },
+  {
+    accessorKey: "fCarrierOrDriver",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title="Fault of Carrier Or Driver"
+      />
+    ),
+    cell: ({ row }) => (
+      <CarrierOrDriverBadge carrierOrDriver={row.original.fCarrierOrDriver} />
+    ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+];
+
+const filters: FilterConfig<DelayCode>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+  {
+    columnName: "fCarrierOrDriver",
+    title: "Fault of Carrier Or Driver",
+    options: yesAndNoChoicesBoolean,
+  },
+];
+
+export default function DelayCodes() {
+  return (
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="delay-code-table-data"
+          columns={columns}
+          link="/delay_codes/"
+          name="Delay Code"
+          exportModelName="DelayCode"
+          filterColumn="code"
+          tableFacetedFilters={filters}
+          TableSheet={DelayCodeDialog}
+          TableEditSheet={DelayCodeEditDialog}
+        />
+      </CardContent>
+    </Card>
+  );
+}

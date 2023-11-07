@@ -211,6 +211,12 @@ class DelayCode(GenericModel):
             Returns the URL for the DelayCode instance's detail view.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     status = ChoiceField(
         _("Status"),
         choices=PrimaryStatusChoices.choices,
@@ -220,7 +226,6 @@ class DelayCode(GenericModel):
     code = models.CharField(
         _("Delay Code"),
         max_length=4,
-        primary_key=True,
         help_text=_("Delay code for the service incident."),
     )
     description = models.CharField(
@@ -243,6 +248,7 @@ class DelayCode(GenericModel):
         verbose_name_plural = _("Delay Codes")
         ordering = ["code"]
         db_table = "delay_code"
+        db_table_comment = "Stores delay codes for a service incident."
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),

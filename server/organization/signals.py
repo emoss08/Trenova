@@ -445,6 +445,7 @@ def create_notification_settings(
 ) -> None:
     if created:
         models.NotificationSetting.objects.get_or_create(
+            business_unit=instance.business_unit,
             organization=instance.organization,
             notification_type=instance,
         )

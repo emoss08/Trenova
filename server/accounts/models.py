@@ -24,9 +24,9 @@ from typing import Any, final
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
-    PermissionsMixin,
-    Permission,
     GroupManager,
+    Permission,
+    PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
@@ -51,6 +51,7 @@ class CustomGroup(models.Model):
         business_unit (ForeignKey): The business unit that the group belongs to
         organization (ForeignKey): The organization that the group belongs to
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -109,6 +110,7 @@ class CustomPermissionMixin(PermissionsMixin):
     Attributes:
         groups (ManyToManyField): The groups that the user belongs to.
     """
+
     groups = models.ManyToManyField(
         CustomGroup,
         verbose_name=_("Groups"),
@@ -122,6 +124,7 @@ class CustomPermissionMixin(PermissionsMixin):
         """
         Metaclass for the CustomPermissionMixin
         """
+
         abstract = True
 
 
