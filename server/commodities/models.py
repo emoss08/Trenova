@@ -140,6 +140,12 @@ class HazardousMaterial(GenericModel):
         verbose_name_plural = _("Hazardous Materials")
         ordering = ["name"]
         db_table = "hazardous_material"
+        db_table_comment = (
+            "Stores Hazardous Material information for related organization."
+        )
+        indexes = [
+            models.Index(fields=["name"]),
+        ]
 
     def __str__(self) -> str:
         """Hazardous Material String Representation
@@ -275,6 +281,7 @@ class Commodity(GenericModel):
         verbose_name_plural = _("Commodities")
         ordering = ["name"]
         db_table = "commodity"
+        db_table_comment = "Stores Commodity information for related organization"
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -289,7 +296,11 @@ class Commodity(GenericModel):
         Returns:
             str: Commodity Name
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(
+            self.name,
+            width=50,
+            placeholder="...",
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity
@@ -305,6 +316,7 @@ class Commodity(GenericModel):
 
         if self.hazardous_material:
             self.is_hazmat = "Y"
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -344,17 +356,3 @@ class Commodity(GenericModel):
                     )
                 }
             )
-
-    def update_commodity(self, **kwargs: Any) -> None:
-        """Update Commodity
-
-        Args:
-            **kwargs(Any): Keyword arguments that are used to update the commodity.
-
-        Returns:
-            None: This function does not return anything.
-        """
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
