@@ -46,6 +46,7 @@ class GroupSerializer(serializers.ModelSerializer):
     """
     Group Serializer
     """
+
     id = serializers.UUIDField(read_only=True)
     permissions = PermissionSerializer(many=True, read_only=True)
 
@@ -247,7 +248,7 @@ class UserSerializer(GenericSerializer):
         # It collects all unique permission codenames from all groups the user is part of.
         permissions = set()
         for group in obj.groups.all():
-            permissions.update(group.permissions.values_list('codename', flat=True))
+            permissions.update(group.permissions.values_list("codename", flat=True))
         return list(permissions)
 
     def create(self, validated_data: Any) -> models.User:  # type: ignore
