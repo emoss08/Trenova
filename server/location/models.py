@@ -59,6 +59,7 @@ class LocationCategory(GenericModel):
         verbose_name_plural = _("Location Categories")
         ordering = ("name",)
         db_table = "location_category"
+        indexes = [models.Index(fields=["name"])]
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -195,6 +196,7 @@ class Location(GenericModel):
         verbose_name_plural = _("Locations")
         ordering = ("code",)
         db_table = "location"
+        indexes = [models.Index(fields=["code"])]
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
@@ -289,11 +291,12 @@ class LocationContact(GenericModel):
 
         verbose_name = _("Location Contact")
         verbose_name_plural = _("Location Contacts")
-        ordering: tuple[str] = ("name",)
-        indexes: list[models.Index] = [
+        ordering = ("name",)
+        indexes = [
             models.Index(fields=["name"]),
         ]
         db_table = "location_contact"
+        db_table_comment = "Stores location contact information related to location."
 
     def __str__(self) -> str:
         """LocationContact string representation
@@ -366,8 +369,9 @@ class LocationComment(GenericModel):
 
         verbose_name = _("Location Comment")
         verbose_name_plural = _("Location Comments")
-        ordering: tuple[str] = ("location",)
+        ordering = ("location",)
         db_table = "location_comment"
+        db_table_comment = "Stores location comment information related to location."
 
     def __str__(self) -> str:
         """LocationComment string representation
@@ -384,13 +388,3 @@ class LocationComment(GenericModel):
             str: LocationComment absolute URL
         """
         return reverse("location-comments-detail", kwargs={"pk": self.pk})
-
-    def update_location_comment(self, **kwargs: Any) -> None:
-        """Update LocationComment
-
-        Args:
-            **kwargs (Any): LocationComment attributes
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
