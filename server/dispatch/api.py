@@ -41,7 +41,15 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.CommentType]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only("id", "organization_id", "name", "description")
+        ).only(
+            "id",
+            "organization_id",
+            "business_unit_id",
+            "name",
+            "description",
+            "created",
+            "modified",
+        )
         return queryset
 
 
