@@ -21,9 +21,9 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
-import { LCTableSheet } from "@/components/location-categories/lc-table-sheet";
 import { truncateText } from "@/lib/utils";
-import { LCTableEditDialog } from "@/components/location-categories/lc-table-edit-sheet";
+import { FleetCodeDialog } from "@/components/fleet-codes/fleet-code-table-dialog";
+import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
 
 const columns: ColumnDef<FleetCode>[] = [
   {
@@ -81,8 +81,8 @@ export default function FleetCodes() {
           name="Fleet Codes"
           exportModelName="FleetCode"
           filterColumn="code"
-          TableSheet={LCTableSheet}
-          TableEditSheet={LCTableEditDialog}
+          TableSheet={FleetCodeDialog}
+          TableEditSheet={FleetCodeEditDialog}
         />
       </CardContent>
     </Card>
