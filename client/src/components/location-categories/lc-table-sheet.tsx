@@ -16,10 +16,14 @@
  */
 
 import React from "react";
-import { Control, useForm } from "react-hook-form";
+import {
+  Control,
+  useForm,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
 import { LocationCategoryFormValues as FormValues } from "@/types/location";
 import { InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
 import { TableSheetProps } from "@/types/tables";
 import { locationCategorySchema as formSchema } from "@/lib/validations/location";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -34,8 +38,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ColorField } from "@/components/common/color-field";
+import { TextareaField } from "@/components/common/fields/textarea";
 
-export function LCForm({ control }: { control: Control<FormValues> }) {
+export function LCForm({
+  control,
+  watch,
+  setValue,
+}: {
+  control: Control<FormValues>;
+  watch: UseFormWatch<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
+}) {
+  const [color, setColor] = React.useState<string>("");
+
+  React.useEffect(() => {
+    setValue("color", color);
+  }, [watch("color"), setValue, color]);
+
   return (
     <div className="flex items-center justify-center">
       <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
@@ -61,6 +81,17 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
             description="Description of the Location Category"
           />
         </div>
+        <div className="grid w-full max-w-md">
+          <ColorField
+            name="color"
+            control={control}
+            color={color}
+            onChange={setColor}
+            placeholder="Color"
+            label="Color"
+            description="Color Code for the Location Category (ffffff is default)"
+          />
+        </div>
       </div>
     </div>
   );
@@ -68,13 +99,16 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
 
 export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
+  const { control, reset, handleSubmit, setValue, watch } = useForm<FormValues>(
+    {
+      resolver: yupResolver(formSchema),
+      defaultValues: {
+        name: "",
+        description: "",
+        color: "",
+      },
     },
-  });
+  );
 
   const mutation = useCustomMutation<FormValues>(
     control,
@@ -106,7 +140,7 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
           Please fill out the form below to create a new Location Category.
         </DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <LCForm control={control} />
+          <LCForm control={control} watch={watch} setValue={setValue} />
           <DialogFooter className="mt-6">
             <Button
               type="submit"

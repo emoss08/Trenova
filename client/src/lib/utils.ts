@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { useEffect, RefObject } from "react";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -35,3 +36,39 @@ export function USDollarFormat(num: number) {
 export function truncateText(str: string, length: number) {
   return str.length > length ? str.substring(0, length) + "..." : str;
 }
+
+const useClickOutside = <T extends HTMLElement>(
+  ref: RefObject<T>,
+  handler: (event: MouseEvent | TouchEvent) => void,
+): void => {
+  useEffect(() => {
+    let startedInside: boolean | null = false;
+    let startedWhenMounted = false;
+
+    const listener = (event: MouseEvent | TouchEvent) => {
+      // Do nothing if `mousedown` or `touchstart` started inside ref element
+      if (startedInside || !startedWhenMounted) return;
+      // Do nothing if clicking ref's element or descendent elements
+      if (!ref.current || ref.current.contains(event.target as Node)) return;
+
+      handler(event);
+    };
+
+    const validateEventStart = (event: MouseEvent | TouchEvent) => {
+      startedWhenMounted = !!ref.current;
+      startedInside = ref.current && ref.current.contains(event.target as Node);
+    };
+
+    document.addEventListener("mousedown", validateEventStart);
+    document.addEventListener("touchstart", validateEventStart);
+    document.addEventListener("click", listener);
+
+    return () => {
+      document.removeEventListener("mousedown", validateEventStart);
+      document.removeEventListener("touchstart", validateEventStart);
+      document.removeEventListener("click", listener);
+    };
+  }, [ref, handler]);
+};
+
+export default useClickOutside;
