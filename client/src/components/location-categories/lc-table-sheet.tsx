@@ -38,24 +38,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ColorField } from "@/components/common/color-field";
 import { TextareaField } from "@/components/common/fields/textarea";
 
 export function LCForm({
   control,
-  watch,
-  setValue,
 }: {
   control: Control<FormValues>;
   watch: UseFormWatch<FormValues>;
   setValue: UseFormSetValue<FormValues>;
 }) {
-  const [color, setColor] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setValue("color", color);
-  }, [watch("color"), setValue, color]);
-
   return (
     <div className="flex items-center justify-center">
       <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
@@ -82,14 +73,15 @@ export function LCForm({
           />
         </div>
         <div className="grid w-full max-w-md">
-          <ColorField
-            name="color"
+          <InputField
             control={control}
-            color={color}
-            onChange={setColor}
-            placeholder="Color"
+            name="color"
             label="Color"
-            description="Color Code for the Location Category (ffffff is default)"
+            autoCapitalize="none"
+            autoCorrect="off"
+            type="text"
+            placeholder="Color (Hex)"
+            description="Color Code for Location Category"
           />
         </div>
       </div>
