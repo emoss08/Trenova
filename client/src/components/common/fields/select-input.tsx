@@ -191,13 +191,7 @@ export function SelectInput<T extends Record<string, unknown>>(
   props: SelectInputProps<T>,
 ) {
   const { field, fieldState } = useController(props);
-  const dataLoading = props.isLoading || props.isDisabled;
-  const errorOccurred = props.isFetchError || !!fieldState.error?.message;
-  const processedValue = ValueProcessor(
-    field.value,
-    props.options,
-    props.isMulti,
-  );
+
   const {
     label,
     description,
@@ -211,6 +205,10 @@ export function SelectInput<T extends Record<string, unknown>>(
     hideSelectedOptions = false,
     ...controllerProps
   } = props;
+
+  const dataLoading = props.isLoading || props.isDisabled;
+  const errorOccurred = props.isFetchError || !!fieldState.error?.message;
+  const processedValue = ValueProcessor(field.value, options, isMulti);
 
   return (
     <>
@@ -227,8 +225,8 @@ export function SelectInput<T extends Record<string, unknown>>(
       )}
       <div className="relative">
         <Select
-          aria-invalid={fieldState.invalid || props.isFetchError}
-          closeMenuOnSelect={!props.isMulti}
+          aria-invalid={fieldState.invalid || isFetchError}
+          closeMenuOnSelect={!isMulti}
           hideSelectedOptions={hideSelectedOptions}
           unstyled
           options={options}
@@ -294,9 +292,10 @@ export function SelectInput<T extends Record<string, unknown>>(
             noOptionsMessage: () =>
               "text-muted-foreground p-2 bg-background rounded-sm",
           }}
+          {...field}
           value={processedValue}
           onChange={(selected) => {
-            if (props.isMulti) {
+            if (isMulti) {
               const values = (selected as SelectOption[]).map(
                 (opt) => opt.value,
               );
