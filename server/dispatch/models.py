@@ -277,10 +277,7 @@ class DelayCode(GenericModel):
 
 
 class FleetCode(GenericModel):
-    """
-    Class: FleetCode
-
-    Model for storing fleet codes for service incidents.
+    """Model for storing fleet codes for service incidents.
 
     A FleetCode instance represents a code used to identify a fleet of vehicles for service incidents.
     This allows for tracking and reporting on specific fleets of vehicles, including their revenue goals,
@@ -338,28 +335,32 @@ class FleetCode(GenericModel):
         _("Revenue Goal"),
         max_digits=10,
         decimal_places=2,
-        default=0.00,
+        blank=True,
+        null=True,
         help_text=_("Revenue goal for the fleet code."),
     )
     deadhead_goal = models.DecimalField(
         _("Deadhead Goal"),
         max_digits=10,
         decimal_places=2,
-        default=0.00,
+        blank=True,
+        null=True,
         help_text=_("Deadhead goal for the fleet code."),
     )
     mileage_goal = models.DecimalField(
         _("Mileage Goal"),
         max_digits=10,
         decimal_places=2,
-        default=0.00,
+        blank=True,
+        null=True,
         help_text=_("Mileage goal for the fleet code."),
     )
     manager = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
         related_name="fleet_code_manager",
         help_text=_("Manager for the fleet code."),
+        limit_choices_to={"is_active": True},
         null=True,
         blank=True,
     )

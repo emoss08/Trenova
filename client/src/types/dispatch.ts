@@ -53,12 +53,13 @@ export type DelayCodeFormValues = Omit<
 >;
 
 export interface FleetCode extends BaseModel {
+  id: string;
   status: StatusChoiceProps;
   code: string;
   description: string;
-  revenueGoal: number;
-  deadheadGoal: number;
-  mileageGoal: number;
+  revenueGoal?: string | null;
+  deadheadGoal?: string | null;
+  mileageGoal?: string | null;
   manager?: string | null;
 }
 

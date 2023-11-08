@@ -112,7 +112,7 @@ class CustomPermissionMixin(PermissionsMixin):
     """
 
     groups = models.ManyToManyField(
-        CustomGroup,
+        CustomGroup,  # type: ignore
         verbose_name=_("Groups"),
         blank=True,
         help_text=_("The groups that the user belongs to."),
