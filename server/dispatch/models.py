@@ -312,6 +312,12 @@ class FleetCode(GenericModel):
             Returns the URL for this object's detail view.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     status = ChoiceField(
         _("Status"),
         choices=PrimaryStatusChoices.choices,
@@ -321,7 +327,6 @@ class FleetCode(GenericModel):
     code = models.CharField(
         _("Fleet Code"),
         max_length=4,
-        primary_key=True,
         help_text=_("Fleet code for the service incident."),
     )
     description = models.CharField(

@@ -474,7 +474,7 @@ class Tractor(GenericModel):
         default=False,
         help_text=_("Equipment is IFTA Qualified."),
     )
-    fleet = models.ForeignKey(
+    fleet_code = models.ForeignKey(
         "dispatch.FleetCode",
         on_delete=models.CASCADE,
         related_name="tractor",

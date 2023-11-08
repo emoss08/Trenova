@@ -54,7 +54,7 @@ class LocationCategory(GenericModel):
         _("Color"),
         blank=True,
         null=True,
-        help_text=_("Color code for Locaiton Category"),
+        help_text=_("Color code for Location Category"),
     )
 
     class Meta:
@@ -80,7 +80,9 @@ class LocationCategory(GenericModel):
         Returns:
             str: Location Category name
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(
+            f"{self.name}: {self.description}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Location Category absolute URL
@@ -88,15 +90,7 @@ class LocationCategory(GenericModel):
         Returns:
             str: Location Category absolute URL
         """
-        return reverse("location:locationcategory_detail", kwargs={"pk": self.pk})
-
-    def update_location_category(self, **kwargs: Any) -> None:
-        """
-        Updates the Location Category with the given kwargs
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
+        return reverse("locationcategory_detail", kwargs={"pk": self.pk})
 
 
 class Location(GenericModel):
