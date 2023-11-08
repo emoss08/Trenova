@@ -40,7 +40,6 @@ class GeneralLedgerAccountBase(BaseModel):
     organization_id: uuid.UUID
     status: str
     account_number: str
-    description: str
     account_type: str
     cash_flow_type: str
     account_sub_type: str
@@ -71,7 +70,6 @@ def test_create_schema() -> None:
         organization_id=uuid.uuid4(),
         status="A",
         account_number="1234-12",
-        description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
         account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
@@ -83,7 +81,6 @@ def test_create_schema() -> None:
     assert gl_account is not None
     assert gl_account["status"] == "A"
     assert gl_account["account_number"] == "1234-12"
-    assert gl_account["description"] == "Description"
     assert (
         gl_account["account_type"]
         == models.GeneralLedgerAccount.AccountTypeChoices.ASSET
@@ -112,7 +109,6 @@ def test_update_schema() -> None:
         organization_id=uuid.uuid4(),
         status="A",
         account_number="1234-12",
-        description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
         account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
@@ -124,7 +120,6 @@ def test_update_schema() -> None:
     assert gl_account is not None
     assert gl_account["status"] == "A"
     assert gl_account["account_number"] == "1234-12"
-    assert gl_account["description"] == "Description"
     assert (
         gl_account["account_type"]
         == models.GeneralLedgerAccount.AccountTypeChoices.ASSET
@@ -153,7 +148,6 @@ def test_delete_schema() -> None:
             organization_id=uuid.uuid4(),
             status="A",
             account_number="1234-12",
-            description="Description 1",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
             cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
             account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
@@ -163,7 +157,6 @@ def test_delete_schema() -> None:
             organization_id=uuid.uuid4(),
             status="A",
             account_number="1234-12",
-            description="Description 2",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
             cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
             account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
@@ -223,7 +216,6 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
         business_unit=business_unit,
         account_number="1234-12",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
-        description="Another Description",
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
         account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
         account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
@@ -263,7 +255,6 @@ def test_api_get_by_id(api_client: APIClient, gl_account_api: Response) -> None:
     assert response.status_code == 200
     assert response.data["account_number"] == gl_account_api.data["account_number"]
     assert response.data["account_type"] == gl_account_api.data["account_type"]
-    assert response.data["description"] == gl_account_api.data["description"]
 
 
 def test_api_put(
@@ -280,7 +271,6 @@ def test_api_put(
         {
             "organization": organization.id,
             "account_number": "2345-23",
-            "description": "Another Test Description",
             "account_type": f"{models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE}",
             "cash_flow_type": f"{models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING}",
             "account_sub_type": f"{models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET}",
@@ -293,7 +283,6 @@ def test_api_put(
         response.data["account_type"]
         == models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
     )
-    assert response.data["description"] == "Another Test Description"
     assert (
         response.data["cash_flow_type"]
         == models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING
