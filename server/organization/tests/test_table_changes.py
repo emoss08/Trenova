@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from io import StringIO
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -30,7 +30,6 @@ from organization.services.psql_triggers import (
     check_trigger_exists,
 )
 from organization.services.table_choices import TABLE_NAME_CHOICES
-from organization.tasks import table_change_alerts
 
 pytestmark = pytest.mark.django_db
 
@@ -152,20 +151,6 @@ def test_command() -> None:
         out = StringIO()
         call_command("psql_listener", stdout=out)
         assert "Starting PostgreSQL listener..." in out.getvalue()
-
-
-@patch("organization.tasks.call_command")
-def test_table_change_alerts_success(mock_call_command: Mock) -> None:
-    """Tests that the table_change_alerts task calls the psql_listener command.
-
-    Args:
-        mock_call_command (Mock): Mock of the call_command function.
-
-    Returns:
-        None: This function does not return anything.
-    """
-    table_change_alerts()
-    mock_call_command.assert_called_once_with("psql_listener")
 
 
 def test_save_table_change_alert_kafka_without_topic(

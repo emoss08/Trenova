@@ -15,19 +15,85 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { CommentTypeTable } from "@/components/comment-type/CommentTypeTable";
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { tableStatusChoices } from "@/lib/constants";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
+import { CommentType } from "@/types/dispatch";
+import { CommentTypeDialog } from "@/components/comment-type/comment-type-table-dialog";
+import { CommentTypeEditSheet } from "@/components/comment-type/comment-type-table-edit-dialog";
 
-export default function CommentTypes(): React.ReactElement {
-  const { classes } = usePageStyles();
+const columns: ColumnDef<CommentType>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+];
 
+const filters: FilterConfig<CommentType>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+];
+
+export default function CommentTypes() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <CommentTypeTable />
-      </Card>
-    </Flex>
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="comment-types-table-data"
+          columns={columns}
+          link="/comment_types/"
+          name="Comment Types"
+          exportModelName="CommentType"
+          filterColumn="name"
+          tableFacetedFilters={filters}
+          TableSheet={CommentTypeDialog}
+          TableEditSheet={CommentTypeEditSheet}
+        />
+      </CardContent>
+    </Card>
   );
 }

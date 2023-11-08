@@ -14,37 +14,61 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
+import * as React from "react";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
-import { ColorInputBaseProps } from "react-colorful/dist/types";
-import * as React from "react";
-import useClickOutside, { cn } from "@/lib/utils";
 import { Label } from "@/components/common/fields/label";
-import { HexColorInput, HexColorPicker } from "react-colorful";
+import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
+import { ExtendedInputProps, Input } from "@/components/common/fields/input";
 
-type ColorFieldProps<T extends FieldValues> = {
-  label?: string;
-  description?: string;
-} & UseControllerProps<T> &
-  ColorInputBaseProps;
+const controlKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
 
-export function ColorField<T extends FieldValues>({
-  ...props
-}: ColorFieldProps<T>) {
-  const [showPicker, setShowPicker] = React.useState<boolean>(false);
-  const popoverRef = React.useRef<HTMLDivElement>(null);
-  const { field, fieldState } = useController(props);
+type DecimalFieldProps = ExtendedInputProps & {
+  precision?: number;
+};
 
-  const close = React.useCallback(() => setShowPicker(false), []);
-  useClickOutside(popoverRef, close);
+function isKeyAllowed(
+  e: React.KeyboardEvent<HTMLInputElement>,
+  field: any,
+  precision: number,
+) {
+  if (controlKeys.includes(e.key)) {
+    return true;
+  }
+
+  const isNumericOrDot = /[0-9.]/.test(e.key);
+  const isSingleDot = e.key === "." && !field.value.includes(".");
+  const isWithinPrecision =
+    field.value.includes(".") && field.value.split(".")[1].length < precision;
 
   return (
-    <div className="relative">
+    isNumericOrDot &&
+    ((e.key === "." && isSingleDot) ||
+      (e.key !== "." && (isWithinPrecision || !field.value.includes("."))))
+  );
+}
+
+export function DecimalField<T extends FieldValues>({
+  precision = 2,
+  ...props
+}: DecimalFieldProps & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
+
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!isKeyAllowed(e, field, precision)) {
+        e.preventDefault();
+      }
+    },
+    [field, precision],
+  );
+
+  return (
+    <>
       {props.label && (
         <Label
           className={cn(
@@ -55,21 +79,18 @@ export function ColorField<T extends FieldValues>({
           {props.label}
         </Label>
       )}
-      <div className="relative w-full" onClick={() => setShowPicker(true)}>
-        <HexColorInput
-          {...field}
+      <div className="relative">
+        <Input
+          type="text"
           className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+            "pr-10",
             fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
           )}
+          onKeyDown={handleKeyDown}
+          {...field}
           {...props}
-        />
-        <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-gray-300" />
-        <div
-          className="absolute right-0 top-0 my-2.5 mx-2 h-5 w-5 rounded-xl"
-          style={{ backgroundColor: props.color }}
+          aria-label={props.label}
         />
         {fieldState.error?.message && (
           <>
@@ -83,11 +104,6 @@ export function ColorField<T extends FieldValues>({
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
-      {showPicker && (
-        <div ref={popoverRef} className="absolute z-1000 w-auto">
-          <HexColorPicker color={props.color} onChange={props.onChange} />
-        </div>
-      )}
-    </div>
+    </>
   );
 }

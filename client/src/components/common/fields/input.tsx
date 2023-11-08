@@ -21,8 +21,8 @@ import { AlertTriangle } from "lucide-react";
 import { Label } from "./label";
 import {
   FieldValues,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 
 export interface InputProps
