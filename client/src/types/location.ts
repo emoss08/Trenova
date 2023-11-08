@@ -38,6 +38,7 @@ export interface LocationCategory extends BaseModel {
   id: string;
   name: string;
   description?: string | null;
+  color?: string | null;
 }
 
 export type LocationCategoryFormValues = Omit<

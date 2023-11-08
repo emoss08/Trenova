@@ -52,6 +52,21 @@ const columns: ColumnDef<LocationCategory>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+    cell: ({ row }) => {
+      if (row.original.color) {
+        return (
+          <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
+            <div
+              className={"h-5 w-5 rounded-xl mx-2"}
+              style={{ backgroundColor: row.original.color }}
+            />
+            {row.original.name}
+          </div>
+        );
+      } else {
+        return row.original.name;
+      }
+    },
   },
   {
     accessorKey: "description",

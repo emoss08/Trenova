@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any
 
+from colorfield.fields import ColorField
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -49,6 +50,12 @@ class LocationCategory(GenericModel):
         _("Description"),
         blank=True,
     )
+    color = ColorField(
+        _("Color"),
+        blank=True,
+        null=True,
+        help_text=_("Color code for Locaiton Category"),
+    )
 
     class Meta:
         """
@@ -57,9 +64,8 @@ class LocationCategory(GenericModel):
 
         verbose_name = _("Location Category")
         verbose_name_plural = _("Location Categories")
-        ordering = ("name",)
         db_table = "location_category"
-        indexes = [models.Index(fields=["name"])]
+        db_table_comment = "Stores location category information."
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),

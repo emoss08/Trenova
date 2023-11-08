@@ -43,13 +43,16 @@ export function LCEditForm({
   locationCategory: LocationCategory;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(formSchema),
-    defaultValues: {
-      name: locationCategory.name,
-      description: locationCategory.description,
+  const { control, reset, handleSubmit, watch, setValue } = useForm<FormValues>(
+    {
+      resolver: yupResolver(formSchema),
+      defaultValues: {
+        name: locationCategory.name,
+        description: locationCategory.description,
+        color: locationCategory.color,
+      },
     },
-  });
+  );
 
   const mutation = useCustomMutation<FormValues>(
     control,
@@ -73,7 +76,7 @@ export function LCEditForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <LCForm control={control} />
+      <LCForm control={control} setValue={setValue} watch={watch} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
