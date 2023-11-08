@@ -40,7 +40,6 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
         "random_element",
         elements=("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"),
     )
-    description = factory.Faker("sentence", nb_words=6, locale="en_US")
 
 
 class RevenueCodeFactory(factory.django.DjangoModelFactory):
