@@ -40,8 +40,7 @@ User = settings.AUTH_USER_MODEL
 
 class Worker(GenericModel):
     """
-    Stores the equipment information that can be used later to
-    assign an shipment to a movement.
+    Stores the equipment information that can be used later to assign an shipment to a movement.
     """
 
     @final
@@ -110,7 +109,7 @@ class Worker(GenericModel):
         _("State"),
         help_text=_("The state of the worker."),
     )
-    fleet = models.ForeignKey(
+    fleet_code = models.ForeignKey(
         "dispatch.FleetCode",
         on_delete=models.CASCADE,
         related_name="worker",

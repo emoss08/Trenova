@@ -15,21 +15,76 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex } from "@mantine/core";
-import React from "react";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { FleetCodeTable } from "@/components/fleet-codes/FleetCodeTable";
+import { FleetCode } from "@/types/dispatch";
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { ColumnDef } from "@tanstack/react-table";
+import { LCTableSheet } from "@/components/location-categories/lc-table-sheet";
+import { truncateText } from "@/lib/utils";
+import { LCTableEditDialog } from "@/components/location-categories/lc-table-edit-sheet";
 
-function FleetCodes(): React.ReactElement {
-  const { classes } = usePageStyles();
+const columns: ColumnDef<FleetCode>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Code" />
+    ),
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 50),
+  },
+];
 
+export default function FleetCodes() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <FleetCodeTable />
-      </Card>
-    </Flex>
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="fleet-code-table-data"
+          columns={columns}
+          link="/fleet_codes/"
+          name="Fleet Codes"
+          exportModelName="FleetCode"
+          filterColumn="code"
+          TableSheet={LCTableSheet}
+          TableEditSheet={LCTableEditDialog}
+        />
+      </CardContent>
+    </Card>
   );
 }
-
-export default FleetCodes;

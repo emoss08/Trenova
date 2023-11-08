@@ -93,6 +93,7 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
+            "business_unit_id",
             "organization_id",
             "code",
             "description",
@@ -101,6 +102,8 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
             "deadhead_goal",
             "manager_id",
             "mileage_goal",
+            "modified",
+            "created",
         )
         return queryset
 
