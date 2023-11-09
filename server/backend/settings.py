@@ -95,11 +95,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # "core.middleware.business_unit_middleware.BusinessUnitMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
+    # "core.middleware.logging_middleware.RocketLoggingMiddleware",
 ]
+
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
@@ -349,6 +350,7 @@ CACHEOPS_DEFAULTS = {
 }
 
 # Logging Configurations
+
 # LOGGING = {
 #     "version": 1,
 #     "disable_existing_loggers": False,
