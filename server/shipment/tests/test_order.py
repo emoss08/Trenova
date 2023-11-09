@@ -816,7 +816,7 @@ def test_validate_formula_variables(
         business_unit(BusinessUnit): BusinessUnit object.
 
     Returns:
-        None: This function does not return anything.dis
+        None: This function does not return anything.
     """
 
     with pytest.raises(ValidationError) as excinfo:
