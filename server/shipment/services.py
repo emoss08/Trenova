@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from decimal import Decimal
+from typing import Callable
 
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
@@ -104,62 +105,88 @@ def gather_formula_variables(*, shipment: models.Shipment) -> types.FormulaVaria
 
 
 def calculate_total(*, shipment: models.Shipment) -> Decimal:
-    """Calculate the sub_total for an order
+    """Calculate the total cost of a shipment based on a given rate method.
 
-    Calculate the sub_total for the shipment if the organization 'ShipmentControl'
-    has auto_total_shipment as True. If not, this method will be skipped in the
-    save method.
+    This function will take in one of the predefined `RatingMethodChoices` from the
+    `models` module and use the information to calculate the total cost. In the case where
+    a `RatingMethodChoice` is not found, it will default to calculating based on the
+    `freight_charge` alone.
+
+    Args:
+        shipment (models.Shipment): Shipment instance for which to calculate total cost.
 
     Returns:
-        Decimal: The total for the order
+        Decimal: Total cost calculated based on the rate method.
     """
 
-    # TODO(WOLFRED): This can be replaced with a dictionary lookup, this seems a bit verbose
+    # Convert to Decimal once
+    freight_charge = Decimal(shipment.freight_charge_amount or 0)
+    other_charge = Decimal(shipment.other_charge_amount or 0)
 
-    if not shipment.freight_charge_amount:
-        return Decimal(0)
+    # Helper function to calculate based on a multiplier
+    def calculate_with_multiplier(multiplier: Decimal) -> Decimal:
+        return (freight_charge * multiplier) + other_charge
 
-    freight_charge = Decimal(shipment.freight_charge_amount)
-    other_charge = (
-        Decimal(shipment.other_charge_amount)
-        if shipment.other_charge_amount
-        else Decimal(0)
-    )
+    # Mapping of rate methods to their calculation strategies
+    rate_method_calculations: dict[str, Callable[[], Decimal]] = {
+        models.RatingMethodChoices.FLAT: lambda: freight_charge + other_charge,
+        models.RatingMethodChoices.PER_MILE: lambda: calculate_with_multiplier(
+            Decimal(shipment.mileage or 0)
+        ),
+        models.RatingMethodChoices.PER_STOP: lambda: calculate_with_multiplier(
+            Decimal(selectors.get_shipment_stops(shipment=shipment).count())
+        ),
+        models.RatingMethodChoices.POUNDS: lambda: calculate_with_multiplier(
+            Decimal(shipment.weight or 0)
+        ),
+        models.RatingMethodChoices.OTHER: lambda: calculate_other_method(
+            shipment, freight_charge, other_charge
+        ),
+    }
 
-    # Calculate `FLAT` rating method
-    if shipment.rate_method == models.RatingMethodChoices.FLAT:
-        return freight_charge + other_charge
+    # Perform calculation based on the rate method
+    return rate_method_calculations.get(shipment.rate_method, lambda: freight_charge)()
 
-    # Calculate `PER_MILE` rating method
-    if shipment.rate_method == models.RatingMethodChoices.PER_MILE and shipment.mileage:
-        return (freight_charge * Decimal(shipment.mileage)) + other_charge
 
-    # Calculate `PER_STOP` rating method
-    if shipment.rate_method == models.RatingMethodChoices.PER_STOP:
-        shipment_stops_count = selectors.get_shipment_stops(shipment=shipment).count()
-        return (freight_charge * Decimal(shipment_stops_count)) + other_charge
+def calculate_other_method(
+    shipment: models.Shipment, freight_charge: Decimal, other_charge: Decimal
+) -> Decimal:
+    """Calculate the total cost for a shipment using an alternate method.
 
-    # Calculate `PER_POUND` rating method
-    if (
-        shipment.rate_method == models.RatingMethodChoices.POUNDS
-        and shipment.weight > 0
-    ):
-        return (freight_charge * Decimal(shipment.weight)) + other_charge
+    This function is called within the larger calculate_total function specifically for
+    'OTHER' rate methods.
 
-    if shipment.rate_method == models.RatingMethodChoices.OTHER:
-        if not shipment.formula_template:
-            return (freight_charge * Decimal(shipment.rating_units)) + other_charge
+    Args:
+        shipment (object): Shipment data that includes the formula template.
+        freight_charge (Decimal): Cost incurred for the transportation of goods.
+        other_charge (Decimal): Additional cost not categorized under freight charge.
 
-        formula_text = shipment.formula_template.formula_text
-        if helpers.validate_formula(formula=formula_text):
-            variables = gather_formula_variables(shipment=shipment)
-            return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
+    Returns:
+        Decimal: Total cost calculated based on the formula template or freight_charge.
+    """
+    if not shipment.formula_template:
+        return (freight_charge * Decimal(shipment.rating_units)) + other_charge
+
+    formula_text = shipment.formula_template.formula_text
+    if helpers.validate_formula(formula=formula_text):
+        variables = gather_formula_variables(shipment=shipment)
+        return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
     return freight_charge
 
 
 def handle_voided_shipment(shipment: models.Shipment) -> None:
-    """If a shipment has the status of voided. Void all stops and movements."""
+    """Handles a shipment that was voided.
 
+    This function sets the shipment status to 'VOIDED', nullifies the ship date,
+    sets `transferred_to_billing` and `billed` fields to False, nullifies the `billing_transfer_date`,
+    and update status of all related movements and stops.
+
+    Args:
+        shipment (models.Shipment): Shipment instance that was voided.
+
+    Returns:
+        None: This function does not return anything.
+    """
     shipment.status = models.StatusChoices.VOIDED
     shipment.ship_date = None
     shipment.transferred_to_billing = False
