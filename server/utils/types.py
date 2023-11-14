@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 from enum import Enum
-from typing import Any, TypeAlias, TypedDict, Union
+from typing import Any, TypedDict, Union
 from uuid import UUID
 
 from django.db.models import UUIDField
@@ -27,17 +27,16 @@ from rest_framework.request import Request
 
 from accounts.models import User
 
-ModelUUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-HealthStatus: TypeAlias = Union[dict[str, Union[str, int, int, int]]]
-HealthStatusAndTime: TypeAlias = Union[
-    dict[str, Union[str, int, int, int, float, float]]
-]
-DiskUsage: TypeAlias = tuple[int, int, int]
-BilledShipments: TypeAlias = tuple[
-    list[Any | list[dict[str, str | list[str]]]], list[Any]
-]
-EDIEnvelope: TypeAlias = tuple[str, str, str, str, str, str]
-ModelDelete: TypeAlias = tuple[int, dict[str, int]]
+type ModelUUID = Union[UUIDField[Union[str, UUID, None], UUID], Any]
+type HealthStatus = Union[dict[str, Union[str, int, int, int]]]
+type HealthStatusAndTime = Union[dict[str, Union[str, int, int, int, float, float]]]
+type DiskUsage = tuple[int, int, int]
+type BilledShipments = tuple[list[Any | list[dict[str, str | list[str]]]], list[Any]]
+type EDIEnvelope = tuple[str, str, str, str, str, str]
+type ModelDelete = tuple[int, dict[str, int]]
+type Coordinates = tuple[
+    tuple[float | None, float | None], tuple[float | None, float | None]
+] | None
 
 
 class BillingClientActions(Enum):
@@ -46,7 +45,7 @@ class BillingClientActions(Enum):
     """
 
     GET_STARTED = "GET_STARTED"
-    shipments_READY = "shipments_READY"
+    SHIPMENTS_READY = "SHIPMENTS_READY"
     BILLING_QUEUE = "BILLING_QUEUE"
     BILL_shipmentS = "BILL_shipmentS"
     BILLING_COMPLETE = "BILLING_COMPLETE"
@@ -80,7 +79,7 @@ class BillingClientSessionResponse(TypedDict):
     last_message: Any
 
 
-class AuthenticatedRequest(Request):
+class AuthenticatedRequest[H: Request]:
     """
     A request that has been authenticated by the authentication middleware.
 
@@ -91,7 +90,7 @@ class AuthenticatedRequest(Request):
     user: User
 
 
-class AuthenticatedHttpRequest(HttpRequest):
+class AuthenticatedHttpRequest[T: HttpRequest]:
     user: User
 
 

@@ -17,7 +17,6 @@
 
 import textwrap
 import uuid
-from typing import Any
 
 from colorfield.fields import ColorField
 from django.db import models
@@ -90,7 +89,7 @@ class LocationCategory(GenericModel):
         Returns:
             str: Location Category absolute URL
         """
-        return reverse("locationcategory_detail", kwargs={"pk": self.pk})
+        return reverse("location-category-detail", kwargs={"pk": self.pk})
 
 
 class Location(GenericModel):
@@ -112,7 +111,7 @@ class Location(GenericModel):
     )
     code = models.CharField(
         _("Code"),
-        max_length=100,
+        max_length=10,
     )
     location_category = models.ForeignKey(
         LocationCategory,
@@ -123,6 +122,11 @@ class Location(GenericModel):
         help_text=_("Location category"),
         null=True,
         blank=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("Location name"),
     )
     depot = models.ForeignKey(
         Depot,
@@ -194,8 +198,8 @@ class Location(GenericModel):
 
         verbose_name = _("Location")
         verbose_name_plural = _("Locations")
-        ordering = ("code",)
         db_table = "location"
+        db_table_comment = "Stores location information for a related organization."
         indexes = [models.Index(fields=["code"])]
         constraints = [
             models.UniqueConstraint(
@@ -221,7 +225,7 @@ class Location(GenericModel):
         Returns:
             str: Location absolute URL
         """
-        return reverse("location:location_detail", kwargs={"pk": self.pk})
+        return reverse("location_detail", kwargs={"pk": self.pk})
 
     @cached_property
     def get_address_combination(self) -> str:
@@ -231,14 +235,6 @@ class Location(GenericModel):
             str: Location address combination
         """
         return f"{self.address_line_1}, {self.city}, {self.state} {self.zip_code}"
-
-    def update_location(self, **kwargs: Any) -> None:
-        """
-        Updates the location with the given kwargs
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class LocationContact(GenericModel):
@@ -313,16 +309,6 @@ class LocationContact(GenericModel):
             str: LocationContact absolute URL
         """
         return reverse("location-contacts-detail", kwargs={"pk": self.pk})
-
-    def update_location_contact(self, **kwargs: Any) -> None:
-        """Update LocationContact
-
-        Args:
-            **kwargs (Any): LocationContact attributes
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class LocationComment(GenericModel):

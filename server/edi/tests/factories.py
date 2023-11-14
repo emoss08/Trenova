@@ -33,10 +33,7 @@ class EDIBillingProfileFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organizations.factories.BusinessUnitFactory")
     customer = factory.SubFactory("customer.factories.CustomerFactory")
     edi_enabled = True
-    destination = "http://www.example.com"
     edi_format = "X12"
-    username = "username"
-    password = "password"
     edi_isa_id = factory.Sequence(lambda n: "ISA_ID_%d" % n)
     edi_gs_id = factory.Sequence(lambda n: "GS_ID_%d" % n)
     edi_version = "4010"

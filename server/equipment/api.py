@@ -59,26 +59,26 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self) -> QuerySet[models.EquipmentType]:
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .select_related("equipment_type_detail")
-            .only(
-                "organization_id",
-                "name",
-                "description",
-                "id",
-                "equipment_type_detail__id",
-                "equipment_type_detail__idling_fuel_usage",
-                "equipment_type_detail__height",
-                "equipment_type_detail__exempt_from_tolls",
-                "equipment_type_detail__equipment_type__id",
-                "equipment_type_detail__variable_cost",
-                "equipment_type_detail__weight",
-                "equipment_type_detail__equipment_class",
-                "equipment_type_detail__fixed_cost",
-            )
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "organization_id",
+            "business_unit_id",
+            "id",
+            "name",
+            "description",
+            "cost_per_mile",
+            "equipment_class",
+            "fixed_cost",
+            "variable_cost",
+            "height",
+            "length",
+            "width",
+            "weight",
+            "idling_fuel_usage",
+            "exempt_from_tolls",
+            "created",
+            "modified",
         )
         return queryset
 

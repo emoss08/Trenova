@@ -251,13 +251,13 @@ class MovementValidation:
         Validate that the assigned worker is allowed to move the commodity.
 
         Returns:
-            None
+            None: This function does not return anything.
 
         Raises:
             ValidationError: If the worker is not allowed to move the commodity.
         """
 
-        if not self.movement.shipment.hazmat:
+        if not self.movement.shipment.hazardous_material:
             return
 
         # Validation for the primary_worker
@@ -381,7 +381,8 @@ class MovementValidation:
             self.movement.organization.dispatch_control.tractor_worker_fleet_constraint
             and self.movement.primary_worker
             and self.movement.tractor
-            and self.movement.primary_worker.fleet_id != self.movement.tractor.fleet_id
+            and self.movement.primary_worker.fleet_code_id
+            != self.movement.tractor.fleet_code_id
         ):
             self.errors["primary_worker"] = _(
                 "The primary worker and tractor must belong to the same fleet to add or update a record. "

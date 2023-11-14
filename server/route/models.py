@@ -71,6 +71,11 @@ class Route(GenericModel):
         blank=True,
         help_text=_("Distance model used to calculate the route"),
     )
+    auto_generated = models.BooleanField(
+        verbose_name=_("Auto Generated"),
+        default=False,
+        help_text=_("Whether the route was auto generated or not"),
+    )
 
     class Meta:
         """
@@ -84,6 +89,7 @@ class Route(GenericModel):
             models.Index(fields=["total_mileage", "duration"]),
         ]
         db_table = "route"
+        db_table_comment = "Stores route information related to shipments"
 
     def __str__(self) -> str:
         """Route string representation
@@ -91,9 +97,11 @@ class Route(GenericModel):
         Returns:
             str: Route string representation
         """
-        return textwrap.wrap(
-            f"{self.origin_location} - {self.destination_location}", 50
-        )[0]
+        return textwrap.shorten(
+            f"Route from {self.origin_location} to {self.destination_location}",
+            width=30,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Route absolute URL
@@ -101,7 +109,7 @@ class Route(GenericModel):
         Returns:
             str: Route absolute URL
         """
-        return reverse("route:detail", kwargs={"pk": self.pk})
+        return reverse("routes-detail", kwargs={"pk": self.pk})
 
 
 class RouteControl(GenericModel):

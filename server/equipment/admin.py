@@ -18,7 +18,7 @@
 from django.contrib import admin
 
 from equipment import models
-from utils.admin import GenericAdmin, GenericStackedInline
+from utils.admin import GenericAdmin
 
 
 @admin.register(models.EquipmentManufacturer)
@@ -38,29 +38,15 @@ class EquipmentManufacturerAdmin(GenericAdmin[models.EquipmentManufacturer]):
     )
 
 
-class EquipmentTypeDetailAdmin(
-    GenericStackedInline[models.EquipmentType, models.EquipmentTypeDetail]
-):
-    """
-    Equipment Type Detail Admin
-    """
-
-    model: type[models.EquipmentTypeDetail] = models.EquipmentTypeDetail
-    can_delete = False
-    verbose_name_plural = "Equipment Type Details"
-    fk_name = "equipment_type"
-
-
 @admin.register(models.EquipmentType)
 class EquipmentTypeAdmin(GenericAdmin[models.EquipmentType]):
     """
     Equipment Type Admin
     """
 
-    model: type[models.EquipmentType] = models.EquipmentType
-    list_display: tuple[str, ...] = ("name", "description")
-    search_fields: tuple[str, ...] = ("name", "description")
-    inlines = (EquipmentTypeDetailAdmin,)
+    model = models.EquipmentType
+    list_display = ("name", "description")
+    search_fields = ("name", "description")
 
 
 @admin.register(models.Tractor)

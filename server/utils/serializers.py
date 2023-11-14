@@ -23,15 +23,15 @@ from rest_framework import serializers
 from accounts.models import Token
 from organization.models import BusinessUnit, Organization
 
-_MT = typing.TypeVar("_MT", bound=Model)
 
-
-class GenericSerializer(serializers.ModelSerializer):
+class GenericSerializer[_MT: Model](serializers.ModelSerializer):
     class Meta:
-        model: type[_MT]  # type: ignore
+        model: type[_MT]
+        fields: typing.Sequence[str] | None
         exclude: typing.Sequence[str] | None
         extra_fields: list[str] = []
         extra_read_only_fields: list[str] = []
+        read_only_fields: typing.Sequence[str] | None
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
@@ -90,7 +90,7 @@ class GenericSerializer(serializers.ModelSerializer):
         else:
             # If reverse=True, then relations pointing to this model are returned.
             fields = {
-                field.name for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
+                field.name for field in self.Meta.model._meta._get_fields(reverse=False)
             }
             fields -= excluded_fields
 

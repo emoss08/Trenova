@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, TypeAlias
+from typing import Any
 
 from geopy.distance import geodesic
 
@@ -23,17 +23,13 @@ from integration.services import google_distance_matrix_service
 from route import models
 from route.models import RouteControl
 from shipment.models import Shipment
-
-Coordinates: TypeAlias = (
-    tuple[tuple[float | None, float | None], tuple[float | None, float | None]] | None
-)
+from utils.types import Coordinates
 
 
 def generate_route(
     *, shipment: Shipment, distance: float, method: str, duration: float | None
 ) -> None:
-    """
-    Generate a new Route object for a Shipment.
+    """Generate a new Route object for a Shipment.
 
     This function takes an instance of the Shipment model representing an Shipment, as well as the distance,
     method, and duration of the new Route object, and creates a new Route object in the database using
@@ -57,6 +53,7 @@ def generate_route(
         total_mileage=distance,
         duration=duration,
         distance_method=method,
+        auto_generated=True,
     )
 
 

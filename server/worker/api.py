@@ -189,7 +189,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
                 "last_name",
                 "zip_code",
                 "code",
-                "fleet_id",
+                "fleet_code_id",
                 "depot_id",
                 "organization_id",
                 "business_unit_id",

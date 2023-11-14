@@ -43,13 +43,15 @@ def test_feasibility_tool_eligible_driver(
     Returns:
         None: this function does not return anything.
     """
-    fleet = FleetCodeFactory(organization=organization, business_unit=business_unit)
+    fleet_code = FleetCodeFactory(
+        organization=organization, business_unit=business_unit
+    )
     worker = WorkerFactory(
-        organization=organization, fleet=fleet, business_unit=business_unit
+        organization=organization, fleet_code=fleet_code, business_unit=business_unit
     )
     tractor = TractorFactory(
         organization=organization,
-        fleet=fleet,
+        fleet_code=fleet_code,
         primary_worker=worker,
         business_unit=business_unit,
     )
@@ -146,10 +148,10 @@ def test_feasibility_tool_not_eligible(
     Returns:
         None: This function does not return anything.
     """
-    fleet = FleetCodeFactory(organization=organization)
-    worker = WorkerFactory(organization=organization, fleet=fleet)
+    fleet_code = FleetCodeFactory(organization=organization)
+    worker = WorkerFactory(organization=organization, fleet_code=fleet_code)
     tractor = TractorFactory(
-        organization=organization, fleet=fleet, primary_worker=worker
+        organization=organization, fleet_code=fleet_code, primary_worker=worker
     )
 
     shipment = ShipmentFactory()

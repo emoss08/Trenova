@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, override
 
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
@@ -251,7 +251,8 @@ class UserSerializer(GenericSerializer):
             permissions.update(group.permissions.values_list("codename", flat=True))
         return list(permissions)
 
-    def create(self, validated_data: Any) -> models.User:  # type: ignore
+    @override
+    def create(self, validated_data: Any) -> models.User:
         """Create a user
 
         Args:
@@ -306,7 +307,8 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
+    @override
+    def update(self, instance: models.User, validated_data: Any) -> models.User:
         """Update a user
 
         From validated_data, pop the profile, and update the user profile

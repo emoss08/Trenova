@@ -27,13 +27,6 @@ from organization.models import Organization
 pytestmark = pytest.mark.django_db
 
 
-def test_equipment_type_details(equipment_type: models.EquipmentType) -> None:
-    """
-    Test equipment type detail is created when equipment type is created.
-    """
-    assert equipment_type.equipment_type_details is not None
-
-
 def test_create_equipment_type_post(
     api_client: APIClient, organization: Organization
 ) -> None:
@@ -74,31 +67,29 @@ def test_create_equip_type_with_detail(
     data = {
         "name": "test_equipment_type",
         "description": "Test Equipment Type Description",
-        "equipment_type_details": {
-            "equipment_class": "TRACTOR",
-            "fixed_cost": 100,
-            "variable_cost": 10,
-            "height": 10,
-            "length": 10,
-            "width": 10,
-            "weight": 10,
-            "idling_fuel_usage": 10,
-            "exempt_from_tolls": True,
-        },
+        "equipment_class": "TRACTOR",
+        "fixed_cost": 100,
+        "variable_cost": 10,
+        "height": 10,
+        "length": 10,
+        "width": 10,
+        "weight": 10,
+        "idling_fuel_usage": 10,
+        "exempt_from_tolls": True,
     }
     response = api_client.post(url, data, format="json")
     assert response.status_code == 201
     assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Type Description"
-    assert response.data["equipment_type_details"]["equipment_class"] == "TRACTOR"
-    assert response.data["equipment_type_details"]["exempt_from_tolls"] is True
-    assert response.data["equipment_type_details"]["fixed_cost"] == "100.0000"
-    assert response.data["equipment_type_details"]["variable_cost"] == "10.0000"
-    assert response.data["equipment_type_details"]["height"] == "10.0000"
-    assert response.data["equipment_type_details"]["length"] == "10.0000"
-    assert response.data["equipment_type_details"]["width"] == "10.0000"
-    assert response.data["equipment_type_details"]["weight"] == "10.0000"
-    assert response.data["equipment_type_details"]["idling_fuel_usage"] == "10.0000"
+    assert response.data["equipment_class"] == "TRACTOR"
+    assert response.data["exempt_from_tolls"] is True
+    assert response.data["fixed_cost"] == "100.0000"
+    assert response.data["variable_cost"] == "10.0000"
+    assert response.data["height"] == "10.0000"
+    assert response.data["length"] == "10.0000"
+    assert response.data["width"] == "10.0000"
+    assert response.data["weight"] == "10.0000"
+    assert response.data["idling_fuel_usage"] == "10.0000"
 
 
 def test_detail_signal_fire(api_client: APIClient, organization: Organization) -> None:
@@ -121,36 +112,6 @@ def test_detail_signal_fire(api_client: APIClient, organization: Organization) -
     assert response.status_code == 201
     assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Type Description"
-    assert response.data["equipment_type_details"] is not None
-
-
-def test_update_equipment_type(
-    api_client: APIClient, equipment_type_api: Response, organization: Organization
-) -> None:
-    """Test update equipment type
-
-    Args:
-        api_client (APIClient): Api Client
-        equipment_type_api (Response): Equipment Type API Response
-        organization (): Organization Object
-
-    Returns:
-        None: This function does return anything.
-    """
-    put_data = {
-        "organization": organization.id,
-        "name": "test_updated",
-        "description": "Test Equipment Type Description Updated",
-    }
-    response = api_client.put(
-        reverse("equipment-types-detail", kwargs={"pk": equipment_type_api.data["id"]}),
-        put_data,
-        format="json",
-    )
-
-    assert response.status_code == 200
-    assert response.data["name"] == "test_updated"
-    assert response.data["description"] == "Test Equipment Type Description Updated"
 
 
 def test_update_equipment_details(
@@ -170,18 +131,15 @@ def test_update_equipment_details(
         "organization": organization.id,
         "name": "test_equipment_type",
         "description": "Test Equipment Updated",
-        "equipment_type_details": {
-            "organization": organization.id,
-            "equipment_class": "TRAILER",
-            "fixed_cost": "1.0000",
-            "variable_cost": "0.0000",
-            "height": "0.0000",
-            "length": "0.0000",
-            "width": "3.0000",
-            "weight": "0.0000",
-            "idling_fuel_usage": "0.0000",
-            "exempt_from_tolls": True,
-        },
+        "equipment_class": "TRAILER",
+        "fixed_cost": "1.0000",
+        "variable_cost": "0.0000",
+        "height": "0.0000",
+        "length": "0.0000",
+        "width": "3.0000",
+        "weight": "0.0000",
+        "idling_fuel_usage": "0.0000",
+        "exempt_from_tolls": True,
     }
     response = api_client.put(
         reverse("equipment-types-detail", kwargs={"pk": equipment_type_api.data["id"]}),
@@ -192,14 +150,14 @@ def test_update_equipment_details(
     assert response.status_code == 200
     assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Updated"
-    assert response.data["equipment_type_details"]["equipment_class"] == "TRAILER"
-    assert response.data["equipment_type_details"]["fixed_cost"] == "1.0000"
-    assert response.data["equipment_type_details"]["variable_cost"] == "0.0000"
-    assert response.data["equipment_type_details"]["height"] == "0.0000"
-    assert response.data["equipment_type_details"]["length"] == "0.0000"
-    assert response.data["equipment_type_details"]["width"] == "3.0000"
-    assert response.data["equipment_type_details"]["weight"] == "0.0000"
-    assert response.data["equipment_type_details"]["idling_fuel_usage"] == "0.0000"
+    assert response.data["equipment_class"] == "TRAILER"
+    assert response.data["fixed_cost"] == "1.0000"
+    assert response.data["variable_cost"] == "0.0000"
+    assert response.data["height"] == "0.0000"
+    assert response.data["length"] == "0.0000"
+    assert response.data["width"] == "3.0000"
+    assert response.data["weight"] == "0.0000"
+    assert response.data["idling_fuel_usage"] == "0.0000"
 
 
 def test_delete_equipment_type(

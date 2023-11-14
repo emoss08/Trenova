@@ -98,7 +98,7 @@ class TransactionService:
             business_unit=shipment.business_unit,
             transaction_type=models.TransactionTypeChoices.DEBIT,
             organization=shipment.organization,
-            ledger_account=revenue_account,
+            general_ledger_account=revenue_account,
             amount=round(shipment.sub_total, 2),
             status=models.TransactionStatusChoices.PENDING,
             shipment=shipment,

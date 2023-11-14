@@ -55,7 +55,7 @@ def worker_api(organization: Organization, user: User) -> Generator[Any, Any, No
     """
     Worker Fixture
     """
-    fleet = FleetCodeFactory()
+    fleet_code = FleetCodeFactory()
     yield models.Worker.objects.create(
         organization=organization,
         business_unit=organization.business_unit,
@@ -71,7 +71,7 @@ def worker_api(organization: Organization, user: User) -> Generator[Any, Any, No
         zip_code="12345",
         manager=user,
         entered_by=user,
-        fleet=fleet,
+        fleet_code=fleet_code,
     )
 
 

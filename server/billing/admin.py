@@ -30,6 +30,7 @@ from billing.models import (
     InvoicePaymentDetail,
 )
 from utils.admin import GenericAdmin
+from utils.types import AuthenticatedHttpRequest
 
 
 @admin.register(BillingQueue)
@@ -63,12 +64,12 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
     search_fields = ("invoice_number", "shipment", "bol_number")
 
     def has_change_permission(
-        self, request: HttpRequest, obj: BillingHistory | None = None
+        self, request: AuthenticatedHttpRequest, obj: BillingHistory | None = None
     ) -> bool:
         """Has permission to change.
 
         Args:
-            request (HttpRequest): Request object from the view function that called this method (if any).
+            request (AuthenticatedHttpRequest): Request object from the view function that called this method (if any).
             obj (BillingHistory | None): Object to be deleted (if any).
 
         Returns:
@@ -77,19 +78,19 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
         return False
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: BillingHistory | None = None
+        self, request: AuthenticatedHttpRequest, obj: BillingHistory | None = None
     ) -> bool:
         """Has permission to delete.
 
         Args:
-            request (HttpRequest): Request object from the view function that called this method (if any).
+            request (AuthenticatedHttpRequest): Request object from the view function that called this method (if any).
             obj (BillingHistory | None): Object to be deleted (if any).
 
         Returns:
             bool: True if the user has permission to delete the given object, False otherwise.
         """
 
-        return bool(request.user.organization.billing_control.remove_billing_history)  # type: ignore
+        return bool(request.user.organization.billing_control.remove_billing_history)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Has permissions to add.
@@ -127,12 +128,12 @@ class BillingLogEntryAdmin(GenericAdmin[BillingLogEntry]):
     )
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: BillingLogEntry | None = None
+        self, request: AuthenticatedHttpRequest, obj: BillingLogEntry | None = None
     ) -> bool:
         """Has permission to delete.
 
         Args:
-            request (HttpRequest): Request object from the view function that called this method (if any).
+            request (AuthenticatedHttpRequest): Request object from the view function that called this method (if any).
             obj (BillingLogEntry | None): Object to be deleted (if any).
 
         Returns:
@@ -140,11 +141,11 @@ class BillingLogEntryAdmin(GenericAdmin[BillingLogEntry]):
         """
         return False
 
-    def has_add_permission(self, request: HttpRequest) -> bool:
+    def has_add_permission(self, request: AuthenticatedHttpRequest) -> bool:
         """Has permissions to add.
 
         Args:
-            request (HttpRequest): Request object from the view function that called this method (if any).
+            request (AuthenticatedHttpRequest): Request object from the view function that called this method (if any).
 
         Returns:
             bool: True if the user has permission to add an object, False otherwise.

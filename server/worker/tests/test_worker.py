@@ -112,7 +112,7 @@ def test_post_worker(
     Returns:
         None: This function does not return anything.
     """
-    fleet = FleetCodeFactory()
+    fleet_code = FleetCodeFactory()
 
     response = api_client.post(
         "/api/workers/",
@@ -127,7 +127,7 @@ def test_post_worker(
             "zip_code": "12345",
             "manager": user.id,
             "entered_by": user.id,
-            "fleet": fleet.code,
+            "fleet_code": fleet_code.id,
             "code": "TESTWORKER",
             "profile": {
                 "organization": organization.id,
@@ -208,7 +208,7 @@ def test_create_with_multi(
     Returns:
         None: This function does not return anything.
     """
-    fleet = FleetCodeFactory()
+    fleet_code = FleetCodeFactory()
 
     response = api_client.post(
         "/api/workers/",
@@ -225,7 +225,7 @@ def test_create_with_multi(
             "zip_code": "12345",
             "manager": user.id,
             "entered_by": user.id,
-            "fleet": fleet.code,
+            "fleet_code": fleet_code.id,
             "profile": {
                 "organization": organization.id,
                 "race": "TEST",
@@ -325,7 +325,7 @@ def test_put_worker(
     Returns:
         None: This function does not return anything.
     """
-    fleet = FleetCodeFactory()
+    fleet_code = FleetCodeFactory()
 
     _response = api_client.post(
         "/api/workers/",
@@ -342,7 +342,7 @@ def test_put_worker(
             "zip_code": "12345",
             "manager": user.id,
             "entered_by": user.id,
-            "fleet": fleet.code,
+            "fleet_code": fleet_code.id,
             "profile": {
                 "organization": organization.id,
                 "race": "TEST",
@@ -402,7 +402,7 @@ def test_put_worker(
         "state": "CA",
         "zip_code": "12345",
         "code": "TESTWORKER",
-        "fleet": fleet.code,
+        "fleet_code": fleet_code.id,
         "manager": user.id,
         "entered_by": user.id,
         "profile": {

@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any
 
 from django import forms
 from django.contrib import admin
@@ -24,17 +24,8 @@ from django.db.models import QuerySet
 from django.db.models.base import Model
 from django.http import HttpRequest
 
-# Model Generic Type
-_M = TypeVar("_M", bound=Model)
 
-# Child Model Generic Type
-_C = TypeVar("_C", bound=Model)
-
-# Parent Model Generic Type
-_P = TypeVar("_P", bound=Model)
-
-
-class GenericAdmin(admin.ModelAdmin[_M]):
+class GenericAdmin[_M: Model](admin.ModelAdmin[_M]):
     """
     Generic Admin Class for all models
     """
@@ -157,11 +148,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         return []
 
 
-class GenericStackedInline(admin.StackedInline[_C, _P]):
+class GenericStackedInline[_C: Model, _P: Model](admin.StackedInline[_C, _P]):
     """
     Generic Admin Stacked for all Models with Organization Exclusion
     """
 
+    model: type[_C]
     extra = 0
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
@@ -191,7 +183,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
         ]
 
 
-class GenericTabularInline(GenericStackedInline[_C, _P]):
+class GenericTabularInline[_C: Model, _P: Model](GenericStackedInline[_C, _P]):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """

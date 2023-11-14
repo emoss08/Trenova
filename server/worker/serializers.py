@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, override
 
 from rest_framework import serializers
 
@@ -221,7 +221,8 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore[override]
+    @override
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
         """Update an existing instance of the Worker model with given validated data.
 
         This method updates an existing worker, based on the data provided in the request.

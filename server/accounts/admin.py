@@ -50,7 +50,7 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     Profile inline
     """
 
-    model = models.UserProfile
+    model = models.UserProfile  # type: ignore
     fk_name = "user"
 
 
@@ -215,8 +215,8 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             lookup, value
         )
 
-    @sensitive_post_parameters_m  # type: ignore
-    @csrf_protect_m  # type: ignore
+    @sensitive_post_parameters_m
+    @csrf_protect_m
     def add_view(
         self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:

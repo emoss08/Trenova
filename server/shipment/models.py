@@ -235,7 +235,7 @@ class ShipmentType(GenericModel):
     )
     name = models.CharField(
         _("Name"),
-        max_length=255,
+        max_length=100,
         help_text=_("Name of the Shipment Type"),
     )
     description = models.TextField(
@@ -596,7 +596,7 @@ class Shipment(GenericModel):
         verbose_name=_("User"),
         help_text=_("Shipment entered by User"),
     )
-    hazmat = models.ForeignKey(
+    hazardous_material = models.ForeignKey(
         "commodities.HazardousMaterial",
         on_delete=models.PROTECT,
         related_name="shipments",
@@ -765,8 +765,8 @@ class Shipment(GenericModel):
             self.temperature_min = self.commodity.min_temp
             self.temperature_max = self.commodity.max_temp
 
-        if self.commodity and self.commodity.hazmat:
-            self.hazmat = self.commodity.hazmat
+        if self.commodity and self.commodity.hazardous_material:
+            self.hazardous_material = self.commodity.hazardous_material
 
         if self.status == StatusChoices.VOIDED:
             handle_voided_shipment(shipment=self)
