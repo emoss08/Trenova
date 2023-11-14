@@ -37,6 +37,21 @@ class EquipmentType(GenericModel):
     :model:`equipment.Equipment` objects.
     """
 
+    @final
+    class EquipmentClassChoices(models.TextChoices):
+        """
+        Equipment Class Choices
+        """
+
+        UNDEFINED = "UNDEFINED", _("UNDEFINED")
+        CAR = "CAR", _("Car")
+        VAN = "VAN", _("Van")
+        PICKUP = "PICKUP", _("Pickup")
+        WALK_IN = "WALK-IN", _("Walk-In")
+        STRAIGHT = "STRAIGHT", _("Straight Truck")
+        TRACTOR = "TRACTOR", _("Tractor")
+        TRAILER = "TRAILER", _("Trailer")
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -61,74 +76,6 @@ class EquipmentType(GenericModel):
     )
     cost_per_mile = models.DecimalField(
         verbose_name=_("Cost Per Mile"), max_digits=10, decimal_places=2, default=0.00
-    )
-
-    class Meta:
-        """
-        Equipment Type Model Metaclass
-        """
-
-        verbose_name = _("Equipment Type")
-        verbose_name_plural = _("Equipment Types")
-        ordering = ["-name"]
-        db_table = "equipment_type"
-        constraints = [
-            models.UniqueConstraint(
-                Lower("name"),
-                "organization",
-                name="unique_equipment_type_name_organization",
-            )
-        ]
-
-    def __str__(self) -> str:
-        """Equipment Type string representation
-
-        Returns:
-            str: String representation of the Equipment Type Model
-        """
-        return textwrap.shorten(self.name, width=40, placeholder="...")
-
-    def get_absolute_url(self) -> str:
-        """Equipment Type absolute URL
-
-        Returns:
-            str: Absolute URL of the Equipment Type Model
-        """
-        return reverse("equipment-types-detail", kwargs={"pk": self.pk})
-
-
-class EquipmentTypeDetail(GenericModel):
-    """
-    Stores detailed information about a :model:`equipment.EquipmentType`.
-    """
-
-    @final
-    class EquipmentClassChoices(models.TextChoices):
-        """
-        Equipment Class Choices
-        """
-
-        UNDEFINED = "UNDEFINED", _("UNDEFINED")
-        CAR = "CAR", _("Car")
-        VAN = "VAN", _("Van")
-        PICKUP = "PICKUP", _("Pickup")
-        WALK_IN = "WALK-IN", _("Walk-In")
-        STRAIGHT = "STRAIGHT", _("Straight Truck")
-        TRACTOR = "TRACTOR", _("Tractor")
-        TRAILER = "TRAILER", _("Trailer")
-
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-    )
-    equipment_type = models.OneToOneField(
-        EquipmentType,
-        on_delete=models.CASCADE,
-        related_name="equipment_type_details",
-        related_query_name="equipment_type_detail",
-        verbose_name=_("Equipment Type"),
     )
     equipment_class = ChoiceField(
         _("Equipment Class"),
@@ -193,33 +140,36 @@ class EquipmentTypeDetail(GenericModel):
 
     class Meta:
         """
-        Equipment Type Detail Model Metaclass
+        Equipment Type Model Metaclass
         """
 
-        verbose_name = _("Equipment Type Detail")
-        verbose_name_plural = _("Equipment Type Details")
-        ordering = ["-equipment_type"]
-        db_table = "equipment_type_detail"
+        verbose_name = _("Equipment Type")
+        verbose_name_plural = _("Equipment Types")
+        ordering = ["-name"]
+        db_table = "equipment_type"
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                "organization",
+                name="unique_equipment_type_name_organization",
+            )
+        ]
 
     def __str__(self) -> str:
-        """Equipment Type Detail string representation
+        """Equipment Type string representation
 
         Returns:
-            str: String representation of the Equipment Type Detail Model
+            str: String representation of the Equipment Type Model
         """
-        return textwrap.shorten(
-            f"{self.equipment_type.name} - {self.equipment_class}",
-            width=50,
-            placeholder="...",
-        )
+        return textwrap.shorten(self.name, width=40, placeholder="...")
 
     def get_absolute_url(self) -> str:
-        """Equipment Type Detail absolute URL
+        """Equipment Type absolute URL
 
         Returns:
-            str: Absolute URL of the Equipment Type Detail Model
+            str: Absolute URL of the Equipment Type Model
         """
-        return reverse("equipment-type-details", kwargs={"pk": self.pk})
+        return reverse("equipment-types-detail", kwargs={"pk": self.pk})
 
 
 class EquipmentManufacturer(GenericModel):
@@ -258,7 +208,6 @@ class EquipmentManufacturer(GenericModel):
 
         verbose_name = _("Equipment Manufacturer")
         verbose_name_plural = _("Equipment Manufacturers")
-        ordering = ["-name"]
         db_table = "equipment_manufacturer"
         constraints = [
             models.UniqueConstraint(
@@ -540,7 +489,7 @@ class Tractor(GenericModel):
                 "Primary worker and secondary worker cannot be the same. Please try again."
             )
 
-        if self.primary_worker and self.fleet != self.primary_worker.fleet:
+        if self.primary_worker and self.fleet_code != self.primary_worker.fleet_code:
             errors["primary_worker"] = _(
                 "Primary worker must be in the same fleet as the tractor. Please try again."
             )
@@ -751,8 +700,8 @@ class Trailer(GenericModel):
 
         if (
             self.equipment_type
-            and self.equipment_type.equipment_type_details.equipment_class
-            != EquipmentTypeDetail.EquipmentClassChoices.TRAILER
+            and self.equipment_type.equipment_class
+            != EquipmentType.EquipmentClassChoices.TRAILER
         ):
             raise ValidationError(
                 {

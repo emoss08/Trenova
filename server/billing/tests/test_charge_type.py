@@ -134,5 +134,5 @@ def test_post_with_unique_name(api_client: APIClient) -> None:
     assert response.data["type"] == "validationError"
     assert (
         response.data["errors"][0]["detail"]
-        == "Job Title with this name already exists. Please try again."
+        == "Job Title with this `name` already exists. Please try again."
     )

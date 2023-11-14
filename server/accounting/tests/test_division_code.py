@@ -149,22 +149,6 @@ def test_delete_schema() -> None:
     assert division_codes_store[0].code == "NEW2"
 
 
-def test_division_code_str_representation(division_code: DivisionCode) -> None:
-    """
-    Test Division Code String Representation
-    """
-    assert str(division_code) == division_code.code
-
-
-def test_division_code_get_absolute_url(division_code: DivisionCode) -> None:
-    """
-    Test Division Code Get Absolute URL
-    """
-    assert (
-        division_code.get_absolute_url() == f"/api/division_codes/{division_code.id}/"
-    )
-
-
 def test_division_code_clean_method_with_valid_data(
     division_code: DivisionCode,
 ) -> None:

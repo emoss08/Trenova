@@ -322,8 +322,6 @@ def test_account_number(general_ledger_account: GeneralLedgerAccount) -> None:
         general_ledger_account.account_number = "00000-23"
         general_ledger_account.full_clean()
 
-    print(excinfo.value.message_dict)
-
     assert excinfo.value.message_dict["account_number"] == [
         "Account number must be in the format XXXX-XX.",
         "Ensure this value has at most 7 characters (it has 8).",
@@ -338,12 +336,9 @@ def test_unique_account_numer(general_ledger_account: GeneralLedgerAccount) -> N
     general_ledger_account.account_number = "1234-12"
     general_ledger_account.save()
 
-    print(general_ledger_account.account_number)
-
     with pytest.raises(ValidationError) as excinfo:
         GeneralLedgerAccountFactory(account_number="1234-12")
 
-    print(excinfo.value.message_dict)
     assert excinfo.value.message_dict["__all__"] == [
         "Constraint “unique_gl_account_organization” is violated."
     ]

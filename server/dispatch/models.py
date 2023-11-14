@@ -457,6 +457,7 @@ class CommentType(GenericModel):
         verbose_name_plural = _("Comment Types")
         ordering = ["organization"]
         db_table = "comment_type"
+        db_table_comment = "Stores different types of comments."
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),

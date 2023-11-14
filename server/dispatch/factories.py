@@ -81,7 +81,7 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
+    name = factory.Faker("text", locale="en_US", max_nb_chars=10)
     description = factory.Faker("text", locale="en_US", max_nb_chars=10)
 
     class Meta:

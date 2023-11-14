@@ -445,7 +445,7 @@ def test_validate_data_type_with_invalid_field() -> None:
 
     assert (
         excinfo.value.args[0]
-        == "Field 'invalid_field' does not exist on the shipment model."
+        == "Field 'invalid_field' does not exist on the Shipment model."
     )
 
 

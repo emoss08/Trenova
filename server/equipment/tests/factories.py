@@ -17,8 +17,6 @@
 
 import factory
 
-from equipment.models import EquipmentTypeDetail
-
 
 class EquipmentTypeFactory(factory.django.DjangoModelFactory):
     """
@@ -35,24 +33,6 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name")
-
-
-class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
-    """
-    Factory for EquipmentTypeDetail model.
-    """
-
-    class Meta:
-        """
-        Metaclass for EquipmentTypeDetailFactory
-        """
-
-        model = "equipment.EquipmentTypeDetail"
-
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    equipment_type = factory.SubFactory(EquipmentTypeFactory)
-    equipment_class = EquipmentTypeDetail.EquipmentClassChoices.TRAILER
 
 
 class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
@@ -90,4 +70,4 @@ class TractorFactory(factory.django.DjangoModelFactory):
     code = factory.Faker("pystr", max_chars=50)
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)
-    fleet = factory.SubFactory("dispatch.factories.FleetCodeFactory")
+    fleet_code = factory.SubFactory("dispatch.factories.FleetCodeFactory")

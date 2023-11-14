@@ -16,18 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
 
 
 class EquipmentConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "equipment"
-
-    def ready(self) -> None:
-        from equipment import signals
-
-        post_save.connect(
-            signals.create_equipment_type_details,
-            sender="equipment.EquipmentType",
-            dispatch_uid="create_equipment_type_details",
-        )

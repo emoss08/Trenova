@@ -427,8 +427,8 @@ def test_service_incident_created(
     dispatch_control.save()
 
     fleet_code = FleetCodeFactory()
-    worker = WorkerFactory(fleet=fleet_code)
-    tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
+    worker = WorkerFactory(fleet_code=fleet_code)
+    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
     Movement.objects.filter(shipment=shipment).update(
         tractor=tractor, primary_worker=worker
     )
@@ -494,8 +494,8 @@ def test_first_stop_sets_ship_date(
     )
 
     fleet_code = FleetCodeFactory()
-    worker = WorkerFactory(fleet=fleet_code)
-    tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
+    worker = WorkerFactory(fleet_code=fleet_code)
+    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
     Movement.objects.filter(shipment=shipment).update(
         tractor=tractor, primary_worker=worker
     )

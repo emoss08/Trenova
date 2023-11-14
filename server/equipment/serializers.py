@@ -15,29 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
-
 from rest_framework import serializers
 
-from equipment import helpers, models
+from equipment import models
 from utils.serializers import GenericSerializer
-
-
-class EquipmentTypeDetailSerializer(GenericSerializer):
-    """A serializer for the EquipmentTypeDetail model
-
-    The serializer provides default operations for creating, update and deleting
-    Equipment Type Detail, as well as listing and retrieving them.
-    """
-
-    class Meta:
-        """
-        A class representing the metadata for the `EquipmentTypeDetailSerializer`
-        class.
-        """
-
-        model = models.EquipmentTypeDetail
-        extra_read_only_fields = ("equipment_type",)
 
 
 class EquipmentTypeSerializer(GenericSerializer):
@@ -47,15 +28,12 @@ class EquipmentTypeSerializer(GenericSerializer):
     Equipment Types, as well as listing and retrieving them.
     """
 
-    equipment_type_details = EquipmentTypeDetailSerializer(required=False)
-
     class Meta:
         """
         A class representing the metadata for the `EquipmentTypeSerializer` class.
         """
 
         model = models.EquipmentType
-        extra_fields = ("equipment_type_details",)
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the EquipmentType model.
@@ -91,62 +69,6 @@ class EquipmentTypeSerializer(GenericSerializer):
             )
 
         return value
-
-    def create(self, validated_data: Any) -> models.EquipmentType:
-        """Create new Equipment Type
-
-        Args:
-            validated_data (Any): Validated data
-
-        Returns:
-            models.EquipmentType: Created EquipmentType
-        """
-        detail_data = validated_data.pop("equipment_type_details", {})
-        organization = super().get_organization
-        business_unit = super().get_business_unit
-
-        equipment_type = models.EquipmentType.objects.create(
-            organization=organization, business_unit=business_unit, **validated_data
-        )
-
-        # Create Equipment Type Details
-        helpers.create_or_update_equip_type_details(
-            business_unit=business_unit,
-            equipment_type=equipment_type,
-            detail_data=detail_data,
-            organization=organization,
-        )
-
-        return equipment_type
-
-    def update(  # type: ignore
-        self, instance: models.EquipmentType, validated_data: Any
-    ) -> models.EquipmentType:
-        """Update Equipment Type
-
-        Args:
-            instance (models.EquipmentType): EquipmentType instance
-            validated_data (Any): Validated data
-
-        Returns:
-            models.EquipmentType: Updated EquipmentType
-        """
-
-        detail_data = validated_data.pop("equipment_type_details", {})
-
-        # Create Equipment Type Details
-        helpers.create_or_update_equip_type_details(
-            business_unit=instance.business_unit,
-            equipment_type=instance,
-            detail_data=detail_data,
-            organization=instance.organization,
-        )
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-
-        return instance
 
 
 class EquipmentManufacturerSerializer(GenericSerializer):

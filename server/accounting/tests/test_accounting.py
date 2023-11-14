@@ -59,6 +59,6 @@ def test_create_transaction_from_shipment(organization: Organization) -> None:
 
     assert transaction
     assert transaction.amount == round(shipment.sub_total, 2)
-    assert transaction.ledger_account == gl_account
+    assert transaction.general_ledger_account == gl_account
     assert transaction.status == models.TransactionStatusChoices.PENDING
     assert transaction.transaction_type == models.TransactionTypeChoices.DEBIT

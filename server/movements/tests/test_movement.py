@@ -49,12 +49,12 @@ def test_create(
     Test Movement Create
     """
 
-    fleet = FleetCodeFactory()
+    fleet_code = FleetCodeFactory()
 
-    tractor.fleet = fleet
+    tractor.fleet_code = fleet_code
     tractor.save()
 
-    worker.fleet = fleet
+    worker.fleet_code = fleet_code
     worker.save()
 
     movement = models.Movement.objects.create(
@@ -336,9 +336,11 @@ def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
     a hazmat endorsement
     """
 
-    hazmat = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazmat=hazmat)
-    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
+    hazardous_material = HazardousMaterialFactory()
+    commodity = CommodityFactory(hazardous_material=hazardous_material)
+    shipment = ShipmentFactory(
+        commodity=commodity, hazardous_material=hazardous_material
+    )
     worker = WorkerFactory()
 
     with pytest.raises(ValidationError) as excinfo:
@@ -356,9 +358,11 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> 
     a hazmat endorsement
     """
 
-    hazmat = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazmat=hazmat)
-    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
+    hazardous_material = HazardousMaterialFactory()
+    commodity = CommodityFactory(hazardous_material=hazardous_material)
+    shipment = ShipmentFactory(
+        commodity=commodity, hazardous_material=hazardous_material
+    )
     worker = WorkerFactory()
     worker.profile.endorsements = "H"
     worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
@@ -486,9 +490,11 @@ def test_second_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
     a hazmat endorsement
     """
 
-    hazmat = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazmat=hazmat)
-    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
+    hazardous_material = HazardousMaterialFactory()
+    commodity = CommodityFactory(hazardous_material=hazardous_material)
+    shipment = ShipmentFactory(
+        commodity=commodity, hazardous_material=hazardous_material
+    )
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"
     worker = WorkerFactory()
@@ -510,9 +516,11 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> N
     a hazmat endorsement
     """
 
-    hazmat = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazmat=hazmat)
-    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
+    hazardous_material = HazardousMaterialFactory()
+    commodity = CommodityFactory(hazardous_material=hazardous_material)
+    shipment = ShipmentFactory(
+        commodity=commodity, hazardous_material=hazardous_material
+    )
 
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"

@@ -57,7 +57,7 @@ class ShipmentTypeFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("pystr", max_chars=255)
+    name = factory.Faker("pystr", max_chars=100)
 
 
 class ReasonCodeFactory(factory.django.DjangoModelFactory):

@@ -873,7 +873,6 @@ class FinancialTransaction(GenericModel):
         GeneralLedgerAccount,
         on_delete=models.CASCADE,
         related_name="transactions",
-        related_query_name="transaction",
         help_text=_("General Ledger Account associated with the transaction"),
         verbose_name=_("General Ledger Account"),
     )

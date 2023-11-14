@@ -43,3 +43,4 @@ machine_learning
 ts_models
 venv/*
 monkeytype.sqlite3
+stubs

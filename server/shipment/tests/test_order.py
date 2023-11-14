@@ -150,8 +150,8 @@ def test_first_stop_completion_puts_shipment_movement_in_progress(
     )
 
     fleet_code = FleetCodeFactory()
-    worker = WorkerFactory(fleet=fleet_code)
-    tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
+    worker = WorkerFactory(fleet_code=fleet_code)
+    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
     Movement.objects.filter(shipment=shipment).update(
         tractor=tractor, primary_worker=worker
     )
@@ -499,9 +499,9 @@ def test_set_total_piece_and_weight_signal(
     movements = selectors.get_shipment_movements(shipment=shipment)
     stops = selectors.get_shipment_stops(shipment=shipment)
 
-    fleet = FleetCodeFactory()
-    worker = WorkerFactory(fleet=fleet)
-    tractor = TractorFactory(primary_worker=worker, fleet=fleet)
+    fleet_code = FleetCodeFactory()
+    worker = WorkerFactory(fleet_code=fleet_code)
+    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
 
     for movement in movements:
         movement.worker = worker
