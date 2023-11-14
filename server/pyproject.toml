@@ -16,7 +16,7 @@ skip = ["rvenv", ".git", "migrations", ".venv", "client", ".tox"]
 
 [tool.black]
 line-length = 88
-target-version = ["py311"]
+target-version = ["py312"]
 exclude = '''
 /(
   | \.git
@@ -121,9 +121,31 @@ exclude_dirs = [
     ".github",
     ".vscode",
     ".docker",
-    "buck-out",
     "build",
     "dist",
     "tests",
     "management",
 ]
+[tool.pyright]
+exclude = [
+    "rvenv",
+    ".venv",
+    "node_modules",
+    "client",
+    "migrations",
+    ".tox",
+    ".git",
+    ".github",
+    ".vscode",
+    ".docker",
+    "build",
+    "dist",
+    "*/tests/*",
+    "**/__pycache__",
+]
+pythonVersion = "3.12"
+pythonPlatform = "Linux"
+stubsPath = "stubs"
+reportMissingImports = true
+reportMissingTypeStubs = false
+defineConstant = { DEBUG = true }
