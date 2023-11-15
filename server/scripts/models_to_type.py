@@ -26,7 +26,7 @@ TYPE_MAP = {
     "UUIDField": "string",
     "OneToOneField": "string",
     "PositiveIntegerField": "number",
-    "DecimalField": "number",
+    "DecimalField": "string",
     "BooleanField": "boolean",
     "CharField": "string",
     "TextField": "string",
