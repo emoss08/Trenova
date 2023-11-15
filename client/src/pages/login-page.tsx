@@ -79,7 +79,7 @@ function UserAuthForm() {
     } catch (error: any) {
       if (error.response) {
         const { data } = error.response;
-        console.log(data);
+        console.error(data);
       }
     } finally {
       setIsLoading(false);
