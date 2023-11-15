@@ -20,29 +20,31 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import React from "react";
-import { TChoiceProps } from "@/types";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { toast } from "@/components/ui/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { statusChoices } from "@/lib/choices";
+import { equipmentClassChoices, statusChoices } from "@/lib/choices";
 import { EquipmentTypeFormValues as FormValues } from "@/types/equipment";
 import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { DecimalField } from "@/components/common/fields/decimal-input";
+import { CheckboxInput } from "../common/fields/checkbox";
 
 export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
-        <div className="grid w-full items-center gap-0.5">
+    <div className="flex-1 overflow-y-auto">
+      <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6 my-4">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -50,7 +52,7 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             label="Status"
             options={statusChoices}
             placeholder="Select Status"
-            description="Status of the Division Code"
+            description="Status of the Equipment Type"
             isClearable={false}
           />
         </div>
@@ -58,69 +60,126 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
           <InputField
             control={control}
             rules={{ required: true }}
-            name="code"
-            label="Code"
+            name="name"
+            label="Name"
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Code"
-            description="Code for the Division Code"
+            placeholder="Name"
+            description="Name for the Equipment Type"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-4">
+        <div className="grid w-full items-center gap-0.5">
+          <SelectInput
+            name="equipmentClass"
+            rules={{ required: true }}
+            control={control}
+            label="Equipment Class"
+            options={equipmentClassChoices}
+            placeholder="Select Equipment Class"
+            description="Class of Equipment Type"
+            isClearable={false}
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="costPerMile"
+            label="Cost Per Mile"
+            type="text"
+            placeholder="Cost Per Mile"
+            description="Cost Per Mile for the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="fixedCost"
+            label="Fixed Cost"
+            type="text"
+            placeholder="Fixed Cost"
+            description="Fixed Cost of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="variableCost"
+            label="Variable Cost"
+            type="text"
+            placeholder="Variable Cost"
+            description="Variable Cost of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="height"
+            label="Height"
+            type="text"
+            placeholder="Height"
+            description="Height of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="length"
+            label="Length"
+            type="text"
+            placeholder="Length"
+            description="Length of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="width"
+            label="Width"
+            type="text"
+            placeholder="Width"
+            description="Width of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="weight"
+            label="Weight"
+            type="text"
+            placeholder="Weight"
+            description="Weight of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <DecimalField
+            control={control}
+            name="idlingFuelUsage"
+            label="Idling Fuel Usage"
+            type="text"
+            placeholder="Idling Fuel Usage"
+            description="Idling Fuel Usage of the Equipment Type"
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
+          <CheckboxInput
+            control={control}
+            label="Exempt From Tolls"
+            name="exemptFromTolls"
+            description="Indicates if the equipment type is exempt from tolls"
           />
         </div>
       </div>
       <div className="my-2">
         <TextareaField
           name="description"
-          rules={{ required: true }}
           control={control}
           label="Description"
           placeholder="Description"
-          description="Description of the Division Code"
+          description="Description of the Equipment Type"
         />
-      </div>
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            name="cashAccount"
-            control={control}
-            label="Cash Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select Cash Account"
-            description="The Cash Account associated with the Division Code"
-            isClearable
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            name="apAccount"
-            control={control}
-            label="AP Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select AP Account"
-            description="The Expense Account associated with the Division Code"
-            isClearable
-          />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            name="expenseAccount"
-            control={control}
-            label="Expense Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select Expense Account"
-            description="The Expense Account associated with the Revenue Code"
-            isClearable
-          />
-        </div>
       </div>
     </div>
   );
@@ -135,17 +194,15 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
       name: "",
       description: "",
       costPerMile: "",
-      equipmentTypeDetails: {
-        equipmentClass: "UNDEFINED",
-        exemptFromTolls: false,
-        fixedCost: "",
-        height: "",
-        length: "",
-        idlingFuelUsage: "",
-        weight: "",
-        variableCost: "",
-        width: "",
-      },
+      equipmentClass: "UNDEFINED",
+      exemptFromTolls: false,
+      fixedCost: "",
+      height: "",
+      length: "",
+      idlingFuelUsage: "",
+      weight: "",
+      variableCost: "",
+      width: "",
     },
   });
 
@@ -154,11 +211,11 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
     toast,
     {
       method: "POST",
-      path: "/division_codes/",
-      successMessage: "Division Code created successfully.",
-      queryKeysToInvalidate: ["division-code-table-data"],
+      path: "/equipment_types/",
+      successMessage: "Equipment Type created successfully.",
+      queryKeysToInvalidate: ["equipment-type-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create new division code.",
+      errorMessage: "Failed to create new equip. type.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -170,27 +227,39 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Division Code</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
-          Please fill out the form below to create a new Division Code.
-        </DialogDescription>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className={cn("w-full xl:w-1/2")}>
+        <SheetHeader>
+          <SheetTitle>Add New Equipment Type</SheetTitle>
+          <SheetDescription>
+            Use this form to add a new equipment type to the system.
+          </SheetDescription>
+        </SheetHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col h-full overflow-y-auto"
+        >
           <EquipTypeForm control={control} />
-          <DialogFooter className="mt-6">
+          <SheetFooter className="mb-12">
+            <Button
+              type="reset"
+              variant="secondary"
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               isLoading={isSubmitting}
               loadingText="Saving Changes..."
+              className="w-full"
             >
               Save
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
