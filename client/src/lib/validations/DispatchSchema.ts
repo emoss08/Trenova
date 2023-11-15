@@ -1,3 +1,4 @@
+import { validateDecimal } from "@/lib/utils";
 /*
  * COPYRIGHT(c) 2023 MONTA
  *
@@ -68,38 +69,38 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
     code: Yup.string()
       .required("Name is required")
       .max(4, "Code cannot be more than 4 characters"),
-    revenueGoal: Yup.number()
+    revenueGoal: Yup.string()
       .required("Revenue Goal is required")
       .test(
         "is-decimal",
         "Revenue Goal must be a decimal with no more than two decimal places",
         (value) => {
           if (value !== undefined && value !== null) {
-            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+            return validateDecimal(value, 2);
           }
           return false;
         },
       ),
-    deadheadGoal: Yup.number()
+    deadheadGoal: Yup.string()
       .required("Deadhead Goal is required")
       .test(
         "is-decimal",
         "Deadhead Goal must be a decimal with no more than two decimal places",
         (value) => {
           if (value !== undefined && value !== null) {
-            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+            return validateDecimal(value, 2);
           }
           return false;
         },
       ),
-    mileageGoal: Yup.number()
+    mileageGoal: Yup.string()
       .required("Mileage Goal is required")
       .test(
         "is-decimal",
         "Mileage Goal must be a decimal with no more than two decimal places",
         (value) => {
           if (value !== undefined && value !== null) {
-            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+            return validateDecimal(value, 2);
           }
           return false;
         },

@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { useEffect, RefObject } from "react";
+import { RefObject, useEffect } from "react";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -37,7 +37,7 @@ export function truncateText(str: string, length: number) {
   return str.length > length ? str.substring(0, length) + "..." : str;
 }
 
-const useClickOutside = <T extends HTMLElement>(
+export const useClickOutside = <T extends HTMLElement>(
   ref: RefObject<T>,
   handler: (event: MouseEvent | TouchEvent) => void,
 ): void => {
@@ -71,4 +71,7 @@ const useClickOutside = <T extends HTMLElement>(
   }, [ref, handler]);
 };
 
-export default useClickOutside;
+export function validateDecimal(value: string, decimalPlaces: number) {
+  const regex = new RegExp(`^\\d+(\\.\\d{1,${decimalPlaces}})?$`);
+  return regex.test(value);
+}

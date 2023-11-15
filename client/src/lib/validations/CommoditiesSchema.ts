@@ -27,6 +27,7 @@ import {
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
+import { validateDecimal } from "@/lib/utils";
 
 export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> =
   Yup.object().shape({
@@ -58,7 +59,7 @@ export const commoditySchema: ObjectSchema<CommodityFormValues> =
         "Minimum temperature cannot be more than two decimal places.",
         (value) => {
           if (value !== "" && value !== undefined) {
-            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+            return validateDecimal(value, 4);
           }
           return true;
         },
@@ -70,7 +71,7 @@ export const commoditySchema: ObjectSchema<CommodityFormValues> =
         "Maximum temperature cannot be more than two decimal places.",
         (value) => {
           if (value !== "" && value !== undefined) {
-            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+            return validateDecimal(value, 2);
           }
           return true;
         },

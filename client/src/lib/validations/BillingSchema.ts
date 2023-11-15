@@ -28,6 +28,7 @@ import {
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 import { StatusChoiceProps } from "@/types";
+import { validateDecimal } from "@/lib/utils";
 
 export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> =
   Yup.object().shape({
@@ -37,9 +38,19 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
       .required("Code is required"),
     description: Yup.string().notRequired(),
     isDetention: Yup.boolean().required("Detention is required"),
-    chargeAmount: Yup.number()
-      .min(1, "Charge Amount must be greater than zero.")
-      .required("Charge amount is required"),
+    chargeAmount: Yup.string()
+      .test(
+        "is-decimal",
+        "Charge Amount cannot be more than four decimal places",
+        (value) => {
+          if (value !== "" && value !== undefined) {
+            return validateDecimal(value, 2);
+          }
+          return true;
+        },
+      )
+      .required()
+      .nullable(),
     method: Yup.string<FuelMethodChoicesProps>().required("Method is required"),
   });
 
