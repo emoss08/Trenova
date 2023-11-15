@@ -48,7 +48,7 @@ export function DataTablePagination<TData>({
   const totalCount = table.getPageCount() * pagination.pageSize;
 
   return (
-    <div className="flex items-center justify-between px-2 py-2">
+    <div className="flex items-center justify-between px-2">
       <div className="hidden sm:block">
         <p className="text-sm text-muted-foreground">
           Showing <span className="font-medium">{fromValue}</span> to&nbsp;

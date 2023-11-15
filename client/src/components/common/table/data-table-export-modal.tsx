@@ -218,7 +218,7 @@ export function DataTableImportExportOption() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default" className="hidden h-8 lg:flex">
+          <Button variant="default" className="h-8 lg:flex">
             <DotsVerticalIcon className="mr-2 h-4 w-4" /> Options
           </Button>
         </DropdownMenuTrigger>
