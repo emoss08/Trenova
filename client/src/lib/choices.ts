@@ -220,7 +220,7 @@ export type EquipmentClassChoiceProps =
   | "TRACTOR"
   | "TRAILER";
 
-export const EquipmentClassChoices = [
+export const equipmentClassChoices = [
   { value: "UNDEFINED", label: "Undefined" },
   { value: "CAR", label: "Car" },
   { value: "VAN", label: "Van" },

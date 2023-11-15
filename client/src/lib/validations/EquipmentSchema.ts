@@ -19,7 +19,6 @@ import * as Yup from "yup";
 import { ObjectSchema, StringSchema } from "yup";
 import {
   EquipmentManufacturerFormValues,
-  EquipmentTypeDetailFormValues,
   EquipmentTypeFormValues,
 } from "@/types/equipment";
 import { EquipmentClassChoiceProps } from "@/lib/choices";
@@ -38,35 +37,6 @@ Yup.addMethod<StringSchema>(
   },
 );
 
-export const equipmentTypeDetailSchema: ObjectSchema<EquipmentTypeDetailFormValues> =
-  Yup.object().shape({
-    equipmentClass: Yup.string<EquipmentClassChoiceProps>().required(
-      "Equipment class is required",
-    ),
-    exemptFromTolls: Yup.boolean().required("Exempt from tolls is required"),
-    fixedCost: Yup.string()
-      .decimal("Fixed Cost must be a decimal")
-      .required("Fixed Cost is required"),
-    height: Yup.string()
-      .decimal("Height must be a decimal")
-      .required("Height is required"),
-    length: Yup.string()
-      .decimal("Length must be a decimal")
-      .required("Length is required"),
-    idlingFuelUsage: Yup.string()
-      .decimal("Idling fuel usage must be a decimal")
-      .required("Idling fuel usage is required"),
-    weight: Yup.string()
-      .decimal("Weight must be a decimal")
-      .required("Weight is required"),
-    variableCost: Yup.string()
-      .decimal("Variable Cost must be a decimal")
-      .required("Variable Cost is required"),
-    width: Yup.string()
-      .decimal("Width must be a decimal")
-      .required("Width is required"),
-  });
-
 export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
@@ -75,14 +45,29 @@ export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
       .max(50, "Name cannot be more than 50 characters"),
     description: Yup.string().notRequired(),
     costPerMile: Yup.string()
-      .test("is-decimal", "Cost per mile must be a decimal", (value) => {
-        if (value) {
-          return /^\d+(\.\d{1,2})?$/.test(value);
-        }
-        return true;
-      })
-      .required("Cost per mile is required"),
-    equipmentTypeDetails: equipmentTypeDetailSchema,
+      .decimal("Cost per mile must be a decimal")
+      .notRequired(),
+    equipmentClass: Yup.string<EquipmentClassChoiceProps>().required(
+      "Equipment class is required",
+    ),
+    exemptFromTolls: Yup.boolean().required("Exempt from tolls is required"),
+    fixedCost: Yup.string()
+      .decimal("Fixed Cost must be a decimal")
+      .nullable()
+      .notRequired(),
+    height: Yup.string()
+      .decimal("Height must be a decimal")
+      .nullable()
+      .notRequired(),
+    length: Yup.string().decimal("Length must be a decimal").notRequired(),
+    idlingFuelUsage: Yup.string()
+      .decimal("Idling fuel usage must be a decimal")
+      .notRequired(),
+    weight: Yup.string().decimal("Weight must be a decimal").notRequired(),
+    variableCost: Yup.string()
+      .decimal("Variable Cost must be a decimal")
+      .notRequired(),
+    width: Yup.string().decimal("Width must be a decimal").notRequired(),
   });
 
 export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValues> =
