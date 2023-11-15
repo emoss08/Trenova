@@ -123,11 +123,8 @@ export function FileField<T extends FieldValues>({
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
             props.className,
           )}
-          // value={field.value}
           onChange={(e) => {
             const value = e.target.files;
-
-            console.log("Field Value", value);
             if (value) {
               field.onChange(value);
             }

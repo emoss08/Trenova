@@ -114,7 +114,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   };
 
   const undoThemeChange = () => {
-    console.log("Previous theme", previousTheme);
+    console.info("Previous theme", previousTheme);
 
     // Set the current theme back to the previous theme
     setCurrentTheme(previousTheme);
