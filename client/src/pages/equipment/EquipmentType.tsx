@@ -14,19 +14,102 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import React from "react";
-import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/assets/styles/PageStyles";
-import { EquipmentTypeTable } from "@/components/equipment-type/EquipmentTypeTable";
 
-export default function EquipmentType(): React.ReactElement {
-  const { classes } = usePageStyles();
+import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { tableStatusChoices } from "@/lib/constants";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
+import { CommentTypeEditSheet } from "@/components/comment-type/comment-type-table-edit-dialog";
+import { EquipmentType } from "@/types/equipment";
+import { EquipTypeDialog } from "@/components/equipment-type/equip-type-table-dialog";
+import { EquipTypeEditSheet } from "@/components/equipment-type/equip-type-edit-table-dialog";
+import { truncateText } from "@/lib/utils";
+import { equipmentClassChoices } from "@/lib/choices";
 
+const columns: ColumnDef<EquipmentType>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 30),
+  },
+  {
+    accessorKey: "equipmentClass",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Equip. Class" />
+    ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+];
+
+const filters: FilterConfig<EquipmentType>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+  {
+    columnName: "equipmentClass",
+    title: "Equip. Class",
+    options: equipmentClassChoices,
+  },
+];
+
+export default function EquipmentTypes() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <EquipmentTypeTable />
-      </Card>
-    </Flex>
+    <DataTable
+      queryKey="equipment-type-table-data"
+      columns={columns}
+      link="/equipment_types/"
+      name="Equip. Types"
+      exportModelName="EquipmentType"
+      filterColumn="name"
+      tableFacetedFilters={filters}
+      TableSheet={EquipTypeDialog}
+      TableEditSheet={EquipTypeEditSheet}
+    />
   );
 }
