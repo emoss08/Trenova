@@ -19,40 +19,27 @@ import { EquipmentClassChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "./organization";
 
-export type EquipmentTypeDetail = {
-  id: string;
-  equipmentClass: EquipmentClassChoiceProps;
-  equipmentType: string;
-  fixedCost: string;
-  variableCost: string;
-  height: string;
-  length: string;
-  width: string;
-  weight: string;
-  idlingFuelUsage: string;
-  exemptFromTolls: boolean;
-};
-
 export interface EquipmentType extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
   description?: string | null;
-  costPerMile: string;
-  equipmentTypeDetails: EquipmentTypeDetail;
+  costPerMile?: string | null;
+  equipmentClass: EquipmentClassChoiceProps;
+  fixedCost?: string | null;
+  variableCost?: string | null;
+  height?: string | null;
+  length?: string | null;
+  width?: string | null;
+  weight?: string | null;
+  idlingFuelUsage?: string | null;
+  exemptFromTolls: boolean;
 }
 
-export type EquipmentTypeDetailFormValues = Omit<
-  EquipmentTypeDetail,
-  "id" | "equipmentType"
->;
-
-export type EquipmentTypeFormValues = Pick<
+export type EquipmentTypeFormValues = Omit<
   EquipmentType,
-  "name" | "description" | "costPerMile" | "status"
-> & {
-  equipmentTypeDetails: EquipmentTypeDetailFormValues;
-};
+  "organization" | "businessUnit" | "created" | "modified" | "id"
+>;
 
 export interface EquipmentManufacturer extends BaseModel {
   id: string;
