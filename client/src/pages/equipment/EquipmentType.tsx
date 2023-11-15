@@ -21,7 +21,6 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { CommentTypeEditSheet } from "@/components/comment-type/comment-type-table-edit-dialog";
 import { EquipmentType } from "@/types/equipment";
 import { EquipTypeDialog } from "@/components/equipment-type/equip-type-table-dialog";
 import { EquipTypeEditSheet } from "@/components/equipment-type/equip-type-edit-table-dialog";
