@@ -27,11 +27,11 @@ class LocationCategoryAdmin(GenericAdmin[models.LocationCategory]):
     Location Category Admin
     """
 
-    list_display: tuple[str, ...] = (
+    list_display = (
         "name",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "name",
         "description",
     )
@@ -67,7 +67,7 @@ class LocationAdmin(GenericAdmin[models.Location]):
     Location Admin
     """
 
-    list_display: tuple[str, ...] = (
+    list_display = (
         "code",
         "location_category",
         "address_line_1",
@@ -75,11 +75,11 @@ class LocationAdmin(GenericAdmin[models.Location]):
         "state",
         "zip_code",
     )
-    list_filter: tuple[str, ...] = (
+    list_filter = (
         "depot",
         "location_category",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "address_line_1",
         "city",
         "state",
