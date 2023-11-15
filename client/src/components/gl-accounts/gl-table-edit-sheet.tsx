@@ -105,7 +105,6 @@ function GLEditForm({
 
   const onSubmit = (values: GLAccountFormValues) => {
     setIsSubmitting(true);
-    console.log(values);
     mutation.mutate(values);
   };
 
