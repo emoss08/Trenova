@@ -122,8 +122,8 @@ function DataTableTopBar<K>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
+    <div className="flex flex-col sm:flex-row justify-between">
+      <div className="flex-1 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mr-2">
         <Input
           placeholder="Filter..."
           value={
@@ -132,7 +132,7 @@ function DataTableTopBar<K>({
           onChange={(event) =>
             table.getColumn(filterColumn)?.setFilterValue(event.target.value)
           }
-          className="w-[150px] lg:w-[250px] h-8"
+          className="w-full lg:w-[250px] h-8"
         />
         {tableFacetedFilters && (
           <DataTableFacetedFilterList
@@ -151,15 +151,17 @@ function DataTableTopBar<K>({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
-      <DataTableImportExportOption />
-      <Button
-        variant={buttonVariant}
-        onClick={() => store.set("sheetOpen", true)}
-        className="ml-2 hidden h-8 lg:flex"
-      >
-        <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
-      </Button>
+      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
+        <DataTableViewOptions table={table} />
+        <DataTableImportExportOption />
+        <Button
+          variant={buttonVariant}
+          onClick={() => store.set("sheetOpen", true)}
+          className="h-8"
+        >
+          <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -197,7 +199,6 @@ export function DataTable<K extends Record<string, any>>({
       }
       return response.data;
     },
-    staleTime: Infinity,
   });
 
   const placeholderData: K[] = React.useMemo(
@@ -272,73 +273,76 @@ export function DataTable<K extends Record<string, any>>({
 
   return (
     <>
-      <div className="space-y-4">
-        <DataTableTopBar
-          table={table}
-          name={name}
-          filterColumn={filterColumn}
-          selectedRowCount={selectedRowCount}
-          tableFacetedFilters={tableFacetedFilters}
-        />
-        <div className="rounded-md">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className={cn("cursor-pointer")}
-                        onDoubleClick={() => {
-                          setCurrentRecord(row.original);
-                          setEditDrawerOpen(true);
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+      <div className="my-2">
+        <div className="space-y-4">
+          <DataTableTopBar
+            table={table}
+            name={name}
+            filterColumn={filterColumn}
+            selectedRowCount={selectedRowCount}
+            tableFacetedFilters={tableFacetedFilters}
+          />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No data available to display.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className={cn("cursor-pointer")}
+                          onDoubleClick={() => {
+                            setCurrentRecord(row.original);
+                            setEditDrawerOpen(true);
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No data available to display.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <DataTablePagination table={table} pagination={pagination} />
         </div>
-        <DataTablePagination table={table} pagination={pagination} />
       </div>
+
       <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableSheet && (
         <TableSheet open={drawerOpen} onOpenChange={setDrawerOpen} />
