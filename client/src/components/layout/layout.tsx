@@ -71,7 +71,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="container mx-auto p-4">
+          <div className="mx-auto px-6 sm:px-6 md:12 xl:px-48">
             <Breadcrumb />
             {/* Site Search Combobox Dialog */}
             <SiteSearch />
