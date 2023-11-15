@@ -74,9 +74,18 @@ class EquipmentType(GenericModel):
         blank=True,
         help_text=_("Description of the equipment type."),
     )
+
     cost_per_mile = models.DecimalField(
-        verbose_name=_("Cost Per Mile"), max_digits=10, decimal_places=2, default=0.00
+        verbose_name=_("Cost Per Mile"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text=_("Cost per mile of the equipment type."),
+        blank=True,
+        null=True,
     )
+
+    # Equipment Type Details
     equipment_class = ChoiceField(
         _("Equipment Class"),
         choices=EquipmentClassChoices.choices,
@@ -89,6 +98,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Fixed cost of the equipment type."),
+        blank=True,
+        null=True,
     )
     variable_cost = models.DecimalField(
         _("Variable Cost"),
@@ -96,6 +107,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Variable cost of the equipment type."),
+        blank=True,
+        null=True,
     )
     height = models.DecimalField(
         _("Height (Inches)"),
@@ -103,6 +116,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Height of the equipment type."),
+        blank=True,
+        null=True,
     )
     length = models.DecimalField(
         _("Length (Inches)"),
@@ -110,6 +125,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Length of the equipment type."),
+        blank=True,
+        null=True,
     )
     width = models.DecimalField(
         _("Width (Inches)"),
@@ -117,6 +134,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Width of the equipment type."),
+        blank=True,
+        null=True,
     )
     weight = models.DecimalField(
         _("Weight (Pounds)"),
@@ -124,6 +143,8 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Weight of the equipment type."),
+        blank=True,
+        null=True,
     )
     idling_fuel_usage = models.DecimalField(
         _("Idling Fuel Usage (Gallons Per Hour)"),
@@ -131,11 +152,13 @@ class EquipmentType(GenericModel):
         decimal_places=4,
         default=0.0000,
         help_text=_("Idling fuel usage of the equipment type."),
+        blank=True,
+        null=True,
     )
     exempt_from_tolls = models.BooleanField(
         _("Exempt From Tolls"),
         default=False,
-        help_text=_("Exempt from tolls of the equipment type."),
+        help_text=_("Indicates if the equipment type is exempt from tolls."),
     )
 
     class Meta:
