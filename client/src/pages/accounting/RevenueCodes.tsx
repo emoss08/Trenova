@@ -18,7 +18,6 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { truncateText } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { RCDialog } from "@/components/revenue-codes/rc-table-dialog";
@@ -72,19 +71,15 @@ const columns: ColumnDef<RevenueCode>[] = [
 
 export default function RevenueCodes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="revenue-code-table-data"
-          columns={columns}
-          link="/revenue_codes/"
-          name="Revenue Code"
-          exportModelName="RevenueCode"
-          filterColumn="code"
-          TableSheet={RCDialog}
-          TableEditSheet={RCTableEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="revenue-code-table-data"
+      columns={columns}
+      link="/revenue_codes/"
+      name="Revenue Code"
+      exportModelName="RevenueCode"
+      filterColumn="code"
+      TableSheet={RCDialog}
+      TableEditSheet={RCTableEditDialog}
+    />
   );
 }

@@ -19,7 +19,6 @@ import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableAccountTypeChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
@@ -95,20 +94,16 @@ const filters: FilterConfig<GeneralLedgerAccount>[] = [
 
 export default function GLAccounts() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="gl-account-table-data"
-          columns={columns}
-          link="/gl_accounts/"
-          name="Gl Account"
-          exportModelName="GeneralLedgerAccount"
-          filterColumn="accountNumber"
-          tableFacetedFilters={filters}
-          TableSheet={GLTableSheet}
-          TableEditSheet={GLTableEditSheet}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="gl-account-table-data"
+      columns={columns}
+      link="/gl_accounts/"
+      name="Gl Account"
+      exportModelName="GeneralLedgerAccount"
+      filterColumn="accountNumber"
+      tableFacetedFilters={filters}
+      TableSheet={GLTableSheet}
+      TableEditSheet={GLTableEditSheet}
+    />
   );
 }

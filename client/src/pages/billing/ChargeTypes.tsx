@@ -17,7 +17,6 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
@@ -80,20 +79,16 @@ const filters: FilterConfig<ChargeType>[] = [
 
 export default function ChargeTypes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="charge-type-table-data"
-          columns={columns}
-          link="/charge_types/"
-          name="Charge Type"
-          exportModelName="ChargeType"
-          filterColumn="name"
-          tableFacetedFilters={filters}
-          TableSheet={ChargeTypeDialog}
-          TableEditSheet={ChargeTypeEditSheet}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="charge-type-table-data"
+      columns={columns}
+      link="/charge_types/"
+      name="Charge Type"
+      exportModelName="ChargeType"
+      filterColumn="name"
+      tableFacetedFilters={filters}
+      TableSheet={ChargeTypeDialog}
+      TableEditSheet={ChargeTypeEditSheet}
+    />
   );
 }

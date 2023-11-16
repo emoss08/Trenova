@@ -17,7 +17,6 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
@@ -80,20 +79,16 @@ const filters: FilterConfig<CommentType>[] = [
 
 export default function CommentTypes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="comment-types-table-data"
-          columns={columns}
-          link="/comment_types/"
-          name="Comment Types"
-          exportModelName="CommentType"
-          filterColumn="name"
-          tableFacetedFilters={filters}
-          TableSheet={CommentTypeDialog}
-          TableEditSheet={CommentTypeEditSheet}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="comment-types-table-data"
+      columns={columns}
+      link="/comment_types/"
+      name="Comment Types"
+      exportModelName="CommentType"
+      filterColumn="name"
+      tableFacetedFilters={filters}
+      TableSheet={CommentTypeDialog}
+      TableEditSheet={CommentTypeEditSheet}
+    />
   );
 }
