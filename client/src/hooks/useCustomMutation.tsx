@@ -103,7 +103,7 @@ function extractFileFromData(
       delete data[key];
       return { fieldName: key, file: item };
     } else if (item instanceof FileList && item.length > 0) {
-      const file = item[0]; // Assuming you're only allowing one file per input
+      const file = item[0];
       delete data[key];
       return { fieldName: key, file };
     }

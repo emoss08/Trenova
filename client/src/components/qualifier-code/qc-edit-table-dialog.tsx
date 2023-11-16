@@ -15,21 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useTableStore } from "@/stores/TableStore";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "../ui/use-toast";
 import { formatDate } from "@/lib/date";
-import {
-  ServiceType,
-  ServiceTypeFormValues as FormValues,
-} from "@/types/order";
-import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
-import { ServiceTypeForm } from "@/components/service-type/st-table-dialog";
 import {
   Dialog,
   DialogContent,
@@ -38,16 +31,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
+import {
+  QualifierCode,
+  QualifierCodeFormValues as FormValues,
+} from "@/types/stop";
+import { QualifierCodeForm } from "@/components/qualifier-code/qc-table-dialog";
+import { toast } from "@/components/ui/use-toast";
 
-function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
+function QualifierCodeEditForm({
+  qualifierCode,
+}: {
+  qualifierCode: QualifierCode;
+}) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(serviceTypeSchema),
+    resolver: yupResolver(qualifierCodeSchema),
     defaultValues: {
-      status: serviceType.status,
-      code: serviceType.code,
-      description: serviceType?.description || "",
+      status: qualifierCode.status,
+      code: qualifierCode.code,
+      description: qualifierCode.description,
     },
   });
 
@@ -56,11 +60,11 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
     toast,
     {
       method: "PUT",
-      path: `/service_types/${serviceType.id}/`,
+      path: `/service_types/${qualifierCode.id}/`,
       successMessage: "Service Type updated successfully.",
       queryKeysToInvalidate: ["service-type-table-data"],
       closeModal: true,
-      errorMessage: "Failed to update service type.",
+      errorMessage: "Failed to update equip. type.",
     },
     () => setIsSubmitting(false),
   );
@@ -75,7 +79,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col h-full overflow-y-auto"
     >
-      <ServiceTypeForm control={control} />
+      <QualifierCodeForm control={control} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
@@ -89,22 +93,27 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
   );
 }
 
-export function ServiceTypeEditDialog({ onOpenChange, open }: TableSheetProps) {
-  const [serviceType] = useTableStore.use("currentRecord") as ServiceType[];
+export function QualifierCodeEditDialog({
+  onOpenChange,
+  open,
+}: TableSheetProps) {
+  const [qualifierCode] = useTableStore.use("currentRecord") as QualifierCode[];
 
-  if (!serviceType) return null;
+  if (!qualifierCode) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{serviceType && serviceType.code}</DialogTitle>
+          <DialogTitle>{qualifierCode && qualifierCode.code}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {serviceType && formatDate(serviceType.modified)}
+          {qualifierCode && formatDate(qualifierCode.modified)}
         </DialogDescription>
-        {serviceType && <ServiceTypeEditForm serviceType={serviceType} />}
+        {qualifierCode && (
+          <QualifierCodeEditForm qualifierCode={qualifierCode} />
+        )}
       </DialogContent>
     </Dialog>
   );
