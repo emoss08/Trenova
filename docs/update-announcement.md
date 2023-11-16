@@ -21,6 +21,6 @@ Mantine's evolving versions, which would have added significant development time
 Instead, our focus will be on leveraging TailwindCSS to expedite the release of new and innovative features, thereby
 enhancing your experience and supporting your business growth.
 
-Sincerly,
+Sincerely,
 
 Wolfred, Creator & Maintainer
