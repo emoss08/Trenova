@@ -17,7 +17,6 @@
 
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { LocationCategory } from "@/types/location";
@@ -77,19 +76,15 @@ const columns: ColumnDef<LocationCategory>[] = [
 
 export default function LocationCategories() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="location-categories-table-data"
-          columns={columns}
-          link="/location_categories/"
-          name="Location Category"
-          exportModelName="LocationCategory"
-          filterColumn="name"
-          TableSheet={LCTableSheet}
-          TableEditSheet={LCTableEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="location-categories-table-data"
+      columns={columns}
+      link="/location_categories/"
+      name="Location Category"
+      exportModelName="LocationCategory"
+      filterColumn="name"
+      TableSheet={LCTableSheet}
+      TableEditSheet={LCTableEditDialog}
+    />
   );
 }

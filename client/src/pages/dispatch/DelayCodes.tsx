@@ -17,7 +17,6 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
@@ -115,20 +114,16 @@ const filters: FilterConfig<DelayCode>[] = [
 
 export default function DelayCodes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="delay-code-table-data"
-          columns={columns}
-          link="/delay_codes/"
-          name="Delay Code"
-          exportModelName="DelayCode"
-          filterColumn="code"
-          tableFacetedFilters={filters}
-          TableSheet={DelayCodeDialog}
-          TableEditSheet={DelayCodeEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="delay-code-table-data"
+      columns={columns}
+      link="/delay_codes/"
+      name="Delay Code"
+      exportModelName="DelayCode"
+      filterColumn="code"
+      tableFacetedFilters={filters}
+      TableSheet={DelayCodeDialog}
+      TableEditSheet={DelayCodeEditDialog}
+    />
   );
 }

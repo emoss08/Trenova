@@ -18,7 +18,6 @@
 import { FleetCode } from "@/types/dispatch";
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
@@ -72,19 +71,15 @@ const columns: ColumnDef<FleetCode>[] = [
 
 export default function FleetCodes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="fleet-code-table-data"
-          columns={columns}
-          link="/fleet_codes/"
-          name="Fleet Codes"
-          exportModelName="FleetCode"
-          filterColumn="code"
-          TableSheet={FleetCodeDialog}
-          TableEditSheet={FleetCodeEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="fleet-code-table-data"
+      columns={columns}
+      link="/fleet_codes/"
+      name="Fleet Codes"
+      exportModelName="FleetCode"
+      filterColumn="code"
+      TableSheet={FleetCodeDialog}
+      TableEditSheet={FleetCodeEditDialog}
+    />
   );
 }

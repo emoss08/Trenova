@@ -17,7 +17,6 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
@@ -117,20 +116,16 @@ const filters: FilterConfig<Commodity>[] = [
 
 export default function CommodityPage() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="commodity-table-data"
-          columns={columns}
-          link="/commodities/"
-          name="Commodity"
-          exportModelName="Commodity"
-          filterColumn="name"
-          tableFacetedFilters={filters}
-          TableSheet={CommodityDialog}
-          TableEditSheet={CommodityEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="commodity-table-data"
+      columns={columns}
+      link="/commodities/"
+      name="Commodity"
+      exportModelName="Commodity"
+      filterColumn="name"
+      tableFacetedFilters={filters}
+      TableSheet={CommodityDialog}
+      TableEditSheet={CommodityEditDialog}
+    />
   );
 }
