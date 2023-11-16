@@ -99,6 +99,8 @@ export type QueryKeys =
   | "tags"
   | "shipmentTypes"
   | "shipmentControl"
+  | "service-type-table-data"
+  | "serviceTypes"
   | "accountingControl"
   | "financeTransaction"
   | "reconciliationQueue"

@@ -97,6 +97,7 @@ export type API_ENDPOINTS =
   | "/shipments/"
   | "/shipment_documents/"
   | "/shipment_comments/"
+  | "/service_types/"
   | "/additional_charges/"
   | "/movements/"
   | "/invoice_control/"
