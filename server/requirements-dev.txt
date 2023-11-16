@@ -3,7 +3,7 @@ djangorestframework-stubs[compatible-mypy]==3.14.4
 factory_boy==3.3.0
 isort==5.12.0
 pretty_errors==1.2.25
-pydantic==2.4.2
+pydantic==2.5.1
 pytest==7.4.3
 pytest-clarity==1.0.1
 pytest-cov==4.1.0
