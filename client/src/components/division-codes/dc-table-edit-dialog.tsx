@@ -38,6 +38,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTableStore } from "@/stores/TableStore";
 import { formatDate } from "@/lib/date";
+import { TableSheetProps } from "@/types/tables";
 
 export function DCEditForm({
   divisionCode,
@@ -103,14 +104,8 @@ export function DCEditForm({
   );
 }
 
-export function DCTableEditDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [divisionCode] = useTableStore.use("currentRecord");
+export function DCTableEditDialog({ open, onOpenChange }: TableSheetProps) {
+  const [divisionCode] = useTableStore.use("currentRecord") as DivisionCode[];
 
   if (!divisionCode) return null;
 
