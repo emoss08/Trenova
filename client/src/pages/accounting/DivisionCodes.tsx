@@ -17,7 +17,6 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
 import { DivisionCode } from "@/types/accounting";
@@ -83,20 +82,16 @@ const filters: FilterConfig<DivisionCode>[] = [
 
 export default function DivisionCodes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="division-code-table-data"
-          columns={columns}
-          link="/division_codes/"
-          name="Division Code"
-          exportModelName="DivisionCode"
-          filterColumn="code"
-          tableFacetedFilters={filters}
-          TableSheet={DCDialog}
-          TableEditSheet={DCTableEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="division-code-table-data"
+      columns={columns}
+      link="/division_codes/"
+      name="Division Code"
+      exportModelName="DivisionCode"
+      filterColumn="code"
+      tableFacetedFilters={filters}
+      TableSheet={DCDialog}
+      TableEditSheet={DCTableEditDialog}
+    />
   );
 }
