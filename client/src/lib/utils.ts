@@ -33,6 +33,13 @@ export function USDollarFormat(num: number) {
   }).format(num);
 }
 
+export function USDollarFormatString(num: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(parseFloat(num));
+}
+
 export function truncateText(str: string, length: number) {
   return str.length > length ? str.substring(0, length) + "..." : str;
 }

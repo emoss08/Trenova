@@ -21,8 +21,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import {
   FieldValues,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 
 const Checkbox = React.forwardRef<
@@ -69,6 +69,7 @@ export function CheckboxInput<T extends FieldValues>({
         onCheckedChange={(e) => {
           field.onChange(e);
         }}
+        checked={field.value as boolean}
       />
       {label && (
         <div className="grid gap-1.5 leading-none">

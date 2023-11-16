@@ -21,9 +21,8 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { tableStatusChoices } from "@/lib/constants";
-import { truncateText, USDollarFormat } from "@/lib/utils";
+import { truncateText, USDollarFormatString } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
 import { FilterConfig } from "@/types/tables";
 import {
@@ -120,7 +119,7 @@ const columns: ColumnDef<AccessorialCharge>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Charge Amount" />
     ),
-    cell: ({ row }) => USDollarFormat(row.original.chargeAmount),
+    cell: ({ row }) => USDollarFormatString(row.original.chargeAmount),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -146,20 +145,16 @@ const filters: FilterConfig<AccessorialCharge>[] = [
 
 export default function AccessorialCharges() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="accessorial-charges-table-data"
-          columns={columns}
-          link="/accessorial_charges/"
-          name="Accessorial Charge"
-          exportModelName="AccessorialCharge"
-          filterColumn="code"
-          tableFacetedFilters={filters}
-          TableSheet={ACDialog}
-          TableEditSheet={ACTableEditDialog}
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="accessorial-charges-table-data"
+      columns={columns}
+      link="/accessorial_charges/"
+      name="Accessorial Charge"
+      exportModelName="AccessorialCharge"
+      filterColumn="code"
+      tableFacetedFilters={filters}
+      TableSheet={ACDialog}
+      TableEditSheet={ACTableEditDialog}
+    />
   );
 }
