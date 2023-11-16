@@ -120,20 +120,22 @@ export function SiteSearch() {
           </CommandGroup>
         ))}
       </CommandList>
-      <div className="sticky bg-muted-foreground/5 flex items-center justify-between border-t py-2">
-        <div>
-          <p className="text-xs ml-2">Search powered by Monta</p>
-        </div>
-        <div>
-          <a
-            href="https://monta.so"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-foreground mr-2"
-          >
-            Learn More
-          </a>
-        </div>
+      <div className="sticky bg-background flex items-center space-x-1 mx-2 py-2 border-t">
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+          <span className="text-xs">↑</span>
+        </kbd>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+          <span className="text-xs">↓</span>
+        </kbd>
+        <p className="text-xs pr-2">to navigate</p>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+          <span className="text-xs">↵</span>
+        </kbd>
+        <p className="text-xs pr-2">to select</p>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+          <span className="text-xs">esc</span>
+        </kbd>
+        <p className="text-xs">to close</p>
       </div>
     </CommandDialog>
   );
