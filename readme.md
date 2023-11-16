@@ -8,6 +8,8 @@ performance and operational efficiency.
 [**Explore the docs »**](#)
 
 [**Application Change Announcement**](https://github.com/emoss08/Monta/blob/main/docs/update-announcement.md)
+
+[**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Monta/blob/main/beam.md)
 </div>
 
 
