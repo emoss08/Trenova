@@ -6,7 +6,11 @@ A comprehensive suite of applications tailored for the transportation and logist
 performance and operational efficiency.
 
 [**Explore the docs »**](#)
+
+[**Application Change Announcement**](https://github.com/emoss08/Monta/blob/main/docs/update-announcement.md)
 </div>
+
+
 
 ## Introduction
 
