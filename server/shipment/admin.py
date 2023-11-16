@@ -192,3 +192,16 @@ class FormulaTemplateAdmin(GenericAdmin[models.FormulaTemplate]):
         "description",
     )
     search_fields = ("name", "description")
+
+
+@admin.register(models.ServiceType)
+class ServiceTypeAdmin(GenericAdmin[models.ServiceType]):
+    """
+    Service Type Admin
+    """
+
+    list_display = (
+        "code",
+        "description",
+    )
+    search_fields = ("code", "description")

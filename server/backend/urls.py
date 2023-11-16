@@ -263,7 +263,7 @@ router.register(
 )
 router.register(r"stops", stops_api.StopViewSet, basename="stops")
 
-# shipment Routing
+# Shipment Routing
 router.register(
     r"shipment_control",
     shipment_api.ShipmentControlViewSet,
@@ -290,6 +290,11 @@ router.register(
     r"additional_charges",
     shipment_api.AdditionalChargeViewSet,
     basename="additional-charges",
+)
+router.register(
+    r"service_types",
+    shipment_api.ServiceTypeViewSet,
+    basename="service-types",
 )
 
 # Movement Routing

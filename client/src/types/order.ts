@@ -16,6 +16,7 @@
  */
 
 import { BaseModel } from "./organization";
+import { StatusChoiceProps } from "@/types/index";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -91,3 +92,15 @@ export interface ShipmentType extends BaseModel {
   name: string;
   description: string;
 }
+
+export interface ServiceType extends BaseModel {
+  id: string;
+  status: StatusChoiceProps;
+  code: string;
+  description?: string | null;
+}
+
+export type ServiceTypeFormValues = Omit<
+  ServiceType,
+  "id" | "organization" | "created" | "modified"
+>;

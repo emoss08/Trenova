@@ -341,3 +341,42 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
             "sub_total",
         )
         return queryset
+
+
+class ServiceTypeViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Service Type in the system.
+
+    The viewset provides default operations for creating, updating and deleting service types,
+    as well as listing and retrieving Service Types. It uses the ``ServiceTypeSerializer``
+    class to convert the additional charge instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by service type by code, and status.
+
+    Attributes:
+        queryset (QuerySet): A queryset of ServiceType objects that will be used to
+        retrieve and update ServiceType objects.
+
+        serializer_class (ServiceTypeSerializer): A serializer class that will be used to
+        convert ServiceType objects to and from JSON-formatted data.
+    """
+
+    queryset = models.ServiceType.objects.all()
+    serializer_class = serializers.ServiceTypeSerializer
+    filterset_fields = ("status", "code")
+    permission_classes = [CustomObjectPermissions]
+
+    def get_queryset(self) -> "QuerySet[models.ServiceType]":
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "business_unit_id",
+            "status",
+            "code",
+            "description",
+            "created",
+            "modified",
+        )
+        return queryset

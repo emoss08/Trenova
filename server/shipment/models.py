@@ -32,7 +32,13 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from location.models import Location
-from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
+from utils.models import (
+    ChoiceField,
+    GenericModel,
+    RatingMethodChoices,
+    StatusChoices,
+    PrimaryStatusChoices,
+)
 
 User = settings.AUTH_USER_MODEL
 
@@ -287,7 +293,9 @@ class ServiceType(GenericModel):
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID.
             Editable and unique.
-        is_active (BooleanField): Default value is True. Verbose name is "Is Active".
+        status (ChoiceField): Verbose name is "Status". Choices are from the
+            PrimaryStatusChoices class. Default is PrimaryStatusChoices.ACTIVE.
+            Help text is "Status of the service type".
         code (CharField): Verbose name is "Code". Max length is 4 and must be unique.
             Help text is "Code of the service type".
         description (TextField): Verbose name is "Description". Can be blank.
@@ -306,14 +314,16 @@ class ServiceType(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Is Active"),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the service type."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(
-        _("Name"),
+        _("Code"),
         max_length=4,
-        help_text=_("Name of the Service Type"),
+        help_text=_("Code of the Service Type"),
     )
     description = models.TextField(
         _("Description"),
@@ -329,6 +339,9 @@ class ServiceType(GenericModel):
         verbose_name = _("Service Type")
         verbose_name_plural = _("Service Types")
         db_table = "service_type"
+        db_table_comment = (
+            "Stores the service type information for a related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),

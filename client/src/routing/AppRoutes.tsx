@@ -43,7 +43,6 @@ const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges"),
 );
 const BillingClientPage = lazy(() => import("../pages/billing/BillingClient"));
-
 const HazardousMaterialPage = lazy(
   () => import("../pages/commodities/HazardousMaterial"),
 );
@@ -58,9 +57,10 @@ const RatePage = lazy(() => import("../pages/dispatch/Rate"));
 const EquipmentTypePage = lazy(
   () => import("../pages/equipment/EquipmentType"),
 );
-const EquipmentManfacturerPage = lazy(
+const EquipmentManufacturerPage = lazy(
   () => import("../pages/equipment/EquipmentManufacturer"),
 );
+const ServiceTypePage = lazy(() => import("../pages/shipment/ServiceType"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -293,8 +293,18 @@ export const routes: RouteObjectWithPermission[] = [
     subMenu: "configuration files",
     path: "/equipment/equipment-manufacturers/",
     description: "Equipment Manufacturer",
-    element: <EquipmentManfacturerPage />,
+    element: <EquipmentManufacturerPage />,
     permission: "equipment.view_equipmentmanufacturer",
+  },
+  // Shipment Pages
+  {
+    title: "Service Type",
+    group: "shipment",
+    subMenu: "configuration files",
+    path: "/shipment-management/service-types/",
+    description: "Service Types",
+    element: <ServiceTypePage />,
+    permission: "shipment.view_servicetype",
   },
   // Error Page
   {

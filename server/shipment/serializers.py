@@ -260,3 +260,22 @@ class AdditionalChargeSerializer(GenericSerializer):
         """
 
         model = models.AdditionalCharge
+
+
+class ServiceTypeSerializer(GenericSerializer):
+    """A serializer for the `ServiceType` model.
+
+    A serializer class for the ServiceType Model. This serializer is used
+    to convert the ServiceType model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+    """
+
+    class Meta:
+        """Metaclass for ServiceTypeSerializer
+
+        Attributes:
+            model (models.ServiceType): The model that the serializer is for.
+        """
+
+        model = models.ServiceType
