@@ -128,7 +128,7 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
       description: "",
       isDetention: false,
       method: "D",
-      chargeAmount: Number(),
+      chargeAmount: "",
     },
   });
 

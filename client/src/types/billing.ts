@@ -60,7 +60,7 @@ export interface AccessorialCharge extends BaseModel {
   code: string;
   description?: string | null;
   isDetention: boolean;
-  chargeAmount: string | null;
+  chargeAmount: string;
   method: FuelMethodChoicesProps;
 }
 

@@ -44,13 +44,12 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
         "Charge Amount cannot be more than four decimal places",
         (value) => {
           if (value !== "" && value !== undefined) {
-            return validateDecimal(value, 2);
+            return validateDecimal(value, 4);
           }
           return true;
         },
       )
-      .required()
-      .nullable(),
+      .required(),
     method: Yup.string<FuelMethodChoicesProps>().required("Method is required"),
   });
 
