@@ -104,4 +104,6 @@ export type QueryKeys =
   | "accountingControl"
   | "financeTransaction"
   | "reconciliationQueue"
-  | "users";
+  | "users"
+  | "qualifier-code-table-data"
+  | "qualifierCodes";

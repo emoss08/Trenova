@@ -14,17 +14,14 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import * as yup from "yup";
-import { ServiceTypeFormValues } from "@/types/order";
+import { QualifierCodeFormValues } from "@/types/stop";
 import { StatusChoiceProps } from "@/types";
 
-export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
-  .object()
-  .shape({
+export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
+  yup.object().shape({
     status: yup.string<StatusChoiceProps>().required("Status is required"),
-    code: yup
-      .string()
-      .max(10, "Code must be at most 10 characters")
-      .required("Code is required"),
-    description: yup.string().notRequired(),
+    code: yup.string().required("Name is required"),
+    description: yup.string().required("Description is required"),
   });

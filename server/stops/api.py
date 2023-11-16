@@ -43,9 +43,14 @@ class QualifierCodeViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
+            "id",
             "organization_id",
+            "business_unit_id",
+            "status",
             "code",
             "description",
+            "created",
+            "modified",
         )
         return queryset
 

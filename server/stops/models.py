@@ -28,7 +28,13 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
+from utils.models import (
+    ChoiceField,
+    GenericModel,
+    StatusChoices,
+    StopChoices,
+    PrimaryStatusChoices,
+)
 from utils.types import ModelDelete
 
 User = settings.AUTH_USER_MODEL
@@ -45,9 +51,15 @@ class QualifierCode(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the service type."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     code = models.CharField(
         _("Code"),
-        max_length=255,
+        max_length=10,
         help_text=_("Code of the Qualifier Code"),
     )
     description = models.CharField(
@@ -63,8 +75,10 @@ class QualifierCode(GenericModel):
 
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
-        ordering = ["code"]
         db_table = "qualifier_code"
+        db_table_comment = (
+            "Stores Qualifier Code information that can be used in stop notes."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
@@ -79,7 +93,11 @@ class QualifierCode(GenericModel):
         Returns:
             str: Code of the Qualifier
         """
-        return textwrap.wrap(self.code, 50)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Qualifier Code Absolute URL
@@ -87,7 +105,7 @@ class QualifierCode(GenericModel):
         Returns:
             str: Qualifier Code Absolute URL
         """
-        return reverse("shipment:qualifier-code-detail", kwargs={"pk": self.pk})
+        return reverse("qualifier-code-detail", kwargs={"pk": self.pk})
 
 
 class Stop(GenericModel):
