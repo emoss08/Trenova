@@ -22,10 +22,11 @@ import {
 } from "react-hook-form";
 import { ColorInputBaseProps } from "react-colorful/dist/types";
 import * as React from "react";
-import useClickOutside, { cn } from "@/lib/utils";
+import { cn, useClickOutside } from "@/lib/utils";
 import { Label } from "@/components/common/fields/label";
-import { HexColorInput, HexColorPicker } from "react-colorful";
+import { HexColorPicker } from "react-colorful";
 import { AlertTriangle } from "lucide-react";
+import { Input } from "@/components/common/fields/input";
 
 export type ColorFieldProps<T extends FieldValues> = {
   label?: string;
@@ -43,6 +44,10 @@ export function ColorField<T extends FieldValues>({
   const close = React.useCallback(() => setShowPicker(false), []);
   useClickOutside(popoverRef, close);
 
+  const handleColorChange = (color: string) => {
+    field.onChange(`${color}`);
+  };
+
   return (
     <div className="relative">
       {props.label && (
@@ -56,7 +61,7 @@ export function ColorField<T extends FieldValues>({
         </Label>
       )}
       <div className="relative w-full" onClick={() => setShowPicker(true)}>
-        <HexColorInput
+        <Input
           {...field}
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
@@ -69,7 +74,7 @@ export function ColorField<T extends FieldValues>({
         <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-gray-300" />
         <div
           className="absolute right-0 top-0 my-2.5 mx-2 h-5 w-5 rounded-xl"
-          style={{ backgroundColor: props.color }}
+          style={{ backgroundColor: field.value }}
         />
         {fieldState.error?.message && (
           <>
@@ -85,7 +90,7 @@ export function ColorField<T extends FieldValues>({
       </div>
       {showPicker && (
         <div ref={popoverRef} className="absolute z-1000 w-auto">
-          <HexColorPicker color={props.color} onChange={props.onChange} />
+          <HexColorPicker color={field.value} onChange={handleColorChange} />
         </div>
       )}
     </div>
