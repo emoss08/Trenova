@@ -36,6 +36,7 @@ const prepareRouteGroups = (routeList: typeof routes) => {
         acc[route.group] = [];
       }
       acc[route.group].push(route);
+
       return acc;
     },
     {} as Record<string, typeof routes>,
