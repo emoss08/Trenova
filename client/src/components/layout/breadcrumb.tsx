@@ -22,6 +22,7 @@ import { pathToRegexp } from "path-to-regexp";
 import { useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Skeleton } from "../ui/skeleton";
+
 export function Breadcrumb() {
   const location = useLocation();
   const [currentRoute, setCurrentRoute] =

@@ -12,8 +12,6 @@ performance and operational efficiency.
 [**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Monta/blob/main/beam.md)
 </div>
 
-
-
 ## Introduction
 
 Monta emerges as a comprehensive web solution, sculpted to serve the intricate demands of modern transportation and
