@@ -88,7 +88,7 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
 
     queryset = models.ShipmentType.objects.all()
     serializer_class = serializers.ShipmentTypeSerializer
-    filterset_fields = ("is_active",)
+    filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.ShipmentType]":
@@ -97,9 +97,12 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
         ).only(
             "id",
             "organization_id",
-            "name",
-            "is_active",
+            "business_unit_id",
+            "code",
+            "status",
             "description",
+            "created",
+            "modified",
         )
         return queryset
 
@@ -117,14 +120,13 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
     Attributes:
         queryset (QuerySet): A queryset of ShipmentType objects that will be used to
         retrieve and update ShipmentType objects.
-
         serializer_class (ReasonCodeSerializer): A serializer class that will be used to
         convert ShipmentType objects to and from JSON-formatted data.
     """
 
     queryset = models.ReasonCode.objects.all()
     serializer_class = serializers.ReasonCodeSerializer
-    filterset_fields = ("is_active",)
+    filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.ReasonCode]":
@@ -132,11 +134,14 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
+            "business_unit_id",
             "organization_id",
-            "is_active",
+            "status",
             "code",
             "code_type",
             "description",
+            "created",
+            "modified",
         )
         return queryset
 

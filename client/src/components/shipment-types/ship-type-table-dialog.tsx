@@ -15,20 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useState } from "react";
-import {
-  Control,
-  useForm,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
-import { LocationCategoryFormValues as FormValues } from "@/types/location";
-import { InputField } from "@/components/common/fields/input";
+import React from "react";
 import { TableSheetProps } from "@/types/tables";
-import { locationCategorySchema as formSchema } from "@/lib/validations/location";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -37,75 +25,89 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Control, useForm } from "react-hook-form";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { statusChoices } from "@/lib/choices";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
-import { ColorField } from "@/components/common/fields/color-field";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
+import { ShipmentTypeFormValues as FormValues } from "@/types/order";
 
-export function LCForm({
+export function ShipmentTypeForm({
   control,
 }: {
   control: Control<FormValues>;
-  watch: UseFormWatch<FormValues>;
-  setValue: UseFormSetValue<FormValues>;
 }) {
-  const [color, setColor] = useState("#000000");
-
   return (
-    <div className="flex items-center justify-center">
-      <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
-        <div className="w-full max-w-md">
+    <div className="flex-1 overflow-y-visible">
+      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid w-full max-w-sm items-center gap-0.5">
+          <SelectInput
+            name="status"
+            rules={{ required: true }}
+            control={control}
+            label="Status"
+            options={statusChoices}
+            placeholder="Select Status"
+            description="Status of the Shipment Type"
+            isClearable={false}
+          />
+        </div>
+        <div className="grid w-full items-center gap-0.5">
           <InputField
             control={control}
             rules={{ required: true }}
-            name="name"
-            label="Name"
+            name="code"
+            label="Code"
+            maxLength={10}
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Name"
-            description="Name for Location Category"
+            placeholder="Code"
+            autoComplete="code"
+            description="Code for the Shipment Type"
           />
         </div>
-        <div className="grid w-full max-w-md">
-          <TextareaField
-            name="description"
-            control={control}
-            label="Description"
-            placeholder="Description"
-            description="Description of the Location Category"
-          />
-        </div>
-        <div className="grid w-full max-w-md">
-          <ColorField name="color" label="color" control={control} />
-        </div>
+      </div>
+      <div className="my-2">
+        <TextareaField
+          name="description"
+          control={control}
+          label="Description"
+          placeholder="Description"
+          description="Description of the Shipment Type"
+        />
       </div>
     </div>
   );
 }
 
-export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
+export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit, setValue, watch } = useForm<FormValues>(
-    {
-      resolver: yupResolver(formSchema),
-      defaultValues: {
-        name: "",
-        description: "",
-        color: "",
-      },
+
+  const { control, reset, handleSubmit } = useForm<FormValues>({
+    resolver: yupResolver(shipmentTypeSchema),
+    defaultValues: {
+      status: "A",
+      code: "",
+      description: "",
     },
-  );
+  });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     toast,
     {
       method: "POST",
-      path: "/location_categories/",
-      successMessage: "Location Category created successfully.",
-      queryKeysToInvalidate: ["location-categories-table-data"],
+      path: "/shipment_types/",
+      successMessage: "Shipment Type created successfully.",
+      queryKeysToInvalidate: ["shipment-type-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create new location category.",
+      errorMessage: "Failed to create new shipment type.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -120,13 +122,13 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Location Category</DialogTitle>
+          <DialogTitle>Create New Shipment Type</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Please fill out the form below to create a new Location Category.
+          Please fill out the form below to create a new Shipment Type.
         </DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <LCForm control={control} watch={watch} setValue={setValue} />
+          <ShipmentTypeForm control={control} />
           <DialogFooter className="mt-6">
             <Button
               type="submit"

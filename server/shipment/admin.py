@@ -54,14 +54,14 @@ class AdditionalChargeInline(
 @admin.register(models.ShipmentType)
 class ShipmentTypeAdmin(GenericAdmin[models.ShipmentType]):
     """
-    shipment type Admin
+    Shipment type Admin
     """
 
     list_display = (
-        "name",
+        "code",
         "description",
     )
-    search_fields = ("name", "description")
+    search_fields = ("code", "description")
 
 
 @admin.register(models.ReasonCode)

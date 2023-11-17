@@ -389,3 +389,17 @@ export const statusChoices = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
 ] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;
+
+/**
+ * Returns code type choices for a select input.
+ */
+export type CodeTypeProps = "VOIDED" | "CANCELLED";
+
+/**
+ * Returns code type choices for a select input.
+ * @returns An array of code type choices.
+ */
+export const codeTypeChoices = [
+  { value: "VOIDED", label: "Voided" },
+  { value: "CANCELLED", label: "Cancelled" },
+] satisfies ReadonlyArray<IChoiceProps<CodeTypeProps>>;
