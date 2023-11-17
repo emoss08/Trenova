@@ -114,7 +114,7 @@ export function DCForm({
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select AP Account"
-            description="The Expense Account associated with the Division Code"
+            description="The AP Account associated with the Division Code"
             isClearable
           />
         </div>
