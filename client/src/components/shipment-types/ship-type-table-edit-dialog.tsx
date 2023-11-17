@@ -15,14 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useTableStore } from "@/stores/TableStore";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "../ui/use-toast";
 import { formatDate } from "@/lib/date";
+import {
+  ShipmentType,
+  ShipmentTypeFormValues as FormValues,
+} from "@/types/order";
+import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
+import { ServiceTypeForm } from "@/components/service-type/st-table-dialog";
 import {
   Dialog,
   DialogContent,
@@ -31,27 +38,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
-import {
-  QualifierCode,
-  QualifierCodeFormValues as FormValues,
-} from "@/types/stop";
-import { QualifierCodeForm } from "@/components/qualifier-code/qc-table-dialog";
-import { toast } from "@/components/ui/use-toast";
 
-function QualifierCodeEditForm({
-  qualifierCode,
+function ShipmentTypeEditForm({
+  shipmentType,
 }: {
-  qualifierCode: QualifierCode;
+  shipmentType: ShipmentType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(qualifierCodeSchema),
+    resolver: yupResolver(shipmentTypeSchema),
     defaultValues: {
-      status: qualifierCode.status,
-      code: qualifierCode.code,
-      description: qualifierCode.description,
+      status: shipmentType.status,
+      code: shipmentType.code,
+      description: shipmentType?.description || "",
     },
   });
 
@@ -60,11 +60,11 @@ function QualifierCodeEditForm({
     toast,
     {
       method: "PUT",
-      path: `/qualifier_codes/${qualifierCode.id}/`,
-      successMessage: "Qualifier Code updated successfully.",
-      queryKeysToInvalidate: ["qualifier-code-table-data"],
+      path: `/shipment_types/${shipmentType.id}/`,
+      successMessage: "Shipment Type updated successfully.",
+      queryKeysToInvalidate: ["shipment-type-table-data"],
       closeModal: true,
-      errorMessage: "Failed to update qualifier code",
+      errorMessage: "Failed to update shipment type.",
     },
     () => setIsSubmitting(false),
   );
@@ -79,7 +79,7 @@ function QualifierCodeEditForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col h-full overflow-y-auto"
     >
-      <QualifierCodeForm control={control} />
+      <ServiceTypeForm control={control} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
@@ -93,27 +93,25 @@ function QualifierCodeEditForm({
   );
 }
 
-export function QualifierCodeEditDialog({
+export function ShipmentTypeEditDialog({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const [qualifierCode] = useTableStore.use("currentRecord") as QualifierCode[];
+  const [shipmentType] = useTableStore.use("currentRecord") as ShipmentType[];
 
-  if (!qualifierCode) return null;
+  if (!shipmentType) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{qualifierCode && qualifierCode.code}</DialogTitle>
+          <DialogTitle>{shipmentType && shipmentType.code}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {qualifierCode && formatDate(qualifierCode.modified)}
+          {shipmentType && formatDate(shipmentType.modified)}
         </DialogDescription>
-        {qualifierCode && (
-          <QualifierCodeEditForm qualifierCode={qualifierCode} />
-        )}
+        {shipmentType && <ShipmentTypeEditForm shipmentType={shipmentType} />}
       </DialogContent>
     </Dialog>
   );

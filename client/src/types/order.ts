@@ -17,6 +17,7 @@
 
 import { BaseModel } from "./organization";
 import { StatusChoiceProps } from "@/types/index";
+import { CodeTypeProps } from "@/lib/choices";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -88,10 +89,15 @@ export type Shipment = {
 
 export interface ShipmentType extends BaseModel {
   id: string;
-  isActive: boolean;
-  name: string;
-  description: string;
+  status: StatusChoiceProps;
+  code: string;
+  description?: string | null;
 }
+
+export type ShipmentTypeFormValues = Omit<
+  ShipmentType,
+  "id" | "organization" | "created" | "modified"
+>;
 
 export interface ServiceType extends BaseModel {
   id: string;
@@ -102,5 +108,18 @@ export interface ServiceType extends BaseModel {
 
 export type ServiceTypeFormValues = Omit<
   ServiceType,
+  "id" | "organization" | "created" | "modified"
+>;
+
+export interface ReasonCode extends BaseModel {
+  id: string;
+  status: StatusChoiceProps;
+  code: string;
+  codeType: CodeTypeProps;
+  description: string;
+}
+
+export type ReasonCodeFormValues = Omit<
+  ReasonCode,
   "id" | "organization" | "created" | "modified"
 >;

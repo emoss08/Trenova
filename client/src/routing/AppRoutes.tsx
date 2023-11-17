@@ -62,6 +62,8 @@ const EquipmentManufacturerPage = lazy(
 );
 const ServiceTypePage = lazy(() => import("../pages/shipment/ServiceType"));
 const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCode"));
+const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
+const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -300,17 +302,35 @@ export const routes: RouteObjectWithPermission[] = [
   // Shipment Pages
   {
     title: "Service Type",
-    group: "shipment",
+    group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/service-types/",
     description: "Service Types",
     element: <ServiceTypePage />,
     permission: "shipment.view_servicetype",
   },
+  {
+    title: "Shipment Type",
+    group: "Shipment Management",
+    subMenu: "configuration files",
+    path: "/shipment-management/shipment-types/",
+    description: "Shipment Types",
+    element: <ShipmentTypePage />,
+    permission: "shipment.view_shipmenttype",
+  },
+  {
+    title: "Reason Code",
+    group: "Shipment Management",
+    subMenu: "configuration files",
+    path: "/shipment-management/reason-codes/",
+    description: "Reason Codes",
+    element: <ReasonCodePage />,
+    permission: "shipment.view_reasoncode",
+  },
   // Stop Pages
   {
     title: "Qualifier Code",
-    group: "shipment",
+    group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/qualifier-codes/",
     description: "Qualifier Codes",

@@ -14,9 +14,15 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import * as yup from "yup";
-import { ServiceTypeFormValues } from "@/types/order";
+import {
+  ReasonCodeFormValues,
+  ServiceTypeFormValues,
+  ShipmentTypeFormValues,
+} from "@/types/order";
 import { StatusChoiceProps } from "@/types";
+import { CodeTypeProps } from "@/lib/choices";
 
 export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
   .object()
@@ -25,6 +31,29 @@ export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
     code: yup
       .string()
       .max(10, "Code must be at most 10 characters")
+      .required("Code is required"),
+    description: yup.string().notRequired(),
+  });
+
+export const reasonCodeSchema: yup.ObjectSchema<ReasonCodeFormValues> = yup
+  .object()
+  .shape({
+    status: yup.string<StatusChoiceProps>().required("Status is required"),
+    code: yup
+      .string()
+      .max(10, "Code must be at most 10 characters")
+      .required("Code is required"),
+    codeType: yup.string<CodeTypeProps>().required("Code type is required"),
+    description: yup.string().required("Description is required"),
+  });
+
+export const shipmentTypeSchema: yup.ObjectSchema<ShipmentTypeFormValues> = yup
+  .object()
+  .shape({
+    status: yup.string<StatusChoiceProps>().required("Status is required"),
+    code: yup
+      .string()
+      .max(10, "Name must be at most 100 characters")
       .required("Code is required"),
     description: yup.string().notRequired(),
   });

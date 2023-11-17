@@ -60,28 +60,28 @@ class ShipmentTypeSerializer(GenericSerializer):
 
         model = models.ShipmentType
 
-    def validate_name(self, value: str) -> str:
-        """Validate the `name` field of the ShipmentType model.
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the ShipmentType model.
 
-        This method validates the `name` field of the ShipmentType model.
+        This method validates the `code` field of the ShipmentType model.
         It checks if the shipment type with the given name already exists in the organization.
         If the shipment type exists, it raises a validation error.
 
         Args:
-            value (str): The value of the `name` field.
+            value (str): The value of the `code` field.
 
         Returns:
-            str: The value of the `name` field.
+            str: The value of the `code` field.
 
         Raises:
-            serializers.ValidationError: If the shipment type with the given name already exists in the
+            serializers.ValidationError: If the shipment type with the given code already exists in the
              organization.
         """
         organization = super().get_organization
 
         queryset = models.ShipmentType.objects.filter(
             organization=organization,
-            name__iexact=value,  # iexact performs a case-insensitive search
+            code__iexact=value,  # iexact performs a case-insensitive search
         )
 
         # Exclude the current instance if updating
@@ -90,7 +90,7 @@ class ShipmentTypeSerializer(GenericSerializer):
 
         if queryset.exists():
             raise serializers.ValidationError(
-                "Shipment type with this `name` already exists. Please try again."
+                "Shipment type with this `code` already exists. Please try again."
             )
 
         return value

@@ -31,27 +31,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
-import {
-  QualifierCode,
-  QualifierCodeFormValues as FormValues,
-} from "@/types/stop";
-import { QualifierCodeForm } from "@/components/qualifier-code/qc-table-dialog";
 import { toast } from "@/components/ui/use-toast";
+import { ReasonCode, ReasonCodeFormValues as FormValues } from "@/types/order";
+import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
+import { ReasonCodeForm } from "@/components/reason-codes/reason-code-table-dialog";
 
-function QualifierCodeEditForm({
-  qualifierCode,
-}: {
-  qualifierCode: QualifierCode;
-}) {
+function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(qualifierCodeSchema),
+    resolver: yupResolver(reasonCodeSchema),
     defaultValues: {
-      status: qualifierCode.status,
-      code: qualifierCode.code,
-      description: qualifierCode.description,
+      status: reasonCode.status,
+      code: reasonCode.code,
+      codeType: reasonCode.codeType,
+      description: reasonCode.description,
     },
   });
 
@@ -60,11 +54,11 @@ function QualifierCodeEditForm({
     toast,
     {
       method: "PUT",
-      path: `/qualifier_codes/${qualifierCode.id}/`,
-      successMessage: "Qualifier Code updated successfully.",
-      queryKeysToInvalidate: ["qualifier-code-table-data"],
+      path: `/reason_codes/${reasonCode.id}/`,
+      successMessage: "Reason Codes updated successfully.",
+      queryKeysToInvalidate: ["reason-code-table-data"],
       closeModal: true,
-      errorMessage: "Failed to update qualifier code",
+      errorMessage: "Failed to update reason codes.",
     },
     () => setIsSubmitting(false),
   );
@@ -79,7 +73,7 @@ function QualifierCodeEditForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col h-full overflow-y-auto"
     >
-      <QualifierCodeForm control={control} />
+      <ReasonCodeForm control={control} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
@@ -93,27 +87,22 @@ function QualifierCodeEditForm({
   );
 }
 
-export function QualifierCodeEditDialog({
-  onOpenChange,
-  open,
-}: TableSheetProps) {
-  const [qualifierCode] = useTableStore.use("currentRecord") as QualifierCode[];
+export function ReasonCodeEditDialog({ onOpenChange, open }: TableSheetProps) {
+  const [reasonCode] = useTableStore.use("currentRecord") as ReasonCode[];
 
-  if (!qualifierCode) return null;
+  if (!reasonCode) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{qualifierCode && qualifierCode.code}</DialogTitle>
+          <DialogTitle>{reasonCode && reasonCode.code}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {qualifierCode && formatDate(qualifierCode.modified)}
+          {reasonCode && formatDate(reasonCode.modified)}
         </DialogDescription>
-        {qualifierCode && (
-          <QualifierCodeEditForm qualifierCode={qualifierCode} />
-        )}
+        {reasonCode && <ReasonCodeEditForm reasonCode={reasonCode} />}
       </DialogContent>
     </Dialog>
   );

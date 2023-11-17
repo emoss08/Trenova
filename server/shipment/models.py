@@ -216,9 +216,11 @@ class ShipmentType(GenericModel):
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID.
             Editable and unique.
-        is_active (BooleanField): Default value is True. Verbose name is "Is Active".
-        name (CharField): Verbose name is "Name". Max length is 255 and must be unique.
-            Help text is "Name of the shipment type".
+        status (ChoiceField): Verbose name is "Status". Choices are from the
+            PrimaryStatusChoices class. Default is PrimaryStatusChoices.ACTIVE.
+            Help text is "Status of the shipment type".
+        code (CharField): Verbose name is "Name". Max length is 10 and must be unique.
+            Help text is "Code of the shipment type".
         description (TextField): Verbose name is "Description". Can be blank.
             Help text is "Description of the shipment type".
 
@@ -235,14 +237,16 @@ class ShipmentType(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Is Active"),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Shipment Type."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
-    name = models.CharField(
-        _("Name"),
-        max_length=100,
-        help_text=_("Name of the Shipment Type"),
+    code = models.CharField(
+        _("Code"),
+        max_length=10,
+        help_text=_("Code of the Shipment Type"),
     )
     description = models.TextField(
         _("Description"),
@@ -258,11 +262,14 @@ class ShipmentType(GenericModel):
         verbose_name = _("Shipment Type")
         verbose_name_plural = _("Shipment Types")
         db_table = "shipment_type"
+        db_table_comment = (
+            "Stores the shipment type information for a related organization."
+        )
         constraints = [
             models.UniqueConstraint(
-                Lower("name"),
+                Lower("code"),
                 "organization",
-                name="unique_shipment_type_name",
+                name="unique_shipment_type_code",
             )
         ]
 
@@ -270,9 +277,11 @@ class ShipmentType(GenericModel):
         """Shipment Type String Representation
 
         Returns:
-            str: shipment type Name
+            str: Shipment type Code
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", 50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Shipment Type Absolute URL
@@ -1146,14 +1155,15 @@ class ReasonCode(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("Is Active"),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Reason Code"),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(
         _("Code"),
-        max_length=5,
+        max_length=10,
         help_text=_("Code of the Reason Code"),
     )
     code_type = ChoiceField(
@@ -1175,6 +1185,9 @@ class ReasonCode(GenericModel):
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
         db_table = "reason_code"
+        db_table_comment = (
+            "Stores Reason code information for when a load is voided or cancelled."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
@@ -1189,7 +1202,9 @@ class ReasonCode(GenericModel):
         Returns:
             str: Code of the Reason
         """
-        return textwrap.wrap(self.code, 50)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", 50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Reason Code Absolute URL
