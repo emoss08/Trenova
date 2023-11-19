@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Control,
   useForm,
@@ -48,8 +48,6 @@ export function LCForm({
   watch: UseFormWatch<FormValues>;
   setValue: UseFormSetValue<FormValues>;
 }) {
-  const [color, setColor] = useState("#000000");
-
   return (
     <div className="flex items-center justify-center">
       <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
@@ -76,7 +74,16 @@ export function LCForm({
           />
         </div>
         <div className="grid w-full max-w-md">
-          <ColorField name="color" label="color" control={control} />
+          <ColorField
+            name="color"
+            label="color"
+            control={control}
+            autoCapitalize="none"
+            autoCorrect="off"
+            type="text"
+            placeholder="Color (Hex)"
+            description="Color Code of the Location Category"
+          />
         </div>
       </div>
     </div>
