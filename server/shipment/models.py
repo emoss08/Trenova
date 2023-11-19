@@ -35,9 +35,9 @@ from location.models import Location
 from utils.models import (
     ChoiceField,
     GenericModel,
+    PrimaryStatusChoices,
     RatingMethodChoices,
     StatusChoices,
-    PrimaryStatusChoices,
 )
 
 User = settings.AUTH_USER_MODEL
