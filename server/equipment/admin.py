@@ -75,7 +75,7 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
                     "code",
                     "equipment_type",
                     "description",
-                    "fleet",
+                    "fleet_code",
                 )
             },
         ),
