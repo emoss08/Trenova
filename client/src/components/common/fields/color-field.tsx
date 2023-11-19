@@ -89,7 +89,7 @@ export function ColorField<T extends FieldValues>({
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="absolute z-1000 w-auto">
+        <div ref={popoverRef} className="absolute z-1000 w-auto mt-2">
           <HexColorPicker color={field.value} onChange={handleColorChange} />
         </div>
       )}
