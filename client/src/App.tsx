@@ -22,7 +22,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useAuthStore } from "@/stores/AuthStore";
-import "@fontsource-variable/inter";
+import "@fontsource/inter"; // Defaults to weight 400
 import { memo, Suspense } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
