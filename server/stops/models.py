@@ -31,9 +31,9 @@ from django.utils.translation import gettext_lazy as _
 from utils.models import (
     ChoiceField,
     GenericModel,
+    PrimaryStatusChoices,
     StatusChoices,
     StopChoices,
-    PrimaryStatusChoices,
 )
 from utils.types import ModelDelete
 

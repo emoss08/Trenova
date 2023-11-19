@@ -191,6 +191,7 @@ class Command(BaseCommand):
         defaults = {
             "description": DESCRIPTION,
             "city": "New York",
+            "name": "Test Location",
             "state": "NY",
             "zip_code": "10001",
             "business_unit": organization.business_unit,
@@ -229,7 +230,7 @@ class Command(BaseCommand):
             "business_unit": organization.business_unit,
         }
         shipment_type, created = ShipmentType.objects.get_or_create(
-            organization=organization, name="Test Order", defaults=defaults
+            organization=organization, code="TEST", defaults=defaults
         )
         return shipment_type
 

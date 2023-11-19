@@ -163,7 +163,7 @@ class OrderAdmin(GenericAdmin[models.Shipment]):
                 "fields": (
                     "equipment_type",
                     "commodity",
-                    "hazmat",
+                    "hazardous_material",
                     "temperature_min",
                     "temperature_max",
                     "bol_number",

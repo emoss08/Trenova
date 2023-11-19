@@ -83,7 +83,7 @@ class WorkerAdmin(GenericAdmin[models.Worker]):
                     "worker_type",
                     "depot",
                     "manager",
-                    "fleet",
+                    "fleet_code",
                     "entered_by",
                 )
             },

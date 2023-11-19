@@ -89,7 +89,6 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    # id = serializers.UUIDField(required=False, allow_null=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
