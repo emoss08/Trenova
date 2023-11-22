@@ -14,16 +14,23 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
 
-from typing import Any
-
-from django.db.models import Prefetch, QuerySet
-from rest_framework import status, viewsets
-from rest_framework.request import Request
-from rest_framework.response import Response
+from django.db.models import (
+    Avg,
+    DurationField,
+    ExpressionWrapper,
+    F,
+    Prefetch,
+    QuerySet,
+)
+from rest_framework import viewsets, response, status
 
 from core.permissions import CustomObjectPermissions
-from location import models, selectors, serializers
+from location import models, serializers
+
+if typing.TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 class LocationCategoryViewSet(viewsets.ModelViewSet):
@@ -65,31 +72,22 @@ class LocationViewSet(viewsets.ModelViewSet):
     )
     permission_classes = [CustomObjectPermissions]
 
-    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        queryset = self.filter_queryset(self.get_queryset())
+    def creat(
+        self, request: "Request", *args: typing.Any, **kwargs: typing.Any
+    ) -> response.Response:
+        serializer = self.get_serializer(data=request.data)
 
-        # Annotate the queryset with average wait time
-        queryset = selectors.get_avg_wait_time(queryset=queryset)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            data = serializer.data
+        # Re-fetch the worker from the database to ensure all related data is fetched
+        worker = models.Worker.objects.get(pk=serializer.instance.pk)  # type: ignore
+        response_serializer = self.get_serializer(worker)
 
-            # Manually add wait_time_avg to the serialized data
-            for item, obj in zip(data, page):
-                item["wait_time_avg"] = obj.wait_time_avg
-
-            return self.get_paginated_response(data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        data = serializer.data
-
-        # Manually add wait_time_avg to the serialized data
-        for item, obj in zip(data, queryset):
-            item["wait_time_avg"] = obj.wait_time_avg
-
-        return Response(data, status=status.HTTP_200_OK)
+        return response.Response(
+            response_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def get_queryset(self) -> QuerySet[models.Location]:
         queryset = (
@@ -101,35 +99,46 @@ class LocationViewSet(viewsets.ModelViewSet):
                     lookup="location_comments",
                     queryset=models.LocationComment.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
-                    ).only(
-                        "id",
-                    ),
+                    ).all(),
                 ),
                 Prefetch(
                     lookup="location_contacts",
                     queryset=models.LocationContact.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
-                    ).only(
-                        "id",
-                    ),
+                    ).all(),
                 ),
             )
+            .select_related("location_category")
+            .annotate(
+                wait_time_avg=Avg(
+                    ExpressionWrapper(
+                        F("stop__departure_time") - F("stop__arrival_time"),
+                        output_field=DurationField(),
+                    )
+                )
+            )
             .only(
-                "id",
                 "organization_id",
+                "business_unit_id",
+                "id",
+                "status",
+                "code",
+                "location_category_id",
+                "location_category__color",
+                "name",
+                "depot_id",
                 "description",
-                "longitude",
                 "address_line_1",
                 "address_line_2",
-                "is_geocoded",
+                "city",
+                "state",
                 "zip_code",
+                "longitude",
                 "latitude",
                 "place_id",
-                "city",
-                "depot",
-                "location_category_id",
-                "code",
-                "state",
+                "is_geocoded",
+                "created",
+                "modified",
             )
         )
         return queryset

@@ -97,6 +97,8 @@ export type QueryKeys =
   | "reasonCodes"
   | "routeControl"
   | "locations"
+  | "locations-table-data"
+  | "locationCategories"
   | "location-categories-table-data"
   | "tags"
   | "shipment-type-table-data"

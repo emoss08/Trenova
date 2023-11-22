@@ -26,7 +26,7 @@
     }
     body {
         @apply bg-background text-foreground;
-        font-family: 'Inter Variable', sans-serif;
+        font-family: "Inter", sans-serif;
     }
 
 

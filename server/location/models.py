@@ -20,6 +20,7 @@ import uuid
 
 from colorfield.fields import ColorField
 from django.db import models
+from django.db.models import Avg, DurationField, ExpressionWrapper, F
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -127,6 +128,7 @@ class Location(GenericModel):
         _("Name"),
         max_length=255,
         help_text=_("Location name"),
+        db_index=True,
     )
     depot = models.ForeignKey(
         Depot,
@@ -200,7 +202,6 @@ class Location(GenericModel):
         verbose_name_plural = _("Locations")
         db_table = "location"
         db_table_comment = "Stores location information for a related organization."
-        indexes = [models.Index(fields=["code"])]
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
@@ -215,9 +216,9 @@ class Location(GenericModel):
         Returns:
             str: Location ID
         """
-        return textwrap.wrap(
-            f"{self.code}: {self.address_line_1}, {self.city}, {self.state}", 50
-        )[0]
+        return textwrap.shorten(
+            f"{self.code}: {self.name}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Location absolute URL
@@ -235,6 +236,19 @@ class Location(GenericModel):
             str: Location address combination
         """
         return f"{self.address_line_1}, {self.city}, {self.state} {self.zip_code}"
+
+    def get_avg_wait_time(self) -> float:
+        """
+        Calculates the average wait time for this location.
+        """
+        return self.stops.aggregate(
+            wait_time_avg=Avg(
+                ExpressionWrapper(
+                    F("departure_time") - F("arrival_time"),
+                    output_field=DurationField(),
+                )
+            )
+        )["wait_time_avg"]
 
 
 class LocationContact(GenericModel):
@@ -260,6 +274,7 @@ class LocationContact(GenericModel):
         _("Name"),
         max_length=255,
         help_text=_("Name of the contact."),
+        db_index=True,
     )
     email = models.EmailField(
         _("Email"),
@@ -287,10 +302,6 @@ class LocationContact(GenericModel):
 
         verbose_name = _("Location Contact")
         verbose_name_plural = _("Location Contacts")
-        ordering = ("name",)
-        indexes = [
-            models.Index(fields=["name"]),
-        ]
         db_table = "location_contact"
         db_table_comment = "Stores location contact information related to location."
 
