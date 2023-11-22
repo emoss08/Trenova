@@ -71,6 +71,7 @@ class LocationViewSet(viewsets.ModelViewSet):
         "status",
     )
     permission_classes = [CustomObjectPermissions]
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     def creat(
         self, request: "Request", *args: typing.Any, **kwargs: typing.Any
