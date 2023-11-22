@@ -205,16 +205,6 @@ router.register(
     basename="location-categories",
 )
 router.register(r"locations", location_api.LocationViewSet, basename="locations")
-router.register(
-    r"location_contacts",
-    location_api.LocationContactViewSet,
-    basename="location-contacts",
-)
-router.register(
-    r"location_comments",
-    location_api.LocationCommentViewSet,
-    basename="location-comments",
-)
 
 # Dispatch Routing
 router.register(
