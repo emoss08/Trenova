@@ -116,7 +116,7 @@ class Location(GenericModel):
     )
     location_category = models.ForeignKey(
         LocationCategory,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         verbose_name=_("Category"),
         related_name="location",
         related_query_name="locations",
