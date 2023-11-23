@@ -19,6 +19,7 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -46,7 +47,7 @@ import {
   FilterConfig,
 } from "@/types/tables";
 import { AlertTriangle, Plus, X } from "lucide-react";
-import React from "react";
+import React, { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,7 @@ function DataTableTopBar<K>({
 export function DataTable<K extends Record<string, any>>({
   columns,
   link,
+  extraSearchParams,
   queryKey,
   name,
   filterColumn,
@@ -176,6 +178,8 @@ export function DataTable<K extends Record<string, any>>({
   TableSheet,
   TableEditSheet,
   exportModelName,
+  renderSubComponent,
+  getRowCanExpand,
 }: DataTableProps<K>) {
   const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
@@ -187,11 +191,16 @@ export function DataTable<K extends Record<string, any>>({
   const [editDrawerOpen, setEditDrawerOpen] = store.use("editSheetOpen");
 
   const dataQuery = useQuery<ApiResponse<K>, Error>({
-    queryKey: [queryKey, link, pageIndex, pageSize],
+    queryKey: [queryKey, link, pageIndex, pageSize, extraSearchParams],
     queryFn: async () => {
       const fetchURL = new URL(`${API_URL}${link}`);
       fetchURL.searchParams.set("limit", pageSize.toString());
       fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
+      if (extraSearchParams) {
+        Object.entries(extraSearchParams).forEach(([key, value]) =>
+          fetchURL.searchParams.set(key, value),
+        );
+      }
 
       const response = await axios.get(fetchURL.href);
       if (response.status !== 200) {
@@ -231,6 +240,7 @@ export function DataTable<K extends Record<string, any>>({
   const table = useReactTable({
     data: placeholderData,
     columns: displayColumns,
+    getRowCanExpand,
     pageCount: dataQuery.data ? Math.ceil(dataQuery.data.count / pageSize) : -1,
     state: {
       pagination: pagination,
@@ -252,6 +262,7 @@ export function DataTable<K extends Record<string, any>>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   if (dataQuery.isError) {
@@ -305,26 +316,33 @@ export function DataTable<K extends Record<string, any>>({
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={cn("cursor-pointer")}
-                          onDoubleClick={() => {
-                            setCurrentRecord(row.original);
-                            setEditDrawerOpen(true);
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                    <Fragment key={row.id}>
+                      <TableRow data-state={row.getIsSelected() && "selected"}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={cn("cursor-pointer")}
+                            onDoubleClick={() => {
+                              setCurrentRecord(row.original);
+                              setEditDrawerOpen(true);
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                      {/* Expanded row */}
+                      {row.getIsExpanded() && (
+                        <tr>
+                          <td colSpan={row.getVisibleCells().length}>
+                            {renderSubComponent({ row })}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))
                 ) : (
                   <TableRow>
