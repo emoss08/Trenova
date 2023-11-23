@@ -254,6 +254,11 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         default=False,
         help_text=_("Designates whether the user can log into this admin site."),
     )
+    is_monta_staff = models.BooleanField(
+        _("Monta Staff Status"),
+        default=False,
+        help_text=_("Designates whether the user is staff for Monta."),
+    )
     date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
     online = models.BooleanField(
         _("Online"),
