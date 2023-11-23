@@ -62,6 +62,9 @@ class LocationCommentSerializer(GenericSerializer):
     Location Comment information, as well as listing and retrieving them.
     """
 
+    comment_type_name = serializers.CharField(required=False, read_only=True)
+    entered_by_username = serializers.CharField(required=False, read_only=True)
+
     class Meta:
         """
         A class representing the metadata for the `LocationCommentSerializer`
@@ -69,6 +72,10 @@ class LocationCommentSerializer(GenericSerializer):
         """
 
         model = models.LocationComment
+        extra_fields = (
+            "comment_type_name",
+            "entered_by_username",
+        )
         extra_read_only_fields = ("location",)
 
 
@@ -79,7 +86,8 @@ class LocationSerializer(GenericSerializer):
     Location information, as well as listing and retrieving them.
     """
 
-    wait_time_avg = serializers.DurationField(required=False)
+    wait_time_avg = serializers.FloatField(required=False, read_only=True)
+    pickup_count = serializers.IntegerField(required=False, read_only=True)
     location_comments = LocationCommentSerializer(many=True, required=False)
     location_contacts = LocationContactSerializer(many=True, required=False)
     location_color = serializers.CharField(
@@ -95,6 +103,7 @@ class LocationSerializer(GenericSerializer):
         model = models.Location
         extra_fields = (
             "wait_time_avg",
+            "pickup_count",
             "location_comments",
             "location_contacts",
             "location_color",
@@ -103,7 +112,7 @@ class LocationSerializer(GenericSerializer):
     def create(self, validated_data: Any) -> models.Location:
         """Create a new instance of the Location model with given validated data.
 
-        This executes the creation of new Location, attaches the Location to the business unit 
+        This executes the creation of new Location, attaches the Location to the business unit
         and organization associated with the request. It updates the Location contacts & comments
         associated with the Location.
 

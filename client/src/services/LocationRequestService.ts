@@ -31,3 +31,17 @@ export async function getLocations(): Promise<Location[]> {
   });
   return response.data.results;
 }
+
+type MonthlyPickupData = {
+  name: string;
+  total: number;
+};
+
+export async function getLocationPickupData(
+  locationId: string,
+): Promise<MonthlyPickupData[]> {
+  const response = await axios.get(
+    `/locations/${locationId}/monthly_pickup_data`,
+  );
+  return response.data;
+}

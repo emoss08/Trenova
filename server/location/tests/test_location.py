@@ -21,7 +21,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from dispatch.models import CommentType
 from location import models
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 

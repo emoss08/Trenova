@@ -16,13 +16,13 @@
  */
 
 import {
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  differenceInSeconds,
   format,
   formatDistanceToNow,
   parseISO,
-  differenceInSeconds,
-  differenceInMinutes,
-  differenceInHours,
-  differenceInDays,
 } from "date-fns";
 
 /**
@@ -32,7 +32,7 @@ import {
  */
 export function formatDate(date: string): string {
   const parsedDate = parseISO(date);
-  return format(parsedDate, "yyyy/MM/dd HH:mm");
+  return format(parsedDate, "yyyy-MM-dd HH:mm");
 }
 
 /**

@@ -69,6 +69,7 @@ class LocationAdmin(GenericAdmin[models.Location]):
 
     list_display = (
         "code",
+        "name",
         "location_category",
         "address_line_1",
         "city",

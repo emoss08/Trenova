@@ -14,23 +14,31 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
+import calendar
+from datetime import timedelta
 
 from django.db.models import (
     Avg,
-    DurationField,
+    Case,
+    Count,
     ExpressionWrapper,
     F,
+    FloatField,
+    IntegerField,
     Prefetch,
     QuerySet,
+    Value,
+    When,
 )
-from rest_framework import viewsets, response, status
+from django.db.models.functions import Extract, TruncMonth
+from django.utils.timezone import now
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from location import models, serializers
-
-if typing.TYPE_CHECKING:
-    from rest_framework.request import Request
+from stops.models import Stop
 
 
 class LocationCategoryViewSet(viewsets.ModelViewSet):
@@ -73,24 +81,53 @@ class LocationViewSet(viewsets.ModelViewSet):
     permission_classes = [CustomObjectPermissions]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
-    def creat(
-        self, request: "Request", *args: typing.Any, **kwargs: typing.Any
-    ) -> response.Response:
-        serializer = self.get_serializer(data=request.data)
+    @action(detail=True, methods=["get"])
+    def monthly_pickup_data(self, request, pk=None):
+        """
+        Endpoint to retrieve monthly pickup data for a specific location.
+        """
+        location = self.get_object()
 
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+        one_year_ago = now() - timedelta(days=365)
 
-        # Re-fetch the worker from the database to ensure all related data is fetched
-        worker = models.Worker.objects.get(pk=serializer.instance.pk)  # type: ignore
-        response_serializer = self.get_serializer(worker)
-
-        return response.Response(
-            response_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        queryset = (
+            Stop.objects.filter(
+                location=location,
+                arrival_time__gte=one_year_ago,
+                stop_type__in=["P", "SP"],
+                arrival_time__isnull=False,
+            )
+            .annotate(month=TruncMonth("arrival_time"))
+            .values("month")
+            .annotate(monthly_count=Count("id"))
+            .order_by("month")
         )
 
+        monthly_counts = {calendar.month_abbr[i]: 0 for i in range(1, 13)}
+
+        for data in queryset:
+            if data["month"]:
+                month_name = data["month"].strftime("%b")
+                monthly_counts[month_name] = data["monthly_count"]
+
+        monthly_data = [
+            {"name": month, "total": count} for month, count in monthly_counts.items()
+        ]
+
+        return Response(monthly_data)
+
     def get_queryset(self) -> QuerySet[models.Location]:
+        """Get the queryset of locations for the logged-in user's organization.
+
+        This method applies filter to the queryset to only return locations
+        for the user's associated organization. In addition to the basic location
+        data, it prefetches related data like location comments and contacts,
+        and also computes average wait time and pick up count at each location.
+        Finally, only specified fields are selected for each location.
+
+        Returns:
+            QuerySet[models.Location]: The queryset containing the list of locations.
+        """
         queryset = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
@@ -100,7 +137,12 @@ class LocationViewSet(viewsets.ModelViewSet):
                     lookup="location_comments",
                     queryset=models.LocationComment.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
-                    ).all(),
+                    )
+                    .annotate(
+                        comment_type_name=F("comment_type__name"),
+                        entered_by_username=F("entered_by__username"),
+                    )
+                    .all(),
                 ),
                 Prefetch(
                     lookup="location_contacts",
@@ -113,10 +155,24 @@ class LocationViewSet(viewsets.ModelViewSet):
             .annotate(
                 wait_time_avg=Avg(
                     ExpressionWrapper(
-                        F("stop__departure_time") - F("stop__arrival_time"),
-                        output_field=DurationField(),
+                        (
+                            Extract("stop__departure_time", "epoch")
+                            - Extract("stop__arrival_time", "epoch")
+                        )
+                        / 60,
+                        output_field=FloatField(),
                     )
-                )
+                ),
+                pickup_count=Count(
+                    Case(
+                        When(
+                            stop__stop_type__in=["P", "SP"],
+                            then=1,
+                        ),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
             )
             .only(
                 "organization_id",

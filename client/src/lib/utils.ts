@@ -23,6 +23,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function upperFirst(str: string) {
+  if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
@@ -81,4 +82,23 @@ export const useClickOutside = <T extends HTMLElement>(
 export function validateDecimal(value: string, decimalPlaces: number) {
   const regex = new RegExp(`^\\d+(\\.\\d{1,${decimalPlaces}})?$`);
   return regex.test(value);
+}
+
+export function formatDuration(durationStr: string) {
+  if (!durationStr) return "";
+
+  const parts = durationStr.split(" ");
+  const days = parseInt(parts[0]);
+  const timeParts = parts[1].split(":");
+  const hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+  const seconds = parseInt(timeParts[2]);
+
+  let result = "";
+  if (days > 0) result += `${days} day${days > 1 ? "s" : ""}, `;
+  if (hours > 0) result += `${hours} hour${hours > 1 ? "s" : ""}, `;
+  if (minutes > 0) result += `${minutes} minute${minutes > 1 ? "s" : ""}, `;
+  if (seconds > 0) result += `${seconds} second${seconds > 1 ? "s" : ""}`;
+
+  return result.replace(/, $/, ""); // Remove trailing comma
 }
