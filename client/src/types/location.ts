@@ -20,18 +20,25 @@ import { StatusChoiceProps } from "@/types/index";
 
 export interface Location extends BaseModel {
   id: string;
+  name: string;
   code: string;
   status: StatusChoiceProps;
-  location_category: string;
+  locationCategory?: string | null;
   depot: string;
   description: string;
-  address_line_1: string;
-  address_line_2: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
-  longitude: number;
-  latitude: number;
-  place_id: string;
-  is_geocoded: boolean;
+  state: string;
+  longitude?: number | null;
+  latitude?: number | null;
+  placeId?: string;
+  isGeocoded: boolean;
+  locationColor?: string;
+  pickupCount: number;
+  waitTimeAvg: number;
+  locationComments: LocationComment[];
+  locationContacts: LocationContact[];
 }
 
 export interface LocationCategory extends BaseModel {
@@ -45,3 +52,22 @@ export type LocationCategoryFormValues = Omit<
   LocationCategory,
   "organization" | "created" | "modified" | "id"
 >;
+
+export interface LocationComment extends BaseModel {
+  id: string;
+  location: string;
+  commentType: string;
+  commentTypeName: string;
+  comment: string;
+  enteredBy: string;
+  enteredByUsername: string;
+}
+
+export interface LocationContact extends BaseModel {
+  id: string;
+  location: string;
+  name: string;
+  email?: string;
+  phone?: number | null;
+  fax?: number | null;
+}

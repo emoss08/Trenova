@@ -15,34 +15,43 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { FleetCode } from "@/types/dispatch";
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { truncateText, upperFirst } from "@/lib/utils";
 import { FleetCodeDialog } from "@/components/fleet-codes/fleet-code-table-dialog";
 import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
+import { Location } from "@/types/location";
+import { ChevronDownIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import { LocationChart } from "@/components/location/table-chart";
 
-const columns: ColumnDef<FleetCode>[] = [
+const renderSubComponent = ({ row }: { row: Row<Location> }) => {
+  return <LocationChart row={row} />;
+};
+
+const columns: ColumnDef<Location>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        className="translate-y-[2px]"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="translate-y-[2px]"
-      />
-    ),
+    id: "expander",
+    footer: (props) => props.column.id,
+    header: () => null,
+    cell: ({ row }) => {
+      return row.getCanExpand() ? (
+        <button
+          {...{
+            onClick: row.getToggleExpandedHandler(),
+            style: { cursor: "pointer" },
+          }}
+        >
+          {row.getIsExpanded() ? (
+            <ChevronDownIcon style={{ width: "1.2em", height: "1.2em" }} />
+          ) : (
+            <ChevronRightIcon style={{ width: "1.2em", height: "1.2em" }} />
+          )}
+        </button>
+      ) : (
+        "🔵"
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -57,10 +66,47 @@ const columns: ColumnDef<FleetCode>[] = [
     },
   },
   {
-    accessorKey: "code",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Code" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
+    cell: ({ row }) => {
+      if (row.original.locationColor) {
+        return (
+          <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
+            <div
+              className={"h-5 w-5 rounded-xl mx-2"}
+              style={{ backgroundColor: row.original.locationColor }}
+            />
+            {row.original.name}
+          </div>
+        );
+      } else {
+        return row.original.name;
+      }
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "location",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Location" />
+    ),
+    cell: ({ row }) =>
+      `${upperFirst(row.original.city)}, ${row.original.state}`,
+  },
+  {
+    accessorKey: "pickupCount",
+    header: "Total Pickups",
+  },
+  {
+    accessorKey: "waitTimeAvg",
+    header: "Avg. Wait Time (mins)",
+    cell: ({ row }) => {
+      return row.original.waitTimeAvg && row.original.waitTimeAvg.toFixed(1);
+    },
   },
   {
     accessorKey: "description",
@@ -74,12 +120,14 @@ export default function Locations() {
     <DataTable
       queryKey="locations-table-data"
       columns={columns}
-      link="/fleet_codes/"
-      name="Fleet Codes"
-      exportModelName="FleetCode"
-      filterColumn="code"
+      link="/locations/"
+      name="Locations"
+      exportModelName="Location"
+      filterColumn="name"
       TableSheet={FleetCodeDialog}
       TableEditSheet={FleetCodeEditDialog}
+      renderSubComponent={renderSubComponent}
+      getRowCanExpand={() => true}
     />
   );
 }

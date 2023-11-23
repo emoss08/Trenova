@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Column, ColumnDef, Table } from "@tanstack/react-table";
+import { Column, ColumnDef, Row, Table } from "@tanstack/react-table";
 import { QueryKeys } from "./index";
 import { API_ENDPOINTS } from "./server";
 
@@ -40,6 +40,9 @@ export type DataTableProps<K> = {
   TableSheet?: React.ComponentType<TableSheetProps>;
   TableEditSheet?: React.ComponentType<TableSheetProps>;
   exportModelName: string;
+  getRowCanExpand: (row: Row<K>) => boolean;
+  renderSubComponent: (props: { row: Row<K> }) => React.ReactElement;
+  extraSearchParams?: Record<string, any>;
 };
 
 export type TableSheetProps = {

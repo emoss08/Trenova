@@ -354,7 +354,7 @@ export function useShipmentTypes(show: boolean) {
   const selectShipmentType =
     (data as ShipmentType[])?.map((item: ShipmentType) => ({
       value: item.id,
-      label: item.name,
+      label: item.code,
     })) || [];
 
   return { selectShipmentType, isLoading, isError, isFetched };
