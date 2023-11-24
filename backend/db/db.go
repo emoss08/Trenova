@@ -1,7 +1,7 @@
 package db
 
 import (
-	"backend/pkg/common/models"
+	"backend/models"
 	"log"
 
 	"gorm.io/driver/postgres"

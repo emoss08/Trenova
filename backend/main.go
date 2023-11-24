@@ -1,36 +1,36 @@
 package main
 
 import (
-	"backend/pkg/common/db"
-	"backend/pkg/common/middleware"
-	"fmt"
+	"backend/db"
+	"backend/handlers"
+	"backend/middleware"
+	"net/http"
+	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
 
 func main() {
-
-	viper.SetConfigFile("./pkg/common/envs/.env")
+	viper.SetConfigFile("./config/envs/dev.env")
 	viper.ReadInConfig()
 
-	dbDsn := viper.Get("DB_DSN").(string)
+	dbUrl := viper.Get("DB_URL").(string)
 
-	fmt.Println(viper.Get("DB_DSN"))
+	db.Init(dbUrl)
 
-	r := gin.Default()
+	r := mux.NewRouter()
 
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-	r.Use(gin.ErrorLogger())
-	r.Use(middleware.ErrorHandlingMiddleware())
+	r.Use(middleware.LoggingMiddleware)
 
-	db.Init(dbDsn)
+	r.HandleFunc("/test", handlers.TestEndpoint).Methods("POST")
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.Run()
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         "127.0.0.1:8080",
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	srv.ListenAndServe()
 }
