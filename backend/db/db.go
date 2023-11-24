@@ -18,6 +18,9 @@ var mods = []interface{}{
 	&models.Department{},
 	&models.EmailControl{},
 	&models.EmailProfile{},
+	&models.Permission{},
+	&models.Role{},
+	&models.Permission{},
 }
 
 func Init(url string) *gorm.DB {
@@ -36,6 +39,9 @@ func Init(url string) *gorm.DB {
 	MigrateEnums(db)
 
 	db.AutoMigrate(mods...)
+
+	// Initialize permissions
+	InitializePermissions(db)
 
 	return db
 }
