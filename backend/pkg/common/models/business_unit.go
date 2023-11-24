@@ -12,28 +12,27 @@ import (
 
 type BusinessUnit struct {
 	TimeStampedModel
-	gorm.Model
-	ID               uuid.UUID `gorm:"type:uuid;primary_key;"`
-	Status           string    `gorm:"size:10;default:'A'"`
-	Name             string    `gorm:"size:255;"`
-	EntityKey        string    `gorm:"size:10;"`
-	AddressLine1     *string   `gorm:"size:255;"`
-	AddressLine2     *string   `gorm:"size:255;"`
-	City             *string   `gorm:"size:100;"`
-	State            *string   `gorm:"size:2;"`
-	ZipCode          *string   `gorm:"size:5;"`
-	ContactEmail     *string   `gorm:"size:255;"`
-	ContactPhone     *string   `gorm:"size:15;"`
-	Description      *string   `gorm:"type:text;"`
-	PaidUntil        *time.Time
-	FreeTrial        bool `gorm:"default:false;"`
+	ID               uuid.UUID  `gorm:"type:uuid;primary_key;"`
+	Status           string     `gorm:"size:10;default:'A'"`
+	Name             string     `gorm:"size:255;"`
+	EntityKey        string     `gorm:"size:10;" json:"entityKey"`
+	AddressLine1     *string    `gorm:"size:255;" json:"addressLine1"`
+	AddressLine2     *string    `gorm:"size:255;" json:"addressLine2"`
+	City             *string    `gorm:"size:100;"`
+	State            *string    `gorm:"size:2;"`
+	ZipCode          *string    `gorm:"size:5;" json:"zipCode"`
+	ContactEmail     *string    `gorm:"size:255;" json:"contactEmail"`
+	ContactPhone     *string    `gorm:"size:15;" json:"contactPhone"`
+	Description      *string    `gorm:"type:text;"`
+	PaidUntil        *time.Time `gorm:"type:timestamp with time zone;" json:"paidUntil"`
+	FreeTrial        bool       `gorm:"default:false;"`
 	BillingInfo      *datatypes.JSON
-	TaxID            string `gorm:"size:255;"`
-	LegalName        string `gorm:"size:255;"`
+	TaxID            string `gorm:"size:255;" json:"taxId"`
+	LegalName        string `gorm:"size:255;" json:"legalName"`
 	Metadata         *datatypes.JSON
 	Notes            *string `gorm:"type:text;"`
-	IsSuspended      bool
-	SuspensionReason *string `gorm:"type:text;"`
+	IsSuspended      bool    `gorm:"default:false;" json:"isSuspended"`
+	SuspensionReason *string `gorm:"type:text;" json:"suspensionReason"`
 	Contract         string  `gorm:"type:text;"` // File paths or URLs to the contract
 }
 
