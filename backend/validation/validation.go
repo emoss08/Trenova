@@ -3,6 +3,7 @@ package validation
 import (
 	"backend/models"
 	"reflect"
+	"regexp"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -20,6 +21,10 @@ func init() {
 	trans, _ := uni.GetTranslator("en")
 
 	validate = validator.New()
+
+	// Register the custom ZIP code validator
+	validate.RegisterValidation("usazipcode", validateUSAZipCode)
+
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := fld.Tag.Get("json")
 		if name == "-" {
@@ -35,6 +40,14 @@ func init() {
 		return t
 	})
 }
+
+// Custom validation function for USA ZIP codes
+func validateUSAZipCode(fl validator.FieldLevel) bool {
+	zipCode := fl.Field().String()
+	regex := regexp.MustCompile(`^\d{5}(-\d{4})?$`)
+	return regex.MatchString(zipCode)
+}
+
 func ValidateStruct(data interface{}) ([]models.FieldError, error) {
 	trans, _ := uni.GetTranslator("en")
 
