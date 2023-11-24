@@ -2,28 +2,26 @@ package main
 
 import (
 	"backend/db"
-	"backend/handlers"
-	"backend/middleware"
+	"backend/router"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/fatih/color"
 	"github.com/spf13/viper"
 )
 
 func main() {
+	// Read the config file
 	viper.SetConfigFile("./config/envs/dev.env")
 	viper.ReadInConfig()
-
 	dbUrl := viper.Get("DB_URL").(string)
 
+	// Initialize the database
 	db.Init(dbUrl)
 
-	r := mux.NewRouter()
-
-	r.Use(middleware.LoggingMiddleware)
-
-	r.HandleFunc("/test", handlers.TestEndpoint).Methods("POST")
+	// Initialize the router
+	r := router.InitRouter()
 
 	srv := &http.Server{
 		Handler:      r,
@@ -32,5 +30,12 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	srv.ListenAndServe()
+	// Prepare the server start message with colors and emoji
+	startMsg := color.New(color.FgGreen).SprintfFunc()
+	log.Println(startMsg("🚀 Server starting on %s", srv.Addr))
+
+	// Start the server and log if there's an error
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatalf("Error starting server: %s", err)
+	}
 }
