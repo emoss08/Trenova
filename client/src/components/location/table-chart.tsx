@@ -96,7 +96,7 @@ export function LocationChart({ row }: { row: Row<Location> }) {
 
       {/* Container for Recent Comments */}
       <div className="flex-1">
-        <h2 className="scroll-m-20 pb-2 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
+        <h2 className="scroll-m-20 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
           Recent Comments
         </h2>
         {row.original.locationComments.length > 0 ? (
@@ -108,14 +108,14 @@ export function LocationChart({ row }: { row: Row<Location> }) {
             .slice(0, 3)
             .map((comment) => (
               <div key={comment.id} className="flex flex-col overflow-hidden">
-                <div className="px-6 py-4">
+                <div className="px-6 pt-4">
                   <h4 className="text-xl font-semibold text-gray-800 dark:text-white">
                     {comment.commentTypeName}
                   </h4>
                   <p className="mt-1">"{truncateText(comment.comment, 150)}"</p>
                 </div>
                 <div className="flex items-center px-6">
-                  <p className="ml-2 text-sm text-gray-400">
+                  <p className="ml-2 pt-1 text-sm text-gray-400">
                     by&nbsp;{upperFirst(comment.enteredByUsername)}&nbsp;
                     {formatDateToHumanReadable(comment.created)}
                   </p>
@@ -123,9 +123,9 @@ export function LocationChart({ row }: { row: Row<Location> }) {
               </div>
             ))
         ) : (
-          <div className="flex flex-col text-center rounded-lg overflow-hidden my-4">
+          <div className="flex flex-col justify-center items-center rounded-lg overflow-hidden my-4">
             <div className="px-6 py-4">
-              <h4 className="text-xl font-semibold">
+              <h4 className="text-xl font-semibold mt-20 text-foreground">
                 No Location Comments Available
               </h4>
             </div>
