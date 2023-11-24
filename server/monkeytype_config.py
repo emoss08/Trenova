@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import os
 from contextlib import contextmanager
-from typing import Iterator
+from collections.abc import Iterator
 
 # 3rd-party
 from monkeytype.config import DefaultConfig

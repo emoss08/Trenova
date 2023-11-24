@@ -23,7 +23,6 @@ from location import models
 from organization.models import BusinessUnit, Organization
 
 
-
 @transaction.atomic
 def create_or_update_location_comments(
     *,
