@@ -11,6 +11,7 @@ import (
 )
 
 type BusinessUnit struct {
+	TimeStampedModel
 	gorm.Model
 	ID               uuid.UUID `gorm:"type:uuid;primary_key;"`
 	Status           string    `gorm:"size:10;default:'A'"`
@@ -19,8 +20,8 @@ type BusinessUnit struct {
 	AddressLine1     *string   `gorm:"size:255;"`
 	AddressLine2     *string   `gorm:"size:255;"`
 	City             *string   `gorm:"size:100;"`
-	State            *string   `gorm:"size:2;"` // Assuming US state codes
-	ZipCode          *string   `gorm:"size:5;"` // Assuming US zip codes
+	State            *string   `gorm:"size:2;"`
+	ZipCode          *string   `gorm:"size:5;"`
 	ContactEmail     *string   `gorm:"size:255;"`
 	ContactPhone     *string   `gorm:"size:15;"`
 	Description      *string   `gorm:"type:text;"`
