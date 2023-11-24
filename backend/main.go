@@ -23,16 +23,18 @@ func main() {
 	// Initialize the router
 	r := router.InitRouter()
 
+	serverAddr := "127.0.0.1:8080"
+
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "127.0.0.1:8080",
+		Addr:         serverAddr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
 	// Prepare the server start message with colors and emoji
 	startMsg := color.New(color.FgGreen).SprintfFunc()
-	log.Println(startMsg("🚀 Server starting on %s", srv.Addr))
+	log.Println(startMsg("🚀 Server starting on http://" + serverAddr))
 
 	// Start the server and log if there's an error
 	if err := srv.ListenAndServe(); err != nil {
