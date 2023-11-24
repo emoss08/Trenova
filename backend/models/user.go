@@ -20,6 +20,7 @@ type User struct {
 	Department   Department
 	DepartmentID uuid.UUID `gorm:"type:uuid;" json:"departmentId" validate:"required,uuid"`
 	UserProfile  UserProfile
+	Roles        []Role `gorm:"many2many:user_roles;" json:"roles"`
 }
 
 // HashPassword creates a bcyrpy hash of the password
@@ -45,6 +46,26 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 	u.Password = hp
 
 	return nil
+}
+
+func (u *User) HasRole(roleName string) bool {
+	for _, role := range u.Roles {
+		if role.Name == roleName {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) HasPermission(permissionName string) bool {
+	for _, role := range u.Roles {
+		for _, perm := range role.Permissions {
+			if perm.Name == permissionName {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type UserProfile struct {
