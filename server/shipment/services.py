@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from decimal import Decimal
-from typing import Callable
+from collections.abc import Callable
 
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
