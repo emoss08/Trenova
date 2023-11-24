@@ -4,6 +4,7 @@ import (
 	"backend/models"
 	"log"
 
+	"github.com/fatih/color"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -24,8 +25,15 @@ func Init(url string) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(url), &gorm.Config{})
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Failed to connect to database:", err)
 	}
+
+	// Log a success message after establishing the connection
+	successMsg := color.New(color.FgHiGreen).SprintfFunc()
+	log.Println(successMsg("🌟 Successfully connected to the database"))
+
+	// Migrate ENUM Types
+	MigrateEnums(db)
 
 	db.AutoMigrate(mods...)
 
