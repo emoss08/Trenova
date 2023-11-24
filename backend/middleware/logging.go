@@ -28,7 +28,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		status := statusColor.Sprintf("%3d", wrappedWriter.statusCode)
 		method := methodColor.Sprint(r.Method)
 
-		log.Printf("[MONTA] %v | %s | %13v | %15s | %-7s %s",
+		log.Printf("[MONTA] %v | %s | %v | %15s | %-7s %s",
 			start.Format("2006/01/02 - 15:04:05"),
 			status,
 			duration,
