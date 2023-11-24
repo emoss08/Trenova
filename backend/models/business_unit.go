@@ -13,27 +13,27 @@ import (
 type BusinessUnit struct {
 	TimeStampedModel
 	ID               uuid.UUID       `gorm:"type:uuid;primary_key;default:gen_random_uuid();"`
-	Status           string          `gorm:"size:10;default:'A'"`
-	Name             string          `gorm:"size:255;"`
-	EntityKey        string          `gorm:"size:10;" json:"entityKey"`
-	AddressLine1     *string         `gorm:"size:255;" json:"addressLine1"`
-	AddressLine2     *string         `gorm:"size:255;" json:"addressLine2"`
-	City             *string         `gorm:"size:100;"`
-	State            *string         `gorm:"size:2;"`
-	ZipCode          *string         `gorm:"size:5;" json:"zipCode"`
-	ContactEmail     *string         `gorm:"size:255;" json:"contactEmail"`
-	ContactPhone     *string         `gorm:"size:15;" json:"contactPhone"`
-	Description      *string         `gorm:"type:text;"`
-	PaidUntil        *time.Time      `gorm:"type:timestamp with time zone;" json:"paidUntil"`
-	FreeTrial        bool            `gorm:"default:false;"`
-	BillingInfo      *datatypes.JSON `gorm:"type:jsonb;" json:"billingInfo"`
-	TaxID            string          `gorm:"size:255;" json:"taxId"`
-	LegalName        string          `gorm:"size:255;" json:"legalName"`
-	Metadata         *datatypes.JSON `gorm:"type:jsonb;"`
-	Notes            *string         `gorm:"type:text;"`
-	IsSuspended      bool            `gorm:"default:false;" json:"isSuspended"`
-	SuspensionReason *string         `gorm:"type:text;" json:"suspensionReason"`
-	Contract         string          `gorm:"type:text;"`
+	Status           string          `gorm:"size:10;default:'A'" json:"status" validate:"required,max=10"`
+	Name             string          `gorm:"size:255;" json:"name" validate:"required"`
+	EntityKey        string          `gorm:"size:10;" json:"entityKey" validate:"required"`
+	AddressLine1     *string         `gorm:"size:255;" json:"addressLine1" validate:"required"`
+	AddressLine2     *string         `gorm:"size:255;" json:"addressLine2" validate:"omitempty"`
+	City             *string         `gorm:"size:100;" json:"city" validate:"omitempty,max=100"`
+	State            *string         `gorm:"size:2;" json:"state" validate:"omitempty,max=2"`
+	ZipCode          *string         `gorm:"size:5;" json:"zipCode" validate:"omitempty,max=5"`
+	ContactEmail     *string         `gorm:"size:255;" json:"contactEmail" validate:"omitempty,email"`
+	ContactPhone     *string         `gorm:"size:10;" json:"contactPhone" validate:"omitempty,e164,max=10"`
+	Description      *string         `gorm:"type:text;" json:"description" validate:"omitempty"`
+	PaidUntil        *time.Time      `gorm:"type:timestamp with time zone;" json:"paidUntil" validate:"omitempty"`
+	FreeTrial        bool            `gorm:"default:false;" json:"freeTrial" validate:"omitempty"`
+	BillingInfo      *datatypes.JSON `gorm:"type:jsonb;" json:"billingInfo" validate:"omitempty,json"`
+	TaxID            string          `gorm:"size:255;" json:"taxId" validate:"required"`
+	LegalName        string          `gorm:"size:255;" json:"legalName" validate:"required"`
+	Metadata         *datatypes.JSON `gorm:"type:jsonb;" json:"metadata" validate:"omitempty,json"`
+	Notes            *string         `gorm:"type:text;" json:"notes" validate:"omitempty"`
+	IsSuspended      bool            `gorm:"default:false;" json:"isSuspended" validate:"omitempty"`
+	SuspensionReason *string         `gorm:"type:text;" json:"suspensionReason" validate:"omitempty"`
+	Contract         *string         `gorm:"type:text;" json:"contract" validate:"omitempty,filepath"`
 }
 
 const (
