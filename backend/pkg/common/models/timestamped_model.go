@@ -7,15 +7,15 @@ import (
 )
 
 type TimeStampedModel struct {
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 }
 
 type BaseModel struct {
 	TimeStampedModel
-	BusinessUnitID uuid.UUID `gorm:"type:uuid;"`
+	BusinessUnitID uuid.UUID `gorm:"type:uuid;" json:"businessUnitId"`
 	BusinessUnit   BusinessUnit
-	OrganizationID uuid.UUID `gorm:"type:uuid;"`
+	OrganizationID uuid.UUID `gorm:"type:uuid;" json:"organizationId"`
 	Organization   Organization
-	ID             uint `gorm:"primary_key"`
+	ID             uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 }

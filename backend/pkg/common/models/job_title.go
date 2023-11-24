@@ -1,7 +1,5 @@
 package models
 
-import "gorm.io/gorm"
-
 type Status string
 
 const (
@@ -26,8 +24,7 @@ const (
 
 type JobTitle struct {
 	BaseModel
-	gorm.Model
 	Status      Status      `gorm:"size:1;"`
 	Description *string     `gorm:"type:text;"`
-	JobFunction JobFunction `gorm:"size:18;"`
+	JobFunction JobFunction `gorm:"size:18;" json:"jobFunction"`
 }
