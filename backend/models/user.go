@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/text/cases"
@@ -10,26 +12,46 @@ import (
 
 type User struct {
 	BaseModel
-	IsActive     bool   `gorm:"default:true;" json:"isActive" validate:"required,boolean"`
-	Username     string `gorm:"size:30;unique;not null" json:"username" validate:"required,max=30"`
-	Password     string `gorm:"not null" json:"password" validate:"required"`
-	Email        string `gorm:"size:255;unique;not null" json:"email" validate:"required,email"`
-	IsStaff      bool   `gorm:"default:false;" json:"isStaff" validate:"required,boolean"`
-	DateJoined   string `gorm:"type:date;" json:"dateJoined" validate:"required"`
-	SessionKey   string `gorm:"size:255;" json:"sessionKey" validate:"omitempty"`
-	Department   Department
-	DepartmentID uuid.UUID `gorm:"type:uuid;" json:"departmentId" validate:"required,uuid"`
-	UserProfile  UserProfile
-	Roles        []Role `gorm:"many2many:user_roles;" json:"roles"`
+	IsActive        bool   `gorm:"default:true;" json:"isActive"`
+	Username        string `gorm:"size:30;unique;not null" json:"username"`
+	Password        string `gorm:"not null" json:"-"`
+	Email           string `gorm:"size:255;unique;not null" json:"email"`
+	IsAdmin         bool   `gorm:"default:false;" json:"isAdmin"`
+	DateJoined      string `gorm:"type:date;" json:"dateJoined"`
+	SessionKey      string `gorm:"size:255;" json:"-"`
+	Department      Department
+	DepartmentID    *uuid.UUID `gorm:"type:uuid;" json:"departmentId"`
+	UserProfile     UserProfile
+	Roles           []Role  `gorm:"many2many:user_roles;" json:"roles"`
+	LastResetSentAt *string `gorm:"type:timestamp;" json:"-" validate:"omitempty"`
 }
 
 // HashPassword creates a bcyrpy hash of the password
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func (u *User) SetPassword(password string) error {
+	// hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		return "", nil
+		return err
 	}
-	return string(bytes), nil
+
+	u.Password = string(hashedPassword)
+
+	// Set the last reset sent at time to now
+	var now = time.Now().Format(time.RFC3339)
+	u.LastResetSentAt = &now
+	u.DateJoined = now
+
+	return nil
+}
+
+// ValidatePassword validates a plain password against the model's password.
+func (u *User) ValidatePassword(password string) bool {
+	bytePassword := []byte(password)
+	bytePasswordHash := []byte(u.Password)
+
+	err := bcrypt.CompareHashAndPassword(bytePasswordHash, bytePassword)
+
+	return err == nil
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
@@ -37,13 +59,14 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 	caser := cases.Lower(language.AmericanEnglish)
 	u.Username = caser.String(u.Username)
 
-	// Hashing the password
-	hp, err := HashPassword(u.Password)
+	// Hash the password
+	err = u.SetPassword(u.Password)
 	if err != nil {
 		return err
 	}
 
-	u.Password = hp
+	// Set the date joined
+	// u.DateJoined = types.Timestamp(time.Now()).String()
 
 	return nil
 }
@@ -70,18 +93,18 @@ func (u *User) HasPermission(permissionName string) bool {
 
 type UserProfile struct {
 	BaseModel
-	UserID          uuid.UUID `gorm:"type:uuid;" json:"userId" validate:"required,uuid"`
-	JobTitleID      uuid.UUID `gorm:"type:uuid;" json:"jobTitleId" validate:"required,uuid"`
+	UserID          uuid.UUID  `gorm:"type:uuid;" json:"userId" validate:"required,uuid"`
+	JobTitleID      *uuid.UUID `gorm:"type:uuid;" json:"jobTitleId" validate:"required,uuid"`
 	JobTitle        JobTitle
-	FirstName       string  `gorm:"size:255;" json:"firstName" validate:"required,max=255"`
+	FirstName       string  `gorm:"size:30;" json:"firstName" validate:"required,max=255"`
 	LastName        string  `gorm:"size:255;" json:"lastName" validate:"required,max=255"`
 	ProfilePic      string  `gorm:"size:255;" json:"profilePic" validate:"omitempty,max=255"`
 	Thumbnail       string  `gorm:"size:255;" json:"thumbnail" validate:"omitempty,max=255"`
 	AddressLine1    string  `gorm:"size:255;" json:"addressLine1" validate:"required,max=255"`
 	AddressLine2    *string `gorm:"size:255;" json:"addressLine2" validate:"omitempty,max=255"`
-	City            *string `gorm:"size:255;" json:"city" validate:"omitempty,max=255"`
-	State           *string `gorm:"size:2;" json:"state" validate:"omitempty,max=2"`
-	ZipCode         *string `gorm:"size:5;" json:"zipCode" validate:"omitempty,max=5;isnumeric"`
+	City            string  `gorm:"size:255;" json:"city" validate:"omitempty,max=255"`
+	State           string  `gorm:"size:2;" json:"state" validate:"omitempty,max=2"`
+	ZipCode         string  `gorm:"size:5;" json:"zipCode" validate:"omitempty,max=5;isnumeric"`
 	PhoneNumber     *string `gorm:"size:20;" json:"phoneNumber" validate:"omitempty,max=20;isnumeric"`
 	IsPhoneVerified bool    `gorm:"default:false;" json:"isPhoneVerified" validate:"required,boolean"`
 }
