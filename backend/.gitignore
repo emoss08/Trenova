@@ -1,5 +1,0 @@
-go.sum
-gin-bin
-Makefile
-*.env
-tmp
