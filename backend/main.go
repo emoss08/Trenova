@@ -3,6 +3,7 @@ package main
 import (
 	"backend/db"
 	"backend/router"
+	"backend/worker"
 	"log"
 	"net/http"
 	"time"
@@ -18,10 +19,13 @@ func main() {
 	dbUrl := viper.Get("DB_URL").(string)
 
 	// Initialize the database
-	db.Init(dbUrl)
+	db := db.Init(dbUrl)
 
 	// Initialize the router
-	r := router.InitRouter()
+	r := router.InitRouter(db)
+
+	// Initialize and run the asynq worker server
+	worker.Init()
 
 	serverAddr := "127.0.0.1:8080"
 
