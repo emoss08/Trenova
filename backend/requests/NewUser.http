@@ -1,0 +1,22 @@
+POST http://localhost:8080/api/v1/users HTTP/1.1
+Content-Type: application/json
+
+{
+    "organizationId": "d6d2bd71-50e9-4c2b-af7d-8e822cba7423",
+    "businessUnitId": "e8c0d46c-7ff6-4894-92e8-c9613d22909a",
+    "username": "sysadmin2",
+    "password": "monta",
+    "email": "monta3@monta.io",
+    "isStaff": true,
+    "userProfile": {
+        "organizationId": "d6d2bd71-50e9-4c2b-af7d-8e822cba7423",
+        "businessUnitId": "e8c0d46c-7ff6-4894-92e8-c9613d22909a",
+        "firstName": "Monta",
+        "lastName": "Admin",
+        "addressLine1": "123 Main St",
+        "addressLine2": "Suite 100",
+        "city": "San Francisco",
+        "state": "CA",
+        "zipCode": "94105"
+    }
+}
