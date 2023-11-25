@@ -21,6 +21,7 @@ var mods = []interface{}{
 	&models.Permission{},
 	&models.Role{},
 	&models.Permission{},
+	&models.AuditLog{},
 }
 
 func Init(url string) *gorm.DB {
