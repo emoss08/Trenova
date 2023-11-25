@@ -8,3 +8,4 @@ test.http
 typings
 frontend
 backend/bin/air
+*.log
