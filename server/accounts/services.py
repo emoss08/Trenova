@@ -68,6 +68,7 @@ def generate_thumbnail(
 
     # If the user doesn't have a profile picture, don't generate a thumbnail.
     if not user_profile.profile_picture:
+        log.info("User doesn't have a profile picture. Skipping thumbnail generation.")
         user_profile.thumbnail = None
         return
 
