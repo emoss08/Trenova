@@ -317,7 +317,10 @@ export function DataTable<K extends Record<string, any>>({
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <Fragment key={row.id}>
-                      <TableRow data-state={row.getIsSelected() && "selected"}>
+                      <TableRow
+                        data-state={row.getIsSelected() && "selected"}
+                        className={row.getIsExpanded() ? "bg-muted/40" : ""}
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}

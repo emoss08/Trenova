@@ -23,7 +23,8 @@ from django.core.mail import send_mail
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
-from accounts import models
+from accounts import models, tasks
+from kafka import services
 from organization.models import Organization
 from utils.serializers import GenericSerializer
 
@@ -268,7 +269,7 @@ class UserSerializer(GenericSerializer):
         organization = super().get_organization
         validated_data["organization"] = organization
 
-        # Get the business unit of ther user from the request.
+        # Get the business unit of the user from the request.
         business_unit = super().get_business_unit
         validated_data["business_unit"] = business_unit
 
@@ -304,6 +305,10 @@ class UserSerializer(GenericSerializer):
 
         # Create the user profile
         models.UserProfile.objects.create(user=user, **profile_data)
+
+        # Fire celery task to generate user profile thumbnail if there is one.
+        if profile_data.get("profile_picture"):
+            tasks.generate_thumbnail_task.delay(user.profile.id)
 
         return user
 
