@@ -15,31 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BaseModel } from "@/types/organization";
 import { StatusChoiceProps } from "@/types/index";
-
-export interface Location extends BaseModel {
-  id: string;
-  name: string;
-  code: string;
-  status: StatusChoiceProps;
-  locationCategory?: string | null;
-  depot: string;
-  description: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  longitude?: number | null;
-  latitude?: number | null;
-  placeId?: string;
-  isGeocoded: boolean;
-  locationColor?: string;
-  pickupCount: number;
-  waitTimeAvg: number;
-  locationComments: LocationComment[];
-  locationContacts: LocationContact[];
-}
+import { BaseModel } from "@/types/organization";
 
 export interface LocationCategory extends BaseModel {
   id: string;
@@ -63,11 +40,72 @@ export interface LocationComment extends BaseModel {
   enteredByUsername: string;
 }
 
+export type LocationCommentFormValues = Omit<
+  LocationComment,
+  | "organization"
+  | "created"
+  | "modified"
+  | "id"
+  | "location"
+  | "enteredBy"
+  | "commentTypeName"
+  | "enteredByUsername"
+>;
+
 export interface LocationContact extends BaseModel {
   id: string;
   location: string;
   name: string;
-  email?: string;
-  phone?: number | null;
-  fax?: number | null;
+  email?: string | null;
+  phone?: string | null;
+  fax?: string | null;
 }
+
+export type LocationContactFormValues = Omit<
+  LocationContact,
+  "organization" | "created" | "modified" | "id" | "location"
+>;
+
+export interface Location extends BaseModel {
+  id: string;
+  name: string;
+  code: string;
+  status: StatusChoiceProps;
+  locationCategory?: string | null;
+  depot?: string | null;
+  description?: string | null;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  longitude?: number | null;
+  latitude?: number | null;
+  placeId?: string;
+  isGeocoded: boolean;
+  locationColor?: string | null;
+  pickupCount: number;
+  waitTimeAvg: number;
+  locationComments: LocationComment[];
+  locationContacts: LocationContact[];
+}
+
+export type LocationFormValues = Omit<
+  Location,
+  | "organization"
+  | "id"
+  | "longitude"
+  | "latitude"
+  | "locationColor"
+  | "pickupCount"
+  | "waitTimeAvg"
+  | "locationContacts"
+  | "locationComments"
+  | "isGeocoded"
+  | "placeId"
+  | "created"
+  | "modified"
+> & {
+  locationComments?: LocationCommentFormValues[] | null;
+  locationContacts?: LocationContactFormValues[] | null;
+};

@@ -16,12 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from rest_framework.test import APIClient
-
 from accounts.models import User
 from dispatch.models import CommentType
+from django.core.exceptions import ValidationError
 from location import models
 from organization.models import BusinessUnit, Organization
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 
@@ -101,8 +101,8 @@ def test_post_location_with_contacts(
                 {
                     "name": "string",
                     "email": "test@test.com",
-                    "phone": 1234567890,
-                    "fax": 1234567890,
+                    "phone": "(123) 123-4567",
+                    "fax": "(123) 123-4567",
                 }
             ],
         },
@@ -118,8 +118,8 @@ def test_post_location_with_contacts(
     assert response.data["zip_code"] == "12345"
     assert response.data["location_contacts"][0]["name"] == "string"
     assert response.data["location_contacts"][0]["email"] == "test@test.com"
-    assert response.data["location_contacts"][0]["phone"] == 1234567890
-    assert response.data["location_contacts"][0]["fax"] == 1234567890
+    assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"
+    assert response.data["location_contacts"][0]["fax"] == "(123) 123-4567"
 
 
 def test_post_location_with_comments(
@@ -219,8 +219,8 @@ def test_post_location_with_comments_and_contacts(
                 {
                     "name": "string",
                     "email": "test@test.com",
-                    "phone": 1234567890,
-                    "fax": 1234567890,
+                    "phone": "(123) 123-4567",
+                    "fax": "(123) 123-4567",
                 }
             ],
         },
@@ -242,8 +242,8 @@ def test_post_location_with_comments_and_contacts(
     assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "string"
     assert response.data["location_contacts"][0]["email"] == "test@test.com"
-    assert response.data["location_contacts"][0]["phone"] == 1234567890
-    assert response.data["location_contacts"][0]["fax"] == 1234567890
+    assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"
+    assert response.data["location_contacts"][0]["fax"] == "(123) 123-4567"
 
 
 def test_put_location_with_comments_and_contacts(
@@ -292,8 +292,8 @@ def test_put_location_with_comments_and_contacts(
                 {
                     "name": "test_contact",
                     "email": "test2@test.com",
-                    "phone": 1234567890,
-                    "fax": 1234567890,
+                    "phone": "(123) 123-4567",
+                    "fax": "(123) 123-4567",
                 }
             ],
         },
@@ -315,8 +315,8 @@ def test_put_location_with_comments_and_contacts(
     assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "test_contact"
     assert response.data["location_contacts"][0]["email"] == "test2@test.com"
-    assert response.data["location_contacts"][0]["phone"] == 1234567890
-    assert response.data["location_contacts"][0]["fax"] == 1234567890
+    assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"
+    assert response.data["location_contacts"][0]["fax"] == "(123) 123-4567"
 
 
 def test_cannot_delete_location(
@@ -335,3 +335,24 @@ def test_cannot_delete_location(
 
     assert response.status_code == 405
     assert response.data["errors"][0]["detail"] == 'Method "DELETE" not allowed.'
+
+
+def test_location_contact_phone_number(
+    location_contact: models.LocationContact,
+) -> None:
+    """Test Location contact phone number throws validation error when the
+    phone number input is invalid
+
+    Args:
+        location_contact (models.LocationContact): LocationContact Object
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    location_contact.phone = "1234"
+    
+    with pytest.raises(ValidationError) as excinfo:
+        location_contact.full_clean()
+        
+    assert excinfo.value.message_dict['phone'][0] == "Phone number must be in the format (xxx) xxx-xxxx"
