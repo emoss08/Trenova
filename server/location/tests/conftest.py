@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from dispatch.factories import CommentTypeFactory
 from location import factories
 
@@ -48,3 +47,11 @@ def comment_type() -> Generator[Any, Any, None]:
     CommentType fixture
     """
     yield CommentTypeFactory()
+
+
+@pytest.fixture()
+def location_contact() -> Generator[Any, Any, None]:
+    """
+    LocationContact fixture
+    """
+    yield factories.LocationContactFactory()

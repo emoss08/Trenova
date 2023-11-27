@@ -19,6 +19,7 @@ import textwrap
 import uuid
 
 from colorfield.fields import ColorField
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, DurationField, ExpressionWrapper, F
 from django.db.models.functions import Lower
@@ -26,7 +27,6 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
-
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
@@ -107,20 +107,21 @@ class Location(GenericModel):
     status = ChoiceField(
         _("Status"),
         choices=PrimaryStatusChoices.choices,
-        help_text=_("Status of the General Ledger Account."),
+        help_text=_("Status of the Location."),
         default=PrimaryStatusChoices.ACTIVE,
     )
-    code = models.CharField(
+    code = models.CharField(  # TODO(WOLFRED): AUTO GENERATE THE CODE
         _("Code"),
         max_length=10,
+        help_text=_("Unique Code for the Location."),
     )
     location_category = models.ForeignKey(
         LocationCategory,
         on_delete=models.RESTRICT,
-        verbose_name=_("Category"),
+        verbose_name=_("Location Category"),
         related_name="location",
         related_query_name="locations",
-        help_text=_("Location category"),
+        help_text=_("The Location Category associated with the Location"),
         null=True,
         blank=True,
     )
@@ -136,7 +137,7 @@ class Location(GenericModel):
         verbose_name=_("Depot"),
         related_name="location",
         related_query_name="locations",
-        help_text=_("Location depot"),
+        help_text=_("The Depot associated with the Location"),
         null=True,
         blank=True,
     )
@@ -282,17 +283,29 @@ class LocationContact(GenericModel):
         help_text=_("Email of the contact."),
         blank=True,
     )
-    phone = models.PositiveIntegerField(
-        _("Phone"),
-        help_text=_("Phone of the contact."),
-        null=True,
+    phone = models.CharField(
+        _("Phone Number"),
+        max_length=15,
         blank=True,
+        help_text=_("Phone Number of the contact."),
+        validators=[
+            RegexValidator(
+                regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                message=_("Phone number must be in the format (xxx) xxx-xxxx"),
+            )
+        ],
     )
-    fax = models.PositiveIntegerField(
-        _("Fax"),
-        help_text=_("Fax of the contact."),
-        null=True,
+    fax = models.CharField(
+        _("Fax Number"),
+        max_length=15,
         blank=True,
+        help_text=_("The Fax Number of the contact"),
+        validators=[
+            RegexValidator(
+                regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                message=_("Fax number must be in the format (xxx) xxx-xxxx"),
+            )
+        ],
     )
 
     class Meta:
