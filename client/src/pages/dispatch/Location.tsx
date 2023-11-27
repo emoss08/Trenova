@@ -19,15 +19,33 @@ import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { truncateText, upperFirst } from "@/lib/utils";
-import { FleetCodeDialog } from "@/components/fleet-codes/fleet-code-table-dialog";
 import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
 import { Location } from "@/types/location";
 import { ChevronDownIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 import { LocationChart } from "@/components/location/table-chart";
+import { LocationTableSheet } from "@/components/location/location-table-dialog";
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
   return <LocationChart row={row} />;
 };
+
+function LocationColor({
+  color,
+  locationName,
+}: {
+  color: string;
+  locationName: string;
+}) {
+  return (
+    <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
+      <div
+        className={"h-5 w-5 rounded-xl mx-2"}
+        style={{ backgroundColor: color }}
+      />
+      {locationName}
+    </div>
+  );
+}
 
 const columns: ColumnDef<Location>[] = [
   {
@@ -73,13 +91,10 @@ const columns: ColumnDef<Location>[] = [
     cell: ({ row }) => {
       if (row.original.locationColor) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
-            <div
-              className={"h-5 w-5 rounded-xl mx-2"}
-              style={{ backgroundColor: row.original.locationColor }}
-            />
-            {row.original.name}
-          </div>
+          <LocationColor
+            color={row.original.locationColor}
+            locationName={row.original.name}
+          />
         );
       } else {
         return row.original.name;
@@ -124,7 +139,7 @@ export default function Locations() {
       name="Locations"
       exportModelName="Location"
       filterColumn="name"
-      TableSheet={FleetCodeDialog}
+      TableSheet={LocationTableSheet}
       TableEditSheet={FleetCodeEditDialog}
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
