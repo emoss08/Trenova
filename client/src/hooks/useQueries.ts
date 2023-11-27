@@ -42,8 +42,12 @@ import { Customer } from "@/types/customer";
 import { getEquipmentTypes } from "@/services/EquipmentRequestService";
 import { EquipmentType } from "@/types/equipment";
 import { getFeasibilityControl } from "@/services/DispatchRequestService";
-import { getLocations } from "@/services/LocationRequestService";
-import { Location } from "@/types/location";
+import {
+  getLocationCategories,
+  getLocations,
+  getUSStates,
+} from "@/services/LocationRequestService";
+import { Location, LocationCategory } from "@/types/location";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import { ShipmentType } from "@/types/order";
 import { getUserDetails, getUsers } from "@/services/UserRequestService";
@@ -370,7 +374,7 @@ export function useUsers(show?: boolean) {
   /** Get users for the select input */
   const { data, isError, isLoading } = useQuery({
     queryKey: ["users"] as QueryKeys[],
-    queryFn: () => getUsers(),
+    queryFn: async () => getUsers(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["users"] as QueryKeys[]),
     staleTime: Infinity,
@@ -395,4 +399,46 @@ export function useUser(userId: string) {
       queryClient.getQueryData(["user", userId] as QueryKeys[]),
     staleTime: Infinity,
   });
+}
+
+export function useLocationCategories(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["locationCategories"] as QueryKeys[],
+    queryFn: async () => getLocationCategories(),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData(["locationCategories"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectLocationCategories =
+    (data as LocationCategory[])?.map((location: LocationCategory) => ({
+      value: location.id,
+      label: location.name,
+    })) || [];
+
+  return { selectLocationCategories, isError, isLoading };
+}
+
+export function useUSStates(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["usStates"] as QueryKeys[],
+    queryFn: async () => getUSStates(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Create an array of objects with value and label for each state
+  const selectUSStates =
+    (data as { name: string; stateCode: string }[])?.map((state) => ({
+      value: state.stateCode,
+      label: state.name,
+    })) || [];
+
+  return { selectUSStates, isError, isLoading };
 }
