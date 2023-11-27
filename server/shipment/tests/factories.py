@@ -53,11 +53,11 @@ class ShipmentTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "shipment.ShipmentType"
-        django_get_or_create = ("name",)
+        django_get_or_create = ("code",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("pystr", max_chars=100)
+    code = factory.Faker("pystr", max_chars=10)
 
 
 class ReasonCodeFactory(factory.django.DjangoModelFactory):
