@@ -51,6 +51,8 @@ TYPE_MAP = {
     "NullBooleanField": "boolean",
     "PositiveSmallIntegerField": "number",
     "MoneyField": "number",
+    "USZipCodeField": "string",
+    "USStateField": "string",
 }
 
 
