@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { Location } from "@/types/location";
+import { Location, LocationCategory } from "@/types/location";
 
 /**
  * Fetches locations from the server.
@@ -44,4 +44,33 @@ export async function getLocationPickupData(
     `/locations/${locationId}/monthly_pickup_data`,
   );
   return response.data;
+}
+
+export async function getLocationCategories(): Promise<LocationCategory[]> {
+  const response = await axios.get("/location_categories/");
+  return response.data.results;
+}
+
+export async function getUSStates(): Promise<
+  { name: string; stateCode: string }[]
+> {
+  const response = await fetch(
+    "https://countriesnow.space/api/v0.1/countries/states",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: "United States" }),
+    },
+  );
+  const json = await response.json();
+
+  if (json && json.data && json.data.states) {
+    return json.data.states.map(
+      (state: { name: string; state_code: string }) => ({
+        name: state.name,
+        stateCode: state.state_code,
+      }),
+    );
+  }
+  throw new Error("States data not found");
 }

@@ -110,5 +110,6 @@ export type QueryKeys =
   | "financeTransaction"
   | "reconciliationQueue"
   | "users"
+  | "usStates"
   | "qualifier-code-table-data"
   | "qualifierCodes";
