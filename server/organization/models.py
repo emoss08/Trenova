@@ -1271,6 +1271,7 @@ class NotificationType(TimeStampedModel):
     Stores the notification type information for a related :model:`organization.Organization`
     """
 
+    @final
     class NotificationChoices(models.TextChoices):
         """
         Notification types choices
