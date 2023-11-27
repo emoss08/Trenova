@@ -193,7 +193,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             )
             .only(
                 "pro_number",
-                "hazmat_id",
+                "hazardous_material",
                 "id",
                 "destination_address",
                 "billing_transfer_date",
