@@ -92,6 +92,7 @@ class ModelVisitor(ast.NodeVisitor):
     Attributes:
         models (dict): A dictionary storing the model fields and their corresponding types.
     """
+
     def __init__(self):
         self.models = {}
 
@@ -180,9 +181,7 @@ def parse_model_file(file_path: Path) -> ModelReturnType:
     return visitor.models
 
 
-def write_ts_interface(
-    models: ModelReturnType, output_file: Path
-) -> None:
+def write_ts_interface(models: ModelReturnType, output_file: Path) -> None:
     """Writes TypeScript interfaces for Django models to a file.
 
     Takes the extracted model information and generates TypeScript interfaces, writing
