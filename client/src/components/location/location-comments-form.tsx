@@ -66,7 +66,7 @@ export function LocationCommentForm({
                       isLoading={isCommentTypeLoading}
                       isFetchError={isCommentTypeError}
                       placeholder="Comment Type"
-                      description="Select the type of comment."
+                      description="Specify the category of the comment from the available options."
                     />
                   </div>
                 </div>
@@ -78,7 +78,7 @@ export function LocationCommentForm({
                       control={control}
                       label="Comment"
                       placeholder="Comment"
-                      description="Additional notes or comments for the account"
+                      description="Provide detailed remarks or observations relevant to the account."
                     />
                   </div>
                 </div>

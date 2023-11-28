@@ -100,7 +100,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
               <TabsTrigger value="contacts">Contacts</TabsTrigger>
             </TabsList>
             <TabsContent value="info">
-              <LocationInfoForm control={control} />
+              <LocationInfoForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="comments">
               <LocationCommentForm control={control} />

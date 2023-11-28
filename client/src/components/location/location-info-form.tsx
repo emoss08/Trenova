@@ -25,8 +25,10 @@ import { TextareaField } from "../common/fields/textarea";
 
 export function LocationInfoForm({
   control,
+  open,
 }: {
   control: Control<FormValues>;
+  open: boolean;
 }) {
   const { selectLocationCategories, isError, isLoading } =
     useLocationCategories();
@@ -35,7 +37,7 @@ export function LocationInfoForm({
     selectUSStates,
     isError: isUSStatesError,
     isLoading: isUsStatesLoading,
-  } = useUSStates();
+  } = useUSStates(open);
 
   return (
     <>
