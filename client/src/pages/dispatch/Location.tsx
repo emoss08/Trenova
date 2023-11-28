@@ -18,8 +18,8 @@
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
-import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
+import { LocationTableEditSheet } from "@/components/location/location-table-edit-dialog";
 import { LocationChart } from "@/components/location/table-chart";
 import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
@@ -125,7 +125,7 @@ export default function Locations() {
       exportModelName="Location"
       filterColumn="name"
       TableSheet={LocationTableSheet}
-      TableEditSheet={FleetCodeEditDialog}
+      TableEditSheet={LocationTableEditSheet}
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
     />
