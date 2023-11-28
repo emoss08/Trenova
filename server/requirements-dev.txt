@@ -5,13 +5,13 @@ factory_boy==3.3.0
 isort==5.12.0
 MonkeyType==23.3.0
 pretty_errors==1.2.25
-pydantic==2.5.1
+pydantic==2.5.2
 pytest==7.4.3
 pytest-clarity==1.0.1
 pytest-cov==4.1.0
 pytest-django==4.7.0
 pytest-monkeytype==1.1.0
 pytest-sugar==0.9.7
-tox==4.11.3
+tox==4.11.4
 types-python-dateutil==2.8.19.14
-types-redis==4.6.0.10
+types-redis==4.6.0.11
