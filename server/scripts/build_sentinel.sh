@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
 : '
 COPYRIGHT 2022 MONTA
 
@@ -19,34 +20,35 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 -------------------------------------------------------------------------------
 
-This is a basic script to get started with redis-sentinel on Ubuntu.
+This is a script to get started with redis-sentinel on Ubuntu.
 '
 
-# Set the requirepass for redis conf.
-REDIS_REQUIRE_PASSWORD="YOUR_REDIS_PASSWORD"
+# Prompt for the requirepass for redis conf
+echo "Please enter the Redis password:"
+read -s REDIS_REQUIRE_PASSWORD
 
-# Set the masterauth for redis conf.
-MASTER_AUTH_PASSWORD="YOUR_MASTER_AUTH_PASSWORD"
+# Prompt for the masterauth for redis conf
+echo "Please enter the Master Auth password:"
+read -s MASTER_AUTH_PASSWORD
 
-# Set the ip address to bind to.
-BIND_IP_ADDRESS="YOUR_IP_ADDRESS"
+# Prompt for the IP address to bind to
+echo "Please enter the IP address to bind Redis to:"
+read BIND_IP_ADDRESS
 
-# Install the latest stable Redis.
+# Install the latest stable Redis
 curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
-
 echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
-
 sudo apt-get update
 sudo apt-get install redis
 
-# Add redis service to start on boot.
+# Add redis service to start on boot
 sudo systemctl enable redis
 
-# Add these lines to the end of the file /etc/redis/redis.conf:
+# Add configurations to the end of the file /etc/redis/redis.conf
 sed -i "
-bind: $BIND_IP_ADDRESS
-requirepass: $REDIS_REQUIRE_PASSWORD
-masterauth: $MASTER_AUTH_PASSWORD
+\$abind $BIND_IP_ADDRESS
+\$arequirepass $REDIS_REQUIRE_PASSWORD
+\$amasterauth $MASTER_AUTH_PASSWORD
 " /etc/redis/redis.conf
 
 echo "This does not add replication. It only adds a master sentinel.
@@ -57,12 +59,11 @@ If you want to add a slave, you want to add the following lines to /etc/redis/re
 slaveof <masterip> <masterport>
 and restart the redis service."
 
-# Restart the redis service.
+# Restart the redis service
 sudo systemctl restart redis
 
-# Test the using the redis-cli
+# Test Redis using the redis-cli
 redis-cli -a $REDIS_REQUIRE_PASSWORD SET "test" "test"
-
 if redis-cli -a $REDIS_REQUIRE_PASSWORD GET "test" | grep -q "test"; then
   echo "Redis is working!"
 else
@@ -71,22 +72,22 @@ fi
 
 # Install sentinel
 sed -i "
-daemonize yes
-port 26379
-bind $BIND_IP_ADDRESS
-supervised systemd
-pidfile '/run/redis/redis-sentinel.pid'
-logfile '/var/log/redis/sentinel.log'
-sentinel monitor mymaster 127.0.0.1 6379 2
-sentinel auth-pass mymaster $MASTER_AUTH_PASSWORD
-sentinel down-after-milliseconds mymaster 5000
-sentinel failover-timeout mymaster 60000
-sentinel parallel-syncs mymaster 1
+\$adaemonize yes
+\$aport 26379
+\$abind $BIND_IP_ADDRESS
+\$asupervised systemd
+\$apidfile '/run/redis/redis-sentinel.pid'
+\$alogfile '/var/log/redis/sentinel.log'
+\$asentinel monitor mymaster 127.0.0.1 6379 2
+\$asentinel auth-pass mymaster $MASTER_AUTH_PASSWORD
+\$asentinel down-after-milliseconds mymaster 5000
+\$asentinel failover-timeout mymaster 60000
+\$asentinel parallel-syncs mymaster 1
 " /etc/redis/sentinel.conf
 
 chown redis:redis /etc/redis/sentinel.conf
 
-# Add sentinel service to start on boot.
+# Add sentinel service to start on boot
 sed -i "
 [Unit]
 Description=Redis Sentinel
@@ -102,18 +103,17 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-"
+" /etc/systemd/system/redis-sentinel.service
 
-# Reload the daemon
+# Reload the daemon and start the sentinel service
 systemctl daemon-reload
-
 service redis-sentinel start
 systemctl enable redis-sentinel
 
 # Test the sentinel
-TAIL -f /var/log/redis/sentinel.log
+tail -f /var/log/redis/sentinel.log &
 
-if redis-cli -p 26379 info | grep "Sentinel"; then
+if redis-cli -p 26379 info | grep -q "Sentinel"; then
   echo "Sentinel is working!"
 else
   echo "Sentinel is not working!"
