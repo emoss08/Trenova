@@ -92,6 +92,7 @@ class ModelVisitor(ast.NodeVisitor):
     Attributes:
         models (dict): A dictionary storing the model fields and their corresponding types.
     """
+
     def __init__(self):
         self.models = {}
 
@@ -180,9 +181,7 @@ def parse_model_file(file_path: Path) -> ModelReturnType:
     return visitor.models
 
 
-def write_ts_interface(
-    models: ModelReturnType, output_file: Path
-) -> None:
+def write_ts_interface(models: ModelReturnType, output_file: Path) -> None:
     """Writes TypeScript interfaces for Django models to a file.
 
     Takes the extracted model information and generates TypeScript interfaces, writing
@@ -191,7 +190,7 @@ def write_ts_interface(
     Args:
         models (Dict[str, List[Tuple[str, str]]]): The dictionary containing model data.
         output_file (Path): The path where the TypeScript file will be written.
-        
+
     Returns:
         None: This function does not return anything.
 
@@ -223,7 +222,7 @@ def process_directory(
         ignore_dirs (List[str]): A list of directory names to ignore.
         progress (Progress): Rich library's progress display object.
         task: The current progress task.
-        
+
     Returns:
         None: This function does not return anything.
     """

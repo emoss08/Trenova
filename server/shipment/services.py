@@ -14,8 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Callable
 
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class

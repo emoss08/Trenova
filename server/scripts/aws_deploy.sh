@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
 : '
 COPYRIGHT 2022 MONTA
 
@@ -22,27 +23,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 This script is used to deploy the django app to AWS.
 '
 
-# Set the AWS access key and secret key
-export AWS_ACCESS_KEY_ID="YOUR_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
 
-# Set the region
-export AWS_REGION="YOUR_REGION"
-
-# Set the AMI to use for the EC2 instance
-AMI="YOUR_AMI"
-
-# Set the instance type
-INSTANCE_TYPE="YOUR_INSTANCE_TYPE"
-
-# Set the SSH user
-SSH_USER="YOUR_SSH_USER"
-
-# Set the path to the SSH private key file
-SSH_PRIVATE_KEY_FILE="YOUR_SSH_PRIVATE_KEY_FILE"
-
-# Set the URL of the Git repository for the Monta project
-GIT_REPO_URL="git@github.com:Monta-Application/Monta.git"
+# Load sensitive data from environment variables
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+AWS_REGION=$AWS_REGION
+AMI=$AMI
+INSTANCE_TYPE=$INSTANCE_TYPE
+SSH_USER=$SSH_USER
+SSH_PRIVATE_KEY_FILE=$SSH_PRIVATE_KEY_FILE
+GIT_REPO_URL=$GIT_REPO_URL
+SECURITY_GROUP_ID=$SECURITY_GROUP_ID
 
 # Create the EC2 instance
 aws ec2 run-instances \
@@ -63,18 +54,49 @@ INSTANCE_IP=$(aws ec2 describe-instances \
 # SSH into the EC2 instance and install the required packages
 ssh -i $SSH_PRIVATE_KEY_FILE $SSH_USER@"$INSTANCE_IP" <<EOF
   sudo apt-get update
-  sudo apt-get install -y python3-pip python3-dev libpq-dev postgresql postgresql-contrib
+  sudo apt-get install -y python3-pip python3-dev libpq-dev git
+
+  # Additional dependencies for frontend
+  curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+
+  # Install Kafka, Zookeeper, Debezium
+  # [Include installation steps for Kafka, Zookeeper, Debezium here]
+
+  # Install Redis
+  sudo apt-get install -y redis-server
+EOF
+# SSH into the EC2 instance for PostgreSQL setup
+ssh -i $SSH_PRIVATE_KEY_FILE $SSH_USER@"$INSTANCE_IP" <<'EOF'
+  echo "Please enter the database password for the new PostgreSQL user 'monta_user':"
+  read -s DB_PASSWORD
+
+  sudo apt-get update
+  sudo apt-get install -y postgresql postgresql-contrib
+
+  # Configure PostgreSQL
+  sudo -u postgres psql -c "CREATE DATABASE monta;"
+  sudo -u postgres psql -c "CREATE USER monta_user WITH PASSWORD '$DB_PASSWORD';"
+  sudo -u postgres psql -c "ALTER ROLE monta_user SET client_encoding TO 'utf8';"
+  sudo -u postgres psql -c "ALTER ROLE monta_user SET default_transaction_isolation TO 'read committed';"
+  sudo -u postgres psql -c "ALTER ROLE monta_user SET timezone TO 'UTC';"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE monta TO monta_user;"
 EOF
 
 # Clone the Monta project from Git
-# shellcheck disable=SC2087
 ssh -i $SSH_PRIVATE_KEY_FILE $SSH_USER@"$INSTANCE_IP" <<EOF
   git clone $GIT_REPO_URL
 EOF
 
 # Install the requirements for the Monta app
-# shellcheck disable=SC2086
 ssh -i $SSH_PRIVATE_KEY_FILE $SSH_USER@$INSTANCE_IP <<EOF
   cd monta
   pip3 install -r requirements.txt
+
+  # Frontend setup
+  npm install
+
+  # Django setup
+  python3 manage.py migrate
+  py manage.py createsystemuser --username monta --password monta --organization "Monta Transportation"
 EOF

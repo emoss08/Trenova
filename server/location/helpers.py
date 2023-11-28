@@ -17,8 +17,9 @@
 
 import typing
 
-from accounts.models import User
 from django.db import transaction
+
+from accounts.models import User
 from location import models
 from organization.models import BusinessUnit, Organization
 
@@ -30,7 +31,7 @@ def create_or_update_location_comments(
     location_comments_data: list[dict[str, typing.Any]],
     organization: Organization,
     business_unit: BusinessUnit,
-    user: User
+    user: User,
 ) -> list[models.LocationComment]:
     created_comments = []
     if location_comments_data:

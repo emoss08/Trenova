@@ -19,6 +19,7 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+
 from dispatch.factories import CommentTypeFactory
 from location import factories
 
