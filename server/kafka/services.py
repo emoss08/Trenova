@@ -30,7 +30,6 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
 from django.db.models import QuerySet
-
 from organization import models, selectors
 
 # Logging Configuration
@@ -73,15 +72,6 @@ class KafkaListener:
         """
         for conn in connections.all(initialized_only=True):
             conn.close_if_unusable_or_obsolete()
-
-    def __repr__(self) -> str:
-        """A built-in function that provides a string representation of the KafkaListener instance.
-
-        Returns:
-            str: The string representation includes the host, port, and group id of the Kafka consumer.
-        """
-
-        return f"KafkaListener({settings.KAFKA_HOST}, {settings.KAFKA_PORT}, {settings.KAFKA_GROUP_ID})"
 
     def __init__(self, thread_pool_size=10) -> None:
         self.thread_pool_size = thread_pool_size
