@@ -16,9 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any, override
 
-from rest_framework import serializers
-
 from location import helpers, models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -76,7 +75,7 @@ class LocationCommentSerializer(GenericSerializer):
             "comment_type_name",
             "entered_by_username",
         )
-        extra_read_only_fields = ("location",)
+        extra_read_only_fields = ("location", "entered_by")
 
 
 class LocationSerializer(GenericSerializer):
@@ -108,6 +107,7 @@ class LocationSerializer(GenericSerializer):
             "location_contacts",
             "location_color",
         )
+        extra_read_only_fields = ("organization", "business_unit",)
 
     def create(self, validated_data: Any) -> models.Location:
         """Create a new instance of the Location model with given validated data.
@@ -129,6 +129,9 @@ class LocationSerializer(GenericSerializer):
         # Get the business unit of the user from the request.
         business_unit = super().get_business_unit
 
+        # Get the user from the request.
+        user = self.context["request"].user
+        
         # Popped data (comments, contacts)
         location_comments_data = validated_data.pop("location_comments", [])
         location_contacts_data = validated_data.pop("location_contacts", [])
@@ -144,6 +147,7 @@ class LocationSerializer(GenericSerializer):
             business_unit=business_unit,
             organization=organization,
             location_comments_data=location_comments_data,
+            user=user,
         )
 
         # Create the Location Contacts
@@ -177,6 +181,9 @@ class LocationSerializer(GenericSerializer):
         # Get the business unit of the user from the request.
         business_unit = super().get_business_unit
 
+        # Get the user from the request.
+        user = self.context["request"].user
+
         # Popped data (comments, contacts)
         location_comments_data = validated_data.pop("location_comments", [])
         location_contacts_data = validated_data.pop("location_contacts", [])
@@ -188,6 +195,7 @@ class LocationSerializer(GenericSerializer):
                 business_unit=business_unit,
                 organization=organization,
                 location_comments_data=location_comments_data,
+                user=user,
             )
 
         # Create or update the location contacts.

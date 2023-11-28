@@ -15,43 +15,47 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { QueryKeys } from "@/types";
 import {
   getAccountingControl,
   getGLAccounts,
   getTags,
 } from "@/services/AccountingRequestService";
 import {
-  AccountingControl,
-  GeneralLedgerAccount,
-  Tag,
-} from "@/types/accounting";
-import {
   getAccessorialCharges,
   getDocumentClassifications,
 } from "@/services/BillingRequestService";
-import { AccessorialCharge, DocumentClassification } from "@/types/billing";
 import {
   getCommodities,
   getHazardousMaterials,
 } from "@/services/CommodityRequestService";
-import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { getCustomers } from "@/services/CustomerRequestService";
-import { Customer } from "@/types/customer";
+import {
+  getCommentTypes,
+  getFeasibilityControl,
+} from "@/services/DispatchRequestService";
 import { getEquipmentTypes } from "@/services/EquipmentRequestService";
-import { EquipmentType } from "@/types/equipment";
-import { getFeasibilityControl } from "@/services/DispatchRequestService";
 import {
   getLocationCategories,
   getLocations,
   getUSStates,
 } from "@/services/LocationRequestService";
-import { Location, LocationCategory } from "@/types/location";
 import { getShipmentTypes } from "@/services/OrderRequestService";
-import { ShipmentType } from "@/types/order";
 import { getUserDetails, getUsers } from "@/services/UserRequestService";
+import { QueryKeys } from "@/types";
+import {
+  AccountingControl,
+  GeneralLedgerAccount,
+  Tag,
+} from "@/types/accounting";
 import { User } from "@/types/accounts";
+import { AccessorialCharge, DocumentClassification } from "@/types/billing";
+import { Commodity, HazardousMaterial } from "@/types/commodities";
+import { Customer } from "@/types/customer";
+import { CommentType } from "@/types/dispatch";
+import { EquipmentType } from "@/types/equipment";
+import { Location, LocationCategory } from "@/types/location";
+import { ShipmentType } from "@/types/order";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
  * Get Tags for select options
@@ -441,4 +445,25 @@ export function useUSStates(show?: boolean) {
     })) || [];
 
   return { selectUSStates, isError, isLoading };
+}
+
+export function useCommentTypes(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["commentTypes"] as QueryKeys[],
+    queryFn: async () => getCommentTypes(),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData(["commentTypes"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectCommentTypes =
+    (data as CommentType[])?.map((commentType: CommentType) => ({
+      value: commentType.id,
+      label: commentType.name,
+    })) || [];
+
+  return { selectCommentTypes, isError, isLoading };
 }

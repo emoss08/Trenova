@@ -15,34 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
-import { CommentType, FeasibilityToolControl } from "@/types/dispatch";
+import { Row } from "@tanstack/react-table";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
-/**
- * Fetches new Rate Number from the server.
- * @returns A promise that resolves to a string representation of the latest rate number.
- */
-export async function getNewRateNumber(): Promise<string> {
-  const response = await axios.get("/rates/get_new_rate_number/");
-  return response.data.rateNumber;
-}
-
-/**
- * Fetches the feasibility tool control from the server.
- * @returns A promise that resolves to a FeasibilityToolControl object.
- */
-export async function getFeasibilityControl(): Promise<
-  FeasibilityToolControl[]
-> {
-  const response = await axios.get("/feasibility_tool_control/");
-  return response.data.results;
-}
-
-export async function getCommentTypes(): Promise<CommentType[]> {
-  const response = await axios.get("/comment_types/", {
-    params: {
-      status: "A",
-    },
-  });
-  return response.data.results;
+export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
+  return row.getCanExpand() ? (
+    <button
+      {...{
+        onClick: row.getToggleExpandedHandler(),
+        style: { cursor: "pointer" },
+      }}
+    >
+      {row.getIsExpanded() ? (
+        <ChevronDownIcon style={{ width: "1.2em", height: "1.2em" }} />
+      ) : (
+        <ChevronRightIcon style={{ width: "1.2em", height: "1.2em" }} />
+      )}
+    </button>
+  ) : (
+    "🔵"
+  );
 }

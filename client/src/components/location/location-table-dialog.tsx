@@ -35,7 +35,8 @@ import { LocationFormValues as FormValues } from "@/types/location";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { LocationCommentForm } from "./location-comments-form";
 
 export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -59,18 +60,16 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  console.log("watch", useWatch({ control }));
-
   const mutation = useCustomMutation<FormValues>(
     control,
     toast,
     {
       method: "POST",
-      path: "/service_types/",
-      successMessage: "Service Type created successfully.",
-      queryKeysToInvalidate: ["service-type-table-data"],
+      path: "/locations/",
+      successMessage: "Location created successfully.",
+      queryKeysToInvalidate: ["locations-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create new service type.",
+      errorMessage: "Failed to create new location.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -104,7 +103,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
               <LocationInfoForm control={control} />
             </TabsContent>
             <TabsContent value="comments">
-              Location Comments go here.
+              <LocationCommentForm control={control} />
             </TabsContent>
             <TabsContent value="contacts">
               <LocationContactForm control={control} />
