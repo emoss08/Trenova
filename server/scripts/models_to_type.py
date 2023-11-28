@@ -18,7 +18,6 @@
 import argparse
 import ast
 import os
-import typing
 from pathlib import Path
 
 import rich
