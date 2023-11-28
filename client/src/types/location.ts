@@ -18,19 +18,19 @@
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
-export interface LocationCategory extends BaseModel {
+export type LocationCategory = BaseModel & {
   id: string;
   name: string;
   description?: string | null;
   color?: string | null;
-}
+};
 
 export type LocationCategoryFormValues = Omit<
   LocationCategory,
   "organization" | "created" | "modified" | "id"
 >;
 
-export interface LocationComment extends BaseModel {
+export type LocationComment = BaseModel & {
   id: string;
   location: string;
   commentType: string;
@@ -38,7 +38,7 @@ export interface LocationComment extends BaseModel {
   comment: string;
   enteredBy: string;
   enteredByUsername: string;
-}
+};
 
 export type LocationCommentFormValues = Omit<
   LocationComment,
@@ -52,21 +52,21 @@ export type LocationCommentFormValues = Omit<
   | "enteredByUsername"
 >;
 
-export interface LocationContact extends BaseModel {
+export type LocationContact = BaseModel & {
   id: string;
   location: string;
   name: string;
   email?: string | null;
   phone?: string | null;
   fax?: string | null;
-}
+};
 
 export type LocationContactFormValues = Omit<
   LocationContact,
   "organization" | "created" | "modified" | "id" | "location"
 >;
 
-export interface Location extends BaseModel {
+export type Location = BaseModel & {
   id: string;
   name: string;
   code: string;
@@ -88,7 +88,7 @@ export interface Location extends BaseModel {
   waitTimeAvg: number;
   locationComments: LocationComment[];
   locationContacts: LocationContact[];
-}
+};
 
 export type LocationFormValues = Omit<
   Location,

@@ -14,14 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from core.permissions import CustomObjectPermissions
+from dispatch import models, serializers
 from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from core.permissions import CustomObjectPermissions
-from dispatch import models, serializers
 
 
 class CommentTypeViewSet(viewsets.ModelViewSet):
@@ -37,6 +36,7 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
     queryset = models.CommentType.objects.all()
     serializer_class = serializers.CommentTypeSerializer
     permission_classes = [CustomObjectPermissions]
+    filter_fields = ("status",)
 
     def get_queryset(self) -> QuerySet[models.CommentType]:
         queryset = self.queryset.filter(
@@ -45,6 +45,7 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
             "id",
             "organization_id",
             "business_unit_id",
+            "status",
             "name",
             "description",
             "created",

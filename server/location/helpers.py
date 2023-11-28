@@ -17,11 +17,10 @@
 
 import typing
 
+from accounts.models import User
 from django.db import transaction
-
 from location import models
 from organization.models import BusinessUnit, Organization
-
 
 
 @transaction.atomic
@@ -31,6 +30,7 @@ def create_or_update_location_comments(
     location_comments_data: list[dict[str, typing.Any]],
     organization: Organization,
     business_unit: BusinessUnit,
+    user: User
 ) -> list[models.LocationComment]:
     created_comments = []
     if location_comments_data:
@@ -45,6 +45,7 @@ def create_or_update_location_comments(
             contact, created = models.LocationComment.objects.update_or_create(
                 id=location_comment_data.get("id"),
                 location=location,
+                entered_by=user,
                 defaults=location_comment_data,
             )
             created_comments.append(contact)

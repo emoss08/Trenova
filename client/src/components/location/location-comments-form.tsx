@@ -17,25 +17,33 @@
 
 import { LocationFormValues as FormValues } from "@/types/location";
 import { Control, useFieldArray } from "react-hook-form";
-import { InputField } from "../common/fields/input";
 
+import { useCommentTypes } from "@/hooks/useQueries";
 import { AlertOctagonIcon } from "lucide-react";
+import { SelectInput } from "../common/fields/select-input";
+import { TextareaField } from "../common/fields/textarea";
 import { Button } from "../ui/button";
 
-export function LocationContactForm({
+export function LocationCommentForm({
   control,
 }: {
   control: Control<FormValues>;
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "locationContacts",
+    name: "locationComments",
     keyName: "id",
   });
 
   const handleAddContact = () => {
-    append({ name: "", email: "", phone: "", fax: "" });
+    append({ commentType: "", comment: "" });
   };
+
+  const {
+    selectCommentTypes,
+    isError: isCommentTypeError,
+    isLoading: isCommentTypeLoading,
+  } = useCommentTypes();
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -45,55 +53,37 @@ export function LocationContactForm({
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-3 gap-2 my-4 pb-2 border-b"
+                className="grid grid-cols-1 gap-2 my-4 pb-2 border-b"
               >
                 <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                   <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`locationContacts.${index}.name`}
-                      label="Name"
-                      placeholder="Name"
-                      description="Enter the full name of the primary contact for this location."
+                    <SelectInput
                       rules={{ required: true }}
+                      name={`locationComments.${index}.commentType`}
+                      control={control}
+                      label="Comment Type"
+                      options={selectCommentTypes}
+                      isLoading={isCommentTypeLoading}
+                      isFetchError={isCommentTypeError}
+                      placeholder="Comment Type"
+                      description="Select the type of comment."
                     />
                   </div>
                 </div>
                 <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                   <div className="min-h-[4em]">
-                    <InputField
+                    <TextareaField
+                      rules={{ required: true }}
+                      name={`locationComments.${index}.comment`}
                       control={control}
-                      name={`locationContacts.${index}.email`}
-                      label="Email"
-                      placeholder="Email"
-                      description="Provide the email address for direct communication with the location's contact."
+                      label="Comment"
+                      placeholder="Comment"
+                      description="Additional notes or comments for the account"
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`locationContacts.${index}.phone`}
-                      label="Phone"
-                      placeholder="Phone"
-                      description="Input the telephone number for reaching the location's contact."
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`locationContacts.${index}.fax`}
-                      label="Fax"
-                      placeholder="Fax"
-                      description="If applicable, list the fax number associated with the location's contact."
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col justify-between max-w-sm mt-6 gap-1">
-                  <div className="min-h-[4em]">
+                <div className="flex flex-col justify-between max-w-sm gap-1">
+                  <div className="min-h-[2em]">
                     <Button
                       size="sm"
                       className="bg-background text-red-600 hover:bg-background hover:text-red-700"
@@ -113,7 +103,7 @@ export function LocationContactForm({
             className="mb-10 w-[200px]"
             onClick={handleAddContact}
           >
-            Add Another Contact
+            Add Another Comment
           </Button>
         </>
       ) : (
@@ -121,9 +111,9 @@ export function LocationContactForm({
           <span className="text-6xl mb-4">
             <AlertOctagonIcon />
           </span>
-          <p className="mb-4">No contacts yet. Please add a new contact.</p>
+          <p className="mb-4">No comments yet. Please add a new comment.</p>
           <Button type="button" size="sm" onClick={handleAddContact}>
-            Add Contact
+            Add Comment
           </Button>
         </div>
       )}

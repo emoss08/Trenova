@@ -17,13 +17,13 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { truncateText, upperFirst } from "@/lib/utils";
+import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
-import { Location } from "@/types/location";
-import { ChevronDownIcon, ChevronRightIcon } from "@radix-ui/react-icons";
-import { LocationChart } from "@/components/location/table-chart";
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
+import { LocationChart } from "@/components/location/table-chart";
+import { truncateText, upperFirst } from "@/lib/utils";
+import { Location } from "@/types/location";
+import { ColumnDef, Row } from "@tanstack/react-table";
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
   return <LocationChart row={row} />;
@@ -53,22 +53,7 @@ const columns: ColumnDef<Location>[] = [
     footer: (props) => props.column.id,
     header: () => null,
     cell: ({ row }) => {
-      return row.getCanExpand() ? (
-        <button
-          {...{
-            onClick: row.getToggleExpandedHandler(),
-            style: { cursor: "pointer" },
-          }}
-        >
-          {row.getIsExpanded() ? (
-            <ChevronDownIcon style={{ width: "1.2em", height: "1.2em" }} />
-          ) : (
-            <ChevronRightIcon style={{ width: "1.2em", height: "1.2em" }} />
-          )}
-        </button>
-      ) : (
-        "🔵"
-      );
+      return <DataTableColumnExpand row={row} />;
     },
     enableSorting: false,
     enableHiding: false,
