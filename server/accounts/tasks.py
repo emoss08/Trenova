@@ -16,9 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 import typing
+
 from celery_singleton import Singleton
-from backend.celery import app
+
 from accounts import models, services
+from backend.celery import app
 from core.exceptions import ServiceException
 
 if typing.TYPE_CHECKING:

@@ -16,12 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.core.exceptions import ValidationError
+from rest_framework.test import APIClient
+
 from accounts.models import User
 from dispatch.models import CommentType
-from django.core.exceptions import ValidationError
 from location import models
 from organization.models import BusinessUnit, Organization
-from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 
@@ -351,8 +352,11 @@ def test_location_contact_phone_number(
     """
 
     location_contact.phone = "1234"
-    
+
     with pytest.raises(ValidationError) as excinfo:
         location_contact.full_clean()
-        
-    assert excinfo.value.message_dict['phone'][0] == "Phone number must be in the format (xxx) xxx-xxxx"
+
+    assert (
+        excinfo.value.message_dict["phone"][0]
+        == "Phone number must be in the format (xxx) xxx-xxxx"
+    )

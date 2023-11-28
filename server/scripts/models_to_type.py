@@ -191,7 +191,7 @@ def write_ts_interface(
     Args:
         models (Dict[str, List[Tuple[str, str]]]): The dictionary containing model data.
         output_file (Path): The path where the TypeScript file will be written.
-        
+
     Returns:
         None: This function does not return anything.
 
@@ -223,7 +223,7 @@ def process_directory(
         ignore_dirs (List[str]): A list of directory names to ignore.
         progress (Progress): Rich library's progress display object.
         task: The current progress task.
-        
+
     Returns:
         None: This function does not return anything.
     """

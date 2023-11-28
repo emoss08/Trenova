@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any, override
 
-from location import helpers, models
 from rest_framework import serializers
+
+from location import helpers, models
 from utils.serializers import GenericSerializer
 
 
@@ -107,7 +108,10 @@ class LocationSerializer(GenericSerializer):
             "location_contacts",
             "location_color",
         )
-        extra_read_only_fields = ("organization", "business_unit",)
+        extra_read_only_fields = (
+            "organization",
+            "business_unit",
+        )
 
     def create(self, validated_data: Any) -> models.Location:
         """Create a new instance of the Location model with given validated data.
@@ -131,7 +135,7 @@ class LocationSerializer(GenericSerializer):
 
         # Get the user from the request.
         user = self.context["request"].user
-        
+
         # Popped data (comments, contacts)
         location_comments_data = validated_data.pop("location_comments", [])
         location_contacts_data = validated_data.pop("location_contacts", [])
