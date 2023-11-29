@@ -32,18 +32,35 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
+import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
 import { Link } from "react-router-dom";
 import { LinksComponent } from "./nav-links";
-import { useHeaderStore } from "@/stores/HeaderStore";
 
-// Type Definitions
-type PermissionType = string;
+type Permission = string | undefined;
+
+interface SubLink {
+  label: string;
+  link: string;
+  permission?: Permission;
+  description: string;
+}
+
+interface MainLink extends Omit<SubLink, "link" | "description"> {
+  link?: string;
+  subLinks?: SubLink[];
+}
+
+interface MainItem {
+  links: MainLink[];
+}
+
+type MenuContent = React.ReactNode | MainItem[];
 
 type MenuData = {
   menuKey: string;
   label: string;
-  permission?: PermissionType;
+  permission?: Permission;
   content?: React.ReactNode;
   link?: string;
 };
@@ -53,61 +70,43 @@ type NavigationMenuItemProps = {
   setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
 
-type SubLink = {
-  label: string;
-  link: string;
-  permission?: string;
-  description: string;
-};
+// Utility Functions
+const hasPermission = (
+  item: { permission?: Permission },
+  userHasPermission: (permission: string) => boolean,
+): boolean => !item.permission || userHasPermission(item.permission);
 
-type MainLink = {
-  label: string;
-  link?: string;
-  permission?: string;
-  description: string;
-  subLinks?: SubLink[];
-};
-
-type MainItem = {
-  links: MainLink[];
-};
-
-/**
- * Check if user has access to the provided menu content.
- */
-const userHasAccessToMenuContent = (
-  content: React.ReactNode,
+const userHasAccessToContent = (
+  content: MenuContent,
   userHasPermission: (permission: string) => boolean,
   isAdmin: boolean,
 ): boolean => {
   if (isAdmin) return true;
 
-  if (React.isValidElement(content) && content.type === LinksComponent) {
-    const linkData = content.props.linkData as MainItem[];
-
-    return linkData.some((mainItem) =>
-      mainItem.links.some((subItem) => {
-        if (subItem.subLinks && !subItem.permission) {
-          return subItem.subLinks.some(
-            (link) => !link.permission || userHasPermission(link.permission),
-          );
-        }
-        return !subItem.permission || userHasPermission(subItem.permission);
-      }),
+  if (Array.isArray(content)) {
+    return content.some((mainItem) =>
+      mainItem.links.some(
+        (link) =>
+          hasPermission(link, userHasPermission) &&
+          (!link.subLinks ||
+            link.subLinks.some((subLink) =>
+              hasPermission(subLink, userHasPermission),
+            )),
+      ),
     );
   }
-  return false;
+  return true;
 };
 
+// NavigationMenuItemWithPermission Component
 const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> =
   React.memo(({ data, setMenuOpen }) => {
     const { userHasPermission, isAdmin } = useUserPermissions();
 
-    if (data.permission && !userHasPermission(data.permission)) {
-      return null;
-    }
-
-    if (!userHasAccessToMenuContent(data.content, userHasPermission, isAdmin)) {
+    if (
+      !hasPermission(data, userHasPermission) ||
+      !userHasAccessToContent(data.content, userHasPermission, isAdmin)
+    ) {
       return null;
     }
 
@@ -162,7 +161,7 @@ export function NavMenu() {
       menuKey: "AdminMenu",
       label: "Administrator",
       link: "/admin",
-      permission: "view_admin",
+      permission: "admin.view_admin_dashboard",
     },
   ];
 
