@@ -29,7 +29,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { Input } from "@/components/common/fields/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -38,6 +41,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useUserPermissions } from "@/context/user-permissions";
+import axios from "@/lib/axiosConfig";
+import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useTableStore as store } from "@/stores/TableStore";
 import { ApiResponse } from "@/types/server";
@@ -46,21 +52,16 @@ import {
   DataTableProps,
   FilterConfig,
 } from "@/types/tables";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Plus, X } from "lucide-react";
 import React, { Fragment } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { DataTableFacetedFilter } from "./data-table-faceted-filter";
-import { Button } from "@/components/ui/button";
-import { DataTableViewOptions } from "./data-table-view-options";
-import { Input } from "@/components/common/fields/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DataTablePagination } from "./data-table-pagination";
 import {
   DataTableImportExportOption,
   TableExportModal,
 } from "./data-table-export-modal";
-import { API_URL } from "@/lib/constants";
-import axios from "@/lib/axiosConfig";
+import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { DataTablePagination } from "./data-table-pagination";
+import { DataTableViewOptions } from "./data-table-view-options";
 
 function DataTableFacetedFilterList<TData>({
   table,
@@ -91,13 +92,19 @@ function DataTableTopBar<K>({
   selectedRowCount,
   filterColumn,
   tableFacetedFilters,
+  addPermissionName,
 }: {
   table: TableType<K>;
   name: string;
   selectedRowCount: number;
   filterColumn: string;
   tableFacetedFilters?: FilterConfig<K>[];
+  addPermissionName: string;
 }) {
+  const { userHasPermission } = useUserPermissions();
+
+  console.log("userhaspermission", userHasPermission(addPermissionName));
+
   const buttonConfig: {
     label: string;
     variant:
@@ -155,13 +162,15 @@ function DataTableTopBar<K>({
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
         <DataTableViewOptions table={table} />
         <DataTableImportExportOption />
-        <Button
-          variant={buttonVariant}
-          onClick={() => store.set("sheetOpen", true)}
-          className="h-8"
-        >
-          <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
-        </Button>
+        {userHasPermission(addPermissionName) && (
+          <Button
+            variant={buttonVariant}
+            onClick={() => store.set("sheetOpen", true)}
+            className="h-8"
+          >
+            <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -180,6 +189,7 @@ export function DataTable<K extends Record<string, any>>({
   exportModelName,
   renderSubComponent,
   getRowCanExpand,
+  addPermissionName,
 }: DataTableProps<K>) {
   const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
@@ -240,7 +250,7 @@ export function DataTable<K extends Record<string, any>>({
   const table = useReactTable({
     data: placeholderData,
     columns: displayColumns,
-    getRowCanExpand,
+    getRowCanExpand: getRowCanExpand,
     pageCount: dataQuery.data ? Math.ceil(dataQuery.data.count / pageSize) : -1,
     state: {
       pagination: pagination,
@@ -292,6 +302,7 @@ export function DataTable<K extends Record<string, any>>({
             filterColumn={filterColumn}
             selectedRowCount={selectedRowCount}
             tableFacetedFilters={tableFacetedFilters}
+            addPermissionName={addPermissionName}
           />
           <div className="rounded-md border">
             <Table>
@@ -341,7 +352,7 @@ export function DataTable<K extends Record<string, any>>({
                       {row.getIsExpanded() && (
                         <tr>
                           <td colSpan={row.getVisibleCells().length}>
-                            {renderSubComponent({ row })}
+                            {renderSubComponent && renderSubComponent({ row })}
                           </td>
                         </tr>
                       )}
