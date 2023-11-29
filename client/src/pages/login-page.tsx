@@ -45,7 +45,7 @@ function UserAuthForm() {
   const [, setUserDetails] = useUserStore.use("user");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  const { control, handleSubmit } = useForm<LoginFormValues>({
+  const { control, handleSubmit, setError } = useForm<LoginFormValues>({
     resolver: yupResolver<LoginFormValues>(userAuthSchema),
   });
 
@@ -79,7 +79,16 @@ function UserAuthForm() {
     } catch (error: any) {
       if (error.response) {
         const { data } = error.response;
-        console.error(data);
+        data.errors.forEach((error: any) => {
+          setError("username", {
+            type: error.code,
+            message: error.detail,
+          });
+          setError("password", {
+            type: error.code,
+            message: error.detail,
+          });
+        });
       }
     } finally {
       setIsLoading(false);
@@ -145,7 +154,7 @@ function UserAuthForm() {
 }
 
 export default function LoginPage() {
-  const [isAuthenticated, _] = useAuthStore(
+  const [isAuthenticated] = useAuthStore(
     (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
       state.isAuthenticated,
       state.setIsAuthenticated,
