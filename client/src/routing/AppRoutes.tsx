@@ -65,6 +65,7 @@ const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCode"));
 const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
 const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
+const WorkerPage = lazy(() => import("../pages/worker/Worker"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -107,7 +108,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/admin/users",
     description: "Manage users and their permissions",
     element: <UserManagementPage />,
-    permission: "admin.users.view",
+    permission: "view_all_users",
   },
   {
     title: "Control Files",
@@ -134,7 +135,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/division-codes",
     description: "Manage division codes",
     element: <DivisionCodesPage />,
-    permission: "accounting.view_divisioncode",
+    permission: "view_divisioncode",
   },
   {
     title: "Revenue Codes",
@@ -143,7 +144,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/revenue-codes",
     description: "Manage revenue codes",
     element: <RevenueCodesPage />,
-    permission: "accounting.view_revenuecode",
+    permission: "view_revenuecode",
   },
   {
     title: "General Ledger Accounts",
@@ -152,7 +153,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounting/gl-accounts",
     description: "Manage general ledger accounts",
     element: <GLAccountsPage />,
-    permission: "accounting.view_generalledgeraccount",
+    permission: "view_generalledgeraccount",
   },
   // Accounts Pages
   {
@@ -162,7 +163,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/accounts/job-titles",
     description: "Manage job titles",
     element: <JobTitlePage />,
-    permission: "accounts.view_jobtitle",
+    permission: "view_jobtitle",
   },
   // Billing Pages
   {
@@ -172,7 +173,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/charge-types",
     description: "Manage charge types",
     element: <ChargeTypePage />,
-    permission: "billing.view_chargetype",
+    permission: "view_chargetype",
   },
   {
     title: "Accessorial Charges",
@@ -181,7 +182,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/accessorial-charges",
     description: "Manage accessorial charges",
     element: <AccessorialChargePage />,
-    permission: "billing.view_accessorialcharge",
+    permission: "view_accessorialcharge",
   },
   {
     title: "Billing Client",
@@ -189,7 +190,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/client",
     description: "Your efficient partner for end-to-end billing management",
     element: <BillingClientPage />,
-    permission: "billing.use_billing_client",
+    permission: "use_billing_client",
   },
   // Commodities Pages
   {
@@ -199,7 +200,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/commodities/hazardous-material",
     description: "Manage hazardous materials",
     element: <HazardousMaterialPage />,
-    permission: "commodities.view_hazardousmaterial",
+    permission: "view_hazardousmaterial",
   },
   {
     title: "Commodities",
@@ -208,7 +209,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/commodities/",
     description: "Manage commodities",
     element: <CommodityPage />,
-    permission: "commodities.view_commodity",
+    permission: "view_commodity",
   },
   // Customer Page
   {
@@ -227,7 +228,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/view/:id",
     description: "View customer",
     element: <ViewCustomerPage />,
-    permission: "customer.view_customer",
+    permission: "view_customer",
   },
   {
     title: "Edit Customer",
@@ -236,7 +237,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/edit/:id",
     description: "Edit customer",
     element: <EditCustomerPage />,
-    permission: "customer.view_customer",
+    permission: "view_customer",
   },
   // Dispatch pages
   {
@@ -246,7 +247,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/delay-codes/",
     description: "Delay Codes",
     element: <DelayCodePage />,
-    permission: "dispatch.view_delaycode",
+    permission: "view_delaycode",
   },
   {
     title: "Fleet Codes",
@@ -255,7 +256,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/fleet-codes/",
     description: "Fleet Codes",
     element: <FleetCodePage />,
-    permission: "dispatch.view_fleetcode",
+    permission: "view_fleetcode",
   },
   {
     title: "Comment Types",
@@ -264,7 +265,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/comment-types/",
     description: "Comment Types",
     element: <CommentTypePage />,
-    permission: "dispatch.view_commenttype",
+    permission: "view_commenttype",
   },
   {
     title: "Rate Management",
@@ -272,7 +273,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/rate-management/",
     description: "Rate Management",
     element: <RatePage />,
-    permission: "dispatch.view_rate",
+    permission: "view_rate",
   },
   {
     title: "Location Categories",
@@ -280,7 +281,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/location-categories/",
     description: "Location Categories",
     element: <LocationCategoryPage />,
-    permission: "location.view_locationcategory",
+    permission: "view_locationcategory",
   },
   {
     title: "Equipment Types",
@@ -289,7 +290,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/equipment/equipment-types/",
     description: "Equipment Types",
     element: <EquipmentTypePage />,
-    permission: "equipment.view_equipmenttype",
+    permission: "view_equipmenttype",
   },
   {
     title: "Equipment Manufacturer",
@@ -298,7 +299,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/equipment/equipment-manufacturers/",
     description: "Equipment Manufacturer",
     element: <EquipmentManufacturerPage />,
-    permission: "equipment.view_equipmentmanufacturer",
+    permission: "view_equipmentmanufacturer",
   },
   {
     title: "Locations",
@@ -307,7 +308,16 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/locations/",
     description: "Locations",
     element: <LocationPage />,
-    permission: "location.view_location",
+    permission: "view_location",
+  },
+  {
+    title: "Workers",
+    group: "dispatch",
+    subMenu: "configuration files",
+    path: "/dispatch/workers/",
+    description: "Workers",
+    element: <WorkerPage />,
+    permission: "view_worker",
   },
   // Shipment Pages
   {
@@ -317,7 +327,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/shipment-management/service-types/",
     description: "Service Types",
     element: <ServiceTypePage />,
-    permission: "shipment.view_servicetype",
+    permission: "view_servicetype",
   },
   {
     title: "Shipment Type",
@@ -326,7 +336,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/shipment-management/shipment-types/",
     description: "Shipment Types",
     element: <ShipmentTypePage />,
-    permission: "shipment.view_shipmenttype",
+    permission: "view_shipmenttype",
   },
   {
     title: "Reason Code",
@@ -335,7 +345,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/shipment-management/reason-codes/",
     description: "Reason Codes",
     element: <ReasonCodePage />,
-    permission: "shipment.view_reasoncode",
+    permission: "view_reasoncode",
   },
   // Stop Pages
   {
@@ -345,7 +355,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/shipment-management/qualifier-codes/",
     description: "Qualifier Codes",
     element: <QualifierCodePage />,
-    permission: "stops.view_qualifiercode",
+    permission: "view_qualifiercode",
   },
   // Error Page
   {
