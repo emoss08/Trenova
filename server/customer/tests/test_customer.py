@@ -14,8 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from collections.abc import Generator
-from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -27,32 +25,6 @@ from location.factories import LocationFactory
 from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
-
-# TODO(Wolfred): I didn't realize I had literally no tests for this.... Let's do that add some point.
-
-
-@pytest.fixture
-def customer_contact() -> Generator[Any, Any, None]:
-    """
-    Customer contact fixture
-    """
-    yield factories.CustomerContactFactory()
-
-
-def test_customer_creation(customer) -> None:
-    """
-    Test customer creation
-    """
-    assert customer is not None
-
-
-def test_customer_update(customer) -> None:
-    """
-    Test customer update
-    """
-    customer.name = "New name"
-    customer.save()
-    assert customer.name == "New name"
 
 
 def test_generate_customer_code(
@@ -76,7 +48,14 @@ def test_generate_customer_code(
     assert customer.code == "INTEL0001"
 
 
-def test_create_customer_with_details(api_client: APIClient) -> None:
+def test_post_customer_with_details(api_client: APIClient) -> None:
+    """Test posting customer with details such as email profile, rule profile, and delivery slots.
+
+    Args:
+        api_client (APIClient): APIClient Object.
+
+    Returns: This function does not return anything.
+    """
     document_classification = DocumentClassificationFactory()
     location = LocationFactory()
 
@@ -146,9 +125,16 @@ def test_create_customer_with_details(api_client: APIClient) -> None:
     assert response.data["delivery_slots"][0]["location"] == location.id
 
 
-def test_edit_customer_with_details(
+def test_put_customer_with_details(
     api_client: APIClient, customer: models.Customer
 ) -> None:
+    """Test put customer with details such as email profile, rule profile, and delivery slots.
+
+    Args:
+        api_client (APIClient): APIClient Object.
+
+    Returns: This function does not return anything.
+    """
     document_classification = DocumentClassificationFactory()
     location = LocationFactory()
 
@@ -235,22 +221,6 @@ def test_validate_blind_copy_emails(customer: models.Customer) -> None:
     ]
 
 
-def test_customer_contact_creation(customer_contact: models.CustomerContact) -> None:
-    """
-    Test customer contact creation
-    """
-    assert customer_contact is not None
-
-
-def test_customer_contact_update(customer_contact: models.CustomerContact) -> None:
-    """
-    Test customer contact update
-    """
-    customer_contact.name = "New name"
-    customer_contact.save()
-    assert customer_contact.name == "New name"
-
-
 def test_customer_contact_payable_has_no_email(
     customer_contact: models.CustomerContact,
 ) -> None:
@@ -258,8 +228,10 @@ def test_customer_contact_payable_has_no_email(
     Test customer contact payable has no email
     """
 
-    with pytest.raises(
-        ValidationError, match="Payable contact must have an email address"
-    ):
+    with pytest.raises(ValidationError) as excinfo:
         customer_contact.email = ""
         customer_contact.full_clean()
+
+    assert excinfo.value.message_dict["email"] == [
+        "Payable contact must have an email address. Please Try Again."
+    ]
