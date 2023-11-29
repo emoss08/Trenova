@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ModeToggle } from "@/components/ui/theme-switcher";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/accounts";
@@ -80,11 +80,7 @@ function UserAuthForm() {
       if (error.response) {
         const { data } = error.response;
         data.errors.forEach((error: any) => {
-          setError("username", {
-            type: error.code,
-            message: error.detail,
-          });
-          setError("password", {
+          setError(error.attr, {
             type: error.code,
             message: error.detail,
           });

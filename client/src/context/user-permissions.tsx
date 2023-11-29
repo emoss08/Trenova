@@ -17,12 +17,12 @@
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import React, { useContext } from "react";
 
-interface UserPermissionsContextType {
+export type UserPermissionsContextType = {
   isAuthenticated: boolean;
   isAdmin: boolean;
   permissions: string[];
   userHasPermission: (permission: string) => boolean;
-}
+};
 
 const UserPermissionsContext =
   React.createContext<UserPermissionsContextType | null>(null);
