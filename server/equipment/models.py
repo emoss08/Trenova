@@ -23,10 +23,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField
-
 from equipment.validators import us_vin_number_validator
+from localflavor.us.models import USStateField
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 from worker.models import Worker
 
@@ -527,6 +527,8 @@ class Trailer(GenericModel):
     Stores information about a piece of Trailer for a :model:`organization.Organization`.
     """
 
+
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -571,7 +573,7 @@ class Trailer(GenericModel):
     )
     year = models.PositiveIntegerField(
         _("Year"),
-        default=0,
+        default=timezone.now().year,
         help_text=_("Year of the trailer."),
     )
     vin_number = models.CharField(
