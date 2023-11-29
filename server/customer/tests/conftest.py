@@ -30,3 +30,11 @@ def customer() -> Generator[Any, Any, None]:
     Customer fixture
     """
     yield factories.CustomerFactory()
+
+
+@pytest.fixture
+def customer_contact() -> Generator[Any, Any, None]:
+    """
+    Customer contact fixture
+    """
+    yield factories.CustomerContactFactory()
