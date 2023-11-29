@@ -17,7 +17,9 @@
 
 import {
   ColumnDef,
-  flexRender,
+  ColumnFilter,
+  ColumnFiltersState,
+  ColumnSort,
   getCoreRowModel,
   getExpandedRowModel,
   getFacetedRowModel,
@@ -25,155 +27,117 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  Table as TableType,
+  OnChangeFn,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
   useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
+import React, { SetStateAction } from "react";
 
-import { Input } from "@/components/common/fields/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table } from "@/components/ui/table";
 import { useUserPermissions } from "@/context/user-permissions";
 import axios from "@/lib/axiosConfig";
 import { API_URL } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { useTableStore as store } from "@/stores/TableStore";
 import { ApiResponse } from "@/types/server";
-import {
-  DataTableFacetedFilterListProps,
-  DataTableProps,
-  FilterConfig,
-} from "@/types/tables";
+import { DataTableProps } from "@/types/tables";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Plus, X } from "lucide-react";
-import React, { Fragment } from "react";
-import {
-  DataTableImportExportOption,
-  TableExportModal,
-} from "./data-table-export-modal";
-import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { AlertTriangle } from "lucide-react";
+import { DataTableBody } from "./data-table-body";
+import { TableExportModal } from "./data-table-export-modal";
+import { DataTableHeader, DataTableTopBar } from "./data-table-header";
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableViewOptions } from "./data-table-view-options";
 
-function DataTableFacetedFilterList<TData>({
-  table,
-  filters,
-}: DataTableFacetedFilterListProps<TData>) {
-  return (
-    <>
-      {filters.map((filter) => {
-        const column = table.getColumn(filter.columnName as string);
-        return (
-          column && (
-            <DataTableFacetedFilter
-              key={filter.columnName as string}
-              column={column}
-              title={filter.title}
-              options={filter.options}
-            />
-          )
-        );
-      })}
-    </>
-  );
+// Define the structure of the state managed by the hook
+interface DataTableState<K> {
+  pagination: { pageIndex: number; pageSize: number };
+  setPagination: OnChangeFn<PaginationState>;
+  rowSelection: Record<string, boolean>;
+  setRowSelection: OnChangeFn<RowSelectionState>;
+  currentRecord?: K;
+  setCurrentRecord: (currentRecord: K | null) => void;
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: OnChangeFn<VisibilityState>;
+  columnFilters: ColumnFilter[];
+  setColumnFilters: (value: SetStateAction<ColumnFiltersState>) => void;
+  sorting: ColumnSort[];
+  setSorting: (value: SetStateAction<SortingState>) => void;
+  drawerOpen: boolean;
+  setDrawerOpen: (drawerOpen: boolean) => void;
+  editDrawerOpen: boolean;
+  setEditDrawerOpen: (editDrawerOpen: boolean) => void;
 }
 
-function DataTableTopBar<K>({
-  table,
-  name,
-  selectedRowCount,
-  filterColumn,
-  tableFacetedFilters,
-  addPermissionName,
-}: {
-  table: TableType<K>;
-  name: string;
-  selectedRowCount: number;
-  filterColumn: string;
-  tableFacetedFilters?: FilterConfig<K>[];
-  addPermissionName: string;
-}) {
-  const { userHasPermission } = useUserPermissions();
+// Custom hook for managing DataTable state
+function useDataTableState<K>(): DataTableState<K> {
+  const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
+  const [rowSelection, setRowSelection] = store.use("rowSelection");
+  const [currentRecord, setCurrentRecord] = store.use("currentRecord");
+  const [columnVisibility, setColumnVisibility] = store.use("columnVisibility");
+  const [columnFilters, setColumnFilters] = store.use("columnFilters");
+  const [sorting, setSorting] = store.use("sorting");
+  const [drawerOpen, setDrawerOpen] = store.use("sheetOpen");
+  const [editDrawerOpen, setEditDrawerOpen] = store.use("editSheetOpen");
 
-  console.log("userhaspermission", userHasPermission(addPermissionName));
+  return {
+    pagination: { pageIndex, pageSize },
+    setPagination,
+    rowSelection,
+    setRowSelection,
+    currentRecord,
+    setCurrentRecord,
+    columnVisibility,
+    setColumnVisibility,
+    columnFilters,
+    setColumnFilters,
+    sorting,
+    setSorting,
+    drawerOpen,
+    setDrawerOpen,
+    editDrawerOpen,
+    setEditDrawerOpen,
+  };
+}
 
-  const buttonConfig: {
-    label: string;
-    variant:
-      | "default"
-      | "destructive"
-      | "outline"
-      | "secondary"
-      | "ghost"
-      | "link"
-      | "blue";
-  } =
-    selectedRowCount > 0
-      ? {
-          label: `Inactivate ${selectedRowCount} records`,
-          variant: "destructive",
-        }
-      : {
-          label: `Add New ${name}`,
-          variant: "default",
-        };
+// Custom hook for data fetching
+function useDataTableQuery<K>(
+  queryKey: string,
+  link: string,
+  pageIndex: number,
+  pageSize: number,
+  extraSearchParams?: Record<string, any>,
+) {
+  return useQuery<ApiResponse<K>, Error>({
+    queryKey: [queryKey, link, pageIndex, pageSize, extraSearchParams],
+    queryFn: () => fetchData<K>(link, pageIndex, pageSize, extraSearchParams),
+  });
+}
 
-  const { label: buttonLabel, variant: buttonVariant } = buttonConfig;
-  const isFiltered = table.getState().columnFilters.length > 0;
+// Separate function for the fetch logic
+async function fetchData<K>(
+  link: string,
+  pageIndex: number,
+  pageSize: number,
+  extraSearchParams?: Record<string, any>,
+): Promise<ApiResponse<K>> {
+  const fetchURL = new URL(`${API_URL}${link}`);
+  fetchURL.searchParams.set("limit", pageSize.toString());
+  fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
+  if (extraSearchParams) {
+    Object.entries(extraSearchParams).forEach(([key, value]) =>
+      fetchURL.searchParams.set(key, value),
+    );
+  }
 
-  return (
-    <div className="flex flex-col sm:flex-row justify-between">
-      <div className="flex-1 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mr-2">
-        <Input
-          placeholder="Filter..."
-          value={
-            (table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn(filterColumn)?.setFilterValue(event.target.value)
-          }
-          className="w-full lg:w-[250px] h-8"
-        />
-        {tableFacetedFilters && (
-          <DataTableFacetedFilterList
-            table={table}
-            filters={tableFacetedFilters}
-          />
-        )}
-        {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
-            Reset
-            <X className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </div>
-      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
-        <DataTableViewOptions table={table} />
-        <DataTableImportExportOption />
-        {userHasPermission(addPermissionName) && (
-          <Button
-            variant={buttonVariant}
-            onClick={() => store.set("sheetOpen", true)}
-            className="h-8"
-          >
-            <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+  const response = await axios.get<ApiResponse<K>>(fetchURL.href);
+  if (response.status !== 200) {
+    throw new Error("Failed to fetch data from server");
+  }
+  return response.data;
 }
 
 export function DataTable<K extends Record<string, any>>({
@@ -191,41 +155,41 @@ export function DataTable<K extends Record<string, any>>({
   getRowCanExpand,
   addPermissionName,
 }: DataTableProps<K>) {
-  const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
-  const [rowSelection, setRowSelection] = store.use("rowSelection");
-  const [currentRecord, setCurrentRecord] = store.use("currentRecord");
-  const [columnVisibility, setColumnVisibility] = store.use("columnVisibility");
-  const [columnFilters, setColumnFilters] = store.use("columnFilters");
-  const [sorting, setSorting] = store.use("sorting");
-  const [drawerOpen, setDrawerOpen] = store.use("sheetOpen");
-  const [editDrawerOpen, setEditDrawerOpen] = store.use("editSheetOpen");
+  const {
+    pagination,
+    setPagination,
+    rowSelection,
+    setRowSelection,
+    currentRecord,
+    setCurrentRecord,
+    columnVisibility,
+    setColumnVisibility,
+    columnFilters,
+    setColumnFilters,
+    sorting,
+    setSorting,
+    drawerOpen,
+    setDrawerOpen,
+    editDrawerOpen,
+    setEditDrawerOpen,
+  } = useDataTableState<K>();
 
-  const dataQuery = useQuery<ApiResponse<K>, Error>({
-    queryKey: [queryKey, link, pageIndex, pageSize, extraSearchParams],
-    queryFn: async () => {
-      const fetchURL = new URL(`${API_URL}${link}`);
-      fetchURL.searchParams.set("limit", pageSize.toString());
-      fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
-      if (extraSearchParams) {
-        Object.entries(extraSearchParams).forEach(([key, value]) =>
-          fetchURL.searchParams.set(key, value),
-        );
-      }
+  const { userHasPermission } = useUserPermissions();
 
-      const response = await axios.get(fetchURL.href);
-      if (response.status !== 200) {
-        throw new Error("Failed to fetch data from server");
-      }
-      return response.data;
-    },
-  });
+  const dataQuery = useDataTableQuery(
+    queryKey,
+    link,
+    pagination.pageIndex,
+    pagination.pageSize,
+    extraSearchParams,
+  );
 
-  const placeholderData: K[] = React.useMemo(
+  const placeholderData: unknown[] = React.useMemo(
     () =>
       dataQuery.isLoading
-        ? Array.from({ length: pageSize }, () => ({}) as K)
+        ? Array.from({ length: pagination.pageSize }, () => ({}) as K)
         : dataQuery.data?.results || [],
-    [dataQuery.isLoading, dataQuery.data, pageSize],
+    [dataQuery.isLoading, dataQuery.data, pagination.pageSize],
   );
 
   const displayColumns: ColumnDef<K>[] = React.useMemo(
@@ -239,21 +203,23 @@ export function DataTable<K extends Record<string, any>>({
     [dataQuery.isLoading, columns],
   );
 
-  const pagination = React.useMemo(
+  const paginationState = React.useMemo(
     () => ({
-      pageIndex,
-      pageSize,
+      pageIndex: pagination.pageIndex,
+      pageSize: pagination.pageSize,
     }),
-    [pageIndex, pageSize],
+    [pagination.pageIndex, pagination.pageSize],
   );
 
   const table = useReactTable({
-    data: placeholderData,
+    data: placeholderData as K[],
     columns: displayColumns,
     getRowCanExpand: getRowCanExpand,
-    pageCount: dataQuery.data ? Math.ceil(dataQuery.data.count / pageSize) : -1,
+    pageCount: dataQuery.data
+      ? Math.ceil(dataQuery.data.count / pagination.pageSize)
+      : -1,
     state: {
-      pagination: pagination,
+      pagination: paginationState,
       sorting,
       columnVisibility,
       rowSelection,
@@ -303,72 +269,19 @@ export function DataTable<K extends Record<string, any>>({
             selectedRowCount={selectedRowCount}
             tableFacetedFilters={tableFacetedFilters}
             addPermissionName={addPermissionName}
+            userHasPermission={userHasPermission}
+            store={store}
           />
           <div className="rounded-md border">
             <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <Fragment key={row.id}>
-                      <TableRow
-                        data-state={row.getIsSelected() && "selected"}
-                        className={row.getIsExpanded() ? "bg-muted/40" : ""}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className={cn("cursor-pointer")}
-                            onDoubleClick={() => {
-                              setCurrentRecord(row.original);
-                              setEditDrawerOpen(true);
-                            }}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                      {/* Expanded row */}
-                      {row.getIsExpanded() && (
-                        <tr>
-                          <td colSpan={row.getVisibleCells().length}>
-                            {renderSubComponent && renderSubComponent({ row })}
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No data available to display.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+              <DataTableHeader table={table} />
+              <DataTableBody
+                columns={columns}
+                setCurrentRecord={setCurrentRecord}
+                setEditDrawerOpen={setEditDrawerOpen}
+                table={table}
+                renderSubComponent={renderSubComponent}
+              />
             </Table>
           </div>
           <DataTablePagination table={table} pagination={pagination} />
