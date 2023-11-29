@@ -258,14 +258,14 @@ export const shipmentNavLinks = [
           {
             label: "Movements",
             link: "/shipment-management/movements/",
-            permission: "movements.view_movement",
+            permission: "view_movement",
             description:
               "Organize and classify different types of shipment movements. Key for planning and optimizing logistical routes and schedules.",
           },
           {
             label: "Qualifier Codes",
             link: "/shipment-management/qualifier-codes/",
-            permission: "stops.view_qualifiercode",
+            permission: "view_qualifiercode",
             description:
               "Manage codes that qualify different aspects of shipments. These codes are crucial for detailed categorization and analysis of shipment attributes.",
           },
