@@ -34,8 +34,6 @@ export const UserPermissionsProvider: React.FC<{
   const isAdmin = useUserStore.get("user").userIsStaff;
   const permissions = useUserStore.get("user").userPermissions || [];
 
-  console.info("userPermissions", permissions);
-
   const userHasPermission = (permission: string) =>
     isAdmin || permissions.includes(permission);
 
