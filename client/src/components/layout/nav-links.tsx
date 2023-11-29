@@ -16,11 +16,10 @@
  */
 
 import { useUserPermissions } from "@/context/user-permissions";
+import { useHeaderStore } from "@/stores/HeaderStore";
 import { ChevronsLeftIcon } from "lucide-react";
 import React, { useState } from "react";
 import { ListItem } from "./links-group";
-import { useHeaderStore } from "@/stores/HeaderStore";
-// Type Definitions
 
 /**
  * Definition for individual link data.
@@ -84,32 +83,25 @@ const SingleLink: React.FC<{
 export function LinksComponent({ linkData }: LinksComponentProps) {
   const [activeSubLinks, setActiveSubLinks] = useState<LinkData[] | null>(null);
   const { userHasPermission } = useUserPermissions();
-  // Checks if user has permission to any of the subLinks
-  const userHasSubLinkPermission = (subLinks: LinkData[]): boolean =>
-    subLinks.some(
-      (subLink) => !subLink.permission || userHasPermission(subLink.permission),
-    );
 
   // Handler for the back click, to navigate back from sublinks
   const handleBackClick = () => setActiveSubLinks(null);
 
-  // Filter and map link data to permitted links
-  const permittedLinks = linkData.flatMap((mainItem) =>
-    mainItem.links.flatMap((subItem) => {
-      if (subItem.permission && !userHasPermission(subItem.permission)) {
-        return [];
-      }
-      if (subItem.subLinks && !userHasSubLinkPermission(subItem.subLinks)) {
-        return [];
-      }
-      return (
-        <SingleLink
-          key={subItem.label}
-          subItem={subItem}
-          setActiveSubLinks={setActiveSubLinks}
-        />
-      );
-    }),
+  // The SingleLink component should only be rendered if permissions allow
+  const renderSingleLink = (subItem: LinkData) => {
+    if (subItem.permission && !userHasPermission(subItem.permission)) {
+      return null;
+    }
+    return (
+      <li key={subItem.label}>
+        <SingleLink subItem={subItem} setActiveSubLinks={setActiveSubLinks} />
+      </li>
+    );
+  };
+
+  // Map link data to permitted links, ensuring no empty <li> elements are created
+  const permittedLinks = linkData.flatMap(
+    (mainItem) => mainItem.links.map(renderSingleLink).filter(Boolean), // Filter out null values
   );
 
   return (
@@ -128,18 +120,22 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
           >
             <ChevronsLeftIcon className="w-5 h-5" />
           </button>
-          {activeSubLinks.map((subLink) => (
-            <li key={subLink.label}>
-              <ListItem
-                onClick={() => useHeaderStore.set("menuOpen", undefined)}
-                title={subLink.label}
-                to={subLink.link}
-                permission={subLink.permission}
-              >
-                {subLink.description}
-              </ListItem>
-            </li>
-          ))}
+          {activeSubLinks.map((subLink) => {
+            if (subLink.permission && !userHasPermission(subLink.permission)) {
+              return null; // Don't render the list item if permission is not granted
+            }
+            return (
+              <li key={subLink.label}>
+                <ListItem
+                  onClick={() => useHeaderStore.set("menuOpen", undefined)}
+                  title={subLink.label}
+                  to={subLink.link}
+                >
+                  {subLink.description}
+                </ListItem>
+              </li>
+            );
+          })}
         </>
       )}
     </ul>

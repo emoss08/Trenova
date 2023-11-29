@@ -22,14 +22,14 @@ export const billingNavLinks = [
       {
         label: "Billing Client",
         link: "/billing/client/",
-        permission: "billing.billing.use_billing_client",
+        permission: "billing.use_billing_client",
         description:
           "This module enables the generation and dispatch of invoices to customers efficiently. It streamlines the billing cycle, ensuring timely and accurate invoicing, and supports various billing formats tailored to customer needs.",
       },
       {
         label: "Billing Control",
         link: "/admin/control-files#billing-controls/",
-        permission: "billing.view_billingcontrol",
+        permission: "view_billingcontrol",
         description:
           "Provides comprehensive control over the entire billing process. This includes setting billing parameters, managing billing cycles, and ensuring compliance with financial regulations.",
       },
@@ -42,42 +42,42 @@ export const billingNavLinks = [
           {
             label: "Charge Types",
             link: "/billing/charge-types/",
-            permission: "billing.view_chargetype",
+            permission: "view_chargetype",
             description:
               "Categorize and manage different types of charges. This facilitates accurate billing and reporting by distinguishing between various charge categories.",
           },
           {
             label: "Division Codes",
             link: "/accounting/division-codes/",
-            permission: "accounting.view_divisioncode",
+            permission: "view_divisioncode",
             description:
               "Use these codes to segment charges and revenue by business divisions. This classification aids in detailed financial analysis and budgeting at the division level.",
           },
           {
             label: "GL Accounts",
             link: "/accounting/gl-accounts/",
-            permission: "accounting.view_generalledgeraccount",
+            permission: "view_generalledgeraccount",
             description:
               "Manage and categorize revenue in the General Ledger. Essential for accurate financial reporting and analysis, ensuring clear visibility into revenue streams.",
           },
           {
             label: "Revenue Codes",
             link: "/accounting/revenue-codes/",
-            permission: "accounting.view_revenuecode",
+            permission: "view_revenuecode",
             description:
               "Classify revenue sources for detailed financial tracking and analysis. These codes help in understanding revenue patterns and making informed financial decisions.",
           },
           {
             label: "Accessorial Charges",
             link: "/billing/accessorial-charges/",
-            permission: "billing.view_accessorialcharge",
+            permission: "view_accessorialcharge",
             description:
               "Define and manage additional charges associated with transportation services. This includes detention, layover, and other incidental charges.",
           },
           {
             label: "Customers",
             link: "/billing/customers/",
-            permission: "customer.view_customer",
+            permission: "view_customer",
             description:
               "Manage customer-related data and categorize billing information. Essential for personalized billing management and maintaining accurate customer financial records.",
           },
@@ -94,7 +94,7 @@ export const dispatchNavLinks = [
       {
         label: "Rate Management",
         link: "/dispatch/rate-management/",
-        permission: "dispatch.view_rate",
+        permission: "view_rate",
         description:
           "This module allows for the comprehensive management of freight and transportation rates. It includes features for setting, adjusting, and analyzing rates, ensuring competitive pricing and operational efficiency.",
       },
@@ -107,49 +107,49 @@ export const dispatchNavLinks = [
           {
             label: "Comment Type",
             link: "/dispatch/comment-types/",
-            permission: "dispatch.view_commenttype",
+            permission: "view_commenttype",
             description:
               "Categorize and manage different types of operational comments. This aids in streamlining communication and documenting specific details related to dispatch activities.",
           },
           {
             label: "Delay Codes",
             link: "/dispatch/delay-codes/",
-            permission: "dispatch.view_delaycode",
+            permission: "view_delaycode",
             description:
               "Identify and categorize various types of delays encountered during dispatch operations. Essential for analyzing and mitigating operational disruptions.",
           },
           {
             label: "Fleet Codes",
             link: "/dispatch/fleet-codes/",
-            permission: "dispatch.view_fleetcode",
+            permission: "view_fleetcode",
             description:
               "Organize and classify different fleet segments. Facilitates efficient fleet management and helps in tracking and analyzing fleet performance.",
           },
           {
             label: "Locations",
             link: "/dispatch/locations/",
-            permission: "location.view_location",
+            permission: "view_location",
             description:
               "Manage and categorize operational locations, including depots, warehouses, and delivery points. Crucial for route planning and logistical coordination.",
           },
           {
             label: "Routes",
             link: "/dispatch/routes/",
-            permission: "route.view_route",
+            permission: "view_route",
             description:
               "Define and categorize various transportation routes. Supports strategic route planning and optimization for enhanced delivery efficiency.",
           },
           {
             label: "Route Control",
             link: "/admin/control-files#route-controls",
-            permission: "route.view_routecontrol",
+            permission: "view_routecontrol",
             description:
               "Manage and control route configurations, ensuring adherence to predefined operational and safety standards. Key for maintaining consistency in route planning.",
           },
           {
             label: "Location Categories",
             link: "/dispatch/location-categories/",
-            permission: "location.view_locationcategory",
+            permission: "view_locationcategory",
             description:
               "Segment locations into distinct categories for better logistical planning. Helps in tailoring operations to specific location characteristics and requirements.",
           },
@@ -166,7 +166,7 @@ export const equipmentNavLinks = [
       {
         label: "Equipment Maintenance Plan",
         link: "#",
-        permission: "equipment.view_equipmentmaintenanceplan",
+        permission: "view_equipmentmaintenanceplan",
         description:
           "This section facilitates the creation and management of comprehensive maintenance schedules for various equipment. It enables precise tracking and proactive maintenance activities, ensuring optimal equipment performance and longevity.",
       },
@@ -179,28 +179,28 @@ export const equipmentNavLinks = [
           {
             label: "Equipment Types",
             link: "/equipment/equipment-types/",
-            permission: "equipment.view_equipmenttype",
+            permission: "view_equipmenttype",
             description:
               "Define and manage the different categories of equipment. This classification system aids in streamlining maintenance protocols and inventory management based on equipment types.",
           },
           {
             label: "Equipment Manufacturers",
             link: "/equipment/equipment-manufacturers/",
-            permission: "equipment.view_equipmentmanufacturer",
+            permission: "view_equipmentmanufacturer",
             description:
               "Organize and view equipment based on their manufacturers. This section helps in aligning maintenance strategies with specific manufacturer guidelines and specifications.",
           },
           {
             label: "Tractor",
             link: "/equipment/tractor/",
-            permission: "equipment.view_tractor",
+            permission: "view_tractor",
             description:
               "Dedicated section for managing and categorizing tractors. It includes detailed information and specific maintenance guidelines tailored to tractors, enhancing their operational efficiency.",
           },
           {
             label: "Trailer",
             link: "/equipment/trailer/",
-            permission: "equipment.view_trailer",
+            permission: "view_trailer",
             description:
               "Focuses on the management and classification of trailers. This part of the system provides specialized maintenance schedules and operational details specific to different types of trailers.",
           },
@@ -217,14 +217,14 @@ export const shipmentNavLinks = [
       {
         label: "Shipment Management",
         link: "/shipment-management/",
-        permission: "shipment.view_shipment",
+        permission: "view_shipment",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
       },
       {
         label: "Shipment Controls",
         link: "/admin/control-files#order-controls/",
-        permission: "shipment.view_shipmentcontrol",
+        permission: "view_shipmentcontrol",
         description:
           "Gain control over the shipment process with customizable settings and rules. This section allows for the fine-tuning of shipment operations, ensuring compliance with logistical standards and customer expectations.",
       },
@@ -237,21 +237,21 @@ export const shipmentNavLinks = [
           {
             label: "Formula Templates",
             link: "/order/formula-template/",
-            permission: "shipment.view_formulatemplate",
+            permission: "view_formulatemplate",
             description:
               "Create and manage formula templates for calculating shipment-related metrics. Essential for automating and standardizing complex calculations in the shipment process.",
           },
           {
             label: "Shipment Types",
             link: "/shipment-management/shipment-types/",
-            permission: "shipment.view_shipmenttype",
+            permission: "view_shipmenttype",
             description:
               "Categorize shipments into distinct types for better management and tracking. This helps in tailoring operations to the specific requirements of different shipment categories.",
           },
           {
             label: "Service Types",
             link: "/shipment-management/service-types/",
-            permission: "shipment.view_servicetype",
+            permission: "view_servicetype",
             description:
               "Define and manage various service types offered in the shipping process. Facilitates customized service offerings and helps in aligning services with customer needs.",
           },
@@ -272,7 +272,7 @@ export const shipmentNavLinks = [
           {
             label: "Reason Codes",
             link: "/shipment-management/reason-codes/",
-            permission: "shipment.view_reasoncode",
+            permission: "view_reasoncode",
             description:
               "Categorize and document different reasons related to shipment processes, such as delays or modifications. Essential for analyzing operational challenges and implementing improvements.",
           },
