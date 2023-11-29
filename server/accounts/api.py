@@ -16,28 +16,20 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
+from accounts import models, serializers
+from accounts.models import CustomGroup
+from accounts.permissions import ViewAllUsersPermission
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.permissions import CustomObjectPermissions
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Permission
 from django.db.models import Prefetch, QuerySet
 from django.utils import timezone
-from rest_framework import (
-    exceptions,
-    generics,
-    permissions,
-    response,
-    status,
-    views,
-    viewsets,
-)
+from rest_framework import (exceptions, generics, permissions, response,
+                            status, views, viewsets)
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
-
-from accounts import models, serializers
-from accounts.models import CustomGroup
-from accounts.permissions import ViewAllUsersPermission
-from core.permissions import CustomObjectPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -377,6 +369,7 @@ class TokenProvisionView(ObtainAuthToken):
             A Response object containing a success message in case of
             successful login, and a status code of OK(200).
         """
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]

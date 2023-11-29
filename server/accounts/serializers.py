@@ -17,14 +17,14 @@
 
 from typing import Any, override
 
-from django.contrib.auth import authenticate, password_validation
+from accounts import models, tasks
+from django.contrib.auth import (authenticate, get_user_model,
+                                 password_validation)
 from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
-from rest_framework import serializers
-
-from accounts import models, tasks
 from organization.models import Organization
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -718,21 +718,46 @@ class TokenProvisionSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs: Any) -> Any:
-        """Validate the data
+        """Validates the provided attributes for user authentication.
+
+        This method checks if the provided username exists in the database. If the username does not exist,
+        it raises a ValidationError with a message indicating that the username does not exist.
+
+        If the username exists, it attempts to authenticate the user using the provided password. If the
+        authentication fails, it raises a ValidationError with a message indicating that the password is incorrect.
+
+        If the authentication is successful, it adds the authenticated user to the attributes dictionary and returns it.
+
         Args:
-            attrs (Any): Data to validate
+            attrs (dict): A dictionary of attributes where the keys are attribute names and the values are attribute values.
+                        It should contain 'username' and 'password' keys.
+
         Returns:
-            Any
+            dict: The original dictionary of attributes with the authenticated user added under the 'user' key.
+
+        Raises:
+            ValidationError: If the username does not exist or the password is incorrect.
         """
+
         username = attrs.get("username")
         password = attrs.get("password")
 
-        user = authenticate(username=username, password=password)
-
-        if not user:
+        # Check if the user exists
+        try:
+            models.User.objects.get(username=username)
+        except models.User.DoesNotExist as exc:
             raise serializers.ValidationError(
-                "User with the given credentials does not exist. Please try again.",
-                code="authorization",
+                {"username": "Username does not exist. Please try again."},
+                code="username_not_found",
+            ) from exc
+
+        # Authenticate the user
+        auth_user = authenticate(username=username, password=password)
+        if auth_user is None:
+            raise serializers.ValidationError(
+                {"password": "Password is incorrect. Please try again."},
+                code="incorrect_password",
             )
-        attrs["user"] = user
+
+        attrs["user"] = auth_user
         return attrs
