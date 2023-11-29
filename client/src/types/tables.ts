@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { Column, ColumnDef, Row, Table } from "@tanstack/react-table";
+import React from "react";
 import { QueryKeys } from "./index";
 import { API_ENDPOINTS } from "./server";
 
@@ -40,9 +40,10 @@ export type DataTableProps<K> = {
   TableSheet?: React.ComponentType<TableSheetProps>;
   TableEditSheet?: React.ComponentType<TableSheetProps>;
   exportModelName: string;
-  getRowCanExpand: (row: Row<K>) => boolean;
-  renderSubComponent: (props: { row: Row<K> }) => React.ReactElement;
+  getRowCanExpand?: (row: Row<K>) => boolean;
+  renderSubComponent?: (props: { row: Row<K> }) => React.ReactElement;
   extraSearchParams?: Record<string, any>;
+  addPermissionName: string;
 };
 
 export type TableSheetProps = {
