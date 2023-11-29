@@ -21,13 +21,9 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    GroupManager,
-    Permission,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        GroupManager, Permission,
+                                        PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models
@@ -37,7 +33,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
-
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
@@ -126,6 +121,49 @@ class CustomPermissionMixin(PermissionsMixin):
         """
 
         abstract = True
+
+    def get_all_permissions(self, obj=None):
+        """
+        Returns a set of permission strings that the user has from their groups.
+        """
+        # Get the custom groups associated with the user
+        custom_groups = self.groups.all()
+
+        # Get the permissions associated with the custom group
+        group_permissions = Permission.objects.filter(customgroup__in=custom_groups)
+
+        # Get the permissions associated with the user
+        user_permissions = Permission.objects.filter(user=self)
+
+        # Combine the permissions
+        permissions = group_permissions.union(user_permissions)
+
+        # Return the permissions
+        return set(permissions.values_list("codename", flat=True).order_by())
+
+    def has_perm(self, perm, obj=None):
+        """
+        Returns True if the user has the specified permission, where perm
+        is in the format "app_label.permission_codename".
+        """
+        # Superuser has all permissions
+        if self.is_superuser:
+            return True
+
+        # Split the permission string
+        app_label, codename = perm.split(".")
+
+        # Check permissions directly associated with the user
+        if self.user_permissions.filter(
+            codename=codename, content_type__app_label=app_label
+        ).exists():
+            return True
+
+        # Check permissions associated with the user's custom groups
+        return self.groups.filter(
+            permissions__codename=codename,
+            permissions__content_type__app_label=app_label,
+        ).exists()
 
 
 class UserManager(BaseUserManager):
@@ -272,7 +310,6 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         null=True,
         help_text=_("Stores the current session key."),
     )
-
     objects = UserManager()
 
     # To get around `Unresolved Attribute` problem with AbstractBaseUser, we have to
@@ -292,7 +329,7 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         db_table = "user"
-        permissions = [("admin.users.view", "Can view all users")]
+        permissions = [("accounts.view_all_users", "Can view all users")]
 
     def __str__(self) -> str:
         """
