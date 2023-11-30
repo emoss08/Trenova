@@ -77,11 +77,13 @@ towards strategic milestones, all without the added weight of extra manpower or 
 - [Django](https://www.djangoproject.com/)
 - [Django Rest Framework](https://www.django-rest-framework.org/)
 - [PostgreSQL](https://www.postgresql.org/)
-- [Kafka](https://kafka.apache.org/)
-- [Zookeeper](https://zookeeper.apache.org/)
+- [Apache Kafka](https://kafka.apache.org/)
+- [ApacheZookeeper](https://zookeeper.apache.org/)
 - [Debezium](https://debezium.io/)
 - [Redis](https://redis.io/)
 - [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
+- [RabbitMQ](https://www.rabbitmq.com/)
+- [Apache Arrow](https://arrow.apache.org/)
 
 ### License and Disclaimer
 
