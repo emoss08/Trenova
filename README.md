@@ -85,24 +85,6 @@ towards strategic milestones, all without the added weight of extra manpower or 
 - [RabbitMQ](https://www.rabbitmq.com/)
 - [Apache Arrow](https://arrow.apache.org/)
 
-### License and Disclaimer
-
-#### Notice:
-
-Monta Suite by Monta Technologies, LLC operates under the "Business Source License," a trademark of MariaDB Corporation Ab. This is not an Open Source license.
-
-Licensing Details:
-
-    Licensor: Monta Technologies, LLC
-    Licensed Work: Monta Suite © 2023 Monta Technologies, LLC
-    Additional Use Grant: Use the Licensed Work with fewer than three server instances for any purpose.
-    Change Date: 2026-11-16
-    Change License: GNU General Public License, Version 2 or later.
-
-If you don't comply with the terms of this License, you must either purchase a commercial license or refrain from using the Licensed Work. Violating the License terms automatically terminates your rights to use Monta Suite.
-
-For alternative licensing or commercial licenses, please visit: https://werewlf.com/pricing/.
-
 #### Disclaimers:
 
 Monta Suite is provided “AS IS” without warranties of any kind, express or implied.
