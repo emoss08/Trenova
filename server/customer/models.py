@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from billing.models import AccessorialCharge, DocumentClassification
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
@@ -28,9 +29,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
+from utils.models import (CharWeekdays, ChoiceField, GenericModel,
+                          PrimaryStatusChoices)
 
 
 @final
@@ -77,7 +77,6 @@ class Customer(GenericModel):
         _("Address Line 1"),
         max_length=150,
         help_text=_("Address line 1"),
-        blank=True,
     )
     address_line_2 = models.CharField(
         _("Address Line 2"),
@@ -89,17 +88,14 @@ class Customer(GenericModel):
         _("City"),
         max_length=150,
         help_text=_("City"),
-        blank=True,
     )
     state = USStateField(
         _("State"),
         help_text=_("State"),
-        blank=True,
     )
     zip_code = USZipCodeField(
         _("Zip Code"),
         help_text=_("Zip code"),
-        blank=True,
     )
     has_customer_portal = models.BooleanField(
         _("Has Customer Portal?"),
