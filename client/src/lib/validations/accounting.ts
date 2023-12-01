@@ -15,15 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import { StatusChoiceProps } from "@/types";
 import {
   AccountingControlFormValues,
   DivisionCodeFormValues,
-  GLAccountFormValues,
-  RevenueCodeFormValues,
+  RevenueCodeFormValues
 } from "@/types/accounting";
-import { StatusChoiceProps } from "@/types";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
@@ -43,8 +42,8 @@ export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
     revenueAccount: Yup.string().notRequired(),
   });
 
-export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
   Yup.object().shape({
+    export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     accountNumber: Yup.string()
       .required("Account number is required")
