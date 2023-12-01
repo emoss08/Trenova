@@ -15,15 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useLogout } from "@/hooks/useLogout";
-import { ThemeOptions } from "@/types";
-import { User } from "@/types/accounts";
-import { AvatarImage } from "@radix-ui/react-avatar";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useTheme } from "@/components/ui/theme-provider";
-import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +29,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/components/ui/theme-provider";
 import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
+import { useLogout } from "@/hooks/useLogout";
+import { ThemeOptions } from "@/types";
+import { User } from "@/types/accounts";
+import { AvatarImage } from "@radix-ui/react-avatar";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -45,19 +45,8 @@ type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
 
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
   ({ user, ...props }, ref) => (
-    <Avatar
-      ref={ref}
-      {...props}
-      className="focus:outline-none"
-      style={{
-        outline: "none",
-      }}
-    >
-      <AvatarImage
-        className="w-full h-full rounded-full"
-        src={user.profile?.thumbnail}
-        alt={user.username}
-      />
+    <Avatar ref={ref} {...props} className="hover:cursor-pointer">
+      <AvatarImage src={user.profile?.thumbnail} alt={user.username} />
       <AvatarFallback>
         {user.profile?.firstName.charAt(0)}
         {user.profile?.lastName.charAt(0)}
@@ -181,9 +170,9 @@ function UserAvatarMenuContent({ user }: { user: User }) {
 
 export function UserAvatarMenu({ user }: { user: User }) {
   return (
-    <div className="hidden md:flex flex-1 items-center justify-between space-x-2 md:justify-end">
+    <div className="hidden md:flex flex-1 items-center justify-between space-x-2 md:justify-end focus-visible:outline-none">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <UserAvatar user={user} />
         </DropdownMenuTrigger>
         <UserAvatarMenuContent user={user} />
