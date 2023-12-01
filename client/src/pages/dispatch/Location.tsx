@@ -128,6 +128,7 @@ export default function Locations() {
       TableEditSheet={LocationTableEditSheet}
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
+      addPermissionName="add_location"
     />
   );
 }
