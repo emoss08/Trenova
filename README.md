@@ -74,11 +74,11 @@ towards strategic milestones, all without the added weight of extra manpower or 
 ### Backend Technologies
 
 - [Python](https://www.python.org/)
-- [Django](https://www.djangoproject.com/)
+- [Django](https://wzww.djangoproject.com/)
 - [Django Rest Framework](https://www.django-rest-framework.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Apache Kafka](https://kafka.apache.org/)
-- [ApacheZookeeper](https://zookeeper.apache.org/)
+- [Apache Zookeeper](https://zookeeper.apache.org/)
 - [Debezium](https://debezium.io/)
 - [Redis](https://redis.io/)
 - [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
