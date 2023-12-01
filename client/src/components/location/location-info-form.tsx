@@ -17,7 +17,11 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { useLocationCategories, useUSStates } from "@/hooks/useQueries";
+import {
+  useDepots,
+  useLocationCategories,
+  useUSStates,
+} from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
 import { LocationFormValues as FormValues } from "@/types/location";
 import { Control } from "react-hook-form";
@@ -32,6 +36,12 @@ export function LocationInfoForm({
 }) {
   const { selectLocationCategories, isError, isLoading } =
     useLocationCategories();
+
+  const {
+    selectDepots,
+    isError: isDepotError,
+    isLoading: isDepotsLoading,
+  } = useDepots(open);
 
   const {
     selectUSStates,
@@ -110,9 +120,9 @@ export function LocationInfoForm({
               name="depot"
               control={control}
               label="Depot"
-              options={selectLocationCategories}
-              isFetchError={isError}
-              isLoading={isLoading}
+              options={selectDepots}
+              isFetchError={isDepotError}
+              isLoading={isDepotsLoading}
               placeholder="Select Depot"
               description="Select the depot or main hub that this location is associated with."
             />
