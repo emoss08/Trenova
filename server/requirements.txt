@@ -28,7 +28,6 @@ django-silk==5.0.4
 django-stubs-ext==4.2.5
 djangorestframework~=3.14.0
 djangorestframework-camel-case==1.4.2
-drf-nested-routers==0.93.4
 drf-spectacular==0.26.5
 drf-standardized-errors[openapi]==0.12.6
 geopy==2.4.1
@@ -51,3 +50,4 @@ rich==13.7.0
 sympy==1.12
 weasyprint==60.1
 whitenoise==6.6.0
+pyarrow==14.0.*

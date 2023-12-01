@@ -19,7 +19,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from customer import helpers, models, selectors
+from customer import helpers, models
 from utils.serializers import GenericSerializer
 
 
@@ -266,6 +266,9 @@ class CustomerSerializer(GenericSerializer):
     rule_profile = CustomerRuleProfileSerializer(required=False)
     delivery_slots = DeliverySlotSerializer(many=True, required=False)
     customer_contacts = CustomerContactSerializer(many=True, required=False)
+    last_ship_date = serializers.DateField(required=False, allow_null=True)
+    last_bill_date = serializers.DateField(required=False, allow_null=True)
+    total_shipments = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         """
@@ -278,6 +281,9 @@ class CustomerSerializer(GenericSerializer):
             "rule_profile",
             "delivery_slots",
             "customer_contacts",
+            "last_ship_date",
+            "last_bill_date",
+            "total_shipments",
         )
 
     def validate_code(self, value: str) -> str:
@@ -314,42 +320,42 @@ class CustomerSerializer(GenericSerializer):
 
         return value
 
-    def to_representation(self, instance: models.Customer) -> dict[str, Any]:
-        """Override the `to_representation` method to provide a custom representation of Customer Instance.
+    # def to_representation(self, instance: models.Customer) -> dict[str, Any]:
+    #     """Override the `to_representation` method to provide a custom representation of Customer Instance.
 
-        Args:
-            instance (models.Customer): An instance of the Customer model.
+    #     Args:
+    #         instance (models.Customer): An instance of the Customer model.
 
-        Returns:
-            dict[str, Any]: A customized dictionary representation of the customer instance.
-        """
+    #     Returns:
+    #         dict[str, Any]: A customized dictionary representation of the customer instance.
+    #     """
 
-        data = super().to_representation(instance)
-        data["full_address"] = instance.get_address_combination
-        data["advocate_full_name"] = (
-            instance.advocate.profile.get_full_name if instance.advocate else None
-        )
+    #     data = super().to_representation(instance)
+    #     data["full_address"] = instance.get_address_combination
+    #     data["advocate_full_name"] = (
+    #         instance.advocate.profile.get_full_name if instance.advocate else None
+    #     )
 
-        if self.context["request"].query_params.get("expand_metrics", False):
-            data["total_shipment_metrics"] = selectors.get_customer_shipments_diff(
-                customer_id=instance.id
-            )
-            data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(
-                customer_id=instance.id
-            )
-            data[
-                "on_time_performance"
-            ] = selectors.get_customer_on_time_performance_diff(customer_id=instance.id)
-            data["total_mileage_metrics"] = selectors.calculate_customer_total_miles(
-                customer_id=instance.id
-            )
-            data["customer_shipment_metrics"] = selectors.get_customer_shipment_metrics(
-                customer_id=instance.id
-            )
-            data["credit_balance"] = selectors.get_customer_credit_balance(
-                customer_id=instance.id
-            )
-        return data
+    #     if self.context["request"].query_params.get("expand_metrics", False):
+    #         data["total_shipment_metrics"] = selectors.get_customer_shipments_diff(
+    #             customer_id=instance.id
+    #         )
+    #         data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(
+    #             customer_id=instance.id
+    #         )
+    #         data[
+    #             "on_time_performance"
+    #         ] = selectors.get_customer_on_time_performance_diff(customer_id=instance.id)
+    #         data["total_mileage_metrics"] = selectors.calculate_customer_total_miles(
+    #             customer_id=instance.id
+    #         )
+    #         data["customer_shipment_metrics"] = selectors.get_customer_shipment_metrics(
+    #             customer_id=instance.id
+    #         )
+    #         data["credit_balance"] = selectors.get_customer_credit_balance(
+    #             customer_id=instance.id
+    #         )
+    #     return data
 
     def create(self, validated_data: Any) -> models.Customer:
         """Create a new instance of the Customer model with given validated data.
