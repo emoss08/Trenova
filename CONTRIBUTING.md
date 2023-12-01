@@ -24,7 +24,7 @@ We are committed to maintaining a welcoming and inclusive community at Monta. Ou
 - Docker is essential for setting up the development environment.
 
 ### Setting Up the Development Environment
-1. **Clone the Repository**: 
+1. **Clone the Repository**:
    ```bash
    git clone https://github.com/emoss08/Monta.git
    cd monta
