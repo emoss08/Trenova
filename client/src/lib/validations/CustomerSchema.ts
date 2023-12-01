@@ -15,43 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ObjectSchema } from "yup";
-import * as Yup from "yup";
+import { StatusChoiceProps, TDayOfWeekChoiceProps } from "@/types";
 import {
-  StatusChoiceProps,
-  TDayOfWeekChoiceProps,
-  YesNoChoiceProps,
-} from "@/types";
-import {
-  CreateCustomerFormValues,
   CustomerContactFormValues,
   CustomerEmailProfileFormValues,
   CustomerFormValues,
   CustomerRuleProfileFormValues,
   DeliverySlotFormValues,
 } from "@/types/customer";
-
-/** Customer Schema */
-export const customerSchema: ObjectSchema<CustomerFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    code: Yup.string().required("Code is required"),
-    name: Yup.string().required("Name is required"),
-    addressLine1: Yup.string().notRequired(),
-    addressLine2: Yup.string().notRequired(),
-    city: Yup.string().notRequired(),
-    state: Yup.string().notRequired(),
-    zipCode: Yup.string().notRequired(),
-    hasCustomerPortal: Yup.string<YesNoChoiceProps>().required(
-      "Has Customer Portal is required",
-    ),
-    autoMarkReadyToBill: Yup.string<YesNoChoiceProps>().required(
-      "Auto Mark Ready to Bill is required",
-    ),
-  });
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 
 /** Customer Email Profile Schema */
-export const CustomerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
+export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
   Yup.object().shape({
     subject: Yup.string().notRequired().max(100),
     comment: Yup.string().notRequired().max(100),
@@ -66,7 +42,7 @@ export const CustomerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
     attachmentName: Yup.string().notRequired(),
   });
 
-export const CustomerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
+export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
   Yup.object().shape({
     name: Yup.string().required("Name is required"),
     customer: Yup.string().required("Customer is required"),
@@ -76,17 +52,48 @@ export const CustomerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValu
       .required("Document Class is required"),
   });
 
-const DeliverySlotSchema: ObjectSchema<DeliverySlotFormValues> =
+const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
   Yup.object().shape({
     dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
       "Day of Week is required",
     ),
-    startTime: Yup.string().required("Start Time is required"),
-    endTime: Yup.string().required("End Time is required"),
+    startTime: Yup.string()
+      .required("Start Time is required")
+      .test(
+        "is-before-end-time",
+        "Start Time must be before End Time",
+        function (value) {
+          const { endTime } = this.parent;
+          if (value && endTime) {
+            const [startHours, startMinutes] = value.split(":").map(Number);
+            const [endHours, endMinutes] = endTime.split(":").map(Number);
+            const startDate = new Date(0, 0, 0, startHours, startMinutes);
+            const endDate = new Date(0, 0, 0, endHours, endMinutes);
+            return startDate < endDate;
+          }
+          return true;
+        },
+      ),
+    endTime: Yup.string()
+      .required("End Time is required")
+      .test(
+        "is-after-start-time",
+        "End Time must be after Start Time",
+        function (value) {
+          const { startTime } = this.parent;
+          if (value && startTime) {
+            const [startHours, startMinutes] = startTime.split(":").map(Number);
+            const [endHours, endMinutes] = value.split(":").map(Number);
+            const startDate = new Date(0, 0, 0, startHours, startMinutes);
+            const endDate = new Date(0, 0, 0, endHours, endMinutes);
+            return endDate > startDate;
+          }
+          return true;
+        },
+      ),
     location: Yup.string().required("Location is required"),
   });
-
-const CustomerContactSchema: ObjectSchema<CustomerContactFormValues> =
+const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
   Yup.object().shape({
     isActive: Yup.boolean().required(),
     name: Yup.string().required("Name is required"),
@@ -96,76 +103,22 @@ const CustomerContactSchema: ObjectSchema<CustomerContactFormValues> =
     isPayableContact: Yup.boolean().required(),
   });
 
-export const CreateCustomerSchema: ObjectSchema<CreateCustomerFormValues> =
+/** Customer Schema */
+export const customerSchema: ObjectSchema<CustomerFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    code: Yup.string().required("Code is required"),
     name: Yup.string().required("Name is required"),
     addressLine1: Yup.string().notRequired(),
     addressLine2: Yup.string().notRequired(),
     city: Yup.string().notRequired(),
     state: Yup.string().notRequired(),
     zipCode: Yup.string().notRequired(),
-    hasCustomerPortal: Yup.string<YesNoChoiceProps>().required(
-      "Has Customer Portal is required",
-    ),
-    autoMarkReadyToBill: Yup.string<YesNoChoiceProps>().required(
-      "Auto Mark Ready to Bill is required",
-    ),
+    hasCustomerPortal: Yup.boolean(),
+    autoMarkReadyToBill: Yup.boolean(),
     advocate: Yup.string().notRequired(),
-    deliverySlots: Yup.array().of(DeliverySlotSchema).notRequired(),
-    emailProfile: Yup.object().shape({
-      subject: Yup.string().notRequired().max(100),
-      comment: Yup.string().notRequired().max(100),
-      fromAddress: Yup.string().email("Invalid email address").notRequired(),
-      blindCopy: Yup.string()
-        .notRequired()
-        .test("is-valid-emails", "Invalid email or list of emails", (value) => {
-          if (!value) return true; // Skip validation if empty
-          return value
-            .split(",")
-            .every((email) => Yup.string().email().isValidSync(email.trim()));
-        }),
-      readReceipt: Yup.boolean().required(),
-      readReceiptTo: Yup.string().when("readReceipt", {
-        is: true,
-        then: (schema) =>
-          schema
-            .required("Read Receipt To is required")
-            .test(
-              "is-valid-emails",
-              "Invalid email or list of emails",
-              (value) => {
-                if (!value) return false; // Mandatory if readReceipt is true
-                return value
-                  .split(",")
-                  .every((email) =>
-                    Yup.string().email().isValidSync(email.trim()),
-                  );
-              },
-            ),
-        // make sure it is a comma email or list of emails regardless
-        otherwise: (schema) =>
-          schema.test(
-            "is-valid-emails",
-            "Invalid email or list of emails",
-            (value) => {
-              if (!value) return true; // Skip validation if empty
-              return value
-                .split(",")
-                .every((email) =>
-                  Yup.string().email().isValidSync(email.trim()),
-                );
-            },
-          ),
-      }),
-      attachmentName: Yup.string().notRequired(),
-    }),
-    ruleProfile: Yup.object().shape({
-      name: Yup.string().required("Name is required"),
-      documentClass: Yup.array()
-        .of(Yup.string().required())
-        .min(1, "At Least one document class is required.")
-        .required(),
-    }),
-    customerContacts: Yup.array().of(CustomerContactSchema).notRequired(),
+    deliverySlots: Yup.array().of(deliverySlotSchema).notRequired(),
+    customerContacts: Yup.array().of(customerContactSchema).notRequired(),
+    ruleProfile: customerRuleProfileSchema.notRequired(),
+    emailProfile: customerEmailProfileSchema.notRequired(),
   });
