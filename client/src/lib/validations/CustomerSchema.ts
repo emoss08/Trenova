@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ObjectSchema } from "yup";
-import * as Yup from "yup";
 import {
   StatusChoiceProps,
   TDayOfWeekChoiceProps,
@@ -30,6 +28,8 @@ import {
   CustomerRuleProfileFormValues,
   DeliverySlotFormValues,
 } from "@/types/customer";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 
 /** Customer Schema */
 export const customerSchema: ObjectSchema<CustomerFormValues> =
@@ -100,17 +100,13 @@ export const CreateCustomerSchema: ObjectSchema<CreateCustomerFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string().required("Name is required"),
-    addressLine1: Yup.string().notRequired(),
+    addressLine1: Yup.string().required("Address Line 1 is required"),
     addressLine2: Yup.string().notRequired(),
-    city: Yup.string().notRequired(),
-    state: Yup.string().notRequired(),
-    zipCode: Yup.string().notRequired(),
-    hasCustomerPortal: Yup.string<YesNoChoiceProps>().required(
-      "Has Customer Portal is required",
-    ),
-    autoMarkReadyToBill: Yup.string<YesNoChoiceProps>().required(
-      "Auto Mark Ready to Bill is required",
-    ),
+    city: Yup.string().required("City is required"),
+    state: Yup.string().required("State is required"),
+    zipCode: Yup.string().required("Zip Code is required"),
+    hasCustomerPortal: Yup.boolean(),
+    autoMarkReadyToBill: Yup.boolean(),
     advocate: Yup.string().notRequired(),
     deliverySlots: Yup.array().of(DeliverySlotSchema).notRequired(),
     emailProfile: Yup.object().shape({
