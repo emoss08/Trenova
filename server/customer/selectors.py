@@ -438,11 +438,6 @@ def get_customer_shipment_metrics(
     last_bill_date = aggregated_dates["last_bill_date"]
     last_shipment_date = aggregated_dates["last_shipment_date"]
 
-    if last_bill_date:
-        last_bill_date = last_bill_date.strftime("%b %d, %Y")
-    if last_shipment_date:
-        last_shipment_date = last_shipment_date.strftime("%b %d, %Y")
-
     return {
         "last_bill_date": last_bill_date,
         "last_shipment_date": last_shipment_date,

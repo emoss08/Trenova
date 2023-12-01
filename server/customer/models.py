@@ -19,7 +19,6 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from billing.models import AccessorialCharge, DocumentClassification
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
@@ -29,8 +28,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-from utils.models import (CharWeekdays, ChoiceField, GenericModel,
-                          PrimaryStatusChoices)
+
+from billing.models import AccessorialCharge, DocumentClassification
+from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 @final
