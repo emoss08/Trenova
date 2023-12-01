@@ -40,6 +40,7 @@ import {
   getUSStates,
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
+import { getDepots } from "@/services/OrganizationRequestService";
 import { getUserDetails, getUsers } from "@/services/UserRequestService";
 import { QueryKeys } from "@/types";
 import {
@@ -55,6 +56,7 @@ import { CommentType } from "@/types/dispatch";
 import { EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory } from "@/types/location";
 import { ShipmentType } from "@/types/order";
+import { Depot } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
@@ -466,4 +468,24 @@ export function useCommentTypes(show?: boolean) {
     })) || [];
 
   return { selectCommentTypes, isError, isLoading };
+}
+
+export function useDepots(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["depots"] as QueryKeys[],
+    queryFn: async () => getDepots(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["depots"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectDepots =
+    (data as Depot[])?.map((commentType: Depot) => ({
+      value: commentType.id,
+      label: commentType.name,
+    })) || [];
+
+  return { selectDepots, isError, isLoading };
 }
