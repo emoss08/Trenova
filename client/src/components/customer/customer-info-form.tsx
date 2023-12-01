@@ -172,7 +172,6 @@ export function CustomerInfoForm({
             <SelectInput
               name="advocate"
               control={control}
-              rules={{ required: true }}
               label="Customer Advocate"
               options={selectUsersData}
               isFetchError={isUserError}
