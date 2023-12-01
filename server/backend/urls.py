@@ -15,23 +15,18 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
-from rest_framework_nested import routers
-
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
 from customer import api as customer_api
 from dispatch import api as dispatch_api
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
+                                   SpectacularSwaggerView)
 from equipment import api as equipment_api
 from integration import api as integration_api
 from invoicing import api as invoicing_api
@@ -41,6 +36,7 @@ from organization import api as org_api
 from plugin import api as plugin_api
 from reports import api as reports_api
 from reports import views as reports_views
+from rest_framework_nested import routers
 from route import api as route_api
 from shipment import api as shipment_api
 from stops import api as stops_api
@@ -80,15 +76,8 @@ router.register(
 
 # Organization Routing
 router.register(r"organizations", org_api.OrganizationViewSet, basename="organization")
-organization_router = routers.NestedSimpleRouter(
-    router, r"organizations", lookup="organizations"
-)
-# organization/<str:pk>/depots
-organization_router.register(
-    r"depots", org_api.DepotViewSet, basename="organization-depot"
-)
-# organization/<str:pk>/departments
-router.register(r"departments", org_api.DepartmentViewSet, basename="departments")
+router.register(r"depots", org_api.DepotViewSet, basename="depots")
+
 router.register(r"email_control", org_api.EmailControlViewSet, basename="email-control")
 router.register(
     r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
@@ -306,7 +295,6 @@ urlpatterns = [
     path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path("api/", include(organization_router.urls)),
     path("api/schema/", SpectacularAPIView.as_view(api_version="0.1.0"), name="schema"),
     path(
         "api/docs/",
