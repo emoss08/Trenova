@@ -41,7 +41,7 @@ export type API_ENDPOINTS =
   | "/revenue_codes/"
   | "/division_codes/"
   | "/organizations/"
-  | "/organizations/depots"
+  | "/depots/"
   | "/departments/"
   | "/email_control/"
   | "/email_profiles/"
