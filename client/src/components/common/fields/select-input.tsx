@@ -15,10 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { cn } from "@/lib/utils";
+import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { AlertTriangle } from "lucide-react";
 import React from "react";
+import {
+  Path,
+  PathValue,
+  UseControllerProps,
+  useController,
+} from "react-hook-form";
 import Select, {
   ClearIndicatorProps,
-  components,
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
@@ -27,18 +35,10 @@ import Select, {
   OptionsOrGroups,
   Props,
   ValueContainerProps,
+  components,
 } from "react-select";
-import { Label } from "./label";
-import { cn } from "@/lib/utils";
-import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { AlertTriangle } from "lucide-react";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
-import {
-  Path,
-  PathValue,
-  useController,
-  UseControllerProps,
-} from "react-hook-form";
+import { Label } from "./label";
 
 type SelectOption = {
   readonly label: string;
@@ -202,6 +202,8 @@ export function SelectInput<T extends Record<string, unknown>>(
     placeholder,
     options,
     maxOptions,
+    menuPlacement = "auto",
+    menuPosition = "absolute",
     hideSelectedOptions = false,
     ...controllerProps
   } = props;
@@ -239,8 +241,8 @@ export function SelectInput<T extends Record<string, unknown>>(
           isFetchError={isFetchError}
           formError={fieldState.error?.message}
           maxMenuHeight={200}
-          menuPlacement="auto"
-          menuPosition="absolute"
+          menuPlacement={menuPlacement}
+          menuPosition={menuPosition}
           styles={{
             input: (base) => ({
               ...base,
