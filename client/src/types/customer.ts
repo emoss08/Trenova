@@ -17,43 +17,6 @@
 
 import { StatusChoiceProps, TDayOfWeekChoiceProps } from "@/types/index";
 
-/** Customer Order Metric Type */
-type TotalOrderMetricsType = {
-  totalOrders: number;
-  lastMonthDiff: number;
-  monthBeforeLastDiff: number;
-};
-
-type TotalRevenueMetricsType = {
-  totalRevenue: number;
-  lastMonthDiff: number;
-  monthBeforeLastDiff: number;
-};
-
-type PerformanceMetricType = {
-  thisMonthOnTimePercentage: number;
-  lastMonthOnTimePercentage: number;
-  onTimeDiff: number;
-  thisMonthEarlyPercentage: number;
-  lastMonthEarlyPercentage: number;
-  earlyDiff: number;
-  thisMonthLatePercentage: number;
-  lastMonthLatePercentage: number;
-  lateDiff: number;
-};
-
-type TotalMileageMetricsType = {
-  thisMonthMiles: number;
-  lastMonthMiles: number;
-  mileageDiff: number;
-};
-
-/** Customer Shipment Metric Type */
-type CustomerShipmentMetrics = {
-  lastBillDate?: string | null;
-  lastShipmentDate?: string | null;
-};
-
 /** Customer Type */
 export type Customer = {
   id: string;
@@ -66,55 +29,31 @@ export type Customer = {
   city?: string | null;
   zipCode?: string | null;
   state?: string | null;
-  hasCustomerPortal: string;
-  autoMarkReadyToBill: string;
+  hasCustomerPortal?: boolean;
+  autoMarkReadyToBill?: boolean;
   created: string;
   modified: string;
-  customerShipmentMetrics: CustomerShipmentMetrics;
-  totalOrderMetrics: TotalOrderMetricsType;
-  totalRevenueMetrics: TotalRevenueMetricsType;
-  onTimePerformance: PerformanceMetricType;
-  totalMileageMetrics: TotalMileageMetricsType;
-  creditBalance: number;
   advocate?: string | null;
   advocateFullName?: string | null;
+  lastBillDate?: string | null;
+  lastShipDate?: string | null;
+  totalShipments?: number | null;
 };
 
-/** Customer Form Values Type */
 export type CustomerFormValues = Omit<
   Customer,
   | "id"
   | "organization"
   | "created"
   | "modified"
-  | "customerShipmentMetrics"
-  | "totalRevenueMetrics"
-  | "totalOrderMetrics"
-  | "onTimePerformance"
-  | "totalMileageMetrics"
-  | "creditBalance"
-  | "advocate"
   | "advocateFullName"
->;
-
-export type CreateCustomerFormValues = Omit<
-  Customer,
-  | "id"
-  | "code"
-  | "organization"
-  | "created"
-  | "modified"
-  | "customerShipmentMetrics"
-  | "totalRevenueMetrics"
-  | "totalOrderMetrics"
-  | "onTimePerformance"
-  | "totalMileageMetrics"
-  | "creditBalance"
-  | "advocateFullName"
+  | "lastBillDate"
+  | "lastShipDate"
+  | "totalShipments"
 > & {
-  deliverySlots?: Array<DeliverySlotFormValues> | null;
+  deliverySlots?: DeliverySlotFormValues[] | null;
+  customerContacts?: CustomerContactFormValues[] | null;
   emailProfile?: CustomerEmailProfileFormValues | null;
-  customerContacts?: Array<CustomerContactFormValues> | null;
   ruleProfile?: CustomerRuleProfileFormValues | null;
 };
 
