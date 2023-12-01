@@ -70,6 +70,12 @@ export type EmailControlFormValues = {
   rateExpirationEmailProfile?: string | null;
 };
 
+export type Depot = BaseModel & {
+  id: string;
+  name: string;
+  description?: string;
+};
+
 /** Base Monta Interface
  *
  * @note This interface is used for all Monta models that have the following fields:
@@ -80,8 +86,8 @@ export type EmailControlFormValues = {
  * Please do not put businessUnit in this interface. Add it directly to the interface that
  * extends this interface.
  * */
-export interface BaseModel {
+export type BaseModel = {
   organization: string;
   created: string;
   modified: string;
-}
+};
