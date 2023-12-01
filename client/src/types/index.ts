@@ -74,6 +74,7 @@ export type QueryKeys =
   | "division-code-table-data"
   | "divisionCodes"
   | "documentClassifications"
+  | "depots"
   | "emailControl"
   | "equipment-manufacturer-table-data"
   | "equipmentManufacturers"
@@ -112,4 +113,5 @@ export type QueryKeys =
   | "users"
   | "usStates"
   | "qualifier-code-table-data"
-  | "qualifierCodes";
+  | "qualifierCodes"
+  | "worker-table-data";
