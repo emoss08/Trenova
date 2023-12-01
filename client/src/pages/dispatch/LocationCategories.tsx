@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
-import { LocationCategory } from "@/types/location";
+import { LCTableEditDialog } from "@/components/location-categories/lc-table-edit-sheet";
 import { LCTableSheet } from "@/components/location-categories/lc-table-sheet";
 import { truncateText } from "@/lib/utils";
-import { LCTableEditDialog } from "@/components/location-categories/lc-table-edit-sheet";
+import { LocationCategory } from "@/types/location";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<LocationCategory>[] = [
   {
@@ -85,6 +85,7 @@ export default function LocationCategories() {
       filterColumn="name"
       TableSheet={LCTableSheet}
       TableEditSheet={LCTableEditDialog}
+      addPermissionName="add_locationcategory"
     />
   );
 }
