@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from billing.models import AccessorialCharge, DocumentClassification
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
@@ -28,9 +29,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
+from utils.models import (CharWeekdays, ChoiceField, GenericModel,
+                          PrimaryStatusChoices)
 
 
 @final
@@ -101,25 +101,21 @@ class Customer(GenericModel):
         help_text=_("Zip code"),
         blank=True,
     )
-    has_customer_portal = models.CharField(
+    has_customer_portal = models.BooleanField(
         _("Has Customer Portal?"),
         help_text=_(
             "Designates whether this customer has the customer portal. "
             "active or not."
         ),
-        choices=[("Y", "Yes"), ("N", "No")],
-        max_length=1,
-        default="N",
+        default=False,
     )
-    auto_mark_ready_to_bill = models.CharField(
-        _("Auto Mark Ready to Bill?"),
+    auto_mark_ready_to_bill = models.BooleanField(
+        _("Has Customer Portal?"),
         help_text=_(
-            "Designates whether to automatically mark customer shipments ready to bill. "
-            "if the shipment passes customer billing requirements."
+            "Designates whether this customer has the customer portal. "
+            "active or not."
         ),
-        choices=[("Y", "Yes"), ("N", "No")],
-        max_length=1,
-        default="N",
+        default=False,
     )
     advocate = models.ForeignKey(
         to="accounts.User",
