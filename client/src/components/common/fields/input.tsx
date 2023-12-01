@@ -18,12 +18,12 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
-import { Label } from "./label";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { Label } from "./label";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -125,6 +125,57 @@ export function FileField<T extends FieldValues>({
           )}
           onChange={(e) => {
             const value = e.target.files;
+            if (value) {
+              field.onChange(value);
+            }
+          }}
+          {...props}
+        />
+        {fieldState.error?.message && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+          </>
+        )}
+        {props.description && !fieldState.error?.message && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function TimeField<T extends FieldValues>({
+  ...props
+}: ExtendedInputProps & UseControllerProps<T>) {
+  // Forces time input to be in 24 hour format (ex: 17:00:00)
+  const { field, fieldState } = useController(props);
+
+  return (
+    <>
+      {props.label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
+          )}
+        >
+          {props.label}
+        </Label>
+      )}
+      <div className="relative">
+        <Input
+          type="time"
+          step="1" // Include this to allow seconds in the format HH:MM:SS
+          className={cn(
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            props.className,
+          )}
+          onChange={(e) => {
+            const value = e.target.value;
             if (value) {
               field.onChange(value);
             }
