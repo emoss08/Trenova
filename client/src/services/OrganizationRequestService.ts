@@ -15,19 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import axios from "@/lib/axiosConfig";
 import { JobTitle } from "@/types/accounts";
-import {
-  Department,
-  EmailControl,
-  EmailProfile,
-  Organization,
-} from "@/types/organization";
 import { BillingControl } from "@/types/billing";
 import { DispatchControl } from "@/types/dispatch";
 import { InvoiceControl } from "@/types/invoicing";
 import { ShipmentControl } from "@/types/order";
+import {
+  Department,
+  Depot,
+  EmailControl,
+  EmailProfile,
+  Organization,
+} from "@/types/organization";
 import { RouteControl } from "@/types/route";
-import axios from "@/lib/axiosConfig";
 
 /**
  * Fetches organizations from the server.
@@ -157,5 +158,14 @@ export async function getEmailControl(): Promise<EmailControl[]> {
  */
 export async function getRouteControl(): Promise<RouteControl[]> {
   const response = await axios.get("/route_control/");
+  return response.data.results;
+}
+
+/**
+ * Fetches depots from the server.
+ * @returns A promise that resolves to an array of depots.
+ */
+export async function getDepots(): Promise<Depot[]> {
+  const response = await axios.get("/depots/");
   return response.data.results;
 }
