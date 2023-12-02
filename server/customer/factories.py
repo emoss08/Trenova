@@ -33,6 +33,12 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name", locale="en_US")
+    address_line_1 = factory.Faker("street_address", locale="en_US")
+    address_line_2 = factory.Faker("secondary_address", locale="en_US")
+    city = factory.Faker("city", locale="en_US")
+    # State abbreviation
+    state = "NC"
+    zip_code = factory.Faker("zipcode", locale="en_US")
 
 
 class DocumentClassificationFactory(factory.django.DjangoModelFactory):

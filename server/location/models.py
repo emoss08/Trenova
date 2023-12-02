@@ -27,7 +27,6 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
-
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
