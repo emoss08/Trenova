@@ -18,7 +18,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from customer import factories
 
 pytestmark = pytest.mark.django_db
@@ -26,15 +25,29 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def customer() -> Generator[Any, Any, None]:
-    """
-    Customer fixture
+    """Customer fixture
+
+    Yields:
+        Generator[Any, Any, None]: Delivery Slot Factory
     """
     yield factories.CustomerFactory()
 
 
 @pytest.fixture
 def customer_contact() -> Generator[Any, Any, None]:
-    """
-    Customer contact fixture
+    """Customer contact fixture
+
+    Yields:
+        Generator[Any, Any, None]: Delivery Slot Factory
     """
     yield factories.CustomerContactFactory()
+
+
+@pytest.fixture
+def delivery_slot() -> Generator[Any, Any, None]:
+    """Delivery Slot Fixture
+
+    Yields:
+        Generator[Any, Any, None]: Delivery Slot Factory
+    """
+    yield factories.DeliverySlotFactory()
