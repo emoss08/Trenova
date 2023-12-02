@@ -63,7 +63,6 @@ const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCode"));
 const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
 const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
-const WorkerPage = lazy(() => import("../pages/worker/Worker"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -289,15 +288,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Locations",
     element: <LocationPage />,
     permission: "view_location",
-  },
-  {
-    title: "Workers",
-    group: "dispatch",
-    subMenu: "configuration files",
-    path: "/dispatch/workers/",
-    description: "Workers",
-    element: <WorkerPage />,
-    permission: "view_worker",
   },
   // Shipment Pages
   {
