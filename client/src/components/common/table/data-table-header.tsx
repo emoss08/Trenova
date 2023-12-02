@@ -20,8 +20,9 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { Table as TableType, flexRender } from "@tanstack/react-table";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
 import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
@@ -93,7 +94,7 @@ const ButtonConfig: React.FC<{
       onClick={() => store.set("sheetOpen", true)}
       className="h-8"
     >
-      <Plus className="mr-2 h-4 w-4" /> {buttonLabel}
+      <PlusIcon className="mr-2 h-4 w-4" /> {buttonLabel}
     </Button>
   );
 });
