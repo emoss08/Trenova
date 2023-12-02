@@ -22,7 +22,7 @@ export type TChoiceProps = {
 
 export type ThemeOptions = "light" | "dark" | "slate-dark" | "system";
 
-export interface IChoiceProps<T extends string> {
+export interface IChoiceProps<T extends string | boolean> {
   value: T;
   label: string;
 }
