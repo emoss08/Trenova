@@ -15,18 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { AlertTriangle } from "lucide-react";
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Path,
   PathValue,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 import Select, {
   ClearIndicatorProps,
+  components,
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
@@ -35,16 +42,23 @@ import Select, {
   OptionsOrGroups,
   Props,
   ValueContainerProps,
-  components,
 } from "react-select";
-import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { Label } from "./label";
+import CreatableSelect, { CreatableProps } from "react-select/creatable";
 
+/**
+ * Option type for the SelectInput component.
+ */
 type SelectOption = {
   readonly label: string;
   readonly value: string | boolean;
 };
 
+/**
+ * Option component for the SelectInput component.
+ * @param props {OptionProps}
+ * @constructor Option
+ */
 function Option({ ...props }: OptionProps) {
   return (
     <components.Option
@@ -59,6 +73,11 @@ function Option({ ...props }: OptionProps) {
   );
 }
 
+/**
+ * DropdownIndicator component for the SelectInput component.
+ * @param props {DropdownIndicatorProps}
+ * @constructor DropdownIndicator
+ */
 function DropdownIndicator(props: DropdownIndicatorProps) {
   return (
     <components.DropdownIndicator {...props}>
@@ -71,6 +90,11 @@ function DropdownIndicator(props: DropdownIndicatorProps) {
   );
 }
 
+/**
+ * IndicatorSeparator component for the SelectInput component.
+ * @param props {IndicatorSeparatorProps}
+ * @constructor IndicatorSeparator
+ */
 function IndicatorSeparator(props: IndicatorSeparatorProps) {
   return (
     <span
@@ -82,6 +106,11 @@ function IndicatorSeparator(props: IndicatorSeparatorProps) {
   );
 }
 
+/**
+ * ClearIndicator component for the SelectInput component.
+ * @param props {ClearIndicatorProps}
+ * @constructor ClearIndicator
+ */
 function ClearIndicator(props: ClearIndicatorProps) {
   return (
     <components.ClearIndicator {...props}>
@@ -90,6 +119,12 @@ function ClearIndicator(props: ClearIndicatorProps) {
   );
 }
 
+/**
+ * ValueContainer component for the SelectInput component.
+ * @param children {React.ReactNode}
+ * @param rest {ValueContainerProps}
+ * @constructor ValueContainer
+ */
 function ValueContainer({ children, ...rest }: ValueContainerProps) {
   const selectedCount = rest.getValue().length;
   const conditional = selectedCount < 3;
@@ -109,10 +144,21 @@ function ValueContainer({ children, ...rest }: ValueContainerProps) {
   );
 }
 
-function Description({ description }: { description: string }) {
+/**
+ * Description component for the SelectInput component.
+ * @param description {string}
+ * @constructor SelectDescription
+ */
+function SelectDescription({ description }: { description: string }) {
   return <p className="text-xs text-foreground/70">{description}</p>;
 }
 
+/**
+ * MenuList component for the SelectInput component.
+ * @param children {React.ReactNode}
+ * @param props {MenuListProps}
+ * @constructor MenuList
+ */
 function MenuList({
   children,
   ...props
@@ -131,6 +177,11 @@ function MenuList({
   );
 }
 
+/**
+ * Gets the label of the option by its value.
+ * @param value {PathValue<T, Path<T>>}
+ * @param options {OptionsOrGroups<SelectOption, GroupBase<SelectOption>>}
+ */
 function getLabelByValue<T extends Record<string, unknown>>(
   value: PathValue<T, Path<T>>,
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
@@ -139,6 +190,13 @@ function getLabelByValue<T extends Record<string, unknown>>(
   return option?.label || value;
 }
 
+/**
+ * Processes the value of the SelectInput component.
+ * @param value {PathValue<T, Path<T>>}
+ * @param options {OptionsOrGroups<SelectOption, GroupBase<SelectOption>>}
+ * @param isMulti {boolean}
+ * @constructor ValueProcessor
+ */
 function ValueProcessor<T extends Record<string, unknown>>(
   value: PathValue<T, Path<T>>,
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
@@ -160,6 +218,12 @@ function ValueProcessor<T extends Record<string, unknown>>(
   };
 }
 
+/**
+ * Error message component for the SelectInput component.
+ * @param isFetchError {boolean}
+ * @param formError {string}
+ * @constructor ErrorMessage
+ */
 function ErrorMessage({
   isFetchError,
   formError,
@@ -176,6 +240,49 @@ function ErrorMessage({
   );
 }
 
+/**
+ * Props for the ContextMenu component.
+ * @param key {string}
+ * @param icon {React.ReactNode}
+ * @param title {string}
+ * @param onClick {() => void}
+ * @constructor ContextMenuProps
+ */
+type ContextMenuProps = {
+  key: string;
+  icon?: React.ReactNode;
+  title: string;
+  onClick: () => void;
+};
+
+/**
+ * Context Menu component used in the SelectInput component.
+ * @param menuItems {ContextMenuProps[]}
+ * @constructor ContextMenu
+ * @returns {React.ReactElement}
+ */
+function ContextMenu({ menuItems }: { menuItems: ContextMenuProps[] }) {
+  return (
+    <Command className="rounded-lg border shadow-md max-h-[200px]">
+      <CommandList>
+        <CommandGroup heading="Actions">
+          {menuItems.map((item) => (
+            <CommandItem key={item.key} onClick={item.onClick}>
+              {item.icon}
+              <span>{item.title}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
+
+/**
+ * Props for the SelectInput component.
+ * @param T The type of the form object.
+ * @param K The type of the created option.
+ */
 interface SelectInputProps<T extends Record<string, unknown>>
   extends UseControllerProps<T>,
     Omit<
@@ -185,12 +292,20 @@ interface SelectInputProps<T extends Record<string, unknown>>
   label: string;
   description?: string;
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
+  hasContextMenu?: boolean;
+  contextMenuItems?: ContextMenuProps[];
 }
 
+/**
+ * A wrapper around react-select's Select component.
+ * @param props {SelectInputProps}
+ * @constructor SelectInput
+ */
 export function SelectInput<T extends Record<string, unknown>>(
   props: SelectInputProps<T>,
 ) {
   const { field, fieldState } = useController(props);
+  const ref = useRef<HTMLDivElement>(null);
 
   const {
     label,
@@ -205,12 +320,41 @@ export function SelectInput<T extends Record<string, unknown>>(
     menuPlacement = "auto",
     menuPosition = "absolute",
     hideSelectedOptions = false,
+    hasContextMenu = false,
+    contextMenuItems = [],
     ...controllerProps
   } = props;
 
   const dataLoading = props.isLoading || props.isDisabled;
   const errorOccurred = props.isFetchError || !!fieldState.error?.message;
   const processedValue = ValueProcessor(field.value, options, isMulti);
+
+  const [visible, setVisible] = useState(false);
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (ref.current && !ref.current.contains(event.target as Node)) {
+      setVisible(false);
+      setContextMenuVisible(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [handleClickOutside]);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (hasContextMenu) {
+        e.preventDefault();
+        setContextMenuVisible(true);
+      }
+    },
+    [hasContextMenu],
+  );
 
   return (
     <>
@@ -225,7 +369,12 @@ export function SelectInput<T extends Record<string, unknown>>(
           {label}
         </Label>
       )}
-      <div className="relative">
+      <div
+        className="relative"
+        ref={ref}
+        onClick={() => setVisible(true)}
+        onContextMenu={handleContextMenu}
+      >
         <Select
           aria-invalid={fieldState.invalid || isFetchError}
           closeMenuOnSelect={!isMulti}
@@ -240,6 +389,7 @@ export function SelectInput<T extends Record<string, unknown>>(
           placeholder={placeholder}
           isFetchError={isFetchError}
           formError={fieldState.error?.message}
+          menuIsOpen={visible}
           maxMenuHeight={200}
           menuPlacement={menuPlacement}
           menuPosition={menuPosition}
@@ -315,13 +465,21 @@ export function SelectInput<T extends Record<string, unknown>>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <Description description={description!} />
+          <SelectDescription description={description!} />
         )}
       </div>
+      {hasContextMenu && contextMenuVisible && (
+        <ContextMenu menuItems={contextMenuItems} />
+      )}
     </>
   );
 }
 
+/**
+ * Props for the CreatableSelectField component.
+ * @param T The type of the form object.
+ * @param K The type of the created option.
+ */
 interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   extends UseControllerProps<T>,
     Omit<
@@ -342,6 +500,11 @@ interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   onCreate: (inputValue: string) => Promise<K>;
 }
 
+/**
+ * A wrapper around react-select's Creatable component.
+ * @param props {CreatableSelectFieldProps}
+ * @constructor CreatableSelectField
+ */
 export function CreatableSelectField<T extends Record<string, unknown>, K>(
   props: CreatableSelectFieldProps<T, K>,
 ) {
@@ -456,7 +619,7 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <Description description={description!} />
+          <SelectDescription description={description!} />
         )}
       </div>
     </>
