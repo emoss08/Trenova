@@ -42,7 +42,7 @@ import { Label } from "./label";
 
 type SelectOption = {
   readonly label: string;
-  readonly value: string;
+  readonly value: string | boolean;
 };
 
 function Option({ ...props }: OptionProps) {
