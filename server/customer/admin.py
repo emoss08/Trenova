@@ -15,9 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.contrib import admin
-
 from customer import models
+from django.contrib import admin
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
@@ -28,7 +27,7 @@ class CustomerEmailProfileAdmin(
     Customer Email Profile Admin
     """
 
-    model: type[models.CustomerEmailProfile] = models.CustomerEmailProfile
+    model = models.CustomerEmailProfile
     list_display = (
         "id",
         "customer",
@@ -43,7 +42,7 @@ class CustomerRuleProfileAdmin(
     Customer Rule Profile Admin
     """
 
-    model: type[models.CustomerRuleProfile] = models.CustomerRuleProfile
+    model = models.CustomerRuleProfile
     list_display = ("name",)
     search_fields = ("name",)
 
@@ -55,7 +54,7 @@ class CustomerFuelTableDetailInline(
     Customer Fuel Table Detail
     """
 
-    model: type[models.CustomerFuelTableDetail] = models.CustomerFuelTableDetail
+    model = models.CustomerFuelTableDetail
     extra = 10
     verbose_name_plural = "Customer Fuel Details"
     fk_name = "customer_fuel_table"
@@ -67,7 +66,7 @@ class CustomerFuelTableAdmin(GenericAdmin[models.CustomerFuelTable]):
     Customer Fuel Table Admin
     """
 
-    model: type[models.CustomerFuelTable] = models.CustomerFuelTable
+    model = models.CustomerFuelTable
     list_display = (
         "id",
         "description",
@@ -82,7 +81,7 @@ class CustomerFuelProfileAdmin(GenericAdmin[models.CustomerFuelProfile]):
     Customer Fuel Profile Admin
     """
 
-    model: type[models.CustomerFuelProfile] = models.CustomerFuelProfile
+    model = models.CustomerFuelProfile
     list_display = (
         "id",
         "customer",
@@ -116,7 +115,7 @@ class CustomerAdmin(GenericAdmin[models.Customer]):
     Customer Admin
     """
 
-    model: type[models.Customer] = models.Customer
+    model = models.Customer
     list_display = (
         "code",
         "name",

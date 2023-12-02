@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from billing.models import AccessorialCharge, DocumentClassification
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
@@ -28,9 +29,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
+from utils.models import (CharWeekdays, ChoiceField, GenericModel,
+                          PrimaryStatusChoices)
 
 
 @final
@@ -163,7 +163,7 @@ class Customer(GenericModel):
         """
 
         if not self.code:
-            self.code = self.generate_customer_code().upper()
+            self.code = self.generate_customer_code()
 
         super().save(*args, **kwargs)
 
@@ -182,23 +182,8 @@ class Customer(GenericModel):
         name and concatenating it with a generated 4-digit numeric sequence. This sequence
         is incremented by 1 with each new code generated.
 
-        In the event a customer name is less than 5 characters, the name is used in its entirety
-        for the base code.
-
-        If the created customer code already exists in the database, the sequence is incremented
-        and used to create a new code. If the length of the new code surpasses 10 characters,
-        the last character of the base code is removed and the sequence is reset to 1 to
-        continue the code generation process.
-
-        This process continues until a unique code, not present in the database, is created.
-
         Returns:
             str: A unique customer code.
-
-        Note:
-            This function assumes that a Django ORM is being used given the use of
-            `self.__class__.objects.filter(code=new_code).exists()`. The design of the
-            code implies a Django model instance will call this function.
         """
         base_code = self.name.replace(" ", "")[:5].upper()
         sequence = 1
@@ -206,7 +191,7 @@ class Customer(GenericModel):
         while True:
             new_code = f"{base_code}{sequence:04d}"
             if not self.__class__.objects.filter(code=new_code).exists():
-                return new_code
+                return new_code.upper()  # Convert to uppercase before returning
             sequence += 1
             if len(f"{base_code}{sequence:04d}") > 10:
                 # If we've reached the max length, reset the base code and sequence
@@ -926,8 +911,6 @@ class DeliverySlot(GenericModel):
                 ],
                 name="unique_ds_customer_day_start_end_loc",
             ),
-            # TODO(wolfred): Write test for this check constraint.
-            # Check if start_time is less than end_time
             models.CheckConstraint(
                 check=models.Q(start_time__lt=models.F("end_time")),
                 name="start_time_lt_end_time",
@@ -954,3 +937,36 @@ class DeliverySlot(GenericModel):
             str: Delivery slot url
         """
         return reverse("delivery-slot-detail", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        super().clean()
+
+        errors = {}
+
+        # Check if the start time is less than the end time
+        if self.start_time >= self.end_time:
+            errors["start_time"] = _(
+                "Start time must be less than end time. Please try again."
+            )
+
+        # Check if the delivery slot overlaps with another delivery slot
+        if (
+            self.__class__.objects.filter(
+                customer=self.customer,
+                day_of_week=self.day_of_week,
+                location=self.location,
+            )
+            .exclude(pk=self.pk)
+            .filter(
+                models.Q(start_time__lte=self.start_time, end_time__gt=self.start_time)
+                | models.Q(start_time__lt=self.end_time, end_time__gte=self.end_time)
+                | models.Q(start_time__gte=self.start_time, end_time__lte=self.end_time)
+            )
+            .exists()
+        ):
+            errors["start_time"] = _(
+                "Delivery slot overlaps with another delivery slot. Please try again."
+            )
+
+        if errors:
+            raise ValidationError(errors)

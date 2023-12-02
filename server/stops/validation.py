@@ -18,7 +18,6 @@
 from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
-
 from stops import models
 from utils.models import StatusChoices
 
@@ -41,7 +40,7 @@ class StopValidation:
             instance (Stop): The stop to validate
         """
         self.instance = instance
-        self.errors: dict[str, Promise] = {}
+        self.errors = {}
         self.validate()
 
         if self.errors:
