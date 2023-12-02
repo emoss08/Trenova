@@ -16,7 +16,7 @@
  */
 
 // User info constants
-import { BChoiceProps, IChoiceProps } from "@/types";
+import { IChoiceProps } from "@/types";
 import { TableOptionProps } from "@/types/tables";
 import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
@@ -55,7 +55,7 @@ export const tableStatusChoices = [
  * Returns boolean yes & no choices for a select input.
  * @returns An array of yes & no choices.
  */
-export const yesAndNoChoicesBoolean: BChoiceProps[] = [
+export const yesAndNoChoicesBoolean: ReadonlyArray<IChoiceProps<boolean>> = [
   { value: true, label: "Yes" },
   { value: false, label: "No" },
 ];
