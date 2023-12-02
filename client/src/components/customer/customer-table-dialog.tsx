@@ -33,7 +33,8 @@ import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { CustomerContactForm } from "./customer-contacts";
 import { CustomerInfoForm } from "./customer-info-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
 
@@ -71,6 +72,12 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
+  const watch = useWatch({
+    control: control,
+  });
+
+  console.info("watching....", watch);
+
   const mutation = useCustomMutation<FormValues>(
     control,
     toast,
@@ -86,10 +93,10 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     reset,
   );
 
-  const onSubmit = (values: FormValues) => {
+  function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     mutation.mutate(values);
-  };
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -125,7 +132,7 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
               <DeliverySlotForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="contacts">
-              {/* <LocationContactForm control={control} /> */}
+              <CustomerContactForm control={control} />
             </TabsContent>
           </Tabs>
           <SheetFooter className="mb-12">
