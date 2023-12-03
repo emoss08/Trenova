@@ -22,12 +22,12 @@ import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/constants";
-import { truncateText, USDollarFormatString } from "@/lib/utils";
+import { USDollarFormatString, truncateText } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
 import { FilterConfig } from "@/types/tables";
 import {
-  fuelMethodChoices,
   FuelMethodChoicesProps,
+  fuelMethodChoices,
 } from "@/utils/apps/billing";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -155,6 +155,7 @@ export default function AccessorialCharges() {
       tableFacetedFilters={filters}
       TableSheet={ACDialog}
       TableEditSheet={ACTableEditDialog}
+      addPermissionName="add_accessorialcharge"
     />
   );
 }

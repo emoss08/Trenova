@@ -347,6 +347,11 @@ export function useLocations(show?: boolean) {
   return { selectLocationData, isError, isLoading };
 }
 
+/**
+ * Get Shipment Types for select options
+ * @param show - show or hide the query
+ * @returns
+ */
 export function useShipmentTypes(show: boolean) {
   const queryClient = useQueryClient();
 
@@ -395,6 +400,10 @@ export function useUsers(show?: boolean) {
   return { selectUsersData, isError, isLoading };
 }
 
+/**
+ * Get User Details
+ * @param userId - user id
+ */
 export function useUser(userId: string) {
   const queryClient = useQueryClient();
 
@@ -407,6 +416,10 @@ export function useUser(userId: string) {
   });
 }
 
+/**
+ * Get Location Categories for select options
+ * @param show - show or hide the query
+ */
 export function useLocationCategories(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -416,7 +429,7 @@ export function useLocationCategories(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["locationCategories"] as QueryKeys[]),
-    staleTime: Infinity,
+    refetchOnWindowFocus: true,
   });
 
   const selectLocationCategories =
@@ -428,6 +441,10 @@ export function useLocationCategories(show?: boolean) {
   return { selectLocationCategories, isError, isLoading };
 }
 
+/**
+ * Get US States for select options
+ * @param show - show or hide the query
+ */
 export function useUSStates(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -449,6 +466,10 @@ export function useUSStates(show?: boolean) {
   return { selectUSStates, isError, isLoading };
 }
 
+/**
+ * Get Comment Types for select options
+ * @param show - show or hide the query
+ */
 export function useCommentTypes(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -470,6 +491,10 @@ export function useCommentTypes(show?: boolean) {
   return { selectCommentTypes, isError, isLoading };
 }
 
+/**
+ * Get Depots for select options
+ * @param show - show or hide the query
+ */
 export function useDepots(show?: boolean) {
   const queryClient = useQueryClient();
 
