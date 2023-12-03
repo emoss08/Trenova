@@ -20,13 +20,16 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { useUSStates, useUsers } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { Control } from "react-hook-form";
+import { PersonIcon } from "@radix-ui/react-icons";
+import { Control, UseFormGetValues } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 
 export function CustomerInfoForm({
   control,
+  getValues,
   open,
 }: {
+  getValues: UseFormGetValues<FormValues>;
   control: Control<FormValues>;
   open: boolean;
 }) {
@@ -176,6 +179,18 @@ export function CustomerInfoForm({
               options={selectUsersData}
               isFetchError={isUserError}
               isLoading={isUsersLoading}
+              hasContextMenu={getValues("advocate")}
+              contextMenuItems={[
+                {
+                  key: "view-user",
+                  title: "View User",
+                  icon: <PersonIcon className="mr-2" />,
+                  onSelect: () => {
+                    // TODO (Wolfred): Implement view user modal
+                    console.log("View User", getValues("advocate"));
+                  },
+                },
+              ]}
               placeholder="Select Customer Advocate"
               description="Assign a customer advocate from your team."
             />
@@ -186,6 +201,7 @@ export function CustomerInfoForm({
             <CheckboxInput
               control={control}
               label="Has Customer Protal?"
+              disabled
               name="hasCustomerPortal"
               description="Indicate whether the customer has access to the online portal for managing their account and services."
             />

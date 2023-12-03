@@ -41,7 +41,7 @@ import { DeliverySlotForm } from "./delivery-slots-form";
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit, getValues } = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
@@ -120,7 +120,11 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
               <TabsTrigger value="contacts">Contacts</TabsTrigger>
             </TabsList>
             <TabsContent value="info">
-              <CustomerInfoForm control={control} open={open} />
+              <CustomerInfoForm
+                control={control}
+                open={open}
+                getValues={getValues}
+              />
             </TabsContent>
             <TabsContent value="email_profile">
               {/* <LocationContactForm control={control} /> */}
