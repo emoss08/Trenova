@@ -68,6 +68,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
       path: "/locations/",
       successMessage: "Location created successfully.",
       queryKeysToInvalidate: ["locations-table-data"],
+      additionalInvalidateQueries: ["locations"],
       closeModal: true,
       errorMessage: "Failed to create new location.",
     },

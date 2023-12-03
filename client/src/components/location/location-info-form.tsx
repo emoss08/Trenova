@@ -23,6 +23,8 @@ import {
   useUSStates,
 } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
+import { WEB_URL } from "@/lib/constants";
+import { PopoutWindow } from "@/lib/utils";
 import { LocationFormValues as FormValues } from "@/types/location";
 import { Control } from "react-hook-form";
 import { TextareaField } from "../common/fields/textarea";
@@ -109,6 +111,30 @@ export function LocationInfoForm({
               options={selectLocationCategories}
               isFetchError={isError}
               isLoading={isLoading}
+              isClearable
+              hasContextMenu
+              contextMenuItems={[
+                {
+                  key: "add-location-category",
+                  title: "Add Location Category",
+                  onSelect: () => {
+                    const queryParams = {
+                      hideHeader: true,
+                    };
+                    PopoutWindow("/dispatch/location-categories/", queryParams);
+                  },
+                },
+                {
+                  key: "copy-location-category",
+                  title: "Copy Link",
+                  onSelect: () => {
+                    // copy the path to clipboard
+                    navigator.clipboard.writeText(
+                      `${WEB_URL}/dispatch/location-categories/`,
+                    );
+                  },
+                },
+              ]}
               placeholder="Select Location Category"
               description="Choose the category that best describes the location's function or type."
             />
@@ -120,6 +146,7 @@ export function LocationInfoForm({
               name="depot"
               control={control}
               label="Depot"
+              isClearable
               options={selectDepots}
               isFetchError={isDepotError}
               isLoading={isDepotsLoading}

@@ -24,16 +24,15 @@ import {
 import { cn } from "@/lib/utils";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { AlertTriangle } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Path,
   PathValue,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 import Select, {
   ClearIndicatorProps,
-  components,
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
@@ -42,9 +41,10 @@ import Select, {
   OptionsOrGroups,
   Props,
   ValueContainerProps,
+  components,
 } from "react-select";
-import { Label } from "./label";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
+import { Label } from "./label";
 
 /**
  * Option type for the SelectInput component.
@@ -252,31 +252,47 @@ type ContextMenuProps = {
   key: string;
   icon?: React.ReactNode;
   title: string;
-  onClick: () => void;
+  textClass?: string;
+  onSelect: () => void;
 };
 
-/**
- * Context Menu component used in the SelectInput component.
- * @param menuItems {ContextMenuProps[]}
- * @constructor ContextMenu
- * @returns {React.ReactElement}
- */
-function ContextMenu({ menuItems }: { menuItems: ContextMenuProps[] }) {
-  return (
-    <Command className="rounded-lg border shadow-md max-h-[200px]">
-      <CommandList>
-        <CommandGroup heading="Actions">
-          {menuItems.map((item) => (
-            <CommandItem key={item.key} onClick={item.onClick}>
-              {item.icon}
-              <span>{item.title}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  );
-}
+const ContextMenu = memo(
+  ({
+    menuItems,
+    onClose,
+  }: {
+    menuItems: ContextMenuProps[];
+    onClose: () => void;
+  }) => {
+    const handleSelect = useCallback(
+      (item: ContextMenuProps) => () => {
+        item.onSelect();
+        onClose();
+      },
+      [onClose],
+    );
+
+    return (
+      <Command className="rounded-lg border shadow-md max-h-[200px]">
+        <CommandList>
+          <CommandGroup heading="Actions">
+            {menuItems.map((item) => (
+              <CommandItem
+                key={item.key}
+                value={item.key}
+                onSelect={handleSelect(item)}
+                className="text-xs"
+              >
+                {item.icon}
+                <span className={item.textClass}>{item.title}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+  },
+);
 
 /**
  * Props for the SelectInput component.
@@ -306,6 +322,7 @@ export function SelectInput<T extends Record<string, unknown>>(
 ) {
   const { field, fieldState } = useController(props);
   const ref = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null); // Ref for the context menu
 
   const {
     label,
@@ -332,12 +349,25 @@ export function SelectInput<T extends Record<string, unknown>>(
   const [visible, setVisible] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
 
+  const handleClick = () => {
+    setVisible(true);
+    setContextMenuVisible(false); // Close context menu when select menu is opened
+  };
+
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (ref.current && !ref.current.contains(event.target as Node)) {
-      setVisible(false);
-      setContextMenuVisible(false);
+    if (
+      (!ref.current || !ref.current.contains(event.target as Node)) &&
+      (!contextMenuRef.current ||
+        !contextMenuRef.current.contains(event.target as Node))
+    ) {
+      setVisible(false); // Close the select dropdown
+      setContextMenuVisible(false); // Close the context menu
     }
   }, []);
+
+  const closeContextMenu = () => {
+    setContextMenuVisible(false);
+  };
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -351,6 +381,7 @@ export function SelectInput<T extends Record<string, unknown>>(
       if (hasContextMenu) {
         e.preventDefault();
         setContextMenuVisible(true);
+        setVisible(false); // Close select menu when context menu is opened
       }
     },
     [hasContextMenu],
@@ -372,7 +403,7 @@ export function SelectInput<T extends Record<string, unknown>>(
       <div
         className="relative"
         ref={ref}
-        onClick={() => setVisible(true)}
+        onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
         <Select
@@ -385,6 +416,8 @@ export function SelectInput<T extends Record<string, unknown>>(
           isLoading={isLoading}
           isDisabled={dataLoading || isFetchError}
           isClearable={isClearable}
+          onMenuOpen={() => setVisible(true)}
+          onMenuClose={() => setVisible(false)}
           maxOptions={maxOptions}
           placeholder={placeholder}
           isFetchError={isFetchError}
@@ -469,7 +502,18 @@ export function SelectInput<T extends Record<string, unknown>>(
         )}
       </div>
       {hasContextMenu && contextMenuVisible && (
-        <ContextMenu menuItems={contextMenuItems} />
+        <div
+          ref={contextMenuRef}
+          style={{
+            width: ref.current ? `${ref.current.offsetWidth}px` : "auto",
+          }}
+          className="absolute z-100 max-w-full h-fit pt-2 top-[330px]"
+        >
+          <ContextMenu
+            menuItems={contextMenuItems}
+            onClose={closeContextMenu}
+          />
+        </div>
       )}
     </>
   );
