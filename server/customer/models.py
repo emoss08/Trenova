@@ -343,16 +343,6 @@ class CustomerEmailProfile(GenericModel):
         """
         return reverse("customer-email-profile-detail", kwargs={"pk": self.pk})
 
-    def update_customer_email_profile(self, **kwargs: Any) -> None:
-        """Updates customer email profile information
-
-        Args:
-            **kwargs (Any): Customer email profile information to update
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
 
 class CustomerRuleProfile(GenericModel):
     """
@@ -510,7 +500,7 @@ class CustomerContact(GenericModel):
         Returns:
             str: Customer contact url
         """
-        return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
+        return reverse("customer-contact-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Customer Contact clean method
