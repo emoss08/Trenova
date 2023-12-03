@@ -15,17 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Control, useForm } from "react-hook-form";
-import { RevenueCodeFormValues as FormValues } from "@/types/accounting";
-import { SelectInput } from "@/components/common/fields/select-input";
 import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
-import React from "react";
-import { TChoiceProps } from "@/types";
-import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -34,9 +27,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { revenueCodeSchema } from "@/lib/validations/accounting";
+import { toast } from "@/components/ui/use-toast";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
+import { revenueCodeSchema } from "@/lib/validations/accounting";
+import { TChoiceProps } from "@/types";
+import { RevenueCodeFormValues as FormValues } from "@/types/accounting";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 
 export function RCForm({
   control,
@@ -88,7 +88,7 @@ export function RCForm({
             isFetchError={isError}
             placeholder="Select Expense Account"
             description="The Expense Account associated with the Revenue Code"
-            isClearable={false}
+            isClearable
           />
         </div>
         <div className="grid w-full items-center gap-0.5">
@@ -102,7 +102,7 @@ export function RCForm({
             isFetchError={isError}
             placeholder="Select Revenue Account"
             description="The Revneue Account associated with the Revenue Code"
-            isClearable={false}
+            isClearable
           />
         </div>
       </div>
@@ -131,6 +131,7 @@ export function RCDialog({ onOpenChange, open }: TableSheetProps) {
       path: "/revenue_codes/",
       successMessage: "Revenue Code created successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
+      additionalInvalidateQueries: ["revenueCodes"],
       closeModal: true,
       errorMessage: "Failed to create new revenue code.",
     },

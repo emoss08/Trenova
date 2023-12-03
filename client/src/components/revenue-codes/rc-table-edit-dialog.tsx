@@ -15,7 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useTableStore } from "@/stores/TableStore";
+import { RCForm } from "@/components/revenue-codes/rc-table-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -24,20 +25,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import React from "react";
+import { toast } from "@/components/ui/use-toast";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useGLAccounts } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
+import { revenueCodeSchema } from "@/lib/validations/accounting";
+import { useTableStore } from "@/stores/TableStore";
 import {
-  RevenueCode,
   RevenueCodeFormValues as FormValues,
+  RevenueCode,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { revenueCodeSchema } from "@/lib/validations/accounting";
+import React from "react";
 import { useForm } from "react-hook-form";
-import { RCForm } from "@/components/revenue-codes/rc-table-dialog";
-import { Button } from "@/components/ui/button";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
-import { useGLAccounts } from "@/hooks/useQueries";
 
 function RCEditForm({
   revenueCode,
@@ -67,6 +67,7 @@ function RCEditForm({
       path: `/revenue_codes/${revenueCode.id}/`,
       successMessage: "Revenue Code updated successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
+      additionalInvalidateQueries: ["revenueCodes"],
       closeModal: true,
       errorMessage: "Failed to update revenue code.",
     },
