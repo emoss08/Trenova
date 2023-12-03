@@ -21,8 +21,10 @@ import { DataTableColumnExpand } from "@/components/common/table/data-table-expa
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
 import { LocationTableEditSheet } from "@/components/location/location-table-edit-dialog";
 import { LocationChart } from "@/components/location/table-chart";
+import { tableStatusChoices } from "@/lib/constants";
 import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
+import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
@@ -115,6 +117,14 @@ const columns: ColumnDef<Location>[] = [
   },
 ];
 
+const filters: FilterConfig<Location>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+];
+
 export default function Locations() {
   return (
     <DataTable
@@ -124,6 +134,7 @@ export default function Locations() {
       name="Locations"
       exportModelName="Location"
       filterColumn="name"
+      tableFacetedFilters={filters}
       TableSheet={LocationTableSheet}
       TableEditSheet={LocationTableEditSheet}
       renderSubComponent={renderSubComponent}
