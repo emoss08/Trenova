@@ -9,3 +9,4 @@ typings
 frontend
 backend/bin/air
 *.log
+*.sql
