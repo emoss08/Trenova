@@ -710,6 +710,12 @@ class Shipment(GenericModel):
                 name="unique_shipment_number_per_organization",
             )
         ]
+        indexes = [
+            models.Index(fields=["pro_number"], name="shipment_pro_number_idx"),
+            models.Index(fields=["status"], name="shipment_status_idx"),
+            models.Index(fields=["bill_date"], name="bill_date_idx"),
+            models.Index(fields=["ship_date"], name="ship_date_idx"),
+        ]
 
     def __str__(self) -> str:
         """String representation of the Shipment
