@@ -293,7 +293,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {
-        "user": "20/second",
+        "user": "100/minute",
         "auth": "20/minute",
     },
     "DEFAULT_PAGINATION_CLASS": "utils.pagination.MontaPagination",

@@ -109,6 +109,7 @@ export function LocationInfoForm({
               options={selectLocationCategories}
               isFetchError={isError}
               isLoading={isLoading}
+              isClearable
               placeholder="Select Location Category"
               description="Choose the category that best describes the location's function or type."
             />
@@ -120,6 +121,7 @@ export function LocationInfoForm({
               name="depot"
               control={control}
               label="Depot"
+              isClearable
               options={selectDepots}
               isFetchError={isDepotError}
               isLoading={isDepotsLoading}

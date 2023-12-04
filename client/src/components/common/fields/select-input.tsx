@@ -15,167 +15,42 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { cn } from "@/lib/utils";
-import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { AlertTriangle } from "lucide-react";
-import React from "react";
 import {
-  Path,
-  PathValue,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { Command as CommandPrimitive } from "cmdk";
+import { Check } from "lucide-react";
+import React, { KeyboardEvent } from "react";
+import {
+  FieldValues,
   UseControllerProps,
   useController,
 } from "react-hook-form";
-import Select, {
-  ClearIndicatorProps,
-  DropdownIndicatorProps,
-  GroupBase,
-  IndicatorSeparatorProps,
-  MenuListProps,
-  OptionProps,
-  OptionsOrGroups,
-  Props,
-  ValueContainerProps,
-  components,
-} from "react-select";
+import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { Label } from "./label";
+import {
+  ClearIndicator,
+  DropdownIndicator,
+  ErrorMessage,
+  IndicatorSeparator,
+  MenuList,
+  Option,
+  SelectDescription,
+  SelectOption,
+  ValueContainer,
+  ValueProcessor,
+} from "./select-components";
 
-type SelectOption = {
-  readonly label: string;
-  readonly value: string | boolean;
-};
-
-function Option({ ...props }: OptionProps) {
-  return (
-    <components.Option
-      className="relative flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none my-1 hover:bg-accent hover:cursor-pointer hover:rounded-sm"
-      {...props}
-    >
-      {props.label}
-      {props.isSelected && (
-        <CheckIcon className="absolute top-1/2 right-3 transform -translate-y-1/2 h-4 w-4" />
-      )}
-    </components.Option>
-  );
-}
-
-function DropdownIndicator(props: DropdownIndicatorProps) {
-  return (
-    <components.DropdownIndicator {...props}>
-      {props.selectProps["aria-invalid"] ? (
-        <AlertTriangle size={15} className="text-red-500" />
-      ) : (
-        <CaretSortIcon className="h-4 w-4 shrink-0" />
-      )}
-    </components.DropdownIndicator>
-  );
-}
-
-function IndicatorSeparator(props: IndicatorSeparatorProps) {
-  return (
-    <span
-      className={cn(
-        "bg-foreground/30 h-6 w-px",
-        props.selectProps["aria-invalid"] && "bg-red-500",
-      )}
-    />
-  );
-}
-
-function ClearIndicator(props: ClearIndicatorProps) {
-  return (
-    <components.ClearIndicator {...props}>
-      <Cross2Icon className="h-4 w-4 shrink-0" />
-    </components.ClearIndicator>
-  );
-}
-
-function ValueContainer({ children, ...rest }: ValueContainerProps) {
-  const selectedCount = rest.getValue().length;
-  const conditional = selectedCount < 3;
-  const { ValueContainer } = components;
-
-  let firstChild: React.ReactNode[] | null = [];
-
-  if (!conditional && Array.isArray(children)) {
-    firstChild = [children[0].shift(), children[1]];
-  }
-
-  return (
-    <ValueContainer {...rest}>
-      {conditional ? children : firstChild}
-      {!conditional && ` and ${selectedCount - 1} others`}
-    </ValueContainer>
-  );
-}
-
-function Description({ description }: { description: string }) {
-  return <p className="text-xs text-foreground/70">{description}</p>;
-}
-
-function MenuList({
-  children,
-  ...props
-}: MenuListProps & {
-  selectProps?: {
-    maxOptions?: number;
-    formError?: string;
-  };
-}) {
-  return (
-    <components.MenuList {...props}>
-      {Array.isArray(children)
-        ? children.slice(0, props.selectProps?.maxOptions)
-        : children}
-    </components.MenuList>
-  );
-}
-
-function getLabelByValue<T extends Record<string, unknown>>(
-  value: PathValue<T, Path<T>>,
-  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
-) {
-  const option = options.find((opt) => opt.value === value);
-  return option?.label || value;
-}
-
-function ValueProcessor<T extends Record<string, unknown>>(
-  value: PathValue<T, Path<T>>,
-  options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
-  isMulti?: boolean,
-) {
-  if (isMulti) {
-    const valuesArray = Array.isArray(value) ? value : [];
-    return valuesArray.map((val) => ({
-      value: val,
-      label: getLabelByValue(val, options),
-    }));
-  }
-
-  if (!value) return undefined;
-
-  return {
-    value: value,
-    label: getLabelByValue(value, options),
-  };
-}
-
-function ErrorMessage({
-  isFetchError,
-  formError,
-}: {
-  isFetchError?: boolean;
-  formError?: string;
-}) {
-  return (
-    <p className="text-xs text-red-500">
-      {isFetchError
-        ? "An error has occurred! Please try again later."
-        : formError}
-    </p>
-  );
-}
-
+/**
+ * Props for the SelectInput component.
+ * @param T The type of the form object.
+ * @param K The type of the created option.
+ */
 interface SelectInputProps<T extends Record<string, unknown>>
   extends UseControllerProps<T>,
     Omit<
@@ -185,8 +60,14 @@ interface SelectInputProps<T extends Record<string, unknown>>
   label: string;
   description?: string;
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
+  hasContextMenu?: boolean;
 }
 
+/**
+ * A wrapper around react-select's Select component.
+ * @param props {SelectInputProps}
+ * @constructor SelectInput
+ */
 export function SelectInput<T extends Record<string, unknown>>(
   props: SelectInputProps<T>,
 ) {
@@ -315,13 +196,18 @@ export function SelectInput<T extends Record<string, unknown>>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <Description description={description!} />
+          <SelectDescription description={description!} />
         )}
       </div>
     </>
   );
 }
 
+/**
+ * Props for the CreatableSelectField component.
+ * @param T The type of the form object.
+ * @param K The type of the created option.
+ */
 interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   extends UseControllerProps<T>,
     Omit<
@@ -342,6 +228,11 @@ interface CreatableSelectFieldProps<T extends Record<string, unknown>, K>
   onCreate: (inputValue: string) => Promise<K>;
 }
 
+/**
+ * A wrapper around react-select's Creatable component.
+ * @param props {CreatableSelectFieldProps}
+ * @constructor CreatableSelectField
+ */
 export function CreatableSelectField<T extends Record<string, unknown>, K>(
   props: CreatableSelectFieldProps<T, K>,
 ) {
@@ -456,9 +347,185 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <Description description={description!} />
+          <SelectDescription description={description!} />
         )}
       </div>
+    </>
+  );
+}
+
+// Credit to https://github.com/armandsalle/my-site/blob/main/src/components/autocomplete.tsx
+
+export type Option = Record<"value" | "label", string> & Record<string, string>;
+
+export interface AutoCompleteProps<T extends Record<string, unknown>>
+  extends UseControllerProps<T> {
+  id?: string;
+  ref?: React.ForwardedRef<HTMLInputElement>;
+  description?: string;
+  label?: string;
+  options: Option[];
+  placeholder?: string;
+  isClearable?: boolean; // Set to true to allow clearing the input
+  isMulti?: boolean; // Set to true to allow multiple selections which are converted to an array
+  isDisabled?: boolean; // Set to true to disable the input
+  isFetching?: boolean; // Set to true when loading options from server
+  isFetchError?: boolean; // Set to true when there is an error fetching options from server
+  maxOptions?: number; // Set the maximum number of options that can be selected
+  emptyMessage: string; // Message to display when there are no options
+  value?: Option;
+  onValueChange?: (value: Option) => void;
+}
+
+export function AutoComplete<TFieldValues extends FieldValues>({
+  ...props
+}: AutoCompleteProps<TFieldValues>) {
+  const { field, fieldState } = useController(props);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const [isOpen, setOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<Option>(props.value as Option);
+  const [inputValue, setInputValue] = React.useState<string>(
+    props.value?.label || "",
+  );
+  const handleKeyDown = React.useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      const input = inputRef.current;
+      if (!input) {
+        return;
+      }
+
+      // Keep the options displayed when the user is typing
+      if (!isOpen) {
+        setOpen(true);
+      }
+
+      // This is not a default behaviour of the <input /> field
+      if (event.key === "Enter" && input.value !== "") {
+        const optionToSelect = props.options.find(
+          (option) => option.label === input.value,
+        );
+        if (optionToSelect) {
+          setSelected(optionToSelect);
+          props.onValueChange?.(optionToSelect);
+        }
+      }
+
+      if (event.key === "Escape") {
+        input.blur();
+      }
+    },
+    [isOpen, props.options, props.onValueChange],
+  );
+
+  const handleBlur = React.useCallback(() => {
+    setOpen(false);
+    setInputValue(selected?.label);
+  }, [selected]);
+
+  const handleSelectOption = React.useCallback(
+    (selectedOption: Option) => {
+      setInputValue(selectedOption.label);
+
+      setSelected(selectedOption);
+      props.onValueChange?.(selectedOption);
+
+      // set the field value
+      field.onChange(selectedOption.value);
+
+      // This is a hack to prevent the input from being focused after the user selects an option
+      // We can call this hack: "The next tick"
+      setTimeout(() => {
+        inputRef?.current?.blur();
+      }, 0);
+    },
+    [props.onValueChange],
+  );
+
+  return (
+    <>
+      {props.label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
+          )}
+          htmlFor={props.id}
+        >
+          {props.label}
+        </Label>
+      )}
+      <CommandPrimitive onKeyDown={handleKeyDown}>
+        <CommandPrimitive.Input
+          ref={inputRef}
+          value={inputValue}
+          name={props.name}
+          onValueChange={props.isFetching ? undefined : setInputValue}
+          onBlur={handleBlur}
+          onFocus={() => setOpen(true)}
+          placeholder={props.placeholder}
+          disabled={props.disabled}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+            props.disabled && "cursor-not-allowed opacity-50",
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-600",
+          )}
+        />
+        <div className="mt-1 relative">
+          {isOpen ? (
+            <div className="absolute w-full z-100 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95">
+              <CommandList className="rounded-lg">
+                {props.isFetching ? (
+                  <CommandPrimitive.Loading>
+                    <div className="p-1">
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  </CommandPrimitive.Loading>
+                ) : null}
+                {props.options.length > 0 && !props.isFetching ? (
+                  <CommandGroup className="h-full overflow-auto">
+                    {props.options.map((option) => {
+                      const isSelected = selected?.value === option.value;
+                      return (
+                        <CommandItem
+                          key={option.value}
+                          value={option.label}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onSelect={() => handleSelectOption(option)}
+                          className={cn(
+                            "relative flex cursor-default select-none rounded-sm text-xs outline-none hover:bg-accent hover:cursor-pointer hover:rounded-sm",
+                            !isSelected ? "pl-3" : null,
+                          )}
+                        >
+                          {isSelected ? (
+                            <Check className="absolute top-1/2 right-3 transform -translate-y-1/2 h-4 w-4" />
+                          ) : null}
+                          {option.label}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                ) : null}
+                {!props.isFetching ? (
+                  <CommandPrimitive.Empty className="select-none rounded-sm px-2 py-3 text-sm text-center">
+                    {props.emptyMessage}
+                  </CommandPrimitive.Empty>
+                ) : null}
+              </CommandList>
+            </div>
+          ) : null}
+        </div>
+      </CommandPrimitive>
+      {fieldState.error?.message && (
+        <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+      )}
+      {props.description && !fieldState.error?.message && (
+        <p className="text-xs text-foreground/70">{props.description}</p>
+      )}
     </>
   );
 }

@@ -14,11 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import {
-  LocationCategory,
-  LocationCategoryFormValues as FormValues,
-} from "@/types/location";
-import { useTableStore } from "@/stores/TableStore";
+import { LCForm } from "@/components/location-categories/lc-table-sheet";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -27,15 +24,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
+import { locationCategorySchema as formSchema } from "@/lib/validations/location";
+import { useTableStore } from "@/stores/TableStore";
+import {
+  LocationCategoryFormValues as FormValues,
+  LocationCategory,
+} from "@/types/location";
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { LCForm } from "@/components/location-categories/lc-table-sheet";
-import { locationCategorySchema as formSchema } from "@/lib/validations/location";
 
 export function LCEditForm({
   locationCategory,
@@ -62,6 +62,7 @@ export function LCEditForm({
       path: `/location_categories/${locationCategory.id}/`,
       successMessage: "Location Category updated successfully.",
       queryKeysToInvalidate: ["location-categories-table-data"],
+      additionalInvalidateQueries: ["locationCategories"],
       closeModal: true,
       errorMessage: "Failed to update location category.",
     },

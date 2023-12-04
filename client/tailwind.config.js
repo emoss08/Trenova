@@ -52,6 +52,13 @@ module.exports = {
           "linear-gradient(90deg, rgba(129,26,188,0.9), rgba(219,52,52,0.9), rgba(241, 196, 15, .9), rgba(34,230,171,0.9), rgba(0,60,211,0.9), rgba(129,26,188,0.9))",
         "rainbow-gradient-dark": "linear-gradient(90deg, white, gray)",
       },
+      background: {
+        "card-rainbow-gradient":
+          "linear-gradient(49deg, #2d4de0 0, #9f71f0 30%, #fc6277 58%, #f8ef6f 95%)",
+      },
+      zIndex: {
+        100: "100",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

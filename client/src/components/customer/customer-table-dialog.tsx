@@ -33,8 +33,11 @@ import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { CustomerContactForm } from "./customer-contacts-form";
+import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
+import { CustomerRuleProfileForm } from "./customer-rule-profile-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
 
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
@@ -71,6 +74,12 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
+  const watch = useWatch({
+    control: control,
+  });
+
+  console.info("watching....", watch);
+
   const mutation = useCustomMutation<FormValues>(
     control,
     toast,
@@ -86,10 +95,10 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     reset,
   );
 
-  const onSubmit = (values: FormValues) => {
+  function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     mutation.mutate(values);
-  };
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,16 +125,16 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
               <CustomerInfoForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="email_profile">
-              {/* <LocationContactForm control={control} /> */}
+              <CustomerEmailProfileForm control={control} />
             </TabsContent>
             <TabsContent value="rule_profile">
-              {/* <LocationCommentForm control={control} /> */}
+              <CustomerRuleProfileForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="delivery_slots">
               <DeliverySlotForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="contacts">
-              {/* <LocationContactForm control={control} /> */}
+              <CustomerContactForm control={control} />
             </TabsContent>
           </Tabs>
           <SheetFooter className="mb-12">

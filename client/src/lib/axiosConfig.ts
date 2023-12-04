@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "axios";
-import { API_URL } from "@/lib/constants";
 import { getCookie } from "@/lib/auth";
+import { API_URL } from "@/lib/constants";
+import axios from "axios";
 
 /**
  * Axios request interceptor.
@@ -36,7 +36,10 @@ axios.interceptors.request.use(
       req.headers["X-CSRFToken"] = csrfToken;
     }
 
-    console.info(`Making request to ${req.url}`);
+    console.log(
+      `%c[MONTA] Axios request: ${req.method?.toUpperCase()} ${req.url}`,
+      "color: #34ebe5; font-weight: bold",
+    );
     return req;
   },
   (error: any) => Promise.reject(error),

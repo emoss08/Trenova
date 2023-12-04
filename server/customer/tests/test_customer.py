@@ -16,12 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.core.exceptions import ValidationError
+from rest_framework.test import APIClient
+
 from billing.tests.factories import DocumentClassificationFactory
 from customer import factories, models
-from django.core.exceptions import ValidationError
 from location.factories import LocationFactory
 from organization.models import BusinessUnit, Organization
-from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 
@@ -240,15 +241,16 @@ def test_customer_contact_payable_has_no_email(
         "Payable contact must have an email address. Please Try Again."
     ]
 
+
 def test_delivery_slot_start_time_less_than_end_time(
     delivery_slot: models.DeliverySlot,
 ) -> None:
     """
     Test delivery slot start time is less than end time
-    
+
     Args:
         delivery_slot(models.DeliverySlot): Delivery Slot object.
-        
+
     Returns:
         None: This function does not return anything.
     """
@@ -261,23 +263,23 @@ def test_delivery_slot_start_time_less_than_end_time(
     assert excinfo.value.message_dict["start_time"] == [
         "Start time must be less than end time. Please try again."
     ]
-    
+
+
 def test_delivery_cannot_overlap(
     delivery_slot: models.DeliverySlot,
 ) -> None:
     """Test delivery slot cannot overlap with another delivery slot assigned to
     the same custoemr and location.
-    
+
     Args:
         delivery_slot(models.DeliverySlot): Delivery Slot object.
-        
+
     Returns:
         None: This function does not return anything.
     """
     delivery_slot.start_time = "20:37:33"
     delivery_slot.end_time = "21:37:33"
-    
-    
+
     with pytest.raises(ValidationError) as excinfo:
         factories.DeliverySlotFactory(
             customer=delivery_slot.customer,

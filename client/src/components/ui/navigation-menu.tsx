@@ -22,20 +22,33 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+interface ExtendedNavigationMenuProps
+  extends React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root> {
+  menuPosition: {
+    left: number;
+    width: number;
+  };
+}
+
 const NavigationMenu = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+  ExtendedNavigationMenuProps
+>(({ menuPosition, className, children, ...props }, ref) => (
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex max-w-max flex-1 items-center justify-center",
+      "relative z-10 flex max-w-max flex-1 items-center",
       className,
     )}
     {...props}
   >
     {children}
-    <NavigationMenuViewport />
+    <NavigationMenuViewport
+      style={{
+        left: `${menuPosition.left}px`,
+        width: `${menuPosition.width}px`,
+      }}
+    />
   </NavigationMenuPrimitive.Root>
 ));
 NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName;
@@ -58,7 +71,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50",
+  "group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50 relative hover:navigation-menu-trigger-hover hover:text-accent-foreground focus:text-accent-foreground data-[state=open]:navigation-menu-trigger-open data-[state=closed]:navigation-menu-trigger-closed",
 );
 
 const NavigationMenuTrigger = React.forwardRef<
@@ -70,7 +83,7 @@ const NavigationMenuTrigger = React.forwardRef<
     className={cn(navigationMenuTriggerStyle(), "group", className)}
     {...props}
   >
-    {children}{" "}
+    {children}
     <ChevronDown
       className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
       aria-hidden="true"
@@ -141,5 +154,6 @@ export {
   NavigationMenuList,
   NavigationMenuTrigger,
   NavigationMenuViewport,
-  navigationMenuTriggerStyle,
+  navigationMenuTriggerStyle
 };
+

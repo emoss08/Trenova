@@ -19,7 +19,6 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from billing.models import AccessorialCharge, DocumentClassification
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
@@ -29,8 +28,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-from utils.models import (CharWeekdays, ChoiceField, GenericModel,
-                          PrimaryStatusChoices)
+
+from billing.models import AccessorialCharge, DocumentClassification
+from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 @final
@@ -343,16 +343,6 @@ class CustomerEmailProfile(GenericModel):
         """
         return reverse("customer-email-profile-detail", kwargs={"pk": self.pk})
 
-    def update_customer_email_profile(self, **kwargs: Any) -> None:
-        """Updates customer email profile information
-
-        Args:
-            **kwargs (Any): Customer email profile information to update
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
 
 class CustomerRuleProfile(GenericModel):
     """
@@ -510,7 +500,7 @@ class CustomerContact(GenericModel):
         Returns:
             str: Customer contact url
         """
-        return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
+        return reverse("customer-contact-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Customer Contact clean method
