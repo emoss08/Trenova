@@ -58,7 +58,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
 
     return (
       <div
-        className="flex items-center hover:cursor-pointer"
+        className="group flex items-center hover:cursor-pointer"
         ref={ref}
         {...props}
       >
@@ -72,7 +72,10 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
           <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
         </Avatar>
         <div className="flex items-center ml-2 mb-1">
-          <ChevronDownIcon className="h-4 w-4" />
+          <ChevronDownIcon
+            className="h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180"
+            aria-hidden="true"
+          />
         </div>
       </div>
     );
