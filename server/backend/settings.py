@@ -705,6 +705,7 @@ CACHEOPS = {
     "organization.organization": {"ops": "all"},
     "organization.department": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
+    "customer.customer": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
@@ -774,3 +775,4 @@ if DEBUG:
         "silk.middleware.SilkyMiddleware",
     ]
     X_FRAME_OPTIONS = "SAMEORIGIN"
+    SILK_PYTHON_PROFILER = True
