@@ -18,19 +18,19 @@
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
-export type LocationCategory = BaseModel & {
+export interface LocationCategory extends BaseModel {
   id: string;
   name: string;
   description?: string | null;
   color?: string | null;
-};
+}
 
 export type LocationCategoryFormValues = Omit<
   LocationCategory,
   "organization" | "created" | "modified" | "id"
 >;
 
-export type LocationComment = BaseModel & {
+export interface LocationComment extends BaseModel {
   id: string;
   location: string;
   commentType: string;
@@ -38,7 +38,7 @@ export type LocationComment = BaseModel & {
   comment: string;
   enteredBy: string;
   enteredByUsername: string;
-};
+}
 
 export type LocationCommentFormValues = Omit<
   LocationComment,
@@ -52,21 +52,21 @@ export type LocationCommentFormValues = Omit<
   | "enteredByUsername"
 >;
 
-export type LocationContact = BaseModel & {
+export interface LocationContact extends BaseModel {
   id: string;
   location: string;
   name: string;
   email?: string | null;
   phone?: string | null;
   fax?: string | null;
-};
+}
 
 export type LocationContactFormValues = Omit<
   LocationContact,
   "organization" | "created" | "modified" | "id" | "location"
 >;
 
-export type Location = BaseModel & {
+export interface Location extends BaseModel {
   id: string;
   name: string;
   code: string;
@@ -84,11 +84,12 @@ export type Location = BaseModel & {
   placeId?: string;
   isGeocoded: boolean;
   locationColor?: string | null;
+  locationCategoryName?: string | null;
   pickupCount: number;
   waitTimeAvg: number;
   locationComments: LocationComment[];
   locationContacts: LocationContact[];
-};
+}
 
 export type LocationFormValues = Omit<
   Location,
@@ -97,6 +98,7 @@ export type LocationFormValues = Omit<
   | "longitude"
   | "latitude"
   | "locationColor"
+  | "locationCategoryName"
   | "pickupCount"
   | "waitTimeAvg"
   | "locationContacts"
