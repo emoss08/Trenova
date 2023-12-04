@@ -29,6 +29,7 @@ import { User } from "@/types/accounts";
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { Footer } from "./footer";
+import { Logo } from "./logo";
 
 /**
  * LayoutProps defines the props for the Layout components.
@@ -56,12 +57,16 @@ export function Layout({ children }: LayoutProps) {
       {!hideHeader && (
         <header className="bg-background sticky top-0 z-50 w-full border-b">
           <RainbowTopBar />
-          <div className="flex justify-between items-center h-14 w-full px-4">
-            <NavMenu />
-            <div className="ml-4"></div>
-            <div className="mr-4">
+          <div className="flex items-center h-14 w-full px-4">
+            <div className="flex-1">
+              <Logo />
+            </div>
+            <div className="flex-1 justify-center hidden md:flex">
+              <NavMenu />
+            </div>
+            <div className="flex-1 flex justify-end">
               {isUserDataLoading ? (
-                <div className="flex items-center justify-end space-x-2">
+                <div className="flex items-center space-x-2">
                   <Skeleton className="h-10 w-10 rounded-full" />
                 </div>
               ) : (
