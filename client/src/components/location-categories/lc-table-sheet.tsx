@@ -15,20 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import {
-  Control,
-  useForm,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
-import { LocationCategoryFormValues as FormValues } from "@/types/location";
+import { ColorField } from "@/components/common/fields/color-field";
 import { InputField } from "@/components/common/fields/input";
-import { TableSheetProps } from "@/types/tables";
-import { locationCategorySchema as formSchema } from "@/lib/validations/location";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
+import { TextareaField } from "@/components/common/fields/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +27,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { TextareaField } from "@/components/common/fields/textarea";
-import { ColorField } from "@/components/common/fields/color-field";
+import { toast } from "@/components/ui/use-toast";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { locationCategorySchema as formSchema } from "@/lib/validations/location";
+import { LocationCategoryFormValues as FormValues } from "@/types/location";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import {
+  Control,
+  UseFormSetValue,
+  UseFormWatch,
+  useForm,
+} from "react-hook-form";
 
 export function LCForm({
   control,
@@ -111,6 +111,7 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
       path: "/location_categories/",
       successMessage: "Location Category created successfully.",
       queryKeysToInvalidate: ["location-categories-table-data"],
+      additionalInvalidateQueries: ["locationCategories"],
       closeModal: true,
       errorMessage: "Failed to create new location category.",
     },

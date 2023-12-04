@@ -14,8 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
-import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -101,4 +101,53 @@ export function formatDuration(durationStr: string) {
   if (seconds > 0) result += `${seconds} second${seconds > 1 ? "s" : ""}`;
 
   return result.replace(/, $/, ""); // Remove trailing comma
+}
+
+function sanitizeQueryParams(
+  queryParams: Record<string, string | number | boolean>,
+) {
+  return Object.entries(queryParams).reduce(
+    (acc, [key, value]) => {
+      // Check for nullish or empty string values
+      if (value !== null && value !== undefined && value !== "") {
+        // Ensure the key and value are properly encoded for URL usage
+        acc[encodeURIComponent(key)] = encodeURIComponent(value.toString());
+      }
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+}
+type PopoutWindowParams = {
+  width?: number;
+  height?: number;
+  left?: number;
+  top?: number;
+};
+
+export function PopoutWindow(
+  path: string,
+  incomingQueryParams?: Record<string, any>,
+  {
+    width = 1280,
+    height = 720,
+    left = window.screen.width / 2 - width / 2,
+    top = window.screen.height / 2 - height / 2,
+  }: PopoutWindowParams = {},
+) {
+  const extendedQueryParams = sanitizeQueryParams({
+    ...incomingQueryParams,
+    width: width.toString(),
+    height: height.toString(),
+    left: left.toString(),
+    top: top.toString(),
+  });
+
+  const url = `${path}?${new URLSearchParams(extendedQueryParams).toString()}`;
+
+  window.open(
+    url,
+    "",
+    `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`,
+  );
 }

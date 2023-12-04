@@ -19,7 +19,8 @@ import { StatusChoiceProps } from "@/types";
 import {
   AccountingControlFormValues,
   DivisionCodeFormValues,
-  RevenueCodeFormValues
+  GLAccountFormValues,
+  RevenueCodeFormValues,
 } from "@/types/accounting";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
@@ -42,8 +43,8 @@ export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
     revenueAccount: Yup.string().notRequired(),
   });
 
+export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
   Yup.object().shape({
-    export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     accountNumber: Yup.string()
       .required("Account number is required")

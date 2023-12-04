@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { StatusChoiceProps, TDayOfWeekChoiceProps } from "@/types";
 import {
   CustomerContactFormValues,
   CustomerEmailProfileFormValues,
@@ -24,25 +25,6 @@ import {
 } from "@/types/customer";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-
-/** Customer Schema */
-export const customerSchema: ObjectSchema<CustomerFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    code: Yup.string().required("Code is required"),
-    name: Yup.string().required("Name is required"),
-    addressLine1: Yup.string().notRequired(),
-    addressLine2: Yup.string().notRequired(),
-    city: Yup.string().notRequired(),
-    state: Yup.string().notRequired(),
-    zipCode: Yup.string().notRequired(),
-    hasCustomerPortal: Yup.string<YesNoChoiceProps>().required(
-      "Has Customer Portal is required",
-    ),
-    autoMarkReadyToBill: Yup.string<YesNoChoiceProps>().required(
-      "Auto Mark Ready to Bill is required",
-    ),
-  });
 
 /** Customer Email Profile Schema */
 export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
@@ -63,7 +45,6 @@ export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
 export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
   Yup.object().shape({
     name: Yup.string().required("Name is required"),
-    customer: Yup.string().required("Customer is required"),
     documentClass: Yup.array()
       .of(Yup.string().required())
       .min(1, "At Least one document class is required.")

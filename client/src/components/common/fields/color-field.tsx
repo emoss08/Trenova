@@ -15,18 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Input } from "@/components/common/fields/input";
+import { Label } from "@/components/common/fields/label";
+import { cn, useClickOutside } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
+import * as React from "react";
+import { HexColorPicker } from "react-colorful";
+import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
-import { ColorInputBaseProps } from "react-colorful/dist/types";
-import * as React from "react";
-import { cn, useClickOutside } from "@/lib/utils";
-import { Label } from "@/components/common/fields/label";
-import { HexColorPicker } from "react-colorful";
-import { AlertTriangle } from "lucide-react";
-import { Input } from "@/components/common/fields/input";
 
 export type ColorFieldProps<T extends FieldValues> = {
   label?: string;

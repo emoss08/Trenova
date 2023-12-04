@@ -16,78 +16,28 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { useUSStates, useUsers } from "@/hooks/useQueries";
-import { statusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { Control } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 
-export function CustomerInfoForm({
+export function CustomerEmailProfileForm({
   control,
-  open,
 }: {
   control: Control<FormValues>;
-  open: boolean;
 }) {
-  const {
-    selectUsersData,
-    isError: isUserError,
-    isLoading: isUsersLoading,
-  } = useUsers(open);
-
-  const {
-    selectUSStates,
-    isLoading: isUsStatesLoading,
-    isError: isUSStatesError,
-  } = useUSStates(open);
-
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
         <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
           <div className="min-h-[4em]">
-            <SelectInput
-              name="status"
-              rules={{ required: true }}
-              control={control}
-              label="Status"
-              options={statusChoices}
-              placeholder="Select Status"
-              description="Identify the current operational status of the customer."
-              isClearable={false}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
-          <div className="min-h-[4em]">
             <InputField
               control={control}
-              rules={{ required: true }}
-              name="code"
-              label="Code"
+              name="emailProfile.subject"
+              label="Subject"
               autoCapitalize="none"
               autoCorrect="off"
               type="text"
-              placeholder="Code"
-              description="Enter a unique identifier or code for the customer."
-              maxLength={10}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
-          <div className="min-h-[4em]">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="name"
-              label="Name"
-              autoCapitalize="none"
-              autoCorrect="off"
-              type="text"
-              placeholder="Name"
+              placeholder="Subject"
               description="Specify the official name of the customer."
               maxLength={10}
             />
@@ -97,13 +47,12 @@ export function CustomerInfoForm({
           <div className="min-h-[4em]">
             <InputField
               control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label="Address Line 1"
+              name="emailProfile.comment"
+              label="Comment"
               autoCapitalize="none"
               autoCorrect="off"
               type="text"
-              placeholder="Address Line 1"
+              placeholder="Comment"
               description="Provide the primary street address or location detail."
             />
           </div>
@@ -112,12 +61,12 @@ export function CustomerInfoForm({
           <div className="min-h-[4em]">
             <InputField
               control={control}
-              name="addressLine2"
-              label="Address Line 2"
+              name="emailProfile.fromAddress"
+              label="From Address"
               autoCapitalize="none"
               autoCorrect="off"
               type="text"
-              placeholder="Address Line 2"
+              placeholder="From Address"
               description="Include any additional address information, such as suite or building number."
             />
           </div>
@@ -126,29 +75,13 @@ export function CustomerInfoForm({
           <div className="min-h-[4em]">
             <InputField
               control={control}
-              rules={{ required: true }}
-              name="city"
-              label="City"
+              name="emailProfile.blindCopy"
+              label="Blind Copy"
               autoCapitalize="none"
               autoCorrect="off"
               type="text"
-              placeholder="City"
+              placeholder="Blind Copy"
               description="Enter the city where the customer is situated."
-            />
-          </div>
-        </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
-          <div className="min-h-[4em]">
-            <SelectInput
-              name="state"
-              control={control}
-              rules={{ required: true }}
-              label="State"
-              options={selectUSStates}
-              isFetchError={isUSStatesError}
-              isLoading={isUsStatesLoading}
-              placeholder="Select State"
-              description="Select the state or region for the customer."
             />
           </div>
         </div>
@@ -157,48 +90,39 @@ export function CustomerInfoForm({
             <InputField
               control={control}
               rules={{ required: true }}
-              name="zipCode"
-              label="Zip Code"
+              name="emailProfile.readReceiptTo"
+              label="Read Receipt To"
               autoCapitalize="none"
               autoCorrect="off"
               type="text"
-              placeholder="Zip Code"
+              placeholder="Read Receipt To"
               description="Input the postal code associated with the customer's address."
             />
           </div>
         </div>
         <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
           <div className="min-h-[4em]">
-            <SelectInput
-              name="advocate"
+            <InputField
               control={control}
-              label="Customer Advocate"
-              options={selectUsersData}
-              isFetchError={isUserError}
-              isLoading={isUsersLoading}
-              placeholder="Select Customer Advocate"
-              description="Assign a customer advocate from your team."
+              rules={{ required: true }}
+              name="emailProfile.attachmentName"
+              label="Attachment Name"
+              autoCapitalize="none"
+              autoCorrect="off"
+              type="text"
+              placeholder="Attachment Name"
+              description="Input the postal code associated with the customer's address."
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5 mt-6">
+        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
           <div className="min-h-[4em]">
             <CheckboxInput
               control={control}
-              label="Has Customer Protal?"
+              label="Read Receipt?"
               disabled
-              name="hasCustomerPortal"
+              name="emailProfile.readReceipt"
               description="Indicate whether the customer has access to the online portal for managing their account and services."
-            />
-          </div>
-        </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5 mt-6">
-          <div className="min-h-[4em]">
-            <CheckboxInput
-              control={control}
-              label="Automatic Billing Readiness"
-              name="autoMarkReadyToBill"
-              description="Enable automatic marking of billing readiness."
             />
           </div>
         </div>

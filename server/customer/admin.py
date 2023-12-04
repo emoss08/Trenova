@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from customer import models
 from django.contrib import admin
+
+from customer import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 

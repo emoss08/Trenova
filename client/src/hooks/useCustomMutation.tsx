@@ -20,6 +20,11 @@ import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
+import {
+  QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import {
   Control,
@@ -28,11 +33,6 @@ import {
   Path,
   UseFormReset,
 } from "react-hook-form";
-import {
-  QueryClient,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
 
 type Toast = Omit<ToasterToast, "id">;
 type DataProp = Record<string, unknown> | FormData;
@@ -120,6 +120,8 @@ function sendFileData(
   return axios.patch(path, formData);
 }
 
+const broadcastChannel = new BroadcastChannel("query-invalidation");
+
 async function handleSuccess<T extends FieldValues>(
   options: MutationOptions,
   toast: (toast: Toast) => void,
@@ -130,16 +132,24 @@ async function handleSuccess<T extends FieldValues>(
     showNotification(toast, "Success", options.successMessage);
   };
 
+  // Invalidate the queries that are passed in
   const invalidateQueries = async (queries?: string[]) => {
     if (queries) {
       await queryClient.invalidateQueries({
         queryKey: queries,
       });
+
+      // Broadcast a message to other windows to invalidate the same queries
+      broadcastChannel.postMessage({
+        type: "invalidate",
+        queryKeys: queries,
+      });
     }
   };
 
-  invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
-  invalidateQueries(options.additionalInvalidateQueries);
+  // Invalidate the queries that are passed in
+  await invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
+  await invalidateQueries(options.additionalInvalidateQueries);
 
   // Close the sheet depending on the method. If the sheet is not open, this will do nothing.
   const sheetKey = options.method === "POST" ? "sheetOpen" : "editSheetOpen";

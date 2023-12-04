@@ -17,10 +17,10 @@
 
 import DatePicker, { ReactDatePickerProps } from "react-datepicker";
 
-import React from "react";
+import { ExtendedInputProps, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { cn } from "@/lib/utils";
-import { ExtendedInputProps, Input } from "@/components/common/fields/input";
+import React from "react";
 
 const DatePickerInput = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
   ({ value, onClick }, ref) => (
@@ -59,9 +59,7 @@ export function DatepickerField({
           monthClassName={() =>
             "text-foreground bg-muted-foreground bg-background"
           }
-          dayClassName={() =>
-            "text-foreground hover:bg-foreground/10 bg-background"
-          }
+          dayClassName={() => "text-foreground hover:bg-accent bg-background"}
           weekDayClassName={() => "text-foreground bg-background select-none"}
         />
         {props.description && !props.formError && (

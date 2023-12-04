@@ -23,13 +23,13 @@ export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
     <button
       {...{
         onClick: row.getToggleExpandedHandler(),
-        style: { cursor: "pointer" },
+        className: "cursor-pointer",
       }}
     >
       {row.getIsExpanded() ? (
-        <ChevronDownIcon style={{ width: "1.2em", height: "1.2em" }} />
+        <ChevronDownIcon className="h-4 w-4" /> // Apply rotation
       ) : (
-        <ChevronRightIcon style={{ width: "1.2em", height: "1.2em" }} />
+        <ChevronRightIcon className="h-4 w-4" />
       )}
     </button>
   ) : (

@@ -19,12 +19,12 @@ import { LocationContactForm } from "@/components/location/location-contacts-for
 import { LocationInfoForm } from "@/components/location/location-info-form";
 import { Button } from "@/components/ui/button";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
@@ -78,6 +78,7 @@ export function LocationEditForm({
       path: `/locations/${location.id}/`,
       successMessage: "Location updated successfully.",
       queryKeysToInvalidate: ["locations-table-data"],
+      additionalInvalidateQueries: ["locations"],
       closeModal: true,
       errorMessage: "Failed to update new location.",
     },

@@ -36,6 +36,7 @@ import { useLogout } from "@/hooks/useLogout";
 import { ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -44,18 +45,39 @@ type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
 };
 
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
-  ({ user, ...props }, ref) => (
-    <Avatar ref={ref} {...props} className="hover:cursor-pointer">
-      <AvatarImage src={user.profile?.thumbnail} alt={user.username} />
-      <AvatarFallback>
-        {user.profile?.firstName.charAt(0)}
-        {user.profile?.lastName.charAt(0)}
-      </AvatarFallback>
-    </Avatar>
-  ),
-);
+  ({ user, ...props }, ref) => {
+    // Determine the initials for the fallback avatar
+    const initials = user.profile
+      ? user.profile.firstName.charAt(0) + user.profile.lastName.charAt(0)
+      : "";
 
-UserAvatar.displayName = "UserAvatar";
+    // Determine the avatar image source
+    const avatarSrc = user.profile?.thumbnail
+      ? user.profile.thumbnail
+      : `https://avatar.vercel.sh/${user.email}`;
+
+    return (
+      <div
+        className="flex items-center hover:cursor-pointer"
+        ref={ref}
+        {...props}
+      >
+        <div className="border-l border-accent h-7 mr-2 pl-2" />
+        <Avatar className="inline-block ml-4 m-auto">
+          <AvatarImage
+            src={avatarSrc}
+            alt={user.username}
+            className="h-9 w-9 rounded-full"
+          />
+          <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
+        </Avatar>
+        <div className="flex items-center ml-2 mb-1">
+          <ChevronDownIcon className="h-4 w-4" />
+        </div>
+      </div>
+    );
+  },
+);
 
 function UserAvatarMenuContent({ user }: { user: User }) {
   const logout = useLogout();

@@ -21,8 +21,16 @@ import { DataTableColumnExpand } from "@/components/common/table/data-table-expa
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
 import { LocationTableEditSheet } from "@/components/location/location-table-edit-dialog";
 import { LocationChart } from "@/components/location/table-chart";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { tableStatusChoices } from "@/lib/constants";
 import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
+import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
@@ -32,18 +40,29 @@ const renderSubComponent = ({ row }: { row: Row<Location> }) => {
 function LocationColor({
   color,
   locationName,
+  locationCategoryName,
 }: {
   color: string;
   locationName: string;
+  locationCategoryName?: string;
 }) {
   return (
-    <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
-      <div
-        className={"h-5 w-5 rounded-xl mx-2"}
-        style={{ backgroundColor: color }}
-      />
-      {locationName}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center space-x-2 text-sm font-mediumtext-gray-900 dark:text-gray-100">
+            <div
+              className={"h-2 w-2 rounded-xl mx-2"}
+              style={{ backgroundColor: color }}
+            />
+            {locationName}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent align="start">
+          {locationCategoryName && <p>{locationCategoryName}</p>}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -79,12 +98,22 @@ const columns: ColumnDef<Location>[] = [
           <LocationColor
             color={row.original.locationColor}
             locationName={row.original.name}
+            locationCategoryName={row.original.locationCategoryName as string}
           />
         );
       } else {
         return row.original.name;
       }
     },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "locationCategoryName",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Location Category" />
+    ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -97,6 +126,7 @@ const columns: ColumnDef<Location>[] = [
     cell: ({ row }) =>
       `${upperFirst(row.original.city)}, ${row.original.state}`,
   },
+
   {
     accessorKey: "pickupCount",
     header: "Total Pickups",
@@ -115,6 +145,14 @@ const columns: ColumnDef<Location>[] = [
   },
 ];
 
+const filters: FilterConfig<Location>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+];
+
 export default function Locations() {
   return (
     <DataTable
@@ -124,6 +162,7 @@ export default function Locations() {
       name="Locations"
       exportModelName="Location"
       filterColumn="name"
+      tableFacetedFilters={filters}
       TableSheet={LocationTableSheet}
       TableEditSheet={LocationTableEditSheet}
       renderSubComponent={renderSubComponent}

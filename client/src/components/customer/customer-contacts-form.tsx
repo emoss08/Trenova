@@ -16,60 +16,44 @@
  */
 
 import { Control, useFieldArray } from "react-hook-form";
-import { TimeField } from "../common/fields/input";
+import { InputField } from "../common/fields/input";
 
-import { useLocations } from "@/hooks/useQueries";
-import { DayOfWeekChoices } from "@/lib/choices";
+import { yesAndNoChoicesBoolean } from "@/lib/constants";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { InfoCircledIcon, PlusIcon } from "@radix-ui/react-icons";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { AlertOctagonIcon } from "lucide-react";
+import { CheckboxInput } from "../common/fields/checkbox";
 import { SelectInput } from "../common/fields/select-input";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
 
-function DeliverySlotAlert() {
-  return (
-    <Alert className="my-5">
-      <InfoCircledIcon className="h-5 w-5" />
-      <AlertTitle>Information!</AlertTitle>
-      <AlertDescription>
-        Delivery slots are used to define the time slots for delivery. You can
-        add multiple delivery slots for a location.
-      </AlertDescription>
-    </Alert>
-  );
-}
-
-export function DeliverySlotForm({
+export function CustomerContactForm({
   control,
-  open,
 }: {
   control: Control<FormValues>;
-  open: boolean;
 }) {
-  const {
-    selectLocationData,
-    isLoading: isLocationsLoading,
-    isError: isLocationError,
-  } = useLocations(open);
-
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "deliverySlots",
+    name: "customerContacts",
     keyName: "id",
   });
 
-  const handleAddSlot = () => {
-    append({ dayOfWeek: "MON", startTime: "", endTime: "", location: "" });
+  const handleAddContact = () => {
+    append({
+      isActive: true,
+      name: "",
+      email: "",
+      title: "",
+      phone: "",
+      isPayableContact: false,
+    });
   };
 
   return (
     <>
-      <DeliverySlotAlert />
       <div className="flex flex-col h-full w-full">
         {fields.length > 0 ? (
           <>
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[600px] overflow-y-auto">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
@@ -78,13 +62,13 @@ export function DeliverySlotForm({
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
-                        name={`deliverySlots.${index}.dayOfWeek`}
+                        name={`customerContacts.${index}.isActive`}
                         rules={{ required: true }}
                         control={control}
-                        label="Day of Week"
-                        options={DayOfWeekChoices}
-                        placeholder="Select Day of week"
-                        description="Specify the operational day of the week for customer transactions."
+                        label="Status"
+                        options={yesAndNoChoicesBoolean}
+                        description="Select the current status of the customer contact's activity."
+                        placeholder="Select Status"
                         isClearable={false}
                         menuPlacement="bottom"
                         menuPosition="fixed"
@@ -93,43 +77,57 @@ export function DeliverySlotForm({
                   </div>
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`deliverySlots.${index}.location`}
+                      <InputField
                         rules={{ required: true }}
                         control={control}
-                        label="Location"
-                        options={selectLocationData}
-                        isFetchError={isLocationError}
-                        isLoading={isLocationsLoading}
-                        placeholder="Select Location"
-                        description="Select the delivery location from the predefined list."
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
+                        name={`customerContacts.${index}.name`}
+                        description="Input the full name of the customer contact."
+                        label="Name"
+                        placeholder="Name"
                       />
                     </div>
                   </div>
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
+                      <InputField
                         control={control}
-                        name={`deliverySlots.${index}.startTime`}
-                        label="Start Time"
-                        placeholder="Start Time"
-                        description="Enter the commencement time for the delivery window."
+                        name={`customerContacts.${index}.title`}
+                        label="Title"
+                        placeholder="Title"
+                        description="Indicate the professional title of the customer contact."
                       />
                     </div>
                   </div>
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
+                      <InputField
+                        type="email"
                         control={control}
-                        name={`deliverySlots.${index}.endTime`}
-                        label="End Time"
-                        placeholder="End Time"
-                        description="Enter the concluding time for the delivery window."
+                        name={`customerContacts.${index}.email`}
+                        label="Email"
+                        placeholder="Email"
+                        description="Provide the customer contact's email address for correspondence."
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                    <div className="min-h-[4em]">
+                      <InputField
+                        control={control}
+                        name={`customerContacts.${index}.phone`}
+                        label="Phone"
+                        placeholder="Phone"
+                        description="Input the customer contact's telephone number for direct communication."
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-between w-full max-w-sm mt-6 gap-0.5">
+                    <div className="min-h-[4em]">
+                      <CheckboxInput
+                        control={control}
+                        name={`customerContacts.${index}.isPayableContact`}
+                        label="Is Payable Contact"
+                        description="Check if the contact is responsible for managing payments and invoices."
                       />
                     </div>
                   </div>
@@ -152,10 +150,10 @@ export function DeliverySlotForm({
               type="button"
               size="sm"
               className="mb-10 w-fit"
-              onClick={handleAddSlot}
+              onClick={handleAddContact}
             >
               <PlusIcon className="mr-2 h-4 w-4" />
-              Add Another Delivery Slot
+              Add Another Contacts
             </Button>
           </>
         ) : (
@@ -163,11 +161,9 @@ export function DeliverySlotForm({
             <span className="text-6xl mb-4">
               <AlertOctagonIcon />
             </span>
-            <p className="mb-4">
-              No delivery slots yet. Please add a new devliery slot.
-            </p>
-            <Button type="button" size="sm" onClick={handleAddSlot}>
-              Add Delivery Slot
+            <p className="mb-4">No contacts yet. Please add a new contacts.</p>
+            <Button type="button" size="sm" onClick={handleAddContact}>
+              Add Contact
             </Button>
           </div>
         )}

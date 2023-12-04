@@ -328,4 +328,23 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "Location": {
+        "app_label": "location",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Status"},
+            {"value": "name", "label": "Name"},
+            {"value": "location_category__name", "label": "Location Category Name"},
+            {"value": "depot__name", "label": "Depot Name"},
+            {"value": "address_line_1", "label": "Address Line 1"},
+            {"value": "address_line_2", "label": "Address Line 2"},
+            {"value": "city", "label": "City"},
+            {"value": "state", "label": "State"},
+            {"value": "zip_code", "label": "Zip Code"},
+            {"value": "longitude", "label": "Longitude"},
+            {"value": "latitude", "label": "Latitude"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }
