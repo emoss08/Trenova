@@ -174,12 +174,7 @@ export function TimeField<T extends FieldValues>({
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
             props.className,
           )}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value) {
-              field.onChange(value);
-            }
-          }}
+          {...field}
           {...props}
         />
         {fieldState.error?.message && (
