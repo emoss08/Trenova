@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Logo } from "@/components/layout/logo";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -51,9 +50,9 @@ interface MainLink extends Omit<SubLink, "link" | "description"> {
   subLinks?: SubLink[];
 }
 
-interface MainItem {
+type MainItem = {
   links: MainLink[];
-}
+};
 
 type MenuContent = React.ReactNode | MainItem[];
 
@@ -68,6 +67,9 @@ type MenuData = {
 type NavigationMenuItemProps = {
   data: MenuData;
   setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
+  setMenuPosition: (position: { left: number; width: number }) => void; // Add this line
+  ref: React.Ref<HTMLLIElement>;
+  menuItemRefs: React.MutableRefObject<Record<string, HTMLLIElement>>; // Add this line
 };
 
 // Utility Functions
@@ -98,42 +100,104 @@ const userHasAccessToContent = (
   return true;
 };
 
+const calculatePosition = (element: HTMLLIElement) => {
+  const rect = element.getBoundingClientRect();
+  const parentRect = element.offsetParent?.getBoundingClientRect();
+  const leftPosition = parentRect ? rect.left - parentRect.left : rect.left;
+  return {
+    left: leftPosition,
+    width: element.offsetWidth,
+  };
+};
+
 // NavigationMenuItemWithPermission Component
-const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> =
-  React.memo(({ data, setMenuOpen }) => {
-    const { userHasPermission, isAdmin } = useUserPermissions();
+const NavigationMenuItemWithPermission = React.memo(
+  React.forwardRef<HTMLLIElement, NavigationMenuItemProps>(
+    ({ data, setMenuOpen, setMenuPosition, menuItemRefs }, ref) => {
+      const { userHasPermission, isAdmin } = useUserPermissions();
 
-    if (
-      !hasPermission(data, userHasPermission) ||
-      !userHasAccessToContent(data.content, userHasPermission, isAdmin)
-    ) {
-      return null;
-    }
+      // Handle mouse enter event
+      const handleMouseEnter = () => {
+        if (menuItemRefs.current[data.menuKey]) {
+          setMenuPosition(
+            calculatePosition(menuItemRefs.current[data.menuKey]),
+          );
+          setMenuOpen(data.menuKey);
+        }
+      };
 
-    return (
-      <NavigationMenuItem>
-        {data.link ? (
-          <Link
-            className={navigationMenuTriggerStyle()}
-            to={data.link}
-            onMouseEnter={() => setMenuOpen(undefined)}
-          >
-            {data.label}
-          </Link>
-        ) : (
-          <>
-            <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
+      // Render null if user does not have permission
+      if (
+        !hasPermission(data, userHasPermission) ||
+        !userHasAccessToContent(data.content, userHasPermission, isAdmin)
+      ) {
+        return null;
+      }
+
+      // Render menu item with appropriate link or trigger
+      return (
+        <NavigationMenuItem ref={ref} onMouseDown={handleMouseEnter}>
+          {data.link ? (
+            <Link
+              className={navigationMenuTriggerStyle()}
+              to={data.link}
+              onMouseEnter={() => setMenuOpen(undefined)}
+            >
               {data.label}
-            </NavigationMenuTrigger>
-            <NavigationMenuContent>{data.content}</NavigationMenuContent>
-          </>
-        )}
-      </NavigationMenuItem>
-    );
-  });
+            </Link>
+          ) : (
+            <>
+              <NavigationMenuTrigger
+                onClick={() => setMenuOpen(data.menuKey)}
+                onMouseEnter={handleMouseEnter}
+              >
+                {data.label}
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>{data.content}</NavigationMenuContent>
+            </>
+          )}
+        </NavigationMenuItem>
+      );
+    },
+  ),
+);
 
 export function NavMenu() {
   const [menuOpen, setMenuOpen] = useHeaderStore.use("menuOpen");
+  const [menuPosition, setMenuPosition] = React.useState({ left: 0, width: 0 });
+  const menuItemRefs = React.useRef<Record<string, HTMLLIElement>>({});
+  const navMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Attach menu item ref
+  const attachRef = React.useCallback(
+    (key: string) => (element: HTMLLIElement | null) => {
+      if (element) menuItemRefs.current[key] = element;
+    },
+    [],
+  );
+
+  // Handle clicks outside the menu to close it
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      navMenuRef.current &&
+      !navMenuRef.current.contains(event.target as Node)
+    ) {
+      setMenuOpen(undefined);
+    }
+  };
+
+  // Add and remove click outside listener
+  React.useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Update menu position when menuOpen changes
+  React.useEffect(() => {
+    if (menuOpen && menuItemRefs.current[menuOpen]) {
+      setMenuPosition(calculatePosition(menuItemRefs.current[menuOpen]));
+    }
+  }, [menuOpen, calculatePosition]);
 
   // Define menu items
   const menuItems: MenuData[] = [
@@ -166,32 +230,34 @@ export function NavMenu() {
   ];
 
   return (
-    <div>
+    <div ref={navMenuRef}>
       {/* Hamburger Menu (visible on small screens) */}
       <button onClick={() => setMenuOpen(menuOpen)} className="md:hidden p-2">
         🍔
       </button>
-
       {/* Navigation Menu */}
       <NavigationMenu
         value={menuOpen}
         onValueChange={(newValue) => newValue && setMenuOpen(newValue)}
         onMouseLeave={() => setMenuOpen(undefined)}
+        menuPosition={menuPosition}
         className={cn(
-          menuOpen ? "block" : "hidden", // Show/Hide based on state
-          "md:flex", // Always flex on medium screens and above
+          menuOpen ? "block" : "hidden",
+          "md:flex",
           "md:space-x-8",
           "lg:space-x-12",
           "xl:space-x-16",
         )}
       >
         <NavigationMenuList>
-          <Logo />
           {menuItems.map((item) => (
             <NavigationMenuItemWithPermission
               key={item.menuKey}
               data={item}
+              setMenuPosition={setMenuPosition}
               setMenuOpen={setMenuOpen}
+              ref={attachRef(item.menuKey)}
+              menuItemRefs={menuItemRefs}
             />
           ))}
         </NavigationMenuList>
