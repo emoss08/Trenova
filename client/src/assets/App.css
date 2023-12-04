@@ -32,7 +32,7 @@
     input[type="time"]::-webkit-calendar-picker-indicator {
         display: none;
       }
-
+      
     :root {
         --background: 0 0% 100%;
         --foreground: 240 10% 3.9%;
@@ -54,7 +54,7 @@
         --input: 240 5.9% 90%;
         --ring: 240 5.9% 10%;
         --radius: 0.5rem;
-
+        --dot-color: black;
     }
 
     .dark {
@@ -79,6 +79,7 @@
         --ring: 240 4.9% 83.9%;
         /* change react toastify background color to match the background color of the current theme */
         --toastify-color-dark: hsl(var(--background)) !important;
+        --dot-color: white;
     }
 
       .slate-dark {
@@ -101,8 +102,20 @@
         --border: 217.2 32.6% 17.5%;
         --input: 217.2 32.6% 17.5%;
         --ring: 212.7 26.8% 83.9;
+        --dot-color: white;
       }
 
+      .navigation-menu-trigger-hover::after {
+          content: '';
+          position: absolute;
+          bottom: 0px;
+          left: 50%;
+          transform: translateX(-50%);
+          height: 5px;
+          width: 5px;
+          border-radius: 50%;
+          background-color: var(--dot-color); 
+      }
 
     .required:after {
         content: " *";
