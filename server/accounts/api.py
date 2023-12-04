@@ -97,7 +97,7 @@ class UserViewSet(viewsets.ModelViewSet):
         Returns:
             A queryset of user objects that are filtered by the organization_id
         """
-        queryset: QuerySet[models.User] = (
+        queryset = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
             )
