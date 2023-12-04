@@ -34,6 +34,7 @@ from django.db.models.functions import Extract, TruncMonth
 from django.utils.timezone import now
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
@@ -82,9 +83,15 @@ class LocationViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     @action(detail=True, methods=["get"])
-    def monthly_pickup_data(self, request, pk=None):
-        """
-        Endpoint to retrieve monthly pickup data for a specific location.
+    def monthly_pickup_data(self, request: Request, pk: str = None) -> Response:
+        """Endpoint to retrieve monthly pickup data for a specific location.
+
+        Args:
+            request (Request): The request object.
+            pk (str): The primary key of the location.
+
+        Returns:
+            Response: The response object containing the monthly pickup data.
         """
         location = self.get_object()
 
@@ -173,6 +180,8 @@ class LocationViewSet(viewsets.ModelViewSet):
                         output_field=IntegerField(),
                     )
                 ),
+                location_color=F("location_category__color"),
+                location_category_name=F("location_category__name"),
             )
             .only(
                 "organization_id",

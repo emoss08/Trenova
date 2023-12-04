@@ -91,7 +91,10 @@ class LocationSerializer(GenericSerializer):
     location_comments = LocationCommentSerializer(many=True, required=False)
     location_contacts = LocationContactSerializer(many=True, required=False)
     location_color = serializers.CharField(
-        source="location_category.color", read_only=True
+        required=False, read_only=True, allow_null=True
+    )
+    location_category_name = serializers.CharField(
+        required=False, read_only=True, allow_null=True
     )
 
     class Meta:
@@ -107,6 +110,7 @@ class LocationSerializer(GenericSerializer):
             "location_comments",
             "location_contacts",
             "location_color",
+            "location_category_name",
         )
         extra_read_only_fields = (
             "organization",
