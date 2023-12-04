@@ -17,14 +17,15 @@
 
 import typing
 
-from core.permissions import CustomObjectPermissions
-from customer import models, serializers
 from django.db.models import Count, Max, Prefetch, Q, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
+from core.permissions import CustomObjectPermissions
+from customer import models, serializers
 from utils.models import StatusChoices
 
 if typing.TYPE_CHECKING:
@@ -195,7 +196,7 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
     @action(
         detail=False, methods=["GET"], name="Get Customer Rule Profile by Customer ID"
     )
-    def get_by_customer_id(self, request: "Request") -> "Response":
+    def get_by_customer_id(self, request: "Request") -> Response:
         """Get Customer Rule Profile by Customer ID.
 
         Args:
