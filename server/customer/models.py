@@ -131,7 +131,6 @@ class Customer(GenericModel):
 
         verbose_name = _("Customer")
         verbose_name_plural = _("Customers")
-        ordering = ["-code"]
         db_table = "customer"
         constraints = [
             models.UniqueConstraint(
@@ -383,7 +382,6 @@ class CustomerRuleProfile(GenericModel):
 
         verbose_name = _("Customer Rule Profile")
         verbose_name_plural = _("Customer Rule Profiles")
-        ordering = ["-name"]
         db_table = "customer_rule_profile"
         constraints = [
             models.UniqueConstraint(
@@ -479,7 +477,6 @@ class CustomerContact(GenericModel):
 
         verbose_name = _("Customer Contact")
         verbose_name_plural = _("Customer Contacts")
-        ordering = ["customer", "name"]
         db_table = "customer_contact"
 
     def __str__(self) -> str:
@@ -667,9 +664,12 @@ class CustomerFuelProfile(GenericModel):
     )
 
     class Meta:
+        """
+        Meta Class for Customer Fuel Profile
+        """
+
         verbose_name = _("Customer Fuel Profile")
         verbose_name_plural = _("Customer Fuel Profiles")
-        ordering = ["customer"]
         db_table = "customer_fuel_profile"
 
     def __str__(self) -> str:
@@ -739,9 +739,12 @@ class CustomerFuelTable(GenericModel):
     )
 
     class Meta:
+        """
+        Meta Class for Customer Fuel Table
+        """
+
         verbose_name = _("Customer Fuel Table")
         verbose_name_plural = _("Customer Fuel Table")
-        ordering = ["id"]
         db_table = "customer_fuel_table"
         constraints = [
             models.UniqueConstraint(
@@ -822,9 +825,12 @@ class CustomerFuelTableDetail(GenericModel):
     )
 
     class Meta:
+        """
+        Meta class for Customer Fuel Profile Details
+        """
+
         verbose_name = _("Customer Fuel Profile Detail")
         verbose_name_plural = _("Customer Fuel Profile Details")
-        ordering = ["customer_fuel_table"]
         db_table = "customer_fuel_profile_detail"
 
     def __str__(self) -> str:
@@ -888,7 +894,6 @@ class DeliverySlot(GenericModel):
 
         verbose_name = _("Delivery Slot")
         verbose_name_plural = _("Delivery Slots")
-        ordering = ["customer", "day_of_week", "start_time", "end_time"]
         db_table = "delivery_slot"
         constraints = [
             models.UniqueConstraint(
