@@ -56,60 +56,62 @@ const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
     dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
       "Day of Week is required",
     ),
-    startTime: Yup.string().required("Start Time is required"),
-    // .test(
-    //   "is-before-end-time",
-    //   "Start Time must be before End Time",
-    //   function (value) {
-    //     const { endTime } = this.parent;
-    //     if (value && endTime) {
-    //       const [startHours, startMinutes, startSeconds] = value
-    //         .split(":")
-    //         .map(Number);
-    //       const [endHours, endMinutes, endSeconds] = endTime
-    //         .split(":")
-    //         .map(Number);
-    //       const startDate = new Date(
-    //         0,
-    //         0,
-    //         0,
-    //         startHours,
-    //         startMinutes,
-    //         startSeconds,
-    //       );
-    //       const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
-    //       return startDate < endDate;
-    //     }
-    //     return true;
-    //   },
-    // ),
-    endTime: Yup.string().required("End Time is required"),
-    // .test(
-    //   "is-after-start-time",
-    //   "End Time must be after Start Time",
-    //   function (value) {
-    //     const { startTime } = this.parent;
-    //     if (value && startTime) {
-    //       const [startHours, startMinutes, startSeconds] = startTime
-    //         .split(":")
-    //         .map(Number);
-    //       const [endHours, endMinutes, endSeconds] = value
-    //         .split(":")
-    //         .map(Number);
-    //       const startDate = new Date(
-    //         0,
-    //         0,
-    //         0,
-    //         startHours,
-    //         startMinutes,
-    //         startSeconds,
-    //       );
-    //       const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
-    //       return endDate > startDate;
-    //     }
-    //     return true;
-    //   },
-    // ),
+    startTime: Yup.string()
+      .required("Start Time is required")
+      .test(
+        "is-before-end-time",
+        "Start Time must be before End Time",
+        function (value) {
+          const { endTime } = this.parent;
+          if (value && endTime) {
+            const [startHours, startMinutes, startSeconds] = value
+              .split(":")
+              .map(Number);
+            const [endHours, endMinutes, endSeconds] = endTime
+              .split(":")
+              .map(Number);
+            const startDate = new Date(
+              0,
+              0,
+              0,
+              startHours,
+              startMinutes,
+              startSeconds,
+            );
+            const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
+            return startDate < endDate;
+          }
+          return true;
+        },
+      ),
+    endTime: Yup.string()
+      .required("End Time is required")
+      .test(
+        "is-after-start-time",
+        "End Time must be after Start Time",
+        function (value) {
+          const { startTime } = this.parent;
+          if (value && startTime) {
+            const [startHours, startMinutes, startSeconds] = startTime
+              .split(":")
+              .map(Number);
+            const [endHours, endMinutes, endSeconds] = value
+              .split(":")
+              .map(Number);
+            const startDate = new Date(
+              0,
+              0,
+              0,
+              startHours,
+              startMinutes,
+              startSeconds,
+            );
+            const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
+            return endDate > startDate;
+          }
+          return true;
+        },
+      ),
     location: Yup.string().required("Location is required"),
   });
 const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
