@@ -61,6 +61,8 @@ interface SelectInputProps<T extends Record<string, unknown>>
   description?: string;
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
   hasContextMenu?: boolean;
+  maxOptions?: number;
+  isFetchError?: boolean;
 }
 
 /**
@@ -109,6 +111,8 @@ export function SelectInput<T extends Record<string, unknown>>(
       <div className="relative">
         <Select
           aria-invalid={fieldState.invalid || isFetchError}
+          aria-labelledby={controllerProps.id}
+          inputId={controllerProps.id}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={hideSelectedOptions}
           unstyled
