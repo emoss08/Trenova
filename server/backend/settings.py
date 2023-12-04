@@ -344,7 +344,6 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Cacheops configurations
 CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
-
 CACHEOPS_DEFAULTS = {
     "timeout": 60 * 60,
 }
