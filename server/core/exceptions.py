@@ -85,7 +85,8 @@ class CustomExceptionHandler(ExceptionHandler):
         if isinstance(exc, ValidationError):
             # Ensure that the exception's message_dict is properly formatted
             formatted_messages = {
-                self.snake_to_camel(k): v for k, v in exc.message_dict.items()
+                CustomExceptionFormatter.snake_to_camel(k): v
+                for k, v in exc.message_dict.items()
             }
             return exceptions.ValidationError(detail=formatted_messages)
         return super().convert_known_exceptions(exc)
