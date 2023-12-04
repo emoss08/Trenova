@@ -14,7 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import logging
 import typing
+from functools import lru_cache
 
 from django.core.exceptions import ValidationError
 from drf_standardized_errors.formatter import ExceptionFormatter
@@ -24,12 +26,50 @@ from rest_framework import exceptions
 
 
 class CustomExceptionFormatter(ExceptionFormatter):
+    # Logger for debugging and monitoring
+    logger = logging.getLogger(__name__)
+
     @staticmethod
+    @lru_cache(maxsize=128)  # Cache to optimize repeated transformations
     def snake_to_camel(snake_str: str) -> str:
-        if snake_str is None:
-            return None  # type: ignore
-        components = snake_str.split("_")
-        return components[0] + "".join(x.title() for x in components[1:])
+        # Handling unexpected inputs gracefully
+        if not snake_str:
+            CustomExceptionFormatter.logger.warning(
+                f"Received invalid input: {snake_str}"
+            )
+            return snake_str
+
+        parts = snake_str.split(".")
+        transformed_parts = []
+
+        for part in parts:
+            # Check for snake_case and convert to camelCase
+            if "_" in part:
+                transformed_parts.append(
+                    CustomExceptionFormatter._convert_snake_to_camel(part)
+                )
+            else:
+                # Keep as is or convert last part to lowercase after numeric index
+                transformed_parts.append(
+                    CustomExceptionFormatter._handle_numeric_index(
+                        part, transformed_parts
+                    )
+                )
+
+        return ".".join(transformed_parts)
+
+    @staticmethod
+    def _convert_snake_to_camel(part: str) -> str:
+        """Converts snake_case to camelCase."""
+        sub_parts = part.split("_")
+        return sub_parts[0] + "".join(x.title() for x in sub_parts[1:])
+
+    @staticmethod
+    def _handle_numeric_index(part: str, transformed_parts: list) -> str:
+        """Handles numeric index in the attribute name."""
+        if transformed_parts and transformed_parts[-1].isdigit():
+            return part.lower()
+        return part
 
     def format_error_response(
         self, error_response: ErrorResponse
@@ -43,7 +83,11 @@ class CustomExceptionFormatter(ExceptionFormatter):
 class CustomExceptionHandler(ExceptionHandler):
     def convert_known_exceptions(self, exc: Exception) -> Exception:
         if isinstance(exc, ValidationError):
-            return exceptions.ValidationError(detail=exc.message_dict)
+            # Ensure that the exception's message_dict is properly formatted
+            formatted_messages = {
+                self.snake_to_camel(k): v for k, v in exc.message_dict.items()
+            }
+            return exceptions.ValidationError(detail=formatted_messages)
         return super().convert_known_exceptions(exc)
 
 
