@@ -18,7 +18,7 @@
 import { Control, useFieldArray } from "react-hook-form";
 import { InputField } from "../common/fields/input";
 
-import { yesAndNoChoicesBoolean } from "@/lib/constants";
+import { booleanStatusChoices } from "@/lib/constants";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { AlertOctagonIcon } from "lucide-react";
@@ -33,7 +33,7 @@ export function CustomerContactForm({
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "customerContacts",
+    name: "contacts",
     keyName: "id",
   });
 
@@ -62,11 +62,11 @@ export function CustomerContactForm({
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
-                        name={`customerContacts.${index}.isActive`}
+                        name={`contacts.${index}.isActive`}
                         rules={{ required: true }}
                         control={control}
                         label="Status"
-                        options={yesAndNoChoicesBoolean}
+                        options={booleanStatusChoices}
                         description="Select the current status of the customer contact's activity."
                         placeholder="Select Status"
                         isClearable={false}
@@ -80,7 +80,7 @@ export function CustomerContactForm({
                       <InputField
                         rules={{ required: true }}
                         control={control}
-                        name={`customerContacts.${index}.name`}
+                        name={`contacts.${index}.name`}
                         description="Input the full name of the customer contact."
                         label="Name"
                         placeholder="Name"
@@ -91,7 +91,7 @@ export function CustomerContactForm({
                     <div className="min-h-[4em]">
                       <InputField
                         control={control}
-                        name={`customerContacts.${index}.title`}
+                        name={`contacts.${index}.title`}
                         label="Title"
                         placeholder="Title"
                         description="Indicate the professional title of the customer contact."
@@ -103,7 +103,7 @@ export function CustomerContactForm({
                       <InputField
                         type="email"
                         control={control}
-                        name={`customerContacts.${index}.email`}
+                        name={`contacts.${index}.email`}
                         label="Email"
                         placeholder="Email"
                         description="Provide the customer contact's email address for correspondence."
@@ -114,7 +114,7 @@ export function CustomerContactForm({
                     <div className="min-h-[4em]">
                       <InputField
                         control={control}
-                        name={`customerContacts.${index}.phone`}
+                        name={`contacts.${index}.phone`}
                         label="Phone"
                         placeholder="Phone"
                         description="Input the customer contact's telephone number for direct communication."
@@ -125,7 +125,7 @@ export function CustomerContactForm({
                     <div className="min-h-[4em]">
                       <CheckboxInput
                         control={control}
-                        name={`customerContacts.${index}.isPayableContact`}
+                        name={`contacts.${index}.isPayableContact`}
                         label="Is Payable Contact"
                         description="Check if the contact is responsible for managing payments and invoices."
                       />

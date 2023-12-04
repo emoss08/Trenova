@@ -19,7 +19,7 @@ import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { CustomerTableSheet } from "@/components/customer/customer-table-dialog";
-import { LCTableEditDialog } from "@/components/location-categories/lc-table-edit-sheet";
+import { CustomerTableEditSheet } from "@/components/customer/customer-table-edit-dialog";
 import { Customer } from "@/types/customer";
 import { ColumnDef, Row } from "@tanstack/react-table";
 
@@ -98,7 +98,7 @@ export default function Customers() {
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
       TableSheet={CustomerTableSheet}
-      TableEditSheet={LCTableEditDialog}
+      TableEditSheet={CustomerTableEditSheet}
       addPermissionName="add_customer"
     />
   );
