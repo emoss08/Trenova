@@ -17,15 +17,14 @@
 
 import typing
 
+from core.permissions import CustomObjectPermissions
+from customer import models, serializers
 from django.db.models import Count, Max, Prefetch, Q, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-
-from core.permissions import CustomObjectPermissions
-from customer import models, serializers
 from utils.models import StatusChoices
 
 if typing.TYPE_CHECKING:
@@ -74,10 +73,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
         Returns:
             A queryset of customers for the current organization.
         """
+
+        user_org = self.request.user.organization_id
+
         queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
+            self.queryset.filter(organization_id=user_org)
             .select_related(
                 "email_profile",
                 "rule_profile",
@@ -86,13 +86,13 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="contacts",
                     queryset=models.CustomerContact.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
+                        organization_id=user_org
                     ).all(),
                 ),
                 Prefetch(
                     lookup="delivery_slots",
                     queryset=models.DeliverySlot.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
+                        organization_id=user_org
                     ).all(),
                 ),
             )
