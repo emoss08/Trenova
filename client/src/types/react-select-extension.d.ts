@@ -1,5 +1,3 @@
-import { CreatableProps, Props } from "react-select/creatable";
-
 declare module "react-select/dist/declarations/src/Select" {
   export interface Props<
     Option,
@@ -14,6 +12,7 @@ declare module "react-select/dist/declarations/src/Select" {
     isClearable?: boolean;
     isMulti?: IsMulti;
     placeholder?: string;
+    Group?: Group;
   }
   export interface CreatableProps<
     Option,
@@ -22,6 +21,8 @@ declare module "react-select/dist/declarations/src/Select" {
   > {
     isFetchError?: boolean;
     formError?: string;
+    isMulti?: IsMulti;
+    Group?: Group;
   }
 }
 
