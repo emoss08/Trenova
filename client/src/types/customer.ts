@@ -38,6 +38,10 @@ export type Customer = {
   lastBillDate?: string | null;
   lastShipDate?: string | null;
   totalShipments?: number | null;
+  deliverySlots?: DeliverySlotFormValues[] | null;
+  contacts?: CustomerContactFormValues[] | null;
+  emailProfile?: CustomerEmailProfileFormValues | null;
+  ruleProfile?: CustomerRuleProfileFormValues | null;
 };
 
 export type CustomerFormValues = Omit<
@@ -50,12 +54,7 @@ export type CustomerFormValues = Omit<
   | "lastBillDate"
   | "lastShipDate"
   | "totalShipments"
-> & {
-  deliverySlots?: DeliverySlotFormValues[] | null;
-  customerContacts?: CustomerContactFormValues[] | null;
-  emailProfile?: CustomerEmailProfileFormValues | null;
-  ruleProfile?: CustomerRuleProfileFormValues | null;
-};
+>;
 
 /** Customer Rule Profile Type */
 export type CustomerRuleProfile = {
@@ -119,8 +118,8 @@ type CustomerContact = {
   customer: string;
   isActive: boolean;
   name: string;
-  email: string;
-  title: string;
+  email?: string | null;
+  title?: string | null;
   phone?: string | null;
   isPayableContact: boolean;
   created: string;
