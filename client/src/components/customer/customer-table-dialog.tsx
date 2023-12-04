@@ -43,7 +43,7 @@ import { DeliverySlotForm } from "./delivery-slots-form";
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit, formState } = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
@@ -57,7 +57,7 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
       hasCustomerPortal: false,
       autoMarkReadyToBill: false,
       deliverySlots: [],
-      customerContacts: [],
+      contacts: [],
       emailProfile: {
         subject: "",
         comment: "",
@@ -73,6 +73,8 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
       },
     },
   });
+
+  console.log("errors", formState.errors);
 
   const watch = useWatch({
     control: control,

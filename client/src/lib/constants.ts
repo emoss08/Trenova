@@ -64,6 +64,15 @@ export const yesAndNoChoicesBoolean: ReadonlyArray<IChoiceProps<boolean>> = [
 ];
 
 /**
+ * Returns boolean yes & no choices for a select input.
+ * @returns An array of yes & no choices.
+ */
+export const booleanStatusChoices: ReadonlyArray<IChoiceProps<boolean>> = [
+  { value: true, label: "Active" },
+  { value: false, label: "Inactive" },
+];
+
+/**
  * Returns yes & no choices for a select input.
  */
 type TYesNoChoiceProps = "Y" | "N";

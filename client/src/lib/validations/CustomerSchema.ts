@@ -56,48 +56,68 @@ const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
     dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
       "Day of Week is required",
     ),
-    startTime: Yup.string()
-      .required("Start Time is required")
-      .test(
-        "is-before-end-time",
-        "Start Time must be before End Time",
-        function (value) {
-          const { endTime } = this.parent;
-          if (value && endTime) {
-            const [startHours, startMinutes] = value.split(":").map(Number);
-            const [endHours, endMinutes] = endTime.split(":").map(Number);
-            const startDate = new Date(0, 0, 0, startHours, startMinutes);
-            const endDate = new Date(0, 0, 0, endHours, endMinutes);
-            return startDate < endDate;
-          }
-          return true;
-        },
-      ),
-    endTime: Yup.string()
-      .required("End Time is required")
-      .test(
-        "is-after-start-time",
-        "End Time must be after Start Time",
-        function (value) {
-          const { startTime } = this.parent;
-          if (value && startTime) {
-            const [startHours, startMinutes] = startTime.split(":").map(Number);
-            const [endHours, endMinutes] = value.split(":").map(Number);
-            const startDate = new Date(0, 0, 0, startHours, startMinutes);
-            const endDate = new Date(0, 0, 0, endHours, endMinutes);
-            return endDate > startDate;
-          }
-          return true;
-        },
-      ),
+    startTime: Yup.string().required("Start Time is required"),
+    // .test(
+    //   "is-before-end-time",
+    //   "Start Time must be before End Time",
+    //   function (value) {
+    //     const { endTime } = this.parent;
+    //     if (value && endTime) {
+    //       const [startHours, startMinutes, startSeconds] = value
+    //         .split(":")
+    //         .map(Number);
+    //       const [endHours, endMinutes, endSeconds] = endTime
+    //         .split(":")
+    //         .map(Number);
+    //       const startDate = new Date(
+    //         0,
+    //         0,
+    //         0,
+    //         startHours,
+    //         startMinutes,
+    //         startSeconds,
+    //       );
+    //       const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
+    //       return startDate < endDate;
+    //     }
+    //     return true;
+    //   },
+    // ),
+    endTime: Yup.string().required("End Time is required"),
+    // .test(
+    //   "is-after-start-time",
+    //   "End Time must be after Start Time",
+    //   function (value) {
+    //     const { startTime } = this.parent;
+    //     if (value && startTime) {
+    //       const [startHours, startMinutes, startSeconds] = startTime
+    //         .split(":")
+    //         .map(Number);
+    //       const [endHours, endMinutes, endSeconds] = value
+    //         .split(":")
+    //         .map(Number);
+    //       const startDate = new Date(
+    //         0,
+    //         0,
+    //         0,
+    //         startHours,
+    //         startMinutes,
+    //         startSeconds,
+    //       );
+    //       const endDate = new Date(0, 0, 0, endHours, endMinutes, endSeconds);
+    //       return endDate > startDate;
+    //     }
+    //     return true;
+    //   },
+    // ),
     location: Yup.string().required("Location is required"),
   });
 const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
   Yup.object().shape({
     isActive: Yup.boolean().required(),
     name: Yup.string().required("Name is required"),
-    email: Yup.string().required("Email is required"),
-    title: Yup.string().required("Title is required"),
+    email: Yup.string().notRequired(),
+    title: Yup.string().notRequired(),
     phone: Yup.string().notRequired(),
     isPayableContact: Yup.boolean().required(),
   });
@@ -117,7 +137,7 @@ export const customerSchema: ObjectSchema<CustomerFormValues> =
     autoMarkReadyToBill: Yup.boolean(),
     advocate: Yup.string().notRequired(),
     deliverySlots: Yup.array().of(deliverySlotSchema).notRequired(),
-    customerContacts: Yup.array().of(customerContactSchema).notRequired(),
+    contacts: Yup.array().of(customerContactSchema).notRequired(),
     ruleProfile: customerRuleProfileSchema.notRequired(),
     emailProfile: customerEmailProfileSchema.notRequired(),
   });
