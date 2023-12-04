@@ -34,14 +34,16 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { CustomerContactForm } from "./customer-contacts";
+import { CustomerContactForm } from "./customer-contacts-form";
+import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
+import { CustomerRuleProfileForm } from "./customer-rule-profile-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
 
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit, getValues } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
@@ -120,17 +122,13 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
               <TabsTrigger value="contacts">Contacts</TabsTrigger>
             </TabsList>
             <TabsContent value="info">
-              <CustomerInfoForm
-                control={control}
-                open={open}
-                getValues={getValues}
-              />
+              <CustomerInfoForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="email_profile">
-              {/* <LocationContactForm control={control} /> */}
+              <CustomerEmailProfileForm control={control} />
             </TabsContent>
             <TabsContent value="rule_profile">
-              {/* <LocationCommentForm control={control} /> */}
+              <CustomerRuleProfileForm control={control} open={open} />
             </TabsContent>
             <TabsContent value="delivery_slots">
               <DeliverySlotForm control={control} open={open} />

@@ -90,25 +90,23 @@ export function CustomerContactForm({
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
-                        type="email"
-                        rules={{ required: true }}
                         control={control}
-                        name={`customerContacts.${index}.email`}
-                        label="Email"
-                        placeholder="Email"
-                        description="Provide the customer contact's email address for correspondence."
+                        name={`customerContacts.${index}.title`}
+                        label="Title"
+                        placeholder="Title"
+                        description="Indicate the professional title of the customer contact."
                       />
                     </div>
                   </div>
                   <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
-                        rules={{ required: true }}
+                        type="email"
                         control={control}
-                        name={`customerContacts.${index}.title`}
-                        label="Title"
-                        placeholder="Title"
-                        description="Indicate the professional title of the customer contact."
+                        name={`customerContacts.${index}.email`}
+                        label="Email"
+                        placeholder="Email"
+                        description="Provide the customer contact's email address for correspondence."
                       />
                     </div>
                   </div>
