@@ -221,41 +221,6 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         model = models.CustomerRuleProfile
 
-    def validate_name(self, value: str) -> str:
-        """Validate the `name` field of the Customer Rule Profile model.
-
-        This method validates the `name` field of the Customer Rule Profile model.
-        It checks if the customer rule profile with the given name already exists in the organization.
-        If the customer rule profile exists, it raises a validation error.
-
-        Args:
-            value (str): The value of the `name` field.
-
-        Returns:
-            str: The value of the `name` field.
-
-        Raises:
-            serializers.ValidationError: If the customer rule profile with the given name already exists
-            in the organization.
-        """
-        organization = super().get_organization
-
-        queryset = models.CustomerRuleProfile.objects.filter(
-            organization=organization,
-            name__iexact=value,  # iexact performs a case-insensitive search
-        )
-
-        # Exclude the current instance if updating
-        if self.instance and isinstance(self.instance, models.CustomerRuleProfile):
-            queryset = queryset.exclude(pk=self.instance.pk)
-
-        if queryset.exists():
-            raise serializers.ValidationError(
-                "Customer Rule Profile with this `name` already exists. Please try again."
-            )
-
-        return value
-
 
 class CustomerSerializer(GenericSerializer):
     """
@@ -265,7 +230,7 @@ class CustomerSerializer(GenericSerializer):
     email_profile = CustomerEmailProfileSerializer(required=False)
     rule_profile = CustomerRuleProfileSerializer(required=False)
     delivery_slots = DeliverySlotSerializer(many=True, required=False)
-    customer_contacts = CustomerContactSerializer(many=True, required=False)
+    contacts = CustomerContactSerializer(many=True, required=False)
     last_ship_date = serializers.DateField(required=False, allow_null=True)
     last_bill_date = serializers.DateField(required=False, allow_null=True)
     total_shipments = serializers.IntegerField(required=False, allow_null=True)
@@ -280,7 +245,7 @@ class CustomerSerializer(GenericSerializer):
             "email_profile",
             "rule_profile",
             "delivery_slots",
-            "customer_contacts",
+            "contacts",
             "last_ship_date",
             "last_bill_date",
             "total_shipments",
@@ -320,43 +285,6 @@ class CustomerSerializer(GenericSerializer):
 
         return value
 
-    # def to_representation(self, instance: models.Customer) -> dict[str, Any]:
-    #     """Override the `to_representation` method to provide a custom representation of Customer Instance.
-
-    #     Args:
-    #         instance (models.Customer): An instance of the Customer model.
-
-    #     Returns:
-    #         dict[str, Any]: A customized dictionary representation of the customer instance.
-    #     """
-
-    #     data = super().to_representation(instance)
-    #     data["full_address"] = instance.get_address_combination
-    #     data["advocate_full_name"] = (
-    #         instance.advocate.profile.get_full_name if instance.advocate else None
-    #     )
-
-    #     if self.context["request"].query_params.get("expand_metrics", False):
-    #         data["total_shipment_metrics"] = selectors.get_customer_shipments_diff(
-    #             customer_id=instance.id
-    #         )
-    #         data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(
-    #             customer_id=instance.id
-    #         )
-    #         data[
-    #             "on_time_performance"
-    #         ] = selectors.get_customer_on_time_performance_diff(customer_id=instance.id)
-    #         data["total_mileage_metrics"] = selectors.calculate_customer_total_miles(
-    #             customer_id=instance.id
-    #         )
-    #         data["customer_shipment_metrics"] = selectors.get_customer_shipment_metrics(
-    #             customer_id=instance.id
-    #         )
-    #         data["credit_balance"] = selectors.get_customer_credit_balance(
-    #             customer_id=instance.id
-    #         )
-    #     return data
-
     def create(self, validated_data: Any) -> models.Customer:
         """Create a new instance of the Customer model with given validated data.
 
@@ -380,7 +308,7 @@ class CustomerSerializer(GenericSerializer):
         email_profile_data = validated_data.pop("email_profile", None)
         rule_profile_data = validated_data.pop("rule_profile", None)
         delivery_slots_data = validated_data.pop("delivery_slots", [])
-        customer_contacts_data = validated_data.pop("customer_contacts", [])
+        customer_contacts_data = validated_data.pop("contacts", [])
 
         # Create the customer
         customer = models.Customer.objects.create(
@@ -451,7 +379,7 @@ class CustomerSerializer(GenericSerializer):
         email_profile_data = validated_data.pop("email_profile", None)
         rule_profile_data = validated_data.pop("rule_profile", None)
         delivery_slots_data = validated_data.pop("delivery_slots", [])
-        customer_contacts_data = validated_data.pop("customer_contacts", [])
+        customer_contacts_data = validated_data.pop("contacts", [])
 
         # Create or update the email profile
         if email_profile_data:

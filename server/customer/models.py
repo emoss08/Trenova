@@ -106,11 +106,8 @@ class Customer(GenericModel):
         default=False,
     )
     auto_mark_ready_to_bill = models.BooleanField(
-        _("Has Customer Portal?"),
-        help_text=_(
-            "Designates whether this customer has the customer portal. "
-            "active or not."
-        ),
+        _("Automatic Billing Readiness?"),
+        help_text=_("Enable automatic marking of billing readiness"),
         default=False,
     )
     advocate = models.ForeignKey(

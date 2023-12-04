@@ -74,7 +74,7 @@ def create_or_update_rule_profile(
     rule_profile_data["business_unit"] = business_unit
     rule_profile_data["organization"] = organization
 
-    rule_profile, created = models.CustomerRuleProfile.objects.update_or_create(
+    rule_profile, _ = models.CustomerRuleProfile.objects.update_or_create(
         customer=customer, defaults=rule_profile_data
     )
     if document_classifications:
