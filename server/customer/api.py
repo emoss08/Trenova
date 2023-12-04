@@ -17,14 +17,15 @@
 
 import typing
 
-from core.permissions import CustomObjectPermissions
-from customer import models, serializers
 from django.db.models import Count, Max, Prefetch, Q, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
+from core.permissions import CustomObjectPermissions
+from customer import models, serializers
 from utils.models import StatusChoices
 
 if typing.TYPE_CHECKING:
@@ -74,7 +75,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
             A queryset of customers for the current organization.
         """
 
-        user_org = self.request.user.organization_id
+        user_org = self.request.user.organization_id  # type: ignore
 
         queryset = (
             self.queryset.filter(organization_id=user_org)
