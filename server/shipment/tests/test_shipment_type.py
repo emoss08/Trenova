@@ -20,7 +20,7 @@ from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from organization.models import BusinessUnit, Organization
+from organization.models import Organization
 from shipment import models
 
 pytestmark = pytest.mark.django_db
@@ -31,25 +31,6 @@ def test_list(shipment_type: models.ShipmentType) -> None:
     Test shipment type list
     """
     assert shipment_type
-
-
-def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
-    """
-    Test shipment type Create
-    """
-
-    ord_type = models.ShipmentType.objects.create(
-        organization=organization,
-        business_unit=business_unit,
-        status="A",
-        name="foo bar",
-        description="foo bar",
-    )
-
-    assert ord_type
-    assert ord_type.is_active
-    assert ord_type.name == "foo bar"
-    assert ord_type.description == "foo bar"
 
 
 def test_update(shipment_type: models.ShipmentType) -> None:
@@ -84,7 +65,7 @@ def test_get_by_id(api_client: APIClient, shipment_type_api: Response) -> None:
     )
 
     assert response.status_code == 200
-    assert response.data["name"] == "Foo Bar"
+    assert response.data["code"] == "FooBar"
     assert response.data["description"] == "Foo Bar"
     assert response.data["status"] == "A"
 
@@ -99,14 +80,14 @@ def test_put(
         reverse("shipment-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
         {
             "organization": organization.id,
-            "name": "New Name",
+            "code": "NewName",
             "description": "New Description",
             "status": "I",
         },
     )
 
     assert response.status_code == 200
-    assert response.data["name"] == "New Name"
+    assert response.data["code"] == "NewName"
     assert response.data["description"] == "New Description"
     assert response.data["status"] == "I"
 

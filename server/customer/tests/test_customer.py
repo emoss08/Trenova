@@ -204,7 +204,7 @@ def test_put_customer_with_details(
     ]
     assert response.data["delivery_slots"][0]["start_time"] == "20:37:33"
     assert response.data["delivery_slots"][0]["end_time"] == "21:37:33"
-    assert response.data["delivery_slots"][0]["day_of_week"] == "MON"
+    assert response.data["delivery_slots"][0]["day_of_week"] == 0
     assert response.data["delivery_slots"][0]["location"] == location.id
 
 

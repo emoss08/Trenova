@@ -293,7 +293,7 @@ def shipment_type_api(
         "/api/shipment_types/",
         {
             "organization": organization.id,
-            "name": "Foo Bar",
+            "code": "FooBar",
             "description": "Foo Bar",
             "status": "A",
         },
