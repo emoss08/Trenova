@@ -27,14 +27,8 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
-from utils.models import (
-    ChoiceField,
-    GenericModel,
-    PrimaryStatusChoices,
-    StatusChoices,
-    StopChoices,
-)
+from utils.models import (ChoiceField, GenericModel, PrimaryStatusChoices,
+                          StatusChoices, StopChoices)
 from utils.types import ModelDelete
 
 User = settings.AUTH_USER_MODEL
