@@ -14,17 +14,11 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { DelayCodeFormValues } from "@/types/dispatch";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { statusChoices } from "@/lib/choices";
+import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
-import React from "react";
-import { TableSheetProps } from "@/types/tables";
-import { Control, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -33,9 +27,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { statusChoices } from "@/lib/choices";
 import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
-import { CheckboxInput } from "@/components/common/fields/checkbox";
+import { DelayCodeFormValues } from "@/types/dispatch";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 
 export function DelayCodeForm({
   control,
@@ -109,7 +108,6 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<DelayCodeFormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/delay_codes/",

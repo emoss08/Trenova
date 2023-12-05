@@ -15,20 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useForm } from "react-hook-form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
-import { TableSheetProps } from "@/types/tables";
-import { useTableStore } from "@/stores/TableStore";
-import { formatDate } from "@/lib/date";
-import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
-import {
-  CommentType,
-  CommentTypeFormValues as FormValues,
-} from "@/types/dispatch";
-import { toast } from "@/components/ui/use-toast";
+import { CommentTypeForm } from "@/components/comment-type/comment-type-table-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +30,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CommentTypeForm } from "@/components/comment-type/comment-type-table-dialog";
-import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/date";
+import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
+import { useTableStore } from "@/stores/TableStore";
+import {
+  CommentType,
+  CommentTypeFormValues as FormValues,
+} from "@/types/dispatch";
+import { TableSheetProps } from "@/types/tables";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -53,7 +52,6 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/comment_types/${commentType.id}/`,

@@ -25,20 +25,19 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { cn } from "@/lib/utils";
-import { useTableStore } from "@/stores/TableStore";
-import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "../ui/use-toast";
 import { formatDate } from "@/lib/date";
-import { EquipTypeForm } from "./equip-type-table-dialog";
+import { cn } from "@/lib/utils";
+import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
+import { useTableStore } from "@/stores/TableStore";
 import {
   EquipmentType,
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
-import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { EquipTypeForm } from "./equip-type-table-dialog";
 
 function EquipTypeEditForm({
   equipType,
@@ -70,7 +69,6 @@ function EquipTypeEditForm({
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/equipment_types/${equipType.id}/`,

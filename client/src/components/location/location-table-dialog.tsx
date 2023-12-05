@@ -27,7 +27,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
 import { locationSchema } from "@/lib/validations/location";
@@ -62,7 +61,6 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/locations/",

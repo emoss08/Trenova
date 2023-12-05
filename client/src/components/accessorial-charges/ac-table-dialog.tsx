@@ -15,20 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { statusChoices } from "@/lib/choices";
-import { AccessorialChargeFormValues as FormValues } from "@/types/billing";
-import { Control, useForm } from "react-hook-form";
-import { fuelMethodChoices } from "@/utils/apps/billing";
-import { TableSheetProps } from "@/types/tables";
-import React from "react";
-import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { TextareaField } from "@/components/common/fields/textarea";
-import { SelectInput } from "@/components/common/fields/select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
-import { toast } from "@/components/ui/use-toast";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +28,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { statusChoices } from "@/lib/choices";
+import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
+import { AccessorialChargeFormValues as FormValues } from "@/types/billing";
+import { TableSheetProps } from "@/types/tables";
+import { fuelMethodChoices } from "@/utils/apps/billing";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 
 export function ACForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -134,7 +133,6 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/accessorial_charges/",

@@ -26,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useHazardousMaterial } from "@/hooks/useQueries";
 import { UnitOfMeasureChoices, statusChoices } from "@/lib/choices";
@@ -186,7 +185,6 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/commodities/",

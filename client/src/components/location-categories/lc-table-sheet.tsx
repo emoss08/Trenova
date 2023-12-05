@@ -27,7 +27,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { locationCategorySchema as formSchema } from "@/lib/validations/location";
 import { LocationCategoryFormValues as FormValues } from "@/types/location";
@@ -105,7 +104,6 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/location_categories/",

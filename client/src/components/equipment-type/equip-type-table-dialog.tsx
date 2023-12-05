@@ -15,19 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Control, useForm } from "react-hook-form";
-import { SelectInput } from "@/components/common/fields/select-input";
+import { DecimalField } from "@/components/common/fields/decimal-input";
 import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
-import React from "react";
-import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { equipmentClassChoices, statusChoices } from "@/lib/choices";
-import { EquipmentTypeFormValues as FormValues } from "@/types/equipment";
-import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import {
   Sheet,
   SheetContent,
@@ -36,8 +28,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { equipmentClassChoices, statusChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
-import { DecimalField } from "@/components/common/fields/decimal-input";
+import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
+import { EquipmentTypeFormValues as FormValues } from "@/types/equipment";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 
 export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
@@ -208,7 +207,6 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/equipment_types/",

@@ -15,14 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
 import { DelayCodeForm } from "@/components/delay-codes/delay-code-table-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useTableStore } from "@/stores/TableStore";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
+import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
+import { useTableStore } from "@/stores/TableStore";
+import { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
 function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>();
@@ -50,7 +49,6 @@ function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
 
   const mutation = useCustomMutation<DelayCodeFormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/delay_codes/${delayCode.id}/`,
