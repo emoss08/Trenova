@@ -25,9 +25,9 @@ from shipment import models, services
 def create_shipment_initial_movement(
     instance: models.Shipment, created: bool, **kwargs: Any
 ) -> None:
-    """Create the initial movement of an shipment model instance.
+    """Create the initial movement of a shipment model instance.
 
-    This function is called as a signal when an shipment model instance is saved.
+    This function is called as a signal when a shipment model instance is saved.
     If the shipment does not have any associated Movement model instances, it creates
     the initial movement using the MovementService.
 
@@ -49,9 +49,9 @@ def create_shipment_initial_movement(
 def set_shipment_mileage_and_create_route(
     instance: models.Shipment, **kwargs: Any
 ) -> None:
-    """Set the mileage for an shipment and create a route.
+    """Set the mileage for a shipment and create a route.
 
-    This function is called as a signal when an shipment model instance is saved.
+    This function is called as a signal when a shipment model instance is saved.
     If the shipment has an origin and destination location, it sets the mileage
     for the shipment and creates a route using the generate_route().
 
