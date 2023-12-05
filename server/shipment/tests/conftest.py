@@ -20,6 +20,8 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -257,17 +259,27 @@ def shipment_documentation_api(
     """
     Pytest Fixture for shipment Documentation
     """
+    # Create a file-like object in memory (could be any content)
+    file_content = b"file_content"
+    file_name = "dummy.pdf"
+    content_file = ContentFile(file_content, name=file_name)
 
-    with open("order/tests/files/dummy.pdf", "rb") as test_file:
-        yield api_client.post(
-            "/api/shipment_documents/",
-            {
-                "organization": f"{organization}",
-                "shipment": f"{shipment.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+    # Create a SimpleUploadedFile using the in-memory file
+    pdf_file = SimpleUploadedFile(
+        name=content_file.name,
+        content=content_file.read(),
+        content_type="application/pdf",
+    )
+
+    yield api_client.post(
+        "/api/shipment_documents/",
+        {
+            "organization": f"{organization}",
+            "shipment": f"{shipment.id}",
+            "document": pdf_file,
+            "document_class": f"{document_classification.id}",
+        },
+    )
 
 
 @pytest.fixture
@@ -283,7 +295,7 @@ def shipment_type_api(
             "organization": organization.id,
             "name": "Foo Bar",
             "description": "Foo Bar",
-            "is_active": True,
+            "status": "A",
         },
     )
 
@@ -301,7 +313,7 @@ def reason_code_api(
             "organization": organization.id,
             "code": "NEWT",
             "description": "Foo Bar",
-            "is_active": True,
+            "status": "A",
             "code_type": "VOIDED",
         },
     )

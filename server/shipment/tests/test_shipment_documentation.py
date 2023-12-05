@@ -15,11 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import os
-import shutil
-from pathlib import Path
-
 import pytest
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -29,50 +26,6 @@ from organization.models import BusinessUnit, Organization
 from shipment import models
 
 pytestmark = pytest.mark.django_db
-
-
-def remove_media_directory(file_path: str) -> None:
-    """Remove Media Directory after test tear down.
-
-    Primary usage is when tests are performing file uploads.
-    This method deletes the media directory after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to directory in media folder.
-
-    Returns:
-        None
-    """
-
-    base_dir = Path(__file__).resolve().parent.parent.parent
-    media_dir = os.path.join(base_dir, f"media/{file_path}")
-
-    if os.path.exists(media_dir):
-        shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
-
-
-def remove_file(file_path: str) -> None:
-    """Remove File after test tear down.
-
-    Primary usage is when tests are performing file uploads.
-    This method deletes the file after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to file in media folder.
-
-    Returns:
-        None
-    """
-
-    base_dir = Path(__file__).resolve().parent.parent.parent
-    file = os.path.join(base_dir, f"media/{file_path}")
-
-    if os.path.exists(file):
-        os.remove(file)
 
 
 def test_list(shipment_document: models.ShipmentDocumentation) -> None:
@@ -91,10 +44,20 @@ def test_create(
     """
     Test shipment Documentation Create
     """
+
+    # Create a file-like object in memory (could be any content)
+    file_content = b"file_content"
+    file_name = "dummy.pdf"
+    content_file = ContentFile(file_content, name=file_name)
+
+    # Create a SimpleUploadedFile using the in-memory file
     pdf_file = SimpleUploadedFile(
-        "dummy.pdf", b"file_content", content_type="application/pdf"
+        name=content_file.name,
+        content=content_file.read(),
+        content_type="application/pdf",
     )
 
+    # Create a shipment documentation
     created_document = models.ShipmentDocumentation.objects.create(
         organization=organization,
         business_unit=business_unit,
@@ -121,8 +84,16 @@ def test_update(
     """
     Test shipment Documentation update
     """
+    # Create a file-like object in memory (could be any content)
+    file_content = b"file_content"
+    file_name = "dummy.pdf"
+    content_file = ContentFile(file_content, name=file_name)
+
+    # Create a SimpleUploadedFile using the in-memory file
     pdf_file = SimpleUploadedFile(
-        "dummy.pdf", b"file_content", content_type="application/pdf"
+        name=content_file.name,
+        content=content_file.read(),
+        content_type="application/pdf",
     )
 
     updated_document = models.ShipmentDocumentation.objects.get(id=shipment_document.id)
@@ -174,15 +145,26 @@ def test_put(
     Test put shipment Documentation by ID
     """
 
-    with open("order/tests/files/dummy.pdf", "rb") as test_file:
-        response = api_client.put(
-            f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
-            {
-                "shipment": f"{shipment.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+    # Create a file-like object in memory (could be any content)
+    file_content = b"file_content"
+    file_name = "dummy.pdf"
+    content_file = ContentFile(file_content, name=file_name)
+
+    # Create a SimpleUploadedFile using the in-memory file
+    pdf_file = SimpleUploadedFile(
+        name=content_file.name,
+        content=content_file.read(),
+        content_type="application/pdf",
+    )
+
+    response = api_client.put(
+        f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
+        {
+            "shipment": f"{shipment.id}",
+            "document": pdf_file,
+            "document_class": f"{document_classification.id}",
+        },
+    )
 
     assert response.data is not None
     assert response.status_code == 200
@@ -201,15 +183,26 @@ def test_patch(
     Test patch shipment Documentation by ID
     """
 
-    with open("order/tests/files/dummy.pdf", "rb") as test_file:
-        response = api_client.put(
-            f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
-            {
-                "shipment": f"{shipment.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+    # Create a file-like object in memory (could be any content)
+    file_content = b"file_content"
+    file_name = "dummy.pdf"
+    content_file = ContentFile(file_content, name=file_name)
+
+    # Create a SimpleUploadedFile using the in-memory file
+    pdf_file = SimpleUploadedFile(
+        name=content_file.name,
+        content=content_file.read(),
+        content_type="application/pdf",
+    )
+
+    response = api_client.put(
+        f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
+        {
+            "shipment": f"{shipment.id}",
+            "document": pdf_file,
+            "document_class": f"{document_classification.id}",
+        },
+    )
 
     assert response.data is not None
     assert response.status_code == 200
@@ -229,8 +222,3 @@ def test_delete(api_client: APIClient, shipment_documentation_api: Response) -> 
 
     assert response.status_code == 204
     assert response.data is None
-
-    if os.path.exists("testfile.txt"):
-        return os.remove("testfile.txt")
-
-    remove_media_directory("shipment_documentation")

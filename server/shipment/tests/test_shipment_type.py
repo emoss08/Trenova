@@ -41,7 +41,7 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
     ord_type = models.ShipmentType.objects.create(
         organization=organization,
         business_unit=business_unit,
-        is_active=True,
+        status="A",
         name="foo bar",
         description="foo bar",
     )
@@ -86,7 +86,7 @@ def test_get_by_id(api_client: APIClient, shipment_type_api: Response) -> None:
     assert response.status_code == 200
     assert response.data["name"] == "Foo Bar"
     assert response.data["description"] == "Foo Bar"
-    assert response.data["is_active"] is True
+    assert response.data["status"] == "A"
 
 
 def test_put(
@@ -101,14 +101,14 @@ def test_put(
             "organization": organization.id,
             "name": "New Name",
             "description": "New Description",
-            "is_active": False,
+            "status": "I",
         },
     )
 
     assert response.status_code == 200
     assert response.data["name"] == "New Name"
     assert response.data["description"] == "New Description"
-    assert response.data["is_active"] is False
+    assert response.data["status"] == "I"
 
 
 def test_delete(api_client: APIClient, shipment_type_api: Response) -> None:

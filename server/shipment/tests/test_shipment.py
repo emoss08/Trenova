@@ -26,7 +26,7 @@ from rest_framework.test import APIClient
 
 from accounting.models import RevenueCode
 from accounts.models import User
-from customer.models import Customer, DeliverySlot
+from customer.models import Customer
 from dispatch.factories import FleetCodeFactory
 from equipment.models import EquipmentType
 from equipment.tests.factories import TractorFactory
@@ -571,34 +571,25 @@ def test_validate_destination_appointment_window_start_not_after_end(
 
 
 def test_validate_appointment_window_against_customer_delivery_slots(
-    shipment: models.Shipment, delivery_slot: DeliverySlot
-) -> None:
-    """Test that the appointment window for a shipment must fall within the customer's allowed delivery slots.
-
-    Args:
-        shipment (models.Shipment): Shipment object.
-        delivery_slot (models.DeliverySlot): DeliverySlot object (fixture might need to be created).
-
-    Returns:
-        None: This function does not return anything.
-    """
-    # This assumes that the customer does not allow deliveries on Sundays at any time
+    shipment, delivery_slot
+):
+    # Set delivery slot to a Sunday
     delivery_slot.customer = shipment.customer
-    delivery_slot.day_of_week = "SUN"  # Sunday
+    delivery_slot.day_of_week = 6  # Sunday
     delivery_slot.start_time = datetime.time(9, 0)  # 9:00 AM
     delivery_slot.end_time = datetime.time(17, 0)  # 5:00 PM
     delivery_slot.location = shipment.destination_location
     delivery_slot.save()
 
-    # Setting the order's destination appointment window to a Sunday at a time the customer doesn't allow
-    sunday_date = timezone.now() + datetime.timedelta(
-        (6 - timezone.now().weekday()) % 7
-    )  # Next Sunday
+    delivery_slot.refresh_from_db()
+
+    # Set shipment's appointment window to a time not allowed by the customer
+    sunday_date = next_weekday(timezone.now(), 6)  # Next Sunday
     shipment.destination_appointment_window_start = datetime.datetime.combine(
-        sunday_date.date(), datetime.time(18, 0)
+        sunday_date.date(), datetime.time(18, 0), tzinfo=timezone.utc
     )  # 6:00 PM
     shipment.destination_appointment_window_end = datetime.datetime.combine(
-        sunday_date.date(), datetime.time(19, 0)
+        sunday_date.date(), datetime.time(19, 0), tzinfo=timezone.utc
     )  # 7:00 PM
 
     with pytest.raises(ValidationError) as excinfo:
@@ -607,6 +598,13 @@ def test_validate_appointment_window_against_customer_delivery_slots(
     assert excinfo.value.message_dict["origin_appointment_window_start"] == [
         "The chosen appointment window for the location is not allowed by the customer. Please try again."
     ]
+
+
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0:  # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
 
 
 def test_calculate_shipment_per_pound_total(shipment: models.Shipment) -> None:

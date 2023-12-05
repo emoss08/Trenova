@@ -268,6 +268,9 @@ class Stop(GenericModel):
             self.movement.shipment.ship_date = self.arrival_time.date()
             self.movement.shipment.save()
 
+        # Set stop status based on arrival and departure times
+        self.update_status_based_on_times()
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
 
