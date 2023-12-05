@@ -17,8 +17,9 @@
 
 import typing
 
-from dispatch import models
 from django.db import transaction
+
+from dispatch import models
 from organization.models import BusinessUnit, Organization
 
 
@@ -65,7 +66,7 @@ def create_or_update_rate_billing_table(
 
     # Delete any rate billing tables that are not in the new list
     to_delete_id = existing_table_ids - new_table_ids
-    
+
     models.RateBillingTable.objects.filter(id__in=to_delete_id).delete()
 
     return created_table_data
