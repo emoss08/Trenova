@@ -19,20 +19,19 @@ import datetime
 import decimal
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.utils import timezone
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils import timezone
 from equipment.tests.factories import EquipmentTypeFactory
 from organization.models import BusinessUnit, Organization
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 from shipment.tests.factories import ShipmentTypeFactory
 
 pytestmark = pytest.mark.django_db
@@ -227,14 +226,14 @@ def test_rate_api_update(api_client: APIClient, rate: models.Rate) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert (
         response.data["rate_billing_tables"][0]["description"]
-        == "Test Rate Billing Table 2"
-    )
-    assert response.data["rate_billing_tables"][0]["unit"] == 100
-    assert (
-        response.data["rate_billing_tables"][1]["description"]
         == "Test Rate Billing Table"
     )
-    assert response.data["rate_billing_tables"][1]["unit"] == 1
+    assert response.data["rate_billing_tables"][0]["unit"] == 1
+    assert (
+        response.data["rate_billing_tables"][1]["description"]
+        == "Test Rate Billing Table 2"
+    )
+    assert response.data["rate_billing_tables"][1]["unit"] == 100
 
 
 def test_rate_api_delete(api_client: APIClient, rate_api: Response) -> None:
