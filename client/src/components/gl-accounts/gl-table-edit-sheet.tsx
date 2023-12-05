@@ -35,7 +35,6 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "../ui/use-toast";
 import { GLForm } from "./gl-table-sheet";
 
 function GLEditForm({
@@ -90,7 +89,6 @@ function GLEditForm({
 
   const mutation = useCustomMutation<GLAccountFormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/gl_accounts/${glAccount.id}/`,

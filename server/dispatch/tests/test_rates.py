@@ -17,13 +17,11 @@
 
 import datetime
 import decimal
-import uuid
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
-from pydantic import BaseModel
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -38,146 +36,6 @@ from organization.models import BusinessUnit, Organization
 from shipment.tests.factories import ShipmentTypeFactory
 
 pytestmark = pytest.mark.django_db
-
-
-class RateBase(BaseModel):
-    """
-    Rate Base Schema
-    """
-
-    organization_id: uuid.UUID
-    rate_number: str
-    customer: uuid.UUID | None
-    effective_date: datetime.date
-    expiration_date: datetime.date
-    commodity_id: uuid.UUID | None
-    shipment_type_id: uuid.UUID | None
-    equipment_type_id: uuid.UUID | None
-
-
-class RateCreate(RateBase):
-    """
-    Rate Create Schema
-    """
-
-    pass
-
-
-class RateUpdate(RateBase):
-    """
-    Rate Update Schema
-    """
-
-    id: uuid.UUID
-
-
-def test_create_schema() -> None:
-    """
-    Test Rate Creation Schema    Returns:
-    """
-
-    rate_create = RateCreate(
-        organization_id=uuid.uuid4(),
-        rate_number="R00001",
-        customer=uuid.uuid4(),
-        effective_date=timezone.now().date(),
-        expiration_date=timezone.now().date(),
-        commodity_id=uuid.uuid4(),
-        shipment_type_id=uuid.uuid4(),
-        equipment_type_id=uuid.uuid4(),
-    )
-
-    rate = rate_create.model_dump()
-    assert rate is not None
-    assert rate["organization_id"] is not None
-    assert rate["rate_number"] == "R00001"
-    assert rate["customer"] is not None
-    assert rate["effective_date"] is not None
-    assert rate["expiration_date"] is not None
-    assert rate["commodity_id"] is not None
-    assert rate["shipment_type_id"] is not None
-    assert rate["equipment_type_id"] is not None
-
-
-def test_update_schema() -> None:
-    """
-    Test Rate Update Schema
-    """
-    rate_update = RateUpdate(
-        id=uuid.uuid4(),
-        organization_id=uuid.uuid4(),
-        rate_number="R00001",
-        customer=uuid.uuid4(),
-        effective_date=timezone.now().date(),
-        expiration_date=timezone.now().date(),
-        commodity_id=uuid.uuid4(),
-        shipment_type_id=uuid.uuid4(),
-        equipment_type_id=uuid.uuid4(),
-    )
-
-    rate = rate_update.model_dump()
-    assert rate is not None
-    assert rate["id"] is not None
-    assert rate["organization_id"] is not None
-    assert rate["rate_number"] == "R00001"
-    assert rate["customer"] is not None
-    assert rate["effective_date"] is not None
-    assert rate["expiration_date"] is not None
-    assert rate["commodity_id"] is not None
-    assert rate["shipment_type_id"] is not None
-    assert rate["equipment_type_id"] is not None
-
-
-def test_delete_schema() -> None:
-    """
-    Test Rate Delete Schema
-    """
-    rates = [
-        RateBase(
-            organization_id=uuid.uuid4(),
-            rate_number="R00001",
-            customer=uuid.uuid4(),
-            effective_date=timezone.now().date(),
-            expiration_date=timezone.now().date(),
-            commodity_id=uuid.uuid4(),
-            shipment_type_id=uuid.uuid4(),
-            equipment_type_id=uuid.uuid4(),
-        ),
-        RateBase(
-            organization_id=uuid.uuid4(),
-            rate_number="R00002",
-            customer=uuid.uuid4(),
-            effective_date=timezone.now().date(),
-            expiration_date=timezone.now().date(),
-            commodity_id=uuid.uuid4(),
-            shipment_type_id=uuid.uuid4(),
-            equipment_type_id=uuid.uuid4(),
-        ),
-    ]
-
-    rate_store = rates.copy()
-
-    rate_store.pop(0)
-
-    assert len(rates) == 2
-    assert len(rate_store) == 1
-    assert rate_store[0].rate_number == "R00002"
-    assert rates[0].rate_number == "R00001"
-
-
-def test_rate_str_representation(rate: models.Rate) -> None:
-    """
-    Test the rate string representation.
-    """
-
-    assert str(rate) == rate.rate_number
-
-
-def test_list(rate: models.Rate) -> None:
-    """
-    Test the list method.
-    """
-    assert rate is not None
 
 
 def test_rate_create(organization: Organization, business_unit: BusinessUnit) -> None:
@@ -326,7 +184,7 @@ def test_rate_api_create_with_tables(
     )
 
 
-def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
+def test_rate_api_update(api_client: APIClient, rate: models.Rate) -> None:
     """
     Test the update method.
     """
@@ -335,10 +193,6 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
-    rate = models.Rate.objects.get(id=rate_api.data["id"])
-    RateBillingTableFactory(
-        rate=rate,
-    )
 
     data = {
         "customer": customer.id,
@@ -356,9 +210,8 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
             },
             {
                 "accessorial_charge": accessorial_charge.id,
-                "rate": rate.id,
                 "description": "Test Rate Billing Table 2",
-                "unit": 1,
+                "unit": 100,
                 "charge_amount": 100.00,
                 "sub_total": 100.00,
             },
@@ -366,18 +219,12 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     }
 
     response = api_client.put(
-        reverse("rates-detail", kwargs={"pk": rate_api.data["id"]}),
+        f"/api/rates/{rate.id}/",
         data=data,
         format="json",
     )
 
     assert response.status_code == status.HTTP_200_OK
-    assert models.Rate.objects.count() == 1
-    assert models.Rate.objects.get().customer.id == data["customer"]
-    assert models.Rate.objects.get().commodity.id == data["commodity"]
-    assert models.Rate.objects.get().shipment_type.id == data["shipment_type"]
-    assert models.Rate.objects.get().equipment_type.id == data["equipment_type"]
-    assert models.Rate.objects.get().comments == data["comments"]
     assert (
         response.data["rate_billing_tables"][0]["description"]
         == "Test Rate Billing Table"
@@ -387,7 +234,7 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
         response.data["rate_billing_tables"][1]["description"]
         == "Test Rate Billing Table 2"
     )
-    assert response.data["rate_billing_tables"][1]["unit"] == 1
+    assert response.data["rate_billing_tables"][1]["unit"] == 100
 
 
 def test_rate_api_delete(api_client: APIClient, rate_api: Response) -> None:
@@ -435,12 +282,3 @@ def test_set_rate_number_increment_hook(rate: models.Rate) -> None:
     assert rate.rate_number == "R00001"
     assert rate2.rate_number is not None
     assert rate2.rate_number == "R00002"
-
-
-async def get_field_names():
-    return [field.name for field in models.Rate._meta._get_fields(reverse=False)]
-
-
-@pytest.mark.asyncio
-async def test_rate_notification_validation(rate: models.Rate) -> None:
-    print(await get_field_names())

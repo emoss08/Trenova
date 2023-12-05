@@ -15,14 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { formatDate } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
+import { useTableStore } from "@/stores/TableStore";
 import { FleetCode, FleetCodeFormValues as FormValues } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "@/components/ui/use-toast";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { FleetCodeForm } from "./fleet-code-table-dialog";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Button } from "../ui/button";
-import { useTableStore } from "@/stores/TableStore";
-import { formatDate } from "@/lib/date";
+import { FleetCodeForm } from "./fleet-code-table-dialog";
 
 function FleetCodeEditForm({
   fleetCode,
@@ -58,7 +57,6 @@ function FleetCodeEditForm({
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/fleet_codes/${fleetCode.id}/`,

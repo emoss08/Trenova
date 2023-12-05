@@ -15,14 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { ChargeTypeFormValues as FormValues } from "@/types/billing";
-import { useForm } from "react-hook-form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "../ui/use-toast";
-import { ChargeTypeForm } from "./charge-type-dialog";
+import { formatDate } from "@/lib/date";
+import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
+import { useTableStore } from "@/stores/TableStore";
+import { ChargeTypeFormValues as FormValues } from "@/types/billing";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { Button } from "../ui/button";
-import { TableSheetProps } from "@/types/tables";
-import { useTableStore } from "@/stores/TableStore";
-import { formatDate } from "@/lib/date";
+import { ChargeTypeForm } from "./charge-type-dialog";
 
 function ChargeTypeEditForm({
   chargeType,
@@ -53,7 +52,6 @@ function ChargeTypeEditForm({
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/charge_types/${chargeType.id}/`,

@@ -22,6 +22,7 @@ import React from "react";
 import { Path, PathValue } from "react-hook-form";
 import {
   ClearIndicatorProps,
+  components,
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
@@ -29,7 +30,6 @@ import {
   OptionProps,
   OptionsOrGroups,
   ValueContainerProps,
-  components,
 } from "react-select";
 
 /**
@@ -37,7 +37,7 @@ import {
  */
 export type SelectOption = {
   readonly label: string;
-  readonly value: string | boolean;
+  readonly value: string | boolean | number;
 };
 
 /**

@@ -15,14 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import { ReasonCodeForm } from "@/components/reason-codes/reason-code-table-dialog";
 import { Button } from "@/components/ui/button";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useTableStore } from "@/stores/TableStore";
-import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useForm } from "react-hook-form";
-import { formatDate } from "@/lib/date";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
-import { ReasonCode, ReasonCodeFormValues as FormValues } from "@/types/order";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { formatDate } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
-import { ReasonCodeForm } from "@/components/reason-codes/reason-code-table-dialog";
+import { useTableStore } from "@/stores/TableStore";
+import { ReasonCodeFormValues as FormValues, ReasonCode } from "@/types/order";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
 function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -51,7 +50,6 @@ function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/reason_codes/${reasonCode.id}/`,

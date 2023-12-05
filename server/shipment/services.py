@@ -97,8 +97,8 @@ def gather_formula_variables(*, shipment: models.Shipment) -> types.FormulaVaria
         "stops": selectors.get_shipment_stops(shipment=shipment).count(),
         "rating_units": shipment.rating_units,
         "equipment_cost_per_mile": shipment.equipment_type.cost_per_mile,
-        "hazmat_additional_cost": shipment.hazmat.additional_cost
-        if shipment.hazmat
+        "hazmat_additional_cost": shipment.hazardous_material.additional_cost
+        if shipment.hazardous_material
         else 0,
         "temperature_differential": shipment.temperature_differential,
     }

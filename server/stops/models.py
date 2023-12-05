@@ -254,9 +254,8 @@ class Stop(GenericModel):
         Returns:
             None
         """
-
-        # self.update_status_based_on_times()
-        super().save(*args, **kwargs)
+        # Set stop status based on arrival and departure times
+        self.update_status_based_on_times()
 
         # If the location code is entered and not the address_line then autofill address_line
         # with the location combination (address_line_1, address_line_2, city, state & zip_code)
@@ -267,6 +266,8 @@ class Stop(GenericModel):
         if self.sequence == 1 and self.arrival_time:
             self.movement.shipment.ship_date = self.arrival_time.date()
             self.movement.shipment.save()
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
@@ -292,12 +293,11 @@ class Stop(GenericModel):
         StopValidation(instance=self)
 
     def update_status_based_on_times(self) -> None:
-        if self.arrival_time is not None and self.departure_time is not None:
+        if self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
-        elif self.arrival_time is not None:
+        elif self.arrival_time:
+            print("IN_PROGRESS")
             self.status = StatusChoices.IN_PROGRESS
-        else:
-            self.status = StatusChoices.NEW
 
 
 class StopComment(GenericModel):

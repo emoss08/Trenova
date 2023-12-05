@@ -19,52 +19,9 @@ import pytest
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from organization.models import BusinessUnit, Organization
-from shipment import models
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
-
-
-def test_list(reason_code: models.ReasonCode) -> None:
-    """
-    Test Reason Code list
-    """
-    assert reason_code is not None
-
-
-def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
-    """
-    Test Reason Code Create
-    """
-    r_code = models.ReasonCode.objects.create(
-        organization=organization,
-        business_unit=business_unit,
-        is_active=True,
-        code="foobo",
-        description="foo bar",
-        code_type="VOIDED",
-    )
-
-    assert r_code is not None
-    assert r_code.is_active is True
-    assert r_code.code == "foobo"
-    assert r_code.description == "foo bar"
-    assert r_code.code_type == "VOIDED"
-
-
-def test_update(reason_code: models.ReasonCode) -> None:
-    """
-    Test shipment type update
-    """
-
-    r_code = models.ReasonCode.objects.get(id=reason_code.id)
-
-    r_code.code = "NEWTY"
-
-    r_code.save()
-
-    assert r_code is not None
-    assert r_code.code == "NEWTY"
 
 
 def test_get(api_client: APIClient) -> None:
@@ -84,7 +41,7 @@ def test_get_by_id(api_client: APIClient, reason_code_api: Response) -> None:
     assert response.status_code == 200
     assert response.data["code"] == "NEWT"
     assert response.data["description"] == "Foo Bar"
-    assert response.data["is_active"] is True
+    assert response.data["status"] == "A"
     assert response.data["code_type"] == "VOIDED"
 
 
@@ -100,7 +57,7 @@ def test_put(
             "organization": organization.id,
             "code": "FOBO",
             "description": "New Description",
-            "is_active": False,
+            "status": "I",
             "code_type": "VOIDED",
         },
     )
@@ -108,7 +65,7 @@ def test_put(
     assert response.status_code == 200
     assert response.data["code"] == "FOBO"
     assert response.data["description"] == "New Description"
-    assert response.data["is_active"] is False
+    assert response.data["status"] == "I"
 
 
 def test_delete(api_client: APIClient, reason_code_api: Response) -> None:

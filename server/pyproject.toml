@@ -126,6 +126,7 @@ exclude_dirs = [
     "tests",
     "management",
 ]
+
 [tool.pyright]
 exclude = [
     "rvenv",
@@ -149,3 +150,15 @@ stubsPath = "stubs"
 reportMissingImports = true
 reportMissingTypeStubs = false
 defineConstant = { DEBUG = true }
+
+[tool.coverage.run]
+omit = [
+    "rvenv/*",
+    "*/migrations/*",
+    "*/settings/*",
+    "*/urls.py",
+    "*/wsgi.py",
+    "*/asgi.py",
+    "*/apps.py",
+    "*/__init__.py",
+]

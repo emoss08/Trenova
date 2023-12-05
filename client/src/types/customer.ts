@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { StatusChoiceProps, TDayOfWeekChoiceProps } from "@/types/index";
+import { StatusChoiceProps } from "@/types/index";
 
 /** Customer Type */
 export type Customer = {
@@ -98,7 +98,7 @@ export type DeliverySlot = {
   organization: string;
   businessUnit: string;
   customer: string;
-  dayOfWeek: TDayOfWeekChoiceProps;
+  dayOfWeek: number;
   startTime: string;
   endTime: string;
   location: string;
