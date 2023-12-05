@@ -853,13 +853,9 @@ class Shipment(GenericModel):
         return f"{today}-{count_for_today:04d}"
 
     def validate_delivery_slot(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        location: Location,
+        self, start_time: datetime, end_time: datetime, location: Location
     ) -> None:
-        """
-        Validates if a delivery slot is available for a given time interval and location.
+        """Validates if a delivery slot is available for a given time interval and location.
 
         This method checks the existence of a delivery slot during a given timespan and location for a specific
         customer.
@@ -878,16 +874,16 @@ class Shipment(GenericModel):
         """
         from customer.models import DeliverySlot
 
+        # Convert start_time to a weekday number (0=Monday, 6=Sunday)
         day_of_week = start_time.weekday()
         allowed_slots = DeliverySlot.objects.filter(
             customer=self.customer, day_of_week=day_of_week, location=location
         )
 
-        # If no slots exist for the customer, simply return without an error.
         if not allowed_slots.exists():
-            return
+            return  # If no slots exist, bypass validation
 
-        # If none of the allowed slots match the desired time, raise a ValidationError.
+        # Ensure both start and end times are within a single slot's duration
         if not any(
             slot.start_time <= start_time.time() <= slot.end_time
             and slot.start_time <= end_time.time() <= slot.end_time
