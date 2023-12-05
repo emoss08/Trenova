@@ -22,34 +22,14 @@ export type TChoiceProps = {
 
 export type ThemeOptions = "light" | "dark" | "slate-dark" | "system";
 
-export interface IChoiceProps<T extends string | boolean> {
+export interface IChoiceProps<T extends string | boolean | number> {
   value: T;
-  label: string;
-}
-
-export interface BChoiceProps {
-  value: boolean;
   label: string;
 }
 
 export type StatusChoiceProps = "A" | "I";
 
 export type YesNoChoiceProps = "Y" | "N";
-
-export type TDayOfWeekChoiceProps =
-  | "MON"
-  | "TUE"
-  | "WED"
-  | "THU"
-  | "FRI"
-  | "SAT"
-  | "SUN";
-
-type NestedKeys<T> = {
-  [K in keyof T]: K extends string ? `${K}.${NestedKeys<T[K]>}` | K : never;
-}[keyof T];
-
-export type InputFieldNameProp<T> = keyof T | NestedKeys<T>;
 
 /** Query Keys used in Monta by react-query
  *

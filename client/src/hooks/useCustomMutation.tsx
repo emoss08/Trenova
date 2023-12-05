@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ToasterToast } from "@/components/ui/use-toast";
+import { ToasterToast, toast } from "@/components/ui/use-toast";
 import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
@@ -48,7 +48,6 @@ type MutationOptions = {
 
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
-  toast: (toast: Toast) => void,
   options: MutationOptions,
   onMutationSettled?: () => void,
   reset?: UseFormReset<T>,
@@ -69,7 +68,7 @@ export function useCustomMutation<T extends FieldValues>(
 async function executeApiMethod(
   method: MutationOptions["method"],
   path: string,
-  data?: any,
+  data: Record<string, unknown> | FormData | null,
 ): Promise<AxiosResponse> {
   const fileData = extractFileFromData(data);
 

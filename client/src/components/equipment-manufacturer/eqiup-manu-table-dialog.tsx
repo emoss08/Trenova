@@ -15,8 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { TableSheetProps } from "@/types/tables";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +27,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Control, useForm } from "react-hook-form";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { statusChoices } from "@/lib/choices";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { statusChoices } from "@/lib/choices";
 import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { EquipmentManufacturerFormValues as FormValues } from "@/types/equipment";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 
 export function EquipManuForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -97,7 +96,6 @@ export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/equipment_manufacturers/",

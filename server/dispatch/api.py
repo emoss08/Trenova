@@ -201,34 +201,9 @@ class RateViewSet(viewsets.ModelViewSet):
                 "rate_billing_tables",
                 queryset=models.RateBillingTable.objects.filter(
                     organization_id=self.request.user.organization_id  # type: ignore
-                ).only(
-                    "id",
-                    "rate_id",
-                    "accessorial_charge_id",
-                    "description",
-                    "unit",
-                    "charge_amount",
-                    "sub_total",
-                ),
+                ).all(),
             )
-        ).only(
-            "id",
-            "rate_number",
-            "status",
-            "customer_id",
-            "effective_date",
-            "expiration_date",
-            "commodity_id",
-            "shipment_type_id",
-            "origin_location_id",
-            "destination_location_id",
-            "rate_method",
-            "rate_amount",
-            "equipment_type_id",
-            "organization_id",
-            "distance_override",
-            "comments",
-        )
+        ).all()
         return queryset
 
 

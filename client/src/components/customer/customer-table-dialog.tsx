@@ -25,7 +25,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
@@ -33,7 +32,7 @@ import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { CustomerContactForm } from "./customer-contacts-form";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
@@ -43,7 +42,7 @@ import { DeliverySlotForm } from "./delivery-slots-form";
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit, formState } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
@@ -74,17 +73,8 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  console.log("errors", formState.errors);
-
-  const watch = useWatch({
-    control: control,
-  });
-
-  console.info("watching....", watch);
-
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/customers/",

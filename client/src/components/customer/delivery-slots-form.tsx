@@ -60,7 +60,7 @@ export function DeliverySlotForm({
   });
 
   const handleAddSlot = () => {
-    append({ dayOfWeek: "MON", startTime: "", endTime: "", location: "" });
+    append({ dayOfWeek: 0, startTime: "", endTime: "", location: "" });
   };
 
   return (

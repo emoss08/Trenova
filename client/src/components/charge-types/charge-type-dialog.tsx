@@ -15,8 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { TableSheetProps } from "@/types/tables";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +26,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Control, useForm } from "react-hook-form";
-import { ChargeTypeFormValues as FormValues } from "@/types/billing";
-import { SelectInput } from "@/components/common/fields/select-input";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
+import { ChargeTypeFormValues as FormValues } from "@/types/billing";
+import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 import { Button } from "../ui/button";
-import { toast } from "../ui/use-toast";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 
 export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -95,7 +94,6 @@ export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/charge_types/",

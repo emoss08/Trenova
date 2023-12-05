@@ -146,7 +146,7 @@ class DeliverySlotFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
-    day_of_week = "WED"
+    day_of_week = 2
     start_time = "00:00:00"
     end_time = "23:59:59"
     location = factory.SubFactory("location.factories.LocationFactory")

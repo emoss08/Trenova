@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { StatusChoiceProps, TDayOfWeekChoiceProps } from "@/types";
+import { StatusChoiceProps } from "@/types";
 import {
   CustomerContactFormValues,
   CustomerEmailProfileFormValues,
@@ -53,9 +53,7 @@ export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValu
 
 const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
   Yup.object().shape({
-    dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
-      "Day of Week is required",
-    ),
+    dayOfWeek: Yup.number().required("Day of Week is required"),
     startTime: Yup.string()
       .required("Start Time is required")
       .test(

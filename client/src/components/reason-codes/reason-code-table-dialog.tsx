@@ -15,8 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { TableSheetProps } from "@/types/tables";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +27,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Control, useForm } from "react-hook-form";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { codeTypeChoices, statusChoices } from "@/lib/choices";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { codeTypeChoices, statusChoices } from "@/lib/choices";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { ReasonCodeFormValues as FormValues } from "@/types/order";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { Control, useForm } from "react-hook-form";
 
 export function ReasonCodeForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -110,7 +109,6 @@ export function ReasonCodeDialog({ onOpenChange, open }: TableSheetProps) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "POST",
       path: "/reason_codes/",

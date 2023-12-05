@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { IChoiceProps, TDayOfWeekChoiceProps } from "@/types";
+import { IChoiceProps } from "@/types";
 import { TableOptionProps } from "@/types/tables";
 
 /** Type for Account Type Choices */
@@ -124,14 +124,14 @@ export const jobFunctionChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<JobFunctionChoiceProps>>;
 
 export const DayOfWeekChoices = [
-  { value: "MON", label: "Monday" },
-  { value: "TUE", label: "Tuesday" },
-  { value: "WED", label: "Wednesday" },
-  { value: "THU", label: "Thursday" },
-  { value: "FRI", label: "Friday" },
-  { value: "SAT", label: "Saturday" },
-  { value: "SUN", label: "Sunday" },
-] satisfies ReadonlyArray<IChoiceProps<TDayOfWeekChoiceProps>>;
+  { value: 0, label: "Monday" },
+  { value: 1, label: "Tuesday" },
+  { value: 2, label: "Wednesday" },
+  { value: 3, label: "Thursday" },
+  { value: 4, label: "Friday" },
+  { value: 5, label: "Saturday" },
+  { value: 6, label: "Sunday" },
+] satisfies ReadonlyArray<IChoiceProps<number>>;
 
 type ServiceIncidentControlChoiceProps =
   | "Never"

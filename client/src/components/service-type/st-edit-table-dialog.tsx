@@ -15,21 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "@/components/ui/button";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useTableStore } from "@/stores/TableStore";
-import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "../ui/use-toast";
-import { formatDate } from "@/lib/date";
-import {
-  ServiceType,
-  ServiceTypeFormValues as FormValues,
-} from "@/types/order";
-import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { ServiceTypeForm } from "@/components/service-type/st-table-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +25,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { formatDate } from "@/lib/date";
+import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
+import { useTableStore } from "@/stores/TableStore";
+import {
+  ServiceTypeFormValues as FormValues,
+  ServiceType,
+} from "@/types/order";
+import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
 function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -53,7 +52,6 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/service_types/${serviceType.id}/`,
