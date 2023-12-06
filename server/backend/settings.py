@@ -360,6 +360,7 @@ CACHEOPS = {
     "organization.department": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
     "customer.customer": {"ops": "all"},
+    "location.states": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
 

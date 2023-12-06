@@ -15,25 +15,55 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from multiprocessing import Process
-from typing import Any
+import typing
 
-from django.core.management import BaseCommand
+import requests
+from django.core.management.base import BaseCommand
+from rich.console import Console
+from rich.progress import Progress
 
-from kafka import services
+from location import models
 
 
 class Command(BaseCommand):
-    help = "Starts the KafkaListener"
+    help = "Preloads the states from CountriesNow API"
 
-    def handle(self, *args: Any, **options: Any) -> None:
-        # Close the existing database connections
-        listener = services.KafkaListener()
-        listener._close_old_connections()
-        listener.listen()
-        p = Process(target=listener.listen)
-        p.start()
+    def handle(self, *args: typing.Any, **options: typing.Any) -> None:
+        r = requests.post(
+            "https://countriesnow.space/api/v0.1/countries/states",
+            json={"country": "United States"},
+        )
+        data = r.json()
+        states = data["data"]["states"]
 
-        # Save the PID to a file
-        with open("kafka_listener_pid.txt", "w") as f:
-            f.write(str(p.pid))
+        existing_states = set(
+            models.States.objects.values_list("abbreviation", flat=True)
+        )
+        new_states = [
+            state for state in states if state["state_code"] not in existing_states
+        ]
+
+        state_objects = [
+            models.States(
+                name=state["name"],
+                abbreviation=state["state_code"],
+                country_name=data["data"]["name"],
+                country_iso3=data["data"]["iso3"],
+            )
+            for state in new_states
+        ]
+
+        console = Console()
+        with Progress() as progress:
+            task = progress.add_task("[green]Loading States...", total=len(new_states))
+
+            for _ in new_states:
+                progress.advance(task)
+
+        if state_objects:
+            models.States.objects.bulk_create(state_objects)
+            console.print(f"{len(state_objects)} new states loaded.", style="green")
+        else:
+            console.print("No new states to load.", style="yellow")
+
+        self.stdout.write(self.style.SUCCESS("States preloading completed."))

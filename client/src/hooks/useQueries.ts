@@ -54,7 +54,7 @@ import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { Customer } from "@/types/customer";
 import { CommentType } from "@/types/dispatch";
 import { EquipmentType } from "@/types/equipment";
-import { Location, LocationCategory } from "@/types/location";
+import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentType } from "@/types/order";
 import { Depot } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -458,8 +458,8 @@ export function useUSStates(show?: boolean) {
 
   // Create an array of objects with value and label for each state
   const selectUSStates =
-    (data as { name: string; stateCode: string }[])?.map((state) => ({
-      value: state.stateCode,
+    (data as USStates[])?.map((state) => ({
+      value: state.abbreviation,
       label: state.name,
     })) || [];
 
