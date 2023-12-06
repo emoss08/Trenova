@@ -19,6 +19,8 @@
 import os
 import sys
 
+import pretty_errors  # noqa: F401
+
 
 def main():
     """Run administrative tasks."""
