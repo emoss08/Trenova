@@ -586,10 +586,10 @@ def test_validate_appointment_window_against_customer_delivery_slots(
     # Set shipment's appointment window to a time not allowed by the customer
     sunday_date = next_weekday(timezone.now(), 6)  # Next Sunday
     shipment.destination_appointment_window_start = datetime.datetime.combine(
-        sunday_date.date(), datetime.time(18, 0), tzinfo=timezone.utc
+        sunday_date.date(), datetime.time(18, 0), tzinfo=datetime.UTC
     )  # 6:00 PM
     shipment.destination_appointment_window_end = datetime.datetime.combine(
-        sunday_date.date(), datetime.time(19, 0), tzinfo=timezone.utc
+        sunday_date.date(), datetime.time(19, 0), tzinfo=datetime.UTC
     )  # 7:00 PM
 
     with pytest.raises(ValidationError) as excinfo:
