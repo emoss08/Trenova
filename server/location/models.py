@@ -26,7 +26,8 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField, USZipCodeField
+from localflavor.us.models import USZipCodeField
+from model_utils.models import TimeStampedModel
 
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
@@ -163,8 +164,9 @@ class Location(GenericModel):
         max_length=255,
         help_text=_("City"),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
+        max_length=5,
         help_text=_("State"),
     )
     zip_code = USZipCodeField(
@@ -399,3 +401,74 @@ class LocationComment(GenericModel):
             str: LocationComment absolute URL
         """
         return reverse("location-comments-detail", kwargs={"pk": self.pk})
+
+
+class States(TimeStampedModel):
+    """
+    Stores US states and their abbreviations
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("The name of the state."),
+    )
+    abbreviation = models.CharField(
+        _("Abbreviation"),
+        help_text=_("The abbreviation of the state."),
+        max_length=5,
+    )
+    country_name = models.CharField(
+        _("Country Name"),
+        max_length=255,
+        help_text=_("The name of the country."),
+    )
+    country_iso3 = models.CharField(
+        _("Country ISO3"),
+        max_length=3,
+        help_text=_("The ISO3 of the country."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the State model
+        """
+
+        verbose_name = _("State")
+        verbose_name_plural = _("States")
+        ordering = ["name"]
+        db_table = "state"
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                "abbreviation",
+                name="unique_name_abbreviation_state",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """State string representation.
+
+        Returns:
+            str: String representation of the state.
+        """
+
+        return textwrap.shorten(
+            f"{self.name} - {self.abbreviation}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """State absolute URL
+
+        Returns:
+            str: The absolute url for the state.
+        """
+        return reverse("state-detail", kwargs={"pk": self.pk})

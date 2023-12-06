@@ -111,3 +111,11 @@ export type LocationFormValues = Omit<
   locationComments?: LocationCommentFormValues[] | null;
   locationContacts?: LocationContactFormValues[] | null;
 };
+
+export type USStates = {
+  id: string;
+  name: string;
+  abbreviation: string;
+  country_name: string;
+  county_iso3: string;
+};

@@ -221,3 +221,19 @@ class LocationSerializer(GenericSerializer):
         instance.save()
 
         return instance
+
+
+class StateSerializer(GenericSerializer):
+    """A serializer for the States model
+
+    The serializer provides default operations for creating, update and deleting
+    States, as well as listing and retrieving them.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `StatesSerializer`
+        class.
+        """
+
+        model = models.States

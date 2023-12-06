@@ -90,3 +90,14 @@ class LocationAdmin(GenericAdmin[models.Location]):
         LocationCommentAdmin,
         LocationContactAdmin,
     )
+
+
+@admin.register(models.States)
+class StateAdmin(admin.ModelAdmin):
+    """
+    US States Admin
+    """
+
+    list_display = ("name", "abbreviation", "country_name", "country_iso3")
+    list_filter = ("name",)
+    search_fields = ("name", "abbreviation", "country_name", "country_iso3")

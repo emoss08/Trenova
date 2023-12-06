@@ -30,7 +30,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from encrypted_model_fields.fields import EncryptedCharField
-from localflavor.us.models import USStateField, USZipCodeField
+from localflavor.us.models import USZipCodeField
 
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
@@ -105,9 +105,10 @@ class Worker(GenericModel):
         max_length=255,
         help_text=_("The city of the worker."),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
-        help_text=_("The state of the worker."),
+        max_length=5,
+        help_text=_("State"),
     )
     fleet_code = models.ForeignKey(
         "dispatch.FleetCode",
@@ -286,10 +287,10 @@ class WorkerProfile(GenericModel):
         help_text=_("Driver License Number"),
         blank=True,
     )
-    license_state = USStateField(
-        _("License State"),
-        help_text=_("License State."),
-        null=True,
+    license_state = models.CharField(
+        _("State"),
+        max_length=5,
+        help_text=_("State"),
         blank=True,
     )
     license_expiration_date = models.DateField(
