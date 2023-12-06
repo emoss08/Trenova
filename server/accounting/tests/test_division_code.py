@@ -344,7 +344,7 @@ def test_api_delete(
     assert response.data is None
 
 
-def test_post_with_unique_code(api_client, division_code: models.DivisionCode) -> None:
+def test_validate_code(api_client, division_code: models.DivisionCode) -> None:
     """Test posting a division code with the same code throws serializer.ValidationError.
 
     Args:

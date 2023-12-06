@@ -17,6 +17,7 @@
 
 import pytest
 from django.core.exceptions import ValidationError
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
@@ -154,3 +155,32 @@ def test_post_with_unique_code(api_client, revenue_code: models.RevenueCode) -> 
         response.data["errors"][0]["detail"]
         == "Revenue Code with this `code` already exists. Please try again."
     )
+
+
+def test_validate_code(api_client: APIClient, revenue_code: models.RevenueCode) -> None:
+    """Test serializer Validation is thrown if the code given is not unique.
+
+    Args:
+        revenue_code (models.RevenueCode): Revenue Code Object
+
+    Return:
+        None: This function does not return anything.
+    """
+
+    response = api_client.post(
+        "/api/revenue_codes/",
+        {
+            "code": revenue_code.code,
+            "description": "Test Description",
+            "organization": revenue_code.organization.id,
+            "business_unit": revenue_code.business_unit.id,
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Revenue Code with this `code` already exists. Please try again."
+    )
+    assert response.data["errors"][0]["attr"] == "code"

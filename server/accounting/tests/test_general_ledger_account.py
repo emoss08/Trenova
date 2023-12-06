@@ -21,6 +21,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from pydantic import BaseModel
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
@@ -342,3 +343,36 @@ def test_unique_account_numer(general_ledger_account: GeneralLedgerAccount) -> N
     assert excinfo.value.message_dict["__all__"] == [
         "Constraint “unique_gl_account_organization” is violated."
     ]
+
+
+def test_validate_account_number(
+    api_client: APIClient,
+    general_ledger_account: GeneralLedgerAccount,
+) -> None:
+    """Test serializer ValidationError is thrown if the account number given is
+    not unique.
+
+    Args:
+        general_ledger_account (GeneralLedgerAccount): General Ledger Account object
+
+    Return:
+        None: This function does not return anything.
+    """
+
+    response = api_client.post(
+        "/api/gl_accounts/",
+        {
+            "organization": general_ledger_account.organization.id,
+            "account_number": general_ledger_account.account_number,
+            "account_type": GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+            "description": "Test General Ledger Account",
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert (
+        response.data["errors"][0]["detail"]
+        == "General Ledger Account with this `account_number` already exists. Please try again."
+    )
+    assert response.data["errors"][0]["attr"] == "accountNumber"

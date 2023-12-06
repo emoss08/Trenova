@@ -71,7 +71,7 @@ def user_profile() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def api_client(token: Token) -> APIClient:
+def api_client(token: Token) -> Generator[APIClient, Any, None]:
     """API client Fixture
 
     Returns:
@@ -83,7 +83,7 @@ def api_client(token: Token) -> APIClient:
 
 
 @pytest.fixture
-def unauthenticated_api_client() -> APIClient:
+def unauthenticated_api_client() -> Generator[APIClient, Any, None]:
     """API client Fixture
 
     Returns:

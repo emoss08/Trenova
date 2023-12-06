@@ -36,7 +36,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField, USZipCodeField
+from localflavor.us.models import USZipCodeField
 
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
@@ -424,9 +424,10 @@ class UserProfile(GenericModel):
         max_length=100,
         help_text=_("The city of the user"),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
-        help_text=_("The state of the user"),
+        max_length=5,
+        help_text=_("State"),
     )
     zip_code = USZipCodeField(
         _("Zip Code"),

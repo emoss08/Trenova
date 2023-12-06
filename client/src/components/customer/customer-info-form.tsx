@@ -17,7 +17,7 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { useUSStates, useUsers } from "@/hooks/useQueries";
+import { useUsers, useUSStates } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { Control } from "react-hook-form";

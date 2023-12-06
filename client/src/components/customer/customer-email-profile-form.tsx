@@ -89,7 +89,6 @@ export function CustomerEmailProfileForm({
           <div className="min-h-[4em]">
             <InputField
               control={control}
-              rules={{ required: true }}
               name="emailProfile.readReceiptTo"
               label="Read Receipt To"
               autoCapitalize="none"
@@ -104,7 +103,6 @@ export function CustomerEmailProfileForm({
           <div className="min-h-[4em]">
             <InputField
               control={control}
-              rules={{ required: true }}
               name="emailProfile.attachmentName"
               label="Attachment Name"
               autoCapitalize="none"
