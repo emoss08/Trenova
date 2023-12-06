@@ -17,7 +17,8 @@
 
 import pytest
 
-from accounting import models, services
+from accounting import models
+from accounting.services import transactions as transaction_service
 from accounting.tests.factories import GeneralLedgerAccountFactory, RevenueCodeFactory
 from organization.models import Organization
 from shipment.tests.factories import ShipmentFactory
@@ -49,7 +50,7 @@ def test_create_transaction_from_shipment(organization: Organization) -> None:
         organization=organization, revenue_code=revenue_code, ready_to_bill=True
     )
 
-    services.TransactionService.create_transaction_from_shipment(shipment=shipment)
+    transaction_service.create_transaction_from_shipment(shipment=shipment)
 
     transaction: models.FinancialTransaction = models.FinancialTransaction.objects.get(
         shipment=shipment
