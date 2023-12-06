@@ -33,7 +33,6 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -1125,7 +1124,7 @@ class TableChangeAlert(TimeStampedModel):
     topic = models.CharField(
         _("Topic"),
         max_length=150,
-        choices=AVAILABLE_TOPICS,  # type: ignore
+        choices=AVAILABLE_TOPICS,
         help_text=_(
             "The topic that the table change alert will use. Usually the same as the table name."
         ),
