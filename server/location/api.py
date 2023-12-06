@@ -32,7 +32,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Extract, TruncMonth
 from django.utils.timezone import now
-from rest_framework import viewsets
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -208,3 +208,21 @@ class LocationViewSet(viewsets.ModelViewSet):
             )
         )
         return queryset
+
+
+class StateViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing state information in the system.
+
+    The viewset provides default operations for creating, updating and deleting states,
+    as well as listing and retrieving states. It uses `LocationSerializer`
+    class to convert the state instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filter is also available, with the ability to filter by Location ID, code and
+    category.
+    """
+
+    queryset = models.States.objects.all()
+    serializer_class = serializers.StateSerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["get", "head", "options"]
