@@ -60,13 +60,14 @@ class KafkaListener:
 
     running = True
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
+    # TODO(Wolfred): Replace this with AIOKAFKA.
 
-    @classmethod
-    def _close_old_connections(cls, **kwargs: Any) -> None:
+    def __init__(self, thread_pool_size=10) -> None:
+        self.thread_pool_size = thread_pool_size
+
+    @staticmethod
+    def _close_old_connections() -> None:
         """A method that closes all old database connections.
-
-        Args:
-            **kwargs (Any): Any additional keyword arguments.
 
         Returns:
             None: This function does not return anything.
@@ -74,11 +75,7 @@ class KafkaListener:
         for conn in connections.all(initialized_only=True):
             conn.close_if_unusable_or_obsolete()
 
-    def __init__(self, thread_pool_size=10) -> None:
-        self.thread_pool_size = thread_pool_size
-
-    @classmethod
-    def _signal_handler(cls, _signal: int, frame: types.FrameType | None) -> None:
+    def _signal_handler(self, _signal: int, frame: types.FrameType | None) -> None:
         """A signal handler method that sets the `running` attribute to False on receiving a termination signal,
         thereby controlling the runtime of the listener.
 
@@ -91,10 +88,9 @@ class KafkaListener:
         """
 
         debug("Received termination signal. Stopping listener...")
-        cls.running = False
+        self.running = False
 
-    @classmethod
-    def _connect(cls) -> tuple[Consumer, Consumer] | None:
+    def _connect(self) -> tuple[Consumer, Consumer] | None:
         """A private method to establish a connection to the Kafka service.
         In case of connection failure, it retries until the listener stops running or a connection is established.
 
@@ -111,7 +107,7 @@ class KafkaListener:
             "auto.commit.interval.ms": settings.KAFKA_AUTO_COMMIT_INTERVAL_MS,
         }
 
-        while cls.running:
+        while self.running:
             try:
                 consumer = Consumer(config)
                 consumer.list_topics(timeout=10)
@@ -134,9 +130,9 @@ class KafkaListener:
 
         return selectors.get_active_kafka_table_change_alerts() or []
 
-    @classmethod
+    @staticmethod
     def _get_messages(
-        cls, *, consumer: Consumer, timeout: float, max_messages: int = 100
+        *, consumer: Consumer, timeout: float, max_messages: int = 100
     ) -> list[Message]:
         """Consumes a batch of messages from the Kafka topic within the specified timeout.
         It filters out messages that are None or contain errors.
@@ -181,8 +177,8 @@ class KafkaListener:
             return None
         return data.get("payload", {})
 
-    @classmethod
-    def _get_message(cls, *, consumer: Consumer, timeout: float) -> Message | None:
+    @staticmethod
+    def _get_message(*, consumer: Consumer, timeout: float) -> Message | None:
         """Fetches a single message from the Kafka topic within the specified timeout.
 
         Args:
@@ -201,9 +197,8 @@ class KafkaListener:
             return None
         return message
 
-    @classmethod
     def _update_subscriptions(
-        cls,
+        self,
         *,
         data_consumer: Consumer,
         table_changes: QuerySet | list,
@@ -222,7 +217,7 @@ class KafkaListener:
         old_table_changes = {
             table_change.get_topic_display() for table_change in table_changes
         }
-        table_changes = cls._get_topic_list()
+        table_changes = self._get_topic_list()
         new_table_changes = {
             table_change.get_topic_display() for table_change in table_changes
         }
@@ -253,9 +248,8 @@ class KafkaListener:
             for field, value in field_value_dict.items()
         )
 
-    @classmethod
     def _process_message(
-        cls, data_message: Message, associated_table_change: models.TableChangeAlert
+        self, data_message: Message, associated_table_change: models.TableChangeAlert
     ) -> None:
         """Processes an individual message from a Kafka topic. If the operation type matches the alert criteria,
         it sends an email to the designated recipients.
@@ -268,7 +262,7 @@ class KafkaListener:
         if not data_message.value():
             return
 
-        data = cls._parse_message(message=data_message)
+        data = self._parse_message(message=data_message)
 
         if data is None:  # Added to handle cases where message is not valid JSON.
             return
@@ -305,13 +299,12 @@ class KafkaListener:
         )
         send_mail(
             subject=subject,
-            message=cls._format_message(field_value_dict=field_value_dict),
+            message=self._format_message(field_value_dict=field_value_dict),
             from_email="table_change@monta.io",
             recipient_list=recipient_list,
         )
 
-    @classmethod
-    def listen(cls) -> None:
+    def listen(self) -> None:
         """Entry point for Kafka listener. It establishes a connection, subscribes to the necessary topics,
         and begins processing messages. This method runs indefinitely until the listener receives a termination signal.
         It also handles exceptions due to lost connection to the Kafka service by attempting to reconnect.
@@ -319,19 +312,19 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        cls.register_signals()
-        consumers = cls._connect()
+        self.register_signals()
+        consumers = self._connect()
 
         if consumers is None:
             error("Failed to connect, exiting...")
             return
 
         data_consumer, alert_update_consumer = consumers
-        cls._subscribe_consumers_to_topics(
+        self._subscribe_consumers_to_topics(
             data_consumer=data_consumer, alert_update_consumer=alert_update_consumer
         )
 
-        cls._execute_tasks(
+        self._execute_tasks(
             data_consumer=data_consumer, alert_update_consumer=alert_update_consumer
         )
 
@@ -339,19 +332,17 @@ class KafkaListener:
         data_consumer.close()
         debug("Consumers closed.")
 
-    @classmethod
-    def register_signals(cls) -> None:
+    def register_signals(self) -> None:
         """Register signals for termination. These signals are used to terminate the Kafka listener gracefully.
 
         Returns:
             None: This function does not return anything.
         """
-        signal.signal(signal.SIGINT, cls._signal_handler)
-        signal.signal(signal.SIGTERM, cls._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
 
-    @classmethod
     def _subscribe_consumers_to_topics(
-        cls, *, data_consumer: Consumer, alert_update_consumer: Consumer
+        self, *, data_consumer: Consumer, alert_update_consumer: Consumer
     ) -> None:
         """
         Subscribe the provided consumers to the necessary topics. The topics are fetched from the _get_topic_list method.
@@ -363,7 +354,7 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        table_changes = cls._get_topic_list()
+        table_changes = self._get_topic_list()
         if not table_changes:
             debug(NO_ALERTS_MSG)
             return
@@ -377,9 +368,8 @@ class KafkaListener:
             f"Subscribed to topics: {[table_change.get_topic_display() for table_change in table_changes]}"
         )
 
-    @classmethod
     def _execute_tasks(
-        cls, *, data_consumer: Consumer, alert_update_consumer: Consumer
+        self, *, data_consumer: Consumer, alert_update_consumer: Consumer
     ) -> None:
         """Start executing tasks based on the received Kafka messages.
 
@@ -396,27 +386,26 @@ class KafkaListener:
             thread_name_prefix="kafka_listener",
         ) as executor:
             try:
-                while cls.running:
+                while self.running:
                     if len(futures) < settings.KAFKA_MAX_CONCURRENT_JOBS:
-                        cls._handle_messages(
+                        self._handle_messages(
                             data_consumer=data_consumer,
                             alert_update_consumer=alert_update_consumer,
                             futures=futures,
                             executor=executor,
                         )
 
-                    cls._wait_for_futures_to_complete(futures=futures)
+                    self._wait_for_futures_to_complete(futures=futures)
 
             except Exception as e:
-                cls._handle_exception(
+                self._handle_exception(
                     e=e,
                     data_consumer=data_consumer,
                     alert_update_consumer=alert_update_consumer,
                 )
 
-    @classmethod
     def _handle_messages(
-        cls,
+        self,
         *,
         data_consumer: Consumer,
         alert_update_consumer: Consumer,
@@ -434,16 +423,15 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        cls._handle_alert_message(
+        self._handle_alert_message(
             alert_update_consumer=alert_update_consumer, data_consumer=data_consumer
         )
-        cls._handle_data_messages(
+        self._handle_data_messages(
             data_consumer=data_consumer, futures=futures, executor=executor
         )
 
-    @classmethod
     def _handle_alert_message(
-        cls, *, alert_update_consumer: Consumer, data_consumer: Consumer
+        self, *, alert_update_consumer: Consumer, data_consumer: Consumer
     ) -> None:
         """Handle alert messages from Kafka and update subscriptions if necessary.
 
@@ -454,19 +442,18 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        alert_message = cls._get_message(
+        alert_message = self._get_message(
             consumer=alert_update_consumer, timeout=POLL_TIMEOUT
         )
 
         if alert_message is not None:
             debug(f"Received alert update: {alert_message.value()}")
-            cls._update_subscriptions(
-                data_consumer=data_consumer, table_changes=cls._get_topic_list()
+            self._update_subscriptions(
+                data_consumer=data_consumer, table_changes=self._get_topic_list()
             )
 
-    @classmethod
     def _handle_data_messages(
-        cls,
+        self,
         *,
         data_consumer: Consumer,
         futures: set[concurrent.futures.Future],
@@ -482,16 +469,15 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        data_messages = cls._get_messages(consumer=data_consumer, timeout=POLL_TIMEOUT)
+        data_messages = self._get_messages(consumer=data_consumer, timeout=POLL_TIMEOUT)
 
         for data_message in data_messages:
-            cls._process_data_message(
+            self._process_data_message(
                 data_message=data_message, futures=futures, executor=executor
             )
 
-    @classmethod
     def _process_data_message(
-        cls,
+        self,
         *,
         data_message: Message,
         futures: set[concurrent.futures.Future],
@@ -519,22 +505,22 @@ class KafkaListener:
             if associated_table_change := next(
                 (
                     table_change
-                    for table_change in cls._get_topic_list()
+                    for table_change in self._get_topic_list()
                     if table_change.get_topic_display() == data_message.topic()
                 ),
                 None,
             ):
                 debug(f"Table Change Alert found. {associated_table_change.name}")
                 future = executor.submit(
-                    cls._process_message,
+                    self._process_message,
                     data_message,
                     associated_table_change,
                 )
                 futures.add(future)
 
-    @classmethod
+    @staticmethod
     def _wait_for_futures_to_complete(
-        cls, *, futures: set[concurrent.futures.Future]
+        *, futures: set[concurrent.futures.Future]
     ) -> None:
         """Wait for tasks to complete, and if they raise any exceptions, log the error.
 
@@ -561,9 +547,8 @@ class KafkaListener:
 
         futures = {f for f in futures if not f.done()}
 
-    @classmethod
     def _handle_exception(
-        cls,
+        self,
         *,
         e: Exception,
         data_consumer: Consumer,
@@ -585,7 +570,7 @@ class KafkaListener:
             and e.args[0].code() == KafkaError._ALL_BROKERS_DOWN
         ):
             error("All brokers are down. Attempting to reconnect...", exc_info=True)
-            data_consumer, alert_update_consumer = cls._connect()
+            data_consumer, alert_update_consumer = self._connect()
         else:
             error("An unexpected error occurred: ", exc_info=True)
             raise e

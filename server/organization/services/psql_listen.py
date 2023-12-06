@@ -48,8 +48,7 @@ class PSQLListener:
             Sets up listeners for table change alerts and handles notifications.
     """
 
-    @classmethod
-    def ensure_trigger_exists(cls, conn: psycopg2.extensions.connection) -> None:
+    def ensure_trigger_exists(self, conn: psycopg2.extensions.connection) -> None:
         """Ensures that a specific trigger exists on a given table.
 
         Args:
@@ -114,8 +113,7 @@ class PSQLListener:
                 )
                 logger.info(f"Trigger {trigger_name} created.")
 
-    @classmethod
-    def connect(cls) -> psycopg2.extensions.connection:
+    def connect(self) -> psycopg2.extensions.connection:
         """Connect to a PostgreSQL database using psycopg2.
 
         This method reads database connection information from environment
@@ -134,8 +132,7 @@ class PSQLListener:
         conn.autocommit = True
         return conn
 
-    @classmethod
-    def listen(cls) -> None:
+    def listen(self) -> None:
         """Set up listeners for table change alerts and handle notifications.
 
         This method connects to the database, sets up listeners for table
@@ -146,8 +143,8 @@ class PSQLListener:
         Returns:
             None: This function does not return anything.
         """
-        conn = cls.connect()
-        cls.ensure_trigger_exists(conn)
+        conn = self.connect()
+        self.ensure_trigger_exists(conn)
         table_changes = get_active_table_alerts()
         table_change_alert_channel = "table_change_alert_updated"
 
