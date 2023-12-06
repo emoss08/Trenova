@@ -24,7 +24,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { divisionCodeSchema } from "@/lib/validations/accounting";
 import { useForm } from "react-hook-form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { toast } from "@/components/ui/use-toast";
 import { DCForm } from "./dc-table-dialog";
 import { useGLAccounts } from "@/hooks/useQueries";
 import {
@@ -63,7 +62,6 @@ export function DCEditForm({
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/division_codes/${divisionCode.id}/`,
