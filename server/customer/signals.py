@@ -15,9 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 import typing
 
 from customer import models
+
+logger = logging.getLogger(__name__)
 
 
 def create_email_and_rule_profile(
@@ -37,18 +40,22 @@ def create_email_and_rule_profile(
     rule_profile_name = f"{instance.code}-rule-profile"
 
     if created:
-        # Create Customer Email Profile
-        models.CustomerEmailProfile.objects.create(
-            organization=instance.organization,
-            business_unit=instance.business_unit,
-            customer=instance,
-        )
+        try:
+            # Create Customer Email Profile
+            models.CustomerEmailProfile.objects.create(
+                organization=instance.organization,
+                business_unit=instance.business_unit,
+                customer=instance,
+            )
 
-        # Create Customer Rule Profile
-        models.CustomerRuleProfile.objects.create(
-            organization=instance.organization,
-            business_unit=instance.business_unit,
-            customer=instance,
-            name=rule_profile_name,
-        )
+            # Create Customer Rule Profile
+            models.CustomerRuleProfile.objects.create(
+                organization=instance.organization,
+                business_unit=instance.business_unit,
+                customer=instance,
+                name=rule_profile_name,
+            )
+        except Exception as exc:
+            logger.error(f"Error creating customer email and rule profile: {exc}")
+
     return None
