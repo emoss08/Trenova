@@ -30,7 +30,6 @@ from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories, models
-from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from organization.models import BusinessUnit, Organization
 from shipment.tests.factories import ShipmentTypeFactory
