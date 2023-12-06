@@ -362,7 +362,7 @@ def test_validate_account_number(
     response = api_client.post(
         "/api/gl_accounts/",
         {
-            "organization": general_ledger_account.organization,
+            "organization": general_ledger_account.organization.id,
             "account_number": general_ledger_account.account_number,
             "account_type": GeneralLedgerAccount.AccountTypeChoices.REVENUE,
             "description": "Test General Ledger Account",
