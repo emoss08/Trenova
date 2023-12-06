@@ -32,12 +32,47 @@ import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 import { CustomerContactForm } from "./customer-contacts-form";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
 import { CustomerRuleProfileForm } from "./customer-rule-profile-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
+
+export function CustomerForm({
+  control,
+  open,
+}: {
+  control: Control<FormValues>;
+  open: boolean;
+}) {
+  return (
+    <Tabs defaultValue="info" className="flex-1 w-full">
+      <TabsList>
+        <TabsTrigger value="info">Information</TabsTrigger>
+        <TabsTrigger value="email_profile">Email Profile</TabsTrigger>
+        <TabsTrigger value="rule_profile">Rule Profile</TabsTrigger>
+        <TabsTrigger value="delivery_slots">Delivery Slots</TabsTrigger>
+        <TabsTrigger value="contacts">Contacts</TabsTrigger>
+      </TabsList>
+      <TabsContent value="info">
+        <CustomerInfoForm control={control} open={open} />
+      </TabsContent>
+      <TabsContent value="email_profile">
+        <CustomerEmailProfileForm control={control} />
+      </TabsContent>
+      <TabsContent value="rule_profile">
+        <CustomerRuleProfileForm control={control} open={open} />
+      </TabsContent>
+      <TabsContent value="delivery_slots">
+        <DeliverySlotForm control={control} open={open} />
+      </TabsContent>
+      <TabsContent value="contacts">
+        <CustomerContactForm control={control} />
+      </TabsContent>
+    </Tabs>
+  );
+}
 
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -105,30 +140,7 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col h-full overflow-y-auto"
         >
-          <Tabs defaultValue="info" className="flex-1 w-full">
-            <TabsList>
-              <TabsTrigger value="info">Information</TabsTrigger>
-              <TabsTrigger value="email_profile">Email Profile</TabsTrigger>
-              <TabsTrigger value="rule_profile">Rule Profile</TabsTrigger>
-              <TabsTrigger value="delivery_slots">Delivery Slots</TabsTrigger>
-              <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            </TabsList>
-            <TabsContent value="info">
-              <CustomerInfoForm control={control} open={open} />
-            </TabsContent>
-            <TabsContent value="email_profile">
-              <CustomerEmailProfileForm control={control} />
-            </TabsContent>
-            <TabsContent value="rule_profile">
-              <CustomerRuleProfileForm control={control} open={open} />
-            </TabsContent>
-            <TabsContent value="delivery_slots">
-              <DeliverySlotForm control={control} open={open} />
-            </TabsContent>
-            <TabsContent value="contacts">
-              <CustomerContactForm control={control} />
-            </TabsContent>
-          </Tabs>
+          <CustomerForm control={control} open={open} />
           <SheetFooter className="mb-12">
             <Button
               type="reset"
