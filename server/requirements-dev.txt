@@ -1,6 +1,6 @@
 celery-types==0.20.0
-django-admin-interface==0.26.1
-djangorestframework-stubs[compatible-mypy]==3.14.4
+django-admin-interface==0.27.0
+djangorestframework-stubs[compatible-mypy]==3.14.5
 factory_boy==3.3.0
 isort==5.12.0
 MonkeyType==23.3.0
