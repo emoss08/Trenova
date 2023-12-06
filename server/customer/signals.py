@@ -15,19 +15,40 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.apps import AppConfig
-from django.db.models.signals import post_save
+import typing
+
+from customer import models
 
 
-class CustomerConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "customer"
+def create_email_and_rule_profile(
+    instance: models.Customer, created: bool, **kwargs: typing.Any
+) -> None:
+    """Once a new customer is created automatically create a CustomerRuleProfile
+    and CustomerEmailProfile
 
-    def ready(self):
-        from customer import signals
+    Args:
+        instance (models.Customer): Customer instance
+        created (bool): Boolean value indicating if the instance was created
 
-        post_save.connect(
-            signals.create_email_and_rule_profile,
-            sender="customer.Customer",
-            dispatch_uid="create_email_and_rule_profile",
+    Returns:
+        None: this function does not return anything.
+    """
+
+    rule_profile_name = f"{instance.code}-rule-profile"
+
+    if created:
+        # Create Customer Email Profile
+        models.CustomerEmailProfile.objects.create(
+            organization=instance.organization,
+            business_unit=instance.business_unit,
+            customer=instance,
         )
+
+        # Create Customer Rule Profile
+        models.CustomerRuleProfile.objects.create(
+            organization=instance.organization,
+            business_unit=instance.business_unit,
+            customer=instance,
+            name=rule_profile_name,
+        )
+    return None
