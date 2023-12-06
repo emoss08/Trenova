@@ -1,4 +1,3 @@
-import { Location, LocationCategory, USStates } from "@/types/location";
 /*
  * COPYRIGHT(c) 2023 MONTA
  *
@@ -17,6 +16,7 @@ import { Location, LocationCategory, USStates } from "@/types/location";
  */
 
 import axios from "@/lib/axiosConfig";
+import { Location, LocationCategory, USStates } from "@/types/location";
 
 /**
  * Fetches locations from the server.

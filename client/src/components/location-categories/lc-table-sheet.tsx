@@ -33,20 +33,9 @@ import { LocationCategoryFormValues as FormValues } from "@/types/location";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
-import {
-  Control,
-  UseFormSetValue,
-  UseFormWatch,
-  useForm,
-} from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 
-export function LCForm({
-  control,
-}: {
-  control: Control<FormValues>;
-  watch: UseFormWatch<FormValues>;
-  setValue: UseFormSetValue<FormValues>;
-}) {
+export function LCForm({ control }: { control: Control<FormValues> }) {
   return (
     <div className="flex items-center justify-center">
       <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
@@ -91,16 +80,14 @@ export function LCForm({
 
 export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit, setValue, watch } = useForm<FormValues>(
-    {
-      resolver: yupResolver(formSchema),
-      defaultValues: {
-        name: "",
-        description: "",
-        color: "",
-      },
+  const { control, reset, handleSubmit } = useForm<FormValues>({
+    resolver: yupResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      color: "",
     },
-  );
+  });
 
   const mutation = useCustomMutation<FormValues>(
     control,
@@ -132,7 +119,7 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
           Please fill out the form below to create a new Location Category.
         </DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <LCForm control={control} watch={watch} setValue={setValue} />
+          <LCForm control={control} />
           <DialogFooter className="mt-6">
             <Button
               type="submit"
