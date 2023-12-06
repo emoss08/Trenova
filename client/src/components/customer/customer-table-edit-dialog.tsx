@@ -25,7 +25,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -88,7 +87,6 @@ export function CustomerEditForm({
 
   const mutation = useCustomMutation<FormValues>(
     control,
-    toast,
     {
       method: "PUT",
       path: `/customers/${customer.id}/`,
