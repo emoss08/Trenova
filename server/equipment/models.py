@@ -25,7 +25,6 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField
 
 from equipment.validators import us_vin_number_validator
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
@@ -353,11 +352,11 @@ class Tractor(GenericModel):
         blank=True,
         help_text=_("Model year of the equipment."),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
+        max_length=5,
         blank=True,
-        null=True,
-        help_text=_("State of the equipment."),
+        help_text=_("State"),
     )
     leased = models.BooleanField(
         _("Leased"),
@@ -597,10 +596,11 @@ class Trailer(GenericModel):
         blank=True,
         help_text=_("Tag identifier of the trailer."),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
+        max_length=5,
         blank=True,
-        help_text=_("State of the trailer."),
+        help_text=_("State"),
     )
     license_plate_number = models.CharField(
         _("License Plate Number"),
@@ -608,10 +608,11 @@ class Trailer(GenericModel):
         blank=True,
         help_text=_("License plate number of the trailer."),
     )
-    license_plate_state = USStateField(
-        _("License Plate State"),
+    license_plate_state = models.CharField(
+        _("State"),
+        max_length=5,
         blank=True,
-        help_text=_("License plate state of the trailer."),
+        help_text=_("State"),
     )
     license_plate_expiration_date = models.DateField(
         _("License Plate Expiration Date"),

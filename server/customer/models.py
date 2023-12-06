@@ -26,7 +26,7 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField, USZipCodeField
+from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
@@ -89,8 +89,9 @@ class Customer(GenericModel):
         max_length=150,
         help_text=_("City"),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
+        max_length=5,
         help_text=_("State"),
     )
     zip_code = USZipCodeField(

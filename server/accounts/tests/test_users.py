@@ -20,13 +20,19 @@ from unittest.mock import patch
 
 import pytest
 from django.core import mail
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory
 from PIL import Image
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from accounts.models import User, UserProfile
+from accounts.selectors import (
+    get_user_auth_token_from_request,
+    get_users_by_organization_id,
+)
 from accounts.serializers import UserSerializer
 from accounts.services import generate_thumbnail
 from accounts.tasks import generate_thumbnail_task
@@ -592,7 +598,7 @@ def test_create_thumbnail(user_profile: UserProfile) -> None:
     image = SimpleUploadedFile("test.png", image_file.getvalue())
 
     # Set the user's profile picture
-    user_profile.profile_picture = image
+    user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
     generate_thumbnail(user_profile=user_profile, size=(100, 100))
 
     # Check that the thumbnail was generated
@@ -618,10 +624,41 @@ def test_create_thumbnail_task(user_thumbnail, user_profile: UserProfile) -> Non
     image = SimpleUploadedFile("test.png", image_file.getvalue())
 
     # Set the user's profile picture
-    user_profile.profile_picture = image
-    user_profile.save()
+    user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
 
     generate_thumbnail_task(profile_instance=user_profile)
 
     user_thumbnail.assert_called_once_with(size=(100, 100), user_profile=user_profile)
     user_thumbnail.assert_called_once()
+
+
+def test_get_user_by_org_id_selector(user: User) -> None:
+    """Test Get user by organization id.
+
+    Args:
+        user (User): User Object.
+
+    Returns:
+        None: this function does not return anything.
+    """
+
+    user = get_users_by_organization_id(organization_id=user.organization.id)  # type: ignore
+
+    assert user is not None
+
+
+def test_get_user_auth_token_from_request(user: User) -> None:
+    """Test get user auth token from request.
+
+    Args:
+        user (User): User Object.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    request = RequestFactory().get("/api/users/")
+    request.user = user
+
+    token = get_user_auth_token_from_request(request=request)
+
+    assert token is not None

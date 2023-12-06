@@ -29,7 +29,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from localflavor.us.models import USStateField, USZipCodeField
+from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
@@ -110,10 +110,10 @@ class BusinessUnit(TimeStampedModel):
         help_text=_("The city of the Business Unit."),
         blank=True,
     )
-    state = USStateField(
-        verbose_name=_("State"),
-        help_text=_("The state of the Business Unit"),
-        blank=True,
+    state = models.CharField(
+        _("State"),
+        max_length=5,
+        help_text=_("State"),
     )
     zip_code = USZipCodeField(
         verbose_name=_("Zip Code"),
@@ -338,10 +338,10 @@ class Organization(TimeStampedModel):
         help_text=_("The city of the organization."),
         blank=True,
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
-        help_text=_("The state of the organization."),
-        blank=True,
+        max_length=5,
+        help_text=_("State"),
     )
     zip_code = USZipCodeField(
         _("zip code"),
@@ -602,9 +602,10 @@ class DepotDetail(TimeStampedModel):
         max_length=255,
         help_text=_("The city of the depot."),
     )
-    state = USStateField(
+    state = models.CharField(
         _("State"),
-        help_text=_("The state of the depot."),
+        max_length=5,
+        help_text=_("State"),
     )
     zip_code = USZipCodeField(
         _("Zip Code"),

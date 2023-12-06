@@ -198,7 +198,7 @@ router.register(
     basename="location-categories",
 )
 router.register(r"locations", location_api.LocationViewSet, basename="locations")
-
+router.register(r"states", location_api.StateViewSet, basename="states")
 # Dispatch Routing
 router.register(
     r"comment_types", dispatch_api.CommentTypeViewSet, basename="comment-types"
