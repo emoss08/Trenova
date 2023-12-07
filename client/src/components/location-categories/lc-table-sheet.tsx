@@ -64,7 +64,7 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
         <div className="grid w-full max-w-md">
           <ColorField
             name="color"
-            label="color"
+            label="Color"
             control={control}
             autoCapitalize="none"
             autoCorrect="off"
