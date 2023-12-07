@@ -19,9 +19,9 @@ import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
   ColumnDef,
+  flexRender,
   Row,
   Table as TableType,
-  flexRender,
 } from "@tanstack/react-table";
 import { Fragment } from "react";
 
@@ -45,7 +45,7 @@ export function DataTableBody<K extends Record<string, any>>({
           <Fragment key={row.id}>
             <TableRow
               data-state={row.getIsSelected() && "selected"}
-              className={row.getIsExpanded() ? "bg-muted/40" : ""}
+              className={row.getIsExpanded() ? "bg-accent" : ""}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell
