@@ -17,34 +17,29 @@
 
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
-import { Checkbox } from "@/components/common/fields/checkbox";
+import { GLAccountTableSub } from "@/components/gl-accounts/gl-table-sub";
 import { tableAccountTypeChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
+
+const renderSubComponent = ({ row }: { row: Row<GeneralLedgerAccount> }) => {
+  // const original = row.original;
+  return <GLAccountTableSub />;
+};
 
 const columns: ColumnDef<GeneralLedgerAccount>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        className="translate-y-[2px]"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="translate-y-[2px]"
-      />
-    ),
+    id: "expander",
+    footer: (props) => props.column.id,
+    header: () => null,
+    cell: ({ row }) => {
+      return <DataTableColumnExpand row={row} />;
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -65,10 +60,6 @@ const columns: ColumnDef<GeneralLedgerAccount>[] = [
     ),
   },
   {
-    accessorKey: "description",
-    header: "Description",
-  },
-  {
     accessorKey: "accountType",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Account Type" />
@@ -76,6 +67,10 @@ const columns: ColumnDef<GeneralLedgerAccount>[] = [
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
   },
 ];
 
@@ -104,6 +99,9 @@ export default function GLAccounts() {
       tableFacetedFilters={filters}
       TableSheet={GLTableSheet}
       TableEditSheet={GLTableEditSheet}
+      renderSubComponent={renderSubComponent}
+      getRowCanExpand={() => true}
+      addPermissionName="add_generalledgeraccount"
     />
   );
 }
