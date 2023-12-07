@@ -109,7 +109,7 @@ export function LocationChart({ row }: { row: Row<Location> }) {
             .map((comment) => (
               <div key={comment.id} className="flex flex-col overflow-hidden">
                 <div className="px-6 pt-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white">
+                  <h4 className="text-xl font-semibold text-foreground">
                     {comment.commentTypeName}
                   </h4>
                   <p className="mt-1">"{truncateText(comment.comment, 150)}"</p>
