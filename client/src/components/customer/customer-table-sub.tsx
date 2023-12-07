@@ -127,9 +127,9 @@ function DeliverySlotTable({
       <Table className="flex flex-col overflow-hidden">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/6">Day of Week</TableHead>{" "}
-            <TableHead className="w-3/6">Start & End Time</TableHead>{" "}
-            <TableHead className="w-2/6">Location</TableHead>{" "}
+            <TableHead className="w-1/12">Day of Week</TableHead>
+            <TableHead className="w-2/12">Start & End Time</TableHead>
+            <TableHead className="w-3/12">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -148,7 +148,7 @@ function DeliverySlotTable({
                   <TableCell className="w-2/12">
                     {deliverySlot.startTime} - {deliverySlot.endTime}
                   </TableCell>
-                  <TableCell className="w-2/12">
+                  <TableCell className="w-3/12">
                     {deliverySlot.locationName}
                   </TableCell>
                 </TableRow>
