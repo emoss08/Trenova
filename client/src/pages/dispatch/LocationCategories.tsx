@@ -54,7 +54,7 @@ const columns: ColumnDef<LocationCategory>[] = [
     cell: ({ row }) => {
       if (row.original.color) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
               className={"h-2 w-2 rounded-xl mx-2"}
               style={{ backgroundColor: row.original.color }}
