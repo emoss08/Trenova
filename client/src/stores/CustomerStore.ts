@@ -15,11 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MRT_RowSelectionState } from "mantine-react-table";
 import { createGlobalStore } from "@/lib/useGlobalStore";
-import { TableStoreProps } from "@/types/tables";
-import { Customer } from "@/types/customer";
-import { BillingHistory } from "@/types/billing";
 
 type customerStoreProps = {
   editModalOpen: boolean;
@@ -27,60 +23,16 @@ type customerStoreProps = {
   createRuleProfileModalOpen: boolean;
 };
 
-type paymentRecordsTableStoreProps<T extends Record<string, unknown>> = {
-  pagination: {
-    pageIndex: number;
-    pageSize: number;
-  };
-  selectedRecord: T | null;
-  globalFilter: string;
-  columnFilters: boolean;
-  rowSelection: MRT_RowSelectionState;
-};
-
-type customerTableStoreProps = {
-  loading: boolean;
-  activeStep: number;
-  attemptedNext: boolean;
-};
-
-export const customerTableStore = createGlobalStore<
-  Omit<TableStoreProps<Customer>, "drawerOpen"> & customerTableStoreProps
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  createModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-  loading: false,
-  activeStep: 0,
-  attemptedNext: false,
-});
-
-export const paymentRecordsTableStore = createGlobalStore<
-  paymentRecordsTableStoreProps<BillingHistory>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  selectedRecord: null,
-  globalFilter: "",
-  columnFilters: false,
-  rowSelection: {},
-});
-
 export const customerStore = createGlobalStore<customerStoreProps>({
   editModalOpen: false,
   createRuleProfileModalOpen: false,
   activeTab: "overview",
+});
+
+type CustomerFormStore = {
+  activeTab: string;
+};
+
+export const useCustomerFormStore = createGlobalStore<CustomerFormStore>({
+  activeTab: "info",
 });

@@ -22,12 +22,10 @@ import { CustomerTableSheet } from "@/components/customer/customer-table-dialog"
 import { CustomerTableEditSheet } from "@/components/customer/customer-table-edit-dialog";
 import { Customer } from "@/types/customer";
 import { ColumnDef, Row } from "@tanstack/react-table";
+import { CustomerTableSub } from "@/components/customer/customer-table-sub";
 
 const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
-  const data = JSON.stringify(row.original, null, 2);
-  return (
-    <pre className="text-xs whitespace-pre-wrap overflow-x-auto">{data}</pre>
-  );
+  return <CustomerTableSub row={row} />;
 };
 
 const columns: ColumnDef<Customer>[] = [
