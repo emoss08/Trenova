@@ -33,6 +33,7 @@ class DeliverySlotSerializer(GenericSerializer):
     """
 
     id = serializers.UUIDField(required=False, allow_null=True)
+    location_name = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         """
@@ -40,6 +41,7 @@ class DeliverySlotSerializer(GenericSerializer):
         """
 
         model = models.DeliverySlot
+        extra_fields = ("location_name",)
         extra_read_only_fields = ("customer",)
 
 

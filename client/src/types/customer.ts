@@ -16,9 +16,10 @@
  */
 
 import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "./organization";
 
 /** Customer Type */
-export type Customer = {
+export interface Customer extends BaseModel {
   id: string;
   organization: string;
   status: StatusChoiceProps;
@@ -38,11 +39,11 @@ export type Customer = {
   lastBillDate?: string | null;
   lastShipDate?: string | null;
   totalShipments?: number | null;
-  deliverySlots?: DeliverySlotFormValues[] | null;
-  contacts?: CustomerContactFormValues[] | null;
-  emailProfile?: CustomerEmailProfileFormValues | null;
-  ruleProfile?: CustomerRuleProfileFormValues | null;
-};
+  deliverySlots?: DeliverySlot[] | null;
+  contacts?: CustomerContact[] | null;
+  emailProfile?: CustomerEmailProfile | null;
+  ruleProfile?: CustomerRuleProfile | null;
+}
 
 export type CustomerFormValues = Omit<
   Customer,
@@ -54,7 +55,12 @@ export type CustomerFormValues = Omit<
   | "lastBillDate"
   | "lastShipDate"
   | "totalShipments"
->;
+> & {
+  deliverySlots?: DeliverySlotFormValues[] | null;
+  contacts?: CustomerContactFormValues[] | null;
+  emailProfile: CustomerEmailProfileFormValues;
+  ruleProfile: CustomerRuleProfileFormValues;
+};
 
 /** Customer Rule Profile Type */
 export type CustomerRuleProfile = {
@@ -102,13 +108,20 @@ export type DeliverySlot = {
   startTime: string;
   endTime: string;
   location: string;
+  locationName: string;
   created: string;
   modified: string;
 };
 
 export type DeliverySlotFormValues = Omit<
   DeliverySlot,
-  "id" | "organization" | "businessUnit" | "customer" | "created" | "modified"
+  | "id"
+  | "organization"
+  | "businessUnit"
+  | "customer"
+  | "locationName"
+  | "created"
+  | "modified"
 >;
 
 type CustomerContact = {

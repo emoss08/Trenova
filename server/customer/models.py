@@ -372,7 +372,6 @@ class CustomerRuleProfile(GenericModel):
         verbose_name=_("Document Class"),
         help_text=_("Document class"),
         blank=True,
-        null=True,
     )
 
     class Meta:

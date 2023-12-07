@@ -17,7 +17,7 @@
 
 import typing
 
-from django.db.models import Count, Max, Prefetch, Q, QuerySet
+from django.db.models import Count, F, Max, Prefetch, Q, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -48,6 +48,19 @@ class DeliverySlotViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.DeliverySlotSerializer
     filterset_fields = ("start_time", "end_time")
     permission_classes = [CustomObjectPermissions]
+
+    def get_queryset(self) -> QuerySet[models.DeliverySlot]:
+        user_org = self.request.user.organization_id  # type: ignore
+
+        queryset = (
+            self.queryset.filter(organization_id=user_org)
+            .annotate(
+                location_name=F("location__name"),
+            )
+            .all()
+        )
+
+        return queryset
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -94,7 +107,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     lookup="delivery_slots",
                     queryset=models.DeliverySlot.objects.filter(
                         organization_id=user_org
-                    ).all(),
+                    )
+                    .annotate(
+                        location_name=F("location__name"),
+                    )
+                    .all(),
                 ),
             )
             .annotate(

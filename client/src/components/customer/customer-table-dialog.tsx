@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
+import { useCustomerFormStore } from "@/stores/CustomerStore";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -46,25 +47,32 @@ export function CustomerForm({
   control: Control<FormValues>;
   open: boolean;
 }) {
+  const [activeTab, setActiveTab] = useCustomerFormStore.use("activeTab");
+
   return (
-    <Tabs defaultValue="info" className="flex-1 w-full">
+    <Tabs
+      defaultValue="info"
+      value={activeTab}
+      className="flex-1 w-full"
+      onValueChange={setActiveTab}
+    >
       <TabsList>
         <TabsTrigger value="info">Information</TabsTrigger>
-        <TabsTrigger value="email_profile">Email Profile</TabsTrigger>
-        <TabsTrigger value="rule_profile">Rule Profile</TabsTrigger>
-        <TabsTrigger value="delivery_slots">Delivery Slots</TabsTrigger>
+        <TabsTrigger value="emailProfile">Email Profile</TabsTrigger>
+        <TabsTrigger value="ruleProfile">Rule Profile</TabsTrigger>
+        <TabsTrigger value="deliverySlots">Delivery Slots</TabsTrigger>
         <TabsTrigger value="contacts">Contacts</TabsTrigger>
       </TabsList>
       <TabsContent value="info">
         <CustomerInfoForm control={control} open={open} />
       </TabsContent>
-      <TabsContent value="email_profile">
+      <TabsContent value="emailProfile">
         <CustomerEmailProfileForm control={control} />
       </TabsContent>
-      <TabsContent value="rule_profile">
+      <TabsContent value="ruleProfile">
         <CustomerRuleProfileForm control={control} open={open} />
       </TabsContent>
-      <TabsContent value="delivery_slots">
+      <TabsContent value="deliverySlots">
         <DeliverySlotForm control={control} open={open} />
       </TabsContent>
       <TabsContent value="contacts">

@@ -310,3 +310,11 @@ export function StatusBadge({ status }: { status: string }) {
     </Badge>
   );
 }
+
+export function BoolStatusBadge({ status }: { status: boolean }) {
+  return (
+    <Badge variant={status ? "default" : "destructive"}>
+      {status ? "Yes" : "No"}
+    </Badge>
+  );
+}
