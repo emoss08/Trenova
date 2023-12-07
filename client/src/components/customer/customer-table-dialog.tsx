@@ -34,6 +34,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
+import SimpleBar from "simplebar-react";
 import { CustomerContactForm } from "./customer-contacts-form";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
@@ -56,13 +57,20 @@ export function CustomerForm({
       className="flex-1 w-full"
       onValueChange={setActiveTab}
     >
-      <TabsList>
-        <TabsTrigger value="info">Information</TabsTrigger>
-        <TabsTrigger value="emailProfile">Email Profile</TabsTrigger>
-        <TabsTrigger value="ruleProfile">Rule Profile</TabsTrigger>
-        <TabsTrigger value="deliverySlots">Delivery Slots</TabsTrigger>
-        <TabsTrigger value="contacts">Contacts</TabsTrigger>
-      </TabsList>
+      <SimpleBar
+        style={{ maxHeight: "100%" }}
+        autoHide={true}
+        forceVisible={"y"}
+      >
+        <TabsList>
+          <TabsTrigger value="info">Information</TabsTrigger>
+          <TabsTrigger value="emailProfile">Email Profile</TabsTrigger>
+          <TabsTrigger value="ruleProfile">Rule Profile</TabsTrigger>
+          <TabsTrigger value="deliverySlots">Delivery Slots</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="detentionPolicy">Detention Policy</TabsTrigger>
+        </TabsList>
+      </SimpleBar>
       <TabsContent value="info">
         <CustomerInfoForm control={control} open={open} />
       </TabsContent>
@@ -77,6 +85,9 @@ export function CustomerForm({
       </TabsContent>
       <TabsContent value="contacts">
         <CustomerContactForm control={control} />
+      </TabsContent>
+      <TabsContent value="detentionPolicy">
+        <p>Work in progress</p>
       </TabsContent>
     </Tabs>
   );
