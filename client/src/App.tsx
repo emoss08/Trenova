@@ -30,6 +30,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Suspense, memo } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { BrowserRouter } from "react-router-dom";
+import "simplebar-react/dist/simplebar.min.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
