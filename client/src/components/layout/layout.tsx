@@ -55,7 +55,7 @@ export function Layout({ children }: LayoutProps) {
     // Use min-h-screen instead of h-screen to prevent overflow from causing double scrollbars
     <div className="flex flex-col min-h-screen">
       {!hideHeader && (
-        <header className="bg-background sticky top-0 z-50 w-full border-b">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           <div className="flex items-center h-14 w-full px-4">
             <div className="flex-1">
