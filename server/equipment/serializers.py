@@ -15,9 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
-
 from equipment import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -178,13 +177,16 @@ class TrailerSerializer(GenericSerializer):
     The serializer provides default operations for creating, update and deleting
     Trailers, as well as listing and retrieving them.
     """
-
+    
+    times_used = serializers.IntegerField(read_only=True, required=False)
+    equip_type_name = serializers.CharField(read_only=True, required=False)
     class Meta:
         """
         A class representing the metadata for the `TrailerSerializer` class.
         """
 
         model = models.Trailer
+        extra_fields = ("times_used", "equip_type_name",)
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Trailer model.

@@ -290,8 +290,9 @@ class CustomerSerializer(GenericSerializer):
     def create(self, validated_data: Any) -> models.Customer:
         """Create a new instance of the Customer model with given validated data.
 
-        This executes the creation of new customer, attaches the customer to the business unit and organization associated with the request.
-        It updates the email profile, rule profile, delivery slots, and customer contacts associated with the Customer.
+        This executes the creation of new customer, attaches the customer to the business unit and organization
+        associated with the request. It updates the email profile, rule profile, delivery slots, and customer contacts
+        associated with the Customer.
 
         Args:
             validated_data (Any): Data validated through serializer for creating a customer.
