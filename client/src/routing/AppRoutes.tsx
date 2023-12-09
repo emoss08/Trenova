@@ -63,6 +63,7 @@ const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCode"));
 const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
 const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
+const TrailerPage = lazy(() => import("../pages/equipment/Trailer"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -191,7 +192,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   // Commodities Pages
   {
-    title: "Hazardous Material",
+    title: "Hazardous Materials",
     group: "commodities",
     subMenu: "configuration files",
     path: "/commodities/hazardous-material",
@@ -272,13 +273,22 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_equipmenttype",
   },
   {
-    title: "Equipment Manufacturer",
+    title: "Equipment Manufacturers",
     group: "equipment",
     subMenu: "configuration files",
     path: "/equipment/equipment-manufacturers/",
     description: "Equipment Manufacturer",
     element: <EquipmentManufacturerPage />,
     permission: "view_equipmentmanufacturer",
+  },
+  {
+    title: "Trailers",
+    group: "equipment",
+    subMenu: "configuration files",
+    path: "/equipment/trailer/",
+    description: "Trailer",
+    element: <TrailerPage />,
+    permission: "view_trailer",
   },
   {
     title: "Locations",
@@ -291,7 +301,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   // Shipment Pages
   {
-    title: "Service Type",
+    title: "Service Types",
     group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/service-types/",
