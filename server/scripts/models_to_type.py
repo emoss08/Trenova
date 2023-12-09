@@ -199,7 +199,7 @@ def write_ts_interface(models: ModelReturnType, output_file: Path) -> None:
     try:
         with output_file.open("w") as file:
             for model_name, fields in models.items():
-                file.write(f"export type {model_name} = BaseModel & {{\n")
+                file.write(f"export interface {model_name} extends BaseModel {{\n")
                 for field_name, ts_type in fields:
                     file.write(f"  {field_name}: {ts_type};\n")
                 file.write("}\n\n")
