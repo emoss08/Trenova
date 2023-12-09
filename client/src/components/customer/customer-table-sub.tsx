@@ -39,7 +39,7 @@ const daysOfWeek = [
   "Thursday", // 3
   "Friday", // 4
   "Saturday", // 5
-  "Sunday",
+  "Sunday", // 6
 ];
 
 function mapToDayOfWeek(dayOfWeek: number) {
@@ -127,9 +127,10 @@ function DeliverySlotTable({
       <Table className="flex flex-col overflow-hidden">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/12">Day of Week</TableHead>
-            <TableHead className="w-2/12">Start & End Time</TableHead>
-            <TableHead className="w-3/12">Location</TableHead>
+            <TableHead className="w-2/12">Day of Week</TableHead>
+            <TableHead className="w-2/12">Start Time</TableHead>
+            <TableHead className="w-2/12">End Time</TableHead>
+            <TableHead className="w-1/12">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -142,13 +143,16 @@ function DeliverySlotTable({
               )
               .map((deliverySlot) => (
                 <TableRow key={deliverySlot.id} className="border-none ">
-                  <TableCell className="w-1/12">
+                  <TableCell className="w-2/12">
                     {mapToDayOfWeek(deliverySlot.dayOfWeek)}
                   </TableCell>
                   <TableCell className="w-2/12">
-                    {deliverySlot.startTime} - {deliverySlot.endTime}
+                    {deliverySlot.startTime}
                   </TableCell>
-                  <TableCell className="w-3/12">
+                  <TableCell className="w-2/12">
+                    {deliverySlot.endTime}
+                  </TableCell>
+                  <TableCell className="w-1/12">
                     {deliverySlot.locationName}
                   </TableCell>
                 </TableRow>
