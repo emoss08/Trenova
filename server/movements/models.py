@@ -70,6 +70,16 @@ class Movement(GenericModel):
         blank=True,
         help_text=_("Tractor of the Movement"),
     )
+    trailer = models.ForeignKey(
+        "equipment.Trailer",
+        verbose_name=_("Trailer"),
+        on_delete=models.PROTECT,
+        related_name="movements",
+        related_query_name="movement",
+        null=True,
+        blank=True,
+        help_text=_("Trailer associated to the movement"),
+    )
     primary_worker = models.ForeignKey(
         "worker.Worker",
         on_delete=models.PROTECT,
