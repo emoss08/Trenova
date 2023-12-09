@@ -55,6 +55,23 @@ export const tableStatusChoices = [
 ] satisfies TableOptionProps[];
 
 /**
+ * Returns status choices when using TableFacetedFilters.
+ * @returns An array of table faceted filter choices.
+ */
+export const boolTableStatusChoices = [
+  {
+    value: true,
+    label: "Active",
+    icon: CircleIcon,
+  },
+  {
+    value: false,
+    label: "Inactive",
+    icon: MinusCircledIcon,
+  },
+] satisfies TableOptionProps[];
+
+/**
  * Returns boolean yes & no choices for a select input.
  * @returns An array of yes & no choices.
  */
