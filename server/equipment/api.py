@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import typing
 
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Count, F, Prefetch, QuerySet
 from rest_framework import response, status, viewsets
 
 from core.permissions import CustomObjectPermissions
@@ -159,38 +159,24 @@ class TrailerViewSet(viewsets.ModelViewSet):
 
     queryset = models.Trailer.objects.all()
     serializer_class = serializers.TrailerSerializer
-    filterset_fields = ("is_active", "equipment_type__name", "fleet__code", "is_leased")
+    filterset_fields = (
+        "is_active",
+        "equipment_type__name",
+        "fleet_code__code",
+        "is_leased",
+    )
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "make",
-            "lease_expiration_date",
-            "fleet_code_id",
-            "axles",
-            "owner",
-            "license_plate_number",
-            "length",
-            "model",
-            "tag_identifier",
-            "leased_date",
-            "planning_comment",
-            "license_plate_expiration_date",
-            "code",
-            "vin_number",
-            "is_leased",
-            "is_active",
-            "state",
-            "equipment_type_id",
-            "width",
-            "year",
-            "last_inspection",
-            "height",
-            "license_plate_state",
+        user_org = self.request.user.organization_id  # type: ignore
+
+        queryset = (
+            self.queryset.filter(organization_id=user_org)
+            .annotate(
+                times_used=Count("movement", distinct=True),
+                equip_type_name=F("equipment_type__name"),
+            )
+            .all()
         )
         return queryset
 

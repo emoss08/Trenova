@@ -97,12 +97,14 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 "rule_profile",
             )
             .prefetch_related(
+                # Prefetch contacts for customer
                 Prefetch(
                     lookup="contacts",
                     queryset=models.CustomerContact.objects.filter(
                         organization_id=user_org
                     ).all(),
                 ),
+                # Prefetch Delivery slots for customer
                 Prefetch(
                     lookup="delivery_slots",
                     queryset=models.DeliverySlot.objects.filter(
@@ -112,6 +114,13 @@ class CustomerViewSet(viewsets.ModelViewSet):
                         location_name=F("location__name"),
                     )
                     .all(),
+                ),
+                # Prefetch document classes for rule profile
+                Prefetch(
+                    lookup="rule_profile__document_class",
+                    queryset=models.DocumentClassification.objects.filter(
+                        organization_id=user_org
+                    ).only("id"),
                 ),
             )
             .annotate(
@@ -127,6 +136,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
                     "shipment__id", filter=Q(shipment__status=StatusChoices.COMPLETED)
                 ),
             )
+            .order_by("code")
             .all()
         )
 
