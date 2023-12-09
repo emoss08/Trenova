@@ -52,3 +52,43 @@ export type EquipmentManufacturerFormValues = Pick<
   EquipmentManufacturer,
   "name" | "description" | "status"
 >;
+
+export interface Trailer extends BaseModel {
+  id: string;
+  code: string;
+  isActive: boolean;
+  planningComment?: string;
+  equipmentType: string | null;
+  make?: string;
+  model?: string;
+  year: number;
+  vinNumber?: string;
+  fleetCode?: string | null;
+  tagIdentifier?: string;
+  state?: string;
+  licensePlateNumber?: string;
+  licensePlateState?: string;
+  licensePlateExpirationDate?: string | null;
+  lastInspection?: string;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
+  axles: number;
+  owner?: string;
+  isLeased: boolean;
+  leasedDate?: string | null;
+  leaseExpirationDate?: string | null;
+  timesUsed: number;
+  equipTypeName: string;
+}
+
+export type TrailerFormValues = Omit<
+  Trailer,
+  | "id"
+  | "timesUsed"
+  | "equipTypeName"
+  | "organization"
+  | "businessUnit"
+  | "created"
+  | "modified"
+>;
