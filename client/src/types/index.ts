@@ -77,6 +77,7 @@ export type QueryKeys =
   | "reason-code-table-data"
   | "reasonCodes"
   | "routeControl"
+  | "trailer-table-data"
   | "locations"
   | "locations-table-data"
   | "locationCategories"
