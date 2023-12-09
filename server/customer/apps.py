@@ -16,18 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
 
 
 class CustomerConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "customer"
-
-    def ready(self):
-        from customer import signals
-
-        post_save.connect(
-            signals.create_email_and_rule_profile,
-            sender="customer.Customer",
-            dispatch_uid="create_email_and_rule_profile",
-        )
