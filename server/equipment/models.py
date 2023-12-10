@@ -16,8 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 import textwrap
+import typing
 import uuid
-from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -31,13 +31,26 @@ from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 from worker.models import Worker
 
 
+@typing.final
+class AvailabilityChoices(models.TextChoices):
+    """
+    Availability Choices
+    """
+
+    AVAILABLE = "A", _("Available")
+    OUT_OF_SERVICE = "OOS", _("Out of Service")
+    AT_MAINTENANCE = "AM", _("At Maintenance")
+    SOLD = "S", _("Sold")
+    LOST = "L", _("Lost")
+
+
 class EquipmentType(GenericModel):
     """
     Stores the equipment type information that can later be used to create
     :model:`equipment.Equipment` objects.
     """
 
-    @final
+    @typing.final
     class EquipmentClassChoices(models.TextChoices):
         """
         Equipment Class Choices
@@ -263,7 +276,7 @@ class Tractor(GenericModel):
     Stores information about a piece of Tractor for a :model:`organization.Organization`.
     """
 
-    @final
+    @typing.final
     class AuxiliaryPowerUnitTypeChoices(models.TextChoices):
         """
         Auxiliary Power Unit Type Choices
@@ -538,10 +551,11 @@ class Trailer(GenericModel):
         max_length=50,
         help_text=_("Code of the trailer."),
     )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("Is the trailer active."),
+    status = ChoiceField(
+        _("Status"),
+        choices=AvailabilityChoices.choices,
+        help_text=_("Status of the trailer."),
+        default=AvailabilityChoices.AVAILABLE,
     )
     planning_comment = models.CharField(
         _("Planning Comment"),
@@ -553,6 +567,7 @@ class Trailer(GenericModel):
         EquipmentType,
         on_delete=models.SET_NULL,
         related_name="trailer",
+        blank=True,
         null=True,
         verbose_name=_("Equipment Type"),
         help_text=_("Equipment type of the trailer."),
@@ -602,6 +617,12 @@ class Trailer(GenericModel):
         blank=True,
         help_text=_("State"),
     )
+    owner = models.CharField(
+        _("Owner"),
+        max_length=50,
+        blank=True,
+        help_text=_("Owner of the trailer."),
+    )
     license_plate_number = models.CharField(
         _("License Plate Number"),
         max_length=50,
@@ -614,52 +635,14 @@ class Trailer(GenericModel):
         blank=True,
         help_text=_("State"),
     )
-    license_plate_expiration_date = models.DateField(
-        _("License Plate Expiration Date"),
-        blank=True,
-        null=True,
-        help_text=_("License plate expiration date of the trailer."),
-    )
+    # ------------
+    # TODO(WOLFRED): Send a notification letting the equipment team know that the license plate is about to expire
+    # ------------
     last_inspection = models.DateField(
         _("Last Inspection"),
         blank=True,
         null=True,
         help_text=_("Last inspection date of the trailer."),
-    )
-    length = models.DecimalField(
-        _("Length"),
-        max_digits=10,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        help_text=_("Length of the trailer."),
-    )
-    width = models.DecimalField(
-        _("Width"),
-        max_digits=10,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        help_text=_("Width of the trailer."),
-    )
-    height = models.DecimalField(
-        _("Height"),
-        max_digits=10,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        help_text=_("Height of the trailer."),
-    )
-    axles = models.PositiveIntegerField(
-        _("Axles"),
-        default=0,
-        help_text=_("Number of axles of the trailer."),
-    )
-    owner = models.CharField(
-        _("Owner"),
-        max_length=50,
-        blank=True,
-        help_text=_("Owner of the trailer."),
     )
     is_leased = models.BooleanField(
         _("Is Leased"),
@@ -672,11 +655,24 @@ class Trailer(GenericModel):
         null=True,
         help_text=_("Leased date of the trailer."),
     )
-    lease_expiration_date = models.DateField(
-        _("Lease Expiration Date"),
+    # ---- Registration Information ----
+    registration_number = models.CharField(
+        _("Registration Number"),
+        max_length=50,
+        blank=True,
+        help_text=_("Registration number of the trailer."),
+    )
+    registration_state = models.CharField(
+        _("State"),
+        max_length=5,
+        blank=True,
+        help_text=_("State"),
+    )
+    registration_expiration = models.DateField(
+        _("Registration Expiration"),
         blank=True,
         null=True,
-        help_text=_("Lease expiration date of the trailer."),
+        help_text=_("Registration expiration date of the trailer."),
     )
 
     class Meta:
@@ -703,6 +699,19 @@ class Trailer(GenericModel):
             str: String representation of the Trailer model
         """
         return textwrap.shorten(self.code, width=50, placeholder="...")
+
+    def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Save method for the Trailer model
+
+        Returns:
+            None: This method does not return anything
+        """
+
+        # If the trailer is leased and the leased date is not set, set it to today
+        if self.is_leased and not self.leased_date:
+            self.leased_date = timezone.now().date()
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Trailer absolute URL
