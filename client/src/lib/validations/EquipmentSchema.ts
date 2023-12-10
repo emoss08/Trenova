@@ -15,14 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
-import { ObjectSchema, StringSchema } from "yup";
+import { EquipmentClassChoiceProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 import {
   EquipmentManufacturerFormValues,
   EquipmentTypeFormValues,
+  TrailerFormValues,
+  TrailerStatuses,
 } from "@/types/equipment";
-import { EquipmentClassChoiceProps } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types";
+import * as Yup from "yup";
+import { ObjectSchema, StringSchema } from "yup";
 
 Yup.addMethod<StringSchema>(
   Yup.string,
@@ -77,4 +79,24 @@ export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValu
       .required("Name is required")
       .max(50, "Name cannot be more than 50 characters"),
     description: Yup.string().notRequired(),
+  });
+
+export const trailerSchema: ObjectSchema<TrailerFormValues> =
+  Yup.object().shape({
+    status: Yup.string<TrailerStatuses>().required("Status is required"),
+    code: Yup.string().required("Code is required"),
+    equipmentType: Yup.string().required("Equipment type is required"),
+    make: Yup.string().notRequired(),
+    model: Yup.string().notRequired(),
+    year: Yup.number().notRequired(),
+    vinNumber: Yup.string().notRequired(),
+    fleetCode: Yup.string().notRequired(),
+    state: Yup.string().notRequired(),
+    licensePlateNumber: Yup.string().notRequired(),
+    licensePlateState: Yup.string().notRequired(),
+    lastInspection: Yup.string().notRequired(),
+    registrationNumber: Yup.string().notRequired(),
+    registrationState: Yup.string().notRequired(),
+    registrationExpiration: Yup.string().notRequired(),
+    isLeased: Yup.boolean().required("Is leased is required"),
   });

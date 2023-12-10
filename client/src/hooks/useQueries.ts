@@ -32,6 +32,7 @@ import { getCustomers } from "@/services/CustomerRequestService";
 import {
   getCommentTypes,
   getFeasibilityControl,
+  getFleetCodes,
 } from "@/services/DispatchRequestService";
 import { getEquipmentTypes } from "@/services/EquipmentRequestService";
 import {
@@ -52,7 +53,7 @@ import { User } from "@/types/accounts";
 import { AccessorialCharge, DocumentClassification } from "@/types/billing";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { Customer } from "@/types/customer";
-import { CommentType } from "@/types/dispatch";
+import { CommentType, FleetCode } from "@/types/dispatch";
 import { EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentType } from "@/types/order";
@@ -507,10 +508,30 @@ export function useDepots(show?: boolean) {
   });
 
   const selectDepots =
-    (data as Depot[])?.map((commentType: Depot) => ({
-      value: commentType.id,
-      label: commentType.name,
+    (data as Depot[])?.map((depot: Depot) => ({
+      value: depot.id,
+      label: depot.name,
     })) || [];
 
   return { selectDepots, isError, isLoading };
+}
+
+export function useFleetCodes(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["fleetCodes"] as QueryKeys[],
+    queryFn: async () => getFleetCodes(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectFleetCodes =
+    (data as FleetCode[])?.map((fleetCode: FleetCode) => ({
+      value: fleetCode.id,
+      label: fleetCode.code,
+    })) || [];
+
+  return { selectFleetCodes, isError, isLoading };
 }

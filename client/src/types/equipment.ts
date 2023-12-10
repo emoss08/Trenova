@@ -17,6 +17,8 @@
 
 import { EquipmentClassChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
+import { TableOptionProps } from "@/types/tables";
+import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 import { BaseModel } from "./organization";
 
 export interface EquipmentType extends BaseModel {
@@ -53,31 +55,49 @@ export type EquipmentManufacturerFormValues = Pick<
   "name" | "description" | "status"
 >;
 
+export type TrailerStatuses = "A" | "OOS" | "AM" | "S" | "L";
+
+export const trailerStatusChoices = [
+  {
+    value: "A",
+    label: "Active",
+    icon: CircleIcon,
+  },
+  {
+    value: "UA",
+    label: "Unavailable",
+    icon: MinusCircledIcon,
+  },
+  {
+    value: "OOS",
+    label: "Out of Service",
+    icon: MinusCircledIcon,
+  },
+  {
+    value: "IM",
+    label: "In Maintenance",
+    icon: MinusCircledIcon,
+  },
+] satisfies TableOptionProps[];
+
 export interface Trailer extends BaseModel {
   id: string;
   code: string;
-  isActive: boolean;
-  planningComment?: string;
-  equipmentType: string | null;
-  make?: string;
-  model?: string;
-  year: number;
-  vinNumber?: string;
+  status: TrailerStatuses;
+  equipmentType: string;
+  make?: string | null;
+  model?: string | null;
+  year?: number | null;
+  vinNumber?: string | null;
   fleetCode?: string | null;
-  tagIdentifier?: string;
-  state?: string;
-  licensePlateNumber?: string;
-  licensePlateState?: string;
-  licensePlateExpirationDate?: string | null;
-  lastInspection?: string;
-  length?: string | null;
-  width?: string | null;
-  height?: string | null;
-  axles: number;
-  owner?: string;
+  state?: string | null;
+  licensePlateNumber?: string | null;
+  licensePlateState?: string | null;
+  lastInspection?: string | null;
+  registrationNumber?: string | null;
+  registrationState?: string | null;
+  registrationExpiration?: string | null;
   isLeased: boolean;
-  leasedDate?: string | null;
-  leaseExpirationDate?: string | null;
   timesUsed: number;
   equipTypeName: string;
 }

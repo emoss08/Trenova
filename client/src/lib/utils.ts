@@ -151,3 +151,13 @@ export function PopoutWindow(
     `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`,
   );
 }
+
+export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
+  const cleanedObj: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined && obj[key] !== "" && obj[key] !== null) {
+      cleanedObj[key] = obj[key];
+    }
+  });
+  return cleanedObj;
+};
