@@ -21,6 +21,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from equipment.models import AvailabilityChoices
 from movements import models
 from utils.models import StatusChoices
 from worker.models import WorkerProfile
@@ -58,7 +59,7 @@ class MovementValidation:
         all the necessary validations.
 
         Returns:
-            None
+            None: This function does not return anything.
 
         Raises:
             ValidationError: If any validation fails.
@@ -70,6 +71,7 @@ class MovementValidation:
         self.validate_movement_worker()
         self.validate_worker_tractor_fleet()
         self.validate_movement_shipment()
+        self.validate_trailer_status_is_available()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -424,6 +426,12 @@ class MovementValidation:
                     )
 
     def validate_voided_movement(self) -> None:
+        """Validate voided movement status cannot be changed. If the movement is voided, then
+        throw a ValidationError.
+
+        Returns:
+            None: This function does not return anything.
+        """
         movement = self.movement
 
         if not movement.exists():
@@ -432,4 +440,20 @@ class MovementValidation:
         if movement.status == StatusChoices.VOIDED:
             self.errors["status"] = _(
                 "Cannot update a voided movement. Please contact your administrator."
+            )
+
+    def validate_trailer_status_is_available(self) -> None:
+        """Validate the status of the trailer is "Available" before assigning it to a movement.
+        If not then throw a ValidationError.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        if (
+            self.movement.trailer
+            and self.movement.trailer.status != AvailabilityChoices.AVAILABLE
+        ):
+            self.errors["trailer"] = _(
+                "Cannot assign a trailer that is not `available`. Please try again."
             )
