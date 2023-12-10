@@ -71,3 +71,20 @@ class TractorFactory(factory.django.DjangoModelFactory):
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)
     fleet_code = factory.SubFactory("dispatch.factories.FleetCodeFactory")
+
+
+class TrailerFactory(factory.django.DjangoModelFactory):
+    """
+    Trailer Factory
+    """
+
+    class Meta:
+        """
+        Metaclass for TrailerFactory
+        """
+
+        model = "equipment.Trailer"
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    code = factory.Faker("pystr", max_chars=50)

@@ -160,7 +160,7 @@ class TrailerViewSet(viewsets.ModelViewSet):
     queryset = models.Trailer.objects.all()
     serializer_class = serializers.TrailerSerializer
     filterset_fields = (
-        "is_active",
+        "status",
         "equipment_type__name",
         "fleet_code__code",
         "is_leased",

@@ -21,7 +21,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from equipment.models import Tractor
-from equipment.tests.factories import TractorFactory
+from equipment.tests.factories import TractorFactory, TrailerFactory
 from movements.tests.factories import MovementFactory
 from organization.models import Organization
 from shipment.models import Shipment
@@ -84,3 +84,11 @@ def movement_api(
             "tractor": f"{tractor.id}",
         },
     )
+
+
+@pytest.fixture
+def trailer() -> Generator[Any, Any, None]:
+    """
+    Pytest fixture for Equipment
+    """
+    yield TrailerFactory()
