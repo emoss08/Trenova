@@ -27,8 +27,8 @@ import { Check } from "lucide-react";
 import React, { KeyboardEvent } from "react";
 import {
   FieldValues,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
@@ -92,7 +92,7 @@ export function SelectInput<T extends Record<string, unknown>>(
   } = props;
 
   const dataLoading = props.isLoading || props.isDisabled;
-  const errorOccurred = props.isFetchError || !!fieldState.error?.message;
+  const errorOccurred = props.isFetchError || fieldState.invalid;
   const processedValue = ValueProcessor(field.value, options, isMulti);
 
   return (
@@ -110,7 +110,7 @@ export function SelectInput<T extends Record<string, unknown>>(
       )}
       <div className="relative">
         <Select
-          aria-invalid={fieldState.invalid || isFetchError}
+          aria-invalid={errorOccurred}
           aria-labelledby={controllerProps.id}
           inputId={controllerProps.id}
           closeMenuOnSelect={!isMulti}
