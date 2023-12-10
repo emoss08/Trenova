@@ -86,7 +86,6 @@ export function CustomerInfoForm({
               label="Name"
               autoCapitalize="none"
               autoCorrect="off"
-              type="text"
               placeholder="Name"
               description="Specify the official name of the customer."
               maxLength={10}
