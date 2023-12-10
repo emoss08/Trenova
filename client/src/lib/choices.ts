@@ -403,3 +403,12 @@ export const codeTypeChoices = [
   { value: "VOIDED", label: "Voided" },
   { value: "CANCELLED", label: "Cancelled" },
 ] satisfies ReadonlyArray<IChoiceProps<CodeTypeProps>>;
+
+/**
+ * Returns boolean yes & no choices for a select input.
+ * @returns An array of yes & no choices.
+ */
+export const booleanStatusChoices: ReadonlyArray<IChoiceProps<boolean>> = [
+  { value: true, label: "Active" },
+  { value: false, label: "Inactive" },
+];
