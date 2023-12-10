@@ -25,7 +25,7 @@ from rest_framework.test import APIClient
 
 from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from dispatch.factories import FleetCodeFactory
-from equipment.models import Tractor
+from equipment.models import Tractor, Trailer
 from equipment.tests.factories import TractorFactory
 from movements import models, services
 from movements.tests.factories import MovementFactory
@@ -276,8 +276,6 @@ def test_primary_worker_mvr_due_date() -> None:
 
     with pytest.raises(ValidationError) as excinfo:
         MovementFactory(organization=worker.organization, primary_worker=worker)
-
-    print("Excinfo", excinfo.value.message_dict)
 
     assert excinfo.value.message_dict["primary_worker"] == [
         "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
@@ -638,4 +636,25 @@ def test_cannot_delete_movement_if_org_disallows(movement: models.Movement) -> N
 
     assert excinfo.value.message_dict["ref_num"] == [
         "Organization does not allow Movement removal. Please contact your administrator."
+    ]
+
+
+def test_validate_trailer_status_is_available(trailer: Trailer) -> None:
+    """Test ValidationError is thrown if a movement is created and the trailer status is not available.
+
+    Args:
+        trailer(models.Trailer): Trailer instance
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    trailer.status = "OOS"
+    trailer.save()
+
+    with pytest.raises(ValidationError) as excinfo:
+        MovementFactory(trailer=trailer)
+
+    assert excinfo.value.message_dict["trailer"] == [
+        "Cannot assign a trailer that is not `available`. Please try again."
     ]
