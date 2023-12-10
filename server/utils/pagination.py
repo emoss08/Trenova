@@ -23,28 +23,37 @@ class MontaPagination(LimitOffsetPagination):
     max_limit = None
 
     def paginate_queryset(self, queryset, request, view=None):
-        self.request = request
         self.limit = self.get_limit(request)
         if self.limit is None:
-            self.count = len(queryset)
+            # When limit is 'all', count without pagination
+            self.count = queryset.count()
             return list(queryset)
         else:
+            # Standard limit-offset pagination
             self.offset = self.get_offset(request)
             self.count = self.get_count(queryset)
-            self.request = request
             return super().paginate_queryset(queryset, request, view=view)
 
     def get_paginated_response(self, data):
         if self.limit is None:
-            # When limit is 'all', we return the total count without next/previous links
+            # Return total count without next/previous links for 'all'
             return Response(
                 {"count": self.count, "next": None, "previous": None, "results": data}
             )
         else:
-            # For normal pagination, we return the response from the parent class
+            # Standard paginated response
             return super().get_paginated_response(data)
 
     def get_limit(self, request):
-        if request.query_params.get(self.limit_query_param) == "all":
+        limit_param = request.query_params.get(self.limit_query_param)
+        if limit_param == "all":
             return None
-        return super().get_limit(request)
+        try:
+            # Ensuring limit is a positive integer
+            limit = int(limit_param)
+            if limit < 1:
+                raise ValueError
+            return limit
+        except (TypeError, ValueError):
+            # Default to the standard implementation if not valid
+            return super().get_limit(request)
