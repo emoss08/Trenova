@@ -34,7 +34,7 @@ import {
   cashFlowTypeChoices,
   statusChoices,
 } from "@/lib/choices";
-import { cn } from "@/lib/utils";
+import { cleanObject, cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/accounting";
 import { TChoiceProps } from "@/types";
 import { GLAccountFormValues } from "@/types/accounting";
@@ -44,9 +44,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import {
   Control,
+  useForm,
   UseFormGetValues,
   UseFormSetValue,
-  useForm,
 } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { FileField, InputField } from "../common/fields/input";
@@ -336,8 +336,10 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
   );
 
   const onSubmit = (values: GLAccountFormValues) => {
+    const cleanedValues = cleanObject(values);
+
     setIsSubmitting(true);
-    mutation.mutate(values);
+    mutation.mutate(cleanedValues);
   };
 
   return (
