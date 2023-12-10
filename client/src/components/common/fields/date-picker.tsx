@@ -15,55 +15,134 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import DatePicker, { ReactDatePickerProps } from "react-datepicker";
-
-import { ExtendedInputProps, Input } from "@/components/common/fields/input";
+import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
-import { cn } from "@/lib/utils";
-import React from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { cn, useClickOutside } from "@/lib/utils";
+import { CalendarIcon } from "@radix-ui/react-icons";
+import { addDays, format } from "date-fns";
+import { AlertTriangle } from "lucide-react";
+import React, { useState } from "react";
+import {
+  FieldValues,
+  useController,
+  UseControllerProps,
+} from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
 
-const DatePickerInput = React.forwardRef<HTMLInputElement, ExtendedInputProps>(
-  ({ value, onClick }, ref) => (
-    <Input value={value} onClick={onClick} ref={ref} />
-  ),
-);
-
-export function DatepickerField({
-  ...props
-}: ReactDatePickerProps & {
+interface DatepickerFieldProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  withAsterisk?: boolean;
   description?: string;
-  formError?: string;
-}) {
+  placeholder?: string;
+  initialDate?: Date;
+}
+
+export function DatepickerField<TFieldValues extends FieldValues>({
+  ...props
+}: DatepickerFieldProps & UseControllerProps<TFieldValues>) {
+  const { field, fieldState } = useController(props);
+  const [date, setDate] = useState<Date | undefined>(props.initialDate);
+  const popoverRef = React.useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [stringDate, setStringDate] = React.useState(
+    props.initialDate ? format(props.initialDate, "PPP") : "",
+  );
+
+  const close = React.useCallback(() => setIsOpen(false), []);
+  useClickOutside(popoverRef, close);
+
   return (
     <>
       {props.label && (
         <Label
           className={cn(
             "text-sm font-medium bg-background border-input",
-            props.withAsterisk && "required",
+            props.rules?.required && "required",
           )}
           htmlFor={props.id}
         >
           {props.label}
         </Label>
       )}
-      <div className="relative">
-        <DatePicker
-          wrapperClassName="flex"
-          selected={props.selected}
-          onChange={props.onChange}
-          customInput={<DatePickerInput />}
-          calendarClassName="bg-background border border-input rounded-md shadow-sm text-foreground"
-          monthClassName={() =>
-            "text-foreground bg-muted-foreground bg-background"
-          }
-          dayClassName={() => "text-foreground hover:bg-accent bg-background"}
-          weekDayClassName={() => "text-foreground bg-background select-none"}
+      <div className="relative w-full">
+        <Input
+          onClick={() => setIsOpen(true)}
+          {...field}
+          aria-invalid={fieldState.invalid}
+          value={stringDate}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            props.className,
+          )}
+          onFocus={() => {
+            if (date) setStringDate(format(date, "MM/dd/yyyy"));
+          }}
+          {...props}
         />
-        {props.description && !props.formError && (
+        <div
+          className={cn(
+            "absolute inset-y-0 right-8 my-2 h-6 w-px",
+            fieldState.invalid ? "bg-red-500" : "bg-foreground/30",
+          )}
+        />
+        <div className="absolute right-0 top-0 my-3 mx-2">
+          {fieldState.invalid ? (
+            <></>
+          ) : (
+            <CalendarIcon className="text-foreground/50 hover:text-foreground" />
+          )}
+        </div>
+
+        {fieldState.error?.message && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <p className="text-xs text-red-700">{fieldState.error?.message}</p>
+          </>
+        )}
+        {props.description && !fieldState.error?.message && (
           <p className="text-xs text-foreground/70">{props.description}</p>
+        )}
+        {isOpen && (
+          <div
+            ref={popoverRef}
+            className="absolute bg-background border border-muted rounded-sm shadow-md mb-2 z-1000 bottom-full"
+          >
+            <div className="flex w-auto flex-col space-y-2 p-2">
+              <Select
+                onValueChange={(value) =>
+                  setDate(addDays(new Date(), parseInt(value)))
+                }
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Select Preset" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="0">Today</SelectItem>
+                  <SelectItem value="1">Tomorrow</SelectItem>
+                  <SelectItem value="3">In 3 days</SelectItem>
+                  <SelectItem value="7">In a week</SelectItem>
+                  <SelectItem value="14">In 2 weeks</SelectItem>
+                  <SelectItem value="30">In a month</SelectItem>
+                </SelectContent>
+              </Select>
+              <Calendar
+                mode="single"
+                selected={date}
+                // onSelect={(date) => onSelect(date)}
+              />
+            </div>
+          </div>
         )}
       </div>
     </>
