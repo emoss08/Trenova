@@ -16,7 +16,11 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { CommentType, FeasibilityToolControl } from "@/types/dispatch";
+import {
+  CommentType,
+  FeasibilityToolControl,
+  FleetCode,
+} from "@/types/dispatch";
 
 /**
  * Fetches new Rate Number from the server.
@@ -40,6 +44,15 @@ export async function getFeasibilityControl(): Promise<
 
 export async function getCommentTypes(): Promise<CommentType[]> {
   const response = await axios.get("/comment_types/", {
+    params: {
+      status: "A",
+    },
+  });
+  return response.data.results;
+}
+
+export async function getFleetCodes(): Promise<FleetCode[]> {
+  const response = await axios.get("/fleet_codes/", {
     params: {
       status: "A",
     },
