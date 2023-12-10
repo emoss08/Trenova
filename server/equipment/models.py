@@ -565,10 +565,8 @@ class Trailer(GenericModel):
     )
     equipment_type = models.ForeignKey(
         EquipmentType,
-        on_delete=models.SET_NULL,
+        on_delete=models.RESTRICT,
         related_name="trailer",
-        blank=True,
-        null=True,
         verbose_name=_("Equipment Type"),
         help_text=_("Equipment type of the trailer."),
     )
@@ -588,6 +586,8 @@ class Trailer(GenericModel):
         _("Year"),
         default=timezone.now().year,
         help_text=_("Year of the trailer."),
+        blank=True,
+        null=True,
     )
     vin_number = models.CharField(
         _("VIN Number"),
@@ -604,12 +604,6 @@ class Trailer(GenericModel):
         blank=True,
         null=True,
         help_text=_("Fleet of the trailer."),
-    )
-    tag_identifier = models.CharField(
-        _("Tag Identifier"),
-        max_length=50,
-        blank=True,
-        help_text=_("Tag identifier of the trailer."),
     )
     state = models.CharField(
         _("State"),
@@ -677,12 +671,11 @@ class Trailer(GenericModel):
 
     class Meta:
         """
-        Tractor Model Metaclass
+        Metaclass for the Trailer Model
         """
 
         verbose_name = _("Trailer")
         verbose_name_plural = _("Trailer")
-        ordering = ["code"]
         db_table = "trailer"
         constraints = [
             models.UniqueConstraint(
