@@ -43,6 +43,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { AsyncSelectInput } from "@/components/common/fields/aync-select-input";
 
 export function TrailerForm({
   control,
@@ -100,7 +101,7 @@ export function TrailerForm({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
           <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
             <div className="min-h-[4em]">
-              <SelectInput
+              <AsyncSelectInput
                 name="equipmentType"
                 rules={{ required: true }}
                 control={control}
@@ -170,7 +171,7 @@ export function TrailerForm({
           </div>
           <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
             <div className="min-h-[4em]">
-              <SelectInput
+              <AsyncSelectInput
                 name="fleetCode"
                 control={control}
                 label="Fleet Code"
