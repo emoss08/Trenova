@@ -176,6 +176,7 @@ class TrailerViewSet(viewsets.ModelViewSet):
                 times_used=Count("movement", distinct=True),
                 equip_type_name=F("equipment_type__name"),
             )
+            .order_by("code")
             .all()
         )
         return queryset
