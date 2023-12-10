@@ -18,13 +18,13 @@
 import { Control, useFieldArray } from "react-hook-form";
 import { InputField } from "../common/fields/input";
 
-import { booleanStatusChoices } from "@/lib/constants";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { AlertOctagonIcon } from "lucide-react";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { SelectInput } from "../common/fields/select-input";
 import { Button } from "../ui/button";
+import { booleanStatusChoices } from "@/lib/choices";
 
 export function CustomerContactForm({
   control,
