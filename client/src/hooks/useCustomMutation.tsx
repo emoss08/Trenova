@@ -15,7 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ToasterToast, toast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { toast } from "@/components/ui/use-toast";
 import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
@@ -34,7 +35,6 @@ import {
   UseFormReset,
 } from "react-hook-form";
 
-type Toast = Omit<ToasterToast, "id">;
 type DataProp = Record<string, unknown> | FormData;
 type MutationOptions = {
   path: string;
@@ -57,10 +57,8 @@ export function useCustomMutation<T extends FieldValues>(
   return useMutation({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
-    onSuccess: async () =>
-      await handleSuccess(options, toast, queryClient, reset),
-    onError: async (error: Error) =>
-      await handleError(error, options, control, toast),
+    onSuccess: () => handleSuccess(options, queryClient, reset),
+    onError: (error: Error) => handleError(error, options, control),
     onSettled: onMutationSettled,
   });
 }
@@ -123,12 +121,15 @@ const broadcastChannel = new BroadcastChannel("query-invalidation");
 
 async function handleSuccess<T extends FieldValues>(
   options: MutationOptions,
-  toast: (toast: Toast) => void,
   queryClient: QueryClient,
   reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
-    showNotification(toast, "Success", options.successMessage);
+    toast({
+      variant: "success",
+      title: "Great! Changes saved successfully.",
+      description: options.successMessage,
+    });
   };
 
   // Invalidate the queries that are passed in
@@ -165,38 +166,27 @@ async function handleError<T extends FieldValues>(
   error: any,
   options: MutationOptions,
   control: Control<T>,
-  toast: (toast: Toast) => void,
 ) {
   const { data } = error?.response || {};
   if (data?.type === "validationError") {
-    handleValidationErrors(data.errors, control, toast);
+    handleValidationErrors(data.errors, control);
   } else {
-    showErrorNotification(toast, options.errorMessage);
+    showErrorNotification(options.errorMessage);
   }
 }
 
-function showNotification(
-  toast: (toast: Toast) => void,
-  title: string,
-  message: string,
-) {
+function showErrorNotification(errorMessage?: string) {
   toast({
-    title: title,
-    description: message,
+    variant: "destructive",
+    title: "Uh Oh! Something went wrong.",
+    description: errorMessage || "An error occurred.",
+    action: <ToastAction altText="Try Again">Try Again.</ToastAction>,
   });
-}
-
-function showErrorNotification(
-  toast: (toast: Toast) => void,
-  errorMessage?: string,
-) {
-  showNotification(toast, "Error", errorMessage || "An error occurred.");
 }
 
 function handleValidationErrors<T extends FieldValues>(
   errors: APIError[],
   control: Control<T>,
-  toast: (toast: Toast) => void,
 ) {
   errors.forEach((e: APIError) => {
     control.setError(
@@ -207,7 +197,7 @@ function handleValidationErrors<T extends FieldValues>(
       } as ErrorOption,
     );
     if (e.attr === "nonFieldErrors") {
-      showErrorNotification(toast, e.detail);
+      showErrorNotification(e.detail);
     }
   });
 }
