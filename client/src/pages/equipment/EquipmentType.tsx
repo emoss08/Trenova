@@ -15,17 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable, StatusBadge } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
+import { EquipTypeEditSheet } from "@/components/equipment-type/equip-type-edit-table-dialog";
+import { EquipTypeDialog } from "@/components/equipment-type/equip-type-table-dialog";
+import { equipmentClassChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
+import { truncateText } from "@/lib/utils";
+import { EquipmentType } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { EquipmentType } from "@/types/equipment";
-import { EquipTypeDialog } from "@/components/equipment-type/equip-type-table-dialog";
-import { EquipTypeEditSheet } from "@/components/equipment-type/equip-type-edit-table-dialog";
-import { truncateText } from "@/lib/utils";
-import { equipmentClassChoices } from "@/lib/choices";
 
 const columns: ColumnDef<EquipmentType>[] = [
   {
@@ -109,6 +109,7 @@ export default function EquipmentTypes() {
       tableFacetedFilters={filters}
       TableSheet={EquipTypeDialog}
       TableEditSheet={EquipTypeEditSheet}
+      addPermissionName="add_equipmenttype"
     />
   );
 }
