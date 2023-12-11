@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
@@ -43,7 +44,6 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
-import { AsyncSelectInput } from "@/components/common/fields/aync-select-input";
 
 export function TrailerForm({
   control,
@@ -53,11 +53,13 @@ export function TrailerForm({
   open: boolean;
 }) {
   const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(open);
+
   const {
     selectFleetCodes,
     isError: isFleetCodeError,
     isLoading: isFleetCodesLoading,
   } = useFleetCodes(open);
+
   const {
     selectUSStates,
     isError: isStateError,
