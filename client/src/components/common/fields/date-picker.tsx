@@ -25,8 +25,8 @@ import { AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 import {
   Select,
@@ -44,6 +44,15 @@ interface DatepickerFieldProps
   initialDate?: Date;
 }
 
+const PRESET_VALUES = [
+  { value: "0", label: "Today" },
+  { value: "1", label: "Tomorrow" },
+  { value: "3", label: "In 3 days" },
+  { value: "7", label: "In a week" },
+  { value: "14", label: "In 2 weeks" },
+  { value: "30", label: "In a month" },
+];
+
 export function DatepickerField<TFieldValues extends FieldValues>({
   ...props
 }: DatepickerFieldProps & UseControllerProps<TFieldValues>) {
@@ -57,6 +66,17 @@ export function DatepickerField<TFieldValues extends FieldValues>({
 
   const close = React.useCallback(() => setIsOpen(false), []);
   useClickOutside(popoverRef, close);
+
+  const handleDateChange = React.useCallback(
+    (selectedDate: Date | undefined) => {
+      if (selectedDate) {
+        setDate(selectedDate);
+        setStringDate(format(selectedDate, "PPP"));
+        field.onChange(format(selectedDate, "yyyy-MM-dd"));
+      }
+    },
+    [field],
+  );
 
   return (
     <>
@@ -84,8 +104,9 @@ export function DatepickerField<TFieldValues extends FieldValues>({
             props.className,
           )}
           onFocus={() => {
-            if (date) setStringDate(format(date, "MM/dd/yyyy"));
+            if (date) setStringDate(format(date, "PPP"));
           }}
+          onChange={(e) => setStringDate(e.target.value)}
           {...props}
         />
         <div
@@ -121,25 +142,24 @@ export function DatepickerField<TFieldValues extends FieldValues>({
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select
                 onValueChange={(value) =>
-                  setDate(addDays(new Date(), parseInt(value)))
+                  handleDateChange(addDays(new Date(), parseInt(value)))
                 }
               >
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="Select Preset" />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="0">Today</SelectItem>
-                  <SelectItem value="1">Tomorrow</SelectItem>
-                  <SelectItem value="3">In 3 days</SelectItem>
-                  <SelectItem value="7">In a week</SelectItem>
-                  <SelectItem value="14">In 2 weeks</SelectItem>
-                  <SelectItem value="30">In a month</SelectItem>
+                  {PRESET_VALUES.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Calendar
                 mode="single"
                 selected={date}
-                // onSelect={(date) => onSelect(date)}
+                onSelect={handleDateChange}
               />
             </div>
           </div>
