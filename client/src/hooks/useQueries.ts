@@ -256,13 +256,14 @@ export function useDocumentClass(show?: boolean) {
 /**
  * Get Equipment Types for select options
  * @param show - show or hide the query
+ * @param limit - limit the number of results
  */
-export function useEquipmentTypes(show?: boolean) {
+export function useEquipmentTypes(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipmentTypes"] as QueryKeys[],
-    queryFn: async () => getEquipmentTypes(),
+    queryKey: ["equipmentTypes", limit] as QueryKeys[],
+    queryFn: async () => getEquipmentTypes(limit),
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["equipmentTypes"] as QueryKeys[]),
@@ -446,12 +447,12 @@ export function useLocationCategories(show?: boolean) {
  * Get US States for select options
  * @param show - show or hide the query
  */
-export function useUSStates(show?: boolean) {
+export function useUSStates(show?: boolean, limit?: number) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["usStates"] as QueryKeys[],
-    queryFn: async () => getUSStates(),
+    queryKey: ["usStates", limit] as QueryKeys[],
+    queryFn: async () => getUSStates(limit),
     enabled: show,
     initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys[]),
     staleTime: Infinity,
@@ -516,12 +517,12 @@ export function useDepots(show?: boolean) {
   return { selectDepots, isError, isLoading };
 }
 
-export function useFleetCodes(show?: boolean) {
+export function useFleetCodes(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["fleetCodes"] as QueryKeys[],
-    queryFn: async () => getFleetCodes(),
+    queryKey: ["fleetCodes", limit] as QueryKeys[],
+    queryFn: async () => getFleetCodes(limit),
     enabled: show,
     initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys[]),
     staleTime: Infinity,
