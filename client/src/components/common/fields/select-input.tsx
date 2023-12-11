@@ -27,8 +27,8 @@ import { Check } from "lucide-react";
 import React, { KeyboardEvent } from "react";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
@@ -84,7 +84,7 @@ export function SelectInput<T extends Record<string, unknown>>(
     isMulti,
     placeholder,
     options,
-    maxOptions,
+    maxOptions = 10,
     menuPlacement = "auto",
     menuPosition = "absolute",
     hideSelectedOptions = false,
