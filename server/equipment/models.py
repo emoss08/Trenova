@@ -25,7 +25,6 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from equipment.validators import us_vin_number_validator
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 from worker.models import Worker
@@ -649,7 +648,6 @@ class Trailer(GenericModel):
         null=True,
         help_text=_("Leased date of the trailer."),
     )
-    # ---- Registration Information ----
     registration_number = models.CharField(
         _("Registration Number"),
         max_length=50,
