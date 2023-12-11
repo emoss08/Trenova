@@ -51,10 +51,11 @@ export async function getCommentTypes(): Promise<CommentType[]> {
   return response.data.results;
 }
 
-export async function getFleetCodes(): Promise<FleetCode[]> {
+export async function getFleetCodes(limit?: number): Promise<FleetCode[]> {
   const response = await axios.get("/fleet_codes/", {
     params: {
       status: "A",
+      limit: limit,
     },
   });
   return response.data.results;

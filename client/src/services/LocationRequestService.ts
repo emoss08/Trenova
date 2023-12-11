@@ -55,10 +55,10 @@ export async function getLocationCategories(): Promise<LocationCategory[]> {
   return response.data.results;
 }
 
-export async function getUSStates(): Promise<USStates[]> {
+export async function getUSStates(limit: number = 100): Promise<USStates[]> {
   const response = await axios.get("/states/", {
     params: {
-      limit: "all",
+      limit: limit,
     },
   });
   return response.data.results;
