@@ -18,9 +18,17 @@
 import axios from "@/lib/axiosConfig";
 import { EquipmentType } from "@/types/equipment";
 
-export async function getEquipmentTypes(): Promise<
-  ReadonlyArray<EquipmentType>
-> {
-  const response = await axios.get("equipment_types/");
+/**
+ * Get equipment types from the server.
+ * @returns a list of equipment types
+ */
+export async function getEquipmentTypes(
+  limit?: number,
+): Promise<ReadonlyArray<EquipmentType>> {
+  const response = await axios.get("equipment_types/", {
+    params: {
+      limit: limit,
+    },
+  });
   return response.data.results;
 }
