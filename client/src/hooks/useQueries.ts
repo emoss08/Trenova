@@ -34,7 +34,10 @@ import {
   getFeasibilityControl,
   getFleetCodes,
 } from "@/services/DispatchRequestService";
-import { getEquipmentTypes } from "@/services/EquipmentRequestService";
+import {
+  getEquipmentManufacturers,
+  getEquipmentTypes,
+} from "@/services/EquipmentRequestService";
 import {
   getLocationCategories,
   getLocations,
@@ -54,7 +57,7 @@ import { AccessorialCharge, DocumentClassification } from "@/types/billing";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { Customer } from "@/types/customer";
 import { CommentType, FleetCode } from "@/types/dispatch";
-import { EquipmentType } from "@/types/equipment";
+import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentType } from "@/types/order";
 import { Depot } from "@/types/organization";
@@ -535,4 +538,27 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
     })) || [];
 
   return { selectFleetCodes, isError, isLoading };
+}
+
+export function useEquipManufacturers(show?: boolean, limit: number = 100) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["equipmentManufacturers", limit] as QueryKeys[],
+    queryFn: async () => getEquipmentManufacturers(limit),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData(["equipmentManufacturers"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectEquipManufacturers =
+    (data as EquipmentManufacturer[])?.map(
+      (equipManufacturer: EquipmentManufacturer) => ({
+        value: equipManufacturer.id,
+        label: equipManufacturer.name,
+      }),
+    ) || [];
+
+  return { selectEquipManufacturers, isError, isLoading };
 }
