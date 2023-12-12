@@ -224,8 +224,8 @@ export function NavMenu() {
     {
       menuKey: "AdminMenu",
       label: "Administrator",
-      link: "/admin",
-      permission: "admin.view_admin_dashboard",
+      link: "/admin/dashboard/",
+      permission: "view_admin_dashboard",
     },
   ];
 
