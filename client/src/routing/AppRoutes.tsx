@@ -64,6 +64,7 @@ const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
 const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
 const TrailerPage = lazy(() => import("../pages/equipment/Trailer"));
+const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -336,6 +337,14 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Qualifier Codes",
     element: <QualifierCodePage />,
     permission: "view_qualifiercode",
+  },
+  {
+    title: "Dashboard",
+    group: "Administration",
+    path: "/admin/dashboard/",
+    description: "Admin Dashboard",
+    element: <AdminPage />,
+    permission: "view_admin_dashboard",
   },
   // Error Page
   {
