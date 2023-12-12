@@ -96,5 +96,5 @@ def trailer() -> Generator[Any, Any, None]:
     Pytest fixture for Equipment
     """
     equip_type = EquipmentTypeFactory(equipment_class="TRAILER")
-    
+
     yield TrailerFactory(equipment_type=equip_type)
