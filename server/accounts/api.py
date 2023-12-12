@@ -113,39 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     ),
                 ),
             )
-            .only(
-                "last_login",
-                "is_superuser",
-                "id",
-                "organization_id",
-                "business_unit_id",
-                "department_id",
-                "is_active",
-                "username",
-                "email",
-                "is_staff",
-                "date_joined",
-                "online",
-                "session_key",
-                "profiles__created",
-                "profiles__modified",
-                "profiles__organization_id",
-                "profiles__id",
-                "profiles__user",
-                "profiles__business_unit_id",
-                "profiles__job_title_id",
-                "profiles__first_name",
-                "profiles__last_name",
-                "profiles__profile_picture",
-                "profiles__address_line_1",
-                "profiles__address_line_2",
-                "profiles__city",
-                "profiles__state",
-                "profiles__zip_code",
-                "profiles__phone_number",
-                "profiles__is_phone_verified",
-                "profiles__thumbnail",
-            )
+            .all()
         )
         return queryset
 
