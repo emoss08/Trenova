@@ -21,7 +21,11 @@ import pytest
 from rest_framework.test import APIClient
 
 from equipment.models import Tractor
-from equipment.tests.factories import TractorFactory, TrailerFactory
+from equipment.tests.factories import (
+    EquipmentTypeFactory,
+    TractorFactory,
+    TrailerFactory,
+)
 from movements.tests.factories import MovementFactory
 from organization.models import Organization
 from shipment.models import Shipment
@@ -91,4 +95,6 @@ def trailer() -> Generator[Any, Any, None]:
     """
     Pytest fixture for Equipment
     """
-    yield TrailerFactory()
+    equip_type = EquipmentTypeFactory(equipment_class="TRAILER")
+
+    yield TrailerFactory(equipment_type=equip_type)

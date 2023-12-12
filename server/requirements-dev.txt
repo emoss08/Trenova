@@ -2,7 +2,7 @@ celery-types==0.20.0
 django-admin-interface==0.27.0
 djangorestframework-stubs[compatible-mypy]==3.14.5
 factory_boy==3.3.0
-isort==5.13.0
+isort==5.13.1
 MonkeyType==23.3.0
 pretty_errors==1.2.25
 pydantic==2.5.2
