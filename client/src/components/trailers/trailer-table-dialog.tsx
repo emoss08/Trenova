@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
+  useEquipManufacturers,
   useEquipmentTypes,
   useFleetCodes,
   useUSStates,
@@ -53,6 +54,12 @@ export function TrailerForm({
   open: boolean;
 }) {
   const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(open);
+
+  const {
+    selectEquipManufacturers,
+    isLoading: isEquipManuLoading,
+    isError: isEquipManuError,
+  } = useEquipManufacturers(open);
 
   const {
     selectFleetCodes,
@@ -113,6 +120,21 @@ export function TrailerForm({
                 isLoading={isLoading}
                 placeholder="Select Equip. Type"
                 description="Select the equipment type of the trailer, to categorize it based on its functionality and usage."
+                isClearable={false}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+            <div className="min-h-[4em]">
+              <AsyncSelectInput
+                name="manufacturer"
+                control={control}
+                label="Manufacturer"
+                options={selectEquipManufacturers}
+                isFetchError={isEquipManuError}
+                isLoading={isEquipManuLoading}
+                placeholder="Select Manufacturer"
+                description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
                 isClearable={false}
               />
             </div>
@@ -301,6 +323,7 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
       code: "",
       status: "A",
       equipmentType: "",
+      manufacturer: "",
       make: "",
       model: "",
       year: undefined,

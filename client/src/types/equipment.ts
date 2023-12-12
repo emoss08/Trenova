@@ -85,6 +85,7 @@ export interface Trailer extends BaseModel {
   code: string;
   status: TrailerStatuses;
   equipmentType: string;
+  manufacturer?: string | null;
   make?: string | null;
   model?: string | null;
   year?: number | null;

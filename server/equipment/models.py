@@ -25,6 +25,7 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from equipment.validators import us_vin_number_validator
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 from worker.models import Worker
@@ -615,6 +616,15 @@ class Trailer(GenericModel):
         max_length=50,
         blank=True,
         help_text=_("Owner of the trailer."),
+    )
+    manufacturer = models.ForeignKey(
+        EquipmentManufacturer,
+        on_delete=models.CASCADE,
+        related_name="trailer",
+        related_query_name="trailer",
+        verbose_name=_("Manufacturer"),
+        blank=True,
+        null=True,
     )
     license_plate_number = models.CharField(
         _("License Plate Number"),

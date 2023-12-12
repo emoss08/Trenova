@@ -86,6 +86,7 @@ export const trailerSchema: ObjectSchema<TrailerFormValues> =
     status: Yup.string<TrailerStatuses>().required("Status is required"),
     code: Yup.string().required("Code is required"),
     equipmentType: Yup.string().required("Equipment type is required"),
+    manufacturer: Yup.string().notRequired(),
     make: Yup.string().notRequired(),
     model: Yup.string().notRequired(),
     year: Yup.number().notRequired(),
