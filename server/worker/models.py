@@ -31,7 +31,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USZipCodeField
-
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
 
@@ -175,7 +174,11 @@ class Worker(GenericModel):
             str: Worker string representation
         """
 
-        return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
+        return textwrap.shorten(
+            f"{self.first_name} {self.last_name}",
+            width=50,
+            placeholder="...",
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Worker save method
