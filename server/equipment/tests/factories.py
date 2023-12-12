@@ -87,4 +87,5 @@ class TrailerFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    equipment_type = factory.SubFactory(EquipmentTypeFactory)
     code = factory.Faker("pystr", max_chars=50)

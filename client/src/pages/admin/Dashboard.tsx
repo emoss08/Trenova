@@ -22,13 +22,9 @@ export default function AdminPage() {
     <Card>
       <CardContent>
         <p className="font-semibold text-lg mb-2 border-b border-dashed">
-          Development in progress...
+          Admin Dashboard
         </p>
-        <p className="text-sm text-gray-400 mt-1">
-          Monta is currently undergoing comprehensive development. As a result,
-          certain features might not yet be accessible, or they may not perform
-          to their intended specifications.
-        </p>
+        <p className="text-sm text-gray-400 mt-1">Work in Progress...</p>
       </CardContent>
     </Card>
   );

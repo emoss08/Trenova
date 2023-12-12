@@ -9,7 +9,7 @@ daphne==4.0.0
 Django==5.0
 django-auditlog==2.3.0
 django-cacheops==7.0.2
-django-celery-beat==2.5.0
+django-celery-beat==2.1.0
 django-celery-results==2.5.1
 django-colorfield==0.11.0
 django-compressor==4.4
@@ -28,7 +28,7 @@ django-silk==5.0.4
 django-stubs-ext==4.2.7
 djangorestframework~=3.14.0
 djangorestframework-camel-case==1.4.2
-drf-spectacular==0.26.5
+drf-spectacular==0.27.0
 drf-standardized-errors[openapi]==0.12.6
 geopy==2.4.1
 googlemaps==4.10.0
@@ -41,13 +41,13 @@ psutil==5.9.6
 psycopg2==2.9.9
 pyarrow==14.0.*
 pyftpdlib==1.5.9
-pypdf==3.17.1
+pypdf==3.17.2
 python-dateutil==2.8.2
 pytz==2023.3.post1
 redis==5.0.1
-reportlab==4.0.7
+reportlab==4.0.8
 requests==2.31.0
 rich==13.7.0
 sympy==1.12
-weasyprint==60.1
+weasyprint==60.2
 whitenoise==6.6.0
