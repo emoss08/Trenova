@@ -54,13 +54,13 @@ import { DataTableHeader, DataTableTopBar } from "./data-table-header";
 import { DataTablePagination } from "./data-table-pagination";
 
 // Define the structure of the state managed by the hook
-interface DataTableState<K> {
+interface DataTableState<TData extends Record<string, any>> {
   pagination: { pageIndex: number; pageSize: number };
   setPagination: OnChangeFn<PaginationState>;
   rowSelection: Record<string, boolean>;
   setRowSelection: OnChangeFn<RowSelectionState>;
-  currentRecord?: K;
-  setCurrentRecord: (currentRecord: K | null) => void;
+  currentRecord?: TData;
+  setCurrentRecord: (currentRecord: TData | null) => void;
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: OnChangeFn<VisibilityState>;
   columnFilters: ColumnFilter[];
@@ -74,7 +74,9 @@ interface DataTableState<K> {
 }
 
 // Custom hook for managing DataTable state
-function useDataTableState<K>(): DataTableState<K> {
+function useDataTableState<
+  TData extends Record<string, any>,
+>(): DataTableState<TData> {
   const [{ pageIndex, pageSize }, setPagination] = store.use("pagination");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
   const [currentRecord, setCurrentRecord] = store.use("currentRecord");
@@ -141,7 +143,7 @@ async function fetchData<K>(
   return response.data;
 }
 
-export function DataTable<K extends Record<string, any>>({
+export function DataTable<TData extends Record<string, any>>({
   columns,
   link,
   extraSearchParams,
@@ -155,7 +157,7 @@ export function DataTable<K extends Record<string, any>>({
   renderSubComponent,
   getRowCanExpand,
   addPermissionName,
-}: DataTableProps<K>) {
+}: DataTableProps<TData>) {
   const {
     pagination,
     setPagination,
@@ -173,7 +175,7 @@ export function DataTable<K extends Record<string, any>>({
     setDrawerOpen,
     editDrawerOpen,
     setEditDrawerOpen,
-  } = useDataTableState<K>();
+  } = useDataTableState<TData>();
 
   const { userHasPermission } = useUserPermissions();
 
@@ -188,12 +190,12 @@ export function DataTable<K extends Record<string, any>>({
   const placeholderData: unknown[] = React.useMemo(
     () =>
       dataQuery.isLoading
-        ? Array.from({ length: pagination.pageSize }, () => ({}) as K)
+        ? Array.from({ length: pagination.pageSize }, () => ({}) as TData)
         : dataQuery.data?.results || [],
     [dataQuery.isLoading, dataQuery.data, pagination.pageSize],
   );
 
-  const displayColumns: ColumnDef<K>[] = React.useMemo(
+  const displayColumns: ColumnDef<TData>[] = React.useMemo(
     () =>
       dataQuery.isLoading
         ? columns.map((column) => ({
@@ -213,7 +215,7 @@ export function DataTable<K extends Record<string, any>>({
   );
 
   const table = useReactTable({
-    data: placeholderData as K[],
+    data: placeholderData as TData[],
     columns: displayColumns,
     getRowCanExpand: getRowCanExpand,
     pageCount: dataQuery.data
