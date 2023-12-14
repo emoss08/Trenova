@@ -19,9 +19,9 @@ import { EquipmentClassChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
 import {
   EquipmentManufacturerFormValues,
+  EquipmentStatus,
   EquipmentTypeFormValues,
   TrailerFormValues,
-  TrailerStatuses,
 } from "@/types/equipment";
 import * as Yup from "yup";
 import { ObjectSchema, StringSchema } from "yup";
@@ -83,7 +83,7 @@ export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValu
 
 export const trailerSchema: ObjectSchema<TrailerFormValues> =
   Yup.object().shape({
-    status: Yup.string<TrailerStatuses>().required("Status is required"),
+    status: Yup.string<EquipmentStatus>().required("Status is required"),
     code: Yup.string().required("Code is required"),
     equipmentType: Yup.string().required("Equipment type is required"),
     manufacturer: Yup.string().notRequired(),

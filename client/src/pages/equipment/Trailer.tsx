@@ -16,16 +16,15 @@
  */
 
 import { Checkbox } from "@/components/common/fields/checkbox";
-import { DataTable } from "@/components/common/table/data-table";
+import {
+  DataTable,
+  EquipmentStatusBadge,
+} from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { TrailerDialog } from "@/components/trailers/trailer-table-dialog";
 import { TrailerEditDialog } from "@/components/trailers/trailer-table-edit-dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Trailer,
-  trailerStatusChoices,
-  TrailerStatuses,
-} from "@/types/equipment";
+import { Trailer, equipmentStatusChoices } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -36,23 +35,6 @@ function LastInspectionDate({ lastInspection }: { lastInspection?: string }) {
     </Badge>
   );
 }
-
-export function TrailerStatusBadge({ status }: { status: TrailerStatuses }) {
-  const mapToStatus = {
-    A: "Available",
-    OOS: "Out of Service",
-    AM: "At Maintenance",
-    S: "Sold",
-    L: "Lost",
-  };
-
-  return (
-    <Badge variant={status === "A" ? "default" : "destructive"}>
-      {mapToStatus[status]}
-    </Badge>
-  );
-}
-
 const columns: ColumnDef<Trailer>[] = [
   {
     id: "select",
@@ -80,7 +62,7 @@ const columns: ColumnDef<Trailer>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <TrailerStatusBadge status={row.getValue("status")} />,
+    cell: ({ row }) => <EquipmentStatusBadge status={row.getValue("status")} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -124,7 +106,7 @@ const filters: FilterConfig<Trailer>[] = [
   {
     columnName: "status",
     title: "Status",
-    options: trailerStatusChoices,
+    options: equipmentStatusChoices,
   },
 ];
 

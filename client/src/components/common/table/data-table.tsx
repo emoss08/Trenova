@@ -43,6 +43,7 @@ import { useUserPermissions } from "@/context/user-permissions";
 import axios from "@/lib/axiosConfig";
 import { API_URL } from "@/lib/constants";
 import { useTableStore as store } from "@/stores/TableStore";
+import { EquipmentStatus } from "@/types/equipment";
 import { ApiResponse } from "@/types/server";
 import { DataTableProps } from "@/types/tables";
 import { useQuery } from "@tanstack/react-query";
@@ -315,6 +316,27 @@ export function BoolStatusBadge({ status }: { status: boolean }) {
   return (
     <Badge variant={status ? "default" : "destructive"}>
       {status ? "Yes" : "No"}
+    </Badge>
+  );
+}
+
+/**
+ * Status badge that can be used to display the status of equipment. (e.g. Trailer & Tractor statuses)
+ * @param status The status of the equipment
+ * @returns A badge with the status of the equipment
+ */
+export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
+  const mapToStatus = {
+    A: "Available",
+    OOS: "Out of Service",
+    AM: "At Maintenance",
+    S: "Sold",
+    L: "Lost",
+  };
+
+  return (
+    <Badge variant={status === "A" ? "default" : "destructive"}>
+      {mapToStatus[status]}
     </Badge>
   );
 }
