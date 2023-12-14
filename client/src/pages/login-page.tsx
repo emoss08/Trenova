@@ -37,7 +37,7 @@ type LoginFormValues = {
 
 function UserAuthForm() {
   const [, setIsAuthenticated] = useAuthStore(
-    (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
+    (state: { isAuthenticated: boolean; setIsAuthenticated: any }) => [
       state.isAuthenticated,
       state.setIsAuthenticated,
     ],
@@ -46,7 +46,11 @@ function UserAuthForm() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const { control, handleSubmit, setError } = useForm<LoginFormValues>({
-    resolver: yupResolver<LoginFormValues>(userAuthSchema),
+    resolver: yupResolver(userAuthSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
   });
 
   const fetchUserDetails = async () => {
@@ -100,13 +104,9 @@ function UserAuthForm() {
             rules={{ required: true }}
             control={control}
             label="Username"
-            id="username"
+            placeholder="Username"
             autoCapitalize="none"
             autoCorrect="off"
-            type="text"
-            placeholder="Username"
-            autoComplete="username"
-            disabled={isLoading}
           />
         </div>
         <div className="grid gap-1">
@@ -115,13 +115,10 @@ function UserAuthForm() {
             rules={{ required: true }}
             control={control}
             label="Password"
-            id="password"
-            autoCapitalize="none"
             type="password"
-            autoComplete="current-password"
+            autoCapitalize="none"
             autoCorrect="off"
             placeholder="Password"
-            disabled={isLoading}
           />
         </div>
         <div className="flex items-center justify-between mt-2">
@@ -181,7 +178,6 @@ export default function LoginPage() {
         </a>
       </p>
       <div className="flex flex-col items-center justify-start space-y-4">
-        {/* Adjusted here */}
         <Card className={cn("w-[420px] shadow-sm")}>
           <CardContent className="pt-0">
             <UserAuthForm />
