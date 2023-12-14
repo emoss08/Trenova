@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import type {} from "react-select/base"; // eslint-disable-line import/no-unassigned-import
 import { Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
 
@@ -27,6 +28,8 @@ declare module "react-select/base" {
     formError?: string;
     isLoading?: boolean;
     maxOptions?: number;
+    hasPopoutWindow?: boolean; // Flag when to show the add new option
+    popoutLink?: string; // Link to the popout page
     isDisabled?: boolean;
     isClearable?: boolean;
     isMulti?: IsMulti;
