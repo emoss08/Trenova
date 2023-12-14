@@ -282,10 +282,10 @@ class Tractor(GenericModel):
         Auxiliary Power Unit Type Choices
         """
 
-        NONE = "none", _("None")
-        APU = "apu", _("APU")
-        BUNK = "bunk-heater", _("Bunk Heater")
-        HYBRID = "hybrid", _("Hybrid")
+        NONE = "N", _("None")
+        APU = "APU", _("APU")
+        BUNK = "BH", _("Bunk Heater")
+        HYBRID = "H", _("Hybrid")
 
     id = models.UUIDField(
         primary_key=True,
@@ -305,10 +305,11 @@ class Tractor(GenericModel):
         related_query_name="tractor",
         verbose_name=_("Equipment Type"),
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
-        help_text=_("Whether the Equipment is active or not."),
+    status = ChoiceField(
+        _("Status"),
+        choices=AvailabilityChoices.choices,
+        help_text=_("Status of the trailer."),
+        default=AvailabilityChoices.AVAILABLE,
     )
     description = models.TextField(
         _("Description"),
