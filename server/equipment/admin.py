@@ -64,56 +64,6 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
         "code",
         "license_plate_number",
     )
-    fieldsets = (
-        (
-            None,
-            {
-                "fields": (
-                    "status",
-                    "code",
-                    "equipment_type",
-                    "fleet_code",
-                )
-            },
-        ),
-        (
-            "Tractor Details",
-            {
-                "classes": ("collapse",),
-                "fields": (
-                    "license_plate_number",
-                    "vin_number",
-                    "manufacturer",
-                    "model",
-                    "model_year",
-                    "state",
-                    "leased",
-                    "leased_date",
-                    "primary_worker",
-                    "secondary_worker",
-                ),
-            },
-        ),
-        (
-            "Advanced Options",
-            {
-                "classes": ("collapse",),
-                "fields": (
-                    "hos_exempt",
-                    "aux_power_unit_type",
-                    "fuel_draw_capacity",
-                    "num_of_axles",
-                    "transmission_manufacturer",
-                    "transmission_type",
-                    "has_berth",
-                    "has_electronic_engine",
-                    "highway_use_tax",
-                    "owner_operated",
-                    "ifta_qualified",
-                ),
-            },
-        ),
-    )
 
 
 @admin.register(models.Trailer)
