@@ -27,12 +27,12 @@ class EquipmentManufacturerAdmin(GenericAdmin[models.EquipmentManufacturer]):
     Equipment Manufacturer Admin
     """
 
-    model: type[models.EquipmentManufacturer] = models.EquipmentManufacturer
-    list_display: tuple[str, ...] = (
+    model = models.EquipmentManufacturer
+    list_display = (
         "name",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "name",
         "description",
     )
@@ -55,15 +55,13 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
     Equipment Admin
     """
 
-    model: type[models.Tractor] = models.Tractor
-    list_display: tuple[str, ...] = (
+    model = models.Tractor
+    list_display = (
         "code",
-        "description",
         "license_plate_number",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "code",
-        "description",
         "license_plate_number",
     )
     fieldsets = (
@@ -74,7 +72,6 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
                     "status",
                     "code",
                     "equipment_type",
-                    "description",
                     "fleet_code",
                 )
             },
@@ -121,12 +118,12 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
 
 @admin.register(models.Trailer)
 class TrailerAdmin(GenericAdmin[models.Trailer]):
-    model: type[models.Trailer] = models.Trailer
-    list_display: tuple[str, ...] = (
+    model = models.Trailer
+    list_display = (
         "code",
         "license_plate_number",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "code",
         "license_plate_number",
     )
@@ -138,18 +135,14 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[models.EquipmentMaintenancePlan
     Equipment Maintenance Plan Admin
     """
 
-    model: type[models.EquipmentMaintenancePlan] = models.EquipmentMaintenancePlan
-    list_display: tuple[str, ...] = (
+    model = models.EquipmentMaintenancePlan
+    list_display = ("name",)
+    search_fields = (
         "name",
-        "description",
-    )
-    search_fields: tuple[str, ...] = (
-        "name",
-        "description",
         "equipment_types",
     )
     fieldsets = (
-        (None, {"fields": ("name", "equipment_types", "description")}),
+        (None, {"fields": ("name", "equipment_types")}),
         (
             "Schedule Details",
             {
