@@ -109,6 +109,8 @@ export function LocationInfoForm({
               options={selectLocationCategories}
               isFetchError={isError}
               isLoading={isLoading}
+              hasPopoutWindow
+              popoutLink="/dispatch/location-categories/"
               isClearable
               placeholder="Select Location Category"
               description="Choose the category that best describes the location's function or type."
