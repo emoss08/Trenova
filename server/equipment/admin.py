@@ -71,7 +71,7 @@ class TractorAdmin(GenericAdmin[models.Tractor]):
             None,
             {
                 "fields": (
-                    "is_active",
+                    "status",
                     "code",
                     "equipment_type",
                     "description",

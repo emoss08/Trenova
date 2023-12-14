@@ -98,7 +98,7 @@ class TractorViewSet(viewsets.ModelViewSet):
     queryset = models.Tractor.objects.all()
     serializer_class = serializers.TractorSerializer
     filterset_fields = (
-        "is_active",
+        "status",
         "manufacturer",
         "equipment_type__name",
         "has_berth",
@@ -109,39 +109,7 @@ class TractorViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.Tractor]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization__id",
-            "equipment_type__id",
-            "transmission_manufacturer",
-            "num_of_axles",
-            "leased",
-            "leased_date",
-            "ifta_qualified",
-            "odometer",
-            "manufacturer",
-            "primary_worker__id",
-            "vin_number",
-            "engine_hours",
-            "highway_use_tax",
-            "is_active",
-            "fuel_draw_capacity",
-            "secondary_worker__id",
-            "model_year",
-            "state",
-            "license_plate_number",
-            "code",
-            "hos_exempt",
-            "transmission_type",
-            "model",
-            "owner_operated",
-            "has_electronic_engine",
-            "manufactured_date",
-            "fleet__code",
-            "has_berth",
-            "description",
-            "aux_power_unit_type",
-        )
+        ).all()
         return queryset
 
 
