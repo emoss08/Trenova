@@ -79,6 +79,8 @@ export type QueryKeys =
   | "routeControl"
   | "trailers"
   | "trailer-table-data"
+  | "tractors"
+  | "tractor-table-data"
   | "locations"
   | "locations-table-data"
   | "locationCategories"
