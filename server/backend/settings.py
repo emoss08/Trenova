@@ -203,7 +203,7 @@ AUTHENTICATION_BACKENDS = [
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": env("DEFAULT_REDIS_LOCATION"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "default",
@@ -211,7 +211,7 @@ CACHES = {
     },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
+        "LOCATION": env("SESSION_REDIS_LOCATION"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "sessions",
@@ -224,7 +224,7 @@ CACHES = {
     },
     "celery": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
+        "LOCATION": env("CELERY_CACHE_BACKEND_LOCATION"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "celery",
@@ -235,23 +235,7 @@ CACHES = {
             },
         },
     },
-    "shipments": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/3",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PREFIX": "shipments",
-            "PARSER_CLASS": "redis.connection.HiredisParser",
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
-                "retry_on_timeout": True,
-            },
-        },
-    },
 }
-
-# Session Configurations
-# SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Cors Configurations
 CORS_ALLOWED_ORIGINS = [
@@ -316,14 +300,26 @@ DRF_STANDARDIZED_ERRORS = {
 }
 
 # Celery Configurations
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-CELERY_TASK_ACKS_LATE = True
+CELERY_BEAT_SCHEDULER = env("CELERY_BEAT_SCHEDULER")
+CELERY_TASK_ACKS_LATE = env("CELERY_TASK_ACKS_LATE", default=True, cast=bool)
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_BROKER_TRANSPORT_OPTIONS = {"confirm_publish": True, "confirm_timeout": 5.0}
+CELERY_TASK_REJECT_ON_WORKER_LOST = env(
+    "CELERY_TASK_REJECT_ON_WORKER_LOST", default=False, cast=bool
+)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = env(
+    "CELERY_WORKER_MAX_TASKS_PER_CHILD", default=1000, cast=int
+)
+CELERY_WORKER_SEND_TASK_EVENTS = env(
+    "CELERY_WORKER_SEND_TASK_EVENTS", default=True, cast=bool
+)
+CELERY_EVENT_QUEUE_EXPIRES = env("CELERY_EVENT_QUEUE_EXPIRES", default=60.0, cast=float)
+CELERY_EVENT_QUEUE_TTL = env("CELERY_EVENT_QUEUE_TTL", default=5.0, cast=float)
 
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
@@ -359,7 +355,6 @@ CACHEOPS = {
     "organization.organization": {"ops": "all"},
     "organization.department": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
-    # "customer.customer": {"ops": "all"},
     "location.states": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
