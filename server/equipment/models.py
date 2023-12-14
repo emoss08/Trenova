@@ -293,7 +293,7 @@ class Tractor(GenericModel):
     code = models.CharField(
         _("Code"),
         max_length=50,
-        help_text=_("Code of the equipment."),
+        help_text=_("Code of the tractor."),
     )
     equipment_type = models.ForeignKey(
         EquipmentType,
@@ -311,30 +311,20 @@ class Tractor(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        help_text=_("Description of the equipment."),
+        help_text=_("Description of the tractor."),
     )
     license_plate_number = models.CharField(
         _("License Plate Number"),
         max_length=50,
         blank=True,
-        help_text=_("License plate number of the equipment."),
+        help_text=_("License plate number of the tractor."),
     )
     vin_number = models.CharField(
         _("VIN Number"),
         max_length=17,
         blank=True,
-        help_text=_("VIN number of the equipment."),
+        help_text=_("VIN number of the tractor."),
         validators=[us_vin_number_validator],
-    )
-    odometer = models.PositiveIntegerField(
-        _("Odometer"),
-        default=0,
-        help_text=_("Odometer of the equipment."),
-    )
-    engine_hours = models.PositiveIntegerField(
-        _("Engine Hours"),
-        default=0,
-        help_text=_("Engine hours of the equipment."),
     )
     manufacturer = models.ForeignKey(
         EquipmentManufacturer,
@@ -349,19 +339,19 @@ class Tractor(GenericModel):
         _("Manufactured Date"),
         blank=True,
         null=True,
-        help_text=_("Manufactured date of the equipment."),
+        help_text=_("Manufactured date of the tractor."),
     )
     model = models.CharField(
         _("Model"),
         max_length=50,
         blank=True,
-        help_text=_("Model of the equipment."),
+        help_text=_("Model of the tractor."),
     )
-    model_year = models.PositiveIntegerField(
+    year = models.PositiveIntegerField(
         _("Model Year"),
         null=True,
         blank=True,
-        help_text=_("Model year of the equipment."),
+        help_text=_("Model year of the tractor."),
     )
     state = models.CharField(
         _("State"),
@@ -372,13 +362,13 @@ class Tractor(GenericModel):
     leased = models.BooleanField(
         _("Leased"),
         default=False,
-        help_text=_("Leased of the equipment."),
+        help_text=_("Leased of the tractor."),
     )
     leased_date = models.DateField(
         _("Leased Date"),
         blank=True,
         null=True,
-        help_text=_("Leased date of the equipment."),
+        help_text=_("Leased date of the tractor."),
     )
     primary_worker = models.OneToOneField(
         Worker,
@@ -403,35 +393,35 @@ class Tractor(GenericModel):
     hos_exempt = models.BooleanField(
         _("HOS Exempt"),
         default=False,
-        help_text=_("HOS exempt of the equipment."),
+        help_text=_("HOS exempt of the tractor."),
     )
     aux_power_unit_type = ChoiceField(
         _("Auxiliary Power Unit Type"),
         choices=AuxiliaryPowerUnitTypeChoices.choices,
         default=AuxiliaryPowerUnitTypeChoices.NONE,
-        help_text=_("Auxiliary power unit type of the equipment."),
+        help_text=_("Auxiliary power unit type of the tractor."),
     )
     fuel_draw_capacity = models.PositiveIntegerField(
         _("Fuel Draw Capacity"),
         default=0,
-        help_text=_("Fuel draw capacity of the equipment."),
+        help_text=_("Fuel draw capacity of the tractor."),
     )
     num_of_axles = models.PositiveIntegerField(
         _("Number of Axles"),
         default=0,
-        help_text=_("Number of axles of the equipment."),
+        help_text=_("Number of axles of the tractor."),
     )
     transmission_manufacturer = models.CharField(
         _("Transmission Manufacturer"),
         max_length=50,
         blank=True,
-        help_text=_("Transmission manufacturer of the equipment."),
+        help_text=_("Transmission manufacturer of the tractor."),
     )
     transmission_type = models.CharField(
         _("Transmission Type"),
         max_length=50,
         blank=True,
-        help_text=_("Transmission type of the equipment."),
+        help_text=_("Transmission type of the tractor."),
     )
     has_berth = models.BooleanField(
         _("Has Berth"),
@@ -466,7 +456,7 @@ class Tractor(GenericModel):
         verbose_name=_("Fleet"),
         blank=True,
         null=True,
-        help_text=_("Fleet of the equipment."),
+        help_text=_("Fleet of the tractor."),
     )
 
     class Meta:
@@ -585,7 +575,7 @@ class Trailer(GenericModel):
         _("VIN Number"),
         max_length=17,
         blank=True,
-        help_text=_("VIN number of the equipment."),
+        help_text=_("VIN number of the trailer."),
         validators=[us_vin_number_validator],
     )
     fleet_code = models.ForeignKey(
@@ -764,11 +754,6 @@ class EquipmentMaintenancePlan(GenericModel):
         related_name="maintenance_plan",
         related_query_name="maintenance_plans",
         verbose_name=_("Equipment Types"),
-    )
-    description = models.TextField(
-        _("Description"),
-        blank=True,
-        help_text=_("Description of the equipment maintenance plan."),
     )
     by_distance = models.BooleanField(
         _("By Distance"),
