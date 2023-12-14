@@ -17,8 +17,8 @@
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const Tabs = TabsPrimitive.Root;
 
@@ -44,18 +44,29 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
+    isError?: boolean;
+    errorCount?: number;
+  }
+>(({ className, isError, errorCount, children, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
       "relative inline-flex flex-1 items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm text-foreground font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       "data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:-mb-1.5 data-[state=active]:z-10",
       "data-[state=inactive]:border-b-2 data-[state=inactive]:border-transparent data-[state=inactive]:-mb-1.5 data-[state=active]:z-10",
+      isError ? "data-[state=inactive]:border-red-500" : "border-transparent",
       className,
     )}
     {...props}
-  />
+  >
+    {children}
+    {isError && (
+      <span className="relative ml-2 px-2 text-xs font-medium text-white bg-red-500 rounded-full">
+        {errorCount}
+      </span>
+    )}
+  </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
