@@ -38,8 +38,8 @@ import {
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
+  equipmentStatusChoices,
   TrailerFormValues as FormValues,
-  trailerStatusChoices,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -84,7 +84,7 @@ export function TrailerForm({
             rules={{ required: true }}
             control={control}
             label="Status"
-            options={trailerStatusChoices}
+            options={equipmentStatusChoices}
             placeholder="Select Status"
             description="Select the current operational status of the trailer."
             isClearable={false}
@@ -313,6 +313,7 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
       path: "/trailers/",
       successMessage: "Trailer created successfully.",
       queryKeysToInvalidate: ["trailer-table-data"],
+      additionalInvalidateQueries: ["trailers"],
       closeModal: true,
       errorMessage: "Failed to create new trailer.",
     },
