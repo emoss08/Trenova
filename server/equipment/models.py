@@ -273,17 +273,6 @@ class Tractor(GenericModel):
     Stores information about a piece of Tractor for a :model:`organization.Organization`.
     """
 
-    @typing.final
-    class AuxiliaryPowerUnitTypeChoices(models.TextChoices):
-        """
-        Auxiliary Power Unit Type Choices
-        """
-
-        NONE = "N", _("None")
-        APU = "APU", _("APU")
-        BUNK = "BH", _("Bunk Heater")
-        HYBRID = "H", _("Hybrid")
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -308,11 +297,6 @@ class Tractor(GenericModel):
         help_text=_("Status of the trailer."),
         default=AvailabilityChoices.AVAILABLE,
     )
-    description = models.TextField(
-        _("Description"),
-        blank=True,
-        help_text=_("Description of the tractor."),
-    )
     license_plate_number = models.CharField(
         _("License Plate Number"),
         max_length=50,
@@ -334,12 +318,6 @@ class Tractor(GenericModel):
         verbose_name=_("Manufacturer"),
         blank=True,
         null=True,
-    )
-    manufactured_date = models.DateField(
-        _("Manufactured Date"),
-        blank=True,
-        null=True,
-        help_text=_("Manufactured date of the tractor."),
     )
     model = models.CharField(
         _("Model"),
@@ -395,58 +373,10 @@ class Tractor(GenericModel):
         default=False,
         help_text=_("HOS exempt of the tractor."),
     )
-    aux_power_unit_type = ChoiceField(
-        _("Auxiliary Power Unit Type"),
-        choices=AuxiliaryPowerUnitTypeChoices.choices,
-        default=AuxiliaryPowerUnitTypeChoices.NONE,
-        help_text=_("Auxiliary power unit type of the tractor."),
-    )
-    fuel_draw_capacity = models.PositiveIntegerField(
-        _("Fuel Draw Capacity"),
-        default=0,
-        help_text=_("Fuel draw capacity of the tractor."),
-    )
-    num_of_axles = models.PositiveIntegerField(
-        _("Number of Axles"),
-        default=0,
-        help_text=_("Number of axles of the tractor."),
-    )
-    transmission_manufacturer = models.CharField(
-        _("Transmission Manufacturer"),
-        max_length=50,
-        blank=True,
-        help_text=_("Transmission manufacturer of the tractor."),
-    )
-    transmission_type = models.CharField(
-        _("Transmission Type"),
-        max_length=50,
-        blank=True,
-        help_text=_("Transmission type of the tractor."),
-    )
-    has_berth = models.BooleanField(
-        _("Has Berth"),
-        default=False,
-        help_text=_("Equipment has Sleeper Berth."),
-    )
-    has_electronic_engine = models.BooleanField(
-        _("Has Electronic Engine"),
-        default=False,
-        help_text=_("Equipment has Electronic Engine."),
-    )
-    highway_use_tax = models.BooleanField(
-        _("Highway Use Tax"),
-        default=False,
-        help_text=_("Equipment has Highway Use Tax."),
-    )
     owner_operated = models.BooleanField(
         _("Owner Operated"),
         default=False,
         help_text=_("Equipment is Owner Operated."),
-    )
-    ifta_qualified = models.BooleanField(
-        _("IFTA Qualified"),
-        default=False,
-        help_text=_("Equipment is IFTA Qualified."),
     )
     fleet_code = models.ForeignKey(
         "dispatch.FleetCode",
@@ -466,14 +396,13 @@ class Tractor(GenericModel):
 
         verbose_name = _("Tractor")
         verbose_name_plural = _("Tractor")
-        ordering = ["code"]
         db_table = "tractor"
         constraints = [
             models.UniqueConstraint(
                 Lower("code"),
                 "organization",
                 name="unique_tractor_code_organization",
-            )
+            ),
         ]
 
     def __str__(self) -> str:
@@ -482,7 +411,9 @@ class Tractor(GenericModel):
         Returns:
             str: String representation of the Tractor Model
         """
-        return textwrap.wrap(self.code, 50)[0]
+        return textwrap.shorten(
+            f"{self.equipment_type} - {self.code}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Tractor absolute URL
