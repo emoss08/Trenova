@@ -21,8 +21,11 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { TrailerDialog } from "@/components/trailers/trailer-table-dialog";
 import { TrailerEditDialog } from "@/components/trailers/trailer-table-edit-dialog";
 import { Badge } from "@/components/ui/badge";
-import { boolTableStatusChoices } from "@/lib/constants";
-import { Trailer, TrailerStatuses } from "@/types/equipment";
+import {
+  Trailer,
+  trailerStatusChoices,
+  TrailerStatuses,
+} from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -121,7 +124,7 @@ const filters: FilterConfig<Trailer>[] = [
   {
     columnName: "status",
     title: "Status",
-    options: boolTableStatusChoices,
+    options: trailerStatusChoices,
   },
 ];
 
