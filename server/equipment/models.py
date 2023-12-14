@@ -87,7 +87,6 @@ class EquipmentType(GenericModel):
         blank=True,
         help_text=_("Description of the equipment type."),
     )
-
     cost_per_mile = models.DecimalField(
         verbose_name=_("Cost Per Mile"),
         max_digits=10,
@@ -97,7 +96,6 @@ class EquipmentType(GenericModel):
         blank=True,
         null=True,
     )
-
     # Equipment Type Details
     equipment_class = ChoiceField(
         _("Equipment Class"),
@@ -181,7 +179,6 @@ class EquipmentType(GenericModel):
 
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
-        ordering = ["-name"]
         db_table = "equipment_type"
         constraints = [
             models.UniqueConstraint(
@@ -557,12 +554,6 @@ class Trailer(GenericModel):
         choices=AvailabilityChoices.choices,
         help_text=_("Status of the trailer."),
         default=AvailabilityChoices.AVAILABLE,
-    )
-    planning_comment = models.CharField(
-        _("Planning Comment"),
-        max_length=50,
-        blank=True,
-        help_text=_("Planning comment of the trailer."),
     )
     equipment_type = models.ForeignKey(
         EquipmentType,
