@@ -28,7 +28,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from accounts.models import User, UserProfile
+from accounts.models import User, UserProfile, JobTitle
 from accounts.selectors import (
     get_user_auth_token_from_request,
     get_users_by_organization_id,
@@ -487,13 +487,18 @@ def test_change_email_with_other_users_email(user: User) -> None:
 
 
 def test_validate_password_not_allowed_on_post(
-    api_client: APIClient, organization: Organization
+    api_client: APIClient, organization: Organization, job_title: JobTitle
 ) -> None:
-    """
-    Test Create user
-    """
-    job_title = JobTitleFactory()
+    """Test that password cannot be added directly to a user on POST.
 
+    Args:
+        api_client: APIClient Object
+        organization: Organization Object
+        job_title: JobTitle Object
+
+    Returns:
+        None: This function does not return anything.
+    """
     payload = {
         "organization": organization.id,
         "username": "test_user_4",
@@ -521,66 +526,6 @@ def test_validate_password_not_allowed_on_post(
     )
 
 
-# def test_remove_user_session(
-#     unauthenticated_api_client: APIClient,
-#     user_api: Response,
-#     api_client: APIClient,
-# ) -> None:
-#     """Test to verify the functionality of the user session removal or logging out process.
-#
-#     Using the provided clients and test data, this test first initializes a user and logs in.
-#     Then it calls the session removal API endpoint. It asserts the endpoint's response status
-#     code is 204 (indicating successful removal of content), and that the user's online status
-#     and session details are properly updated.
-#
-#     Args:
-#         unauthenticated_api_client (APIClient): An instance of APIClient which is not yet authenticated.
-#         user_api (Response): A Response instance containing serialized user data for testing.
-#         api_client (APIClient): An instance of APIClient which is authenticated.
-#
-#     Returns:
-#         None: This function does not return anything.
-#     """
-#     user = User.objects.get(id=user_api.data["id"])
-#
-#     user.set_password("trashuser12345%")
-#     user.save()
-#     client = unauthenticated_api_client.post(
-#         "/api/login/",
-#         {"username": user_api.data["username"], "password": "trashuser12345%"},
-#     )
-#     user.refresh_from_db()
-#     response = api_client.post(
-#         "/api/sessions/kick/", {"user_id": client.data["user_id"]}
-#     )
-#     user.refresh_from_db()
-#
-#     assert response.status_code == 204
-#     assert user.online is False
-#     assert user.session_key is None
-
-
-# def test_remove_user_session_without_id(api_client: APIClient) -> None:
-#     """Test case for calling the remove user session API endpoint without providing a user_id.
-#
-#     This test checks the behavior of the API endpoint when called without a user_id. The
-#     endpoint is expected to respond with a 400 status code (indicating a 'Bad Request') and
-#     to provide a related error message. The error message must have the 'user_id' attribute
-#     and a detail field indicating that the field is required.
-#
-#     Args:
-#         api_client (APIClient): An instance of the Django Rest Framework's APIClient that
-#         will be used to send a POST request to the /api/sessions/kick/ endpoint.
-#
-#     Returns:
-#         None: This function does not return anything.
-#     """
-#     response = api_client.post("/api/sessions/kick/")
-#     assert response.status_code == 400
-#     assert response.data["errors"][0]["attr"] == "user_id"
-#     assert response.data["errors"][0]["detail"] == "This field is required."
-
-
 def test_create_thumbnail(user_profile: UserProfile) -> None:
     """Test to ensure when a user uploads a profile picture, that a thumbnail is generated.
 
@@ -595,7 +540,6 @@ def test_create_thumbnail(user_profile: UserProfile) -> None:
     image_file = BytesIO()
     image.save(image_file, "png")
     image_file.seek(0)
-    image = SimpleUploadedFile("test.png", image_file.getvalue())
 
     # Set the user's profile picture
     user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
