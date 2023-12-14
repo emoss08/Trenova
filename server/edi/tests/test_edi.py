@@ -18,7 +18,7 @@
 import pytest
 from django.utils import timezone
 
-from accounts.tests.factories import UserFactory
+from accounts.models import User
 from billing.models import BillingQueue
 from edi import exceptions, helpers
 from edi.tests import factories
@@ -81,7 +81,7 @@ def test_generate_edi_trailers() -> None:
 
 
 def test_get_nested_attr(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     """Test getting nested attribute.
 
@@ -89,7 +89,6 @@ def test_get_nested_attr(
         None: This function does not return anything.
     """
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -115,7 +114,7 @@ def test_get_nested_attr(
 
 
 def test_get_nested_attr_exception(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     """Test getting nested attribute exception.
 
@@ -123,7 +122,6 @@ def test_get_nested_attr_exception(
         None: This function does not return anything.
     """
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -152,10 +150,9 @@ def test_get_nested_attr_exception(
 
 
 def test_generate_edi_content(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -213,7 +210,7 @@ def test_generate_edi_content(
 
 
 def test_generate_edi_content_value_returns_empty_string(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     """Test generate_edi_content value returns an empty string if value is ``None``
 
@@ -225,7 +222,6 @@ def test_generate_edi_content_value_returns_empty_string(
         None: This function does not return anything.
     """
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -260,7 +256,7 @@ def test_generate_edi_content_value_returns_empty_string(
 
 
 def test_generate_edi_content_parser_error(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     """Test Generate EDI content throws parser error if placeholders are not found, but passed.
 
@@ -272,7 +268,6 @@ def test_generate_edi_content_parser_error(
         None: This function does not return anything.
     """
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -306,10 +301,9 @@ def test_generate_edi_content_parser_error(
 
 
 def test_generate_edi_document(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
@@ -354,11 +348,9 @@ def test_generate_edi_document(
     # Assert that BIG and N3 segments are in the document
     assert "N3*" in document
 
-    print(document)
-
 
 def test_generate_edi_content_validation_regex(
-    organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit, user: User
 ) -> None:
     """Test if EDI Segment field `validation_regex` is defined, validate the pattern against the value of the field.
 
@@ -373,7 +365,6 @@ def test_generate_edi_content_validation_regex(
     """
 
     shipment_1 = ShipmentFactory()
-    user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
     shipment_movements.update(status="C")
