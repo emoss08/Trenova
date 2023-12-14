@@ -25,7 +25,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useGLAccounts, useTags, useUsers } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/accounting";
@@ -46,24 +45,6 @@ function GLEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const {
-    selectGLAccounts,
-    isError: glAccountsError,
-    isLoading: glAccountsLoading,
-  } = useGLAccounts(open);
-
-  const {
-    selectUsersData,
-    isError: usersError,
-    isLoading: usersLoading,
-  } = useUsers(open);
-
-  const {
-    selectTags,
-    isError: tagsError,
-    isLoading: tagsLoading,
-  } = useTags(open);
-
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { handleSubmit, control, getValues, setValue } =
@@ -115,15 +96,7 @@ function GLEditForm({
         control={control}
         getValues={getValues}
         setValue={setValue}
-        users={selectUsersData}
-        isUsersError={usersError}
-        isUsersLoading={usersLoading}
-        tags={selectTags}
-        isTagsError={tagsError}
-        isTagsLoading={tagsLoading}
-        glAccounts={selectGLAccounts}
-        isGLAccountsLoading={glAccountsError}
-        isGLAccountsError={glAccountsLoading}
+        open={open}
       />
       <SheetFooter className="mb-12">
         <Button
