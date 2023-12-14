@@ -63,6 +63,8 @@ interface SelectInputProps<T extends Record<string, unknown>>
   hasContextMenu?: boolean;
   maxOptions?: number;
   isFetchError?: boolean;
+  hasPopoutWindow?: boolean; // Set to true to open the popout window
+  popoutLink?: string; // Link to the popout page
 }
 
 /**
@@ -88,6 +90,8 @@ export function SelectInput<T extends Record<string, unknown>>(
     menuPlacement = "auto",
     menuPosition = "absolute",
     hideSelectedOptions = false,
+    hasPopoutWindow = false,
+    popoutLink,
     ...controllerProps
   } = props;
 
@@ -119,6 +123,8 @@ export function SelectInput<T extends Record<string, unknown>>(
           options={options}
           isMulti={isMulti}
           isLoading={isLoading}
+          hasPopoutWindow={hasPopoutWindow}
+          popoutLink={popoutLink}
           isDisabled={dataLoading || isFetchError}
           isClearable={isClearable}
           maxOptions={maxOptions}
