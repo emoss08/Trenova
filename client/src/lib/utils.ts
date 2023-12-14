@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -22,29 +22,56 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function upperFirst(str: string) {
+/**
+ * Formats a date string into a human readable format
+ * @param dateStr - The date string to format
+ * @returns {string}
+ */
+export function upperFirst(str: string): string {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function USDollarFormat(num: number) {
+/**
+ * Formats a number into a USD string
+ * @param num - The number to format
+ * @returns {string}
+ */
+export function USDollarFormat(num: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(num);
 }
 
-export function USDollarFormatString(num: string) {
+/**
+ * Formats a number into a USD string
+ * @param num - The number to format
+ * @returns {string}
+ */
+export function USDollarFormatString(num: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(parseFloat(num));
 }
 
-export function truncateText(str: string, length: number) {
+/**
+ * Truncates a string to a given length
+ * @param str - The string to truncate
+ * @param length - The length to truncate the string to
+ * @returns {string}
+ */
+export function truncateText(str: string, length: number): string {
   return str.length > length ? str.substring(0, length) + "..." : str;
 }
 
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive).
+ * @param min - The minimum value to return
+ * @param max - The maximum value to return
+ * @returns {number}
+ */
 export const useClickOutside = <T extends HTMLElement>(
   ref: RefObject<T>,
   handler: (event: MouseEvent | TouchEvent) => void,
@@ -79,12 +106,23 @@ export const useClickOutside = <T extends HTMLElement>(
   }, [ref, handler]);
 };
 
-export function validateDecimal(value: string, decimalPlaces: number) {
+/**
+ * Validates a decimal value with a given number of decimal places
+ * @param value - The value to validate
+ * @param decimalPlaces - The number of decimal places to allow
+ * @returns {boolean}
+ */
+export function validateDecimal(value: string, decimalPlaces: number): boolean {
   const regex = new RegExp(`^\\d+(\\.\\d{1,${decimalPlaces}})?$`);
   return regex.test(value);
 }
 
-export function formatDuration(durationStr: string) {
+/**
+ * Formats a duration string into a human readable format
+ * @param durationStr - The duration string to format
+ * @returns {string}
+ */
+export function formatDuration(durationStr: string): string {
   if (!durationStr) return "";
 
   const parts = durationStr.split(" ");
@@ -103,9 +141,14 @@ export function formatDuration(durationStr: string) {
   return result.replace(/, $/, ""); // Remove trailing comma
 }
 
+/**
+ * Sanitizes query params by removing nullish and empty string values
+ * @param queryParams
+ * @returns {Record<string, string>}
+ */
 function sanitizeQueryParams(
   queryParams: Record<string, string | number | boolean>,
-) {
+): Record<string, string> {
   return Object.entries(queryParams).reduce(
     (acc, [key, value]) => {
       // Check for nullish or empty string values
@@ -118,29 +161,39 @@ function sanitizeQueryParams(
     {} as Record<string, string>,
   );
 }
+
 type PopoutWindowParams = {
   width?: number;
   height?: number;
   left?: number;
   top?: number;
+  hideHeader?: boolean;
 };
 
+/**
+ * Opens a new window with the given path and query params
+ * @param path - The path to open the new window to
+ * @param incomingQueryParams - The query params to pass to the new window
+ * @returns {void}
+ */
 export function PopoutWindow(
   path: string,
-  incomingQueryParams?: Record<string, any>,
+  incomingQueryParams?: Record<string, string | number | boolean>,
   {
     width = 1280,
     height = 720,
     left = window.screen.width / 2 - width / 2,
     top = window.screen.height / 2 - height / 2,
+    hideHeader = true,
   }: PopoutWindowParams = {},
-) {
+): void {
   const extendedQueryParams = sanitizeQueryParams({
     ...incomingQueryParams,
     width: width.toString(),
     height: height.toString(),
     left: left.toString(),
     top: top.toString(),
+    hideHeader: hideHeader.toString(),
   });
 
   const url = `${path}?${new URLSearchParams(extendedQueryParams).toString()}`;
@@ -152,6 +205,11 @@ export function PopoutWindow(
   );
 }
 
+/**
+ * Removes all undefined, null, and empty string values from an object
+ * @param obj
+ * @returns {Record<string, any>}
+ */
 export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
   const cleanedObj: Record<string, any> = {};
   Object.keys(obj).forEach((key) => {
@@ -160,4 +218,15 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
     }
   });
   return cleanedObj;
+};
+
+/**
+ * Converts a camelCase string to a readable string
+ * @param str
+ * @returns {string}
+ */
+export const convertCamelCaseToReadable = (str: string): string => {
+  return str
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase());
 };
