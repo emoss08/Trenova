@@ -20,6 +20,7 @@ from typing import Any, override
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
+from django.db import transaction
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
@@ -307,11 +308,12 @@ class UserSerializer(GenericSerializer):
 
         # Fire celery task to generate user profile thumbnail if there is one.
         if profile_data.get("profile_picture"):
-            tasks.generate_thumbnail_task.delay(user.profile.id)
+            transaction.on_commit(
+                lambda: tasks.generate_thumbnail_task.delay(user.profile.id)
+            )
 
         return user
 
-    @override
     def update(self, instance: models.User, validated_data: Any) -> models.User:
         """Update a user
 
