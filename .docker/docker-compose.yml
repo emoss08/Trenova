@@ -91,16 +91,16 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
     restart: always
 
-#  monta_rabbitmq:
-#    image: rabbitmq:3-management
-#    container_name: monta-rabbitmq
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    expose:
-#      - "5672"
-#      - "15672"
-#    environment:
-#      - RABBITMQ_DEFAULT_USER=monta
-#      - RABBITMQ_DEFAULT_PASS=monta
-#    restart: always
+  monta_rabbitmq:
+    image: rabbitmq:3-management
+    container_name: monta-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    expose:
+      - "5672"
+      - "15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=monta
+      - RABBITMQ_DEFAULT_PASS=monta
+    restart: always
