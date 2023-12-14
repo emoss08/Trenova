@@ -28,7 +28,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from accounts.models import User, UserProfile, JobTitle
+from accounts.models import JobTitle, User, UserProfile
 from accounts.selectors import (
     get_user_auth_token_from_request,
     get_users_by_organization_id,
