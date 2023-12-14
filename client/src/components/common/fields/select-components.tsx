@@ -15,8 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { cn } from "@/lib/utils";
-import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { Button } from "@/components/ui/button";
+import { cn, convertCamelCaseToReadable, PopoutWindow } from "@/lib/utils";
+import {
+  CaretSortIcon,
+  CheckIcon,
+  Cross2Icon,
+  PlusIcon,
+} from "@radix-ui/react-icons";
 import { AlertTriangle } from "lucide-react";
 import React from "react";
 import { Path, PathValue } from "react-hook-form";
@@ -152,12 +158,50 @@ export function MenuList({
   selectProps?: {
     maxOptions?: number;
     formError?: string;
+    popoutLink?: string;
+    hasPopoutWindow?: boolean;
   };
 }) {
+  const openPopoutWindow = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault(); // Prevent form submission
+    PopoutWindow("/dispatch/location-categories/", {
+      hideHeader: true,
+    });
+  };
+
+  const AddNewButton = ({ name }: { name: string }) => (
+    <Button
+      className="text-xs font-normal bg-background w-full text-foreground rounded-sm hover:bg-accent hover:text-foreground/90 flex items-center justify-between pl-3"
+      size="xs"
+      onClick={openPopoutWindow}
+    >
+      <span className="mr-2">
+        {convertCamelCaseToReadable(name || "")} Entry
+      </span>
+      <PlusIcon className="h-4 w-4" />
+    </Button>
+  );
   return (
     <components.MenuList {...props}>
       {Array.isArray(children)
-        ? children.slice(0, props.selectProps?.maxOptions)
+        ? children
+            .slice(0, props.selectProps?.maxOptions)
+            .map((child, index) => {
+              if (
+                index === 0 &&
+                props.selectProps?.popoutLink &&
+                props.selectProps?.hasPopoutWindow
+              ) {
+                return (
+                  <React.Fragment key={index}>
+                    <AddNewButton name={props.selectProps?.name as string} />
+                    {child}
+                  </React.Fragment>
+                );
+              } else {
+                return child;
+              }
+            })
         : children}
     </components.MenuList>
   );
