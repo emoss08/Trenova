@@ -46,6 +46,7 @@ import {
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import { getDepots } from "@/services/OrganizationRequestService";
 import { getUserDetails, getUsers } from "@/services/UserRequestService";
+import { getWorkers } from "@/services/WorkerRequestService";
 import { QueryKeys } from "@/types";
 import {
   AccountingControl,
@@ -61,6 +62,7 @@ import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentType } from "@/types/order";
 import { Depot } from "@/types/organization";
+import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
@@ -520,6 +522,11 @@ export function useDepots(show?: boolean) {
   return { selectDepots, isError, isLoading };
 }
 
+/**
+ * Get Fleet Codes for select options
+ * @param show - show or hide the query
+ * @param limit - limit the number of results
+ */
 export function useFleetCodes(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
@@ -540,6 +547,11 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
   return { selectFleetCodes, isError, isLoading };
 }
 
+/**
+ * Get Equipment Manufacturers for select options
+ * @param show - show or hide the query
+ * @param limit - limit the number of results
+ */
 export function useEquipManufacturers(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
@@ -561,4 +573,29 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
     ) || [];
 
   return { selectEquipManufacturers, isError, isLoading };
+}
+
+/**
+ * Get Workers for select options
+ * @param show - show or hide the query
+ * @param limit - limit the number of results
+ */
+export function useWorkers(show?: boolean, limit: number = 100) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["workers", limit] as QueryKeys[],
+    queryFn: async () => getWorkers(limit),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["workers"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectWorkers =
+    (data as Worker[])?.map((worker: Worker) => ({
+      value: worker.id,
+      label: worker.code,
+    })) || [];
+
+  return { selectWorkers, isError, isLoading };
 }
