@@ -20,6 +20,8 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 django_stubs_ext.monkeypatch()
 
@@ -138,8 +140,18 @@ DATABASES = {
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
-        "ATOMIC_REQUESTS": True,
-        "CONN_HEALTH_CHECK": True,
+        "ATOMIC_REQUESTS": True,  # Ensures atomicity of each request
+        "CONN_HEALTH_CHECK": True,  # Checks health of the connection before each request
+        "OPTIONS": {
+            "options": "-c statement_timeout=60000",  # Statement time set to 60 seconds
+            "connect_timeout": 10,  # Timeout for establishing a new connection
+            "client_encoding": "UTF8",  # Ensure UTF8 encoding for compatibility
+            "sslmode": env(
+                "DB_SSL_MODE", cast=str
+            ),  # Force SSL connection for security
+        },
+        "CONN_MAX_AGE": 600,  # Persistent connections for 10 minutes
+        "DISABLE_SERVER_SIDE_CURSORS": False,  # Enables server-side cursors for large result sets
     },
     # "replica1": {
     #     "ENGINE": "django.db.backends.postgresql",
