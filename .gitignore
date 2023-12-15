@@ -9,6 +9,7 @@ typings
 frontend
 backend/bin/air
 *.log
-*.sql
 .coverage
 server/core/management/commands/get_memory_usage.py
+Monta.session.sql
+Monta DB.session.sql
