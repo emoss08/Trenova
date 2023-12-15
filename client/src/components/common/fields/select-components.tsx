@@ -33,6 +33,7 @@ import {
   GroupBase,
   IndicatorSeparatorProps,
   MenuListProps,
+  NoticeProps,
   OptionProps,
   OptionsOrGroups,
   ValueContainerProps,
@@ -162,25 +163,6 @@ export function MenuList({
     hasPopoutWindow?: boolean;
   };
 }) {
-  const openPopoutWindow = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault(); // Prevent form submission
-    PopoutWindow("/dispatch/location-categories/", {
-      hideHeader: true,
-    });
-  };
-
-  const AddNewButton = ({ name }: { name: string }) => (
-    <Button
-      className="text-xs font-normal bg-background w-full text-foreground rounded-sm hover:bg-accent hover:text-foreground/90 flex items-center justify-between pl-3"
-      size="xs"
-      onClick={openPopoutWindow}
-    >
-      <span className="mr-2">
-        {convertCamelCaseToReadable(name || "")} Entry
-      </span>
-      <PlusIcon className="h-4 w-4" />
-    </Button>
-  );
   return (
     <components.MenuList {...props}>
       {Array.isArray(children)
@@ -194,7 +176,10 @@ export function MenuList({
               ) {
                 return (
                   <React.Fragment key={index}>
-                    <AddNewButton name={props.selectProps?.name as string} />
+                    <AddNewButton
+                      name={props.selectProps?.name as string}
+                      popoutLink={props.selectProps.popoutLink as string}
+                    />
                     {child}
                   </React.Fragment>
                 );
@@ -204,6 +189,36 @@ export function MenuList({
             })
         : children}
     </components.MenuList>
+  );
+}
+
+export function NoOptionsMessage({
+  children,
+  ...props
+}: NoticeProps & {
+  selectProps?: {
+    maxOptions?: number;
+    formError?: string;
+    popoutLink?: string;
+    hasPopoutWindow?: boolean;
+  };
+}) {
+  const { formError, popoutLink, hasPopoutWindow } = props.selectProps || {};
+
+  return (
+    <components.NoOptionsMessage {...props}>
+      <div className="flex flex-col items-center justify-center my-1">
+        <p className="text-accent-foreground text-sm my-1">
+          {formError || children || "No options available..."}
+        </p>
+        {popoutLink && hasPopoutWindow && (
+          <AddNewButton
+            name={props.selectProps?.name as string}
+            popoutLink={props.selectProps.popoutLink as string}
+          />
+        )}
+      </div>
+    </components.NoOptionsMessage>
   );
 }
 
@@ -267,5 +282,47 @@ export function ErrorMessage({
         ? "An error has occurred! Please try again later."
         : formError}
     </p>
+  );
+}
+
+/**
+ * Popout window component for the SelectInput component.
+ * @param popoutLink {string}
+ * @param hasPopoutWindow {boolean}
+ */
+function openPopoutWindow(
+  popoutLink: string,
+  event: React.MouseEvent<HTMLButtonElement>,
+) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  PopoutWindow(popoutLink, {
+    hideHeader: true,
+  });
+}
+
+function AddNewButton({
+  name,
+  popoutLink,
+}: {
+  name: string;
+  popoutLink: string;
+}) {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    openPopoutWindow(popoutLink, event);
+  };
+
+  return (
+    <Button
+      className="text-xs font-normal bg-background w-full text-foreground rounded-sm hover:bg-accent hover:text-foreground/90 flex items-center justify-between pl-3 py-3.5"
+      size="xs"
+      onClick={(event) => handleClick(event)}
+    >
+      <span className="mr-2">
+        {convertCamelCaseToReadable(name || "")} Entry
+      </span>
+      <PlusIcon className="h-4 w-4" />
+    </Button>
   );
 }
