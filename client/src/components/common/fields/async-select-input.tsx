@@ -14,23 +14,23 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { useController, UseControllerProps } from "react-hook-form";
-import { GroupBase, OptionsOrGroups, Props } from "react-select";
+import { Label } from "@/components/common/fields/label";
 import {
   ClearIndicator,
   DropdownIndicator,
   ErrorMessage,
   IndicatorSeparator,
   MenuList,
+  NoOptionsMessage,
   Option,
   SelectDescription,
   SelectOption,
   ValueContainer,
   ValueProcessor,
 } from "@/components/common/fields/select-components";
-import { Label } from "@/components/common/fields/label";
 import { cn } from "@/lib/utils";
-import React from "react";
+import { UseControllerProps, useController } from "react-hook-form";
+import { GroupBase, OptionsOrGroups, Props } from "react-select";
 import AsyncSelect from "react-select/async";
 
 /**
@@ -73,6 +73,8 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
     menuPlacement = "auto",
     menuPosition = "absolute",
     hideSelectedOptions = false,
+    hasPopoutWindow = false,
+    popoutLink,
     ...controllerProps
   } = props;
 
@@ -116,7 +118,10 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
           hideSelectedOptions={hideSelectedOptions}
           unstyled
           defaultOptions={options}
+          hasPopoutWindow={hasPopoutWindow}
+          popoutLink={popoutLink}
           cacheOptions
+          noOptionsMessage={() => "No options available..."}
           loadOptions={loadOptions}
           isMulti={isMulti}
           isLoading={isLoading}
@@ -147,6 +152,7 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
             IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
+            NoOptionsMessage: NoOptionsMessage,
           }}
           classNames={{
             control: ({ isFocused }) =>
@@ -176,8 +182,6 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
               "p-1 text-foreground/50 rounded-md hover:text-foreground",
             menu: () => "mt-2 p-1 border rounded-md bg-background shadow-lg",
             groupHeading: () => "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
-            noOptionsMessage: () =>
-              "text-muted-foreground p-2 bg-background rounded-sm",
             loadingMessage: () =>
               "text-muted-foreground p-2 bg-background rounded-sm text-xs",
           }}
