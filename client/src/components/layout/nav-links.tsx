@@ -41,16 +41,9 @@ export type LinksComponentProps = {
   }[];
 };
 
-/**
- * A ProtectedLink component which checks for permissions before rendering.
- */
-export const ProtectedLink: React.FC<LinkData & { onClick?: () => void }> = ({
-  label,
-  link,
-  description,
-  permission,
-  onClick,
-}) => {
+export const ProtectedLink: React.FC<
+  LinkData & { onClick?: (event: React.MouseEvent) => void }
+> = ({ label, link, description, permission, onClick }) => {
   const { userHasPermission } = useUserPermissions();
 
   if (permission && !userHasPermission(permission)) {
@@ -58,22 +51,33 @@ export const ProtectedLink: React.FC<LinkData & { onClick?: () => void }> = ({
   }
 
   return (
-    <ListItem title={label} to={link} onClick={onClick}>
+    <ListItem
+      title={label}
+      to={link}
+      onClick={(event) => {
+        if (onClick) {
+          event.preventDefault();
+          onClick(event);
+        }
+      }}
+    >
       {description}
     </ListItem>
   );
 };
 
-/**
- * A SingleLink component which renders an individual link.
- */
 const SingleLink: React.FC<{
   subItem: LinkData;
   setActiveSubLinks: (links: LinkData[] | null) => void;
 }> = ({ subItem, setActiveSubLinks }) => (
   <ProtectedLink
     {...subItem}
-    onClick={() => subItem.subLinks && setActiveSubLinks(subItem.subLinks)}
+    onClick={(event) => {
+      if (subItem.subLinks) {
+        event.preventDefault();
+        setActiveSubLinks(subItem.subLinks);
+      }
+    }}
   />
 );
 
