@@ -16,11 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 import typing
 
-from django.db.models import Count, F, Prefetch, QuerySet
-from rest_framework import response, status, viewsets
-
 from core.permissions import CustomObjectPermissions
+from django.db.models import Count, F, Prefetch, QuerySet
 from equipment import models, serializers
+from rest_framework import response, status, viewsets
 
 if typing.TYPE_CHECKING:
     from rest_framework.request import Request
@@ -91,8 +90,8 @@ class TractorViewSet(viewsets.ModelViewSet):
     class to convert the tractor instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by is_active, manufacturer,
-    has_berth, equipment_type__name, fleet__code and highway_use_tax.
+    Filtering is also available, with the ability to filter by status, manufacturer,
+    equipment_type__name.
     """
 
     queryset = models.Tractor.objects.all()
@@ -101,15 +100,17 @@ class TractorViewSet(viewsets.ModelViewSet):
         "status",
         "manufacturer",
         "equipment_type__name",
-        "has_berth",
-        "highway_use_tax",
     )
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).all()
+        queryset = (
+            self.queryset.filter(
+                organization_id=self.request.user.organization_id  # type: ignore
+            )
+            .annotate(equip_type_name=F("equipment_type__name"))
+            .all()
+        )
         return queryset
 
 
