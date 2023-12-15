@@ -15,9 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
-
 from equipment import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -129,12 +128,15 @@ class TractorSerializer(GenericSerializer):
     Tractors, as well as listing and retrieving them.
     """
 
+    equip_type_name = serializers.CharField(read_only=True, required=False)
+
     class Meta:
         """
         A class representing the metadata for the `TractorSerializer` class.
         """
 
         model = models.Tractor
+        extra_fields = ("equip_type_name",)
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Tractor model.
