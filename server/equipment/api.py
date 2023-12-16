@@ -16,10 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 import typing
 
-from core.permissions import CustomObjectPermissions
 from django.db.models import Count, F, Prefetch, QuerySet
-from equipment import models, serializers
 from rest_framework import response, status, viewsets
+
+from core.permissions import CustomObjectPermissions
+from equipment import models, serializers
 
 if typing.TYPE_CHECKING:
     from rest_framework.request import Request
