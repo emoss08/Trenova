@@ -43,6 +43,16 @@ import {
   userHasAccessToContent,
 } from "@/lib/navmenu";
 
+function FooterContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-gray-100 dark:bg-gray-800 px-8 py-4">
+      <div className="flex items-center justify-between gap-2 font-display">
+        <div className="relative">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 // NavigationMenuItemWithPermission Component
 const NavigationMenuItemWithPermission = React.memo(
   React.forwardRef<HTMLLIElement, NavigationMenuItemProps>(
@@ -89,7 +99,12 @@ const NavigationMenuItemWithPermission = React.memo(
               >
                 {data.label}
               </NavigationMenuTrigger>
-              <NavigationMenuContent>{data.content}</NavigationMenuContent>
+              <NavigationMenuContent>
+                {data.content}
+                {data.footerContent && (
+                  <FooterContainer>{data.footerContent}</FooterContainer>
+                )}
+              </NavigationMenuContent>
             </>
           )}
         </NavigationMenuItem>
@@ -162,6 +177,14 @@ export function NavMenu() {
       menuKey: "equipmentMenu",
       label: "Equipment Management",
       content: <LinksComponent linkData={equipmentNavLinks} />,
+      footerContent: (
+        <p className="text-xs font-semibold">
+          <span className="text-gray-500">
+            Manage your equipment for your entire fleet, including trailers,
+            trucks, and chassis.
+          </span>
+        </p>
+      ),
     },
     {
       menuKey: "shipmentMenu",
@@ -185,6 +208,7 @@ export function NavMenu() {
       {/* Navigation Menu */}
       <NavigationMenu
         value={menuOpen}
+        defaultValue={undefined}
         onValueChange={(newValue) => newValue && setMenuOpen(newValue)}
         onMouseLeave={() => setMenuOpen(undefined)}
         menuPosition={menuPosition}

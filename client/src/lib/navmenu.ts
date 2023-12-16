@@ -43,6 +43,7 @@ export type MenuData = {
   permission?: Permission;
   content?: React.ReactNode;
   link?: string;
+  footerContent?: React.ReactNode;
 };
 
 export type NavigationMenuItemProps = {
