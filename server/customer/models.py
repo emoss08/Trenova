@@ -20,14 +20,13 @@ import uuid
 from typing import Any, final
 
 from django.core.exceptions import ValidationError
-from django.core.validators import EmailValidator
+from django.core.validators import EmailValidator, RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USZipCodeField
-from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices, Weekdays
@@ -456,12 +455,17 @@ class CustomerContact(GenericModel):
         help_text=_("Contact title"),
         blank=True,
     )
-    phone = PhoneNumberField(
+    phone = models.CharField(
         _("Phone Number"),
-        max_length=20,
-        help_text=_("Contact phone"),
-        null=True,
+        max_length=15,
         blank=True,
+        help_text=_("The phone number of the user"),
+        validators=[
+            RegexValidator(
+                regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                message=_("Phone number must be in the format (xxx) xxx-xxxx"),
+            )
+        ],
     )
     is_payable_contact = models.BooleanField(
         _("Payable Contact"),
