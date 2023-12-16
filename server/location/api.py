@@ -103,6 +103,7 @@ class LocationViewSet(viewsets.ModelViewSet):
                 arrival_time__gte=one_year_ago,
                 stop_type__in=["P", "SP"],
                 arrival_time__isnull=False,
+                status="C",
             )
             .annotate(month=TruncMonth("arrival_time"))
             .values("month")
@@ -174,6 +175,9 @@ class LocationViewSet(viewsets.ModelViewSet):
                     Case(
                         When(
                             stop__stop_type__in=["P", "SP"],
+                            stop__arrival_time__gte=now() - timedelta(days=365),
+                            stop__arrival_time__isnull=False,
+                            stop__status="C",
                             then=1,
                         ),
                         default=Value(0),
@@ -183,29 +187,7 @@ class LocationViewSet(viewsets.ModelViewSet):
                 location_color=F("location_category__color"),
                 location_category_name=F("location_category__name"),
             )
-            .only(
-                "organization_id",
-                "business_unit_id",
-                "id",
-                "status",
-                "code",
-                "location_category_id",
-                "location_category__color",
-                "name",
-                "depot_id",
-                "description",
-                "address_line_1",
-                "address_line_2",
-                "city",
-                "state",
-                "zip_code",
-                "longitude",
-                "latitude",
-                "place_id",
-                "is_geocoded",
-                "created",
-                "modified",
-            )
+            .all()
         )
         return queryset
 
