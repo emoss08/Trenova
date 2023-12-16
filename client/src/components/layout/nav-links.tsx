@@ -112,7 +112,7 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
     <ul
       className={`relative grid w-[400px] gap-3 p-4 ${
         activeSubLinks ? "pt-8" : ""
-      } md:w-[500px] md:grid-cols-2 lg:w-[600px]`}
+      } md:w-[500px] md:grid-cols-2 xl:w-[700px]`}
     >
       {!activeSubLinks ? (
         permittedLinks
