@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
@@ -24,6 +24,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChargeType } from "@/types/billing";
 import { ChargeTypeDialog } from "@/components/charge-types/charge-type-dialog";
 import { ChargeTypeEditSheet } from "@/components/charge-types/charge-type-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<ChargeType>[] = [
   {

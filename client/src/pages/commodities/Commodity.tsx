@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
@@ -26,6 +26,7 @@ import { Commodity } from "@/types/commodities";
 import { Badge } from "@/components/ui/badge";
 import { CommodityDialog } from "@/components/commodities/commodity-dialog";
 import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 function HazmatBadge({ isHazmat }: { isHazmat: string }) {
   return (
