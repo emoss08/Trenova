@@ -98,4 +98,5 @@ export type QueryKeys =
   | "usStates"
   | "qualifier-code-table-data"
   | "qualifierCodes"
-  | "worker-table-data";
+  | "worker-table-data"
+  | "workers";

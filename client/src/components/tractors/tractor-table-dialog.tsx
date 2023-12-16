@@ -16,7 +16,6 @@
  */
 import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
@@ -34,21 +33,23 @@ import {
   useEquipmentTypes,
   useFleetCodes,
   useUSStates,
+  useWorkers,
 } from "@/hooks/useQueries";
 import { cleanObject, cn } from "@/lib/utils";
-import { trailerSchema } from "@/lib/validations/EquipmentSchema";
+import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  TrailerFormValues as FormValues,
-  trailerStatusChoices,
+  TractorFormValues as FormValues,
+  equipmentStatusChoices,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
+import { DatepickerField } from "../common/fields/date-picker";
 import { Form, FormControl, FormGroup } from "../ui/form";
 import { Separator } from "../ui/separator";
 
-export function TrailerForm({
+export function TractorForm({
   control,
   open,
 }: {
@@ -75,6 +76,12 @@ export function TrailerForm({
     isLoading: isStatesLoading,
   } = useUSStates(open);
 
+  const {
+    selectWorkers,
+    isError: isWorkerError,
+    isLoading: isWorkersLoading,
+  } = useWorkers(open);
+
   return (
     <Form>
       <FormGroup>
@@ -84,9 +91,9 @@ export function TrailerForm({
             rules={{ required: true }}
             control={control}
             label="Status"
-            options={trailerStatusChoices}
+            options={equipmentStatusChoices}
             placeholder="Select Status"
-            description="Select the current operational status of the trailer."
+            description="Select the current operational status of the tractor."
             isClearable={false}
           />
         </FormControl>
@@ -100,7 +107,7 @@ export function TrailerForm({
             autoCorrect="off"
             type="text"
             placeholder="Code"
-            description="Enter a unique identifier or code for the trailer."
+            description="Enter a unique identifier or code for the tractor."
           />
         </FormControl>
       </FormGroup>
@@ -115,9 +122,10 @@ export function TrailerForm({
             options={selectEquipmentType}
             isFetchError={isError}
             isLoading={isLoading}
+            popoutLink="/equipment/equipment-types/"
+            hasPopoutWindow
             placeholder="Select Equip. Type"
-            description="Select the equipment type of the trailer, to categorize it based on its functionality and usage."
-            isClearable={false}
+            description="Select the equipment type of the tractor, to categorize it based on its functionality and usage."
           />
         </FormControl>
         <FormControl>
@@ -125,23 +133,25 @@ export function TrailerForm({
             name="manufacturer"
             control={control}
             label="Manufacturer"
+            popoutLink="/equipment/equipment-manufacturers/"
+            hasPopoutWindow
             options={selectEquipManufacturers}
             isFetchError={isEquipManuError}
             isLoading={isEquipManuLoading}
             placeholder="Select Manufacturer"
-            description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
-            isClearable={false}
+            description="Select the manufacturer of the tractor, to categorize it based on its functionality and usage."
+            isClearable
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
-            name="make"
-            label="Make"
-            placeholder="Make"
+            name="vinNumber"
+            label="Vin Number"
+            placeholder="Vin Number"
             autoCapitalize="none"
             autoCorrect="off"
-            description="Specify the manufacturer of the trailer."
+            description="Input the Vehicle Identification Number."
           />
         </FormControl>
         <FormControl>
@@ -152,7 +162,7 @@ export function TrailerForm({
             placeholder="Model"
             autoCapitalize="none"
             autoCorrect="off"
-            description="Indicate the model of the trailer as provided by the manufacturer."
+            description="Indicate the model of the tractor as provided by the manufacturer."
           />
         </FormControl>
         <FormControl>
@@ -164,31 +174,8 @@ export function TrailerForm({
             placeholder="Year"
             autoCapitalize="none"
             autoCorrect="off"
-            description="Enter the year of manufacture of the trailer."
+            description="Enter the year of manufacture of the tractor."
             maxLength={4}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            name="vinNumber"
-            control={control}
-            label="Vin Number"
-            placeholder="Vin Number"
-            autoCapitalize="none"
-            autoCorrect="off"
-            description="Input the Vehicle Identification Number."
-          />
-        </FormControl>
-        <FormControl>
-          <AsyncSelectInput
-            name="fleetCode"
-            control={control}
-            label="Fleet Code"
-            options={selectFleetCodes}
-            isFetchError={isFleetCodeError}
-            isLoading={isFleetCodesLoading}
-            placeholder="Select Fleet Code"
-            description="Select the code that identifies the trailer within your fleet."
           />
         </FormControl>
         <FormControl>
@@ -200,8 +187,49 @@ export function TrailerForm({
             isFetchError={isStateError}
             isLoading={isStatesLoading}
             placeholder="Select State"
-            description="Choose the state where the trailer is primarily operated or registered.."
-            isClearable={false}
+            description="Choose the state where the tractor is primarily operated or registered.."
+            isClearable
+          />
+        </FormControl>
+        <FormControl>
+          <AsyncSelectInput
+            name="fleetCode"
+            control={control}
+            label="Fleet Code"
+            options={selectFleetCodes}
+            isFetchError={isFleetCodeError}
+            isLoading={isFleetCodesLoading}
+            placeholder="Select Fleet Code"
+            description="Select the code that identifies the tractor within your fleet."
+            hasPopoutWindow
+            popoutLink="/dispatch/fleet-codes/"
+            isClearable
+          />
+        </FormControl>
+        <FormControl>
+          <AsyncSelectInput
+            name="primaryWorker"
+            control={control}
+            label="Primary Worker"
+            options={selectWorkers}
+            isFetchError={isWorkerError}
+            isLoading={isWorkersLoading}
+            placeholder="Select Primary Worker"
+            description="Select the primary worker assigned to the tractor."
+            isClearable
+          />
+        </FormControl>
+        <FormControl>
+          <AsyncSelectInput
+            name="secondaryWorker"
+            control={control}
+            label="Secondary Worker"
+            options={selectWorkers}
+            isFetchError={isWorkerError}
+            isLoading={isWorkersLoading}
+            placeholder="Select Secondary Worker"
+            description="Select the secondary worker assigned to the tractor."
+            isClearable
           />
         </FormControl>
         <FormControl>
@@ -212,68 +240,40 @@ export function TrailerForm({
             placeholder="License Plate Number"
             autoCapitalize="none"
             autoCorrect="off"
-            description="Enter the license plate number of the trailer, crucial for legal identification and registration."
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="licensePlateState"
-            control={control}
-            label="License Plate State"
-            options={selectUSStates}
-            isFetchError={isStateError}
-            isLoading={isStatesLoading}
-            placeholder="Select License Plate State"
-            description="Select the state of registration of the trailer's license plate."
+            description="Enter the license plate number of the tractor, crucial for legal identification and registration."
           />
         </FormControl>
         <FormControl>
           <DatepickerField
-            name="lastInspection"
+            name="leasedDate"
             control={control}
-            label="Last Inspection"
-            placeholder="Last Inspection Date"
-            description="Input the date of the last inspection the trailer underwent."
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            name="registrationNumber"
-            control={control}
-            label="Registration #"
-            placeholder="Registration Number"
-            autoCapitalize="none"
-            autoCorrect="off"
-            description="Enter the registration number assigned to the trailer by the motor vehicle department."
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="registrationState"
-            control={control}
-            label="Registration State"
-            options={selectUSStates}
-            isFetchError={isStateError}
-            isLoading={isStatesLoading}
-            placeholder="Select Registration State"
-            description="Select the state where the trailer is registered."
-          />
-        </FormControl>
-        <FormControl>
-          <DatepickerField
-            name="registrationExpiration"
-            control={control}
-            placeholder="Registration Expiration Date"
-            label="Registration Expiration"
-            description="Choose the date when the current registration of the trailer expires."
+            label="Leased Date"
+            placeholder="Leased Date"
+            description="Input the date when the tractor was leased."
           />
         </FormControl>
         <FormControl className="mt-5">
           <CheckboxInput
             control={control}
-            label="Is Leased?"
-            name="isLeased"
-            description="Indicate whether the trailer is leased."
+            label="HOS Exempt?"
+            name="hosExempt"
+            description="Indicate whether the tractor is exempt from Hours of Service (HOS) regulations."
+          />
+        </FormControl>
+        <FormControl className="mt-5">
+          <CheckboxInput
+            control={control}
+            label="Owner Operated?"
+            name="ownerOperated"
+            description="Indicate whether the tractor is not owned by the company."
+          />
+        </FormControl>
+        <FormControl className="mt-5">
+          <CheckboxInput
+            control={control}
+            label="Leased?"
+            name="leased"
+            description="Indicate whether the tractor is leased."
           />
         </FormControl>
       </FormGroup>
@@ -281,28 +281,28 @@ export function TrailerForm({
   );
 }
 
-export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
+export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(trailerSchema),
+    resolver: yupResolver(tractorSchema),
     defaultValues: {
-      code: "",
       status: "A",
+      code: "",
       equipmentType: "",
       manufacturer: "",
-      make: "",
+      vinNumber: "",
       model: "",
       year: undefined,
-      vinNumber: "",
-      fleetCode: "",
-      licensePlateNumber: "",
-      lastInspection: undefined,
       state: "",
-      isLeased: false,
-      registrationNumber: "",
-      registrationState: "",
-      registrationExpiration: "",
+      fleetCode: "",
+      primaryWorker: "",
+      secondaryWorker: "",
+      licensePlateNumber: "",
+      leasedDate: "",
+      hosExempt: false,
+      ownerOperated: false,
+      leased: false,
     },
   });
 
@@ -310,11 +310,12 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/trailers/",
-      successMessage: "Trailer created successfully.",
-      queryKeysToInvalidate: ["trailer-table-data"],
+      path: "/tractors/",
+      successMessage: "Tractor created successfully.",
+      queryKeysToInvalidate: ["tractor-table-data"],
+      additionalInvalidateQueries: ["tractors"],
       closeModal: true,
-      errorMessage: "Failed to create new trailer.",
+      errorMessage: "Failed to create new tractor.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -331,16 +332,16 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>Add New Trailer</SheetTitle>
+          <SheetTitle>Add New Tractor</SheetTitle>
           <SheetDescription>
-            Use this form to add a new trailer to the system.
+            Use this form to add a new tractor to the system.
           </SheetDescription>
         </SheetHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col h-full overflow-y-auto"
         >
-          <TrailerForm control={control} open={open} />
+          <TractorForm control={control} open={open} />
           <SheetFooter className="mb-12">
             <Button
               type="reset"

@@ -64,6 +64,7 @@ const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
 const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
 const TrailerPage = lazy(() => import("../pages/equipment/Trailer"));
+const TractorPage = lazy(() => import("../pages/equipment/Tractor"));
 const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 
 export type RouteObjectWithPermission = RouteObject & {
@@ -290,6 +291,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Trailer",
     element: <TrailerPage />,
     permission: "view_trailer",
+  },
+  {
+    title: "Tractors",
+    group: "equipment",
+    subMenu: "configuration files",
+    path: "/equipment/tractor/",
+    description: "Tractor",
+    element: <TractorPage />,
+    permission: "view_tractor",
   },
   {
     title: "Locations",

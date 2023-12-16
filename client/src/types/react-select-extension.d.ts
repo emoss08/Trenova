@@ -15,8 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import type {} from "react-select/base"; // eslint-disable-line import/no-unassigned-import
 import { Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
+import type { } from "react-select/base"; // eslint-disable-line import/no-unassigned-import
+
+type _ = Options; // Added just so auto sort import won't remove the import
 
 declare module "react-select/base" {
   export interface Props<
@@ -45,6 +47,10 @@ declare module "react-select/base" {
     formError?: string;
     isMulti?: IsMulti;
     Group?: Group;
+  }
+  export interface AsyncSelectInput {
+    hasPopoutWindow?: boolean; // Flag when to show the add new option
+    popoutLink?: string; // Link to the popout page
   }
 }
 

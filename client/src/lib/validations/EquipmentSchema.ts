@@ -21,6 +21,7 @@ import {
   EquipmentManufacturerFormValues,
   EquipmentStatus,
   EquipmentTypeFormValues,
+  TractorFormValues,
   TrailerFormValues,
 } from "@/types/equipment";
 import * as Yup from "yup";
@@ -100,4 +101,24 @@ export const trailerSchema: ObjectSchema<TrailerFormValues> =
     registrationState: Yup.string().notRequired(),
     registrationExpiration: Yup.string().notRequired(),
     isLeased: Yup.boolean().required("Is leased is required"),
+  });
+
+export const tractorSchema: Yup.ObjectSchema<TractorFormValues> =
+  Yup.object().shape({
+    status: Yup.string<EquipmentStatus>().required("Status is required"),
+    code: Yup.string().required("Code is required"),
+    equipmentType: Yup.string().required("Equipment type is required"),
+    licensePlateNumber: Yup.string().notRequired(),
+    vinNumber: Yup.string().notRequired(),
+    manufacturer: Yup.string().notRequired(),
+    model: Yup.string().notRequired(),
+    year: Yup.number().notRequired(),
+    state: Yup.string().notRequired(),
+    leased: Yup.boolean().required("Leased is required"),
+    leasedDate: Yup.string().notRequired(),
+    primaryWorker: Yup.string().notRequired(),
+    secondaryWorker: Yup.string().notRequired(),
+    hosExempt: Yup.boolean().required("HOS exempt is required"),
+    ownerOperated: Yup.boolean().required("Owner operated is required"),
+    fleetCode: Yup.string().notRequired(),
   });
