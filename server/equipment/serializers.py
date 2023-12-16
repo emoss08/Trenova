@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from equipment import models
 from rest_framework import serializers
+
+from equipment import models
 from utils.serializers import GenericSerializer
 
 
