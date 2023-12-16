@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BoolStatusBadge } from "@/components/common/table/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -31,6 +30,7 @@ import { useTableStore } from "@/stores/TableStore";
 import { Customer } from "@/types/customer";
 import { Row } from "@tanstack/react-table";
 import React from "react";
+import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 
 const daysOfWeek = [
   "Monday", // 0
