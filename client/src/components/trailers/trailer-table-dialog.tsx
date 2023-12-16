@@ -38,8 +38,8 @@ import {
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  equipmentStatusChoices,
   TrailerFormValues as FormValues,
+  equipmentStatusChoices,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -118,6 +118,8 @@ export function TrailerForm({
             placeholder="Select Equip. Type"
             description="Select the equipment type of the trailer, to categorize it based on its functionality and usage."
             isClearable={false}
+            popoutLink="/equipment/equipment-types/"
+            hasPopoutWindow
           />
         </FormControl>
         <FormControl>
@@ -131,6 +133,8 @@ export function TrailerForm({
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
             isClearable={false}
+            popoutLink="/equipment/equipment-manufacturers/"
+            hasPopoutWindow
           />
         </FormControl>
         <FormControl>
@@ -189,6 +193,9 @@ export function TrailerForm({
             isLoading={isFleetCodesLoading}
             placeholder="Select Fleet Code"
             description="Select the code that identifies the trailer within your fleet."
+            hasPopoutWindow
+            popoutLink="/dispatch/fleet-codes/"
+            isClearable
           />
         </FormControl>
         <FormControl>

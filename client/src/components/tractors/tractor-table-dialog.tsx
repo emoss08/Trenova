@@ -122,10 +122,10 @@ export function TractorForm({
             options={selectEquipmentType}
             isFetchError={isError}
             isLoading={isLoading}
-            popoutLink="/equipment/equipment-types/"
-            hasPopoutWindow
             placeholder="Select Equip. Type"
             description="Select the equipment type of the tractor, to categorize it based on its functionality and usage."
+            popoutLink="/equipment/equipment-types/"
+            hasPopoutWindow
           />
         </FormControl>
         <FormControl>
@@ -133,14 +133,14 @@ export function TractorForm({
             name="manufacturer"
             control={control}
             label="Manufacturer"
-            popoutLink="/equipment/equipment-manufacturers/"
-            hasPopoutWindow
             options={selectEquipManufacturers}
             isFetchError={isEquipManuError}
             isLoading={isEquipManuLoading}
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the tractor, to categorize it based on its functionality and usage."
             isClearable
+            popoutLink="/equipment/equipment-manufacturers/"
+            hasPopoutWindow
           />
         </FormControl>
         <FormControl>
