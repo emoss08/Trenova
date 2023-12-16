@@ -55,9 +55,9 @@ export type EquipmentManufacturerFormValues = Pick<
   "name" | "description" | "status"
 >;
 
-export type TrailerStatuses = "A" | "OOS" | "AM" | "S" | "L";
+export type EquipmentStatus = "A" | "OOS" | "AM" | "S" | "L";
 
-export const trailerStatusChoices = [
+export const equipmentStatusChoices = [
   {
     value: "A",
     label: "Active",
@@ -83,7 +83,7 @@ export const trailerStatusChoices = [
 export interface Trailer extends BaseModel {
   id: string;
   code: string;
-  status: TrailerStatuses;
+  status: EquipmentStatus;
   equipmentType: string;
   manufacturer?: string | null;
   make?: string | null;
@@ -112,4 +112,29 @@ export type TrailerFormValues = Omit<
   | "businessUnit"
   | "created"
   | "modified"
+>;
+
+export interface Tractor extends BaseModel {
+  id: string;
+  code: string;
+  equipmentType: string;
+  status: string;
+  licensePlateNumber?: string | null;
+  vinNumber?: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  year?: number | null;
+  state?: string | null;
+  leased: boolean;
+  leasedDate?: string | null;
+  primaryWorker?: string | null;
+  secondaryWorker?: string | null;
+  hosExempt: boolean;
+  ownerOperated: boolean;
+  fleetCode?: string | null;
+}
+
+export type TractorFormValues = Omit<
+  Tractor,
+  "id" | "organization" | "businessUnit" | "created" | "modified"
 >;

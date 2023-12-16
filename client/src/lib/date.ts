@@ -90,3 +90,8 @@ export const getFormattedDate = (): string => {
     { hour: "numeric", minute: "2-digit", hour12: true },
   )}`;
 };
+
+export function parseLocalDate(dateString: string) {
+  const [year, month, day] = dateString.split("-");
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}

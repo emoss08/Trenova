@@ -18,6 +18,7 @@
 import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
+import { parseLocalDate } from "@/lib/date";
 import { cn, useClickOutside } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { addDays, format } from "date-fns";
@@ -61,7 +62,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [stringDate, setStringDate] = React.useState(
-    props.initialDate ? format(props.initialDate, "PPP") : "",
+    props.initialDate ? format(props.initialDate, "yyyy-MM-dd") : "",
   );
 
   const close = React.useCallback(() => setIsOpen(false), []);
@@ -96,7 +97,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           onClick={() => setIsOpen(true)}
           {...field}
           aria-invalid={fieldState.invalid}
-          value={stringDate}
+          value={field.value || stringDate}
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
             fieldState.invalid &&
@@ -158,7 +159,9 @@ export function DatepickerField<TFieldValues extends FieldValues>({
               </Select>
               <Calendar
                 mode="single"
-                selected={date}
+                selected={
+                  field.value ? parseLocalDate(field.value) : new Date()
+                }
                 onSelect={handleDateChange}
               />
             </div>
