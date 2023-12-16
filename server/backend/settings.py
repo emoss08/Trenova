@@ -142,6 +142,7 @@ DATABASES = {
         "CONN_HEALTH_CHECK": True,  # Checks health of the connection before each request
         "OPTIONS": {
             "options": "-c statement_timeout=60000",  # Statement time set to 60 seconds
+            "server_side_binding": True,
             "connect_timeout": 10,  # Timeout for establishing a new connection
             "client_encoding": "UTF8",  # Ensure UTF8 encoding for compatibility
             "sslmode": env(
