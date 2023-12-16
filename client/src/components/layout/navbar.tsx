@@ -35,80 +35,13 @@ import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
 import { Link } from "react-router-dom";
 import { LinksComponent } from "./nav-links";
-
-type Permission = string | undefined;
-
-interface SubLink {
-  label: string;
-  link: string;
-  permission?: Permission;
-  description: string;
-}
-
-interface MainLink extends Omit<SubLink, "link" | "description"> {
-  link?: string;
-  subLinks?: SubLink[];
-}
-
-type MainItem = {
-  links: MainLink[];
-};
-
-type MenuContent = React.ReactNode | MainItem[];
-
-type MenuData = {
-  menuKey: string;
-  label: string;
-  permission?: Permission;
-  content?: React.ReactNode;
-  link?: string;
-};
-
-type NavigationMenuItemProps = {
-  data: MenuData;
-  setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setMenuPosition: (position: { left: number; width: number }) => void;
-  ref: React.Ref<HTMLLIElement>;
-  menuItemRefs: React.MutableRefObject<Record<string, HTMLLIElement>>;
-};
-
-// Utility Functions
-const hasPermission = (
-  item: { permission?: Permission },
-  userHasPermission: (permission: string) => boolean,
-): boolean => !item.permission || userHasPermission(item.permission);
-
-const userHasAccessToContent = (
-  content: MenuContent,
-  userHasPermission: (permission: string) => boolean,
-  isAdmin: boolean,
-): boolean => {
-  if (isAdmin) return true;
-
-  if (Array.isArray(content)) {
-    return content.some((mainItem) =>
-      mainItem.links.some(
-        (link) =>
-          hasPermission(link, userHasPermission) &&
-          (!link.subLinks ||
-            link.subLinks.some((subLink) =>
-              hasPermission(subLink, userHasPermission),
-            )),
-      ),
-    );
-  }
-  return true;
-};
-
-const calculatePosition = (element: HTMLLIElement) => {
-  const rect = element.getBoundingClientRect();
-  const parentRect = element.offsetParent?.getBoundingClientRect();
-  const leftPosition = parentRect ? rect.left - parentRect.left : rect.left;
-  return {
-    left: leftPosition,
-    width: element.offsetWidth,
-  };
-};
+import {
+  MenuData,
+  NavigationMenuItemProps,
+  calculatePosition,
+  hasPermission,
+  userHasAccessToContent,
+} from "@/lib/navmenu";
 
 // NavigationMenuItemWithPermission Component
 const NavigationMenuItemWithPermission = React.memo(
@@ -119,9 +52,12 @@ const NavigationMenuItemWithPermission = React.memo(
       // Handle mouse enter event
       const handleMouseEnter = () => {
         if (menuItemRefs.current[data.menuKey]) {
-          setMenuPosition(
-            calculatePosition(menuItemRefs.current[data.menuKey]),
+          const newPosition = calculatePosition(
+            menuItemRefs.current[data.menuKey],
           );
+          newPosition.left -= 200;
+
+          setMenuPosition(newPosition);
           setMenuOpen(data.menuKey);
         }
       };
@@ -136,7 +72,7 @@ const NavigationMenuItemWithPermission = React.memo(
 
       // Render menu item with appropriate link or trigger
       return (
-        <NavigationMenuItem ref={ref} onMouseDown={handleMouseEnter}>
+        <NavigationMenuItem ref={ref} onMouseEnter={handleMouseEnter}>
           {data.link ? (
             <Link
               className={navigationMenuTriggerStyle()}
@@ -171,7 +107,9 @@ export function NavMenu() {
   // Attach menu item ref
   const attachRef = React.useCallback(
     (key: string) => (element: HTMLLIElement | null) => {
-      if (element) menuItemRefs.current[key] = element;
+      if (element) {
+        menuItemRefs.current[key] = element;
+      }
     },
     [],
   );
@@ -195,34 +133,43 @@ export function NavMenu() {
   // Update menu position when menuOpen changes
   React.useEffect(() => {
     if (menuOpen && menuItemRefs.current[menuOpen]) {
-      setMenuPosition(calculatePosition(menuItemRefs.current[menuOpen]));
+      const position = calculatePosition(menuItemRefs.current[menuOpen]);
+      // Adjust the left position here
+      position.left -= 200; // Adjust the value as needed
+      setMenuPosition(position);
     }
   }, [menuOpen, calculatePosition]);
 
   // Define menu items
   const menuItems: MenuData[] = [
     {
-      menuKey: "BillingMenu",
+      menuKey: "dashboardMenu",
+      label: "Dashboard",
+      link: "/",
+      permission: "view_dashbaord",
+    },
+    {
+      menuKey: "billingMenu",
       label: "Billing & AR",
       content: <LinksComponent linkData={billingNavLinks} />,
     },
     {
-      menuKey: "DispatchMenu",
+      menuKey: "dispatchMenu",
       label: "Dispatch Management",
       content: <LinksComponent linkData={dispatchNavLinks} />,
     },
     {
-      menuKey: "EquipmentMenu",
+      menuKey: "equipmentMenu",
       label: "Equipment Management",
       content: <LinksComponent linkData={equipmentNavLinks} />,
     },
     {
-      menuKey: "ShipmentMenu",
+      menuKey: "shipmentMenu",
       label: "Shipment Management",
       content: <LinksComponent linkData={shipmentNavLinks} />,
     },
     {
-      menuKey: "AdminMenu",
+      menuKey: "adminMenu",
       label: "Administrator",
       link: "/admin/dashboard/",
       permission: "view_admin_dashboard",
