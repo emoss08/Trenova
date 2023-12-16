@@ -38,7 +38,7 @@ pandas==2.1.4
 phonenumbers==8.13.26
 Pillow==10.1.0
 psutil==5.9.6
-psycopg2==2.9.9
+psycopg[binary]==3.1.15
 pyarrow==14.0.*
 pyftpdlib==1.5.9
 pypdf==3.17.2
