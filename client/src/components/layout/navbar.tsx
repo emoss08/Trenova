@@ -67,9 +67,9 @@ type MenuData = {
 type NavigationMenuItemProps = {
   data: MenuData;
   setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setMenuPosition: (position: { left: number; width: number }) => void; // Add this line
+  setMenuPosition: (position: { left: number; width: number }) => void;
   ref: React.Ref<HTMLLIElement>;
-  menuItemRefs: React.MutableRefObject<Record<string, HTMLLIElement>>; // Add this line
+  menuItemRefs: React.MutableRefObject<Record<string, HTMLLIElement>>;
 };
 
 // Utility Functions
