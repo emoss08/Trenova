@@ -20,8 +20,6 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
 django_stubs_ext.monkeypatch()
 
@@ -150,7 +148,7 @@ DATABASES = {
                 "DB_SSL_MODE", cast=str
             ),  # Force SSL connection for security
         },
-        "CONN_MAX_AGE": 600,  # Persistent connections for 10 minutes
+        "CONN_MAX_AGE": 0,  # Needs to be set to 0 for Celery Beat to work
         "DISABLE_SERVER_SIDE_CURSORS": False,  # Enables server-side cursors for large result sets
     },
     # "replica1": {
@@ -171,6 +169,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Eastern"
 USE_I18N = True
 USE_TZ = True
+LANGUAGE_COOKIE_NAME = "monta_language"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
