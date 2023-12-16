@@ -16,13 +16,14 @@
  */
 
 import { FleetCode } from "@/types/dispatch";
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
 import { FleetCodeDialog } from "@/components/fleet-codes/fleet-code-table-dialog";
 import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<FleetCode>[] = [
   {

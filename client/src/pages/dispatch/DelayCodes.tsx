@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { DelayCode } from "@/types/dispatch";
 import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
 import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 function CarrierOrDriverBadge({
   carrierOrDriver,

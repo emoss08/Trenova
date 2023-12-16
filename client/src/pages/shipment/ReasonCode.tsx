@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
@@ -24,6 +24,7 @@ import { truncateText } from "@/lib/utils";
 import { ReasonCode } from "@/types/order";
 import { ReasonCodeDialog } from "@/components/reason-codes/reason-code-table-dialog";
 import { ReasonCodeEditDialog } from "@/components/reason-codes/reason-code-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<ReasonCode>[] = [
   {

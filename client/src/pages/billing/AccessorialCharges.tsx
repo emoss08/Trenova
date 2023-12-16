@@ -18,7 +18,7 @@
 import { ACDialog } from "@/components/accessorial-charges/ac-table-dialog";
 import { ACTableEditDialog } from "@/components/accessorial-charges/ac-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/constants";
@@ -30,6 +30,7 @@ import {
   fuelMethodChoices,
 } from "@/utils/apps/billing";
 import { ColumnDef } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 function DetentionBadge({ isDetention }: { isDetention: boolean }) {
   return (

@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
@@ -24,6 +24,7 @@ import { truncateText } from "@/lib/utils";
 import { ServiceType } from "@/types/order";
 import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
 import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<ServiceType>[] = [
   {

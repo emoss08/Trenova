@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
@@ -25,6 +25,7 @@ import { truncateText } from "@/lib/utils";
 import { ShipmentType } from "@/types/order";
 import { ShipmentTypeDialog } from "@/components/shipment-types/ship-type-table-dialog";
 import { ShipmentTypeEditDialog } from "@/components/shipment-types/ship-type-table-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<ShipmentType>[] = [
   {

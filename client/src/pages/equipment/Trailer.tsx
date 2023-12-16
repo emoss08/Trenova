@@ -16,10 +16,7 @@
  */
 
 import { Checkbox } from "@/components/common/fields/checkbox";
-import {
-  DataTable,
-  EquipmentStatusBadge,
-} from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { TrailerDialog } from "@/components/trailers/trailer-table-dialog";
 import { TrailerEditDialog } from "@/components/trailers/trailer-table-edit-dialog";
@@ -27,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trailer, equipmentStatusChoices } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
 
 function LastInspectionDate({ lastInspection }: { lastInspection?: string }) {
   return (

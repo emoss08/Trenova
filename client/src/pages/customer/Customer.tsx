@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { CustomerTableSheet } from "@/components/customer/customer-table-dialog";
@@ -23,6 +23,7 @@ import { CustomerTableEditSheet } from "@/components/customer/customer-table-edi
 import { Customer } from "@/types/customer";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { CustomerTableSub } from "@/components/customer/customer-table-sub";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
   return <CustomerTableSub row={row} />;

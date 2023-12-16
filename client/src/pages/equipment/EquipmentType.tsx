@@ -16,7 +16,7 @@
  */
 
 import { Checkbox } from "@/components/common/fields/checkbox";
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { EquipTypeEditSheet } from "@/components/equipment-type/equip-type-edit-table-dialog";
 import { EquipTypeDialog } from "@/components/equipment-type/equip-type-table-dialog";
@@ -26,6 +26,7 @@ import { truncateText } from "@/lib/utils";
 import { EquipmentType } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<EquipmentType>[] = [
   {

@@ -16,16 +16,14 @@
  */
 
 import { Checkbox } from "@/components/common/fields/checkbox";
-import {
-  DataTable,
-  EquipmentStatusBadge,
-} from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { TractorDialog } from "@/components/tractors/tractor-table-dialog";
 import { TractorTableEditSheet } from "@/components/tractors/tractor-table-edit-dialog";
 import { Tractor, equipmentStatusChoices } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<Tractor>[] = [
   {

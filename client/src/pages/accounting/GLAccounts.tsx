@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
@@ -26,6 +26,7 @@ import { tableStatusChoices } from "@/lib/constants";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const renderSubComponent = ({ row }: { row: Row<GeneralLedgerAccount> }) => {
   // const original = row.original;

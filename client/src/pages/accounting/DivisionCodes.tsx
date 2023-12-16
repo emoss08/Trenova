@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable, StatusBadge } from "@/components/common/table/data-table";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { tableStatusChoices } from "@/lib/constants";
@@ -24,6 +24,7 @@ import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { DCDialog } from "@/components/division-codes/dc-table-dialog";
 import { DCTableEditDialog } from "@/components/division-codes/dc-table-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<DivisionCode>[] = [
   {
