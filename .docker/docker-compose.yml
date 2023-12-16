@@ -44,6 +44,7 @@ services:
       - "-c"
       - "pg_stat_statements.track=all"
     restart: always
+  
   #  connect:
   #    image: debezium/connect:latest
   #    container_name: connect
@@ -68,7 +69,6 @@ services:
   #    depends_on:
   #      - broker
   #    restart: on-failure
-
 
   pgadmin:
     image: dpage/pgadmin4
@@ -101,6 +101,6 @@ services:
       - "5672"
       - "15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=monta
-      - RABBITMQ_DEFAULT_PASS=monta
+      - RABBITMQ_DEFAULT_USER=monta # This is just for local development
+      - RABBITMQ_DEFAULT_PASS=monta # This is just for local development
     restart: always
