@@ -27,7 +27,6 @@ from django.db.models import (
     IntegerField,
     Prefetch,
     QuerySet,
-    Value,
     When,
 )
 from django.db.models.functions import Extract, TruncMonth
@@ -40,6 +39,7 @@ from rest_framework.response import Response
 from core.permissions import CustomObjectPermissions
 from location import models, serializers
 from stops.models import Stop
+from utils.models import StatusChoices
 
 
 class LocationCategoryViewSet(viewsets.ModelViewSet):
@@ -83,7 +83,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
     @action(detail=True, methods=["get"])
-    def monthly_pickup_data(self, request: Request, pk: str = None) -> Response:
+    def monthly_pickup_data(self, request: Request, pk: str | None = None) -> Response:
         """Endpoint to retrieve monthly pickup data for a specific location.
 
         Args:
@@ -175,12 +175,11 @@ class LocationViewSet(viewsets.ModelViewSet):
                     Case(
                         When(
                             stop__stop_type__in=["P", "SP"],
-                            stop__arrival_time__gte=now() - timedelta(days=365),
                             stop__arrival_time__isnull=False,
-                            stop__status="C",
+                            stop__status=StatusChoices.COMPLETED,  # Ensure only completed stops are counted
                             then=1,
                         ),
-                        default=Value(0),
+                        default=None,
                         output_field=IntegerField(),
                     )
                 ),
