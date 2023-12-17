@@ -443,7 +443,7 @@ class States(TimeStampedModel):
         verbose_name = _("State")
         verbose_name_plural = _("States")
         ordering = ["name"]
-        db_table = "state"
+        db_table = "states"
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
