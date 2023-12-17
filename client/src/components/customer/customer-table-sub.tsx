@@ -30,7 +30,11 @@ import { useTableStore } from "@/stores/TableStore";
 import { Customer } from "@/types/customer";
 import { Row } from "@tanstack/react-table";
 import React from "react";
-import { BoolStatusBadge } from "@/components/common/table/data-table-components";
+import {
+  BoolStatusBadge,
+  DataNotFound,
+} from "@/components/common/table/data-table-components";
+import { CircleBackslashIcon, PersonIcon } from "@radix-ui/react-icons";
 
 const daysOfWeek = [
   "Monday", // 0
@@ -93,18 +97,12 @@ function CustomerContactTable({
                 </TableRow>
               ))
           ) : (
-            <div className="flex flex-col items-center justify-center my-5">
-              <p className="font-semibold text-accent-foreground">
-                No contacts found
-              </p>
-              <Button
-                className="mt-2"
-                size="xs"
-                onClick={() => onClick("contacts")}
-              >
-                Add Contact
-              </Button>
-            </div>
+            <DataNotFound
+              message="Get Started by adding a contact"
+              name="contacts"
+              Icon={PersonIcon}
+              onButtonClick={() => onClick("contacts")}
+            />
           )}
         </TableBody>
       </Table>
@@ -158,18 +156,12 @@ function DeliverySlotTable({
                 </TableRow>
               ))
           ) : (
-            <div className="flex flex-col items-center justify-center my-5">
-              <p className="font-semibold text-accent-foreground">
-                No delivery slots found
-              </p>
-              <Button
-                className="mt-2"
-                size="xs"
-                onClick={() => onClick("deliverySlots")}
-              >
-                Add Delivery Slot
-              </Button>
-            </div>
+            <DataNotFound
+              message="Get Started by adding a delivery slot"
+              name="delivery slots"
+              Icon={CircleBackslashIcon}
+              onButtonClick={() => onClick("deliverySlots")}
+            />
           )}
         </TableBody>
       </Table>
