@@ -14,15 +14,16 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Label } from "./label";
 import { AlertTriangle } from "lucide-react";
+import * as React from "react";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { ErrorMessage } from "./input";
+import { Label } from "./label";
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
@@ -80,15 +81,15 @@ export function TextareaField<T extends FieldValues>({
           {...props}
           {...field}
         />
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
