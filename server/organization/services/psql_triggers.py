@@ -235,8 +235,8 @@ def create_update_function(
     Returns:
         None: This function does not return anything.
     """
-    fields_string: str = create_insert_field_string(fields=fields)
-    comparison_string: str = create_update_field_string(fields=fields)
+    fields_string = create_insert_field_string(fields=fields)
+    comparison_string = create_update_field_string(fields=fields)
 
     # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
     # and is safely quoted.
@@ -253,23 +253,23 @@ def create_update_function(
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
-                 CREATE or REPLACE FUNCTION {quoted_function_name}()
-                 RETURNS trigger
-                 LANGUAGE 'plpgsql'
-                 as $BODY$
-                 declare
-                 begin
-                     IF (TG_OP = 'UPDATE' AND {comparison_string} AND NEW.organization_id = %s) THEN
-                         PERFORM pg_notify(%s,
-                         json_build_object(
-                             {fields_string}
-                         )::text);
-                     END IF;
-                     RETURN NULL;
-                 END
-                 $BODY$;
-                 """,
-            [str(organization_id), quoted_listener_name],
+            CREATE OR REPLACE FUNCTION {quoted_function_name}()
+            RETURNS trigger
+            LANGUAGE 'plpgsql'
+            AS $BODY$
+            DECLARE
+            BEGIN
+                IF (TG_OP = 'UPDATE' AND {comparison_string} AND NEW.organization_id = %s::uuid) THEN
+                    PERFORM pg_notify('{quoted_listener_name}',
+                    json_build_object(
+                        {fields_string}
+                    )::text);
+                END IF;
+                RETURN NULL;
+            END
+            $BODY$;
+            """,
+            [organization_id],
         )
 
 

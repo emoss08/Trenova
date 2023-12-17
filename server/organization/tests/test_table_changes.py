@@ -145,7 +145,7 @@ def test_command() -> None:
     Returns:
         None: This function does not return anything.
     """
-    with patch("psycopg2.connect"), patch(
+    with patch("psycopg.connect"), patch(
         "django.core.management.color.supports_color", return_value=False
     ):
         out = StringIO()

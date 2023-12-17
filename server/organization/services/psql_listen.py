@@ -20,7 +20,7 @@ import os
 import select
 from pathlib import Path
 
-import psycopg2
+import psycopg
 from environ import environ
 
 from organization.selectors import get_active_table_alerts
@@ -48,7 +48,7 @@ class PSQLListener:
             Sets up listeners for table change alerts and handles notifications.
     """
 
-    def ensure_trigger_exists(self, conn: psycopg2.extensions.connection) -> None:
+    def ensure_trigger_exists(self, conn: psycopg.connection) -> None:
         """Ensures that a specific trigger exists on a given table.
 
         Args:
@@ -113,7 +113,7 @@ class PSQLListener:
                 )
                 logger.info(f"Trigger {trigger_name} created.")
 
-    def connect(self) -> psycopg2.extensions.connection:
+    def connect(self) -> psycopg.connection:
         """Connect to a PostgreSQL database using psycopg2.
 
         This method reads database connection information from environment
@@ -122,7 +122,7 @@ class PSQLListener:
         Returns:
             psycopg2.connection: A connection to the PostgreSQL database.
         """
-        conn = psycopg2.connect(
+        conn = psycopg.connect(
             host="localhost",
             database=env("DB_NAME"),
             user=env("DB_USER"),

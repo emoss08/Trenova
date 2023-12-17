@@ -12,7 +12,8 @@ performance and operational efficiency.
 [**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Monta/blob/main/beam.md)
 </div>
 
-![Monta Logo](https://github.com/Monta-Application/Monta/assets/66630775/df3bbf5c-aaf9-4771-ae54-bc51557b08df)
+![Preview](https://github.com/emoss08/Monta/assets/119015874/f4f8f0cc-2561-4af1-801f-1d69293c292a)
+
 
 ## Introduction
 
