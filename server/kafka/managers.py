@@ -49,6 +49,7 @@ class KafkaManager:
 
     _instance: KafkaManager | None = None
     __initialized: bool
+    # TODO(Wolfred): Replace this with AIOKAFKA.
 
     def __new__(cls) -> KafkaManager:
         """Creates a new instance of KafkaManager if it doesn't exist already.
