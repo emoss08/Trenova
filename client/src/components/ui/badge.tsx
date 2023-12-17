@@ -48,18 +48,21 @@ export interface BadgeProps
   withDot?: boolean;
 }
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, withDot = true, ...props }: BadgeProps) {
   return (
     <div className={cn(badgeVariants({ variant }), className)} {...props}>
-      <svg
-        className="h-1.5 w-1.5 fill-current"
-        viewBox="0 0 6 6"
-        aria-hidden="true"
-      >
-        <circle cx={3} cy={3} r={3} />
-      </svg>
+      {withDot && (
+        <svg
+          className="h-1.5 w-1.5 fill-current"
+          viewBox="0 0 6 6"
+          aria-hidden="true"
+        >
+          <circle cx={3} cy={3} r={3} />
+        </svg>
+      )}
       {props.children}
     </div>
   );
 }
+
 export { Badge, badgeVariants };
