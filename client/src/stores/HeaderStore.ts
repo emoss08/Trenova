@@ -28,8 +28,10 @@ interface HeaderStoreType {
 
 type HeaderStoreProps = {
   menuOpen?: string;
+  notificaitonMenuOpen: boolean;
 };
 
 export const useHeaderStore = createGlobalStore<HeaderStoreProps>({
   menuOpen: undefined,
+  notificaitonMenuOpen: false,
 });

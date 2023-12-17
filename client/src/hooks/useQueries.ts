@@ -45,7 +45,11 @@ import {
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import { getDepots } from "@/services/OrganizationRequestService";
-import { getUserDetails, getUsers } from "@/services/UserRequestService";
+import {
+  getUserDetails,
+  getUserNotifications,
+  getUsers,
+} from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
 import { QueryKeys } from "@/types";
 import {
@@ -598,4 +602,26 @@ export function useWorkers(show?: boolean, limit: number = 100) {
     })) || [];
 
   return { selectWorkers, isError, isLoading };
+}
+
+/**
+ * Get UserNotifications for notification menu
+ * @param menuOpen - menu open state
+ * @param userId - user id
+ */
+export function useNotificaitons(menuOpen: boolean, userId: string) {
+  const queryClient = useQueryClient();
+
+  const { data: notificationsData, isLoading: notificationsLoading } = useQuery(
+    {
+      queryKey: ["userNotifications", userId],
+      queryFn: async () => getUserNotifications(),
+      initialData: () => {
+        return queryClient.getQueryData(["userNotifications", userId]);
+      },
+      enabled: menuOpen,
+    },
+  );
+
+  return { notificationsData, notificationsLoading };
 }

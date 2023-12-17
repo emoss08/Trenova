@@ -54,14 +54,13 @@ export type SelectOption = {
  */
 export function Option({ ...props }: OptionProps) {
   return (
-    <components.Option
-      className="relative flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none my-1 hover:bg-accent hover:cursor-pointer hover:rounded-sm"
-      {...props}
-    >
-      {props.label}
-      {props.isSelected && (
-        <CheckIcon className="absolute top-1/2 right-3 transform -translate-y-1/2 h-4 w-4" />
-      )}
+    <components.Option {...props}>
+      <div className="relative flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none my-1 hover:bg-accent hover:cursor-pointer hover:rounded-sm">
+        {props.label}
+        {props.isSelected && (
+          <CheckIcon className="absolute top-1/2 right-3 transform -translate-y-1/2 h-4 w-4" />
+        )}
+      </div>
     </components.Option>
   );
 }

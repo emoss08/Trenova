@@ -39,6 +39,7 @@ import {
   ErrorMessage,
   IndicatorSeparator,
   MenuList,
+  NoOptionsMessage,
   Option,
   SelectDescription,
   SelectOption,
@@ -153,6 +154,7 @@ export function SelectInput<T extends Record<string, unknown>>(
             IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
+            NoOptionsMessage: NoOptionsMessage,
           }}
           classNames={{
             control: ({ isFocused }) =>
@@ -318,6 +320,7 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
+            NoOptionsMessage: NoOptionsMessage,
           }}
           classNames={{
             control: ({ isFocused }) =>
