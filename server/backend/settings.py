@@ -472,6 +472,7 @@ KAFKA_EXCLUDE_TOPICS = [
     "monta_app_.public.auth_token",
     "monta_app_.public.django_migrations",
     "monta_app_.public.django_session",
+    "monta_app_.public.states",
 ]
 
 # Development Configurations
