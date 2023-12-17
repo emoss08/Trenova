@@ -20,7 +20,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.db.utils import OperationalError
-from psycopg2 import OperationalError as Psycopg2OperationalError
+from psycopg import OperationalError as PsycopgOperationalError
 
 
 class Command(BaseCommand):
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             try:
                 self.check(databases=["default"])
                 db_up = True
-            except (Psycopg2OperationalError, OperationalError):
+            except (PsycopgOperationalError, OperationalError):
                 self.stdout.write(
                     self.style.WARNING(
                         f"Database unavailable, waiting {delay} second(s)..."
