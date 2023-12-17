@@ -69,7 +69,6 @@ Our goal is to empower your business with a system that manages operational comp
 - [Django Rest Framework](https://www.django-rest-framework.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Apache Kafka](https://kafka.apache.org/)
-- [Apache Zookeeper](https://zookeeper.apache.org/)
 - [Debezium](https://debezium.io/)
 - [Redis](https://redis.io/)
 - [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
