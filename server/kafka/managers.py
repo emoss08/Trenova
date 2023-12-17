@@ -23,6 +23,7 @@ import socket
 from pathlib import Path
 
 from confluent_kafka import KafkaException, admin
+from django.conf import settings
 from environ import environ
 
 from kafka.types import ConsumerGroupMetadata
@@ -98,7 +99,7 @@ class KafkaManager:
         """
 
         try:
-            sock: socket.socket = socket.create_connection(
+            sock = socket.create_connection(
                 (self.kafka_host, self.kafka_port), timeout=timeout
             )
             sock.close()
@@ -109,6 +110,16 @@ class KafkaManager:
 
     @staticmethod
     def admin_client() -> admin.AdminClient:
+        """
+        Returns an instance of the Kafka AdminClient.
+
+        The AdminClient is used for performing administrative operations on the Kafka cluster,
+        such as creating and deleting topics, listing consumer groups, and getting cluster metadata.
+
+        Returns:
+            admin.AdminClient: An instance of the Kafka AdminClient.
+        """
+
         return admin.AdminClient({"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")})
 
     def get_available_topics(self) -> list[tuple]:
@@ -123,13 +134,11 @@ class KafkaManager:
             list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
 
-        exclude_topics = ["localhost.public.silk_response"]
+        exclude_topics = settings.KAFKA_EXCLUDE_TOPICS
 
         if self.admin_client() is None:
-            # raise KafkaException("Kafka admin client is not available.")
             return []
         if not self.is_kafka_available(timeout=5):
-            # raise KafkaException("Kafka is not available.")
             return []
 
         try:
