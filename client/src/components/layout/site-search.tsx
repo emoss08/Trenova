@@ -110,7 +110,7 @@ export function SiteSearch() {
             <CommandGroup key={group} heading={upperFirst(group)}>
               {groupCommands.map((cmd) => (
                 <CommandItem
-                  key={cmd.path}
+                  key={cmd.path + "-item"}
                   onSelect={() => {
                     navigate(cmd.path);
                     setOpen(false);
@@ -121,7 +121,7 @@ export function SiteSearch() {
                 </CommandItem>
               ))}
             </CommandGroup>
-            <CommandSeparator />
+            <CommandSeparator key={group + "-separator"} />
           </>
         ))}
       </CommandList>
