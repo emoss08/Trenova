@@ -17,6 +17,7 @@
 
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { NavMenu } from "@/components/layout/navbar";
+import { NotificationMenu } from "@/components/layout/notification-menu";
 import { SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
@@ -28,6 +29,7 @@ import { useUserStore } from "@/stores/AuthStore";
 import { User } from "@/types/accounts";
 import React from "react";
 import { useLocation } from "react-router-dom";
+import { AppGridMenu } from "./app-grid";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
 
@@ -53,18 +55,24 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     // Use min-h-screen instead of h-screen to prevent overflow from causing double scrollbars
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen" id="app">
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
-          <div className="flex items-center h-14 w-full px-4">
-            <div className="flex-1">
+          <div className="flex items-center justify-between h-14 w-full px-4">
+            {/* Logo on the left */}
+            <div>
               <Logo />
             </div>
-            <div className="flex-1 justify-center hidden md:flex">
+            {/* Centered Navigation Menu (visible on md screens and up) */}
+            <div className="hidden md:flex flex-1 justify-center">
               <NavMenu />
             </div>
-            <div className="flex-1 flex justify-end">
+            {/* User Avatar and Notification Bell on the right */}
+            <div className="flex items-center">
+              <AppGridMenu />
+              <NotificationMenu />
+              <div className="border-l border-muted-foreground/40 h-7 mr-2 pl-2" />
               {isUserDataLoading ? (
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-10 w-10 rounded-full" />

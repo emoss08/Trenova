@@ -18,10 +18,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
+import { QueryKeys } from "@/types";
+import { Organization } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Organization } from "@/types/organization";
-import { QueryKeys } from "@/types";
 
 export function Logo() {
   const queryClient = useQueryClient();
@@ -61,7 +61,7 @@ export function Logo() {
     <Link
       className="font-semibold text-xl text-accent-foreground max-w-[250px] mr-5 truncate"
       to="/"
-      title={organizationData?.name} // tooltip for truncated text
+      title={organizationData?.name}
     >
       {organizationData?.name}
     </Link>
