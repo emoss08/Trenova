@@ -45,6 +45,17 @@ module.exports = {
         // => @media (min-width: 1536px) { ... }
       },
     },
+    fontSize: {
+      xxs: "0.5rem",
+      xs: "0.725rem",
+      sm: "0.875rem",
+      base: "1rem",
+      xl: "1.25rem",
+      "2xl": "1.563rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3.052rem",
+    },
     extend: {
       backgroundImage: {
         "rainbow-gradient-light":
