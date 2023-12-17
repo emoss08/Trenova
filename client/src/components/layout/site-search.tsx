@@ -27,6 +27,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "../ui/command";
 
 const prepareRouteGroups = (routeList: typeof routes) => {
@@ -105,20 +106,23 @@ export function SiteSearch() {
           </CommandEmpty>
         )}
         {Object.entries(filteredGroups).map(([group, groupCommands]) => (
-          <CommandGroup key={group} heading={upperFirst(group)}>
-            {groupCommands.map((cmd) => (
-              <CommandItem
-                key={cmd.path}
-                onSelect={() => {
-                  navigate(cmd.path);
-                  setOpen(false);
-                }}
-                className="hover:cursor-pointer"
-              >
-                {cmd.title}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          <>
+            <CommandGroup key={group} heading={upperFirst(group)}>
+              {groupCommands.map((cmd) => (
+                <CommandItem
+                  key={cmd.path}
+                  onSelect={() => {
+                    navigate(cmd.path);
+                    setOpen(false);
+                  }}
+                  className="hover:cursor-pointer"
+                >
+                  {cmd.title}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+          </>
         ))}
       </CommandList>
       <div className="sticky bg-background flex items-center space-x-1 mx-2 py-2 border-t">
