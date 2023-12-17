@@ -17,37 +17,43 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { EquipmentStatus } from "@/types/equipment";
+import { IconProps } from "@radix-ui/react-icons/dist/types";
+import { PlusIcon } from "@radix-ui/react-icons";
+import { upperFirst } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-function NoData() {
+type DataNotFoundProps = {
+  message: string;
+  name: string;
+  Icon: React.ForwardRefExoticComponent<
+    IconProps & React.RefAttributes<SVGSVGElement>
+  >;
+  onButtonClick?: () => void;
+};
+
+export function DataNotFound({
+  message,
+  name,
+  Icon,
+  onButtonClick,
+}: DataNotFoundProps) {
   return (
-    <div className="text-center">
-      <svg
-        className="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-        />
-      </svg>
-      <h3 className="mt-2 text-sm font-semibold text-gray-900"></h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Get started by creating a new project.
-      </p>
-      <div className="mt-6">
-        <button
+    <div className="text-center my-10">
+      <Icon className="mx-auto h-10 w-10 text-foreground" />
+      <h3 className="mt-2 text-sm font-semibold text-gray-900">
+        No {upperFirst(name)}
+      </h3>
+      <p className="mt-1 text-sm text-gray-500">{message}</p>
+      <div className="mt-3">
+        <Button
+          className="mt-3"
           type="button"
-          className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          size="sm"
+          onClick={onButtonClick}
         >
           <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-          New Project
-        </button>
+          Add {upperFirst(name)}
+        </Button>
       </div>
     </div>
   );
