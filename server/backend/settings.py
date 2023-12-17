@@ -188,6 +188,40 @@ MEDIA_DIR = os.path.join(BASE_DIR, "media")
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = "/media/"
 
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+        "verbose": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "kafka": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+            "formatter": "verbose",
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -427,6 +461,18 @@ KAFKA_ALERT_UPDATE_TOPIC = env("KAFKA_ALERT_UPDATE_TOPIC")
 KAFKA_AUTO_COMMIT = env("KAFKA_AUTO_COMMIT")
 KAFKA_AUTO_COMMIT_INTERVAL_MS = env("KAFKA_AUTO_COMMIT_INTERVAL_MS")
 KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
+KAFKA_EXCLUDE_TOPICS = [
+    "monta_app_.public.silk_response",
+    "monta_app_.public.silk_request",
+    "monta_app_.public.silk_sqlquery",
+    "monta_app_.public.auditlog_logentry",
+    "monta_app_.public.admin_interface_theme",
+    "monta_app_.public.django_admin_log",
+    "monta_app_.public.django_content_type",
+    "monta_app_.public.auth_token",
+    "monta_app_.public.django_migrations",
+    "monta_app_.public.django_session",
+]
 
 # Development Configurations
 if DEBUG:
