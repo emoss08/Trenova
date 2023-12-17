@@ -22,21 +22,27 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import { upperFirst } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-type DataNotFoundProps = {
+/**
+ * Component that displays a message when no data is found.
+ * @param message The message to display
+ * @param name The name of the data
+ * @param Icon The icon to display
+ * @param onButtonClick The callback to call when the button is clicked
+ * @returns A component that displays a message when no data is found
+ */
+export function DataNotFound({
+  message,
+  name,
+  Icon,
+  onButtonClick,
+}: {
   message: string;
   name: string;
   Icon: React.ForwardRefExoticComponent<
     IconProps & React.RefAttributes<SVGSVGElement>
   >;
   onButtonClick?: () => void;
-};
-
-export function DataNotFound({
-  message,
-  name,
-  Icon,
-  onButtonClick,
-}: DataNotFoundProps) {
+}) {
   return (
     <div className="text-center my-10">
       <Icon className="mx-auto h-10 w-10 text-foreground" />
@@ -59,6 +65,11 @@ export function DataNotFound({
   );
 }
 
+/**
+ * Status badge that can be used to display the status of a record.
+ * @param status The status of the record
+ * @returns A badge with the status of the record
+ */
 export function StatusBadge({ status }: { status: string }) {
   return (
     <Badge variant={status === "A" ? "default" : "destructive"}>
@@ -67,6 +78,11 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/**
+ * Status badge that can be used to display the status of a boolean value.
+ * @param status The status of the boolean value
+ * @returns A badge with the status of the boolean value
+ */
 export function BoolStatusBadge({ status }: { status: boolean }) {
   return (
     <Badge variant={status ? "default" : "destructive"}>
