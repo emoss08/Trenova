@@ -62,7 +62,6 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
         ref={ref}
         {...props}
       >
-        <div className="border-l border-accent h-7 mr-2 pl-2" />
         <Avatar className="inline-block ml-4 m-auto">
           <AvatarImage
             src={avatarSrc}
