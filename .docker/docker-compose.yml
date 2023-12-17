@@ -44,7 +44,7 @@ services:
       - "-c"
       - "pg_stat_statements.track=all"
     restart: always
-  
+
   #  connect:
   #    image: debezium/connect:latest
   #    container_name: connect
