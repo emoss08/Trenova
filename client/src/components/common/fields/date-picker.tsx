@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Input } from "@/components/common/fields/input";
+import { ErrorMessage, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
 import { parseLocalDate } from "@/lib/date";
@@ -124,15 +124,15 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           )}
         </div>
 
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-700">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
         {isOpen && (

@@ -25,6 +25,14 @@ import {
 } from "react-hook-form";
 import { Label } from "./label";
 
+export function ErrorMessage({ formError }: { formError?: string }) {
+  return (
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500">
+      {formError ? formError : "An Error has occurred. Please try again."}
+    </div>
+  );
+}
+
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -81,15 +89,15 @@ export function InputField<T extends FieldValues>({
           )}
           {...props}
         />
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
@@ -131,15 +139,15 @@ export function FileField<T extends FieldValues>({
           }}
           {...props}
         />
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
@@ -177,15 +185,15 @@ export function TimeField<T extends FieldValues>({
           {...field}
           {...props}
         />
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>

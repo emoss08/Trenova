@@ -276,11 +276,11 @@ export function ErrorMessage({
   formError?: string;
 }) {
   return (
-    <p className="text-xs text-red-500">
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500">
       {isFetchError
         ? "An error has occurred! Please try again later."
         : formError}
-    </p>
+    </div>
   );
 }
 

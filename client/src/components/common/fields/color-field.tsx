@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Input } from "@/components/common/fields/input";
+import { ErrorMessage, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { cn, useClickOutside } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
@@ -24,8 +24,8 @@ import { HexColorPicker } from "react-colorful";
 import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 
 export type ColorFieldProps<T extends FieldValues> = {
@@ -76,15 +76,15 @@ export function ColorField<T extends FieldValues>({
           className="absolute right-0 top-0 my-2.5 mx-2 h-5 w-5 rounded-xl"
           style={{ backgroundColor: field.value }}
         />
-        {fieldState.error?.message && (
+        {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
-            <p className="text-xs text-red-600">{fieldState.error?.message}</p>
+            <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
-        {props.description && !fieldState.error?.message && (
+        {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
