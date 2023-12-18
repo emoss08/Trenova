@@ -30,15 +30,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ui/theme-provider";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
 import { useLogout } from "@/hooks/useLogout";
 import { ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { TOAST_STYLE } from "@/lib/constants";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -85,7 +85,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const logout = useLogout();
   const { theme, setTheme, isRainbowAnimationActive, toggleRainbowAnimation } =
     useTheme();
-  const { toast } = useToast();
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
   const navigate = useNavigate();
@@ -115,30 +114,64 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       { hour: "numeric", minute: "2-digit", hour12: true },
     )}`;
 
-    toast({
-      title: `Theme changed to ${selectedTheme}`,
-      description: formattedDate,
-      action: (
-        <ToastAction altText="Goto schedule to undo" onClick={undoThemeChange}>
-          Undo
-        </ToastAction>
+    const undoThemeChange = () => {
+      console.info("Previous theme", previousTheme);
+
+      // Set the current theme back to the previous theme
+      setCurrentTheme(previousTheme);
+
+      // Update the actual theme
+      setTheme(previousTheme);
+
+      toast.success(
+        () => (
+          <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
+            <div className="grid gap-1">
+              <span className="font-semibold">
+                Theme reverted to {previousTheme}
+              </span>
+              <span className="text-xs">Your theme change was undone.</span>
+            </div>
+          </div>
+        ),
+        {
+          id: "theme-switcher",
+          style: TOAST_STYLE,
+          ariaProps: {
+            role: "status",
+            "aria-live": "polite",
+          },
+        },
+      );
+    };
+
+    toast(
+      () => (
+        <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
+          <div className="grid gap-1">
+            <span className="font-semibold">
+              Theme changed to {selectedTheme}
+            </span>
+            <span className="text-xs">{formattedDate}</span>
+          </div>
+          <button
+            onClick={undoThemeChange}
+            className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          >
+            Undo
+          </button>
+        </div>
       ),
-    });
-  };
-
-  const undoThemeChange = () => {
-    console.info("Previous theme", previousTheme);
-
-    // Set the current theme back to the previous theme
-    setCurrentTheme(previousTheme);
-
-    // Update the actual theme
-    setTheme(previousTheme);
-
-    toast({
-      title: `Theme reverted to ${previousTheme}`,
-      description: "Your theme change was undone.",
-    });
+      {
+        duration: 4000,
+        id: "theme-switcher",
+        style: TOAST_STYLE,
+        ariaProps: {
+          role: "status",
+          "aria-live": "polite",
+        },
+      },
+    );
   };
 
   return (

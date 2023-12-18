@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import axios from "@/lib/axiosConfig";
+import { TOAST_STYLE } from "@/lib/constants";
 import { StoreType } from "@/lib/useGlobalStore";
 import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
@@ -100,10 +101,21 @@ function TableExportModalBody({
 
       if (response.status === 202) {
         setShowExportModal(false);
-        // toast({
-        //   title: "Success",
-        //   description: response.data.results,
-        // });
+        toast.success(
+          () => (
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold">Success</span>
+              <span className="text-xs">{response.data.results}</span>
+            </div>
+          ),
+          {
+            style: TOAST_STYLE,
+            ariaProps: {
+              role: "status",
+              "aria-live": "polite",
+            },
+          },
+        );
         reset();
       }
     } catch (error: any) {
@@ -120,13 +132,7 @@ function TableExportModalBody({
           </div>
         ),
         {
-          duration: 4000,
-          id: "notification-toast",
-          style: {
-            background: "hsl(var(--background))",
-            color: "hsl(var(--foreground))",
-            boxShadow: "0 0 0 1px hsl(var(--border))",
-          },
+          style: TOAST_STYLE,
           ariaProps: {
             role: "status",
             "aria-live": "polite",

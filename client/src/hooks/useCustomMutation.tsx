@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ToastAction } from "@/components/ui/toast";
-import { toast } from "@/components/ui/use-toast";
 import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
 import { QueryKeys } from "@/types";
@@ -34,6 +32,9 @@ import {
   Path,
   UseFormReset,
 } from "react-hook-form";
+import toast from "react-hot-toast";
+import React from "react";
+import { TOAST_STYLE } from "@/lib/constants";
 
 type DataProp = Record<string, unknown> | FormData;
 type MutationOptions = {
@@ -125,11 +126,25 @@ async function handleSuccess<T extends FieldValues>(
   reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
-    toast({
-      variant: "success",
-      title: "Great! Changes saved successfully.",
-      description: options.successMessage,
-    });
+    toast.success(
+      () => (
+        <div className="flex flex-col space-y-1">
+          <span className="font-semibold">
+            Great! Changes saved successfully.
+          </span>
+          <span className="text-xs">{options.successMessage}</span>
+        </div>
+      ),
+      {
+        duration: 4000,
+        id: "notification-toast",
+        style: TOAST_STYLE,
+        ariaProps: {
+          role: "status",
+          "aria-live": "polite",
+        },
+      },
+    );
   };
 
   // Invalidate the queries that are passed in
@@ -176,12 +191,23 @@ async function handleError<T extends FieldValues>(
 }
 
 function showErrorNotification(errorMessage?: string) {
-  toast({
-    variant: "destructive",
-    title: "Uh Oh! Something went wrong.",
-    description: errorMessage || "An error occurred.",
-    action: <ToastAction altText="Try Again">Try Again.</ToastAction>,
-  });
+  toast.error(
+    () => (
+      <div className="flex flex-col space-y-1">
+        <span className="font-semibold">Uh Oh! Something went wrong.</span>
+        <span className="text-xs">{errorMessage}</span>
+      </div>
+    ),
+    {
+      duration: 4000,
+      id: "notification-toast",
+      style: TOAST_STYLE,
+      ariaProps: {
+        role: "status",
+        "aria-live": "polite",
+      },
+    },
+  );
 }
 
 function handleValidationErrors<T extends FieldValues>(

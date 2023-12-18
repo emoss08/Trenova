@@ -19,7 +19,11 @@ import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
 import NotificationSound from "@/assets/audio/notification.webm";
 import { useNotificaitons } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
-import { ENABLE_WEBSOCKETS, WEB_SOCKET_URL } from "@/lib/constants";
+import {
+  ENABLE_WEBSOCKETS,
+  TOAST_STYLE,
+  WEB_SOCKET_URL,
+} from "@/lib/constants";
 import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
@@ -70,11 +74,7 @@ const reconnect = () => {
             {
               duration: 4000,
               id: "connection-closed",
-              style: {
-                background: "hsl(var(--background))",
-                color: "hsl(var(--foreground))",
-                fontSize: "0.875rem",
-              },
+              style: TOAST_STYLE,
               ariaProps: {
                 role: "status",
                 "aria-live": "polite",
@@ -124,11 +124,7 @@ export function NotificationMenu() {
       },
       {
         id: "notification-toast",
-        style: {
-          background: "hsl(var(--background))",
-          color: "hsl(var(--foreground))",
-          fontSize: "0.875rem",
-        },
+        style: TOAST_STYLE,
         ariaProps: {
           role: "status",
           "aria-live": "polite",
@@ -165,10 +161,7 @@ export function NotificationMenu() {
                   {
                     duration: 4000,
                     id: "notification-toast",
-                    style: {
-                      background: "hsl(var(--background))",
-                      color: "hsl(var(--foreground))",
-                    },
+                    style: TOAST_STYLE,
                     ariaProps: {
                       role: "status",
                       "aria-live": "polite",
@@ -198,11 +191,7 @@ export function NotificationMenu() {
                 ),
                 {
                   id: "connection-closed",
-                  style: {
-                    background: "hsl(var(--background))",
-                    color: "hsl(var(--foreground))",
-                    fontSize: "0.875rem",
-                  },
+                  style: TOAST_STYLE,
                   ariaProps: {
                     role: "status",
                     "aria-live": "polite",
