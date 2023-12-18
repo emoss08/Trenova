@@ -15,27 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { TExportModelFormValues } from "@/types/forms";
-import { getColumns } from "@/services/ReportRequestService";
-import axios from "@/lib/axiosConfig";
-import { ExportModelSchema } from "@/lib/validations/GenericSchema";
-import { Controller, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { toast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { DialogTitle } from "@radix-ui/react-dialog";
-import { SelectInput } from "@/components/common/fields/select-input";
+import { Label } from "@/components/common/fields/label";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/common/fields/radio-group";
-import { Label } from "@/components/common/fields/label";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
-import { StoreType } from "@/lib/useGlobalStore";
-import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
-import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +31,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import axios from "@/lib/axiosConfig";
+import { StoreType } from "@/lib/useGlobalStore";
+import { ExportModelSchema } from "@/lib/validations/GenericSchema";
+import { getColumns } from "@/services/ReportRequestService";
+import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
+import { TExportModelFormValues } from "@/types/forms";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { DialogTitle } from "@radix-ui/react-dialog";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -72,7 +72,7 @@ function TableExportModalBody({
     staleTime: Infinity,
   });
 
-  const { control, handleSubmit, reset, watch } =
+  const { control, handleSubmit, reset, watch, setError } =
     useForm<TExportModelFormValues>({
       resolver: yupResolver(ExportModelSchema),
       defaultValues: {
@@ -83,7 +83,7 @@ function TableExportModalBody({
 
   const watchedColumns = watch("columns");
 
-  const columns = columnsData?.map((column: any) => ({
+  const selectColumnData = columnsData?.map((column: any) => ({
     label: column.label,
     value: column.value,
   }));
@@ -100,17 +100,39 @@ function TableExportModalBody({
 
       if (response.status === 202) {
         setShowExportModal(false);
-        toast({
-          title: "Success",
-          description: response.data.results,
-        });
+        // toast({
+        //   title: "Success",
+        //   description: response.data.results,
+        // });
         reset();
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response.data.error,
+      setError("columns", {
+        type: "manual",
+        message: error.response.data.error,
       });
+
+      toast.error(
+        () => (
+          <div className="flex flex-col space-y-1">
+            <span className="font-semibold">{error.response.data.title}</span>
+            <span className="text-xs">{error.response.data.error}</span>
+          </div>
+        ),
+        {
+          duration: 4000,
+          id: "notification-toast",
+          style: {
+            background: "hsl(var(--background))",
+            color: "hsl(var(--foreground))",
+            boxShadow: "0 0 0 1px hsl(var(--border))",
+          },
+          ariaProps: {
+            role: "status",
+            "aria-live": "polite",
+          },
+        },
+      );
     } finally {
       setLoading(false);
     }
@@ -119,7 +141,7 @@ function TableExportModalBody({
   return isColumnsLoading ? (
     <>
       <div className="flex flex-col items-center justify-center space-y-2 h-40 w-full">
-        <Loader2 className="animate-spin h-20 w-20 text-muted" />
+        <Loader2 className="animate-spin h-20 w-20 text-foreground" />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
         </p>
@@ -134,7 +156,7 @@ function TableExportModalBody({
           control={control}
           rules={{ required: true }}
           name="columns"
-          options={columns}
+          options={selectColumnData}
           label="Columns"
           placeholder="Select columns"
           description="A group of columns/fields that will be exported into your specified format."
