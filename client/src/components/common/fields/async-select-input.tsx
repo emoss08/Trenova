@@ -111,6 +111,7 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
       )}
       <div className="relative">
         <AsyncSelect
+          label={label}
           aria-invalid={errorOccurred}
           aria-labelledby={controllerProps.id}
           inputId={controllerProps.id}
