@@ -15,6 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table } from "@/components/ui/table";
+import { useUserPermissions } from "@/context/user-permissions";
+import axios from "@/lib/axiosConfig";
+import { API_URL } from "@/lib/constants";
+import { useTableStore as store } from "@/stores/TableStore";
+import { ApiResponse } from "@/types/server";
+import { DataTableProps } from "@/types/tables";
+import { useQuery } from "@tanstack/react-query";
 import {
   ColumnDef,
   ColumnFilter,
@@ -35,17 +44,8 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import React, { SetStateAction } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table } from "@/components/ui/table";
-import { useUserPermissions } from "@/context/user-permissions";
-import axios from "@/lib/axiosConfig";
-import { API_URL } from "@/lib/constants";
-import { useTableStore as store } from "@/stores/TableStore";
-import { ApiResponse } from "@/types/server";
-import { DataTableProps } from "@/types/tables";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
 import { DataTableBody } from "./data-table-body";
+import { ErrorLoadingData } from "./data-table-components";
 import { TableExportModal } from "./data-table-export-modal";
 import { DataTableHeader, DataTableTopBar } from "./data-table-header";
 import { DataTablePagination } from "./data-table-pagination";
@@ -242,18 +242,7 @@ export function DataTable<TData extends Record<string, any>>({
   });
 
   if (dataQuery.isError) {
-    return (
-      <div className="text-center">
-        <AlertTriangle className="mx-auto h-6 w-6 text-accent-foreground" />
-        <p className="mt-2 font-semibold text-accent-foreground">
-          Well, this is embarrassing...
-        </p>
-        <p className="mt-2 text-muted-foreground">
-          We were unable to load the data for this table. Please try again
-          later.
-        </p>
-      </div>
-    );
+    return <ErrorLoadingData />;
   }
 
   const selectedRowCount = Object.keys(rowSelection).length;

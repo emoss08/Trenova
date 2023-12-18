@@ -202,13 +202,13 @@ export function NoOptionsMessage({
     hasPopoutWindow?: boolean;
   };
 }) {
-  const { formError, popoutLink, hasPopoutWindow } = props.selectProps || {};
+  const { popoutLink, hasPopoutWindow } = props.selectProps || {};
 
   return (
     <components.NoOptionsMessage {...props}>
       <div className="flex flex-col items-center justify-center my-1">
         <p className="text-accent-foreground text-sm my-1">
-          {formError || children || "No options available..."}
+          {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton

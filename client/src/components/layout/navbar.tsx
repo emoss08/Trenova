@@ -30,11 +30,6 @@ import {
   equipmentNavLinks,
   shipmentNavLinks,
 } from "@/lib/nav-links";
-import { cn } from "@/lib/utils";
-import { useHeaderStore } from "@/stores/HeaderStore";
-import React from "react";
-import { Link } from "react-router-dom";
-import { LinksComponent } from "./nav-links";
 import {
   MenuData,
   NavigationMenuItemProps,
@@ -42,16 +37,12 @@ import {
   hasPermission,
   userHasAccessToContent,
 } from "@/lib/navmenu";
-
-function FooterContainer({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-gray-100 dark:bg-gray-800 px-8 py-4">
-      <div className="flex items-center justify-between gap-2 font-display">
-        <div className="relative">{children}</div>
-      </div>
-    </div>
-  );
-}
+import { cn } from "@/lib/utils";
+import { useHeaderStore } from "@/stores/HeaderStore";
+import React from "react";
+import { Link } from "react-router-dom";
+import { FooterContainer } from "../common/footer";
+import { LinksComponent } from "./nav-links";
 
 // NavigationMenuItemWithPermission Component
 const NavigationMenuItemWithPermission = React.memo(

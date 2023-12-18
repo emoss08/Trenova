@@ -106,8 +106,8 @@ export function SiteSearch() {
           </CommandEmpty>
         )}
         {Object.entries(filteredGroups).map(([group, groupCommands]) => (
-          <>
-            <CommandGroup key={group} heading={upperFirst(group)}>
+          <React.Fragment key={group}>
+            <CommandGroup heading={upperFirst(group)}>
               {groupCommands.map((cmd) => (
                 <CommandItem
                   key={cmd.path + "-item"}
@@ -122,7 +122,7 @@ export function SiteSearch() {
               ))}
             </CommandGroup>
             <CommandSeparator key={group + "-separator"} />
-          </>
+          </React.Fragment>
         ))}
       </CommandList>
       <div className="sticky bg-background flex items-center space-x-1 mx-2 py-2 border-t">

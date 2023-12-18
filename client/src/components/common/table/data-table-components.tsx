@@ -14,13 +14,14 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { EquipmentStatus } from "@/types/equipment";
-import { IconProps } from "@radix-ui/react-icons/dist/types";
-import { PlusIcon } from "@radix-ui/react-icons";
-import { upperFirst } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { upperFirst } from "@/lib/utils";
+import { EquipmentStatus } from "@/types/equipment";
+import { PlusIcon } from "@radix-ui/react-icons";
+import { IconProps } from "@radix-ui/react-icons/dist/types";
+import { AlertTriangle } from "lucide-react";
+import React from "react";
 
 /**
  * Component that displays a message when no data is found.
@@ -109,5 +110,19 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
     <Badge variant={status === "A" ? "default" : "destructive"}>
       {mapToStatus[status]}
     </Badge>
+  );
+}
+
+export function ErrorLoadingData() {
+  return (
+    <div className="text-center">
+      <AlertTriangle className="mx-auto h-10 w-10 text-accent-foreground" />
+      <p className="mt-2 font-semibold text-accent-foreground">
+        Well, this is embarrassing...
+      </p>
+      <p className="mt-2 text-muted-foreground">
+        We were unable to load the data for this table. Please try again later.
+      </p>
+    </div>
   );
 }

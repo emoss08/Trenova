@@ -15,29 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { ModeToggle } from "@/components/ui/theme-switcher";
-import { useAuthStore } from "@/stores/AuthStore";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { resetPasswordSchema } from "@/lib/validations/accounts";
-import axios from "@/lib/axiosConfig";
-import { Label } from "@/components/common/fields/label";
 import { InputField } from "@/components/common/fields/input";
+import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ModeToggle } from "@/components/ui/theme-switcher";
+import axios from "@/lib/axiosConfig";
+import { cn } from "@/lib/utils";
+import { resetPasswordSchema } from "@/lib/validations/accounts";
+import { useAuthStore } from "@/stores/AuthStore";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 
 type FormValues = {
   email: string;
 };
 
 export function ResetPasswordForm() {
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const [, setIsAuthenticated] = useAuthStore(
     (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
       state.isAuthenticated,
@@ -59,19 +57,19 @@ export function ResetPasswordForm() {
     try {
       const response = await axios.post("/reset_password/", values);
       if (response.status === 200) {
-        toast({
-          title: "Email Sent",
-          description: "Please check your email for the reset link.",
-        });
+        // toast({
+        //   title: "Email Sent",
+        //   description: "Please check your email for the reset link.",
+        // });
       }
     } catch (error: any) {
       console.info("error", error);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
-        action: <ToastAction altText="Try again">Try again</ToastAction>,
-      });
+      // toast({
+      //   variant: "destructive",
+      //   title: "Uh oh! Something went wrong.",
+      //   description: "There was a problem with your request.",
+      //   action: <ToastAction altText="Try again">Try again</ToastAction>,
+      // });
     } finally {
       setIsLoading(false);
     }

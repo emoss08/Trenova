@@ -14,18 +14,15 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { useTheme } from "@/components/ui/theme-provider";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/common/fields/label";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/ui/theme-provider";
 import { ThemeOptions } from "@/types";
 import { useState } from "react";
-import { getFormattedDate } from "@/lib/date";
 
 export function ThemeSwitcher() {
   const { theme, setTheme, setIsRainbowAnimationActive } = useTheme();
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
 
@@ -40,26 +37,33 @@ export function ThemeSwitcher() {
     setCurrentTheme(selectedTheme);
     // Then, make necessary changes like showing toast and so on
     setTheme(selectedTheme);
-    toast({
-      title: `Theme changed to ${selectedTheme}`,
-      description: getFormattedDate(),
-      action: (
-        <ToastAction altText="Goto schedule to undo" onClick={undoThemeChange}>
-          Undo
-        </ToastAction>
-      ),
-    });
+    // toast({
+    //   title: `Theme changed to ${selectedTheme}`,
+    //   description: getFormattedDate(),
+    //   action: (
+    //     <ToastAction
+    //       altText="Goto schedule to undo"
+    //       onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+    //         undoThemeChange(e)
+    //       }
+    //     >
+    //       Undo
+    //     </ToastAction>
+    //   ),
+    // });
   };
 
-  const undoThemeChange = () => {
+  const undoThemeChange = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     // Set the current theme back to the previous theme
     setCurrentTheme(previousTheme);
     // Update the actual theme
     setTheme(previousTheme);
-    toast({
-      title: `Theme reverted to ${previousTheme}`,
-      description: "Your theme change was undone.",
-    });
+    // toast({
+    //   title: `Theme reverted to ${previousTheme}`,
+    //   description: "Your theme change was undone.",
+    // });
   };
 
   return (

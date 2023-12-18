@@ -17,12 +17,13 @@
 
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { NavMenu } from "@/components/layout/navbar";
-import { NotificationMenu } from "@/components/layout/notification-menu";
+import { NotificationMenu } from "@/components/layout/notification_menu/notification-menu";
 import { SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "react-hot-toast";
+
 import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
 import { useUser } from "@/hooks/useQueries";
 import { useUserStore } from "@/stores/AuthStore";
@@ -56,6 +57,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     // Use min-h-screen instead of h-screen to prevent overflow from causing double scrollbars
     <div className="flex flex-col min-h-screen" id="app">
+      <Toaster position="bottom-right" />
       {!hideHeader && (
         <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
@@ -91,7 +93,6 @@ export function Layout({ children }: LayoutProps) {
           <Breadcrumb />
           <SiteSearch />
           {children}
-          <Toaster />
         </div>
       </main>
 
@@ -109,9 +110,9 @@ export function Layout({ children }: LayoutProps) {
 export function UnprotectedLayout({ children }: LayoutProps) {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      <Toaster position="bottom-right" />
       <RainbowTopBar />
       <div className="h-screen">{children}</div>
-      <Toaster />
     </div>
   );
 }
