@@ -14,3 +14,49 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
+
+import redis
+from django.core.management.base import BaseCommand
+
+
+class Command(BaseCommand):
+    help = "Deletes all keys matching the pattern."
+
+    def handle(self, *args: typing.Any, **options: typing.Any) -> None:
+        """Handle method for invalidating column keys in Redis.
+
+        Args:
+            *args: Variable length argument list.
+            **options: Arbitrary keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        # Connect to Redis
+        redis_client = redis.Redis(host="localhost", port=6379, db=1)
+
+        # Define the key pattern
+        pattern = ":1:allowed_fields_*"
+
+        # Initialize cursor for SCAN
+        cursor = 0
+
+        while True:
+            # Scan for keys matching the pattern
+            cursor, keys = redis_client.scan(cursor, match=pattern, count=1000)
+            if keys:
+                # Delete keys found in this scan iteration
+                redis_client.delete(*keys)
+                self.stdout.write(
+                    self.style.NOTICE(f"Deleted {len(keys)} keys matching the pattern.")
+                )
+
+            # Break the loop if cursor returned is 0 (end of scan)
+            if cursor == 0:
+                break
+
+        self.stdout.write(
+            self.style.SUCCESS("Successfully deleted all keys matching the pattern.")
+        )
