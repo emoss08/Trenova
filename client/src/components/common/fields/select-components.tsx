@@ -16,7 +16,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { cn, convertCamelCaseToReadable, PopoutWindow } from "@/lib/utils";
+import { cn, PopoutWindow } from "@/lib/utils";
 import {
   CaretSortIcon,
   CheckIcon,
@@ -176,7 +176,7 @@ export function MenuList({
                 return (
                   <React.Fragment key={index}>
                     <AddNewButton
-                      name={props.selectProps?.name as string}
+                      label={props.selectProps?.label as string}
                       popoutLink={props.selectProps.popoutLink as string}
                     />
                     {child}
@@ -200,9 +200,12 @@ export function NoOptionsMessage({
     formError?: string;
     popoutLink?: string;
     hasPopoutWindow?: boolean;
+    label: string;
   };
 }) {
   const { popoutLink, hasPopoutWindow } = props.selectProps || {};
+
+  console.info("selectProps", props.selectProps);
 
   return (
     <components.NoOptionsMessage {...props}>
@@ -212,7 +215,7 @@ export function NoOptionsMessage({
         </p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
-            name={props.selectProps?.name as string}
+            label={props.selectProps?.label as string}
             popoutLink={props.selectProps.popoutLink as string}
           />
         )}
@@ -302,10 +305,10 @@ function openPopoutWindow(
 }
 
 function AddNewButton({
-  name,
+  label,
   popoutLink,
 }: {
-  name: string;
+  label: string;
   popoutLink: string;
 }) {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -318,9 +321,7 @@ function AddNewButton({
       size="xs"
       onClick={(event) => handleClick(event)}
     >
-      <span className="mr-2">
-        {convertCamelCaseToReadable(name || "")} Entry
-      </span>
+      <span className="mr-2">{label} Entry</span>
       <PlusIcon className="h-4 w-4" />
     </Button>
   );

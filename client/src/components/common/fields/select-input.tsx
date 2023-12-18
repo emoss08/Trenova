@@ -102,12 +102,13 @@ export function SelectInput<T extends Record<string, unknown>>(
       )}
       <div className="relative">
         <Select
+          unstyled
           aria-invalid={errorOccurred}
           aria-labelledby={controllerProps.id}
           inputId={controllerProps.id}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={hideSelectedOptions}
-          unstyled
+          label={label}
           options={options}
           isMulti={isMulti}
           isLoading={isLoading}
@@ -268,6 +269,7 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
       )}
       <div className="relative">
         <CreatableSelect
+          label={label}
           unstyled
           aria-invalid={fieldState.invalid || isFetchError}
           isMulti={isMulti}

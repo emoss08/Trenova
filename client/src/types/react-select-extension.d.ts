@@ -26,6 +26,7 @@ declare module "react-select/base" {
     IsMulti extends boolean,
     Group extends GroupBase<Option>,
   > {
+    label: string;
     isFetchError?: boolean;
     formError?: string;
     isLoading?: boolean;
@@ -43,12 +44,14 @@ declare module "react-select/base" {
     IsMulti extends boolean,
     Group extends GroupBase<Option>,
   > {
+    label: string;
     isFetchError?: boolean;
     formError?: string;
     isMulti?: IsMulti;
     Group?: Group;
   }
   export interface AsyncSelectInput {
+    label: string;
     hasPopoutWindow?: boolean; // Flag when to show the add new option
     popoutLink?: string; // Link to the popout page
   }
