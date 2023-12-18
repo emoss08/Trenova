@@ -256,7 +256,7 @@ ALLOWED_MODELS = {
         "app_label": "dispatch",
         "allowed_fields": [
             {"value": "organization__name", "label": "Organization Name"},
-            {"value": "is_active", "label": "Is Active"},
+            {"value": "status", "label": "Status"},
             {"value": "code", "label": "Code"},
             {"value": "description", "label": "Description"},
             {"value": "revenue_goal", "label": "Revenue Goal"},
