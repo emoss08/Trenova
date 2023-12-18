@@ -108,3 +108,9 @@ export const rateMethodChoices: ReadonlyArray<
   { value: "PP", label: "Per Pound" },
   { value: "O", label: "Other" },
 ];
+
+export const TOAST_STYLE = {
+  background: "hsl(var(--background))",
+  color: "hsl(var(--foreground))",
+  boxShadow: "0 0 0 1px hsl(var(--border))",
+};

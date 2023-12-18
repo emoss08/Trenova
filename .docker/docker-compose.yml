@@ -61,7 +61,6 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: 127.0.0.1
       CONNECT_REST_ADVERTISED_PORT: 8083
       CONNECT_TASKS_MAX: 1
-
     depends_on:
       - kafka
     restart: on-failure
@@ -86,6 +85,11 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     restart: always
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - '8001:8001'
 
   monta_rabbitmq:
     image: rabbitmq:3-management

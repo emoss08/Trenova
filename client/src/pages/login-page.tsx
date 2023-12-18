@@ -107,6 +107,7 @@ function UserAuthForm() {
             placeholder="Username"
             autoCapitalize="none"
             autoCorrect="off"
+            autoComplete="username"
           />
         </div>
         <div className="grid gap-1">
@@ -118,6 +119,7 @@ function UserAuthForm() {
             type="password"
             autoCapitalize="none"
             autoCorrect="off"
+            autoComplete="current-password"
             placeholder="Password"
           />
         </div>

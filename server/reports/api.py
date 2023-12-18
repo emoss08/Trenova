@@ -15,11 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
 from django.apps import apps
 from django.core.cache import cache
+from kombu.exceptions import OperationalError
 from notifications.helpers import get_notification_list
 from rest_framework import exceptions, generics, status, viewsets
 from rest_framework.decorators import api_view
@@ -31,6 +33,9 @@ from reports import models, serializers, tasks
 from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
 from reports.selectors import get_audit_logs_by_model_name
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -206,6 +211,7 @@ def generate_report_api(request: Request) -> Response:
         DisallowedModelException: If the provided 'model_name' is not in the allowed list of models.
         exceptions.ValidationError: If any other validation on the request data fails.
     """
+
     model_name = request.data.get("model_name", None)
     columns = request.data.get("columns", None)
     file_format = request.data.get("file_format", None)
@@ -238,7 +244,10 @@ def generate_report_api(request: Request) -> Response:
     for column in columns:
         if column not in allowed_fields:
             return Response(
-                {"error": f"Invalid column for model: {column}"},
+                {
+                    "title": "Invalid column Usage",
+                    "error": f"Column `{column}` is not allowed for model `{model_name}`",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -255,8 +264,17 @@ def generate_report_api(request: Request) -> Response:
             },
             status=status.HTTP_202_ACCEPTED,
         )
-    except exceptions.ValidationError as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except exceptions.ValidationError as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+    except OperationalError as op_exc:
+        logger.error(f"Exception in generate_report_api: {op_exc}")
+        return Response(
+            {
+                "title": "Unable to generate report",
+                "error": "Report Service is not currently available. Please try again later.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 class UserReportViewSet(viewsets.ModelViewSet):
