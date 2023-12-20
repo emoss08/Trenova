@@ -176,7 +176,7 @@ export function MenuList({
                 return (
                   <React.Fragment key={index}>
                     <AddNewButton
-                      label={props.selectProps?.label as string}
+                      label={props.selectProps?.popoutLinkLabel as string}
                       popoutLink={props.selectProps.popoutLink as string}
                     />
                     {child}
@@ -200,7 +200,6 @@ export function NoOptionsMessage({
     formError?: string;
     popoutLink?: string;
     hasPopoutWindow?: boolean;
-    label: string;
   };
 }) {
   const { popoutLink, hasPopoutWindow } = props.selectProps || {};
@@ -215,7 +214,7 @@ export function NoOptionsMessage({
         </p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
-            label={props.selectProps?.label as string}
+            label={props.selectProps?.popoutLinkLabel as string}
             popoutLink={props.selectProps.popoutLink as string}
           />
         )}
