@@ -42,15 +42,6 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.CommentType]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "business_unit_id",
-            "status",
-            "name",
-            "description",
-            "created",
-            "modified",
         )
         return queryset
 
@@ -72,12 +63,6 @@ class DelayCodeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.DelayCode]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "status",
-            "code",
-            "description",
-            "f_carrier_or_driver",
         )
         return queryset
 
@@ -97,24 +82,12 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.FleetCodeSerializer
     filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
-    search_fields = ("code", "description", "status", "manager__username")
+    search_fields = ("code", "status", "manager__username")
 
     def get_queryset(self) -> QuerySet[models.FleetCode]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "business_unit_id",
-            "organization_id",
-            "code",
-            "description",
-            "status",
-            "revenue_goal",
-            "deadhead_goal",
-            "manager_id",
-            "mileage_goal",
-            "modified",
-            "created",
-        )
+        ).order_by("code")
         return queryset
 
 

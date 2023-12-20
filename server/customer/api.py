@@ -52,12 +52,8 @@ class DeliverySlotViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.DeliverySlot]:
         user_org = self.request.user.organization_id  # type: ignore
 
-        queryset = (
-            self.queryset.filter(organization_id=user_org)
-            .annotate(
-                location_name=F("location__name"),
-            )
-            .all()
+        queryset = self.queryset.filter(organization_id=user_org).annotate(
+            location_name=F("location__name"),
         )
 
         return queryset
@@ -137,7 +133,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 ),
             )
             .order_by("code")
-            .all()
         )
 
         return queryset
@@ -172,32 +167,15 @@ class CustomerFuelTableViewSet(viewsets.ModelViewSet):
         Returns:
             The filtered queryset.
         """
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .prefetch_related(
-                Prefetch(
-                    lookup="customer_fuel_table_details",
-                    queryset=models.CustomerFuelTableDetail.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only(
-                        "id",
-                        "customer_fuel_table_id",
-                        "percentage",
-                        "start_price",
-                        "method",
-                        "organization_id",
-                        "amount",
-                    ),
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).prefetch_related(
+            Prefetch(
+                lookup="customer_fuel_table_details",
+                queryset=models.CustomerFuelTableDetail.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
                 ),
-            )
-            .only(
-                "id",
-                "organization_id",
-                "name",
-                "description",
-            )
+            ),
         )
 
         return queryset
@@ -272,11 +250,6 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
                 )
             )
             .annotate()
-            .only(
-                "id",
-                "organization_id",
-                "name",
-            )
         )
 
         return queryset

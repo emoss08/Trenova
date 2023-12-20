@@ -342,12 +342,11 @@ class FleetCode(GenericModel):
 
     class Meta:
         """
-        Metaclass for FleetCode
+        Metaclass for FleetCode model.
         """
 
         verbose_name = _("Fleet Code")
         verbose_name_plural = _("Fleet Codes")
-        ordering = ["code"]
         db_table = "fleet_code"
         constraints = [
             models.UniqueConstraint(
@@ -364,7 +363,9 @@ class FleetCode(GenericModel):
         Returns:
             str: A string representation of the FleetCode instance, wrapped to a maximum of 4 characters.
         """
-        return textwrap.wrap(self.code, 4)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """

@@ -278,11 +278,6 @@ class ChargeTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.ChargeType]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "name",
-            "description",
         )
         return queryset
 
@@ -308,14 +303,6 @@ class AccessorialChargeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.AccessorialCharge]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "is_detention",
-            "charge_amount",
-            "code",
-            "description",
-            "method",
-            "organization_id",
         )
 
         return queryset

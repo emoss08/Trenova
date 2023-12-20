@@ -32,6 +32,7 @@ class RouteAdmin(GenericAdmin[models.Route]):
         "destination_location",
         "total_mileage",
         "duration",
+        "auto_generated",
     )
     list_filter: tuple[str, ...] = ("origin_location",)
     search_fields: tuple[str, ...] = (

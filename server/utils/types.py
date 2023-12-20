@@ -37,6 +37,7 @@ type ModelDelete = tuple[int, dict[str, int]]
 type Coordinates = tuple[
     tuple[float | None, float | None], tuple[float | None, float | None]
 ] | None
+type Point = tuple[float | None, float | None] | Any
 
 
 class BillingClientActions(Enum):

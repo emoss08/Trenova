@@ -174,15 +174,6 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
         """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "status",
-            "code",
-            "description",
-            "organization_id",
-            "cash_account_id",
-            "ap_account_id",
-            "expense_account_id",
         )
 
         return queryset
