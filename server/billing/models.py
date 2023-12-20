@@ -436,7 +436,7 @@ class DocumentClassification(GenericModel):
     )
     name = models.CharField(
         _("Name"),
-        max_length=150,
+        max_length=10,
         help_text=_("Document classification name"),
     )
     description = models.TextField(
@@ -452,7 +452,6 @@ class DocumentClassification(GenericModel):
 
         verbose_name = _("Document Classification")
         verbose_name_plural = _("Document Classifications")
-        ordering = ["name"]
         db_table = "document_classification"
         db_table_comment = (
             "Stores document classification information for related organization."

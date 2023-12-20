@@ -65,6 +65,9 @@ const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
 const LocationPage = lazy(() => import("../pages/dispatch/Location"));
 const TrailerPage = lazy(() => import("../pages/equipment/Trailer"));
 const TractorPage = lazy(() => import("../pages/equipment/Tractor"));
+const DocumentClassPage = lazy(
+  () => import("../pages/billing/DocumentClassification"),
+);
 const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 
 export type RouteObjectWithPermission = RouteObject & {
@@ -174,6 +177,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage charge types",
     element: <ChargeTypePage />,
     permission: "view_chargetype",
+  },
+  {
+    title: "Document Classifications",
+    group: "billing",
+    subMenu: "configuration files",
+    path: "/billing/document-classes",
+    description: "Manage document classifications",
+    element: <DocumentClassPage />,
+    permission: "view_documentclassification",
   },
   {
     title: "Accessorial Charges",

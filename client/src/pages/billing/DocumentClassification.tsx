@@ -15,18 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
+import { DocumentClassDialog } from "@/components/document-class/document-class-table-dialog";
+import { DocumentClassification } from "@/types/billing";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChargeType } from "@/types/billing";
-import { ChargeTypeDialog } from "@/components/charge-types/charge-type-dialog";
-import { ChargeTypeEditSheet } from "@/components/charge-types/charge-type-edit-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { DocumentClassEditDialog } from "@/components/document-class/document-class-table-edit-dialog";
 
-const columns: ColumnDef<ChargeType>[] = [
+const columns: ColumnDef<DocumentClassification>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -49,16 +46,6 @@ const columns: ColumnDef<ChargeType>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
-    ),
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
-  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
@@ -70,27 +57,18 @@ const columns: ColumnDef<ChargeType>[] = [
   },
 ];
 
-const filters: FilterConfig<ChargeType>[] = [
-  {
-    columnName: "status",
-    title: "Status",
-    options: tableStatusChoices,
-  },
-];
-
-export default function ChargeTypes() {
+export default function DocumentClassificationPage() {
   return (
     <DataTable
-      queryKey="charge-type-table-data"
+      queryKey="document-classification-table-data"
       columns={columns}
-      link="/charge_types/"
-      name="Charge Type"
-      exportModelName="ChargeType"
+      link="/document_classifications/"
+      name="Document Class."
+      exportModelName="DocumentClassification"
       filterColumn="name"
-      tableFacetedFilters={filters}
-      TableSheet={ChargeTypeDialog}
-      TableEditSheet={ChargeTypeEditSheet}
-      addPermissionName="add_chargetype"
+      TableSheet={DocumentClassDialog}
+      TableEditSheet={DocumentClassEditDialog}
+      addPermissionName="add_documentclassification"
     />
   );
 }

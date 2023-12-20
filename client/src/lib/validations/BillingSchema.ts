@@ -21,6 +21,7 @@ import {
   AccessorialChargeFormValues,
   BillingControlFormValues,
   ChargeTypeFormValues,
+  DocumentClassificationFormValues,
 } from "@/types/billing";
 import {
   AutoBillingCriteriaChoicesProps,
@@ -58,6 +59,16 @@ export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string()
       .max(50, "Name must be less than 50 characters.")
+      .required("Name is required"),
+    description: Yup.string()
+      .max(100, "Description must be less than 100 characters.")
+      .notRequired(),
+  });
+
+export const documentClassSchema: ObjectSchema<DocumentClassificationFormValues> =
+  Yup.object().shape({
+    name: Yup.string()
+      .max(10, "Name must be less than 10 characters.")
       .required("Name is required"),
     description: Yup.string()
       .max(100, "Description must be less than 100 characters.")

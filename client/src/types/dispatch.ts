@@ -49,7 +49,7 @@ export interface DelayCode extends BaseModel {
 
 export type DelayCodeFormValues = Omit<
   DelayCode,
-  "organization" | "businessUnit" | "created" | "modified"
+  "id" | "organization" | "businessUnit" | "created" | "modified"
 >;
 
 export interface FleetCode extends BaseModel {
@@ -65,7 +65,7 @@ export interface FleetCode extends BaseModel {
 
 export type FleetCodeFormValues = Omit<
   FleetCode,
-  "organization" | "businessUnit" | "created" | "modified"
+  "id" | "organization" | "businessUnit" | "created" | "modified"
 >;
 
 export interface CommentType extends BaseModel {
@@ -87,8 +87,8 @@ export interface Rate extends BaseModel {
   isActive: boolean;
   rateNumber: string;
   customer?: string | null;
-  effectiveDate: Date;
-  expirationDate: Date;
+  effectiveDate: string;
+  expirationDate: string;
   commodity?: string | null;
   orderType?: string | null;
   equipmentType?: string | null;

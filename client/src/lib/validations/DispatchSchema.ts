@@ -1,3 +1,19 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
 import { validateDecimal } from "@/lib/utils";
 /*
  * COPYRIGHT(c) 2023 MONTA
@@ -15,7 +31,6 @@ import { validateDecimal } from "@/lib/utils";
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 import {
@@ -68,41 +83,45 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string()
       .required("Name is required")
-      .max(4, "Code cannot be more than 4 characters"),
+      .max(10, "Code cannot be more than 10 characters"),
     revenueGoal: Yup.string()
-      .required("Revenue Goal is required")
+      .notRequired()
+      .nullable()
       .test(
         "is-decimal",
         "Revenue Goal must be a decimal with no more than two decimal places",
         (value) => {
-          if (value !== undefined && value !== null) {
-            return validateDecimal(value, 2);
+          if (value === undefined || value === null || value === "") {
+            return true; // Passes validation for null, undefined, or empty string
           }
-          return false;
+          return validateDecimal(value, 2);
         },
       ),
     deadheadGoal: Yup.string()
-      .required("Deadhead Goal is required")
+      .notRequired()
+      .nullable()
       .test(
         "is-decimal",
         "Deadhead Goal must be a decimal with no more than two decimal places",
         (value) => {
-          if (value !== undefined && value !== null) {
-            return validateDecimal(value, 2);
+          console.info("value", value);
+          if (value === undefined || value === null || value === "") {
+            return true; // Passes validation for null, undefined, or empty string
           }
-          return false;
+          return validateDecimal(value, 2);
         },
       ),
     mileageGoal: Yup.string()
-      .required("Mileage Goal is required")
+      .notRequired()
+      .nullable()
       .test(
         "is-decimal",
         "Mileage Goal must be a decimal with no more than two decimal places",
         (value) => {
-          if (value !== undefined && value !== null) {
-            return validateDecimal(value, 2);
+          if (value === undefined || value === null || value === "") {
+            return true; // Passes validation for null, undefined, or empty string
           }
-          return false;
+          return validateDecimal(value, 2);
         },
       ),
     description: Yup.string()

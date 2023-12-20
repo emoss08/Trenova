@@ -81,7 +81,8 @@ const ButtonConfig: React.FC<{
   selectedRowCount: number;
   name: string;
   store: StoreType<TableStoreProps>;
-}> = React.memo(({ selectedRowCount, name, store }) => {
+  isDisabled?: boolean;
+}> = React.memo(({ selectedRowCount, name, store, isDisabled }) => {
   const buttonLabel =
     selectedRowCount > 0
       ? `Inactivate ${selectedRowCount} records`
@@ -93,6 +94,7 @@ const ButtonConfig: React.FC<{
       variant={buttonVariant}
       onClick={() => store.set("sheetOpen", true)}
       className="h-8"
+      disabled={isDisabled}
     >
       <PlusIcon className="mr-2 h-4 w-4" /> {buttonLabel}
     </Button>
@@ -168,13 +170,12 @@ export function DataTableTopBar<K>({
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
         <DataTableViewOptions table={table} />
         <DataTableImportExportOption />
-        {userHasPermission(addPermissionName) && (
-          <ButtonConfig
-            selectedRowCount={selectedRowCount}
-            name={name}
-            store={store}
-          />
-        )}
+        <ButtonConfig
+          selectedRowCount={selectedRowCount}
+          name={name}
+          store={store}
+          isDisabled={!userHasPermission(addPermissionName)}
+        />
       </div>
     </div>
   );

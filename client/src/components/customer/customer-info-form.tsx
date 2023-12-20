@@ -177,6 +177,9 @@ export function CustomerInfoForm({
               isLoading={isUsersLoading}
               placeholder="Select Customer Advocate"
               description="Assign a customer advocate from your team."
+              hasPopoutWindow
+              popoutLink="#" // TODO: Change once User Management is added.
+              popoutLinkLabel="User"
             />
           </div>
         </div>

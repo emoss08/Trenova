@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -24,8 +24,8 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Formats a date string into a human readable format
- * @param dateStr - The date string to format
  * @returns {string}
+ * @param str
  */
 export function upperFirst(str: string): string {
   if (!str) return "";
@@ -68,9 +68,9 @@ export function truncateText(str: string, length: number): string {
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
- * @param min - The minimum value to return
- * @param max - The maximum value to return
  * @returns {number}
+ * @param ref
+ * @param handler
  */
 export const useClickOutside = <T extends HTMLElement>(
   ref: RefObject<T>,
@@ -174,6 +174,11 @@ type PopoutWindowParams = {
  * Opens a new window with the given path and query params
  * @param path - The path to open the new window to
  * @param incomingQueryParams - The query params to pass to the new window
+ * @param width - The width of the new window
+ * @param height - The height of the new window
+ * @param left - The left position of the new window
+ * @param top - The top position of the new window
+ * @param hideHeader - Whether or not to hide the header of the new window
  * @returns {void}
  */
 export function PopoutWindow(
@@ -218,15 +223,4 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
     }
   });
   return cleanedObj;
-};
-
-/**
- * Converts a camelCase string to a readable string
- * @param str
- * @returns {string}
- */
-export const convertCamelCaseToReadable = (str: string): string => {
-  return str
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (str) => str.toUpperCase());
 };

@@ -17,11 +17,11 @@
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
-import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
+import { documentClassSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ChargeType,
-  ChargeTypeFormValues as FormValues,
+  DocumentClassification,
+  DocumentClassificationFormValues as FormValues,
 } from "@/types/billing";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -36,16 +36,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { ChargeTypeForm } from "./charge-type-dialog";
+import { DocumentClassForm } from "@/components/document-class/document-class-table-dialog";
 
-function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
+function DocumentClassEditForm({
+  documentClass,
+}: {
+  documentClass: DocumentClassification;
+}) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(chargeTypeSchema),
+    resolver: yupResolver(documentClassSchema),
     defaultValues: {
-      status: chargeType.status,
-      name: chargeType.name,
-      description: chargeType.description,
+      name: documentClass.name,
+      description: documentClass.description,
     },
   });
 
@@ -53,11 +56,11 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
     control,
     {
       method: "PUT",
-      path: `/charge_types/${chargeType.id}/`,
-      successMessage: "Charge Type updated successfully.",
-      queryKeysToInvalidate: ["charge-type-table-data"],
+      path: `/document_classifications/${documentClass.id}/`,
+      successMessage: "Document Classification updated successfully.",
+      queryKeysToInvalidate: ["document-classification-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create update charge type.",
+      errorMessage: "Failed to update document classification.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -70,7 +73,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <ChargeTypeForm control={control} />
+      <DocumentClassForm control={control} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
@@ -84,19 +87,26 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
   );
 }
 
-export function ChargeTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
-  const [chargeType] = useTableStore.use("currentRecord");
+export function DocumentClassEditDialog({
+  onOpenChange,
+  open,
+}: TableSheetProps) {
+  const [documentClass] = useTableStore.use(
+    "currentRecord",
+  ) as DocumentClassification[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{chargeType && chargeType.name}</DialogTitle>
+          <DialogTitle>{documentClass && documentClass.name}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on {chargeType && formatDate(chargeType.modified)}
+          Last updated on {documentClass && formatDate(documentClass.modified)}
         </DialogDescription>
-        {chargeType && <ChargeTypeEditForm chargeType={chargeType} />}
+        {documentClass && (
+          <DocumentClassEditForm documentClass={documentClass} />
+        )}
       </DialogContent>
     </Dialog>
   );
