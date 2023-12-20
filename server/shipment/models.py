@@ -70,40 +70,8 @@ class EntryMethodChoices(models.TextChoices):
 
 
 class ShipmentControl(GenericModel):
-    """Stores the shipment control information for a related :model:`organization.Organization`.
-
-    The Shipment Control model stores the Shipment Control information for a related
-    organization. It is used to store information such as whether to automatically
-    rate shipments, calculate distance, enforce customer information, generate routes,
-    and more.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID.
-            Editable and unique.
-        organization (OneToOneField): ForeignKey to the related organization model
-            with a CASCADE on delete. Has a verbose name of "Organization" and
-            related names of "shipment_control" and "shipment_controls".
-        auto_rate_shipment (BooleanField): Default value is True.
-            Help text is "Auto rate shipments".
-        calculate_distance (BooleanField): Default value is True.
-            Help text is "Calculate distance for the shipment".
-        enforce_rev_code (BooleanField): Default value is False.
-            Help text is "Enforce rev code being entered when entering an shipment.".
-        generate_routes (BooleanField): Default value is False.
-            Help text is "Automatically generate routes for shipment entry.".
-        auto_sequence_stops (BooleanField): Default value is True.
-            Help text is "Auto Sequence stops for the shipment and movements.".
-        auto_shipment_total (BooleanField): Default value is True.
-            Help text is "Automate the shipment total amount calculation.".
-        enforce_origin_destination (BooleanField): Default value is False.
-            Help text is "Compare and validate that origin and destination are not the same.".
-
-    Methods:
-        get_absolute_url(self) -> str:
-            Returns the URL for this object's detail view.
-
-        save(self, *args, **kwargs) -> None:
-            Saves the current object to the database.
+    """
+    Stores the shipment control information for a related :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -733,31 +701,9 @@ class Shipment(GenericModel):
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Overrides the default Django save method to provide custom save behavior for the Shipment model.
 
-        Before saving the instance, if the 'pro_number' field is empty, it generates a pro number using the
-        'generate_pro_number' method.
-
-        If 'auto_rate' is true, it retrieves and sets the transfer rate details for this shipment.
-
-        If the shipment's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
-        If the Shipment's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
-        piece count and weight for this shipment.
-
-        If the 'ready_to_bill' flag is present and 'auto_shipment_total' setting from the organization Shipment Control
-        is set to True, the sub_total is automatically calculated.
-
-        If 'origin_location' or 'destination_location' exists but the corresponding addresses do not, it sets
-        the address using the location's combined address details.
-
-        If the shipment has a commodity set and the commodity has a minimum and maximum temperature specification,
-        If the Shipment has a commodity set and the commodity has a minimum and maximum temperature specification,
-        these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the shipment.
-
-        If the commodity is classified as a hazardous material, the 'hazmat' field of the Shipment is set to True.
-
-        It recalculates the sub_total and other charges before calling super().save() method.
-
-        Note:
-            This function alters the current instance 'self' and saves the changes into the database.
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments.
 
         Returns:
             None: This function does not return anything.
