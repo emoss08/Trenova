@@ -90,6 +90,7 @@ export default function ChargeTypes() {
       tableFacetedFilters={filters}
       TableSheet={ChargeTypeDialog}
       TableEditSheet={ChargeTypeEditSheet}
+      addPermissionName="add_chargetype"
     />
   );
 }
