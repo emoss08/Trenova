@@ -67,6 +67,9 @@ export function LocationCommentForm({
                       isFetchError={isCommentTypeError}
                       placeholder="Comment Type"
                       description="Specify the category of the comment from the available options."
+                      popoutLink="/dispatch/comment-types/"
+                      hasPopoutWindow
+                      popoutLinkLabel="Comment Type"
                     />
                   </div>
                 </div>

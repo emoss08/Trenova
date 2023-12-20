@@ -80,6 +80,7 @@ export function SelectInput<T extends Record<string, unknown>>(
     hideSelectedOptions = false,
     hasPopoutWindow = false,
     popoutLink,
+    popoutLinkLabel,
     ...controllerProps
   } = props;
 
@@ -108,7 +109,7 @@ export function SelectInput<T extends Record<string, unknown>>(
           inputId={controllerProps.id}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={hideSelectedOptions}
-          label={label}
+          popoutLinkLabel={popoutLinkLabel}
           options={options}
           isMulti={isMulti}
           isLoading={isLoading}
@@ -269,7 +270,6 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
       )}
       <div className="relative">
         <CreatableSelect
-          label={label}
           unstyled
           aria-invalid={fieldState.invalid || isFetchError}
           isMulti={isMulti}

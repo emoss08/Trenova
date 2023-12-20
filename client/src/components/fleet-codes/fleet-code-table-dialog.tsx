@@ -131,6 +131,9 @@ export function FleetCodeForm({
             placeholder="Select Manager"
             description="User who manages the Fleet Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="#" // TODO: Change once Document Classification is added.
+            popoutLinkLabel="User"
           />
         </div>
       </div>

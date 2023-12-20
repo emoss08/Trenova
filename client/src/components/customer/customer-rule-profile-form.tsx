@@ -66,6 +66,9 @@ export function CustomerRuleProfileForm({
               isLoading={isDocumentClassLoading}
               placeholder="Select Document Classification"
               description="Select the state or region for the customer."
+              hasPopoutWindow
+              popoutLink="#" // TODO: Change once Document Classification is added.
+              popoutLinkLabel="Document Classification"
             />
           </div>
         </div>

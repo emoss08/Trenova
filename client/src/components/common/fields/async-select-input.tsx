@@ -111,7 +111,6 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
       )}
       <div className="relative">
         <AsyncSelect
-          label={label}
           aria-invalid={errorOccurred}
           aria-labelledby={controllerProps.id}
           inputId={controllerProps.id}
@@ -121,6 +120,7 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
           defaultOptions={options}
           hasPopoutWindow={hasPopoutWindow}
           popoutLink={popoutLink}
+          popoutLinkLabel={props.popoutLinkLabel}
           cacheOptions
           noOptionsMessage={() => "No options available..."}
           loadOptions={loadOptions}

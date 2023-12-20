@@ -120,6 +120,7 @@ export function TrailerForm({
             isClearable={false}
             popoutLink="/equipment/equipment-types/"
             hasPopoutWindow
+            popoutLinkLabel="Equipment Types"
           />
         </FormControl>
         <FormControl>
@@ -133,8 +134,9 @@ export function TrailerForm({
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
             isClearable={false}
-            popoutLink="/equipment/equipment-manufacturers/"
             hasPopoutWindow
+            popoutLink="/equipment/equipment-manufacturers/"
+            popoutLinkLabel="Equipment Manufacturer"
           />
         </FormControl>
         <FormControl>
@@ -195,6 +197,7 @@ export function TrailerForm({
             description="Select the code that identifies the trailer within your fleet."
             hasPopoutWindow
             popoutLink="/dispatch/fleet-codes/"
+            popoutLinkLabel="Fleet Code"
             isClearable
           />
         </FormControl>

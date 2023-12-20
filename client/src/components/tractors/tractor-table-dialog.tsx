@@ -126,6 +126,7 @@ export function TractorForm({
             description="Select the equipment type of the tractor, to categorize it based on its functionality and usage."
             popoutLink="/equipment/equipment-types/"
             hasPopoutWindow
+            popoutLinkLabel="Equipment Type"
           />
         </FormControl>
         <FormControl>
@@ -139,8 +140,9 @@ export function TractorForm({
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the tractor, to categorize it based on its functionality and usage."
             isClearable
-            popoutLink="/equipment/equipment-manufacturers/"
             hasPopoutWindow
+            popoutLink="/equipment/equipment-manufacturers/"
+            popoutLinkLabel="Equipment Manufacturer"
           />
         </FormControl>
         <FormControl>
@@ -204,6 +206,7 @@ export function TractorForm({
             hasPopoutWindow
             popoutLink="/dispatch/fleet-codes/"
             isClearable
+            popoutLinkLabel="Fleet Code"
           />
         </FormControl>
         <FormControl>
@@ -217,6 +220,9 @@ export function TractorForm({
             placeholder="Select Primary Worker"
             description="Select the primary worker assigned to the tractor."
             isClearable
+            hasPopoutWindow
+            popoutLink="#"
+            popoutLinkLabel="Worker"
           />
         </FormControl>
         <FormControl>
@@ -230,6 +236,9 @@ export function TractorForm({
             placeholder="Select Secondary Worker"
             description="Select the secondary worker assigned to the tractor."
             isClearable
+            hasPopoutWindow
+            popoutLink="#"
+            popoutLinkLabel="Worker"
           />
         </FormControl>
         <FormControl>

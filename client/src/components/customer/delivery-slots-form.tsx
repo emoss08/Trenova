@@ -106,6 +106,9 @@ export function DeliverySlotForm({
                         isClearable={false}
                         menuPlacement="bottom"
                         menuPosition="fixed"
+                        hasPopoutWindow
+                        popoutLink="/dispatch/locations/" // TODO: Change once Document Classification is added.
+                        popoutLinkLabel="Location"
                       />
                     </div>
                   </div>
