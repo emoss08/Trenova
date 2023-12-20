@@ -69,6 +69,7 @@ const Button = React.forwardRef<
       asChild = false,
       isLoading,
       loadingText,
+      disabled,
       ...props
     },
     ref,
@@ -79,9 +80,10 @@ const Button = React.forwardRef<
         className={cn(
           buttonVariants({ variant, size, className }),
           isLoading && "cursor-progress",
+          "disabled:cursor-not-allowed",
         )}
+        disabled={disabled || isLoading}
         ref={ref}
-        disabled={isLoading}
         {...props}
       >
         {isLoading ? (
