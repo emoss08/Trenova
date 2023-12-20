@@ -87,7 +87,6 @@ class CustomGroup(models.Model):
         verbose_name_plural = _("Groups")
         db_table = "a_group"
         db_table_comment = "Stores the groups that a user belongs to."
-
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -641,8 +640,8 @@ class JobTitle(GenericModel):
 
         verbose_name = _("Job Title")
         verbose_name_plural = _("Job Titles")
-        ordering = ["name"]
         db_table = "job_title"
+        db_table_comment = "Stores the job title information related to users."
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -717,6 +716,7 @@ class Token(models.Model):
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
         db_table = "auth_token"
+        db_table_comment = "Stores the token for a user."
 
     def __str__(self) -> str:
         """Token string representation.

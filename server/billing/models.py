@@ -294,7 +294,7 @@ class ChargeType(GenericModel):
         verbose_name_plural = _("Charge Types")
         ordering = ["name"]
         db_table = "charge_type"
-        db_table_comment = "Stores other charge types."
+        db_table_comment = "Stores charge type information for related organization."
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
@@ -1169,7 +1169,11 @@ class BillingHistory(GenericModel):
         Returns:
             str: BillingHistory string representation
         """
-        return textwrap.wrap(self.shipment.pro_number, 50)[0]
+        return textwrap.shorten(
+            f"{self.shipment.pro_number} {self.bill_type} {self.invoice_number}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Billing History absolute url
@@ -1215,17 +1219,9 @@ class BillingExceptionManager(models.Manager):
     """
     A custom manager for the BillingException model that provides additional functionality for
     managing BillingException instances.
-
-    This class inherits from Django's built-in `models.Manager` class, and is used to manage instances
-    of the `BillingException` model. It provides two methods to retrieve and create `BillingException`
-    instances with additional functionality.
-
-    Methods:
-        - get_most_recent_exception(Shipment)
-        - create_billing_exception(organization, exception_type, Shipment, exception_message)
     """
 
-    def get_most_recent_exception(self, shipment: Shipment) -> BillingException:
+    def get_most_recent_exception(self, *shipment: Shipment) -> BillingException:
         """
         Retrieve the most recent BillingException instance associated with the provided Shipment.
 
@@ -1239,11 +1235,8 @@ class BillingExceptionManager(models.Manager):
             shipment (Shipment): The Shipment object to retrieve the most recent BillingException for.
 
         Returns:
-            Optional[BillingException]: The most recent BillingException instance associated with the provided Shipment,
+            BillingException: The most recent BillingException instance associated with the provided Shipment,
             or None if no BillingException instance is found.
-
-        Raises:
-            None
         """
         return self.filter(shipment=shipment).latest("created_at")  # type: ignore
 
@@ -1259,15 +1252,6 @@ class BillingExceptionManager(models.Manager):
         """
         Create a new BillingException instance with the provided information.
 
-        This method creates a new `BillingException` instance with the provided information. It takes the following
-        arguments:
-        - `organization` (type: `Organization`): The `Organization` object associated with the `BillingException`.
-        - `exception_type` (type: `str`): A string representing the type of the `BillingException`.
-        - `shipment` (type: `Shipment`): The `Shipment` object associated with the `BillingException`.
-        - `exception_message` (type: `str`): A message describing the `BillingException`.
-
-        The method returns the newly created `BillingException` instance.
-
         Args:
             organization (Organization): The Organization object associated with the BillingException.
             business_unit (BusinessUnit): The BusinessUnit object associated with the BillingException.
@@ -1277,9 +1261,6 @@ class BillingExceptionManager(models.Manager):
 
         Returns:
             BillingException: The new BillingException instance.
-
-        Raises:
-            None
         """
         return self.create(  # type: ignore
             organization=organization,
@@ -1291,18 +1272,8 @@ class BillingExceptionManager(models.Manager):
 
 
 class BillingException(GenericModel):
-    """The BillingException model is used to store information about a billing exception.
-
-    It has several fields, including:
-    id: a unique identifier for the exception, generated using a UUID
-    exception_type: a choice field representing the type of exception, with choices defined in the nested
-    BillingExceptionChoices class
-    shipment: a foreign key to an shipment related to the exception
-    exception_message: a text field for storing a message about the exception
-    The model also has a Meta class for setting verbose names and ordering, as well as a __str__ method
-    for returning a string representation of the exception. The nested BillingExceptionChoices class is
-    used to define the choices for the exception_type field and the class is marked final, so it can't
-    be overridden in the subclasses.
+    """
+    Stores billing exception exception information for a related :model:`shipment.Shipment`.
     """
 
     id = models.UUIDField(
@@ -1358,24 +1329,14 @@ class BillingException(GenericModel):
         """Billing Exception absolute url
 
         Returns:
-            Absolute url for the billing exception object. For example,
-            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+            str: Absolute url for the billing exception object.
         """
         return reverse("billing-exception-detail", kwargs={"pk": self.pk})
 
 
 class InvoicePaymentDetail(GenericModel):
-    """The InvoicePaymentDetail model is used to store information about a payment for an invoice.
-
-    It has several fields, including:
-    id: a unique identifier for the payment, generated using a UUID
-    invoice: a foreign key to an invoice related to the payment
-    check_number: a text field for storing the check number for the payment
-    payment_amount: a decimal field for storing the payment amount
-    payment_date: a date field for storing the date the payment was received
-    payment_method: a text field for storing the payment method used
-    The model also has a Meta class for setting verbose names and ordering, as well as a __str__ method
-    for returning a string representation of the payment.
+    """
+    Stores invoice payment detail information for a related :model:`billing.BillingHistory`.
     """
 
     id = models.UUIDField(
@@ -1386,7 +1347,7 @@ class InvoicePaymentDetail(GenericModel):
     )
     invoice = models.ForeignKey(
         BillingHistory,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         help_text=_("Invoice for the payment."),
         verbose_name=_("Invoice"),
     )
@@ -1439,7 +1400,6 @@ class InvoicePaymentDetail(GenericModel):
         """Invoice Payment Detail absolute url
 
         Returns:
-            Absolute url for the invoice payment detail object. For example,
-            `/invoice_payment_detail/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+            str: Absolute url for the invoice payment detail object.
         """
         return reverse("invoice-payment-detail-detail", kwargs={"pk": self.pk})
