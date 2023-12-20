@@ -282,31 +282,6 @@ class FleetCode(GenericModel):
     A FleetCode instance represents a code used to identify a fleet of vehicles for service incidents.
     This allows for tracking and reporting on specific fleets of vehicles, including their revenue goals,
     deadhead goals, and mileage goals.
-
-    Attributes:
-        code (CharField): Fleet code for the service incident.
-            Has a max length of 4 characters, is the primary key and unique, with help text of "Fleet code for the
-            service incident.".
-        description (CharField): Description for the fleet code.
-            Has a max length of 100 characters and help text of "Description for the fleet code.".
-        status (ChoiceField): Whether the fleet code is active.
-            Has a default value of True and help text of "Is the fleet code active.".
-        revenue_goal (DecimalField): Revenue goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for
-            the fleet code.".
-        deadhead_goal (DecimalField): Deadhead goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Deadhead goal for
-            the fleet code.".
-        mileage_goal (DecimalField): Mileage goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Mileage goal for
-            the fleet code.".
-
-    Methods:
-        __str__(self) -> str:
-            Returns a string representation of the fleet code, wrapped to a maximum of 50 characters.
-
-        get_absolute_url(self) -> str:
-            Returns the URL for this object's detail view.
     """
 
     id = models.UUIDField(
@@ -323,7 +298,7 @@ class FleetCode(GenericModel):
     )
     code = models.CharField(
         _("Fleet Code"),
-        max_length=4,
+        max_length=10,
         help_text=_("Fleet code for the service incident."),
     )
     description = models.CharField(
