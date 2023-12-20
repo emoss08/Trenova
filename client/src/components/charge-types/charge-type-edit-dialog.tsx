@@ -19,7 +19,10 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { ChargeTypeFormValues as FormValues } from "@/types/billing";
+import {
+  ChargeType,
+  ChargeTypeFormValues as FormValues,
+} from "@/types/billing";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -35,11 +38,7 @@ import {
 } from "../ui/dialog";
 import { ChargeTypeForm } from "./charge-type-dialog";
 
-function ChargeTypeEditForm({
-  chargeType,
-}: {
-  chargeType: Record<string, any>;
-}) {
+function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(chargeTypeSchema),
