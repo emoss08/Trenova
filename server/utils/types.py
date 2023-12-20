@@ -28,8 +28,8 @@ from rest_framework.request import Request
 from accounts.models import User
 
 type ModelUUID = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-type HealthStatus = Union[dict[str, Union[str, int, int, int]]]
-type HealthStatusAndTime = Union[dict[str, Union[str, int, int, int, float, float]]]
+type HealthStatus = dict[str, Union[str, int, int, int]]
+type HealthStatusAndTime = dict[str, Union[str, int, int, int, float, float]]
 type DiskUsage = tuple[int, int, int]
 type BilledShipments = tuple[list[Any | list[dict[str, str | list[str]]]], list[Any]]
 type EDIEnvelope = tuple[str, str, str, str, str, str]
