@@ -16,13 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from django.core.exceptions import ValidationError
-from rest_framework.test import APIClient
-
 from accounts.models import User
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import CommentType
+from django.core.exceptions import ValidationError
 from organization.models import Organization
+from rest_framework.test import APIClient
 from worker import models
 
 pytestmark = pytest.mark.django_db
@@ -579,4 +578,26 @@ def test_worker_sex_choices(worker: models.Worker) -> None:
 
     assert excinfo.value.message_dict["sex"] == [
         "Value 'invalid' is not a valid choice."
+    ]
+
+
+def test_is_active_not_allowed_when_termination_date(worker: models.Worker) -> None:
+    """Test ValidationError is thrown when the worker has a termination date ,but
+    is still active.
+
+    Args:
+        worker (models.Worker): Worker Object.
+
+    Returns:
+        None: this function does not return anything.
+    """
+
+    worker.profile.termination_date = "2021-01-01"
+    worker.profile.is_active = True
+
+    with pytest.raises(ValidationError) as excinfo:
+        worker.profile.clean()
+
+    assert excinfo.value.message_dict["termination_date"] == [
+        "You must set the worker to inactive to set the termination date. Please try again."
     ]

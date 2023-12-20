@@ -31,7 +31,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USZipCodeField
-
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
 
@@ -453,6 +452,17 @@ class WorkerProfile(GenericModel):
                 {
                     "license_expiration_date": _(
                         "You must provide license expiration date. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        # Validate if the termination date is set the isActiveFlag is set to False
+        if self.termination_date and self.worker.is_active:
+            raise ValidationError(
+                {
+                    "termination_date": _(
+                        "You must set the worker to inactive to set the termination date. Please try again."
                     )
                 },
                 code="invalid",
