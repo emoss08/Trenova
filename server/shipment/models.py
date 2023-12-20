@@ -703,6 +703,9 @@ class Shipment(GenericModel):
         verbose_name = _("Shipment")
         verbose_name_plural = _("Shipments")
         db_table = "shipment"
+        db_table_comment = (
+            "Stores shipment information related to a related organization."
+        )
         constraints = [
             models.UniqueConstraint(
                 Lower("pro_number"),
@@ -801,6 +804,8 @@ class Shipment(GenericModel):
 
         self.calculate_other_charge_amount()
 
+        self.set_shipment_mileage_and_create_route()
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -841,7 +846,32 @@ class Shipment(GenericModel):
 
         super().clean()
 
+    def set_shipment_mileage_and_create_route(self) -> None:
+        """Set the mileage for a shipment and create a route.
+
+        This function is called as a signal when a shipment model instance is saved.
+        If the shipment has an origin and destination location, it sets the mileage
+        for the shipment and creates a route using the generate_route().
+
+        Returns:
+            None: This function does not return anything.
+        """
+        from route.services import get_shipment_mileage
+
+        if (
+            self.origin_location
+            and self.destination_location
+            and self.origin_location.is_geocoded
+            and self.destination_location.is_geocoded
+        ):
+            self.mileage = get_shipment_mileage(shipment=self)
+
     def generate_pro_number(self) -> str:
+        """Generates a unique pro number for the shipment.
+
+        Returns:
+            str: The generated pro number.
+        """
         today = datetime.now().strftime("%y%m%d")
         count_for_today = (
             self.__class__.objects.filter(
@@ -951,6 +981,7 @@ class ShipmentDocumentation(GenericModel):
         verbose_name = _("Shipment Documentation")
         verbose_name_plural = _("Shipment Documentation")
         db_table = "shipment_documentation"
+        db_table_comment = "Stores documentation related to a related shipment."
 
     def __str__(self) -> str:
         """String representation of the ShipmentDocumentation
@@ -1018,6 +1049,7 @@ class ShipmentComment(GenericModel):
         verbose_name = _("Shipment Comment")
         verbose_name_plural = _("Shipment Comments")
         db_table = "shipment_comment"
+        db_table_comment = "Stores comments related to a related shipment."
 
     def __str__(self) -> str:
         """String representation of the ShipmentComment
@@ -1108,6 +1140,7 @@ class AdditionalCharge(GenericModel):
         verbose_name = _("Additional Charge")
         verbose_name_plural = _("Additional Charges")
         db_table = "additional_charge"
+        db_table_comment = "Stores Additional Charge related to a related shipment."
 
     def __str__(self) -> str:
         """String representation of the AdditionalCharges
@@ -1292,6 +1325,9 @@ class FormulaTemplate(GenericModel):
         verbose_name = _("Formula Template")
         verbose_name_plural = _("Formula Templates")
         db_table = "formula_template"
+        db_table_comment = (
+            "Stores formula template information for a related organization."
+        )
 
     def __str__(self) -> str:
         """String representation of the FormulaTemplate

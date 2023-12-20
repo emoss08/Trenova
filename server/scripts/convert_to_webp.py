@@ -51,7 +51,6 @@ def convert_png_to_webp(
         immediately.
     """
     if not os.path.exists(directory):
-        print(f"Directory {directory} does not exist!")
         return
 
     for filename in os.listdir(directory):
@@ -65,9 +64,6 @@ def convert_png_to_webp(
                     lossless=lossless,
                     quality=quality,
                     method=method,
-                )
-                print(
-                    f"Converted {filename} to WEBP format with quality={quality} and method={method}."
                 )
 
 

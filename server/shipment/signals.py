@@ -18,7 +18,6 @@
 from typing import Any
 
 from movements.models import Movement
-from route.services import get_shipment_mileage
 from shipment import models, services
 
 
@@ -44,23 +43,3 @@ def create_shipment_initial_movement(
 
     if not Movement.objects.filter(shipment=instance).exists():
         services.create_initial_movement(shipment=instance)
-
-
-def set_shipment_mileage_and_create_route(
-    instance: models.Shipment, **kwargs: Any
-) -> None:
-    """Set the mileage for a shipment and create a route.
-
-    This function is called as a signal when a shipment model instance is saved.
-    If the shipment has an origin and destination location, it sets the mileage
-    for the shipment and creates a route using the generate_route().
-
-    Args:
-        instance (models.Shipment): The instance of the shipment model being saved.
-        **kwargs (Any): Additional keyword arguments.
-
-    Returns:
-        None: This function does not return anything.
-    """
-    if instance.origin_location and instance.destination_location:
-        instance.mileage = get_shipment_mileage(shipment=instance)

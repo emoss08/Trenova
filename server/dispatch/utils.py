@@ -134,8 +134,6 @@ def get_eligible_drivers(
             operator=feasibility_control.mpd_operator,
             criteria_value=feasibility_control.mpd_criteria,
         ):
-            print(f"Worker {worker} meets the feasibility criteria")
-
             # Check if worker is eligible for the order
             driver_info = services.feasibility_tool(
                 origin_appointment=origin_appointment,
@@ -154,13 +152,10 @@ def get_eligible_drivers(
 
             # If driver_info is not None, the worker is eligible
             if driver_info is not None:
-                print(f"Worker {worker} is eligible for the order")
                 eligible_workers_hos.append(worker_hos)
             else:
                 ineligible_workers_hos.append(worker_hos)
-                print(f"Worker {worker} is NOT eligible for the order")
         else:
             ineligible_workers_hos.append(worker_hos)
-            print(f"Worker {worker} does not meet the feasibility criteria")
 
     return eligible_workers_hos, ineligible_workers_hos
