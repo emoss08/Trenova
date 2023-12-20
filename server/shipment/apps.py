@@ -31,8 +31,3 @@ class ShipmentConfig(AppConfig):
             sender="shipment.Shipment",
             dispatch_uid="create_shipment_initial_movement",
         )
-        post_save.connect(
-            signals.set_shipment_mileage_and_create_route,
-            sender="shipment.Shipment",
-            dispatch_uid="set_shipment_mileage_and_create_route",
-        )
