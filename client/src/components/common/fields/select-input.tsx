@@ -53,6 +53,7 @@ interface SelectInputProps<T extends Record<string, unknown>>
   isFetchError?: boolean;
   hasPopoutWindow?: boolean; // Set to true to open the popout window
   popoutLink?: string; // Link to the popout page
+  popoutLinkLabel?: string; // Label for the popout link
 }
 
 /**

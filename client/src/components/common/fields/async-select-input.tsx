@@ -29,7 +29,7 @@ import {
   ValueProcessor,
 } from "@/components/common/fields/select-components";
 import { cn } from "@/lib/utils";
-import { UseControllerProps, useController } from "react-hook-form";
+import { useController, UseControllerProps } from "react-hook-form";
 import { GroupBase, OptionsOrGroups, Props } from "react-select";
 import AsyncSelect from "react-select/async";
 
@@ -49,6 +49,9 @@ interface AsyncSelectInputProps<T extends Record<string, unknown>>
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
   hasContextMenu?: boolean;
   isFetchError?: boolean;
+  hasPopoutWindow?: boolean;
+  popoutLink?: string;
+  popoutLinkLabel?: string;
 }
 
 /**
