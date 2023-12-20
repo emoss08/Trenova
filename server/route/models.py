@@ -74,6 +74,7 @@ class Route(GenericModel):
     auto_generated = models.BooleanField(
         verbose_name=_("Auto Generated"),
         default=False,
+        editable=False,
         help_text=_("Whether the route was auto generated or not"),
     )
 
@@ -152,8 +153,8 @@ class RouteControl(GenericModel):
         Distance method choices for shipment model
         """
 
-        GOOGLE = "Google", _("Google")
-        MONTA = "Monta", _("Monta")
+        GOOGLE = "G", _("Google")
+        MONTA = "M", _("Monta")
 
     id = models.UUIDField(
         primary_key=True,
@@ -247,7 +248,8 @@ class RouteControl(GenericModel):
             raise ValidationError(
                 {
                     "generate_routes": _(
-                        "'Monta' does not support automatic route generation. Please select Google as the distance method."
+                        "'Monta' does not support automatic route generation. Please select Google as the distance "
+                        "method."
                     ),
                 },
                 code="invalid",
