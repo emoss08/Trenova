@@ -15,15 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
-
 from geopy.distance import geodesic
 
 from integration.services import google_distance_matrix_service
 from route import models
 from route.models import RouteControl
 from shipment.models import Shipment
-from utils.types import Coordinates
+from utils.types import Coordinates, Point
 
 
 def generate_route(
@@ -58,15 +56,14 @@ def generate_route(
 
 
 def get_coordinates(*, shipment: Shipment) -> Coordinates:
-    """
-    Retrieve the latitude and longitude coordinates for a Shipment's origin and destination locations.
+    """Retrieve the latitude and longitude coordinates for a Shipment's origin and destination locations.
 
     This function takes an instance of the Shipment model representing a Shipment and retrieves the latitude
     and longitude coordinates for the Shipment's origin and destination locations. The function returns a
     tuple containing two tuples, each representing a pair of latitude and longitude coordinates for the two points.
 
     Args:
-        shipment: An instance of the Shipment model representing a shipment to retrieve the coordinates for.
+        shipment(Shipment): An instance of the Shipment model representing a shipment to retrieve the coordinates for.
 
     Returns:
         A tuple containing two tuples, each representing a pair of latitude and longitude coordinates for
@@ -91,8 +88,8 @@ def get_coordinates(*, shipment: Shipment) -> Coordinates:
 def calculate_distance(
     *,
     route_control: RouteControl,
-    point_1: tuple[float | None, float | None] | Any,
-    point_2: tuple[float | None, float | None] | Any,
+    point_1: Point,
+    point_2: Point,
 ) -> tuple[float, float, str]:
     """
     Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the
@@ -107,9 +104,9 @@ def calculate_distance(
 
     Args:
         route_control (RouteControl): An instance of the Organization's RouteControl object.
-        point_1 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude
+        point_1 (Point): A tuple of two floats representing the latitude
         and longitude of the first point.
-        point_2 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude
+        point_2 (Point): A tuple of two floats representing the latitude
         and longitude of the second point.
 
     Returns:
@@ -120,7 +117,7 @@ def calculate_distance(
 
     # Get the distance method from the Organization's RouteControl object
     if route_control.distance_method == RouteControl.DistanceMethodChoices.GOOGLE:
-        method = "Google"
+        method = "G"
 
         # Get the distance and duration between the two points using the Google Distance Matrix API
         distance_miles, duration_hours = google_distance_matrix_service(
@@ -131,7 +128,7 @@ def calculate_distance(
         )
     else:
         # If the distance method is not Google, use the Haversine formula
-        method = "Monta"
+        method = "M"
         duration_hours = 0  # TODO: Implement duration calculation
 
         # Calculate the distance between the two points using the Haversine formula
@@ -141,8 +138,7 @@ def calculate_distance(
 
 
 def get_shipment_mileage(*, shipment: Shipment) -> float | None:
-    """
-    Get the total mileage for a shipment's route or calculate the distance between two locations.
+    """Get the total mileage for a shipment's route or calculate the distance between two locations.
 
     This function attempts to retrieve a Route object from the database that matches the organization,
     origin_location, and destination_location of the shipment. If a Route object is found, the function
@@ -155,7 +151,7 @@ def get_shipment_mileage(*, shipment: Shipment) -> float | None:
     the function generates a new Route object and stores it in the database.
 
     Args:
-        shipment: An instance of the Shipment model representing a shipment to get the mileage for.
+        shipment(Shipment): An instance of the Shipment model representing a shipment to get the mileage for.
 
     Returns:
         A float representing the total mileage for the shipment's route if a route exists, or the calculated
@@ -173,6 +169,7 @@ def get_shipment_mileage(*, shipment: Shipment) -> float | None:
         )
         return route.total_mileage
     except models.Route.DoesNotExist:
+        print("Route does not exist.")
         # Get coordinates for two points.
         point_1, point_2 = get_coordinates(shipment=shipment)
 
