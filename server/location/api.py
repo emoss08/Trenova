@@ -186,7 +186,6 @@ class LocationViewSet(viewsets.ModelViewSet):
                 location_color=F("location_category__color"),
                 location_category_name=F("location_category__name"),
             )
-            .all()
         )
         return queryset
 

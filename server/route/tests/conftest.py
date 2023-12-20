@@ -15,34 +15,21 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
-from django.core.exceptions import ValidationError
+from collections.abc import Generator
+from typing import Any
 
-from organization.models import Organization
+import pytest
+
+from shipment.tests.factories import ShipmentFactory
 
 pytestmark = pytest.mark.django_db
 
 
-def test_route_control_exists(organization: Organization) -> None:
-    """
-    Test route control is created from
-    create_route_control post_save signal
-    """
-    assert organization.route_control is not None
-    assert organization.route_control.organization == organization
+@pytest.fixture
+def shipment() -> Generator[Any, Any, None]:
+    """Shipment factory.
 
-
-def test_dispatch_control_google_integration(organization: Organization) -> None:
+    Returns:
+        A ShipmentFactory object.
     """
-    Test Service incident control choices throws ValidationError
-    when the passed choice is not valid.
-    """
-    with pytest.raises(ValidationError) as excinfo:
-        organization.route_control.distance_method = "Google"
-        organization.route_control.full_clean()
-
-    assert excinfo.value.message_dict["distance_method"] == [
-        "Google Maps integration is not configured for the organization."
-        " Please configure the integration before selecting Google as "
-        "the distance method."
-    ]
+    return ShipmentFactory()

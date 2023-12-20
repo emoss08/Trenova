@@ -61,24 +61,6 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.EquipmentType]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "business_unit_id",
-            "id",
-            "name",
-            "description",
-            "cost_per_mile",
-            "equipment_class",
-            "fixed_cost",
-            "variable_cost",
-            "height",
-            "length",
-            "width",
-            "weight",
-            "idling_fuel_usage",
-            "exempt_from_tolls",
-            "created",
-            "modified",
         )
         return queryset
 
@@ -105,13 +87,9 @@ class TractorViewSet(viewsets.ModelViewSet):
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .annotate(equip_type_name=F("equipment_type__name"))
-            .all()
-        )
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).annotate(equip_type_name=F("equipment_type__name"))
         return queryset
 
 
@@ -147,7 +125,6 @@ class TrailerViewSet(viewsets.ModelViewSet):
                 equip_type_name=F("equipment_type__name"),
             )
             .order_by("code")
-            .all()
         )
         return queryset
 
@@ -171,11 +148,6 @@ class EquipmentManufacturerViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.EquipmentManufacturer]:
         queryset = self.queryset.filter(
             organization__exact=self.request.user.organization  # type: ignore
-        ).only(
-            "id",
-            "name",
-            "organization_id",
-            "description",
         )
         return queryset
 
@@ -197,29 +169,14 @@ class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.EquipmentMaintenancePlan]:
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .prefetch_related(
-                Prefetch(
-                    "equipment_types",
-                    queryset=models.EquipmentType.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only("id"),
-                )
-            )
-            .only(
-                "organization_id",
-                "id",
-                "miles",
-                "by_engine_hours",
-                "name",
-                "by_distance",
-                "months",
-                "by_time",
-                "engine_hours",
-                "description",
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).prefetch_related(
+            Prefetch(
+                "equipment_types",
+                queryset=models.EquipmentType.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                ).only("id"),
             )
         )
         return queryset
