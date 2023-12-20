@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
+import { GroupBase, Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
 
 type _ = Options; // Added just so auto sort import won't remove the import
 
