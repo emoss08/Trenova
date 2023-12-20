@@ -93,7 +93,9 @@ const NavigationMenuItemWithPermission = React.memo(
               <NavigationMenuContent>
                 {data.content}
                 {data.footerContent && (
-                  <FooterContainer>{data.footerContent}</FooterContainer>
+                  <FooterContainer className="p-3">
+                    {data.footerContent}
+                  </FooterContainer>
                 )}
               </NavigationMenuContent>
             </>
@@ -117,7 +119,7 @@ export function NavMenu() {
         menuItemRefs.current[key] = element;
       }
     },
-    [],
+    [menuItemRefs],
   );
 
   // Handle clicks outside the menu to close it
