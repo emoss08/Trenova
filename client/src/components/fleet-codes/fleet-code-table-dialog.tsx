@@ -37,6 +37,8 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { cleanObject } from "@/lib/utils";
 
 export function FleetCodeForm({
   control,
@@ -48,9 +50,9 @@ export function FleetCodeForm({
   const { selectUsersData, isLoading, isError } = useUsers(open);
 
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
-        <div className="grid w-full items-center gap-0.5">
+    <Form>
+      <FormGroup className="md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -61,8 +63,8 @@ export function FleetCodeForm({
             description="Status of the Fleet Code"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -72,10 +74,11 @@ export function FleetCodeForm({
             type="text"
             placeholder="Code"
             description="Code for the Fleet Code"
+            maxLength={10}
           />
-        </div>
-      </div>
-      <div className="my-2">
+        </FormControl>
+      </FormGroup>
+      <div>
         <TextareaField
           name="description"
           rules={{ required: true }}
@@ -85,41 +88,38 @@ export function FleetCodeForm({
           description="Description of the Fleet Code"
         />
       </div>
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+      <FormGroup className="md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <DecimalField
             control={control}
-            rules={{ required: true }}
             name="revenueGoal"
             label="Revenue Goal"
             type="text"
             placeholder="Revenue Goal"
             description="Revenue Goal for the Fleet Code"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl className="grid w-full max-w-sm items-center gap-0.5">
           <DecimalField
             control={control}
-            rules={{ required: true }}
             name="deadheadGoal"
             label="Deadhead Goal"
             type="text"
             placeholder="Deadhead Goal"
             description="Deadhead Goal for the Fleet Code"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl className="grid w-full max-w-sm items-center gap-0.5">
           <DecimalField
             control={control}
-            rules={{ required: true }}
             name="mileageGoal"
             label="Mileage Goal"
             type="text"
             placeholder="Mileage Goal"
             description="Mileage Goal for the Fleet Code"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="manager"
             control={control}
@@ -135,9 +135,9 @@ export function FleetCodeForm({
             popoutLink="#" // TODO: Change once Document Classification is added.
             popoutLinkLabel="User"
           />
-        </div>
-      </div>
-    </div>
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -171,8 +171,10 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
   );
 
   const onSubmit = (values: FormValues) => {
+    const cleanedValues = cleanObject(values);
+
     setIsSubmitting(true);
-    mutation.mutate(values);
+    mutation.mutate(cleanedValues);
   };
 
   return (
