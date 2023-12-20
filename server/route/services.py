@@ -144,12 +144,6 @@ def get_shipment_mileage(*, shipment: Shipment) -> float | None:
     origin_location, and destination_location of the shipment. If a Route object is found, the function
     returns the total_mileage attribute of the object.
 
-    If a Route object is not found, the function calculates the distance between the shipment's origin and
-    destination locations using the get_coordinates() and calculate_distance() functions. After calculating
-    the distance, the function checks the organization's route_control attribute to determine if a new
-    Route object should be generated using the generate_route() function. If generate_routes is True,
-    the function generates a new Route object and stores it in the database.
-
     Args:
         shipment(Shipment): An instance of the Shipment model representing a shipment to get the mileage for.
 
@@ -169,7 +163,6 @@ def get_shipment_mileage(*, shipment: Shipment) -> float | None:
         )
         return route.total_mileage
     except models.Route.DoesNotExist:
-        print("Route does not exist.")
         # Get coordinates for two points.
         point_1, point_2 = get_coordinates(shipment=shipment)
 
