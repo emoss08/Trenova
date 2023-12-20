@@ -156,8 +156,6 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             action="send_to_billing_queue", data=content
         )
 
-        print(content)
-
         if not content["message"]:
             await self.send_and_update_session_response(
                 data={
@@ -244,7 +242,6 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             #         "message": "Good job! You have successfully billed your orders.",
             #     }
             # )
-            print(content)
             await self.good_job()
 
     async def good_job(self) -> None:

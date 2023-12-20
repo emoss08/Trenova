@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
-import sys
 
 from art import text2art
 from channels.auth import AuthMiddlewareStack
@@ -27,17 +26,9 @@ from rich.console import Console
 
 from organization.routing import websocket_urlpatterns
 
-if sys.implementation.name == "pypy":
-    import warnings
-
-    warnings.warn(
-        "Running on PyPy is not fully supported. Be aware some features may not work as expected.",
-        RuntimeWarning,
-    )
-
 console = Console()
-logo = text2art("MONTA", font="Larry 3D")
-console.print(logo, style="bold purple")
+logo = text2art("MONTA", font="Merlin2")
+console.print(logo, style="bold yellow")
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 

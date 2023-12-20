@@ -229,7 +229,5 @@ def mark_shipment_as_paid_task(self: "Task") -> None:
             payment_received=True
         )
 
-        print("unpaid invoices", unpaid_invoices)
-
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

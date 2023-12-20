@@ -196,6 +196,7 @@ class RouteControl(GenericModel):
         verbose_name_plural = _("Route Controls")
         ordering = ("organization",)
         db_table = "route_control"
+        db_table_comment = "Store Route Control information related to an organization"
 
     def __str__(self) -> str:
         """Route Control string representation
@@ -213,7 +214,7 @@ class RouteControl(GenericModel):
         Returns:
             str: Route Control absolute URL
         """
-        return reverse("route:control-detail", kwargs={"pk": self.pk})
+        return reverse("route-control-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Route Control clean method

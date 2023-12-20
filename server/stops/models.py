@@ -199,6 +199,7 @@ class Stop(GenericModel):
         verbose_name_plural = _("Stops")
         ordering = ["movement", "sequence"]
         db_table = "stop"
+        db_table_comment = "Stores movement information related to a movement."
 
     def __str__(self) -> str:
         """String representation of the Stop
@@ -252,7 +253,7 @@ class Stop(GenericModel):
             **kwargs (Any): Keyword Arguments
 
         Returns:
-            None
+            None: This function does not return anything.
         """
         # Set stop status based on arrival and departure times
         self.update_status_based_on_times()
@@ -281,11 +282,10 @@ class Stop(GenericModel):
         """Stop clean Method
 
         Returns:
-            None
+            None: This function does not return anything
 
         Raises:
             ValidationError: If the stop is not valid.
-
         """
         super().clean()
         from stops.validation import StopValidation
@@ -293,10 +293,15 @@ class Stop(GenericModel):
         StopValidation(instance=self)
 
     def update_status_based_on_times(self) -> None:
+        """
+        Update the status of the stop based on arrival and departure times.
+
+        Returns:
+            None: This function does not return anything.
+        """
         if self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
         elif self.arrival_time:
-            print("IN_PROGRESS")
             self.status = StatusChoices.IN_PROGRESS
 
 
