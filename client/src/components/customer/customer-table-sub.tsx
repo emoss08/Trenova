@@ -15,7 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "@/components/ui/button";
+import {
+  BoolStatusBadge,
+  DataNotFound,
+} from "@/components/common/table/data-table-components";
 import {
   Table,
   TableBody,
@@ -24,17 +27,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { truncateText } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { useCustomerFormStore } from "@/stores/CustomerStore";
 import { useTableStore } from "@/stores/TableStore";
 import { Customer } from "@/types/customer";
+import { CircleBackslashIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Row } from "@tanstack/react-table";
 import React from "react";
 import {
-  BoolStatusBadge,
-  DataNotFound,
-} from "@/components/common/table/data-table-components";
-import { CircleBackslashIcon, PersonIcon } from "@radix-ui/react-icons";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 const daysOfWeek = [
   "Monday", // 0
@@ -62,6 +67,9 @@ function CustomerContactTable({
       <h2 className="scroll-m-20 pb-2 pl-3 text-2xl font-semibold tracking-tight">
         Customer Contacts
       </h2>
+      <div className="border-l-4 border-red-500 text-red-500 pl-2 ml-3">
+        Payable Contact
+      </div>
       <Table className="flex flex-col overflow-hidden">
         <TableHeader>
           <TableRow>
@@ -70,7 +78,6 @@ function CustomerContactTable({
             <TableHead className="w-3/12">Email</TableHead>
             <TableHead className="w-2/12">Title</TableHead>
             <TableHead className="w-2/12">Phone</TableHead>
-            <TableHead className="w-2/12">Payable Contact?</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,15 +92,30 @@ function CustomerContactTable({
                   <TableCell className="w-1/12">
                     <BoolStatusBadge status={contact.isActive} />
                   </TableCell>
-                  <TableCell className="w-2/12">
-                    {truncateText(contact.name, 20)}
+                  <TableCell
+                    className={cn(
+                      "w-2/12",
+                      contact.isPayableContact && "text-red-500  font-semibold",
+                    )}
+                  >
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {truncateText(contact.name, 20)}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {contact.isPayableContact
+                            ? "This is the payable contact"
+                            : "This is not the payable contact"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell className="w-3/12">{contact.email}</TableCell>
-                  <TableCell className="w-2/12">{contact.title}</TableCell>
-                  <TableCell className="w-2/12">{contact.phone}</TableCell>
                   <TableCell className="w-2/12">
-                    <BoolStatusBadge status={contact.isPayableContact} />
+                    {truncateText(contact.title as string, 20)}
                   </TableCell>
+                  <TableCell className="w-2/12">{contact.phone}</TableCell>
                 </TableRow>
               ))
           ) : (
@@ -119,7 +141,7 @@ function DeliverySlotTable({
 }) {
   return (
     <div className="flex-1">
-      <h2 className="scroll-m-20 pb-3 pl-3 text-2xl font-semibold tracking-tight">
+      <h2 className="scroll-m-20 pb-2 pl-3 text-2xl font-semibold tracking-tight">
         Delivery Slots
       </h2>
       <Table className="flex flex-col overflow-hidden">

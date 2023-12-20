@@ -53,6 +53,7 @@ interface SelectInputProps<T extends Record<string, unknown>>
   isFetchError?: boolean;
   hasPopoutWindow?: boolean; // Set to true to open the popout window
   popoutLink?: string; // Link to the popout page
+  popoutLinkLabel?: string; // Label for the popout link
 }
 
 /**
@@ -80,6 +81,7 @@ export function SelectInput<T extends Record<string, unknown>>(
     hideSelectedOptions = false,
     hasPopoutWindow = false,
     popoutLink,
+    popoutLinkLabel,
     ...controllerProps
   } = props;
 
@@ -108,7 +110,7 @@ export function SelectInput<T extends Record<string, unknown>>(
           inputId={controllerProps.id}
           closeMenuOnSelect={!isMulti}
           hideSelectedOptions={hideSelectedOptions}
-          label={label}
+          popoutLinkLabel={popoutLinkLabel}
           options={options}
           isMulti={isMulti}
           isLoading={isLoading}
@@ -269,7 +271,6 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
       )}
       <div className="relative">
         <CreatableSelect
-          label={label}
           unstyled
           aria-invalid={fieldState.invalid || isFetchError}
           isMulti={isMulti}

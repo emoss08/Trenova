@@ -109,11 +109,12 @@ export function LocationInfoForm({
               options={selectLocationCategories}
               isFetchError={isError}
               isLoading={isLoading}
-              hasPopoutWindow
-              popoutLink="/dispatch/location-categories/"
               isClearable
               placeholder="Select Location Category"
               description="Choose the category that best describes the location's function or type."
+              hasPopoutWindow
+              popoutLink="/dispatch/location-categories/"
+              popoutLinkLabel="Location Category"
             />
           </div>
         </div>
@@ -129,6 +130,9 @@ export function LocationInfoForm({
               isLoading={isDepotsLoading}
               placeholder="Select Depot"
               description="Select the depot or main hub that this location is associated with."
+              hasPopoutWindow
+              popoutLink="#"
+              popoutLinkLabel="Depot"
             />
           </div>
         </div>

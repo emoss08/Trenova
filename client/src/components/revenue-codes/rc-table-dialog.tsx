@@ -88,6 +88,9 @@ export function RCForm({
             placeholder="Select Expense Account"
             description="The Expense Account associated with the Revenue Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="/accounting/gl-accounts"
+            popoutLinkLabel="GL Account"
           />
         </div>
         <div className="grid w-full items-center gap-0.5">
@@ -102,6 +105,9 @@ export function RCForm({
             placeholder="Select Revenue Account"
             description="The Revneue Account associated with the Revenue Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="/accounting/gl-accounts"
+            popoutLinkLabel="GL Account"
           />
         </div>
       </div>

@@ -322,8 +322,7 @@ class AccessorialChargeViewSet(viewsets.ModelViewSet):
 
 
 class DocumentClassificationViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing document classifications in the system.
+    """A viewset for viewing and editing document classifications in the system.
 
     The viewset provides default operations for creating, updating, and
     deleting document classifications, as well as listing and retrieving document classifications.
@@ -342,12 +341,7 @@ class DocumentClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.DocumentClassification]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "name",
-            "organization_id",
-            "description",
-        )
+        ).all()
         return queryset
 
 

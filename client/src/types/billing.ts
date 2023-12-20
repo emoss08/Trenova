@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 import {
   AutoBillingCriteriaChoicesProps,
   FuelMethodChoicesProps,
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
-import { BaseModel } from "@/types/organization";
-import { StatusChoiceProps } from "@/types/index";
 
 /** Types for Billing Control */
 export interface BillingControl extends BaseModel {
@@ -140,8 +140,14 @@ export interface BillingHistory extends BaseModel {
 }
 
 /** Types for Document Classification */
-export type DocumentClassification = {
+export interface DocumentClassification extends BaseModel {
   id: string;
   name: string;
-  description: string;
-};
+  description?: string | null;
+}
+
+/** Types for Document Classification */
+export type DocumentClassificationFormValues = Omit<
+  DocumentClassification,
+  "id" | "organization" | "created" | "modified"
+>;
