@@ -53,6 +53,7 @@ export type QueryKeys =
   | "delayCodes"
   | "division-code-table-data"
   | "divisionCodes"
+  | "document-classification-table-data"
   | "documentClassifications"
   | "depots"
   | "emailControl"

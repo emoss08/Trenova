@@ -372,4 +372,14 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "DocumentClassification": {
+        "app_label": "billing",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "name", "label": "Name"},
+            {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }

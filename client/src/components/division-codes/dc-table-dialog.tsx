@@ -101,6 +101,9 @@ export function DCForm({
             placeholder="Select Cash Account"
             description="The Cash Account associated with the Division Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="/accounting/gl-accounts"
+            popoutLinkLabel="GL Account"
           />
         </div>
         <div className="grid w-full max-w-sm items-center gap-0.5">
@@ -115,6 +118,9 @@ export function DCForm({
             placeholder="Select AP Account"
             description="The AP Account associated with the Division Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="/accounting/gl-accounts"
+            popoutLinkLabel="GL Account"
           />
         </div>
         <div className="grid w-full max-w-sm items-center gap-0.5">
@@ -129,6 +135,9 @@ export function DCForm({
             placeholder="Select Expense Account"
             description="The Expense Account associated with the Revenue Code"
             isClearable
+            hasPopoutWindow
+            popoutLink="/accounting/gl-accounts"
+            popoutLinkLabel="GL Account"
           />
         </div>
       </div>
