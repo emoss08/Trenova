@@ -14,8 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Prefetch, QuerySet, Count
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
@@ -147,90 +150,85 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing shipments in the system.
+
+    The viewset provides default operations for creating, updating and deleting shipments,
+    as well as listing and retrieving shipments. It uses the ``ShipmentSerializer`` class to
+    convert the shipment instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by shipment type by pro_number, and customer.
+    """
+
     queryset = models.Shipment.objects.all()
     serializer_class = serializers.ShipmentSerializer
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("pro_number", "customer")
 
-    def get_queryset(self) -> "QuerySet[models.Shipment]":
-        queryset = (
+    @action(detail=False, methods=["get"])
+    def get_shipment_count_by_status(self, request: Request):
+        """Get the total shipment count per status for the organization.
+
+        Returns:
+            Response: A response object containing the shipment count per status, along with the status representation.
+        """
+        shipment_count_by_status = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
             )
-            .prefetch_related(
-                Prefetch(
-                    "additional_charges",
-                    queryset=models.AdditionalCharge.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
-                ),
-                Prefetch(
-                    lookup="movements",
-                    queryset=Movement.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
-                ),
-                Prefetch(
-                    lookup="shipment_documentation",
-                    queryset=models.ShipmentDocumentation.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
-                ),
-                Prefetch(
-                    lookup="shipment_comments",
-                    queryset=models.ShipmentComment.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id", "created")
-                    .all(),
-                ),
-            )
-            .only(
-                "pro_number",
-                "hazardous_material",
-                "id",
-                "destination_address",
-                "billing_transfer_date",
-                "voided_comm",
-                "destination_appointment_window_start",
-                "weight",
-                "billed",
-                "sub_total",
-                "bol_number",
-                "other_charge_amount",
-                "revenue_code_id",
-                "temperature_min",
-                "mileage",
-                "auto_rate",
-                "origin_appointment_window_start",
-                "origin_appointment_window_end",
-                "status",
-                "freight_charge_amount",
-                "bill_date",
-                "pieces",
-                "destination_appointment_window_end",
-                "entered_by_id",
-                "consignee_ref_number",
-                "origin_address",
-                "origin_location_id",
-                "equipment_type_id",
-                "transferred_to_billing",
-                "ready_to_bill",
-                "shipment_type_id",
-                "comment",
-                "temperature_max",
-                "destination_location_id",
-                "commodity_id",
-                "rate_method",
-                "rate_id",
-                "customer_id",
-            )
+            .values("status")
+            .annotate(count=Count("status"))
+            .order_by("status")
+        )
+
+        total_order_count = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).count()
+
+        return Response(
+            {
+                "results": shipment_count_by_status,
+                "total_count": total_order_count,
+            }
+        )
+
+    def get_queryset(self) -> "QuerySet[models.Shipment]":
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).prefetch_related(
+            Prefetch(
+                "additional_charges",
+                queryset=models.AdditionalCharge.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                )
+                .only("id", "shipment_id", "organization_id")
+                .all(),
+            ),
+            Prefetch(
+                lookup="movements",
+                queryset=Movement.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                )
+                .only("id", "shipment_id", "organization_id")
+                .all(),
+            ),
+            Prefetch(
+                lookup="shipment_documentation",
+                queryset=models.ShipmentDocumentation.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                )
+                .only("id", "shipment_id", "organization_id")
+                .all(),
+            ),
+            Prefetch(
+                lookup="shipment_comments",
+                queryset=models.ShipmentComment.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                )
+                .only("id", "shipment_id", "organization_id", "created")
+                .all(),
+            ),
         )
 
         return queryset
