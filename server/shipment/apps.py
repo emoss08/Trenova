@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 
 
 class ShipmentConfig(AppConfig):
@@ -30,4 +30,10 @@ class ShipmentConfig(AppConfig):
             signals.create_shipment_initial_movement,
             sender="shipment.Shipment",
             dispatch_uid="create_shipment_initial_movement",
+        )
+
+        pre_save.connect(
+            signals.update_stops_on_shipment_change,
+            sender="shipment.Shipment",
+            dispatch_uid="update_stops_on_shipment_change",
         )
