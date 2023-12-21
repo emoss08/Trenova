@@ -14,14 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Prefetch, QuerySet, Count
+from core.permissions import CustomObjectPermissions
+from django.db.models import Count, Prefetch, QuerySet
+from movements.models import Movement
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from core.permissions import CustomObjectPermissions
-from movements.models import Movement
 from shipment import models, serializers
 
 
@@ -194,41 +193,45 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self) -> "QuerySet[models.Shipment]":
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).prefetch_related(
-            Prefetch(
-                "additional_charges",
-                queryset=models.AdditionalCharge.objects.filter(
-                    organization_id=self.request.user.organization_id  # type: ignore
-                )
-                .only("id", "shipment_id", "organization_id")
-                .all(),
-            ),
-            Prefetch(
-                lookup="movements",
-                queryset=Movement.objects.filter(
-                    organization_id=self.request.user.organization_id  # type: ignore
-                )
-                .only("id", "shipment_id", "organization_id")
-                .all(),
-            ),
-            Prefetch(
-                lookup="shipment_documentation",
-                queryset=models.ShipmentDocumentation.objects.filter(
-                    organization_id=self.request.user.organization_id  # type: ignore
-                )
-                .only("id", "shipment_id", "organization_id")
-                .all(),
-            ),
-            Prefetch(
-                lookup="shipment_comments",
-                queryset=models.ShipmentComment.objects.filter(
-                    organization_id=self.request.user.organization_id  # type: ignore
-                )
-                .only("id", "shipment_id", "organization_id", "created")
-                .all(),
-            ),
+        queryset = (
+            self.queryset.filter(
+                organization_id=self.request.user.organization_id  # type: ignore
+            )
+            .prefetch_related(
+                Prefetch(
+                    "additional_charges",
+                    queryset=models.AdditionalCharge.objects.filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
+                    )
+                    .only("id", "shipment_id", "organization_id")
+                    .all(),
+                ),
+                Prefetch(
+                    lookup="movements",
+                    queryset=Movement.objects.filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
+                    )
+                    .only("id", "shipment_id", "organization_id")
+                    .all(),
+                ),
+                Prefetch(
+                    lookup="shipment_documentation",
+                    queryset=models.ShipmentDocumentation.objects.filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
+                    )
+                    .only("id", "shipment_id", "organization_id")
+                    .all(),
+                ),
+                Prefetch(
+                    lookup="shipment_comments",
+                    queryset=models.ShipmentComment.objects.filter(
+                        organization_id=self.request.user.organization_id  # type: ignore
+                    )
+                    .only("id", "shipment_id", "organization_id", "created")
+                    .all(),
+                ),
+            )
+            .order_by("pro_number")
         )
 
         return queryset
