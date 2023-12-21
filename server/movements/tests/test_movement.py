@@ -18,18 +18,17 @@
 from datetime import timedelta
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from dispatch.factories import FleetCodeFactory
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from equipment.models import Tractor, Trailer
 from equipment.tests.factories import TractorFactory
 from movements import models, services
 from movements.tests.factories import MovementFactory
 from organization.models import BusinessUnit, Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 from shipment.models import Shipment
 from shipment.tests.factories import ShipmentFactory
 from worker.factories import WorkerFactory
@@ -282,15 +281,26 @@ def test_primary_worker_mvr_due_date() -> None:
     ]
 
 
-def test_primary_worker_termination_date() -> None:
-    """
-    Test ValidationError is thrown when the primary worker termination_date
+def test_primary_worker_termination_date(worker: Worker) -> None:
+    """Test ValidationError is thrown when the primary worker termination_date
     is filled with any date.
+
+    Args:
+        worker (Worker): Worker instance
+
+    Returns:
+        None: This function does not return anything.
     """
-    worker = WorkerFactory()
+
+    # Act: Set worker to inactive
+    worker.is_active = False
+    worker.save()
+
+    # Act: Set worker termination date
     worker.profile.termination_date = timezone.now()
     worker.profile.save()
 
+    # Act: Set organization to require regulatory check
     dispatch_control = worker.organization.dispatch_control
     dispatch_control.regulatory_check = True
     dispatch_control.save()
@@ -460,12 +470,14 @@ def test_secondary_worker_mvr_due_date() -> None:
     ]
 
 
-def test_secondary_worker_termination_date() -> None:
+def test_secondary_worker_termination_date(worker: Worker) -> None:
     """
     Test ValidationError is thrown when the secondary worker
     termination_date is filled with any date.
     """
-    worker = WorkerFactory()
+    worker.is_active = False
+    worker.save()
+
     worker.profile.termination_date = timezone.now()
     worker.profile.save()
 
