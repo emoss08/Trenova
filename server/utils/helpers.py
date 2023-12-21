@@ -21,9 +21,8 @@ from functools import wraps
 
 from dateutil.parser import parse
 from django.db import models
-from PIL import Image
-
 from organization.models import BusinessUnit
+from PIL import Image
 
 
 def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
