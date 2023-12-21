@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -224,3 +224,22 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
   });
   return cleanedObj;
 };
+
+export function shipmentStatusToReadable(status: string) {
+  switch (status) {
+    case "N":
+      return "New";
+    case "P":
+      return "In Progress";
+    case "C":
+      return "Completed";
+    case "H":
+      return "On Hold";
+    case "B":
+      return "BILLED";
+    case "V":
+      return "Voided";
+    default:
+      return "Unknown";
+  }
+}

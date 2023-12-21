@@ -15,32 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { InputField } from "../common/fields/input";
 
-const statusToString = (status: string) => {
-  switch (status) {
-    case "N":
-      return "New";
-    case "P":
-      return "In Progress";
-    case "C":
-      return "Completed";
-    case "H":
-      return "On Hold";
-    case "B":
-      return "BILLED";
-    case "V":
-      return "Voided";
-    default:
-      return "Unknown";
-  }
-};
 function FilterOptions() {
-  const { data, isLoading, isFetched } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["shipmentCountByStatus"],
     queryFn: async () => getShipmentCountByStatus(),
   });
@@ -67,14 +50,14 @@ function FilterOptions() {
     data &&
     data.results.sort((a, b) => {
       return (
-        sortOrder[statusToString(a.status)] -
-        sortOrder[statusToString(b.status)]
+        sortOrder[shipmentStatusToReadable(a.status)] -
+        sortOrder[shipmentStatusToReadable(b.status)]
       );
     });
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="bg-foreground shadow ring-1 ring-accent-foreground/20 rounded-md">
+      <div className="bg-foreground ring-1 ring-accent-foreground/20 rounded-md">
         <div className="flex flex-row justify-between items-center px-4 py-2">
           <div className="font-semibold text-sm text-background">
             All Shipments
@@ -88,11 +71,11 @@ function FilterOptions() {
         sortedResults.map(({ status, count }) => (
           <div
             key={status}
-            className="group bg-background hover:bg-foreground shadow ring-1 ring-accent-foreground/20 rounded-md"
+            className="group bg-background hover:bg-foreground ring-1 ring-accent-foreground/20 rounded-md"
           >
             <div className="flex flex-row justify-between items-center px-4 py-2 text-foreground group-hover:text-background group-hover:cursor-pointer">
               <div className="font-semibold text-sm">
-                {statusToString(status)}
+                {shipmentStatusToReadable(status)}
               </div>
               <div className="font-semibold text-sm">{count}</div>
             </div>
