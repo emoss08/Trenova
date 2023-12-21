@@ -87,6 +87,7 @@ export type QueryKeys =
   | "locationCategories"
   | "location-categories-table-data"
   | "tags"
+  | "shipments"
   | "shipment-type-table-data"
   | "shipmentTypes"
   | "shipmentControl"
