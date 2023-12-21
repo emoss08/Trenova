@@ -59,9 +59,11 @@ export type ExtendedInputProps = Omit<InputProps, "name"> & {
   description?: string;
   label?: string;
   ref?: React.ForwardedRef<HTMLInputElement>;
+  icon?: React.ReactNode;
 };
 
 export function InputField<T extends FieldValues>({
+  icon,
   ...props
 }: ExtendedInputProps & UseControllerProps<T>) {
   const { field, fieldState } = useController(props);
@@ -80,10 +82,13 @@ export function InputField<T extends FieldValues>({
         </Label>
       )}
       <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          {icon && icon}
+        </div>
         <Input
           {...field}
           className={cn(
-            "pr-10",
+            "pl-10",
             fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
           )}
