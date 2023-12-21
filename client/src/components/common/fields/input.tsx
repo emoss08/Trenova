@@ -82,13 +82,15 @@ export function InputField<T extends FieldValues>({
         </Label>
       )}
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          {icon && icon}
-        </div>
+        {icon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            {icon}
+          </div>
+        )}
         <Input
           {...field}
           className={cn(
-            "pl-10",
+            icon && "pl-10",
             fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
           )}
