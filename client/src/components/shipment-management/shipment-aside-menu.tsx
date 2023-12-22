@@ -26,6 +26,7 @@ function FilterOptions() {
   const { data, isLoading } = useQuery({
     queryKey: ["shipmentCountByStatus"],
     queryFn: async () => getShipmentCountByStatus(),
+    staleTime: Infinity,
   });
 
   if (isLoading) {

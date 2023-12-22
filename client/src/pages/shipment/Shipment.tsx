@@ -28,6 +28,7 @@ export default function ShipmentManagement() {
   const { data } = useQuery({
     queryKey: ["shipments"] as QueryKeys[],
     queryFn: async () => getShipments(),
+    staleTime: Infinity,
   });
 
   return (

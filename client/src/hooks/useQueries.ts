@@ -619,6 +619,7 @@ export function useNotifications(userId: string) {
       initialData: () => {
         return queryClient.getQueryData(["userNotifications", userId]);
       },
+      staleTime: Infinity,
     },
   );
 
