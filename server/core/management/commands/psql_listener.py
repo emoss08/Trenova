@@ -17,30 +17,21 @@
 from typing import Any
 
 from django.core.management.base import BaseCommand
-
 from organization.services.psql_listen import PSQLListener
 
 
 class Command(BaseCommand):
-    """
-    A Django management command that listens for PostgreSQL notifications and logs them to the console.
+    """A Django management command that listens for PostgreSQL notifications and logs them to the console.
 
     This command sets up a PostgreSQL listener using the `psycopg2` library, and listens for notifications on
     the channels defined in the `TableChangeAlert` model. When a notification is received, it is logged to the
     console using Django's built-in logging system.
-
-    Example usage:
-        python manage.py psql_listener
-
-    Returns:
-        None.
     """
 
     help = "Listens for PostgreSQL notifications and logs them to the console."
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """
-        Runs the main body of the command.
+        """Runs the main body of the command.
 
         This method invokes the `psql_listener` function, which sets up a PostgreSQL listener using the
         `psycopg2` library, and listens for notifications on the channels defined in the `TableChangeAlert`
@@ -51,10 +42,7 @@ class Command(BaseCommand):
             options: A dictionary of keyword arguments.
 
         Returns:
-            None.
-
-        Raises:
-            None.
+            None: This function does not return anything.
         """
 
         self.stdout.write(self.style.SUCCESS("Starting PostgreSQL listener..."))
