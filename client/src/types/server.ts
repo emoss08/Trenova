@@ -95,6 +95,7 @@ export type API_ENDPOINTS =
   | "/shipment_control/"
   | "/reason_codes/"
   | "/shipments/"
+  | "/shipments/get_shipment_count_by_status/"
   | "/shipment_documents/"
   | "/shipment_comments/"
   | "/service_types/"

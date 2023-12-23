@@ -45,8 +45,7 @@ const NavigationMenu = React.forwardRef<
     {children}
     <NavigationMenuViewport
       style={{
-        left: `${menuPosition.left}px !important`,
-        width: `${menuPosition.width}px !important`,
+        left: `${menuPosition.left}px`,
       }}
     />
   </NavigationMenuPrimitive.Root>

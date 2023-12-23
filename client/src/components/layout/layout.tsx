@@ -26,6 +26,7 @@ import { Toaster } from "react-hot-toast";
 
 import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
 import { useUser } from "@/hooks/useQueries";
+import { ENVIRONMENT } from "@/lib/constants";
 import { useUserStore } from "@/stores/AuthStore";
 import { User } from "@/types/accounts";
 import React from "react";
@@ -33,6 +34,17 @@ import { useLocation } from "react-router-dom";
 import { AppGridMenu } from "./app-grid";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
+
+function DevHeader() {
+  // Simple header that puts div in the middle on a red background
+  return (
+    <header className="flex items-center justify-center h-5 w-full bg-red-700">
+      <div className="text-red-100">
+        You're currently running Monta in development mode.
+      </div>
+    </header>
+  );
+}
 
 /**
  * LayoutProps defines the props for the Layout components.
@@ -61,11 +73,10 @@ export function Layout({ children }: LayoutProps) {
       {!hideHeader && (
         <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
+          {ENVIRONMENT === "development" && <DevHeader />}
           <div className="flex items-center justify-between h-14 w-full px-4">
             {/* Logo on the left */}
-            <div>
-              <Logo />
-            </div>
+            <Logo />
             {/* Centered Navigation Menu (visible on md screens and up) */}
             <div className="hidden md:flex flex-1 justify-center">
               <NavMenu />
@@ -111,7 +122,11 @@ export function UnprotectedLayout({ children }: LayoutProps) {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Toaster position="bottom-right" />
-      <RainbowTopBar />
+      <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <RainbowTopBar />
+        {ENVIRONMENT === "development" && <DevHeader />}
+      </header>
+
       <div className="h-screen">{children}</div>
     </div>
   );

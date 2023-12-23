@@ -33,7 +33,8 @@ export type Organization = {
   currency: string;
   dateFormat: string;
   timeFormat: string;
-  logo: string;
+  logo?: string;
+  darkLogo?: string;
   tokenExpirationDays: number;
 };
 

@@ -59,28 +59,15 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        queryset: QuerySet[models.Organization] = (
-            self.queryset.filter(id=self.request.user.organization_id)  # type: ignore
-            .prefetch_related(
-                Prefetch(
-                    "depots",
-                    queryset=models.Depot.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only("id", "organization_id"),
-                ),
-            )
-            .only(
-                "id",
-                "name",
-                "scac_code",
-                "org_type",
-                "timezone",
-                "language",
-                "currency",
-                "date_format",
-                "time_format",
-                "logo",
-            )
+        queryset: QuerySet[models.Organization] = self.queryset.filter(
+            id=self.request.user.organization_id
+        ).prefetch_related(  # type: ignore
+            Prefetch(
+                "depots",
+                queryset=models.Depot.objects.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                ).only("id", "organization_id"),
+            ),
         )
         return queryset
 

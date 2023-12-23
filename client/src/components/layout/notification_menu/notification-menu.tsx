@@ -17,7 +17,15 @@
 
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
 import NotificationSound from "@/assets/audio/notification.webm";
-import { useNotificaitons } from "@/hooks/useQueries";
+import { Notifications } from "@/components/layout/notification_menu/notification";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNotifications } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import {
   ENABLE_WEBSOCKETS,
@@ -33,14 +41,6 @@ import { Howl } from "howler";
 import { BellIcon, ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Notifications } from "@/components/layout/notification_menu/notification";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
@@ -101,7 +101,7 @@ export function NotificationMenu() {
   const [userHasNotifications, setUserHasNotifications] =
     useState<boolean>(false);
   const { userId } = useUserStore.get("user");
-  const { notificationsData, notificationsLoading } = useNotificaitons(userId);
+  const { notificationsData, notificationsLoading } = useNotifications(userId);
   const queryClient = useQueryClient();
 
   const markedAndInvalidate = async () => {

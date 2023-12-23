@@ -458,6 +458,17 @@ class WorkerProfile(GenericModel):
                 code="invalid",
             )
 
+        # Validate if the termination date is set the isActiveFlag is set to False
+        if self.termination_date and self.worker.is_active:
+            raise ValidationError(
+                {
+                    "termination_date": _(
+                        "You must set the worker to inactive to set the termination date. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
         validate_worker_regulatory_information(self)
 
     def update_worker_profile(self, **kwargs):

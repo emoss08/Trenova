@@ -36,37 +36,25 @@ def get_active_sessions() -> QuerySet[Session] | None:
     return active_sessions if active_sessions.exists() else None
 
 
-def get_active_table_alerts() -> QuerySet[models.TableChangeAlert] | None:
-    """
-    Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
+def get_active_psql_table_change_alerts() -> QuerySet[models.TableChangeAlert]:
+    """Returns a queryset of active TableChangeAlert objects.
 
-    An alert is considered active if it meets the following conditions:
-    - The 'is_active' flag is True
-    - The 'effective_date' is less than or equal to the current time, or is null
-    - The 'expiration_date' is greater than or equal to the current time, or is null
-
-    This function is decorated with the `cached_as()` decorator from the `cacheops` package. This decorator
-    caches the result of this function for 60 seconds, and keeps the cache fresh by invalidating the cache
-    whenever a TableChangeAlert object is saved or deleted.
+    This function is decorated with the `cached_as()` decorator from the `cacheops` package.
+    This decorator caches the result of this function for 60 seconds, and keeps the cache fresh
+    by invalidating the cache whenever a TableChangeAlert object is saved or deleted.
 
     Returns:
-        An iterable of active TableChangeAlert objects, or None if no alerts are active.
-
-    Raises:
-        None.
-
-    Example usage:
-        alerts = get_active_table_alerts()
-        for alert in alerts:
-            # Do something with the alert object
+        A queryset of active TableChangeAlert objects. The queryset can be empty if no alerts are active.
     """
 
-    query: Q = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
-        effective_date__isnull=True
-    ) & Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
+    current_time = timezone.now()
+    query = (
+        Q(is_active=True)
+        & (Q(effective_date__lte=current_time) | Q(effective_date__isnull=True))
+        & (Q(expiration_date__gte=current_time) | Q(expiration_date__isnull=True))
+    )
 
-    active_alerts = models.TableChangeAlert.objects.filter(query)
-    return active_alerts if active_alerts.exists() else None
+    return models.TableChangeAlert.objects.filter(query, source="POSTGRES")
 
 
 def get_active_triggers() -> Iterable[tuple] | None:

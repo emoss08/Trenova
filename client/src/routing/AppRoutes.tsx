@@ -48,10 +48,12 @@ const HazardousMaterialPage = lazy(
 );
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
+const WorkerPage = lazy(() => import("../pages/worker/Worker"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCode"));
 const CommentTypePage = lazy(() => import("../pages/dispatch/CommentType"));
 const RatePage = lazy(() => import("../pages/dispatch/Rate"));
+const ShipmentManagementPage = lazy(() => import("../pages/shipment/Shipment"));
 const EquipmentTypePage = lazy(
   () => import("../pages/equipment/EquipmentType"),
 );
@@ -253,6 +255,15 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_fleetcode",
   },
   {
+    title: "Workers",
+    group: "dispatch",
+    subMenu: "configuration files",
+    path: "/dispatch/workers/",
+    description: "Workers",
+    element: <WorkerPage />,
+    permission: "view_worker",
+  },
+  {
     title: "Comment Types",
     group: "dispatch",
     subMenu: "configuration files",
@@ -323,6 +334,14 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_location",
   },
   // Shipment Pages
+  {
+    title: "Shipment Management",
+    group: "Shipment Management",
+    path: "/shipment-management/",
+    description: "Shipment Management",
+    element: <ShipmentManagementPage />,
+    permission: "view_shipment",
+  },
   {
     title: "Service Types",
     group: "Shipment Management",

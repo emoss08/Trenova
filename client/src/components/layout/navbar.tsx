@@ -172,7 +172,7 @@ export function NavMenu() {
       content: <LinksComponent linkData={equipmentNavLinks} />,
       footerContent: (
         <p className="text-xs font-semibold">
-          <span className="text-gray-500">
+          <span className="text-accent-foreground">
             Manage your equipment for your entire fleet, including trailers,
             trucks, and chassis.
           </span>
@@ -201,7 +201,6 @@ export function NavMenu() {
       {/* Navigation Menu */}
       <NavigationMenu
         value={menuOpen}
-        defaultValue={undefined}
         onValueChange={(newValue) => newValue && setMenuOpen(newValue)}
         onMouseLeave={() => setMenuOpen(undefined)}
         menuPosition={menuPosition}

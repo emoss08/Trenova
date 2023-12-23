@@ -14,8 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Count, Prefetch, Q, QuerySet
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
@@ -147,10 +150,65 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing shipments in the system.
+
+    The viewset provides default operations for creating, updating and deleting shipments,
+    as well as listing and retrieving shipments. It uses the ``ShipmentSerializer`` class to
+    convert the shipment instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by shipment type by pro_number, and customer.
+    """
+
     queryset = models.Shipment.objects.all()
     serializer_class = serializers.ShipmentSerializer
     permission_classes = [CustomObjectPermissions]
-    filterset_fields = ("pro_number", "customer")
+    filterset_fields = (
+        "pro_number",
+        "customer",
+        "status",
+    )
+    search_fields = ("pro_number", "customer__name", "bol_number")
+
+    @action(detail=False, methods=["get"])
+    def get_shipment_count_by_status(self, request: Request) -> Response:
+        """
+        Get the total shipment count per status for the organization, with optional search filtering.
+
+        Returns:
+            Response: A response object containing the shipment count per status, along with the status representation.
+        """
+
+        if search_query := request.query_params.get("search"):
+            search_conditions = (
+                Q(pro_number__icontains=search_query)
+                | Q(bol_number__icontains=search_query)
+                | Q(customer__name__icontains=search_query)
+            )
+            filtered_queryset = self.queryset.filter(search_conditions)
+        else:
+            filtered_queryset = self.queryset
+
+        shipment_count_by_status = (
+            filtered_queryset.filter(
+                organization_id=request.user.organization_id  # type: ignore
+            )
+            .values("status")
+            .annotate(count=Count("status"))
+            .order_by("status")
+        )
+
+        total_order_count = filtered_queryset.filter(
+            organization_id=request.user.organization_id  # type: ignore
+        ).count()
+
+        return Response(
+            {
+                "results": shipment_count_by_status,
+                "total_count": total_order_count,
+            }
+        )
 
     def get_queryset(self) -> "QuerySet[models.Shipment]":
         queryset = (
@@ -191,46 +249,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                     .all(),
                 ),
             )
-            .only(
-                "pro_number",
-                "hazardous_material",
-                "id",
-                "destination_address",
-                "billing_transfer_date",
-                "voided_comm",
-                "destination_appointment_window_start",
-                "weight",
-                "billed",
-                "sub_total",
-                "bol_number",
-                "other_charge_amount",
-                "revenue_code_id",
-                "temperature_min",
-                "mileage",
-                "auto_rate",
-                "origin_appointment_window_start",
-                "origin_appointment_window_end",
-                "status",
-                "freight_charge_amount",
-                "bill_date",
-                "pieces",
-                "destination_appointment_window_end",
-                "entered_by_id",
-                "consignee_ref_number",
-                "origin_address",
-                "origin_location_id",
-                "equipment_type_id",
-                "transferred_to_billing",
-                "ready_to_bill",
-                "shipment_type_id",
-                "comment",
-                "temperature_max",
-                "destination_location_id",
-                "commodity_id",
-                "rate_method",
-                "rate_id",
-                "customer_id",
-            )
+            .order_by("pro_number")
         )
 
         return queryset
