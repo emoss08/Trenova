@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BaseModel } from "./organization";
-import { StatusChoiceProps } from "@/types/index";
 import { CodeTypeProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "./organization";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -38,54 +38,6 @@ export type ShipmentControlFormValues = Omit<
   ShipmentControl,
   "id" | "organization" | "created" | "modified"
 >;
-
-export type Shipment = {
-  mileage: number;
-  comment: string;
-  proNumber: string;
-  originAppointmentWindowStart: string;
-  billed: boolean;
-  temperatureMin: null | number;
-  id: string;
-  transferredToBilling: boolean;
-  destinationLocation: string;
-  subTotalCurrency: string;
-  destinationAddress: string;
-  movements: string[];
-  equipmentType: string;
-  originAppointmentWindowEnd: string;
-  readyToBill: boolean;
-  orderComments: string[];
-  freightChargeAmount: string;
-  rateMethod: string;
-  commodity: null | string;
-  subTotal: string;
-  bolNumber: string;
-  additionalCharges: any[];
-  enteredBy: string;
-  billingTransferDate: null | string;
-  weight: string;
-  temperatureMax: null | number;
-  voidedComm: string;
-  originAddress: string;
-  freightChargeAmountCurrency: string;
-  otherChargeAmount: string;
-  orderDocumentation: any[];
-  hazmat: null | string;
-  status: string;
-  otherChargeAmountCurrency: string;
-  destinationAppointmentWindowStart: string;
-  destinationAppointmentWindowEnd: string;
-  customer: string;
-  pieces: number;
-  autoRate: boolean;
-  orderType: string;
-  consigneeRefNumber: string;
-  billDate: null | string;
-  rate: null | string;
-  revenueCode: null | string;
-  originLocation: string;
-};
 
 export interface ShipmentType extends BaseModel {
   id: string;
@@ -123,3 +75,55 @@ export type ReasonCodeFormValues = Omit<
   ReasonCode,
   "id" | "organization" | "created" | "modified"
 >;
+
+export interface Shipment extends BaseModel {
+  id: string;
+  proNumber: string;
+  shipmentType: string;
+  serviceType?: string | null;
+  status: string;
+  revenueCode?: string | null;
+  originLocation?: string | null;
+  originAddress?: string;
+  originAppointmentWindowStart: string;
+  originAppointmentWindowEnd: string;
+  destinationLocation?: string | null;
+  destinationAddress?: string;
+  destinationAppointmentWindowStart: string;
+  destinationAppointmentWindowEnd: string;
+  ratingUnits: number;
+  rate?: string | null;
+  mileage?: number | null;
+  otherChargeAmount: string;
+  freightChargeAmount?: string | null;
+  rateMethod?: string;
+  customer: string;
+  pieces: number;
+  weight: string;
+  readyToBill: boolean;
+  billDate?: string | null;
+  shipDate?: string | null;
+  billed: boolean;
+  transferredToBilling: boolean;
+  billingTransferDate?: Date | null;
+  subTotal: string;
+  equipmentType: string;
+  commodity?: string | null;
+  enteredBy: string;
+  hazardousMaterial?: string | null;
+  temperatureMin?: string | null;
+  temperatureMax?: string | null;
+  bolNumber: string;
+  consigneeRefNumber?: string;
+  comment?: string;
+  voidedComm?: string;
+  autoRate: boolean;
+  currentSuffix?: string;
+  formulaTemplate?: string | null;
+  entryMethod: string;
+}
+
+export type ShipmentSearchForm = {
+  searchQuery: string;
+  statusFilter: string;
+};

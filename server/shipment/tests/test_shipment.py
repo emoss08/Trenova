@@ -830,3 +830,57 @@ def test_validate_formula_variables(
     assert excinfo.value.message_dict["formula_text"] == [
         "Formula template contains invalid variables: bad, equipment_cost, temp_factor. Please try again."
     ]
+
+
+def test_update_stops_on_shipment_change(shipment: models.Shipment) -> None:
+    """Test update_stops_on_shipment_change signal is called when shipment is saved.
+
+    Args:
+        shipment (models.Shipment): shipment object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    # Arrange: Create a shipment with two stops
+    stop_movement = Movement.objects.get(shipment=shipment)
+
+    # Act: Change the origin location
+    shipment_origin_stop = Stop.objects.get(movement=stop_movement, sequence=1)
+    shipment_destination_stop = Stop.objects.get(movement=stop_movement, sequence=2)
+
+    # Act: Change the origin appointment window
+    shipment.origin_appointment_window_start = timezone.now()
+    shipment.origin_appointment_window_end = timezone.now() + datetime.timedelta(days=1)
+
+    # Act: Change the destination appointment window
+    shipment.destination_appointment_window_start = timezone.now() + datetime.timedelta(
+        days=1
+    )
+    shipment.destination_appointment_window_end = timezone.now() + datetime.timedelta(
+        days=2
+    )
+
+    # Act: Save the shipment
+    shipment.save()
+
+    # Assert: Check if the stops are updated
+    shipment_origin_stop.refresh_from_db()
+    shipment_destination_stop.refresh_from_db()
+
+    assert (
+        shipment_origin_stop.appointment_time_window_start
+        == shipment.origin_appointment_window_start
+    )
+    assert (
+        shipment_origin_stop.appointment_time_window_end
+        == shipment.origin_appointment_window_end
+    )
+    assert (
+        shipment_destination_stop.appointment_time_window_start
+        == shipment.destination_appointment_window_start
+    )
+    assert (
+        shipment_destination_stop.appointment_time_window_end
+        == shipment.destination_appointment_window_end
+    )

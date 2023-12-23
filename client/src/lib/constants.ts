@@ -37,6 +37,9 @@ export const THEME_KEY = import.meta.env.VITE_THEME_KEY as string;
 // Website URL constant
 export const WEB_URL = import.meta.env.VITE_WEB_URL as string;
 
+// Environment constant
+export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT as string;
+
 /**
  * Returns status choices when using TableFacetedFilters.
  * @returns An array of table faceted filter choices.

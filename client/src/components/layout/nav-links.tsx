@@ -58,6 +58,8 @@ export const ProtectedLink: React.FC<
         if (onClick) {
           event.preventDefault();
           onClick(event);
+        } else {
+          // directly navigate to the link if there is no onClick Handler and sublinks for the menu.
         }
       }}
     >
@@ -87,32 +89,50 @@ const SingleLink: React.FC<{
 export function LinksComponent({ linkData }: LinksComponentProps) {
   const [activeSubLinks, setActiveSubLinks] = useState<LinkData[] | null>(null);
   const { userHasPermission } = useUserPermissions();
+  const [, setMenuOpen] = useHeaderStore.use("menuOpen");
 
   // Handler for the back click, to navigate back from sublinks
   const handleBackClick = () => setActiveSubLinks(null);
 
   // The SingleLink component should only be rendered if permissions allow
-  const renderSingleLink = (subItem: LinkData) => {
-    if (subItem.permission && !userHasPermission(subItem.permission)) {
+  const renderLink = (linkItem: LinkData) => {
+    if (linkItem.permission && !userHasPermission(linkItem.permission)) {
       return null;
     }
+
+    if (!linkItem.subLinks) {
+      // Render main link that navigates directly
+      return (
+        <li key={linkItem.label}>
+          <ListItem
+            title={linkItem.label}
+            to={linkItem.link}
+            onClick={() => setMenuOpen(undefined)}
+          >
+            {linkItem.description}
+          </ListItem>
+        </li>
+      );
+    }
+
+    // Render link with sub-links
     return (
-      <li key={subItem.label}>
-        <SingleLink subItem={subItem} setActiveSubLinks={setActiveSubLinks} />
+      <li key={linkItem.label}>
+        <SingleLink subItem={linkItem} setActiveSubLinks={setActiveSubLinks} />
       </li>
     );
   };
 
   // Map link data to permitted links, ensuring no empty <li> elements are created
   const permittedLinks = linkData.flatMap(
-    (mainItem) => mainItem.links.map(renderSingleLink).filter(Boolean), // Filter out null values
+    (mainItem) => mainItem.links.map(renderLink).filter(Boolean), // Filter out null values
   );
 
   return (
     <ul
       className={`relative grid w-[400px] gap-3 p-4 ${
         activeSubLinks ? "pt-8" : ""
-      } md:w-[500px] md:grid-cols-2 xl:w-[700px]`}
+      } md:w-[500px] md:grid-cols-2 lg:w-[700px]`}
     >
       {!activeSubLinks ? (
         permittedLinks

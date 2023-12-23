@@ -21,7 +21,7 @@ import LoadingSkeleton from "@/components/layout/loading-skeleton";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { UserPermissionsProvider } from "@/context/user-permissions";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
-import { THEME_KEY } from "@/lib/constants";
+import { ENVIRONMENT, THEME_KEY } from "@/lib/constants";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useAuthStore } from "@/stores/AuthStore";
 import "@fontsource/inter"; // Defaults to weight 400
@@ -68,7 +68,12 @@ const AppImpl = memo(() => {
           <ProtectedRoutes />
         </Suspense>
       </BrowserRouter>
-      <ReactQueryDevtools buttonPosition="bottom-left" initialIsOpen={false} />
+      {ENVIRONMENT === "development" && (
+        <ReactQueryDevtools
+          buttonPosition="bottom-left"
+          initialIsOpen={false}
+        />
+      )}
     </QueryClientProvider>
   );
 });

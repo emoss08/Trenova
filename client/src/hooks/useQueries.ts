@@ -609,7 +609,7 @@ export function useWorkers(show?: boolean, limit: number = 100) {
  * @param menuOpen - menu open state
  * @param userId - user id
  */
-export function useNotificaitons(userId: string) {
+export function useNotifications(userId: string) {
   const queryClient = useQueryClient();
 
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery(
@@ -619,6 +619,7 @@ export function useNotificaitons(userId: string) {
       initialData: () => {
         return queryClient.getQueryData(["userNotifications", userId]);
       },
+      staleTime: Infinity,
     },
   );
 

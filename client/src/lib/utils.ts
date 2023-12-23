@@ -224,3 +224,22 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
   });
   return cleanedObj;
 };
+
+export function shipmentStatusToReadable(status: string) {
+  switch (status) {
+    case "N":
+      return "New";
+    case "P":
+      return "In Progress";
+    case "C":
+      return "Completed";
+    case "H":
+      return "On Hold";
+    case "B":
+      return "Billed";
+    case "V":
+      return "Voided";
+    default:
+      return "Unknown";
+  }
+}

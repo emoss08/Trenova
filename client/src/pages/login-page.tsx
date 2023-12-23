@@ -45,13 +45,20 @@ function UserAuthForm() {
   const [, setUserDetails] = useUserStore.use("user");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  const { control, handleSubmit, setError } = useForm<LoginFormValues>({
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  const { control, handleSubmit, setError, watch } = useForm<LoginFormValues>({
     resolver: yupResolver(userAuthSchema),
     defaultValues: {
       username: "",
       password: "",
     },
   });
+
+  const passwordValue = watch("password");
 
   const fetchUserDetails = async () => {
     try {
@@ -110,18 +117,29 @@ function UserAuthForm() {
             autoComplete="username"
           />
         </div>
-        <div className="grid gap-1">
+        <div className="grid gap-1 relative">
           <InputField
             name="password"
             rules={{ required: true }}
             control={control}
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoCapitalize="none"
             autoCorrect="off"
             autoComplete="current-password"
             placeholder="Password"
           />
+          {passwordValue && (
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 mt-6"
+              onClick={togglePasswordVisibility}
+            >
+              <p className="text-xs text-black uppercase">
+                {showPassword ? "hide" : "show"}
+              </p>
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between mt-2">
           <div>

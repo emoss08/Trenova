@@ -399,7 +399,18 @@ class Organization(TimeStampedModel):
         help_text=_("Time Format"),
     )
     logo = models.ImageField(
-        _("Logo"), upload_to="organizations/logo/", null=True, blank=True
+        _("Logo"),
+        upload_to="organizations/logo/",
+        null=True,
+        blank=True,
+        help_text=_("The logo that will be used on a light background."),
+    )
+    dark_logo = models.ImageField(
+        _("Dark Logo"),
+        upload_to="organizations/logo/",
+        null=True,
+        blank=True,
+        help_text=_("The logo that will be used on a dark background."),
     )
     token_expiration_days = models.PositiveIntegerField(
         _("Token Expiration Days"),
@@ -415,6 +426,7 @@ class Organization(TimeStampedModel):
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
         db_table = "organization"
+        db_table_comment = "Stores information about the Organization."
         permissions = [
             ("view_systemhealth", "Can View System Health"),
             ("view_activesessions", "Can View Active Sessions"),
@@ -430,7 +442,7 @@ class Organization(TimeStampedModel):
         Returns:
             str: String representation of the organization.
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(f"{self.name} ({self.scac_code})", width=50)
 
     def save(self, **kwargs: Any) -> None:
         """Organization save method.
