@@ -22,9 +22,11 @@ import { QueryKeys } from "@/types";
 import { Organization } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useTheme } from "../ui/theme-provider";
 
 export function Logo() {
   const queryClient = useQueryClient();
+  const { theme } = useTheme();
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
@@ -41,16 +43,30 @@ export function Logo() {
     staleTime: Infinity, // never refetch
   });
 
+  console.info("organizationData", organizationData);
+
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
   }
 
   if (organizationData && organizationData.logo) {
+    if (theme === "light") {
+      return (
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <img
+            className="h-[60px] object-contain"
+            src={organizationData?.logo}
+            alt="Organization Logo"
+          />
+        </Link>
+      );
+    }
+
     return (
       <Link to="/" style={{ textDecoration: "none" }}>
         <img
           className="h-[60px] object-contain"
-          src={organizationData?.logo}
+          src={organizationData?.darkLogo || organizationData?.logo}
           alt="Organization Logo"
         />
       </Link>
