@@ -22,8 +22,16 @@ import { Shipment } from "@/types/order";
  * Fetches the shipments from the server.
  * @returns A promise that resolves to a FeasibilityToolControl object.
  */
-export async function getShipments(): Promise<Shipment[]> {
-  const response = await axios.get("/shipments/");
+export async function getShipments(
+  searchQuery?: string,
+  statusFilter?: string,
+): Promise<Shipment[]> {
+  const response = await axios.get("/shipments/", {
+    params: {
+      search: searchQuery,
+      status: statusFilter,
+    },
+  });
   return response.data.results;
 }
 
@@ -37,7 +45,13 @@ type ShipmentsByStatusResponse = {
   totalCount: number;
 };
 
-export async function getShipmentCountByStatus(): Promise<ShipmentsByStatusResponse> {
-  const response = await axios.get("/shipments/get_shipment_count_by_status/");
+export async function getShipmentCountByStatus(
+  searchQuery?: string,
+): Promise<ShipmentsByStatusResponse> {
+  const response = await axios.get("/shipments/get_shipment_count_by_status/", {
+    params: {
+      search: searchQuery,
+    },
+  });
   return response.data;
 }

@@ -122,3 +122,8 @@ export interface Shipment extends BaseModel {
   formulaTemplate?: string | null;
   entryMethod: string;
 }
+
+export type ShipmentSearchForm = {
+  searchQuery: string;
+  statusFilter: string;
+};

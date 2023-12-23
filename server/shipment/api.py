@@ -14,13 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from core.permissions import CustomObjectPermissions
-from django.db.models import Count, Prefetch, QuerySet
-from movements.models import Movement
+from django.db.models import Count, Prefetch, QuerySet, Q
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from core.permissions import CustomObjectPermissions
+from movements.models import Movement
 from shipment import models, serializers
 
 
@@ -163,26 +164,43 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = models.Shipment.objects.all()
     serializer_class = serializers.ShipmentSerializer
     permission_classes = [CustomObjectPermissions]
-    filterset_fields = ("pro_number", "customer")
+    filterset_fields = (
+        "pro_number",
+        "customer",
+        "status",
+    )
+    search_fields = ("pro_number", "customer__name", "bol_number")
 
     @action(detail=False, methods=["get"])
-    def get_shipment_count_by_status(self, request: Request):
-        """Get the total shipment count per status for the organization.
+    def get_shipment_count_by_status(self, request: Request) -> Response:
+        """
+        Get the total shipment count per status for the organization, with optional search filtering.
 
         Returns:
             Response: A response object containing the shipment count per status, along with the status representation.
         """
+
+        if search_query := request.query_params.get("search"):
+            search_conditions = (
+                Q(pro_number__icontains=search_query)
+                | Q(bol_number__icontains=search_query)
+                | Q(customer__name__icontains=search_query)
+            )
+            filtered_queryset = self.queryset.filter(search_conditions)
+        else:
+            filtered_queryset = self.queryset
+
         shipment_count_by_status = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
+            filtered_queryset.filter(
+                organization_id=request.user.organization_id  # type: ignore
             )
             .values("status")
             .annotate(count=Count("status"))
             .order_by("status")
         )
 
-        total_order_count = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
+        total_order_count = filtered_queryset.filter(
+            organization_id=request.user.organization_id  # type: ignore
         ).count()
 
         return Response(

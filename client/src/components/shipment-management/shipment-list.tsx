@@ -16,10 +16,16 @@
  */
 
 import { shipmentStatusToReadable } from "@/lib/utils";
-import { Shipment } from "@/types/order";
+import { Shipment, ShipmentSearchForm } from "@/types/order";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import { Badge } from "../ui/badge";
+import { Skeleton } from "../ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { QueryKeys } from "@/types";
+import { getShipments } from "@/services/ShipmentRequestService";
+import { useDebounce } from "@/hooks/useDebounce";
+import { UseFormWatch } from "react-hook-form";
 
 const ShipmentProgressIndicator = ({
   currentStatus,
@@ -57,24 +63,63 @@ const ShipmentProgressIndicator = ({
   );
 };
 
+function SkeletonShipmentList() {
+  // Loop to render 5 skeleton items
+
+  const skeletonItems = Array.from({ length: 6 }, (_, i) => i);
+
+  return (
+    <ul role="list" className="space-y-5">
+      {skeletonItems.map((item) => (
+        <li
+          key={item}
+          className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
+        >
+          <Skeleton key={item} className="h-28" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ShipmentList({
-  shipments,
   finalStatuses,
   progressStatuses,
+  watch,
 }: {
-  shipments: Shipment[];
   finalStatuses: string[];
   progressStatuses: string[];
+  watch: UseFormWatch<ShipmentSearchForm>;
 }) {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleString();
 
+  const statusFilter = watch("statusFilter");
+  const searchQuery = watch("searchQuery");
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const {
+    data: shipments,
+    isLoading: isShipmentsLoading,
+    isError: isShipmentError,
+  } = useQuery({
+    queryKey: ["shipments", debouncedSearchQuery, statusFilter] as QueryKeys[],
+    queryFn: async () => getShipments(debouncedSearchQuery, statusFilter),
+    staleTime: Infinity,
+  });
+
   // Function to check if the shipment is delayed
-  const isShipmentDelayed = (item: any, finalStatuses: any) => {
+  const isShipmentDelayed = (item: Shipment, finalStatuses: string[]) => {
     const deliveryEndDate = new Date(item.destinationAppointmentWindowEnd);
     const today = new Date();
     return !finalStatuses.includes(item.status) && today > deliveryEndDate;
   };
+
+  // Render skeleton items while the shipments are loading
+  if (isShipmentsLoading) {
+    return <SkeletonShipmentList />;
+  }
 
   return (
     <ul role="list" className="space-y-5">

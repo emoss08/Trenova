@@ -17,33 +17,35 @@
 
 import { ShipmentAsideMenus } from "@/components/shipment-management/shipment-aside-menu";
 import { ShipmentList } from "@/components/shipment-management/shipment-list";
-import { getShipments } from "@/services/ShipmentRequestService";
-import { QueryKeys } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { ShipmentSearchForm } from "@/types/order";
+import { useForm } from "react-hook-form";
 
 const finalStatuses = ["C", "H", "B", "V"];
 const progressStatuses = ["N", "P", "C"];
 
 export default function ShipmentManagement() {
-  const { data } = useQuery({
-    queryKey: ["shipments"] as QueryKeys[],
-    queryFn: async () => getShipments(),
-    staleTime: Infinity,
+  const { control, watch, setValue } = useForm<ShipmentSearchForm>({
+    defaultValues: {
+      searchQuery: "",
+      statusFilter: "",
+    },
   });
 
   return (
     <div className="flex space-x-10 p-4">
       <div className="w-1/4">
-        <ShipmentAsideMenus />
+        <ShipmentAsideMenus
+          control={control}
+          setValue={setValue}
+          watch={watch}
+        />
       </div>
       <div className="w-3/4">
-        {data && (
-          <ShipmentList
-            shipments={data}
-            finalStatuses={finalStatuses}
-            progressStatuses={progressStatuses}
-          />
-        )}
+        <ShipmentList
+          finalStatuses={finalStatuses}
+          progressStatuses={progressStatuses}
+          watch={watch}
+        />
       </div>
     </div>
   );

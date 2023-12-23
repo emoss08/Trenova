@@ -17,15 +17,27 @@
 
 import { shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
+import { ShipmentSearchForm } from "@/types/order";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { InputField } from "../common/fields/input";
+import { Button } from "../ui/button";
+import { QueryKeys } from "@/types";
 
-function FilterOptions() {
+function FilterOptions({
+  setValue,
+  searchQuery,
+}: {
+  setValue: UseFormSetValue<ShipmentSearchForm>;
+  searchQuery?: string;
+}) {
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["shipmentCountByStatus"],
-    queryFn: async () => getShipmentCountByStatus(),
+    queryKey: ["shipmentCountByStatus", searchQuery] as QueryKeys[],
+    queryFn: async () => getShipmentCountByStatus(searchQuery),
     staleTime: Infinity,
   });
 
@@ -41,7 +53,7 @@ function FilterOptions() {
     "In Progress": 2,
     Completed: 3,
     "On Hold": 4,
-    BILLED: 5,
+    Billed: 5,
     Voided: 6,
     Unknown: 7,
   };
@@ -58,41 +70,58 @@ function FilterOptions() {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="bg-foreground ring-1 ring-accent-foreground/20 rounded-md">
-        <div className="flex flex-row justify-between items-center px-4 py-2">
-          <div className="font-semibold text-sm text-background">
-            All Shipments
-          </div>
-          <div className="font-semibold text-sm text-background">
-            {totalCount}
-          </div>
-        </div>
-      </div>
+      <Button
+        variant="outline"
+        className={`w-full hover:bg-foreground hover:text-background flex flex-row justify-between items-center select-none ${
+          selectedStatus === null ? "bg-foreground text-background" : ""
+        }`}
+        onClick={() => {
+          setValue("statusFilter", "");
+          setSelectedStatus(null);
+        }}
+      >
+        <div className="font-semibold text-sm">All Shipments</div>
+        <div className="font-semibold text-sm ml-2">{totalCount}</div>
+      </Button>
       {sortedResults &&
         sortedResults.map(({ status, count }) => (
-          <div
+          <Button
             key={status}
-            className="group bg-background hover:bg-foreground ring-1 ring-accent-foreground/20 rounded-md"
+            variant="outline"
+            className={`w-full hover:bg-foreground hover:text-background flex flex-row justify-between ${
+              selectedStatus === status && "bg-foreground text-background"
+            }`}
+            onClick={() => {
+              setValue("statusFilter", status);
+              setSelectedStatus(status);
+            }}
           >
-            <div className="flex flex-row justify-between items-center px-4 py-2 text-foreground group-hover:text-background group-hover:cursor-pointer">
-              <div className="font-semibold text-sm">
-                {shipmentStatusToReadable(status)}
-              </div>
-              <div className="font-semibold text-sm">{count}</div>
+            <div className="font-semibold text-sm">
+              {shipmentStatusToReadable(status)}
             </div>
-          </div>
+            <div className="font-semibold text-sm">{count}</div>
+          </Button>
         ))}
     </div>
   );
 }
 
-export function ShipmentAsideMenus() {
-  const { control } = useForm();
+export function ShipmentAsideMenus({
+  control,
+  setValue,
+  watch,
+}: {
+  control: Control<ShipmentSearchForm>;
+  setValue: UseFormSetValue<ShipmentSearchForm>;
+  watch: UseFormWatch<ShipmentSearchForm>;
+}) {
+  const searchQuery = watch("searchQuery");
+
   return (
     <>
       <div className="mb-4">
         <InputField
-          name="searchShipments"
+          name="searchQuery"
           control={control}
           placeholder="Search Shipments..."
           icon={
@@ -100,11 +129,10 @@ export function ShipmentAsideMenus() {
           }
         />
       </div>
-
       <p className="text-sm font-semibold text-muted-foreground mb-4">
         Filter Shipments
       </p>
-      <FilterOptions />
+      <FilterOptions setValue={setValue} searchQuery={searchQuery} />
     </>
   );
 }

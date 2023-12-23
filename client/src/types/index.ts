@@ -89,6 +89,7 @@ export type QueryKeys =
   | "tags"
   | "shipments"
   | "shipment-type-table-data"
+  | "shipmentCountByStatus"
   | "shipmentTypes"
   | "shipmentControl"
   | "service-type-table-data"
