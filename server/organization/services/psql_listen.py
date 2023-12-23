@@ -16,172 +16,164 @@
 # --------------------------------------------------------------------------------------------------
 
 import logging
-import os
-import select
-from pathlib import Path
+import selectors
+import sys
 
-import psycopg
-from environ import environ
+import environ
+from django.db.models import QuerySet
+from psycopg import connect, sql, OperationalError, Cursor
 
-from organization.selectors import get_active_table_alerts
+from organization import models
+from organization.selectors import get_active_psql_table_change_alerts
 
-# Logging Configuration
-logger = logging.getLogger(__name__)
+# Configure logger for 'psql_listener'
+logger = logging.Logger("psql_listener")
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
 
-# Environment Configuration
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+
+logger.addHandler(console_handler)
+
 env = environ.Env()
-ENV_DIR = Path(__file__).parent.parent.parent
-environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
 
 class PSQLListener:
-    """A class representing a PostgreSQL listener for table change alerts.
+    def __init__(self):
+        self.table_change_alert_channel = "table_change_alert_updated"
+        self.conn = None
 
-    This class provides methods to connect to a PostgreSQL database and
-    listen to notifications on specific channels. It sets up listeners for
-    table change alerts and handles notifications by printing them.
+    def ensure_trigger_exists(self) -> None:
+        try:
+            with self.conn.cursor() as cur:
+                self._create_trigger_function_if_not_exists(cur=cur)
+                self._create_trigger_if_not_exists(cur=cur)
+        except Exception as e:
+            logger.error(f"Error ensuring trigger exists: {e}")
+            raise
 
-    Methods:
-        connect() -> psycopg2.extensions.connection:
-            Establishes a connection to a PostgreSQL database using psycopg2.
-        listen() -> None:
-            Sets up listeners for table change alerts and handles notifications.
-    """
-
-    def ensure_trigger_exists(self, conn: psycopg.connection) -> None:
-        """Ensures that a specific trigger exists on a given table.
-
-        Args:
-            conn(connection): A psycopg2.extensions.connection instance.
-
-        Returns:
-            None: This function does not return anything.
-        """
-        trigger_name = "table_change_alert_trigger"
+    @staticmethod
+    def _create_trigger_function_if_not_exists(*, cur: Cursor) -> None:
         trigger_function_name = "notify_table_change"
-        table_name = "public.table_change_alert"
-
-        with conn.cursor() as cur:
-            # Check if the function exists
+        cur.execute(
+            "SELECT 1 FROM pg_proc WHERE proname = %s;", (trigger_function_name,)
+        )
+        if not cur.fetchone():
+            logger.info(f"Function {trigger_function_name} does not exist. Creating...")
             cur.execute(
                 """
-                SELECT 1
-                FROM pg_proc
-                WHERE proname = %s;
-            """,
-                (trigger_function_name,),
+                CREATE OR REPLACE FUNCTION notify_table_change() RETURNS TRIGGER AS $$
+                BEGIN
+                    PERFORM pg_notify('table_change_alert_updated', TG_TABLE_NAME || ' ' || TG_OP);
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            """
             )
-            function_exists = cur.fetchone()
+            logger.info(f"Function {trigger_function_name} created.")
 
-            # Create the function if it doesn't exist
-            if not function_exists:
-                logger.info(
-                    f"Function {trigger_function_name} does not exist. Creating..."
-                )
-                cur.execute(
-                    f"""
-                    CREATE OR REPLACE FUNCTION {trigger_function_name}() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('table_change_alert_updated', TG_TABLE_NAME || ' ' || TG_OP);
-                        RETURN NEW;
-                    END;
-                    $$ LANGUAGE plpgsql;
-                """
-                )
-                logger.info(f"Function {trigger_function_name} created.")
-
-            # Check if the trigger exists
+    @staticmethod
+    def _create_trigger_if_not_exists(*, cur: Cursor) -> None:
+        trigger_name = "table_change_alert_trigger"
+        cur.execute(
+            sql.SQL("SELECT 1 FROM pg_trigger WHERE tgname = %s;"), [trigger_name]
+        )
+        if not cur.fetchone():
+            logger.info(f"Trigger {trigger_name} does not exist. Creating...")
+            table_name = "public.table_change_alert"
+            trigger_function_name = "notify_table_change"
             cur.execute(
-                """
-                SELECT 1
-                FROM pg_trigger
-                WHERE tgname = %s;
-            """,
-                (trigger_name,),
-            )
-            trigger_exists = cur.fetchone()
-
-            # Create the trigger if it doesn't exist
-            if not trigger_exists:
-                logger.info(f"Trigger {trigger_name} does not exist. Creating...")
-                cur.execute(
-                    f"""
+                sql.SQL(
+                    """
                     CREATE TRIGGER {trigger_name}
-                    AFTER INSERT OR UPDATE OR DELETE ON {table_name}
-                    FOR EACH ROW EXECUTE PROCEDURE {trigger_function_name}();
+                    AFTER INSERT OR UPDATE OR DELETE ON {table}
+                    FOR EACH ROW EXECUTE PROCEDURE {function_name}();
                 """
+                ).format(
+                    trigger_name=sql.Identifier(trigger_name),
+                    table=sql.Identifier(table_name),
+                    function_name=sql.Identifier(trigger_function_name),
                 )
-                logger.info(f"Trigger {trigger_name} created.")
+            )
+            logger.info(f"Trigger {trigger_name} created.")
 
-    def connect(self) -> psycopg.connection:
-        """Connect to a PostgreSQL database using psycopg2.
-
-        This method reads database connection information from environment
-        variables and returns a connection to the specified database.
-
-        Returns:
-            psycopg2.connection: A connection to the PostgreSQL database.
-        """
-        conn = psycopg.connect(
-            host="localhost",
-            database=env("DB_NAME"),
+    def connect(self) -> None:
+        self.conn = connect(
+            dbname=env("DB_NAME"),
             user=env("DB_USER"),
             password=env("DB_PASSWORD"),
-            port=5432,
+            host=env("DB_HOST"),
+            port=env("DB_PORT"),
+            autocommit=True,
         )
-        conn.autocommit = True
-        return conn
 
     def listen(self) -> None:
-        """Set up listeners for table change alerts and handle notifications.
+        self.connect()
+        try:
+            self.ensure_trigger_exists()
+            self._start_listening()
+        except Exception as e:
+            logger.error(f"Error during listening: {e}")
+        finally:
+            if self.conn:
+                self.conn.close()
 
-        This method connects to the database, sets up listeners for table
-        change alerts, and handles notifications by printing them. If a
-        notification is received on the table_change_alert_channel, it restarts
-        the listeners for table_changes.
-
-        Returns:
-            None: This function does not return anything.
-        """
-        conn = self.connect()
-        self.ensure_trigger_exists(conn)
-        table_changes = get_active_table_alerts()
-        table_change_alert_channel = "table_change_alert_updated"
+    def _start_listening(self) -> None:
+        table_changes = get_active_psql_table_change_alerts()
 
         if not table_changes:
             logger.warning("No active table change alerts.")
-            conn.close()
             return
 
-        with conn.cursor() as cur:
-            for change in table_changes:
-                cur.execute("LISTEN %s;", (change.listener_name,))
-                logger.info(f"Listening to channel: {change.listener_name}")
+        with self.conn.cursor() as cur:
+            self._listen_to_channels(cur, table_changes)
+            self._poll_notifications()
 
-            cur.execute("LISTEN %s;", (table_change_alert_channel,))
-            logger.info(f"Listening to channel: {table_change_alert_channel}")
+    def _listen_to_channels(
+        self, cur: Cursor, table_changes: QuerySet[models.TableChangeAlert]
+    ) -> None:
+        for change in table_changes:
+            if change.listener_name:
+                self._execute_listen(cur=cur, channel_name=change.listener_name)
+            else:
+                logger.warning(f"Listener name is empty for change: {change}")
 
-            while True:
-                rlist, _, _ = select.select([conn.fileno()], [], [], 5)
-                if conn.fileno() in rlist:
-                    conn.poll()
-                    while conn.notifies:
-                        notify = conn.notifies.pop(0)
-                        logger.info(
-                            f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}"
-                        )
+        self._execute_listen(cur=cur, channel_name=self.table_change_alert_channel)
 
-                        if notify.channel == table_change_alert_channel:
-                            cur.execute("UNLISTEN *;")
-                            logger.info(
-                                "Restarting listener due to new TableChangeAlert..."
-                            )
-                            for change in table_changes:
-                                cur.execute("LISTEN %s;", (change.listener_name,))
-                                logger.info(
-                                    f"Listening to channel: {change.listener_name}"
-                                )
+    @staticmethod
+    def _execute_listen(*, cur: Cursor, channel_name: str) -> None:
+        listen_query = sql.SQL("LISTEN {}").format(sql.Identifier(channel_name))
+        cur.execute(listen_query)
+        logger.info(f"Listening to channel: {channel_name}")
 
-                            cur.execute("LISTEN %s;", (table_change_alert_channel,))
-                else:
-                    logger.info("Timeout reached, no notifications received.")
+    def _poll_notifications(self) -> None:
+        sel = selectors.DefaultSelector()
+        sel.register(self.conn, selectors.EVENT_READ)
+
+        while True:
+            if not sel.select(timeout=60.0):
+                # No FD activity detected in one minute
+                continue
+
+            # Activity detected. Is the connection still ok?
+            try:
+                self.conn.execute("SELECT 1")
+                self._handle_notifications()
+            except OperationalError:
+                # You were disconnected: handle this case, such as re-establishing connection or exiting
+                logger.error("Lost connection to the database!")
+                sys.exit(1)
+
+    def _handle_notifications(self) -> None:
+        # Iterate over the generator of notifications
+        for notify in self.conn.notifies():
+            logger.info(f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}")
+            if notify.channel == self.table_change_alert_channel:
+                self._restart_listening(self.conn.cursor())
+
+    def _restart_listening(self, cur: Cursor) -> None:
+        cur.execute(sql.SQL("UNLISTEN *;"))
+        logger.info("Restarting listener due to new TableChangeAlert...")
+        table_changes = get_active_psql_table_change_alerts()
+        self._listen_to_channels(cur, table_changes)
