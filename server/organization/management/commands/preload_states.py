@@ -19,10 +19,9 @@ import typing
 
 import requests
 from django.core.management.base import BaseCommand
+from location import models
 from rich.console import Console
 from rich.progress import Progress
-
-from location import models
 
 
 class Command(BaseCommand):
