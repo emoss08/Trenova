@@ -21,7 +21,7 @@ import sys
 
 import environ
 from django.db.models import QuerySet
-from psycopg import connect, sql, OperationalError, Cursor
+from psycopg import Cursor, OperationalError, connect, sql
 
 from organization import models
 from organization.selectors import get_active_psql_table_change_alerts

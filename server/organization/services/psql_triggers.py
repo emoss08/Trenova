@@ -19,6 +19,7 @@ from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
 
 from utils.types import ModelUUID
+
 from .table_choices import TableChoiceService
 
 table_service = TableChoiceService()
