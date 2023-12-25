@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { createGlobalStore } from "@/lib/useGlobalStore";
 import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { createGlobalStore } from "@/lib/useGlobalStore";
 
 type AuthState = {
   isAuthenticated: boolean;

@@ -15,9 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ShipmentAsideMenus } from "@/components/shipment-management/shipment-aside-menu";
-import { ShipmentList } from "@/components/shipment-management/shipment-list";
+import { ShipmentBreadcrumb } from "@/components/shipment-management/shipment-breadcrumb";
+import { ShipmentListView } from "@/components/shipment-management/shipment-list-view";
+import { ShipmentMapView } from "@/components/shipment-management/shipment-map-view";
+import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
+import { useShipmentStore } from "@/stores/ShipmentStore";
 import { ShipmentSearchForm } from "@/types/order";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 const finalStatuses = ["C", "H", "B", "V"];
@@ -31,22 +35,44 @@ export default function ShipmentManagement() {
     },
   });
 
+  const [currentView, setCurrentView] = useShipmentStore.use("currentView");
+
+  useEffect(() => {
+    useBreadcrumbStore.set("hasCreateButton", true);
+    useBreadcrumbStore.set("createButtonText", "Add New Shipment");
+
+    return () => {
+      useBreadcrumbStore.set("hasCreateButton", false);
+      useBreadcrumbStore.set("createButtonText", "");
+    };
+  });
+
+  const renderView = () => {
+    switch (currentView) {
+      case "list":
+        return (
+          <ShipmentListView
+            control={control}
+            progressStatuses={progressStatuses}
+            watch={watch}
+            finalStatuses={finalStatuses}
+            setValue={setValue}
+          />
+        );
+      case "map":
+        return <ShipmentMapView />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="flex space-x-10 p-4">
-      <div className="w-1/4">
-        <ShipmentAsideMenus
-          control={control}
-          setValue={setValue}
-          watch={watch}
-        />
+    <>
+      <ShipmentBreadcrumb />
+      <div className="flex space-x-10 p-4">
+        {/* Render the view */}
+        {renderView()}
       </div>
-      <div className="w-3/4">
-        <ShipmentList
-          finalStatuses={finalStatuses}
-          progressStatuses={progressStatuses}
-          watch={watch}
-        />
-      </div>
-    </div>
+    </>
   );
 }

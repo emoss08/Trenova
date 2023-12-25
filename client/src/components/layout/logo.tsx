@@ -30,9 +30,10 @@ export function Logo() {
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
+
   const { data: organizationData, isLoading } = useQuery({
     queryKey: ["organization", organizationId] as QueryKeys[],
-    queryFn: () => {
+    queryFn: async () => {
       if (!organizationId) {
         return Promise.resolve(null);
       }
@@ -40,37 +41,20 @@ export function Logo() {
     },
     initialData: (): Organization | undefined =>
       queryClient.getQueryData(["organization", organizationId]),
-    staleTime: Infinity, // never refetch
+    staleTime: Infinity,
   });
 
-  console.info("organizationData", organizationData);
-
   if (isLoading) {
-    return <Skeleton className="h-10 w-full" />;
+    return <Skeleton className="h-10 w-40" />;
   }
 
   if (organizationData && organizationData.logo) {
-    if (theme === "light") {
-      return (
-        <Link to="/" style={{ textDecoration: "none" }}>
-          <img
-            className="h-[60px] object-contain"
-            src={organizationData?.logo}
-            alt="Organization Logo"
-          />
-        </Link>
-      );
-    }
+    const logoSource =
+      theme === "light"
+        ? organizationData.logo
+        : organizationData.darkLogo || organizationData.logo;
 
-    return (
-      <Link to="/" style={{ textDecoration: "none" }}>
-        <img
-          className="h-[60px] object-contain"
-          src={organizationData?.darkLogo || organizationData?.logo}
-          alt="Organization Logo"
-        />
-      </Link>
-    );
+    return <LogoLink src={logoSource} alt="Organization Logo" />;
   }
 
   return (
@@ -80,6 +64,14 @@ export function Logo() {
       title={organizationData?.name}
     >
       {organizationData?.name}
+    </Link>
+  );
+}
+
+function LogoLink({ src, alt }: { src: string; alt: string }) {
+  return (
+    <Link to="/" style={{ textDecoration: "none" }}>
+      <img className="h-[60px] object-contain" src={src} alt={alt} />
     </Link>
   );
 }
