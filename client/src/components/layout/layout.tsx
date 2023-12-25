@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { NavMenu } from "@/components/layout/navbar";
 import { NotificationMenu } from "@/components/layout/notification_menu/notification-menu";
 import { SiteSearch } from "@/components/layout/site-search";
@@ -38,8 +37,8 @@ import { Logo } from "./logo";
 function DevHeader() {
   // Simple header that puts div in the middle on a red background
   return (
-    <header className="flex items-center justify-center h-5 w-full bg-red-700">
-      <div className="text-red-100">
+    <header className="flex items-center justify-center h-5 w-full bg-indigo-700">
+      <div className="text-white">
         You're currently running Monta in development mode.
       </div>
     </header>
@@ -101,7 +100,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Main content should allow for y-axis overflow only */}
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
-          <Breadcrumb />
+          {/* <Breadcrumb /> */}
           <SiteSearch />
           {children}
         </div>

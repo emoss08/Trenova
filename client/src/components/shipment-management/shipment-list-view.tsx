@@ -15,26 +15,40 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/lib/useGlobalStore";
-import { RouteObjectWithPermission } from "@/routing/AppRoutes";
+import { ShipmentAsideMenus } from "@/components/shipment-management/shipment-aside-menu";
+import { ShipmentList } from "@/components/shipment-management/shipment-list";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { ShipmentSearchForm } from "@/types/order";
 
-interface BreadcrumbStoreType {
-  currentRoute: RouteObjectWithPermission;
-  loading: boolean;
-  hasCreateButton: boolean;
-  createButtonText?: string;
-  switchButtonText?: string;
+export function ShipmentListView({
+  finalStatuses,
+  progressStatuses,
+  control,
+  setValue,
+  watch,
+}: {
+  finalStatuses: string[];
+  progressStatuses: string[];
+  control: Control<ShipmentSearchForm>;
+  setValue: UseFormSetValue<ShipmentSearchForm>;
+  watch: UseFormWatch<ShipmentSearchForm>;
+}) {
+  return (
+    <>
+      <div className="w-1/4">
+        <ShipmentAsideMenus
+          control={control}
+          setValue={setValue}
+          watch={watch}
+        />
+      </div>
+      <div className="w-3/4">
+        <ShipmentList
+          finalStatuses={finalStatuses}
+          progressStatuses={progressStatuses}
+          watch={watch}
+        />
+      </div>
+    </>
+  );
 }
-
-export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
-  currentRoute: {
-    title: "",
-    group: "",
-    subMenu: "",
-    path: "",
-  },
-  loading: false,
-  hasCreateButton: false,
-  createButtonText: "Create",
-  switchButtonText: "Switch",
-});

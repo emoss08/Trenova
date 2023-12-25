@@ -24,12 +24,12 @@ import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { ENVIRONMENT, THEME_KEY } from "@/lib/constants";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useAuthStore } from "@/stores/AuthStore";
-import "@fontsource/inter"; // Defaults to weight 400
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Suspense, memo } from "react";
+import { memo, Suspense } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { BrowserRouter } from "react-router-dom";
+import "@fontsource/inter"; // Defaults to weight 400
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +51,7 @@ export default function App() {
   if (isLoading) {
     return <LoadingSkeleton />;
   }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey={THEME_KEY}>
       <UserPermissionsProvider>

@@ -93,6 +93,7 @@ export function InputField<T extends FieldValues>({
             icon && "pl-10",
             fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            props.className,
           )}
           {...props}
         />

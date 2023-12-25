@@ -240,8 +240,8 @@ export function NotificationMenu() {
           <span className="sr-only">Notifications</span>
           {userHasNotifications && (
             <span className="flex absolute h-2 w-2 top-0 right-0 -mt-1 -mr-1">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-25"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-700 opacity-25"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-800"></span>
             </span>
           )}
         </nav>
