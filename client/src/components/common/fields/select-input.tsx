@@ -45,7 +45,7 @@ interface SelectInputProps<T extends Record<string, unknown>>
       Props<SelectOption, boolean, GroupBase<SelectOption>>,
       "defaultValue" | "name"
     > {
-  label: string;
+  label?: string;
   description?: string;
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>;
   hasContextMenu?: boolean;
@@ -153,6 +153,7 @@ export function SelectInput<T extends Record<string, unknown>>(
                   ? "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
                   : "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
+                props.className,
               ),
             placeholder: () =>
               cn(

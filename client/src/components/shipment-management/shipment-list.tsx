@@ -15,17 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { useDebounce } from "@/hooks/useDebounce";
 import { shipmentStatusToReadable } from "@/lib/utils";
+import { getShipments } from "@/services/ShipmentRequestService";
+import { useShipmentStore } from "@/stores/ShipmentStore";
+import { QueryKeys } from "@/types";
 import { Shipment, ShipmentSearchForm } from "@/types/order";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
+import { UseFormWatch } from "react-hook-form";
+import { ErrorLoadingData } from "../common/table/data-table-components";
 import { Badge } from "../ui/badge";
 import { Skeleton } from "../ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { QueryKeys } from "@/types";
-import { getShipments } from "@/services/ShipmentRequestService";
-import { useDebounce } from "@/hooks/useDebounce";
-import { UseFormWatch } from "react-hook-form";
+
+const DEBOUNCE_DELAY = 500; // debounce delay in ms
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleString();
 
 const ShipmentProgressIndicator = ({
   currentStatus,
@@ -91,13 +98,11 @@ export function ShipmentList({
   progressStatuses: string[];
   watch: UseFormWatch<ShipmentSearchForm>;
 }) {
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleString();
-
+  const queryClient = useQueryClient();
   const statusFilter = watch("statusFilter");
   const searchQuery = watch("searchQuery");
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
 
   const {
     data: shipments,
@@ -106,6 +111,12 @@ export function ShipmentList({
   } = useQuery({
     queryKey: ["shipments", debouncedSearchQuery, statusFilter] as QueryKeys[],
     queryFn: async () => getShipments(debouncedSearchQuery, statusFilter),
+    initialData: (): Shipment[] | undefined =>
+      queryClient.getQueryData([
+        "shipments",
+        debouncedSearchQuery,
+        statusFilter,
+      ]),
     staleTime: Infinity,
   });
 
@@ -121,6 +132,12 @@ export function ShipmentList({
     return <SkeletonShipmentList />;
   }
 
+  if (isShipmentError) {
+    return (
+      <ErrorLoadingData message="There was an error loading the shipments." />
+    );
+  }
+
   return (
     <ul role="list" className="space-y-5">
       {shipments &&
@@ -128,6 +145,9 @@ export function ShipmentList({
           <li
             key={shipment.id}
             className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
+            onClick={() => {
+              useShipmentStore.set("currentShipment", shipment);
+            }}
           >
             {/* Check and render the badge if the shipment is delayed */}
             {isShipmentDelayed(shipment, finalStatuses) && (
@@ -168,21 +188,15 @@ export function ShipmentList({
                       {shipment.originAddress}
                     </span>
                   </div>
-                  <div className="text-foreground">
-                    <div className="flex">
-                      <p className="font-semibold pr-2">Window Start: </p>{" "}
-                      {formatDate(shipment.originAppointmentWindowStart)}
-                    </div>
-                    <div className="flex">
-                      <p className="font-semibold pr-2">Window End: </p>{" "}
-                      {formatDate(shipment.originAppointmentWindowEnd)}
-                    </div>
-                  </div>
+                  <WindowTime
+                    start={shipment.originAppointmentWindowStart}
+                    end={shipment.originAppointmentWindowEnd}
+                  />
                 </div>
                 {/* Shipment destination and appointment */}
                 <div className="text-sm">
                   <div className="flex items-center mb-2">
-                    <div className="flex items-center justify-center rounded-full w-4 h-4 bg-blue-500 mr-2">
+                    <div className="flex items-center justify-center rounded-full w-4 h-4 bg-blue-800 mr-2">
                       <ArrowDown className="inline-block h-3 w-3 text-white" />
                     </div>
                     <span>
@@ -191,21 +205,28 @@ export function ShipmentList({
                       </span>
                     </span>
                   </div>
-                  <div className="text-foreground">
-                    <div className="flex">
-                      <p className="font-semibold pr-2">Window Start: </p>{" "}
-                      {formatDate(shipment.destinationAppointmentWindowStart)}
-                    </div>
-                    <div className="flex">
-                      <p className="font-semibold pr-2">Window End: </p>{" "}
-                      {formatDate(shipment.destinationAppointmentWindowEnd)}
-                    </div>
-                  </div>
+                  <WindowTime
+                    start={shipment.destinationAppointmentWindowStart}
+                    end={shipment.destinationAppointmentWindowEnd}
+                  />
                 </div>
               </div>
             </div>
           </li>
         ))}
     </ul>
+  );
+}
+
+function WindowTime({ start, end }: { start: string; end: string }) {
+  return (
+    <div className="text-foreground">
+      <div className="flex">
+        <p className="font-semibold pr-2">Window Start: </p> {formatDate(start)}
+      </div>
+      <div className="flex">
+        <p className="font-semibold pr-2">Window End: </p> {formatDate(end)}
+      </div>
+    </div>
   );
 }

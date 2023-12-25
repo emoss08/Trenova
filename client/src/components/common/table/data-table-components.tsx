@@ -113,7 +113,7 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   );
 }
 
-export function ErrorLoadingData() {
+export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <div className="text-center">
       <AlertTriangle className="mx-auto h-10 w-10 text-accent-foreground" />
@@ -121,7 +121,7 @@ export function ErrorLoadingData() {
         Well, this is embarrassing...
       </p>
       <p className="mt-2 text-muted-foreground">
-        We were unable to load the data for this table. Please try again later.
+        {message || "There was an error loading the data."}
       </p>
     </div>
   );

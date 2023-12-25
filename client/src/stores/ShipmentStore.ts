@@ -16,25 +16,16 @@
  */
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
-import { RouteObjectWithPermission } from "@/routing/AppRoutes";
+import { Shipment } from "@/types/order";
 
-interface BreadcrumbStoreType {
-  currentRoute: RouteObjectWithPermission;
-  loading: boolean;
-  hasCreateButton: boolean;
-  createButtonText?: string;
-  switchButtonText?: string;
-}
+export type ShipmentView = "list" | "calendar" | "map";
 
-export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
-  currentRoute: {
-    title: "",
-    group: "",
-    subMenu: "",
-    path: "",
-  },
-  loading: false,
-  hasCreateButton: false,
-  createButtonText: "Create",
-  switchButtonText: "Switch",
+type ShipmentStore = {
+  currentShipment: Shipment | null;
+  currentView: ShipmentView;
+};
+
+export const useShipmentStore = createGlobalStore<ShipmentStore>({
+  currentShipment: null,
+  currentView: "map",
 });
