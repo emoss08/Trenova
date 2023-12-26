@@ -6,10 +6,10 @@ channels_redis==4.1.0
 confluent-kafka==2.3.0
 cssutils==2.9.0
 daphne==4.0.0
-Django==4.2.8
+Django==4.2.8 # Do not upgrade until django celery beat supports django 5.0
 django-auditlog==2.3.0
 django-cacheops==7.0.2
-django-celery-beat==2.1.0
+django-celery-beat==2.1.0 # Do not upgrade until they support django 5.0
 django-celery-results==2.5.1
 django-colorfield==0.11.0
 django-compressor==4.4
