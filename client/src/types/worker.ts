@@ -32,6 +32,8 @@ export interface Worker extends BaseModel {
   zipCode: string;
   depot?: string | null;
   manager: string;
+  profilePicture?: string | null;
+  thumbnail?: string | null;
   enteredBy: string;
   profile: WorkerProfile;
   contacts: WorkerContact[];

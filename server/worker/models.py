@@ -73,6 +73,20 @@ class Worker(GenericModel):
             "Unselect this instead of deleting workers."
         ),
     )
+    profile_picture = models.ImageField(
+        _("Profile Picture"),
+        upload_to="workers/pictures",
+        help_text=_("The profile picture of the worker"),
+        null=True,
+        blank=True,
+    )
+    thumbnail = models.ImageField(
+        _("Thumbnail"),
+        upload_to="workers/thumbnails",
+        help_text=_("The thumbnail of the worker's profile picture"),
+        null=True,
+        blank=True,
+    )
     worker_type = ChoiceField(
         _("Worker type"),
         choices=WorkerType.choices,
