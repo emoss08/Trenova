@@ -256,6 +256,7 @@ class WorkerProfile(GenericModel):
         NONE = "N", _("None")
         HAZMAT = "H", _("Hazmat")
         TANKER = "T", _("Tanker")
+        DOUBLES = "P", _("Doubles/Triples")
         X = "X", _("Tanker and Hazmat")
 
     worker = models.OneToOneField(
