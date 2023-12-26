@@ -37,7 +37,7 @@ export function ShipmentBreadcrumb() {
         </h2>
         <div className="flex items-center">
           <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
-            Shipment Management - Shipment List
+            Shipment Management - Shipment Management
           </a>
         </div>
       </div>
