@@ -17,6 +17,7 @@
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Shipment } from "@/types/order";
+import { GoogleMap } from "@google";
 
 export type ShipmentView = "list" | "calendar" | "map";
 
@@ -28,4 +29,22 @@ type ShipmentStore = {
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
   currentShipment: null,
   currentView: "map",
+});
+
+export type MapType = "roadmap" | "hybrid" | "terrain";
+
+export type MapLayer = "TrafficLayer";
+
+type ShipmentMapStore = {
+  map: GoogleMap | null;
+  maps: GoogleMap | null;
+  mapType: MapType;
+  mapLayers: MapLayer[];
+};
+
+export const useShipmentMapStore = createGlobalStore<ShipmentMapStore>({
+  map: null,
+  maps: null,
+  mapType: "roadmap",
+  mapLayers: [],
 });
