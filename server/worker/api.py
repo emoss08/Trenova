@@ -110,6 +110,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
     permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("is_active", "profiles__endorsements", "manager", "fleet_code")
 
     def create(
         self, request: "Request", *args: typing.Any, **kwargs: typing.Any
