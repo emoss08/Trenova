@@ -31,6 +31,7 @@ import { User } from "@/types/accounts";
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { AppGridMenu } from "./app-grid";
+import { Breadcrumb } from "./breadcrumb";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
 
@@ -100,7 +101,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Main content should allow for y-axis overflow only */}
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
-          {/* <Breadcrumb /> */}
+          <Breadcrumb />
           <SiteSearch />
           {children}
         </div>
@@ -125,7 +126,6 @@ export function UnprotectedLayout({ children }: LayoutProps) {
         <RainbowTopBar />
         {ENVIRONMENT === "development" && <DevHeader />}
       </header>
-
       <div className="h-screen">{children}</div>
     </div>
   );
