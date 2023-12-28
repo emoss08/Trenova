@@ -59,6 +59,7 @@ class CustomReportSerializer(GenericSerializer):
         """
 
         model = models.CustomReport
+        fields = "__all__"
 
 
 class UserReportSerializer(GenericSerializer):

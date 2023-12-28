@@ -73,6 +73,20 @@ class Worker(GenericModel):
             "Unselect this instead of deleting workers."
         ),
     )
+    profile_picture = models.ImageField(
+        _("Profile Picture"),
+        upload_to="workers/pictures",
+        help_text=_("The profile picture of the worker"),
+        null=True,
+        blank=True,
+    )
+    thumbnail = models.ImageField(
+        _("Thumbnail"),
+        upload_to="workers/thumbnails",
+        help_text=_("The thumbnail of the worker's profile picture"),
+        null=True,
+        blank=True,
+    )
     worker_type = ChoiceField(
         _("Worker type"),
         choices=WorkerType.choices,
@@ -256,6 +270,7 @@ class WorkerProfile(GenericModel):
         NONE = "N", _("None")
         HAZMAT = "H", _("Hazmat")
         TANKER = "T", _("Tanker")
+        DOUBLES = "P", _("Doubles/Triples")
         X = "X", _("Tanker and Hazmat")
 
     worker = models.OneToOneField(
@@ -785,6 +800,10 @@ class WorkerTimeAway(GenericModel):
 
 
 class WorkerHOS(GenericModel):
+    """
+    Stores Hours of service information for a related :model:`worker.Worker`.
+    """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -800,19 +819,19 @@ class WorkerHOS(GenericModel):
         help_text=_("Related worker."),
     )
     drive_time = models.PositiveIntegerField(
-        _("Drive Time"), help_text=_("Drive time in minutes")
+        _("Drive Time"), help_text=_("Drive time in seconds")
     )
     off_duty_time = models.PositiveIntegerField(
-        _("Off Duty Time"), help_text=_("Off duty time in minutes")
+        _("Off Duty Time"), help_text=_("Off duty time in seconds")
     )
     sleeper_berth_time = models.PositiveIntegerField(
-        _("Sleeper Berth Time"), help_text=_("Sleeper berth time in minutes")
+        _("Sleeper Berth Time"), help_text=_("Sleeper berth time in seconds")
     )
     on_duty_time = models.PositiveIntegerField(
-        _("On Duty Time"), help_text=_("On duty time in minutes")
+        _("On Duty Time"), help_text=_("On duty time in seconds")
     )
     violation_time = models.PositiveIntegerField(
-        _("Violation Time"), help_text=_("Violation time in minutes")
+        _("Violation Time"), help_text=_("Violation time in seconds")
     )
     current_status = models.CharField(
         _("Current Status"), max_length=50, help_text=_("Current status of the driver")
@@ -823,7 +842,7 @@ class WorkerHOS(GenericModel):
         help_text=_("Current location of the driver"),
     )
     seventy_hour_time = models.PositiveIntegerField(
-        _("70 Hour Time"), help_text=_("70 hour time in minutes")
+        _("70 Hour Time"), help_text=_("70 hour time in seconds")
     )
     miles_driven = models.PositiveIntegerField(
         _("Miles Driven"), help_text=_("Miles driven")
@@ -850,6 +869,7 @@ class WorkerHOS(GenericModel):
         verbose_name_plural = _("Worker HOS")
         ordering = ["worker"]
         db_table = "worker_hos"
+        db_table_comment = "Stores Hours of service information for a worker"
 
     def __str__(self) -> str:
         """

@@ -287,8 +287,9 @@ def shipment_type_api(
     api_client: APIClient, organization: Organization
 ) -> Generator[Any, Any, None]:
     """
-    shipment type Factory
+    Shipment Type Factory
     """
+
     yield api_client.post(
         "/api/shipment_types/",
         {

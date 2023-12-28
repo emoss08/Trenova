@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ShipmentAsideMenus } from "@/components/shipment-management/shipment-aside-menu";
+import { ShipmentAsideMenus } from "@/components/shipment-management/map-view/shipment-aside-menu";
 import { ShipmentList } from "@/components/shipment-management/shipment-list";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { ShipmentSearchForm } from "@/types/order";

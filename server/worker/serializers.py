@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, override
+from typing import Any
 
 from rest_framework import serializers
 
@@ -36,7 +36,13 @@ class WorkerCommentSerializer(GenericSerializer):
         """
 
         model = models.WorkerComment
-        extra_read_only_fields = ("worker",)
+        fields = "__all__"
+        read_only_fields = ("worker", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+            "worker": {"required": False},
+        }
 
     def create(self, validated_data: Any) -> models.WorkerComment:
         raise NotImplementedError(
@@ -57,7 +63,13 @@ class WorkerContactSerializer(GenericSerializer):
         """
 
         model = models.WorkerContact
-        extra_read_only_fields = ("worker",)
+        fields = "__all__"
+        read_only_fields = ("worker", "organization", "business_unit")
+        extra_kwargs = {
+            "worker": {"required": False},
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def create(self, validated_data: Any) -> models.WorkerContact:
         raise NotImplementedError(
@@ -76,11 +88,29 @@ class WorkerProfileSerializer(GenericSerializer):
         """
 
         model = models.WorkerProfile
-        extra_read_only_fields = ("worker",)
+        fields = "__all__"
+        read_only_fields = ("worker", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+            "worker": {"required": False},
+        }
 
     def create(self, validated_data: Any) -> models.WorkerProfile:
         raise NotImplementedError(
             "WorkerProfileSerializer should not create objects directly. Use helper functions instead."
+        )
+
+
+class WorkerHOSSerializer(GenericSerializer):
+    class Meta:
+        model = models.WorkerHOS
+        extra_read_only_fields = ("worker",)
+        fields = "__all__"
+
+    def create(self, validated_data: Any) -> models.WorkerHOS:
+        raise NotImplementedError(
+            "WorkerHOSSerializer should not create objects directly. Use helper functions instead."
         )
 
 
@@ -92,6 +122,7 @@ class WorkerSerializer(GenericSerializer):
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
+    current_hos = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -99,11 +130,19 @@ class WorkerSerializer(GenericSerializer):
         """
 
         model = models.Worker
-        extra_fields = (
-            "profile",
-            "contacts",
-            "comments",
-        )
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+            "code": {"required": False, "allow_null": True},
+        }
+
+    def get_current_hos(self, obj: models.Worker) -> Any:
+        # Use the prefetched latest_hos
+        if hasattr(obj, "latest_hos") and obj.latest_hos:
+            return WorkerHOSSerializer(obj.latest_hos[0]).data
+        return None
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Worker model.
@@ -139,27 +178,6 @@ class WorkerSerializer(GenericSerializer):
             )
 
         return value
-
-    def to_representation(self, instance: models.Worker) -> dict[str, Any]:
-        """Customize the representation of the worker, which will be returned in API response.
-
-        This method provides a custom serialization format, adds related objects data to response.
-
-        Args:
-            instance (models.Worker): object of Worker model to represent.
-
-        Returns:
-            dict: Dictionary containing the representation of relevant information related to the Worker.
-        """
-        representation = super().to_representation(instance)
-        representation["profile"] = WorkerProfileSerializer(instance.profile).data
-        representation["contacts"] = WorkerContactSerializer(
-            instance.contacts.all(), many=True
-        ).data
-        representation["comments"] = WorkerCommentSerializer(
-            instance.comments.all(), many=True
-        ).data
-        return representation
 
     def create(self, validated_data: Any) -> models.Worker:
         """Create a new instance of the Worker model with given validated data.
@@ -220,7 +238,6 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    @override
     def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
         """Update an existing instance of the Worker model with given validated data.
 
@@ -235,6 +252,13 @@ class WorkerSerializer(GenericSerializer):
             models.Worker: Updated Worker instance.
         """
 
+        # Get the organization of the user from the request.
+        organization = super().get_organization
+
+        # Get the business unit of the user from the request.
+        business_unit = super().get_business_unit
+
+        # Popped data (profile, contacts, comments)
         worker_profile_data = validated_data.pop("profile", None)
         worker_comments_data = validated_data.pop("comments", [])
         worker_contacts_data = validated_data.pop("contacts", [])
@@ -242,24 +266,24 @@ class WorkerSerializer(GenericSerializer):
         # Update Worker Profile
         helpers.create_or_update_worker_profile(
             worker=instance,
-            business_unit=instance.organization.business_unit,
-            organization=instance.organization,
+            business_unit=business_unit,
+            organization=organization,
             profile_data=worker_profile_data,
         )
 
         # Update Worker Comments
         helpers.create_or_update_worker_comments(
             worker=instance,
-            business_unit=instance.organization.business_unit,
-            organization=instance.organization,
+            business_unit=business_unit,
+            organization=organization,
             worker_comment_data=worker_comments_data,
         )
 
         # Update Worker Contacts
         helpers.create_or_update_worker_contacts(
             worker=instance,
-            business_unit=instance.organization.business_unit,
-            organization=instance.organization,
+            business_unit=business_unit,
+            organization=organization,
             worker_contacts_data=worker_contacts_data,
         )
 

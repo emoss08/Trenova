@@ -17,7 +17,7 @@
 
 import { ShipmentBreadcrumb } from "@/components/shipment-management/shipment-breadcrumb";
 import { ShipmentListView } from "@/components/shipment-management/shipment-list-view";
-import { ShipmentMapView } from "@/components/shipment-management/shipment-map-view";
+import { ShipmentMapView } from "@/components/shipment-management/map-view/shipment-map-view";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { ShipmentSearchForm } from "@/types/order";
@@ -35,7 +35,7 @@ export default function ShipmentManagement() {
     },
   });
 
-  const [currentView, setCurrentView] = useShipmentStore.use("currentView");
+  const [currentView] = useShipmentStore.use("currentView");
 
   useEffect(() => {
     useBreadcrumbStore.set("hasCreateButton", true);

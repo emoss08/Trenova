@@ -30,11 +30,22 @@ class MovementSerializer(GenericSerializer):
     """
 
     class Meta:
-        """Metaclass for shipmentserializer
+        """Metaclass for Movement Serializer.
 
         Attributes:
             model (models.Shipment): The model that the serializer is for.
         """
 
         model = models.Movement
-        extra_read_only_fields = ("id", "ref_num")
+        fields = "__all__"
+        read_only_fields = (
+            "customer",
+            "id",
+            "ref_num",
+            "organization",
+            "business_unit",
+        )
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

@@ -455,6 +455,7 @@ export function useLocationCategories(show?: boolean) {
 /**
  * Get US States for select options
  * @param show - show or hide the query
+ * @param limit
  */
 export function useUSStates(show?: boolean, limit?: number) {
   const queryClient = useQueryClient();
@@ -601,12 +602,11 @@ export function useWorkers(show?: boolean, limit: number = 100) {
       label: worker.code,
     })) || [];
 
-  return { selectWorkers, isError, isLoading };
+  return { data, selectWorkers, isError, isLoading };
 }
 
 /**
  * Get UserNotifications for notification menu
- * @param menuOpen - menu open state
  * @param userId - user id
  */
 export function useNotifications(userId: string) {

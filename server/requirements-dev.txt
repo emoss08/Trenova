@@ -1,3 +1,4 @@
+black==23.12.1
 celery-types==0.20.0
 django-admin-interface==0.28.0
 djangorestframework-stubs[compatible-mypy]==3.14.5
@@ -12,6 +13,8 @@ pytest-cov==4.1.0
 pytest-django==4.7.0
 pytest-monkeytype==1.1.0
 pytest-sugar==0.9.7
+ruff==0.1.9
 tox==4.11.4
 types-python-dateutil==2.8.19.14
 types-redis==4.6.0.11
+

@@ -31,4 +31,7 @@ def generate_worker_code(*, instance: models.Worker) -> str:
     new_code = f"{code}{models.Worker.objects.count() + 1:04d}"
 
     # Check if the code already exists in the database
-    return new_code if models.Worker.objects.filter(code=code).exists() else code
+    try:
+        models.Worker.objects.get(code=new_code)
+    except models.Worker.DoesNotExist:
+        return new_code

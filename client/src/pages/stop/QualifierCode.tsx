@@ -95,6 +95,7 @@ export default function QualifierCodes() {
       tableFacetedFilters={filters}
       TableSheet={QualifierCodeDialog}
       TableEditSheet={QualifierCodeEditDialog}
+      addPermissionName="add_qualifiercode"
     />
   );
 }

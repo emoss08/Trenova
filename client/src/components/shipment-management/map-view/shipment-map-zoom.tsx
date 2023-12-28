@@ -15,27 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
-import { Worker } from "@/types/worker";
+import { Button } from "@/components/ui/button";
+import { MinusIcon, PlusIcon } from "lucide-react";
+import { GoogleMap } from "@google";
 
-/**
- * Fetches an array of all workers from the server.
- * @param {number} limit The maximum number of workers to return.
- * @param searchQuery
- * @param fleetFilter
- * @returns {Promise<Worker[]>} A promise that resolves to an array of workers.
- */
-export async function getWorkers(
-  limit: number = 100,
-  searchQuery?: string,
-  fleetFilter?: string,
-): Promise<Worker[]> {
-  const response = await axios.get("/workers/", {
-    params: {
-      limit,
-      search: searchQuery,
-      fleet_code: fleetFilter,
-    },
-  });
-  return response.data.results;
+// Components that control the zoom in and out for the map.
+export function ShipmentMapZoom({ map }: { map: GoogleMap }) {
+  if (!map) return null; // This will handle the case when map is not yet loaded
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <Button
+        className="bg-background text-foreground hover:text-background"
+        size="icon"
+        onClick={() => map.setZoom(map.getZoom() + 1)}
+      >
+        <PlusIcon size={24} />
+      </Button>
+      <Button
+        className="bg-background text-foreground hover:text-background"
+        size="icon"
+        onClick={() => map.setZoom(map.getZoom() - 1)}
+      >
+        <MinusIcon size={24} />
+      </Button>
+    </div>
+  );
 }

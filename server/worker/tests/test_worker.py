@@ -273,6 +273,7 @@ def test_create_with_multi(
         },
         format="json",
     )
+
     assert response.status_code == 201
     assert response.data is not None
     assert response.data["is_active"] is True
@@ -410,7 +411,7 @@ def test_put_worker(
             "race": "TEST",
             "sex": "MALE",
             "date_of_birth": "1970-12-10",
-            "license_number": "1234569780",
+            "license_number": "1234567890",
             "license_state": "NC",
             "endorsements": "N",
         },
@@ -446,7 +447,7 @@ def test_put_worker(
     assert response.status_code == 200
     assert response.data is not None
     assert response.data["first_name"] == "foo bar"
-    assert response.data["profile"]["license_number"] == "1234569780"
+    assert response.data["profile"]["license_number"] == "1234567890"
     assert response.data["comments"][0]["comment"] == "TEST COMMENT CREATION 2"
     assert response.data["contacts"][0]["name"] == "Test Contact 2"
 
