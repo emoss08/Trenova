@@ -602,7 +602,7 @@ export function useWorkers(show?: boolean, limit: number = 100) {
       label: worker.code,
     })) || [];
 
-  return { selectWorkers, isError, isLoading };
+  return { data, selectWorkers, isError, isLoading };
 }
 
 /**
