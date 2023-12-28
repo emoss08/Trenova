@@ -24,11 +24,15 @@ export type ShipmentView = "list" | "calendar" | "map";
 type ShipmentStore = {
   currentShipment: Shipment | null;
   currentView: ShipmentView;
+  sendMessageDialogOpen: boolean;
+  currentWorker: string | null;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
   currentShipment: null,
   currentView: "map",
+  sendMessageDialogOpen: false,
+  currentWorker: null,
 });
 
 export type MapType = "roadmap" | "hybrid" | "terrain";
