@@ -17,9 +17,8 @@
 import decimal
 from typing import Any
 
-from rest_framework import serializers
-
 from billing import models
+from rest_framework import serializers
 from shipment.models import Shipment
 from utils.serializers import GenericSerializer
 
@@ -42,6 +41,11 @@ class BillingControlSerializer(GenericSerializer):
 
         model = models.BillingControl
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class BillingQueueSerializer(GenericSerializer):
@@ -63,6 +67,11 @@ class BillingQueueSerializer(GenericSerializer):
 
         model = models.BillingQueue
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class BillingLogEntrySerializer(GenericSerializer):
@@ -83,6 +92,11 @@ class BillingLogEntrySerializer(GenericSerializer):
 
         model = models.BillingLogEntry
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class BillingHistorySerializer(GenericSerializer):
@@ -103,6 +117,11 @@ class BillingHistorySerializer(GenericSerializer):
 
         model = models.BillingHistory
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ChargeTypeSerializer(GenericSerializer):
@@ -121,6 +140,11 @@ class ChargeTypeSerializer(GenericSerializer):
 
         model = models.ChargeType
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate name does not exist for the organization. Will only apply to
@@ -167,6 +191,11 @@ class AccessorialChargeSerializer(GenericSerializer):
 
         model = models.AccessorialCharge
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_charge_amount(self, value: decimal.Decimal) -> decimal.Decimal:
         """Validates the charge amount for an accessorial charge.
@@ -234,6 +263,11 @@ class DocumentClassificationSerializer(GenericSerializer):
 
         model = models.DocumentClassification
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """This method validates the name of a document classification instance. It checks if a document classification

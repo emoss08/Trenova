@@ -20,12 +20,6 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from accounting.models import RevenueCode
 from accounting.tests.factories import RevenueCodeFactory
 from accounts.models import User
@@ -38,11 +32,16 @@ from customer.factories import CustomerFactory, DeliverySlotFactory
 from customer.models import Customer
 from dispatch.factories import CommentTypeFactory
 from dispatch.models import CommentType
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
 from organization.models import Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 from shipment.models import Shipment, ShipmentType
 from shipment.tests.factories import (
     AdditionalChargeFactory,
@@ -287,8 +286,9 @@ def shipment_type_api(
     api_client: APIClient, organization: Organization
 ) -> Generator[Any, Any, None]:
     """
-    shipment type Factory
+    Shipment Type Factory
     """
+
     yield api_client.post(
         "/api/shipment_types/",
         {

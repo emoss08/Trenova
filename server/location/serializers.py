@@ -37,6 +37,11 @@ class LocationCategorySerializer(GenericSerializer):
 
         model = models.LocationCategory
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class LocationContactSerializer(GenericSerializer):
@@ -54,7 +59,11 @@ class LocationContactSerializer(GenericSerializer):
 
         model = models.LocationContact
         fields = "__all__"
-        read_only_fields = ("location",)
+        read_only_fields = ("location", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class LocationCommentSerializer(GenericSerializer):
@@ -75,7 +84,11 @@ class LocationCommentSerializer(GenericSerializer):
 
         model = models.LocationComment
         fields = "__all__"
-        read_only_fields = ("location", "entered_by")
+        read_only_fields = ("location", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class LocationSerializer(GenericSerializer):
@@ -104,10 +117,11 @@ class LocationSerializer(GenericSerializer):
 
         model = models.Location
         fields = "__all__"
-        read_only_fields = (
-            "organization",
-            "business_unit",
-        )
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def create(self, validated_data: Any) -> models.Location:
         """Create a new instance of the Location model with given validated data.
@@ -230,3 +244,8 @@ class StateSerializer(GenericSerializer):
 
         model = models.States
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

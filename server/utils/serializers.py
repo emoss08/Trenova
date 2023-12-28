@@ -15,11 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.utils.functional import cached_property
-from rest_framework import serializers
-
 from accounts.models import Token
+from django.utils.functional import cached_property
 from organization.models import BusinessUnit, Organization
+from rest_framework import serializers
 
 
 class GenericSerializer(serializers.ModelSerializer):
@@ -44,3 +43,13 @@ class GenericSerializer(serializers.ModelSerializer):
 
         token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization.business_unit
+
+    def create(self, validated_data):
+        validated_data["organization"] = self.get_organization
+        validated_data["business_unit"] = self.get_business_unit
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data["organization"] = self.get_organization
+        validated_data["business_unit"] = self.get_business_unit
+        return super().update(instance, validated_data)

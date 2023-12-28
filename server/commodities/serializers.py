@@ -36,6 +36,11 @@ class HazardousMaterialSerializer(GenericSerializer):
 
         model = models.HazardousMaterial
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CommoditySerializer(GenericSerializer):
@@ -54,6 +59,11 @@ class CommoditySerializer(GenericSerializer):
 
         model = models.Commodity
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validates the name of the commodity to ensure that it is unique.

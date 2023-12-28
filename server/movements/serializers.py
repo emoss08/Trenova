@@ -38,4 +38,14 @@ class MovementSerializer(GenericSerializer):
 
         model = models.Movement
         fields = "__all__"
-        read_only_fields = ("id", "ref_num")
+        read_only_fields = (
+            "customer",
+            "id",
+            "ref_num",
+            "organization",
+            "business_unit",
+        )
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

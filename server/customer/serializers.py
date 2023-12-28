@@ -17,9 +17,8 @@
 
 from typing import Any
 
-from rest_framework import serializers
-
 from customer import helpers, models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -42,7 +41,11 @@ class DeliverySlotSerializer(GenericSerializer):
 
         model = models.DeliverySlot
         fields = "__all__"
-        read_only_fields = ("customer",)
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CustomerContactSerializer(GenericSerializer):
@@ -63,7 +66,11 @@ class CustomerContactSerializer(GenericSerializer):
 
         model = models.CustomerContact
         fields = "__all__"
-        read_only_fields = ("customer",)
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CustomerEmailProfileSerializer(GenericSerializer):
@@ -81,6 +88,11 @@ class CustomerEmailProfileSerializer(GenericSerializer):
 
         model = models.CustomerEmailProfile
         fields = "__all__"
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CustomerFuelTableDetailSerializer(GenericSerializer):
@@ -98,6 +110,11 @@ class CustomerFuelTableDetailSerializer(GenericSerializer):
 
         model = models.CustomerFuelTableDetail
         fields = "__all__"
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CustomerFuelTableSerializer(GenericSerializer):
@@ -125,6 +142,11 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
         model = models.CustomerFuelTable
         fields = "__all__"
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Customer Fuel Table model.
@@ -226,6 +248,11 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         model = models.CustomerRuleProfile
         fields = "__all__"
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class CustomerSerializer(GenericSerializer):
@@ -248,6 +275,11 @@ class CustomerSerializer(GenericSerializer):
 
         model = models.Customer
         fields = "__all__"
+        read_only_fields = ("customer", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Customer model.

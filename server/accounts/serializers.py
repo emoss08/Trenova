@@ -15,17 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, override
+from typing import Any
 
+from accounts import models, tasks
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
 from django.db import transaction
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
-from rest_framework import serializers
-
-from accounts import models, tasks
 from organization.models import Organization
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -134,9 +133,16 @@ class UserProfileSerializer(GenericSerializer):
         model = models.UserProfile
         fields = "__all__"
         read_only_fields = (
+            "customer",
+            "organization",
+            "business_unit",
             "id",
             "user",
         )
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 @extend_schema_serializer(
@@ -228,6 +234,7 @@ class UserSerializer(GenericSerializer):
             "groups",
             "user_permissions",
             "organization",
+            "business_unit",
             "is_staff",
             "is_active",
             "is_superuser",
@@ -235,6 +242,8 @@ class UserSerializer(GenericSerializer):
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
             "date_joined": {"read_only": True},
+            "organization": {"required": False},
+            "business_unit": {"required": False},
         }
 
     def get_user_permissions(self, obj):
@@ -245,7 +254,6 @@ class UserSerializer(GenericSerializer):
             permissions.update(group.permissions.values_list("codename", flat=True))
         return list(permissions)
 
-    @override
     def create(self, validated_data: Any) -> models.User:
         """Create a user
 
@@ -255,8 +263,6 @@ class UserSerializer(GenericSerializer):
         Returns:
             models.User: User instance
         """
-
-        # TODO(WOLFRED): Break this out into separate functions.
 
         # Get the organization of the user from the request.
         organization = super().get_organization

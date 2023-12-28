@@ -40,6 +40,11 @@ class ShipmentControlSerializer(GenericSerializer):
 
         model = models.ShipmentControl
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ShipmentTypeSerializer(GenericSerializer):
@@ -61,6 +66,11 @@ class ShipmentTypeSerializer(GenericSerializer):
 
         model = models.ShipmentType
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False, "allow_null": True},
+            "business_unit": {"required": False, "allow_null": True},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the ShipmentType model.
@@ -116,6 +126,11 @@ class ReasonCodeSerializer(GenericSerializer):
 
         model = models.ReasonCode
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the ReasonCode model.
@@ -200,6 +215,11 @@ class ShipmentSerializer(GenericSerializer):
 
         model = models.Shipment
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ShipmentDocumentationSerializer(GenericSerializer):
@@ -220,6 +240,11 @@ class ShipmentDocumentationSerializer(GenericSerializer):
 
         model = models.ShipmentDocumentation
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ShipmentCommentSerializer(GenericSerializer):
@@ -240,6 +265,11 @@ class ShipmentCommentSerializer(GenericSerializer):
 
         model = models.ShipmentComment
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class AdditionalChargeSerializer(GenericSerializer):
@@ -261,6 +291,11 @@ class AdditionalChargeSerializer(GenericSerializer):
 
         model = models.AdditionalCharge
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ServiceTypeSerializer(GenericSerializer):
@@ -281,3 +316,8 @@ class ServiceTypeSerializer(GenericSerializer):
 
         model = models.ServiceType
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
