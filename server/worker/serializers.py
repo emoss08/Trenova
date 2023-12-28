@@ -84,6 +84,12 @@ class WorkerProfileSerializer(GenericSerializer):
         )
 
 
+class WorkerHOSSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.WorkerHOS
+        fields = "__all__"
+
+
 class WorkerSerializer(GenericSerializer):
     """
     Worker Serializer
@@ -92,6 +98,7 @@ class WorkerSerializer(GenericSerializer):
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
+    current_hos = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -103,7 +110,14 @@ class WorkerSerializer(GenericSerializer):
             "profile",
             "contacts",
             "comments",
+            "current_hos",
         )
+
+    def get_current_hos(self, obj):
+        # Use the prefetched latest_hos
+        if hasattr(obj, "latest_hos") and obj.latest_hos:
+            return WorkerHOSSerializer(obj.latest_hos[0]).data
+        return None
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Worker model.
