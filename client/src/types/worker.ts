@@ -33,29 +33,31 @@ export interface Worker extends BaseModel {
   depot?: string | null;
   manager: string;
   profilePicture?: string | null;
-  thumbnail?: string | null;
+  thumbnail?: string;
   enteredBy: string;
   profile: WorkerProfile;
   contacts: WorkerContact[];
   comments: WorkerComment[];
+  timeAway: WorkerTimeAway[];
+  currentHos?: WorkerHOS | null;
 }
 
 export interface WorkerProfile extends BaseModel {
   worker: string;
   race?: string;
   sex?: string;
-  dateOfBirth?: Date | null;
+  dateOfBirth?: string | null;
   licenseState?: string;
-  licenseExpirationDate?: Date | null;
+  licenseExpirationDate?: string | null;
   endorsements?: string;
-  hazmatExpirationDate?: Date | null;
-  hm126ExpirationDate?: Date | null;
-  hireDate?: Date | null;
-  terminationDate?: Date | null;
-  reviewDate?: Date | null;
-  physicalDueDate?: Date | null;
-  mvrDueDate?: Date | null;
-  medicalCertDate?: Date | null;
+  hazmatExpirationDate?: string | null;
+  hm126ExpirationDate?: string | null;
+  hireDate?: string | null;
+  terminationDate?: string | null;
+  reviewDate?: string | null;
+  physicalDueDate?: string | null;
+  mvrDueDate?: string | null;
+  medicalCertDate?: string | null;
 }
 
 export interface WorkerContact extends BaseModel {
@@ -80,14 +82,13 @@ export interface WorkerComment extends BaseModel {
 export interface WorkerTimeAway extends BaseModel {
   id: string;
   worker: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   leaveType: string;
 }
 
 export interface WorkerHOS extends BaseModel {
   id: string;
-  worker: string;
   driveTime: number;
   offDutyTime: number;
   sleeperBerthTime: number;
@@ -97,6 +98,6 @@ export interface WorkerHOS extends BaseModel {
   currentLocation: string;
   seventyHourTime: number;
   milesDriven: number;
-  logDate: Date;
-  lastResetDate: Date;
+  logDate: string;
+  lastResetDate: string;
 }
