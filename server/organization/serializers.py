@@ -180,6 +180,7 @@ class EmailControlSerializer(GenericSerializer):
         """
 
         model = models.EmailControl
+        fields = "__all__"
 
 
 class EmailProfileSerializer(GenericSerializer):
@@ -193,6 +194,7 @@ class EmailProfileSerializer(GenericSerializer):
         """
 
         model = models.EmailProfile
+        fields = "__all__"
 
 
 class EmailLogSerializer(GenericSerializer):
@@ -206,6 +208,7 @@ class EmailLogSerializer(GenericSerializer):
         """
 
         model = models.EmailLog
+        fields = "__all__"
 
 
 class TaxRateSerializer(GenericSerializer):
@@ -219,6 +222,7 @@ class TaxRateSerializer(GenericSerializer):
         """
 
         model = models.TaxRate
+        fields = "__all__"
 
 
 class TableChangeAlertSerializer(GenericSerializer):
@@ -232,7 +236,7 @@ class TableChangeAlertSerializer(GenericSerializer):
         """
 
         model = models.TableChangeAlert
-        extra_read_only_fields = ("function_name", "trigger_name", "listener_name")
+        read_only_fields = ("function_name", "trigger_name", "listener_name")
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the TableChangeAlert model.
@@ -281,6 +285,7 @@ class NotificationTypeSerializer(GenericSerializer):
         """
 
         model = models.NotificationType
+        fields = "__all__"
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the NotificationType model.
@@ -329,3 +334,4 @@ class NotificationSettingSerializer(GenericSerializer):
         """
 
         model = models.NotificationSetting
+        fields = "__all__"

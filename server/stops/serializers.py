@@ -37,6 +37,12 @@ class QualifierCodeSerializer(GenericSerializer):
         """
 
         model = models.QualifierCode
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the QualifierCode model.
@@ -84,15 +90,17 @@ class StopCommentSerializer(GenericSerializer):
     """
 
     class Meta:
-        """Metaclass for the `StopCommentSerializer` class
-
-        Attributes:
-            model (models.Shipment): The model that the serializer is for.
-            extra_fields (tuple): A tuple of extra fields that should be included
-            in the serialized representation of the model.
+        """
+        Metaclass for the `StopCommentSerializer` class
         """
 
         model = models.StopComment
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class StopSerializer(GenericSerializer):
@@ -111,6 +119,12 @@ class StopSerializer(GenericSerializer):
         """
 
         model = models.Stop
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ServiceIncidentSerializer(GenericSerializer):
@@ -122,12 +136,14 @@ class ServiceIncidentSerializer(GenericSerializer):
     """
 
     class Meta:
-        """Metaclass for the `ServiceIncidentSerializer` class
-
-        Attributes:
-            model (models.ServiceIncident): The model that the serializer is for.
-            extra_fields (tuple): A tuple of extra fields that should be included
-            in the serialized representation of the model.
+        """
+        Metaclass for the `ServiceIncidentSerializer` class
         """
 
         model = models.ServiceIncident
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

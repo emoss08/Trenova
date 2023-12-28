@@ -14,28 +14,3 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-
-from invoicing import models
-from utils.serializers import GenericSerializer
-
-
-class InvoiceControlSerializer(GenericSerializer):
-    """A serializer for the `InvoiceControl` model.
-
-    A serializer class for the InvoiceControl model. This serializer is used
-    to convert InvoiceControl model instances into a Python dictionary format
-    that can be rendered into a JSON response. It also defined the fields that
-    should be included in the serialized representation of the model
-    """
-
-    class Meta:
-        """
-        Metaclass for the InvoiceControlSerializer
-
-        Attributes:
-            model (InvoiceControl): The model that the serializer is for.
-        """
-
-        model = models.InvoiceControl
-        fields = "__all__"

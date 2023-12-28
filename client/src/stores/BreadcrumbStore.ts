@@ -19,11 +19,8 @@ import { createGlobalStore } from "@/lib/useGlobalStore";
 import { RouteObjectWithPermission } from "@/routing/AppRoutes";
 
 interface BreadcrumbStoreType {
-  currentRoute: RouteObjectWithPermission;
+  currentRoute: RouteObjectWithPermission | null;
   loading: boolean;
-  hasCreateButton: boolean;
-  createButtonText?: string;
-  switchButtonText?: string;
 }
 
 export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
@@ -34,7 +31,4 @@ export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
     path: "",
   },
   loading: false,
-  hasCreateButton: false,
-  createButtonText: "Create",
-  switchButtonText: "Switch",
 });

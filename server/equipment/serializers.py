@@ -34,6 +34,12 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.EquipmentType
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the EquipmentType model.
@@ -85,6 +91,12 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         """
 
         model = models.EquipmentManufacturer
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Equipment Manufacturer model.
@@ -137,7 +149,12 @@ class TractorSerializer(GenericSerializer):
         """
 
         model = models.Tractor
-        extra_fields = ("equip_type_name",)
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Tractor model.
@@ -191,10 +208,12 @@ class TrailerSerializer(GenericSerializer):
         """
 
         model = models.Trailer
-        extra_fields = (
-            "times_used",
-            "equip_type_name",
-        )
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Trailer model.
@@ -246,6 +265,12 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
         """
 
         model = models.EquipmentMaintenancePlan
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the EquipmentMaintenancePlan model.

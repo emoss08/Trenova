@@ -39,6 +39,8 @@ export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT as string;
 
 export const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY as string;
 
+export const DEBOUNCE_DELAY = 500; // debounce delay in ms
+
 /**
  * Returns status choices when using TableFacetedFilters.
  * @returns An array of table faceted filter choices.

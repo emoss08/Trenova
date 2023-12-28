@@ -16,6 +16,7 @@
  */
 
 import { useDebounce } from "@/hooks/useDebounce";
+import { DEBOUNCE_DELAY } from "@/lib/constants";
 import { shipmentStatusToReadable } from "@/lib/utils";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
@@ -28,8 +29,6 @@ import { UseFormWatch } from "react-hook-form";
 import { ErrorLoadingData } from "../common/table/data-table-components";
 import { Badge } from "../ui/badge";
 import { Skeleton } from "../ui/skeleton";
-
-const DEBOUNCE_DELAY = 500; // debounce delay in ms
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleString();
@@ -140,80 +139,79 @@ export function ShipmentList({
 
   return (
     <ul role="list" className="space-y-5">
-      {shipments &&
-        shipments.map((shipment) => (
-          <li
-            key={shipment.id}
-            className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
-            onClick={() => {
-              useShipmentStore.set("currentShipment", shipment);
-            }}
-          >
-            {/* Check and render the badge if the shipment is delayed */}
-            {isShipmentDelayed(shipment, finalStatuses) && (
-              <Badge className="absolute top-0 right-0 p-1 rounded-none rounded-bl text-xs">
-                Delayed
-              </Badge>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              {/* Shipment status, pro number, and progress indicator */}
-              <div className="md:col-span-1 flex flex-col">
-                <p className="text-xs font-semibold text-muted-foregrounds">
-                  #{shipment.proNumber}
-                </p>
-                <h4 className="text-xl font-semibold text-foreground">
-                  {shipmentStatusToReadable(shipment.status)}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(shipment.created)}
-                </p>
-                {/* Shipment progress indicator directly below the status */}
-                <div className="w-full mt-2">
-                  <ShipmentProgressIndicator
-                    currentStatus={shipment.status}
-                    finalStatuses={finalStatuses}
-                    progressStatuses={progressStatuses}
-                  />
-                </div>
-              </div>
-              {/* Shipment origin and destination with appointment */}
-              <div className="md:col-span-2 grid grid-cols-2 gap-4 ml-4">
-                {/* Shipment origin and appointment */}
-                <div className="text-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="flex items-center justify-center rounded-full w-4 h-4 bg-foreground mr-2">
-                      <ArrowUp className="inline-block h-3 w-3 text-background" />
-                    </div>
-                    <span className="font-semibold text-foreground">
-                      {shipment.originAddress}
-                    </span>
-                  </div>
-                  <WindowTime
-                    start={shipment.originAppointmentWindowStart}
-                    end={shipment.originAppointmentWindowEnd}
-                  />
-                </div>
-                {/* Shipment destination and appointment */}
-                <div className="text-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="flex items-center justify-center rounded-full w-4 h-4 bg-blue-800 mr-2">
-                      <ArrowDown className="inline-block h-3 w-3 text-white" />
-                    </div>
-                    <span>
-                      <span className="font-semibold text-foreground">
-                        {shipment.destinationAddress}
-                      </span>
-                    </span>
-                  </div>
-                  <WindowTime
-                    start={shipment.destinationAppointmentWindowStart}
-                    end={shipment.destinationAppointmentWindowEnd}
-                  />
-                </div>
+      {shipments?.map((shipment) => (
+        <li
+          key={shipment.id}
+          className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
+          onClick={() => {
+            useShipmentStore.set("currentShipment", shipment);
+          }}
+        >
+          {/* Check and render the badge if the shipment is delayed */}
+          {isShipmentDelayed(shipment, finalStatuses) && (
+            <Badge className="absolute top-0 right-0 p-1 rounded-none rounded-bl text-xs">
+              Delayed
+            </Badge>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            {/* Shipment status, pro number, and progress indicator */}
+            <div className="md:col-span-1 flex flex-col">
+              <p className="text-xs font-semibold text-muted-foregrounds">
+                #{shipment.proNumber}
+              </p>
+              <h4 className="text-xl font-semibold text-foreground">
+                {shipmentStatusToReadable(shipment.status)}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {formatDate(shipment.created)}
+              </p>
+              {/* Shipment progress indicator directly below the status */}
+              <div className="w-full mt-2">
+                <ShipmentProgressIndicator
+                  currentStatus={shipment.status}
+                  finalStatuses={finalStatuses}
+                  progressStatuses={progressStatuses}
+                />
               </div>
             </div>
-          </li>
-        ))}
+            {/* Shipment origin and destination with appointment */}
+            <div className="md:col-span-2 grid grid-cols-2 gap-4 ml-4">
+              {/* Shipment origin and appointment */}
+              <div className="text-sm">
+                <div className="flex items-center mb-2">
+                  <div className="flex items-center justify-center rounded-full w-4 h-4 bg-foreground mr-2">
+                    <ArrowUp className="inline-block h-3 w-3 text-background" />
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    {shipment.originAddress}
+                  </span>
+                </div>
+                <WindowTime
+                  start={shipment.originAppointmentWindowStart}
+                  end={shipment.originAppointmentWindowEnd}
+                />
+              </div>
+              {/* Shipment destination and appointment */}
+              <div className="text-sm">
+                <div className="flex items-center mb-2">
+                  <div className="flex items-center justify-center rounded-full w-4 h-4 bg-blue-700 mr-2">
+                    <ArrowDown className="inline-block h-3 w-3 text-white" />
+                  </div>
+                  <span>
+                    <span className="font-semibold text-foreground">
+                      {shipment.destinationAddress}
+                    </span>
+                  </span>
+                </div>
+                <WindowTime
+                  start={shipment.destinationAppointmentWindowStart}
+                  end={shipment.destinationAppointmentWindowEnd}
+                />
+              </div>
+            </div>
+          </div>
+        </li>
+      ))}
     </ul>
   );
 }

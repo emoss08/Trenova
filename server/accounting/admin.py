@@ -32,13 +32,13 @@ class GeneralLedgerAccountAdmin(GenericAdmin[models.GeneralLedgerAccount]):
     """
 
     model = models.GeneralLedgerAccount
-    list_display: tuple[str, ...] = (
+    list_display = (
         "account_number",
         "cash_flow_type",
         "account_sub_type",
         "account_classification",
     )
-    search_fields: tuple[str, ...] = ("account_number",)
+    search_fields = ("account_number",)
 
     def get_form(
         self,
@@ -71,11 +71,11 @@ class RevenueCodeAdmin(GenericAdmin[models.RevenueCode]):
     """
 
     model = models.RevenueCode
-    list_display: tuple[str, ...] = (
+    list_display = (
         "code",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "code",
         "description",
     )
@@ -88,11 +88,11 @@ class DivisionCodeAdmin(GenericAdmin[models.DivisionCode]):
     """
 
     model = models.DivisionCode
-    list_display: tuple[str, ...] = (
+    list_display = (
         "code",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "code",
         "description",
     )
@@ -105,11 +105,11 @@ class TagAdmin(GenericAdmin[models.Tag]):
     """
 
     model = models.Tag
-    list_display: tuple[str, ...] = (
+    list_display = (
         "name",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "name",
         "description",
     )
@@ -122,12 +122,12 @@ class FinancialTransactionAdmin(GenericAdmin[models.FinancialTransaction]):
     """
 
     model = models.FinancialTransaction
-    list_display: tuple[str, ...] = (
+    list_display = (
         "transaction_number",
         "transaction_type",
         "amount",
     )
-    search_fields: tuple[str, ...] = ("shipment__pro_number",)
+    search_fields = ("shipment__pro_number",)
 
 
 @admin.register(models.AccountingControl)
@@ -162,13 +162,13 @@ class ReconciliationQueueAdmin(GenericAdmin[models.ReconciliationQueue]):
     """
 
     model = models.ReconciliationQueue
-    list_display: tuple[str, ...] = (
+    list_display = (
         "shipment",
         "resolved",
         "reason",
         "resolved_by",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields = (
         "date_added",
         "reason",
     )

@@ -15,16 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+
 import typing
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import response, status, viewsets
+from rest_framework import request, response, status, viewsets
 
 from core.permissions import CustomObjectPermissions
 from worker import models, serializers
-
-if typing.TYPE_CHECKING:
-    from rest_framework.request import Request
 
 
 class WorkerCommentViewSet(viewsets.ModelViewSet):
@@ -76,52 +74,28 @@ class WorkerProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.WorkerProfile]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "worker_id",
-            "physical_due_date",
-            "hazmat_expiration_date",
-            "license_number",
-            "date_of_birth",
-            "termination_date",
-            "hire_date",
-            "race",
-            "mvr_due_date",
-            "sex",
-            "license_expiration_date",
-            "hm_126_expiration_date",
-            "medical_cert_date",
-            "review_date",
-            "license_state",
-            "endorsements",
         )
 
         return queryset
 
 
 class WorkerViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing workers in the system.
-
-    The viewset provides default operations for creating, updating, and deleting workers,
-    as well as listing and retrieving workers. It uses the `WorkerSerializer` class to
-    convert the worker instances to and from JSON-formatted data.
-    """
-
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
     permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("profiles__endorsements", "manager", "fleet_code")
+    search_fields = ("first_name", "last_name", "code", "profiles__license_number")
 
     def create(
-        self, request: "Request", *args: typing.Any, **kwargs: typing.Any
+        self, request: request.Request, *args: typing.Any, **kwargs: typing.Any
     ) -> response.Response:
         serializer = self.get_serializer(data=request.data)
-
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        # Re-fetch the worker from the database to ensure all related data is fetched
-        worker = models.Worker.objects.get(pk=serializer.instance.pk)  # type: ignore
+        # Re-fetch the worker with related data
+        worker = models.Worker.objects.get(pk=serializer.instance.pk)
         response_serializer = self.get_serializer(worker)
 
         return response.Response(
@@ -129,87 +103,28 @@ class WorkerViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self) -> QuerySet[models.Worker]:
-        """Returns a queryset of workers for the current user's organization.
+        user_org = self.request.user.organization_id  # type: ignore
 
-        The queryset includes related fields such as profiles, manager(user), depot, organization,
-        entered_by(user). It also prefetches related comments and contacts.
+        # Fetch latest WorkerHOS IDs
+        latest_hos_ids = (
+            models.WorkerHOS.objects.filter(worker__organization_id=user_org)
+            .order_by("worker_id", "-log_date")
+            .distinct("worker_id")
+            .values_list("id", flat=True)
+        )
 
-        Returns:
-            QuerySet[models.Worker]: A queryset of workers for the current user's organization.
-        """
+        # Fetch all relevant WorkerHOS records in one query
+        relevant_hos_records = models.WorkerHOS.objects.filter(id__in=latest_hos_ids)
+
         queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .select_related(
-                "profiles",
-            )
+            self.queryset.filter(organization_id=user_org)
+            .select_related("profiles")
             .prefetch_related(
+                "comments",
+                "contacts",
                 Prefetch(
-                    lookup="comments",
-                    queryset=models.WorkerComment.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only(
-                        "id",
-                        "entered_by_id",
-                        "organization_id",
-                        "comment",
-                        "comment_type_id",
-                        "worker_id",
-                    ),
+                    "worker_hos", queryset=relevant_hos_records, to_attr="latest_hos"
                 ),
-                Prefetch(
-                    lookup="contacts",
-                    queryset=models.WorkerContact.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only(
-                        "id",
-                        "phone",
-                        "organization_id",
-                        "name",
-                        "worker_id",
-                        "is_primary",
-                        "relationship",
-                        "email",
-                        "mobile_phone",
-                    ),
-                ),
-            )
-            .only(
-                "id",
-                "city",
-                "state",
-                "address_line_1",
-                "address_line_2",
-                "is_active",
-                "worker_type",
-                "manager_id",
-                "entered_by_id",
-                "first_name",
-                "last_name",
-                "zip_code",
-                "code",
-                "fleet_code_id",
-                "depot_id",
-                "organization_id",
-                "business_unit_id",
-                "profiles__license_expiration_date",
-                "profiles__hazmat_expiration_date",
-                "profiles__sex",
-                "profiles__review_date",
-                "profiles__mvr_due_date",
-                "profiles__medical_cert_date",
-                "profiles__license_number",
-                "profiles__date_of_birth",
-                "profiles__race",
-                "profiles__license_state",
-                "profiles__organization_id",
-                "profiles__physical_due_date",
-                "profiles__worker_id",
-                "profiles__hire_date",
-                "profiles__endorsements",
-                "profiles__hm_126_expiration_date",
-                "profiles__termination_date",
             )
         )
         return queryset

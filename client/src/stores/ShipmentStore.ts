@@ -17,15 +17,38 @@
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Shipment } from "@/types/order";
+import { GoogleMap } from "@google";
 
 export type ShipmentView = "list" | "calendar" | "map";
 
 type ShipmentStore = {
   currentShipment: Shipment | null;
   currentView: ShipmentView;
+  sendMessageDialogOpen: boolean;
+  currentWorker: string | null;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
   currentShipment: null,
   currentView: "map",
+  sendMessageDialogOpen: false,
+  currentWorker: null,
+});
+
+export type MapType = "roadmap" | "hybrid" | "terrain";
+
+export type MapLayer = "TrafficLayer";
+
+type ShipmentMapStore = {
+  map: GoogleMap | null;
+  maps: GoogleMap | null;
+  mapType: MapType;
+  mapLayers: MapLayer[];
+};
+
+export const useShipmentMapStore = createGlobalStore<ShipmentMapStore>({
+  map: null,
+  maps: null,
+  mapType: "roadmap",
+  mapLayers: [],
 });
