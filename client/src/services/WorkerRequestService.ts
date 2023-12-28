@@ -21,12 +21,20 @@ import { Worker } from "@/types/worker";
 /**
  * Fetches an array of all workers from the server.
  * @param {number} limit The maximum number of workers to return.
+ * @param searchQuery
+ * @param fleetFilter
  * @returns {Promise<Worker[]>} A promise that resolves to an array of workers.
  */
-export async function getWorkers(limit: number = 100): Promise<Worker> {
+export async function getWorkers(
+  limit: number = 100,
+  searchQuery?: string,
+  fleetFilter?: string,
+): Promise<Worker[]> {
   const response = await axios.get("/workers/", {
     params: {
       limit,
+      search: searchQuery,
+      fleet_code: fleetFilter,
     },
   });
   return response.data.results;
