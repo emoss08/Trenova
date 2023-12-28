@@ -17,7 +17,7 @@
 
 import typing
 
-from django.db.models import QuerySet, Prefetch
+from django.db.models import Prefetch, QuerySet
 from rest_framework import response, status, viewsets
 
 from core.permissions import CustomObjectPermissions

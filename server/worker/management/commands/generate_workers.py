@@ -26,7 +26,7 @@ from accounts.models import User
 from dispatch.models import FleetCode
 from organization.models import Organization
 from utils.helpers import get_or_create_business_unit
-from worker.models import WorkerHOS, Worker
+from worker.models import Worker, WorkerHOS
 
 
 class Command(BaseCommand):
