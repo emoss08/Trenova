@@ -15,13 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { cn, upperFirst } from "@/lib/utils";
+import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { pathToRegexp } from "path-to-regexp";
 import { useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 
 export function Breadcrumb() {
@@ -29,20 +28,25 @@ export function Breadcrumb() {
   const [currentRoute, setCurrentRoute] =
     useBreadcrumbStore.use("currentRoute");
   const [loading, setLoading] = useBreadcrumbStore.use("loading");
-  const hasCreateButton = useBreadcrumbStore.get("hasCreateButton");
-  const createButtonText = useBreadcrumbStore.get("createButtonText");
 
   // Find the matching route based on the current pathname
   useEffect(() => {
     setLoading(true);
 
-    const matchedRoute = routes.find((r) => {
-      if (r.path === "*") return false;
-      return pathToRegexp(r.path).test(location.pathname);
-    });
+    const excludedPath = "/shipment-management/";
+    let matchedRoute = null;
+
+    if (location.pathname !== excludedPath) {
+      matchedRoute = routes.find((route) => {
+        if (route.path === "*" || route.path === excludedPath) return false;
+        return pathToRegexp(route.path).test(location.pathname);
+      });
+    }
 
     if (matchedRoute) {
       setCurrentRoute(matchedRoute);
+    } else {
+      setCurrentRoute(null);
     }
 
     setLoading(false);
@@ -58,30 +62,33 @@ export function Breadcrumb() {
   // Construct breadcrumb text, memoized to avoid recalculations
   const breadcrumbText = useMemo(() => {
     if (!currentRoute) return "";
-    const parts = [
-      currentRoute.group,
-      currentRoute.subMenu,
-      currentRoute.title,
-    ].filter((str: string | undefined): str is string => Boolean(str));
 
-    return parts.map(upperFirst).join(" - ");
+    const parts = [currentRoute.group, currentRoute.subMenu, currentRoute.title]
+      .filter((str): str is string => str !== undefined)
+      .map(upperFirst);
+
+    return parts.join(" - ");
   }, [currentRoute]);
 
-  return loading ? (
-    <>
-      <Skeleton className="w-[200px] h-[30px]" />
-      <Skeleton className="w-[200px] h-[30px] mt-5" />
-    </>
-  ) : (
-    <div
-      className={cn(
-        hasCreateButton && "flex justify-between",
-        "pt-5 pb-4 md:pt-4 md:pb-4",
-      )}
-    >
+  if (loading) {
+    return (
+      <>
+        <Skeleton className="w-[200px] h-[30px]" />
+        <Skeleton className="w-[200px] h-[30px] mt-5" />
+      </>
+    );
+  }
+
+  if (!currentRoute) {
+    // Return null or an alternative component for excluded paths
+    return null;
+  }
+
+  return (
+    <div className="pt-5 pb-4 md:pt-4 md:pb-4">
       <div>
         <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
-          {currentRoute?.title}
+          {currentRoute.title}
         </h2>
         <div className="flex items-center">
           <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
@@ -89,16 +96,6 @@ export function Breadcrumb() {
           </a>
         </div>
       </div>
-      {hasCreateButton && (
-        <div className="mt-3">
-          <Button size="sm" variant="outline" className="h-9 font-semibold">
-            Change View
-          </Button>
-          <Button size="sm" className="h-9 ml-3 font-semibold">
-            {createButtonText}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
