@@ -14,101 +14,32 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
-
-from django.db.models import Model
-from django.utils.functional import cached_property
-from rest_framework import serializers
 
 from accounts.models import Token
+from django.utils.functional import cached_property
 from organization.models import BusinessUnit, Organization
+from rest_framework import serializers
 
 
-class GenericSerializer[_MT: Model](serializers.ModelSerializer):
-    class Meta:
-        model: type[_MT]
-        fields: typing.Sequence[str] | None
-        exclude: typing.Sequence[str] | None
-        extra_fields: list[str] = []
-        extra_read_only_fields: list[str] = []
-        read_only_fields: typing.Sequence[str] | None
-
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.set_fields()
+class GenericSerializer(serializers.ModelSerializer):
+    """
+    Generic Serializer for handling common functionalities across models.
+    """
 
     @cached_property
     def get_organization(self) -> Organization:
-        if self.context["request"].user.is_authenticated:
-            _organization: Organization = self.context["request"].user.organization
-            return _organization
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return request.user.organization
+
+        token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization
 
     @cached_property
     def get_business_unit(self) -> BusinessUnit:
-        if self.context["request"].user.is_authenticated:
-            _business_unit: BusinessUnit = self.context[
-                "request"
-            ].user.organization.business_unit
-            return _business_unit
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return request.user.organization.business_unit
+
+        token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization.business_unit
-
-    def create(self, validated_data: typing.Any) -> _MT:  # type:ignore
-        organization: Organization = self.get_organization
-        validated_data["organization"] = organization
-
-        business_unit: BusinessUnit = self.get_business_unit
-        validated_data["business_unit"] = business_unit
-
-        return super().create(validated_data)
-
-    def update(self, instance: _MT, validated_data: typing.Any) -> _MT:
-        organization: Organization = self.get_organization
-        validated_data["organization"] = organization
-
-        business_unit: BusinessUnit = self.get_business_unit
-        validated_data["business_unit"] = business_unit
-
-        return super().update(instance, validated_data)
-
-    def set_fields(self) -> None:
-        read_only_fields: tuple[str, ...] = (
-            "organization",
-            "business_unit",
-            "created",
-            "modified",
-        )
-
-        original_fields = getattr(self.Meta, "fields", None)
-        excluded_fields = set(getattr(self.Meta, "exclude", ()))
-
-        # If the `fields` attribute is set, then use it.
-        if original_fields is not None:
-            fields = set(original_fields)
-        else:
-            # If reverse=True, then relations pointing to this model are returned.
-            fields = {
-                field.name for field in self.Meta.model._meta._get_fields(reverse=False)
-            }
-            fields -= excluded_fields
-
-        self.Meta.read_only_fields = read_only_fields
-        self.Meta.fields = tuple(fields)
-
-        # Add extra fields from the `extra_fields` attribute.
-        if extra_fields := set(getattr(self.Meta, "extra_fields", [])):
-            if not isinstance(extra_fields, (list, set)):
-                raise TypeError("The `extra_fields` attribute must be a list or set.")
-            self.Meta.fields += tuple(extra_fields)
-
-        # Add extra read-only fields from the `extra_read_only_fields` attribute.
-        if extra_read_only_fields := set(
-            getattr(self.Meta, "extra_read_only_fields", [])
-        ):
-            if not isinstance(extra_read_only_fields, (list, set)):
-                raise TypeError(
-                    "The `extra_read_only_fields` attribute must be a list or set."
-                )
-            self.Meta.read_only_fields += tuple(extra_read_only_fields)

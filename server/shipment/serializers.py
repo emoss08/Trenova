@@ -39,6 +39,7 @@ class ShipmentControlSerializer(GenericSerializer):
         """
 
         model = models.ShipmentControl
+        fields = "__all__"
 
 
 class ShipmentTypeSerializer(GenericSerializer):
@@ -59,6 +60,7 @@ class ShipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.ShipmentType
+        fields = "__all__"
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the ShipmentType model.
@@ -113,6 +115,7 @@ class ReasonCodeSerializer(GenericSerializer):
         """
 
         model = models.ReasonCode
+        fields = "__all__"
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the ReasonCode model.
@@ -196,12 +199,7 @@ class ShipmentSerializer(GenericSerializer):
         """
 
         model = models.Shipment
-        extra_fields = (
-            "additional_charges",
-            "movements",
-            "shipment_documentation",
-            "shipment_comments",
-        )
+        fields = "__all__"
 
 
 class ShipmentDocumentationSerializer(GenericSerializer):
@@ -221,6 +219,7 @@ class ShipmentDocumentationSerializer(GenericSerializer):
         """
 
         model = models.ShipmentDocumentation
+        fields = "__all__"
 
 
 class ShipmentCommentSerializer(GenericSerializer):
@@ -240,6 +239,7 @@ class ShipmentCommentSerializer(GenericSerializer):
         """
 
         model = models.ShipmentComment
+        fields = "__all__"
 
 
 class AdditionalChargeSerializer(GenericSerializer):
@@ -260,6 +260,7 @@ class AdditionalChargeSerializer(GenericSerializer):
         """
 
         model = models.AdditionalCharge
+        fields = "__all__"
 
 
 class ServiceTypeSerializer(GenericSerializer):
@@ -279,3 +280,4 @@ class ServiceTypeSerializer(GenericSerializer):
         """
 
         model = models.ServiceType
+        fields = "__all__"

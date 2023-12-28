@@ -33,6 +33,7 @@ class IntegrationVendorSerializer(GenericSerializer):
         """
 
         model = models.IntegrationVendor
+        fields = "__all__"
 
 
 class IntegrationSerializer(GenericSerializer):
@@ -50,6 +51,7 @@ class IntegrationSerializer(GenericSerializer):
         """
 
         model = models.Integration
+        fields = "__all__"
 
 
 class GoogleAPISerializer(GenericSerializer):
@@ -67,3 +69,4 @@ class GoogleAPISerializer(GenericSerializer):
         """
 
         model = models.GoogleAPI
+        fields = "__all__"

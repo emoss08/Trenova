@@ -15,16 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+
 import typing
 
-from django.db.models import Prefetch, QuerySet
-from rest_framework import response, status, viewsets
-
 from core.permissions import CustomObjectPermissions
+from django.db.models import Prefetch, QuerySet
+from rest_framework import request, response, status, viewsets
 from worker import models, serializers
-
-if typing.TYPE_CHECKING:
-    pass
 
 
 class WorkerCommentViewSet(viewsets.ModelViewSet):
@@ -76,24 +73,6 @@ class WorkerProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.WorkerProfile]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "worker_id",
-            "physical_due_date",
-            "hazmat_expiration_date",
-            "license_number",
-            "date_of_birth",
-            "termination_date",
-            "hire_date",
-            "race",
-            "mvr_due_date",
-            "sex",
-            "license_expiration_date",
-            "hm_126_expiration_date",
-            "medical_cert_date",
-            "review_date",
-            "license_state",
-            "endorsements",
         )
 
         return queryset
@@ -102,13 +81,13 @@ class WorkerProfileViewSet(viewsets.ModelViewSet):
 class WorkerViewSet(viewsets.ModelViewSet):
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
-    permission_classes = [
-        CustomObjectPermissions
-    ]  # Replace with your actual permission classes
+    permission_classes = [CustomObjectPermissions]
     filterset_fields = ("profiles__endorsements", "manager", "fleet_code")
     search_fields = ("first_name", "last_name", "code", "profiles__license_number")
 
-    def create(self, request, *args, **kwargs):
+    def create(
+        self, request: request.Request, *args: typing.Any, **kwargs: typing.Any
+    ) -> response.Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -122,7 +101,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
             response_serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Worker]:
         user_org = self.request.user.organization_id  # type: ignore
 
         # Fetch latest WorkerHOS IDs

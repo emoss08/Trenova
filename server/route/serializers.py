@@ -35,6 +35,7 @@ class RouteSerializer(GenericSerializer):
         """
 
         model = models.Route
+        fields = "__all__"
 
 
 class RouteControlSerializer(GenericSerializer):
@@ -52,3 +53,4 @@ class RouteControlSerializer(GenericSerializer):
         """
 
         model = models.RouteControl
+        fields = "__all__"

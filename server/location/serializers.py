@@ -36,6 +36,7 @@ class LocationCategorySerializer(GenericSerializer):
         """
 
         model = models.LocationCategory
+        fields = "__all__"
 
 
 class LocationContactSerializer(GenericSerializer):
@@ -52,7 +53,8 @@ class LocationContactSerializer(GenericSerializer):
         """
 
         model = models.LocationContact
-        extra_read_only_fields = ("location",)
+        fields = "__all__"
+        read_only_fields = ("location",)
 
 
 class LocationCommentSerializer(GenericSerializer):
@@ -72,11 +74,8 @@ class LocationCommentSerializer(GenericSerializer):
         """
 
         model = models.LocationComment
-        extra_fields = (
-            "comment_type_name",
-            "entered_by_username",
-        )
-        extra_read_only_fields = ("location", "entered_by")
+        fields = "__all__"
+        read_only_fields = ("location", "entered_by")
 
 
 class LocationSerializer(GenericSerializer):
@@ -104,15 +103,8 @@ class LocationSerializer(GenericSerializer):
         """
 
         model = models.Location
-        extra_fields = (
-            "wait_time_avg",
-            "pickup_count",
-            "location_comments",
-            "location_contacts",
-            "location_color",
-            "location_category_name",
-        )
-        extra_read_only_fields = (
+        fields = "__all__"
+        read_only_fields = (
             "organization",
             "business_unit",
         )
@@ -237,3 +229,4 @@ class StateSerializer(GenericSerializer):
         """
 
         model = models.States
+        fields = "__all__"

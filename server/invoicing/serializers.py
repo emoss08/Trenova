@@ -38,4 +38,4 @@ class InvoiceControlSerializer(GenericSerializer):
         """
 
         model = models.InvoiceControl
-        extra_fields = ("organization",)
+        fields = "__all__"

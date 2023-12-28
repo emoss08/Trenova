@@ -41,6 +41,7 @@ class BillingControlSerializer(GenericSerializer):
         """
 
         model = models.BillingControl
+        fields = "__all__"
 
 
 class BillingQueueSerializer(GenericSerializer):
@@ -61,7 +62,7 @@ class BillingQueueSerializer(GenericSerializer):
         """
 
         model = models.BillingQueue
-        extra_fields = ("customer_name",)
+        fields = "__all__"
 
 
 class BillingLogEntrySerializer(GenericSerializer):
@@ -81,6 +82,7 @@ class BillingLogEntrySerializer(GenericSerializer):
         """
 
         model = models.BillingLogEntry
+        fields = "__all__"
 
 
 class BillingHistorySerializer(GenericSerializer):
@@ -100,6 +102,7 @@ class BillingHistorySerializer(GenericSerializer):
         """
 
         model = models.BillingHistory
+        fields = "__all__"
 
 
 class ChargeTypeSerializer(GenericSerializer):
@@ -117,6 +120,7 @@ class ChargeTypeSerializer(GenericSerializer):
         """
 
         model = models.ChargeType
+        fields = "__all__"
 
     def validate_name(self, value: str) -> str:
         """Validate name does not exist for the organization. Will only apply to
@@ -162,6 +166,7 @@ class AccessorialChargeSerializer(GenericSerializer):
         """
 
         model = models.AccessorialCharge
+        fields = "__all__"
 
     def validate_charge_amount(self, value: decimal.Decimal) -> decimal.Decimal:
         """Validates the charge amount for an accessorial charge.
@@ -228,6 +233,7 @@ class DocumentClassificationSerializer(GenericSerializer):
         """
 
         model = models.DocumentClassification
+        fields = "__all__"
 
     def validate_name(self, value: str) -> str:
         """This method validates the name of a document classification instance. It checks if a document classification

@@ -41,8 +41,8 @@ class DeliverySlotSerializer(GenericSerializer):
         """
 
         model = models.DeliverySlot
-        extra_fields = ("location_name",)
-        extra_read_only_fields = ("customer",)
+        fields = "__all__"
+        read_only_fields = ("customer",)
 
 
 class CustomerContactSerializer(GenericSerializer):
@@ -62,7 +62,8 @@ class CustomerContactSerializer(GenericSerializer):
         """
 
         model = models.CustomerContact
-        extra_read_only_fields = ("customer",)
+        fields = "__all__"
+        read_only_fields = ("customer",)
 
 
 class CustomerEmailProfileSerializer(GenericSerializer):
@@ -79,6 +80,7 @@ class CustomerEmailProfileSerializer(GenericSerializer):
         """
 
         model = models.CustomerEmailProfile
+        fields = "__all__"
 
 
 class CustomerFuelTableDetailSerializer(GenericSerializer):
@@ -95,6 +97,7 @@ class CustomerFuelTableDetailSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTableDetail
+        fields = "__all__"
 
 
 class CustomerFuelTableSerializer(GenericSerializer):
@@ -121,7 +124,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTable
-        extra_fields = ("customer_fuel_table_details",)
+        fields = "__all__"
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Customer Fuel Table model.
@@ -222,6 +225,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         """
 
         model = models.CustomerRuleProfile
+        fields = "__all__"
 
 
 class CustomerSerializer(GenericSerializer):
@@ -243,15 +247,7 @@ class CustomerSerializer(GenericSerializer):
         """
 
         model = models.Customer
-        extra_fields = (
-            "email_profile",
-            "rule_profile",
-            "delivery_slots",
-            "contacts",
-            "last_ship_date",
-            "last_bill_date",
-            "total_shipments",
-        )
+        fields = "__all__"
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Customer model.

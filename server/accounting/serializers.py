@@ -43,6 +43,12 @@ class TagSerializer(GenericSerializer):
         """
 
         model = models.Tag
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class GeneralLedgerAccountSerializer(GenericSerializer):
@@ -67,6 +73,12 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_account_number(self, value: str) -> str:
         """Validate account number does not exist for the organization. Will only apply to
@@ -124,7 +136,12 @@ class RevenueCodeSerializer(GenericSerializer):
         """
 
         model = models.RevenueCode
-        extra_fields = ("rev_account_num", "exp_account_num")
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate code does not exist for the organization. Will only apply to
@@ -173,6 +190,12 @@ class DivisionCodeSerializer(GenericSerializer):
         """
 
         model = models.DivisionCode
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate code does not exist for the organization. Will only apply to
@@ -226,6 +249,12 @@ class FinancialTransactionSerializer(GenericSerializer):
         """
 
         model = models.FinancialTransaction
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class ReconciliationQueueSerializer(GenericSerializer):
@@ -250,6 +279,12 @@ class ReconciliationQueueSerializer(GenericSerializer):
         """
 
         model = models.ReconciliationQueue
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class AccountingControlSerializer(GenericSerializer):
@@ -270,3 +305,9 @@ class AccountingControlSerializer(GenericSerializer):
         """
 
         model = models.AccountingControl
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

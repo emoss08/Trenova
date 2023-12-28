@@ -35,6 +35,7 @@ class HazardousMaterialSerializer(GenericSerializer):
         """
 
         model = models.HazardousMaterial
+        fields = "__all__"
 
 
 class CommoditySerializer(GenericSerializer):
@@ -52,6 +53,7 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
+        fields = "__all__"
 
     def validate_name(self, value: str) -> str:
         """Validates the name of the commodity to ensure that it is unique.

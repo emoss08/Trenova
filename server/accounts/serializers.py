@@ -129,18 +129,11 @@ class UserProfileSerializer(GenericSerializer):
         The `Meta` class allows you to specify metadata about a serializer class, such as the model
         it should be based on, any additional fields to include in the serialized representation,
         and any read-only fields.
-
-        Attributes:
-            model: The model that the serializer should be based on.
-            extra_fields: A tuple of field names that should be included in the serialized representation
-            in addition to the fields defined on the model.
-            extra_read_only_fields: A tuple of field names that should be read-only in the serialized
-            representation.
         """
 
         model = models.UserProfile
-        extra_fields = ("job_title", "title_name", "organization")
-        extra_read_only_fields = (
+        fields = "__all__"
+        read_only_fields = (
             "id",
             "user",
         )
@@ -227,8 +220,8 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        extra_fields = ("profile", "full_name")
-        extra_read_only_fields = (
+        fields = "__all__"
+        read_only_fields = (
             "id",
             "online",
             "last_login",
@@ -683,7 +676,7 @@ class TokenSerializer(serializers.ModelSerializer):
         """
 
         model: type[models.Token] = models.Token
-        fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
+        fields = ["id", "user", "created", "expires", "last_used", "key"]
 
 
 @extend_schema_serializer(

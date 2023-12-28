@@ -41,6 +41,12 @@ class CommentTypeSerializer(GenericSerializer):
         """
 
         model = models.CommentType
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Comment Type model.
@@ -96,6 +102,12 @@ class DelayCodeSerializer(GenericSerializer):
         """
 
         model = models.DelayCode
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Delay Code model.
@@ -151,6 +163,12 @@ class FleetCodeSerializer(GenericSerializer):
         """
 
         model = models.FleetCode
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_code(self, value: str) -> str:
         """Validate the `code` field of the Fleet Code model.
@@ -206,6 +224,12 @@ class DispatchControlSerializer(GenericSerializer):
         """
 
         model = models.DispatchControl
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class RateBillingTableSerializer(GenericSerializer):
@@ -223,7 +247,12 @@ class RateBillingTableSerializer(GenericSerializer):
         """
 
         model = models.RateBillingTable
-        extra_read_only_fields = ("rate",)
+        fields = "__all__"
+        read_only_fields = ("rate", "organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class RateSerializer(GenericSerializer):
@@ -241,7 +270,12 @@ class RateSerializer(GenericSerializer):
         """
 
         model = models.Rate
-        extra_fields = ("rate_billing_tables",)
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def to_internal_value(self, data: typing.Any) -> typing.Any:
         """Convert the input data into the internal (deserialized) data format.
@@ -394,3 +428,9 @@ class FeasibilityToolControlSerializer(GenericSerializer):
         """
 
         model = models.FeasibilityToolControl
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
