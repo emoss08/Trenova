@@ -18,9 +18,10 @@
 
 import typing
 
-from core.permissions import CustomObjectPermissions
 from django.db.models import Prefetch, QuerySet
 from rest_framework import request, response, status, viewsets
+
+from core.permissions import CustomObjectPermissions
 from worker import models, serializers
 
 
