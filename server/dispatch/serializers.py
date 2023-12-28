@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 import typing
 
-from dispatch import helpers, models
 from rest_framework import serializers
+
+from dispatch import helpers, models
 from utils.helpers import convert_to_date
 from utils.serializers import GenericSerializer
 

@@ -17,8 +17,9 @@
 
 from typing import Any
 
-from customer import helpers, models
 from rest_framework import serializers
+
+from customer import helpers, models
 from utils.serializers import GenericSerializer
 
 

@@ -15,10 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from accounts.models import Token
 from django.utils.functional import cached_property
-from organization.models import BusinessUnit, Organization
 from rest_framework import serializers
+
+from accounts.models import Token
+from organization.models import BusinessUnit, Organization
 
 
 class GenericSerializer(serializers.ModelSerializer):

@@ -17,8 +17,9 @@
 import decimal
 from typing import Any
 
-from billing import models
 from rest_framework import serializers
+
+from billing import models
 from shipment.models import Shipment
 from utils.serializers import GenericSerializer
 
