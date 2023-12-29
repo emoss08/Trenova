@@ -1,5 +1,9 @@
+<div align="center">
+
+<img src="https://github.com/emoss08/Monta/assets/66630775/89e6d143-b2d8-4dce-818c-320ce3ff1ef4" alt="image" width="400" height="auto">
 <h1 align="center"><b>Monta Suite</b></h1>
 
+</div>
 <div align="center">
 
 A comprehensive suite of applications tailored for the transportation and logistics sector. Enhancing your business
@@ -12,7 +16,6 @@ performance and operational efficiency.
 [**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Monta/blob/main/beam.md)
 </div>
 
-![Preview](https://github.com/emoss08/Monta/assets/119015874/f4f8f0cc-2561-4af1-801f-1d69293c292a)
 
 
 ## Introduction
