@@ -44,3 +44,4 @@ ts_models
 venv/*
 monkeytype.sqlite3
 stubs
+beam
