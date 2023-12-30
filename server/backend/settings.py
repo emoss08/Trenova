@@ -98,6 +98,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
+    "waffle.middleware.WaffleMiddleware",
     # "core.middleware.logging_middleware.RocketLoggingMiddleware",
 ]
 
@@ -473,7 +474,19 @@ KAFKA_EXCLUDE_TOPICS = [
     "monta_app_.public.django_migrations",
     "monta_app_.public.django_session",
     "monta_app_.public.states",
+    "monta_app_.public.flag",
+    "monta_app_.public.flag_groups",
+    "monta_app_.public.flag_organization",
+    "monta_app_.public.flag_users",
+    "monta_app_.public.user",
+    "monta_app_.public.user_groups",
+    "monta_app_.public.user_profile",
+    "monta_app_.public.user_report",
 ]
+
+
+# Monta Feature Flag Configurations
+FEATURE_FLAG_TIMEOUT = 60 * 60 * 24  # 24 hours
 
 # Development Configurations
 if DEBUG:
