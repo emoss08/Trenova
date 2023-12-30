@@ -14,13 +14,14 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { Notification, UserNotification } from "@/types/accounts";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import nothingFound from "@/assets/images/there-is-nothing-here.png";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatTimestamp } from "@/lib/date";
 import { truncateText } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import React from "react";
+import { Notification, UserNotification } from "@/types/accounts";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 export function Notifications({
   notification,
@@ -36,7 +37,12 @@ export function Notifications({
   if (!notification || notification.unreadList.length === 0) {
     return (
       <div className="flex flex-col justify-content-center items-center h-full w-full mt-10">
-        <img src={nothingFound} alt="Nothing Found" className="h-40 w-40" />
+        <LazyLoadImage
+          alt="Nothing found"
+          src={nothingFound}
+          className="h-40 w-40"
+          visibleByDefault={true}
+        />
         <h3 className="text-2xl font-medium">All Caught up!</h3>
         <p className="text-sm text-muted-foreground">
           You have no unread notifications
