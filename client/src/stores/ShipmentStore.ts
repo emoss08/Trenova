@@ -17,22 +17,25 @@
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Shipment } from "@/types/order";
+import { Worker } from "@/types/worker";
 import { GoogleMap } from "@google";
 
 export type ShipmentView = "list" | "calendar" | "map";
 
 type ShipmentStore = {
-  currentShipment: Shipment | null;
+  currentShipment?: Shipment;
   currentView: ShipmentView;
   sendMessageDialogOpen: boolean;
-  currentWorker: string | null;
+  reviewLogDialogOpen: boolean;
+  currentWorker?: Worker;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
-  currentShipment: null,
+  currentShipment: undefined,
   currentView: "map",
   sendMessageDialogOpen: false,
-  currentWorker: null,
+  reviewLogDialogOpen: false,
+  currentWorker: undefined,
 });
 
 export type MapType = "roadmap" | "hybrid" | "terrain";
