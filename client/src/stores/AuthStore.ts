@@ -42,7 +42,7 @@ const createStore = (set: SetState<AuthState>) => ({
 // TODO(WOLFRED): Switch this to createGlobalStore once we have a way to persist global stores
 export const useAuthStore = create<AuthState>(
   persist(createStore, {
-    name: "auth-storage",
+    name: "monta-auth-storage",
   }) as StateCreator<AuthState>,
 );
 
