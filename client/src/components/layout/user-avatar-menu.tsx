@@ -89,6 +89,22 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [previousTheme, setPreviousTheme] = useState(theme);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "q" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        logout();
+      }
+
+      if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        navigate("/account/settings/");
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [logout]);
+
   const switchTheme = (selectedTheme: ThemeOptions) => {
     // If the selected theme is the same as the current one, just return
     if (currentTheme === selectedTheme) {
@@ -215,11 +231,11 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
         Account Settings
-        <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+        <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => logout()}>
         Log out
-        <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+        <DropdownMenuShortcut>⌘Q</DropdownMenuShortcut>
       </DropdownMenuItem>
     </DropdownMenuContent>
   );
