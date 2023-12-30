@@ -60,7 +60,7 @@ export function SendMessageDialog({
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      worker: currentWorker || "",
+      worker: currentWorker?.id || "",
       message: "",
     },
   });
