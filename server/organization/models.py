@@ -31,10 +31,10 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from kafka.managers import KafkaManager
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -1508,6 +1508,13 @@ class FeatureFlag(TimeStampedModel):
         blank=True,
         help_text=_("The description of the feature flag."),
     )
+    preview = models.ImageField(
+        _("Preview"),
+        upload_to="feature_flags/preview/",
+        null=True,
+        blank=True,
+        help_text=_("The preview image of the feature flag."),
+    )
 
     class Meta:
         """
@@ -1527,6 +1534,15 @@ class FeatureFlag(TimeStampedModel):
             str: String representation of the feature flag.
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    def save(self, **kwargs: Any) -> None:
+        is_new = self._state.adding
+        super().save(**kwargs)
+
+        if is_new:
+            from organization.tasks import create_organization_feature_flags
+
+            create_organization_feature_flags.delay(feature_flag_id=self.id)
 
     def get_absolute_url(self) -> str:
         """FeatureFlag absolute URL

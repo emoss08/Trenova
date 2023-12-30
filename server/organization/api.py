@@ -20,19 +20,18 @@ from collections.abc import Sequence
 
 import redis
 from cacheops import invalidate_model
+from core import checks
+from core.permissions import CustomObjectPermissions
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Prefetch, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from organization import exceptions, models, selectors, serializers
 from rest_framework import permissions, status, views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from core import checks
-from core.permissions import CustomObjectPermissions
-from organization import exceptions, models, selectors, serializers
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -673,3 +672,36 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
             "custom_subject",
         )
         return queryset
+
+
+class OrganizationFeatureFlagView(views.APIView):
+    """
+    View that returns back the feature flags for the organization
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        """Get the feature flags for the organization
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a list of dictionaries representing the feature flags.
+        """
+        try:
+            organization_id = request.user.organization_id  # type: ignore
+
+            queryset = selectors.get_organization_feature_flags(
+                organization_id=organization_id
+            )
+
+            serializer = serializers.OrganizationFeatureFlagSerializer(
+                queryset, many=True
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AttributeError:
+            return Response(
+                {"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
+            )

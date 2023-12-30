@@ -401,6 +401,7 @@ CACHEOPS = {
     "organization.emailcontrol": {"ops": "all"},
     "organization.organization": {"ops": "all"},
     "organization.department": {"ops": "all"},
+    "organization.OrganizationFeatureFlag": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
     "location.states": {"ops": "all"},
 }

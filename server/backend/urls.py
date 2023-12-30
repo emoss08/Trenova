@@ -407,6 +407,11 @@ urlpatterns = [
         accounts_api.RemoveUserSessionView.as_view(),
         name="kick-user-session",
     ),
+    path(
+        "api/organization_feature_flags/",
+        org_api.OrganizationFeatureFlagView.as_view(),
+        name="organization-feature-flags",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

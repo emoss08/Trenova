@@ -14,11 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.utils.functional import cached_property
-from rest_framework import serializers
-
 from accounts.models import Token
+from django.utils.functional import cached_property
 from organization import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -335,3 +334,19 @@ class NotificationSettingSerializer(GenericSerializer):
 
         model = models.NotificationSetting
         fields = "__all__"
+
+
+class OrganizationFeatureFlagSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the OrganizationFeatureFlag model
+    """
+
+    feature_flag_name = serializers.CharField()
+
+    class Meta:
+        """
+        Metaclass for the OrganizationFeatureFlagSerializer
+        """
+
+        model = models.OrganizationFeatureFlag
+        fields = ["feature_flag_name", "enabled"]

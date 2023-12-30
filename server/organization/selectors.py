@@ -19,7 +19,7 @@ from collections.abc import Iterable
 
 from django.contrib.sessions.models import Session
 from django.db import connection
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, F
 from django.utils import timezone
 
 from organization import models
@@ -77,7 +77,7 @@ def get_active_kafka_table_change_alerts() -> QuerySet[models.TableChangeAlert] 
     """Get Active Table Change Alerts where source is Kafka.
 
     Returns:
-
+        QuerySet[models.TableChangeAlert]: A queryset of all active table change alerts.
     """
     query: Q = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
         effective_date__isnull=True
@@ -87,3 +87,16 @@ def get_active_kafka_table_change_alerts() -> QuerySet[models.TableChangeAlert] 
 
     active_alerts = models.TableChangeAlert.objects.filter(query)
     return active_alerts if active_alerts.exists() else None
+
+
+def get_organization_feature_flags(
+    *, organization_id: str
+) -> QuerySet[models.OrganizationFeatureFlag] | None:
+    """Get all organization feature flags.
+
+    Returns:
+        QuerySet[models.FeatureFlag]: A queryset of all organization feature flags.
+    """
+    return models.OrganizationFeatureFlag.objects.filter(
+        organization_id=organization_id
+    ).annotate(feature_flag_name=F("feature_flag__name"))
