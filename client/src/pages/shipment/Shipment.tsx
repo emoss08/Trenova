@@ -15,13 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ShipmentMapView } from "@/components/shipment-management/map-view/shipment-map-view";
 import { ShipmentBreadcrumb } from "@/components/shipment-management/shipment-breadcrumb";
 import { ShipmentListView } from "@/components/shipment-management/shipment-list-view";
-import { ShipmentMapView } from "@/components/shipment-management/map-view/shipment-map-view";
-import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { ShipmentSearchForm } from "@/types/order";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 const finalStatuses = ["C", "H", "B", "V"];
@@ -36,16 +34,6 @@ export default function ShipmentManagement() {
   });
 
   const [currentView] = useShipmentStore.use("currentView");
-
-  useEffect(() => {
-    useBreadcrumbStore.set("hasCreateButton", true);
-    useBreadcrumbStore.set("createButtonText", "Add New Shipment");
-
-    return () => {
-      useBreadcrumbStore.set("hasCreateButton", false);
-      useBreadcrumbStore.set("createButtonText", "");
-    };
-  });
 
   const renderView = () => {
     switch (currentView) {
