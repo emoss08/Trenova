@@ -16,6 +16,7 @@
  */
 import { InputField } from "@/components/common/fields/input";
 import { SendMessageDialog } from "@/components/common/send-message-dialog";
+import { HourGridDialog } from "@/components/common/view-hos-logs";
 import { ShipmentMapAside } from "@/components/shipment-management/map-view/shipment-map-aside";
 import { ShipmentMapOptions } from "@/components/shipment-management/map-view/shipment-map-options";
 import { ShipmentMapZoom } from "@/components/shipment-management/map-view/shipment-map-zoom";
@@ -99,6 +100,9 @@ export function ShipmentMapView() {
   const [, setMaps] = useShipmentMapStore.use("maps");
   const [sendMessageDialogOpen, setSendMessageDialogOpen] =
     useShipmentStore.use("sendMessageDialogOpen");
+  const [reviewLogDialogOpen, setReviewLogDialogOpen] = useShipmentStore.use(
+    "reviewLogDialogOpen",
+  );
 
   const handleApiLoaded = useCallback(
     ({ map, maps }: { map: GoogleMap; maps: GoogleMap }) => {
@@ -162,6 +166,12 @@ export function ShipmentMapView() {
         <SendMessageDialog
           open={sendMessageDialogOpen}
           onOpenChange={() => setSendMessageDialogOpen(false)}
+        />
+      )}
+      {reviewLogDialogOpen && (
+        <HourGridDialog
+          open={reviewLogDialogOpen}
+          onOpenChange={() => setReviewLogDialogOpen(false)}
         />
       )}
     </>

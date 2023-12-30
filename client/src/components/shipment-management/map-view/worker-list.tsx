@@ -175,7 +175,7 @@ function WorkerCard({
   return (
     <li
       className={cn(
-        "group relative flex items-center space-x-3 rounded-lg border px-6 py-3 shadow-sm hover:bg-foreground mb-2",
+        "group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground mb-2",
         `ring-accent-foreground/20 ${statusColor}`,
       )}
     >
@@ -264,14 +264,24 @@ export function WorkerList({
                 <ContextMenuItem>Schedule Maintenance</ContextMenuItem>
                 <ContextMenuItem>Monitor Performance</ContextMenuItem>
                 <ContextMenuSeparator />
-                <ContextMenuItem>Review HOS Logs</ContextMenuItem>
+                <ContextMenuItem
+                  onClick={() => {
+                    // Set the current worker to currentWorker in the store.
+                    useShipmentStore.set("currentWorker", item);
+
+                    // Open the Review Logs Dialog.
+                    useShipmentStore.set("reviewLogDialogOpen", true);
+                  }}
+                >
+                  Review HOS Logs
+                </ContextMenuItem>
                 <ContextMenuItem>View Incident Reports</ContextMenuItem>
                 <ContextMenuItem>Vehicle Maintenance Logs</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
                   onClick={() => {
-                    // Set the current worker to the id of the worker that was clicked.
-                    useShipmentStore.set("currentWorker", item.id);
+                    // Set the current worker to currentWorker in the store.
+                    useShipmentStore.set("currentWorker", item);
 
                     // Open the send message dialog.
                     useShipmentStore.set("sendMessageDialogOpen", true);
