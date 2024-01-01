@@ -17,38 +17,48 @@
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Shipment } from "@/types/order";
-import { GoogleMap } from "@google";
+import { Worker } from "@/types/worker";
+import { SetState, StateCreator, create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type ShipmentView = "list" | "calendar" | "map";
 
 type ShipmentStore = {
-  currentShipment: Shipment | null;
+  currentShipment?: Shipment;
   currentView: ShipmentView;
   sendMessageDialogOpen: boolean;
-  currentWorker: string | null;
+  reviewLogDialogOpen: boolean;
+  currentWorker?: Worker;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
-  currentShipment: null,
+  currentShipment: undefined,
   currentView: "map",
   sendMessageDialogOpen: false,
-  currentWorker: null,
+  reviewLogDialogOpen: false,
+  currentWorker: undefined,
 });
 
 export type MapType = "roadmap" | "hybrid" | "terrain";
 
-export type MapLayer = "TrafficLayer";
+export type MapLayer = "TrafficLayer" | "WeatherLayer" | "TransitLayer";
 
 type ShipmentMapStore = {
-  map: GoogleMap | null;
-  maps: GoogleMap | null;
   mapType: MapType;
+  setMapType: (mapType: MapType) => void;
   mapLayers: MapLayer[];
+  setMapLayers: (mapLayers: MapLayer[]) => void;
 };
 
-export const useShipmentMapStore = createGlobalStore<ShipmentMapStore>({
-  map: null,
-  maps: null,
+const createShipmentStore = (set: SetState<ShipmentMapStore>) => ({
   mapType: "roadmap",
-  mapLayers: [],
+  setMapType: (mapType: MapType) => set({ mapType }),
+  mapLayers: [] as MapLayer[],
+  setMapLayers: (mapLayers: MapLayer[]) => set({ mapLayers }),
 });
+
+export const useShipmentMapStore = create<ShipmentMapStore>(
+  persist(createShipmentStore, {
+    name: "monta-shipment-map-preferences",
+  }) as StateCreator<ShipmentMapStore>,
+);

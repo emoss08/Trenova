@@ -15,17 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, CardContent } from "@/components/ui/card";
+import { FeatureManagementPage } from "@/components/feature-management/feature-list";
 
 export default function AdminPage() {
-  return (
-    <Card>
-      <CardContent>
-        <p className="font-semibold text-lg mb-2 border-b border-dashed">
-          Admin Dashboard
-        </p>
-        <p className="text-sm text-gray-400 mt-1">Work in Progress...</p>
-      </CardContent>
-    </Card>
-  );
+  return <FeatureManagementPage />;
 }

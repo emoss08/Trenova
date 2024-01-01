@@ -25,6 +25,12 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useNotifications } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import {
@@ -93,6 +99,83 @@ const reconnect = () => {
     }
   };
 };
+
+function NotificationButton({
+  userHasNotifications,
+}: {
+  userHasNotifications: boolean;
+}) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <nav className="relative inline-flex mx-4 mt-1 cursor-pointer">
+            <BellIcon className="h-5 w-5" />
+            <span className="sr-only">Notifications</span>
+            {userHasNotifications && (
+              <span className="flex absolute h-2 w-2 top-0 right-0 -mt-1 -mr-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-700 opacity-25"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-800"></span>
+              </span>
+            )}
+          </nav>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={5}>
+          <span>Notifications</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function NotificationContent({
+  notificationsData,
+  notificationsLoading,
+  userHasNotifications,
+  readAllNotifications,
+}: {
+  notificationsData: UserNotification | undefined;
+  notificationsLoading: boolean;
+  userHasNotifications: boolean;
+  readAllNotifications: () => void;
+}) {
+  return (
+    <>
+      {notificationsLoading ? (
+        <div className="flex flex-col space-y-2 px-4 py-2 border-b border-accent">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium leading-none">
+              <Skeleton className="h-4 w-20" />
+            </h4>
+            <span className="text-xs text-muted-foreground">
+              <Skeleton className="h-4 w-20" />
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            <Skeleton className="h-4 w-20" />
+          </p>
+        </div>
+      ) : (
+        <ScrollArea className="h-80 w-full">
+          <Notifications
+            notification={notificationsData as UserNotification}
+            notificationLoading={notificationsLoading}
+          />
+        </ScrollArea>
+      )}
+      {userHasNotifications && (
+        <div className="border-t pt-2 text-center flex items-center justify-center">
+          <button
+            className="text-sm flex items-center hover:bg-accent rounded-md p-2 outline-transparent"
+            onClick={readAllNotifications}
+          >
+            Read All Notifications <ChevronRight className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
 
 export function NotificationMenu() {
   const [notificationsMenuOpen, setNotificationMenuOpen] = useHeaderStore.use(
@@ -216,8 +299,6 @@ export function NotificationMenu() {
     };
   }, [userId, queryClient]);
 
-  // React useEffect to change the userHasNotifications state
-  // when the notificationsData changes
   React.useEffect(() => {
     if (
       notificationsData &&
@@ -234,17 +315,8 @@ export function NotificationMenu() {
       open={notificationsMenuOpen}
       onOpenChange={(open) => setNotificationMenuOpen(open)}
     >
-      <PopoverTrigger asChild>
-        <nav className="relative inline-flex mx-4 cursor-pointer">
-          <BellIcon className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-          {userHasNotifications && (
-            <span className="flex absolute h-2 w-2 top-0 right-0 -mt-1 -mr-1">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-700 opacity-25"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-800"></span>
-            </span>
-          )}
-        </nav>
+      <PopoverTrigger>
+        <NotificationButton userHasNotifications={userHasNotifications} />
       </PopoverTrigger>
       <PopoverContent
         className="w-80"
@@ -252,38 +324,12 @@ export function NotificationMenu() {
         alignOffset={-40}
         align="end"
       >
-        {notificationsLoading ? (
-          <div className="flex flex-col space-y-2 px-4 py-2 border-b border-accent">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium leading-none">
-                <Skeleton className="h-4 w-20" />
-              </h4>
-              <span className="text-xs text-muted-foreground">
-                <Skeleton className="h-4 w-20" />
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              <Skeleton className="h-4 w-20" />
-            </p>
-          </div>
-        ) : (
-          <ScrollArea className="h-80 w-full">
-            <Notifications
-              notification={notificationsData as UserNotification}
-              notificationLoading={notificationsLoading}
-            />
-          </ScrollArea>
-        )}
-        {userHasNotifications && (
-          <div className="border-t pt-2 text-center flex items-center justify-center">
-            <button
-              className="text-sm flex items-center hover:bg-accent rounded-md p-2 outline-transparent"
-              onClick={readAllNotifications}
-            >
-              Read All Notifications <ChevronRight className="h-4 w-4 ml-1" />
-            </button>
-          </div>
-        )}
+        <NotificationContent
+          notificationsData={notificationsData as UserNotification}
+          notificationsLoading={notificationsLoading}
+          userHasNotifications={userHasNotifications}
+          readAllNotifications={readAllNotifications}
+        />
       </PopoverContent>
     </Popover>
   );

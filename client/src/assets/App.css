@@ -23,11 +23,11 @@
 
     * {
         @apply border-border;
+        font-family: "Inter", sans-serif;
     }
 
     body {
         @apply bg-background text-foreground;
-        font-family: "Inter", sans-serif;
     }
 
     input[type="time"]::-webkit-calendar-picker-indicator {

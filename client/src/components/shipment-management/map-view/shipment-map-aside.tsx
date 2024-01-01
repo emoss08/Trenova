@@ -17,7 +17,6 @@
 import { InputField } from "@/components/common/fields/input";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { WorkerSortOptions } from "@/components/shipment-management/map-view/shipment-map-filter";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useFleetCodes, useUsers } from "@/hooks/useQueries";
 import { DEBOUNCE_DELAY } from "@/lib/constants";
@@ -29,7 +28,7 @@ import { Worker } from "@/types/worker";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { WorkerList } from "./worker-list";
+import { WorkerList, WorkerListSkeleton } from "./worker-list";
 
 type WorkerSearchForm = {
   searchQuery: string;
@@ -159,7 +158,7 @@ export function ShipmentMapAside() {
   return (
     <aside className="w-96 p-4 border ring-accent-foreground/20 rounded-md">
       {isLoading ? (
-        <Skeleton className="h-full" />
+        <WorkerListSkeleton />
       ) : (
         <>
           {/* Fixed search field at the top */}

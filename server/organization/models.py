@@ -20,6 +20,9 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from ckeditor.fields import RichTextField
+from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
@@ -1473,3 +1476,209 @@ class NotificationSetting(TimeStampedModel):
         return [
             email.strip() for email in self.email_recipients.split(",") if email.strip()
         ]
+
+
+class FeatureFlag(TimeStampedModel):
+    """
+    Stores feature flags related to a :model:`organization.Organization`.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("The name of the feature flag (ex: Shipment Map View)."),
+        unique=True,
+    )
+    code = models.CharField(
+        _("Code"),
+        max_length=30,
+        help_text=_("The code of the feature flag (ex: SHIPMENT_MAP_VIEW)."),
+        unique=True,
+    )
+    beta = models.BooleanField(
+        _("Beta"),
+        default=False,
+        help_text=_("Whether the feature flag is in beta."),
+    )
+    paid_only = models.BooleanField(
+        _("Paid Only"),
+        default=False,
+        help_text=_("Whether the feature flag is only available to paid users."),
+    )
+    description = RichTextField(
+        _("Description"),
+        blank=True,
+        help_text=_("The description of the feature flag."),
+    )
+    preview = models.ImageField(
+        _("Preview"),
+        upload_to="feature_flags/preview/",
+        null=True,
+        blank=True,
+        help_text=_("The preview image of the feature flag."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the FeatureFlag model
+        """
+
+        verbose_name = _("Feature Flag")
+        verbose_name_plural = _("Feature Flags")
+        ordering = ("name",)
+        db_table = "feature_flag"
+        db_table_comment = "Stores list of available feature flags for Monta."
+
+    def __str__(self) -> str:
+        """Feature flag string representation
+
+        Returns:
+            str: String representation of the feature flag.
+        """
+        return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    def save(self, **kwargs: Any) -> None:
+        is_new = self._state.adding
+        super().save(**kwargs)
+
+        if is_new:
+            from organization.tasks import create_organization_feature_flags
+
+            create_organization_feature_flags.delay(feature_flag_id=self.id)
+
+    def get_absolute_url(self) -> str:
+        """FeatureFlag absolute URL
+
+        Returns:
+            str: The absolute url for the feature flag.
+        """
+        return reverse("feature-flags-detail", kwargs={"pk": self.pk})
+
+
+class OrganizationFeatureFlag(TimeStampedModel):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="feature_flags",
+        help_text=_("The organization that the feature flag belongs to."),
+    )
+    feature_flag = models.ForeignKey(
+        FeatureFlag,
+        on_delete=models.CASCADE,
+        verbose_name=_("Feature Flag"),
+        related_name="organizations",
+        help_text=_("The feature flag that the organization has."),
+    )
+    enabled = models.BooleanField(
+        _("Enabled"),
+        default=False,
+        help_text=_("Whether the feature flag is enabled for the organization."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the OrganizationFeatureFlag model
+        """
+
+        verbose_name = _("Organization Feature Flag")
+        verbose_name_plural = _("Organization Feature Flags")
+        ordering = ("organization", "feature_flag")
+        db_table = "organization_feature_flag"
+        db_table_comment = "Stores list of feature flags for each organization."
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "feature_flag"],
+                name="unique_organization_feature_flag",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """OrganizationFeatureFlag string representation
+
+        Returns:
+            str: String representation of the organization feature flag.
+        """
+        return textwrap.shorten(
+            f"{self.organization} - {self.feature_flag}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """OrganizationFeatureFlag absolute URL
+
+        Returns:
+            str: The absolute url for the organization feature flag.
+        """
+        return reverse("organization-feature-flags-detail", kwargs={"pk": self.pk})
+
+    @staticmethod
+    def get_cache_key(organization_id: str, feature_flag_name: str) -> str:
+        """Get the cache key for the feature flag.
+
+        Args:
+            organization_id(str): The id of the organization.
+            feature_flag_name(str): The name of the feature flag.
+
+        Returns:
+            str: The cache key for the feature flag.
+        """
+        return f"organization_feature_flag_{organization_id}_{feature_flag_name}"
+
+    @classmethod
+    def is_enabled(cls, organization_id: str, code: str) -> bool:
+        """Check if a feature flag is enabled for an organization.
+
+        If the feature flag is not found in the cache, it will be retrieved from the database and cached.
+
+        Args:
+            organization_id(str): The id of the organization.
+            code(str): The name of the feature flag.
+
+        Returns:
+            bool: Whether the feature flag is enabled for the organization.
+        """
+        cache_key = cls.get_cache_key(organization_id, code)
+        cached = cache.get(cache_key)
+
+        if cached is not None:
+            return cached
+
+        flag_status = cls.objects.filter(
+            organization_id=organization_id,
+            feature_flag__code=code,
+            enabled=True,
+        ).exists()
+
+        # Cache the result with a defined timeout
+        cache.set(cache_key, flag_status, timeout=settings.FEATURE_FLAG_CACHE_TIMEOUT)
+
+        return flag_status
+
+    def save(self, **kwargs: Any) -> None:
+        """OrganizationFeatureFlag save method.
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        # Invalidate the cache before saving
+        cache_key = self.get_cache_key(self.organization_id, self.feature_flag.code)
+        cache.delete(cache_key)
+        super().save(**kwargs)

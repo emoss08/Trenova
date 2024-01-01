@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "auditlog",
     "notifications",
     "channels",
+    "ckeditor",
     # Monta Apps
     "backend",
     "core",
@@ -400,6 +401,7 @@ CACHEOPS = {
     "organization.emailcontrol": {"ops": "all"},
     "organization.organization": {"ops": "all"},
     "organization.department": {"ops": "all"},
+    "organization.OrganizationFeatureFlag": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
     "location.states": {"ops": "all"},
 }
@@ -473,7 +475,22 @@ KAFKA_EXCLUDE_TOPICS = [
     "monta_app_.public.django_migrations",
     "monta_app_.public.django_session",
     "monta_app_.public.states",
+    "monta_app_.public.flag",
+    "monta_app_.public.flag_groups",
+    "monta_app_.public.flag_organization",
+    "monta_app_.public.flag_users",
+    "monta_app_.public.user",
+    "monta_app_.public.user_groups",
+    "monta_app_.public.user_profile",
+    "monta_app_.public.user_report",
 ]
+
+
+# Monta Feature Flag Configurations
+FEATURE_FLAG_TIMEOUT = 60 * 60 * 24  # 24 hours
+
+# CK Editor Configurations
+# CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
 
 # Development Configurations
 if DEBUG:

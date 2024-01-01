@@ -77,6 +77,13 @@ export type Depot = BaseModel & {
   description?: string;
 };
 
+export type FeatureFlag = {
+  name: string;
+  code: string;
+  description: string;
+  enabled: boolean;
+};
+
 /** Base Monta Interface
  *
  * @note This interface is used for all Monta models that have the following fields:

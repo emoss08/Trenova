@@ -15,13 +15,51 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LayoutGridIcon } from "lucide-react";
+
+function AppGridButton() {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <nav className="relative inline-flex mt-1 cursor-pointer">
+            <LayoutGridIcon className="h-5 w-5" />
+            <span className="sr-only">Application Grid</span>
+          </nav>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={5}>
+          <span>Application Grid</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 export function AppGridMenu() {
   return (
-    <nav className="relative inline-flex cursor-pointer">
-      <LayoutGridIcon className="h-5 w-5" />
-      <span className="sr-only">Application Grid</span>
-    </nav>
+    <Popover>
+      <PopoverTrigger>
+        <AppGridButton />
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-80"
+        sideOffset={10}
+        alignOffset={-40}
+        align="end"
+      >
+        Application Grid will be here
+      </PopoverContent>
+    </Popover>
   );
 }

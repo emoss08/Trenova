@@ -44,7 +44,10 @@ import {
   getUSStates,
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
-import { getDepots } from "@/services/OrganizationRequestService";
+import {
+  getDepots,
+  getFeatureFlags,
+} from "@/services/OrganizationRequestService";
 import {
   getUserDetails,
   getUserNotifications,
@@ -419,10 +422,10 @@ export function useUser(userId: string) {
   const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: ["user", userId] as QueryKeys[],
+    queryKey: ["users", userId] as QueryKeys[],
     queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
-    initialData: () =>
-      queryClient.getQueryData(["user", userId] as QueryKeys[]),
+    initialData: (): User | undefined =>
+      queryClient.getQueryData(["users", userId] as QueryKeys[]),
     staleTime: Infinity,
   });
 }
@@ -624,4 +627,22 @@ export function useNotifications(userId: string) {
   );
 
   return { notificationsData, notificationsLoading };
+}
+
+/**
+ * Get Feature Flags for Admin Dashbaord.
+ */
+export function useFeatureFlags() {
+  const queryClient = useQueryClient();
+
+  const { data: featureFlagsData, isLoading: featureFlagsLoading } = useQuery({
+    queryKey: ["featureFlags"],
+    queryFn: async () => getFeatureFlags(),
+    initialData: () => {
+      return queryClient.getQueryData(["featureFlags"]);
+    },
+    staleTime: Infinity,
+  });
+
+  return { featureFlagsData, featureFlagsLoading };
 }

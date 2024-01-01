@@ -16,11 +16,22 @@
  */
 
 import { Button } from "@/components/ui/button";
+import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
+import { MoreVerticalIcon } from "lucide-react";
+import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
-export function ShipmentBreadcrumb() {
+function OptionsDropdown() {
   const [currentView, setCurrentView] = useShipmentStore.use("currentView");
-
   const toggleView = () => {
     if (currentView === "list") {
       setCurrentView("map");
@@ -29,6 +40,49 @@ export function ShipmentBreadcrumb() {
     }
   };
 
+  // Use Effect to switch the view based on keypress
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggleView();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [toggleView]);
+
+  React.useEffect(() => {
+    // set the document title based on the current view
+    document.title = `Shipment Management - ${upperFirst(currentView)} View`;
+  });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="h-9 lg:flex font-semibold">
+          <MoreVerticalIcon className="h-4 w-4 mt-0.5 mr-1" />
+          Options
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[150px]">
+        <DropdownMenuLabel>Options</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => toggleView()}>
+          Switch View
+          <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Import</DropdownMenuItem>
+        <DropdownMenuItem>Export</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>View Audit Log</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function ShipmentBreadcrumb() {
   return (
     <div className="flex justify-between pt-5 pb-4 md:pt-4 md:pb-4">
       <div>
@@ -41,15 +95,8 @@ export function ShipmentBreadcrumb() {
           </a>
         </div>
       </div>
-      <div className="mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-9 font-semibold"
-          onClick={toggleView}
-        >
-          Change View
-        </Button>
+      <div className="mt-3 flex">
+        <OptionsDropdown />
         <Button size="sm" className="h-9 ml-3 font-semibold">
           Add New Shipment
         </Button>

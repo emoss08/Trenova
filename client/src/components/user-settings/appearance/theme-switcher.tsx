@@ -22,50 +22,20 @@ import { useState } from "react";
 
 export function ThemeSwitcher() {
   const { theme, setTheme, setIsRainbowAnimationActive } = useTheme();
-  // const { toast } = useToast();
   const [currentTheme, setCurrentTheme] = useState(theme);
-  const [previousTheme, setPreviousTheme] = useState(theme);
 
   const switchTheme = (selectedTheme: ThemeOptions) => {
     // If the selected theme is the same as the current one, just return
     if (currentTheme === selectedTheme) {
       return;
     }
-    // First, set the previous theme to the current theme
-    setPreviousTheme(currentTheme);
+
     // Now, set the current theme to the selected theme
     setCurrentTheme(selectedTheme);
+
     // Then, make necessary changes like showing toast and so on
     setTheme(selectedTheme);
-    // toast({
-    //   title: `Theme changed to ${selectedTheme}`,
-    //   description: getFormattedDate(),
-    //   action: (
-    //     <ToastAction
-    //       altText="Goto schedule to undo"
-    //       onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-    //         undoThemeChange(e)
-    //       }
-    //     >
-    //       Undo
-    //     </ToastAction>
-    //   ),
-    // });
   };
-
-  const undoThemeChange = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    // Set the current theme back to the previous theme
-    setCurrentTheme(previousTheme);
-    // Update the actual theme
-    setTheme(previousTheme);
-    // toast({
-    //   title: `Theme reverted to ${previousTheme}`,
-    //   description: "Your theme change was undone.",
-    // });
-  };
-
   return (
     <div className="space-y-1">
       <Label>Theme</Label>

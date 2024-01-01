@@ -58,6 +58,8 @@ class TableChoiceService:
                 "notifications_",
                 "plugin",
                 "auditlog",
+                "admin_",
+                "flag",
             )
             if table_name.startswith(excluded_names):
                 names.remove(table_name)
