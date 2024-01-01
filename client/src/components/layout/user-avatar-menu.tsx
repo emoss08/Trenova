@@ -21,6 +21,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ui/theme-provider";
 import { useLogout } from "@/hooks/useLogout";
+import { TOAST_STYLE } from "@/lib/constants";
 import { ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
@@ -38,7 +40,6 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { TOAST_STYLE } from "@/lib/constants";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -131,8 +132,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
     )}`;
 
     const undoThemeChange = () => {
-      console.info("Previous theme", previousTheme);
-
       // Set the current theme back to the previous theme
       setCurrentTheme(previousTheme);
 
@@ -191,20 +190,26 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   };
 
   return (
-    <DropdownMenuContent className="w-56">
-      <div className="px-2">
-        <p className="text-sm">Signed in as</p>
-        <p className="truncate text-sm font-medium text-accent-foreground">
-          {user.email}
-        </p>
-      </div>
+    <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuLabel className="font-normal">
+        <div className="flex flex-col space-y-1">
+          <p className="text-sm font-medium leading-none">{user.username}</p>
+          <p className="text-xs leading-none text-muted-foreground">
+            {user.email}
+          </p>
+        </div>
+      </DropdownMenuLabel>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuItem>Changelog</DropdownMenuItem>
-        <DropdownMenuItem>Support</DropdownMenuItem>
-        <DropdownMenuItem>License</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+          Account Settings
+          <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+          Inbox
+          <DropdownMenuShortcut>⌘H</DropdownMenuShortcut>
+        </DropdownMenuItem>
       </DropdownMenuGroup>
-      <DropdownMenuSeparator />
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
         <DropdownMenuPortal>
@@ -229,10 +234,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
         {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
       </DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
-        Account Settings
-        <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-      </DropdownMenuItem>
       <DropdownMenuItem onClick={() => logout()}>
         Log out
         <DropdownMenuShortcut>⌘Q</DropdownMenuShortcut>

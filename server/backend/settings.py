@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "auditlog",
     "notifications",
     "channels",
+    "ckeditor",
     # Monta Apps
     "backend",
     "core",
@@ -488,6 +489,9 @@ KAFKA_EXCLUDE_TOPICS = [
 
 # Monta Feature Flag Configurations
 FEATURE_FLAG_TIMEOUT = 60 * 60 * 24  # 24 hours
+
+# CK Editor Configurations
+# CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
 
 # Development Configurations
 if DEBUG:

@@ -99,4 +99,8 @@ def get_organization_feature_flags(
     """
     return models.OrganizationFeatureFlag.objects.filter(
         organization_id=organization_id
-    ).annotate(feature_flag_name=F("feature_flag__name"))
+    ).annotate(
+        name=F("feature_flag__name"),
+        code=F("feature_flag__code"),
+        description=F("feature_flag__description"),
+    )

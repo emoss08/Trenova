@@ -33,6 +33,9 @@ const LocationCategoryPage = lazy(
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
+const UserPreferencesPage = lazy(
+  () => import("../pages/users/UserPreferences"),
+);
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
@@ -130,6 +133,13 @@ export const routes: RouteObjectWithPermission[] = [
     group: "user",
     path: "/account/settings/",
     element: <UserSettingsPage />,
+    excludeFromMenu: true,
+  },
+  {
+    title: "User Preferences",
+    group: "user",
+    path: "/account/settings/preferences",
+    element: <UserPreferencesPage />,
     excludeFromMenu: true,
   },
   // Accounting Pages

@@ -20,6 +20,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -31,10 +32,10 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
+from kafka.managers import KafkaManager
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -1489,8 +1490,14 @@ class FeatureFlag(TimeStampedModel):
     )
     name = models.CharField(
         _("Name"),
+        max_length=255,
+        help_text=_("The name of the feature flag (ex: Shipment Map View)."),
+        unique=True,
+    )
+    code = models.CharField(
+        _("Code"),
         max_length=30,
-        help_text=_("The name of the feature flag (ex: shipment_map_view)."),
+        help_text=_("The code of the feature flag (ex: SHIPMENT_MAP_VIEW)."),
         unique=True,
     )
     beta = models.BooleanField(
@@ -1503,7 +1510,7 @@ class FeatureFlag(TimeStampedModel):
         default=False,
         help_text=_("Whether the feature flag is only available to paid users."),
     )
-    description = models.TextField(
+    description = RichTextField(
         _("Description"),
         blank=True,
         help_text=_("The description of the feature flag."),
@@ -1631,19 +1638,19 @@ class OrganizationFeatureFlag(TimeStampedModel):
         return f"organization_feature_flag_{organization_id}_{feature_flag_name}"
 
     @classmethod
-    def is_enabled(cls, organization_id: str, feature_flag_name: str) -> bool:
+    def is_enabled(cls, organization_id: str, code: str) -> bool:
         """Check if a feature flag is enabled for an organization.
 
         If the feature flag is not found in the cache, it will be retrieved from the database and cached.
 
         Args:
             organization_id(str): The id of the organization.
-            feature_flag_name(str): The name of the feature flag.
+            code(str): The name of the feature flag.
 
         Returns:
             bool: Whether the feature flag is enabled for the organization.
         """
-        cache_key = cls.get_cache_key(organization_id, feature_flag_name)
+        cache_key = cls.get_cache_key(organization_id, code)
         cached = cache.get(cache_key)
 
         if cached is not None:
@@ -1651,7 +1658,7 @@ class OrganizationFeatureFlag(TimeStampedModel):
 
         flag_status = cls.objects.filter(
             organization_id=organization_id,
-            feature_flag__name=feature_flag_name,
+            feature_flag__code=code,
             enabled=True,
         ).exists()
 
@@ -1671,6 +1678,6 @@ class OrganizationFeatureFlag(TimeStampedModel):
         """
 
         # Invalidate the cache before saving
-        cache_key = self.get_cache_key(self.organization_id, self.feature_flag.name)
+        cache_key = self.get_cache_key(self.organization_id, self.feature_flag.code)
         cache.delete(cache_key)
         super().save(**kwargs)
