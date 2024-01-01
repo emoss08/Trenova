@@ -79,10 +79,8 @@ Our goal is to empower your business with a system that manages operational comp
 
 ### UI/UX Resources
 
-- [3DIcons](https://3dicons.co/)
 - [Radix Icons](https://www.radix-ui.com/icons)
 - [Lucide React](https://lucide.dev/icons/)
-- [Keenthemes Vectors](https://keenthemes.com/)
 - [Tailwind UI](https://tailwindui.com/)
 - [Shadcn](https://ui.shadcn.com/)
 - [Vercel Avatars](https://github.com/vercel/avatar)
