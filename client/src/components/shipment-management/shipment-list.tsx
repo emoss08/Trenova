@@ -51,14 +51,14 @@ const ShipmentProgressIndicator = ({
     : progressStatuses.indexOf(currentStatus);
 
   return (
-    <div className="flex items-center w-full">
+    <div className="flex w-full items-center">
       {progressStatuses.map((status, index) => (
         <React.Fragment key={status}>
           <div
-            className={`flex-1 h-1 ${
+            className={`h-1 flex-1 ${
               index <= currentStatusIndex
                 ? "bg-foreground"
-                : "bg-muted-foreground/40 animate-pulse"
+                : "animate-pulse bg-muted-foreground/40"
             }`}
           />
           {/* Render a spacer after each line except the last one */}
@@ -79,7 +79,7 @@ function SkeletonShipmentList() {
       {skeletonItems.map((item) => (
         <li
           key={item}
-          className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
+          className="group relative overflow-hidden rounded-md bg-background p-4 ring-1 ring-accent-foreground/20 hover:cursor-pointer hover:bg-muted/50 sm:px-6"
         >
           <Skeleton key={item} className="h-28" />
         </li>
@@ -142,21 +142,21 @@ export function ShipmentList({
       {shipments?.map((shipment) => (
         <li
           key={shipment.id}
-          className="group overflow-hidden bg-background hover:bg-muted/50 hover:cursor-pointer ring-1 ring-accent-foreground/20 rounded-md p-4 sm:px-6 relative"
+          className="group relative overflow-hidden rounded-md bg-background p-4 ring-1 ring-accent-foreground/20 hover:cursor-pointer hover:bg-muted/50 sm:px-6"
           onClick={() => {
             useShipmentStore.set("currentShipment", shipment);
           }}
         >
           {/* Check and render the badge if the shipment is delayed */}
           {isShipmentDelayed(shipment, finalStatuses) && (
-            <Badge className="absolute top-0 right-0 p-1 rounded-none rounded-bl text-xs">
+            <Badge className="absolute right-0 top-0 rounded-none rounded-bl p-1 text-xs">
               Delayed
             </Badge>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+          <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-3">
             {/* Shipment status, pro number, and progress indicator */}
-            <div className="md:col-span-1 flex flex-col">
-              <p className="text-xs font-semibold text-muted-foregrounds">
+            <div className="flex flex-col md:col-span-1">
+              <p className="text-muted-foregrounds text-xs font-semibold">
                 #{shipment.proNumber}
               </p>
               <h4 className="text-xl font-semibold text-foreground">
@@ -166,7 +166,7 @@ export function ShipmentList({
                 {formatDate(shipment.created)}
               </p>
               {/* Shipment progress indicator directly below the status */}
-              <div className="w-full mt-2">
+              <div className="mt-2 w-full">
                 <ShipmentProgressIndicator
                   currentStatus={shipment.status}
                   finalStatuses={finalStatuses}
@@ -175,11 +175,11 @@ export function ShipmentList({
               </div>
             </div>
             {/* Shipment origin and destination with appointment */}
-            <div className="md:col-span-2 grid grid-cols-2 gap-4 ml-4">
+            <div className="ml-4 grid grid-cols-2 gap-4 md:col-span-2">
               {/* Shipment origin and appointment */}
               <div className="text-sm">
-                <div className="flex items-center mb-2">
-                  <div className="flex items-center justify-center rounded-full w-4 h-4 bg-foreground mr-2">
+                <div className="mb-2 flex items-center">
+                  <div className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-foreground">
                     <ArrowUp className="inline-block h-3 w-3 text-background" />
                   </div>
                   <span className="font-semibold text-foreground">
@@ -193,8 +193,8 @@ export function ShipmentList({
               </div>
               {/* Shipment destination and appointment */}
               <div className="text-sm">
-                <div className="flex items-center mb-2">
-                  <div className="flex items-center justify-center rounded-full w-4 h-4 bg-blue-700 mr-2">
+                <div className="mb-2 flex items-center">
+                  <div className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-blue-700">
                     <ArrowDown className="inline-block h-3 w-3 text-white" />
                   </div>
                   <span>
@@ -220,10 +220,10 @@ function WindowTime({ start, end }: { start: string; end: string }) {
   return (
     <div className="text-foreground">
       <div className="flex">
-        <p className="font-semibold pr-2">Window Start: </p> {formatDate(start)}
+        <p className="pr-2 font-semibold">Window Start: </p> {formatDate(start)}
       </div>
       <div className="flex">
-        <p className="font-semibold pr-2">Window End: </p> {formatDate(end)}
+        <p className="pr-2 font-semibold">Window End: </p> {formatDate(end)}
       </div>
     </div>
   );

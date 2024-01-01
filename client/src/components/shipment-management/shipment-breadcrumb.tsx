@@ -60,8 +60,8 @@ function OptionsDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9 lg:flex font-semibold">
-          <MoreVerticalIcon className="h-4 w-4 mt-0.5 mr-1" />
+        <Button variant="outline" className="h-9 font-semibold lg:flex">
+          <MoreVerticalIcon className="mr-1 mt-0.5 h-4 w-4" />
           Options
         </Button>
       </DropdownMenuTrigger>
@@ -84,7 +84,7 @@ function OptionsDropdown() {
 
 export function ShipmentBreadcrumb() {
   return (
-    <div className="flex justify-between pt-5 pb-4 md:pt-4 md:pb-4">
+    <div className="flex justify-between pb-4 pt-5 md:py-4">
       <div>
         <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
           Shipment Management
@@ -97,7 +97,7 @@ export function ShipmentBreadcrumb() {
       </div>
       <div className="mt-3 flex">
         <OptionsDropdown />
-        <Button size="sm" className="h-9 ml-3 font-semibold">
+        <Button size="sm" className="ml-3 h-9 font-semibold">
           Add New Shipment
         </Button>
       </div>

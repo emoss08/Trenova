@@ -52,7 +52,7 @@ export const FormControl = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
-    <div className="flex flex-col justify-between w-full gap-0.5">
+    <div className="flex w-full flex-col justify-between gap-0.5">
       <div ref={ref} className={cn("min-h-[4em]", className)} {...props} />
     </div>
   );

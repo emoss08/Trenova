@@ -348,7 +348,7 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
         </SheetHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col h-full overflow-y-auto"
+          className="flex h-full flex-col overflow-y-auto"
         >
           <TractorForm control={control} open={open} />
           <SheetFooter className="mb-12">

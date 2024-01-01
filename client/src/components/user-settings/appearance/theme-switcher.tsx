@@ -44,11 +44,11 @@ export function ThemeSwitcher() {
       </p>
       <div className="grid max-w-xl grid-cols-3 gap-8 pt-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 border-primary">
+          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
               onClick={() => switchTheme("light")}
-              className="aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sr-only"
+              className="sr-only aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
               <div className="space-y-2 rounded-sm bg-white p-2">
@@ -72,11 +72,11 @@ export function ThemeSwitcher() {
           </label>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 border-primary">
+          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <button
               type="button"
               onClick={() => switchTheme("dark")}
-              className="aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sr-only"
+              className="sr-only aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             ></button>
             <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
               <div className="space-y-2 rounded-sm bg-zinc-950 p-2">
@@ -100,11 +100,11 @@ export function ThemeSwitcher() {
           </label>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 border-primary">
+          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <button
               type="button"
               onClick={() => switchTheme("slate-dark")}
-              className="aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sr-only"
+              className="sr-only aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             ></button>
             <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
               <div className="space-y-2 rounded-sm bg-slate-950 p-2">
@@ -134,15 +134,15 @@ export function ThemeSwitcher() {
       </p>
       <div className="grid max-w-xl grid-cols-3 gap-8 pt-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 border-primary">
+          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
               onClick={() => setIsRainbowAnimationActive(false)}
-              className="aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sr-only"
+              className="sr-only aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
               <div className="space-y-2 rounded-sm bg-background p-2">
-                <div className="h-1 rounded-md bg-rainbow-gradient-light bg-200% w-full" />
+                <div className="h-1 w-full rounded-md bg-rainbow-gradient-light bg-200%" />
                 <div className="space-y-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-muted-foreground/90"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-muted-foreground/90"></div>
@@ -164,15 +164,15 @@ export function ThemeSwitcher() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 border-primary">
+          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
               onClick={() => setIsRainbowAnimationActive(true)}
-              className="aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sr-only"
+              className="sr-only aspect-square h-4 w-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
               <div className="space-y-2 rounded-sm bg-background p-2">
-                <div className="h-1 rounded-md bg-rainbow-gradient-light bg-200% animate-rainbow-flow" />
+                <div className="h-1 animate-rainbow-flow rounded-md bg-rainbow-gradient-light bg-200%" />
                 <div className="space-y-2 rounded-md bg-foreground/10 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-muted-foreground/90"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-muted-foreground/90"></div>

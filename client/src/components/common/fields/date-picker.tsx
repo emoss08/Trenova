@@ -116,7 +116,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
             fieldState.invalid ? "bg-red-500" : "bg-foreground/30",
           )}
         />
-        <div className="absolute right-0 top-0 my-3 mx-2">
+        <div className="absolute right-0 top-0 mx-2 my-3">
           {fieldState.invalid ? (
             <></>
           ) : (
@@ -126,7 +126,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
 
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -138,7 +138,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         {isOpen && (
           <div
             ref={popoverRef}
-            className="absolute bg-background border border-muted rounded-sm shadow-md mb-2 z-1000 bottom-full"
+            className="z-1000 absolute bottom-full mb-2 rounded-sm border border-muted bg-background shadow-md"
           >
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select

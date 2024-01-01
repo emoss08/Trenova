@@ -36,8 +36,8 @@ export function CustomerRuleProfileForm({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+      <div className="my-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -53,7 +53,7 @@ export function CustomerRuleProfileForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <SelectInput
               name="ruleProfile.documentClass"

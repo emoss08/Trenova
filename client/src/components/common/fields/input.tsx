@@ -27,7 +27,7 @@ import { Label } from "./label";
 
 export function ErrorMessage({ formError }: { formError?: string }) {
   return (
-    <div className="mt-2 inline-block rounded bg-red-50 text-red-500 dark:bg-red-300 dark:text-red-800  px-2 py-1 text-xs leading-tight ">
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs  leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
       {formError ? formError : "An Error has occurred. Please try again."}
     </div>
   );
@@ -83,7 +83,7 @@ export function InputField<T extends FieldValues>({
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             {icon}
           </div>
         )}
@@ -99,7 +99,7 @@ export function InputField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -149,7 +149,7 @@ export function FileField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -195,7 +195,7 @@ export function TimeField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />

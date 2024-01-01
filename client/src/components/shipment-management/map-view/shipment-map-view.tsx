@@ -76,7 +76,7 @@ function MapMarker({ text }: MapMarkerProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center justify-center w-4 h-4 bg-black rounded-full cursor-auto border-2 border-white" />
+          <div className="flex h-4 w-4 cursor-auto items-center justify-center rounded-full border-2 border-white bg-black" />
         </TooltipTrigger>
         <TooltipContent>{text}</TooltipContent>
       </Tooltip>
@@ -114,27 +114,27 @@ export function ShipmentMapView() {
 
   return (
     <>
-      <div className="flex h-[700px] w-screen mx-auto space-x-10">
+      <div className="mx-auto flex h-[700px] w-screen space-x-10">
         <ShipmentMapAside />
-        <div className="flex-grow relative">
+        <div className="relative grow">
           {/* Absolute positioned map options */}
-          <div className="absolute top-0 right-0 z-10 p-2">
+          <div className="absolute right-0 top-0 z-10 p-2">
             <ShipmentMapOptions />
           </div>
           {/* Absolute positioned search field */}
-          <div className="absolute top-0 left-0 z-10 p-2">
+          <div className="absolute left-0 top-0 z-10 p-2">
             <InputField
               name="searchMapQuery"
               control={control}
               placeholder="Search Shipments..."
-              className="shadow-md pl-10"
+              className="pl-10 shadow-md"
               icon={
                 <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
               }
             />
           </div>
           {/* Absolute positioned zoom controls */}
-          <div className="absolute bottom-0 right-0 z-10 p-2 mb-4">
+          <div className="absolute bottom-0 right-0 z-10 mb-4 p-2">
             <ShipmentMapZoom map={map} />
           </div>
           {/* Google Map */}

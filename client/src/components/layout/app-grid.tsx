@@ -33,7 +33,7 @@ function AppGridButton() {
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <nav className="relative inline-flex mt-1 cursor-pointer">
+          <nav className="relative mt-1 inline-flex cursor-pointer">
             <LayoutGridIcon className="h-5 w-5" />
             <span className="sr-only">Application Grid</span>
           </nav>

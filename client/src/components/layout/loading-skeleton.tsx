@@ -17,14 +17,14 @@
 
 export default function LoadingSkeleton() {
   return (
-    <div className="flex flex-row min-h-screen justify-center items-center">
+    <div className="flex min-h-screen flex-row items-center justify-center">
       <div className="border">
-        <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center">
           <div className="p-8">
-            <p className="font-semibold text-lg mb-2">
+            <p className="text-lg mb-2 font-semibold">
               Monta is loading. Please wait.
             </p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="mt-1 text-sm text-gray-400">
               If the operation exceeds a duration of 10 seconds, kindly verify
               the status of your internet connectivity. <br />
               In case of persistent difficulty, please get in touch with your

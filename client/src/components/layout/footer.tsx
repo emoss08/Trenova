@@ -17,9 +17,9 @@
 
 export function Footer() {
   return (
-    <footer className="flex justify-between items-center py-2 px-10 font-semibold">
+    <footer className="flex items-center justify-between px-10 py-2 font-semibold">
       {/* Copyright */}
-      <div className="text-foreground text-xs">
+      <div className="text-xs text-foreground">
         <span className="me-1">2023©</span>
         <a href="#" target="_blank" rel="noopener noreferrer">
           Monta Technologies

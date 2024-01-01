@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -35,6 +35,9 @@ const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const UserPreferencesPage = lazy(
   () => import("../pages/users/UserPreferences"),
+);
+const FeatureManagementPage = lazy(
+  () => import("../pages/admin/FeatureManagement"),
 );
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
@@ -389,6 +392,7 @@ export const routes: RouteObjectWithPermission[] = [
     element: <QualifierCodePage />,
     permission: "view_qualifiercode",
   },
+  // Admin Pages
   {
     title: "Dashboard",
     group: "Administration",
@@ -396,6 +400,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Admin Dashboard",
     element: <AdminPage />,
     permission: "view_admin_dashboard",
+  },
+  {
+    title: "Feature Management",
+    group: "Administration",
+    path: "/admin/dashboard/feature-management/",
+    description: "Feature Flag Management",
+    element: <FeatureManagementPage />,
+    permission: "view_admin_dashboard",
+    excludeFromMenu: true,
   },
   // Error Page
   {

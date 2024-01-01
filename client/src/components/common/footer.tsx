@@ -9,7 +9,7 @@ export function FooterContainer({
 }) {
   return (
     <div className={cn("bg-accent", className)}>
-      <div className="flex items-center justify-between gap-2 font-display">
+      <div className="font-display flex items-center justify-between gap-2">
         <div className="relative">{children}</div>
       </div>
     </div>

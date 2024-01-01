@@ -38,7 +38,7 @@ import { Logo } from "./logo";
 function DevHeader() {
   // Simple header that puts div in the middle on a red background
   return (
-    <header className="flex items-center justify-center h-5 w-full bg-indigo-700">
+    <header className="flex h-5 w-full items-center justify-center bg-indigo-700">
       <div className="text-white">
         You're currently running Monta in development mode.
       </div>
@@ -68,24 +68,24 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     // Use min-h-screen instead of h-screen to prevent overflow from causing double scrollbars
-    <div className="flex flex-col min-h-screen" id="app">
+    <div className="flex min-h-screen flex-col" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           {ENVIRONMENT === "development" && <DevHeader />}
-          <div className="flex items-center justify-between h-14 w-full px-4">
+          <div className="flex h-14 w-full items-center justify-between px-4">
             {/* Logo on the left */}
             <Logo />
             {/* Centered Navigation Menu (visible on md screens and up) */}
-            <div className="hidden md:flex flex-1 justify-center">
+            <div className="hidden flex-1 justify-center md:flex">
               <NavMenu />
             </div>
             {/* User Avatar and Notification Bell on the right */}
             <div className="flex items-center">
               <AppGridMenu />
               <NotificationMenu />
-              <div className="border-l border-muted-foreground/40 h-7 mr-2 pl-2" />
+              <div className="mr-2 h-7 border-l border-muted-foreground/40 pl-2" />
               {isUserDataLoading ? (
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-10 w-10 rounded-full" />
@@ -108,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer>
+      <footer className="mt-10 shrink-0">
         <Footer />
       </footer>
     </div>
@@ -120,9 +120,9 @@ export function Layout({ children }: LayoutProps) {
  */
 export function UnprotectedLayout({ children }: LayoutProps) {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />
-      <header className="shrink-0 sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <RainbowTopBar />
         {ENVIRONMENT === "development" && <DevHeader />}
       </header>

@@ -50,16 +50,16 @@ export function CustomerContactForm({
 
   return (
     <>
-      <div className="flex flex-col h-full w-full">
+      <div className="flex h-full w-full flex-col">
         {fields.length > 0 ? (
           <>
             <div className="max-h-[600px] overflow-y-auto">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-2 gap-2 my-4 pb-2 border-b"
+                  className="my-4 grid grid-cols-2 gap-2 border-b pb-2"
                 >
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
                         name={`contacts.${index}.isActive`}
@@ -75,7 +75,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
                         rules={{ required: true }}
@@ -87,7 +87,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
                         control={control}
@@ -98,7 +98,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
                         type="email"
@@ -110,7 +110,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <InputField
                         control={control}
@@ -121,7 +121,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm mt-6 gap-0.5">
+                  <div className="mt-6 flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <CheckboxInput
                         control={control}
@@ -131,7 +131,7 @@ export function CustomerContactForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between max-w-sm gap-1">
+                  <div className="flex max-w-sm flex-col justify-between gap-1">
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
@@ -157,7 +157,7 @@ export function CustomerContactForm({
             </Button>
           </>
         ) : (
-          <div className="flex-grow flex flex-col items-center justify-center mt-44">
+          <div className="mt-44 flex grow flex-col items-center justify-center">
             <span className="text-6xl mb-4">
               <AlertOctagonIcon />
             </span>

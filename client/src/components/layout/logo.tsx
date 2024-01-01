@@ -59,7 +59,7 @@ export function Logo() {
 
   return (
     <Link
-      className="font-semibold text-xl text-accent-foreground max-w-[250px] mr-5 truncate"
+      className="mr-5 max-w-[250px] truncate text-xl font-semibold text-accent-foreground"
       to="/"
       title={organizationData?.name}
     >

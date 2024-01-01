@@ -54,7 +54,7 @@ function Filter({ title, options, loading }: FilterOptions) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground hover:cursor-pointer">
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
           <span className="truncate">{title}</span>
           <ChevronDown className="h-4 w-4" />
         </div>
@@ -65,7 +65,7 @@ function Filter({ title, options, loading }: FilterOptions) {
           <CommandList>
             {loading ? (
               <CommandItem>
-                <Skeleton className="w-full h-6" />
+                <Skeleton className="h-6 w-full" />
               </CommandItem>
             ) : (
               <>
@@ -118,7 +118,7 @@ export function WorkerSortOptions({
   sortOptions: FilterOptions[];
 }) {
   return (
-    <div className="flex items-center justify-between mt-2">
+    <div className="mt-2 flex items-center justify-between">
       {sortOptions.map((sortOptions) => (
         <Filter key={sortOptions.id} {...sortOptions} />
       ))}

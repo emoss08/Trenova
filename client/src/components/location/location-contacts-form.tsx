@@ -38,16 +38,16 @@ export function LocationContactForm({
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full flex-col">
       {fields.length > 0 ? (
         <>
           <div className="max-h-[600px] overflow-y-auto">
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-3 gap-2 my-4 pb-2 border-b"
+                className="my-4 grid grid-cols-3 gap-2 border-b pb-2"
               >
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
@@ -59,7 +59,7 @@ export function LocationContactForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
@@ -70,7 +70,7 @@ export function LocationContactForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
@@ -81,7 +81,7 @@ export function LocationContactForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
@@ -92,7 +92,7 @@ export function LocationContactForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between max-w-sm mt-6 gap-1">
+                <div className="mt-6 flex max-w-sm flex-col justify-between gap-1">
                   <div className="min-h-[4em]">
                     <Button
                       size="sm"
@@ -117,7 +117,7 @@ export function LocationContactForm({
           </Button>
         </>
       ) : (
-        <div className="flex-grow flex flex-col items-center justify-center mt-48">
+        <div className="mt-48 flex grow flex-col items-center justify-center">
           <span className="text-6xl mb-4">
             <AlertOctagonIcon />
           </span>

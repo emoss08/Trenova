@@ -55,10 +55,10 @@ export type SelectOption = {
 export function Option({ ...props }: OptionProps) {
   return (
     <components.Option {...props}>
-      <div className="relative flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none my-1 hover:bg-accent hover:cursor-pointer hover:rounded-sm">
+      <div className="relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
         {props.label}
         {props.isSelected && (
-          <CheckIcon className="absolute top-1/2 right-3 transform -translate-y-1/2 h-4 w-4" />
+          <CheckIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
         )}
       </div>
     </components.Option>
@@ -208,8 +208,8 @@ export function NoOptionsMessage({
 
   return (
     <components.NoOptionsMessage {...props}>
-      <div className="flex flex-col items-center justify-center my-1">
-        <p className="text-accent-foreground text-sm my-1">
+      <div className="my-1 flex flex-col items-center justify-center">
+        <p className="my-1 text-sm text-accent-foreground">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -316,7 +316,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="text-xs font-normal bg-background w-full text-foreground rounded-sm hover:bg-accent hover:text-foreground/90 flex items-center justify-between pl-3 py-3.5"
+      className="flex w-full items-center justify-between rounded-sm bg-background py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

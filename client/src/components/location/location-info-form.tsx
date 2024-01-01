@@ -51,8 +51,8 @@ export function LocationInfoForm({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+      <div className="my-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <SelectInput
               name="status"
@@ -66,7 +66,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -83,8 +83,8 @@ export function LocationInfoForm({
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+      <div className="my-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -100,7 +100,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <SelectInput
               name="locationCategory"
@@ -118,7 +118,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <SelectInput
               name="depot"
@@ -136,7 +136,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -151,7 +151,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -165,7 +165,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}
@@ -180,7 +180,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <SelectInput
               name="state"
@@ -195,7 +195,7 @@ export function LocationInfoForm({
             />
           </div>
         </div>
-        <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+        <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
           <div className="min-h-[4em]">
             <InputField
               control={control}

@@ -70,7 +70,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50 relative hover:bg-accent hover:text-accent-foreground focus:text-accent-foreground data-[state=open]:navigation-menu-trigger-open data-[state=closed]:navigation-menu-trigger-closed",
+  "data-[state=open]:navigation-menu-trigger-open data-[state=closed]:navigation-menu-trigger-closed group relative inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50",
 );
 
 const NavigationMenuTrigger = React.forwardRef<
@@ -84,7 +84,7 @@ const NavigationMenuTrigger = React.forwardRef<
   >
     {children}
     <ChevronDown
-      className="relative top-[1px] ml-1 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180 text-accent-foreground/50"
+      className="relative top-[1px] ml-1 h-4 w-4 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>
@@ -153,6 +153,5 @@ export {
   NavigationMenuList,
   NavigationMenuTrigger,
   NavigationMenuViewport,
-  navigationMenuTriggerStyle
+  navigationMenuTriggerStyle,
 };
-

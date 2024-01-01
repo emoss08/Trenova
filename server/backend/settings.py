@@ -485,13 +485,6 @@ KAFKA_EXCLUDE_TOPICS = [
     "monta_app_.public.user_report",
 ]
 
-
-# Monta Feature Flag Configurations
-FEATURE_FLAG_TIMEOUT = 60 * 60 * 24  # 24 hours
-
-# CK Editor Configurations
-# CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
-
 # Development Configurations
 if DEBUG:
     INSTALLED_APPS.insert(0, "admin_interface")

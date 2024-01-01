@@ -46,16 +46,16 @@ export function LocationCommentForm({
   } = useCommentTypes();
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full flex-col">
       {fields.length > 0 ? (
         <>
           <div className="max-h-[600px] overflow-y-auto">
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-1 gap-2 my-4 pb-2 border-b"
+                className="my-4 grid grid-cols-1 gap-2 border-b pb-2"
               >
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <SelectInput
                       rules={{ required: true }}
@@ -73,7 +73,7 @@ export function LocationCommentForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                   <div className="min-h-[4em]">
                     <TextareaField
                       rules={{ required: true }}
@@ -85,7 +85,7 @@ export function LocationCommentForm({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col justify-between max-w-sm gap-1">
+                <div className="flex max-w-sm flex-col justify-between gap-1">
                   <div className="min-h-[2em]">
                     <Button
                       size="sm"
@@ -110,7 +110,7 @@ export function LocationCommentForm({
           </Button>
         </>
       ) : (
-        <div className="flex-grow flex flex-col items-center justify-center mt-48">
+        <div className="mt-48 flex grow flex-col items-center justify-center">
           <span className="text-6xl mb-4">
             <AlertOctagonIcon />
           </span>

@@ -73,8 +73,8 @@ export function Breadcrumb() {
   if (loading) {
     return (
       <>
-        <Skeleton className="w-[200px] h-[30px]" />
-        <Skeleton className="w-[200px] h-[30px] mt-5" />
+        <Skeleton className="h-[30px] w-[200px]" />
+        <Skeleton className="mt-5 h-[30px] w-[200px]" />
       </>
     );
   }
@@ -85,7 +85,7 @@ export function Breadcrumb() {
   }
 
   return (
-    <div className="pt-5 pb-4 md:pt-4 md:pb-4">
+    <div className="pb-4 pt-5 md:py-4">
       <div>
         <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
           {currentRoute.title}

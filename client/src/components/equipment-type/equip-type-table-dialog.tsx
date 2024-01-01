@@ -42,7 +42,7 @@ import { CheckboxInput } from "../common/fields/checkbox";
 export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6 my-4">
+      <div className="my-4 grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="status"
@@ -69,7 +69,7 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
           />
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-4">
+      <div className="my-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="grid w-full items-center gap-0.5">
           <SelectInput
             name="equipmentClass"
@@ -235,7 +235,7 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
         </SheetHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col h-full overflow-y-auto"
+          className="flex h-full flex-col overflow-y-auto"
         >
           <EquipTypeForm control={control} />
           <SheetFooter className="mb-12">

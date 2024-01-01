@@ -21,7 +21,6 @@ from django.contrib.sessions.models import Session
 from django.db import connection
 from django.db.models import F, Q, QuerySet
 from django.utils import timezone
-
 from organization import models
 
 
@@ -103,4 +102,6 @@ def get_organization_feature_flags(
         name=F("feature_flag__name"),
         code=F("feature_flag__code"),
         description=F("feature_flag__description"),
+        beta=F("feature_flag__beta"),
+        paid_only=F("feature_flag__paid_only"),
     )

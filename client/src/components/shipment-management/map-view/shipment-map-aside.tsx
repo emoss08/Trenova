@@ -147,7 +147,7 @@ export function ShipmentMapAside() {
 
   if (isError) {
     return (
-      <aside className="items-center w-96 p-4 border ring-accent-foreground/20 rounded-md">
+      <aside className="w-96 items-center rounded-md border p-4 ring-accent-foreground/20">
         <div className="mt-52">
           <ErrorLoadingData />
         </div>
@@ -156,7 +156,7 @@ export function ShipmentMapAside() {
   }
 
   return (
-    <aside className="w-96 p-4 border ring-accent-foreground/20 rounded-md">
+    <aside className="w-96 rounded-md border p-4 ring-accent-foreground/20">
       {isLoading ? (
         <WorkerListSkeleton />
       ) : (

@@ -35,7 +35,7 @@ import { Loader2 } from "lucide-react";
 
 function SkeletonLoader() {
   return (
-    <div className="flex flex-col items-center justify-center mt-20">
+    <div className="mt-20 flex flex-col items-center justify-center">
       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       <p className="mt-2 font-semibold text-accent-foreground">
         Loading Chart...
@@ -64,7 +64,7 @@ export function LocationChart({ row }: { row: Row<Location> }) {
 
   return (
     <div className="mt-7 flex border-b">
-      <div className="flex-1 col-xs-push-3">
+      <div className="col-xs-push-3 flex-1">
         <h2 className="scroll-m-20 pb-2 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
           Monthly Pickups
         </h2>
@@ -123,9 +123,9 @@ export function LocationChart({ row }: { row: Row<Location> }) {
               </div>
             ))
         ) : (
-          <div className="flex flex-col justify-center items-center rounded-lg overflow-hidden my-4">
+          <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
             <div className="px-6 py-4">
-              <h4 className="text-xl font-semibold mt-20 text-foreground">
+              <h4 className="mt-20 text-xl font-semibold text-foreground">
                 No Location Comments Available
               </h4>
             </div>

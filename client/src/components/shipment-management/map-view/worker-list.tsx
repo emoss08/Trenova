@@ -41,16 +41,16 @@ import { AvatarFallback } from "@radix-ui/react-avatar";
 
 export function WorkerListSkeleton({ count = 9 }: { count?: number }) {
   return (
-    <ul className="p-3 h-[600px]">
+    <ul className="h-[600px] p-3">
       {[...Array(count)].map((_, index) => (
         <li
           key={index}
-          className="group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground mb-2"
+          className="group relative mb-2 flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground"
         >
           <Skeleton className="h-10 w-10 rounded-full" />
           <div className="min-w-0 flex-1">
             <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-40 mt-1" />
+            <Skeleton className="mt-1 h-4 w-40" />
           </div>
         </li>
       ))}
@@ -153,7 +153,7 @@ function WorkerRegBadge({
       {isExpired && (
         <Tooltip>
           <TooltipTrigger>
-            <Badge className="absolute top-0 right-0 p-1 rounded-none rounded-bl rounded-tr text-xs h-5 w-32 bg-destructive text-destructive-foreground hover:bg-destructive/50 hover:text-background">
+            <Badge className="absolute right-0 top-0 h-5 w-32 rounded-none rounded-bl rounded-tr bg-destructive p-1 text-xs text-destructive-foreground hover:bg-destructive/50 hover:text-background">
               Attention Required
             </Badge>
           </TooltipTrigger>
@@ -161,14 +161,14 @@ function WorkerRegBadge({
             <p className="font-semibold">
               The following regulatory information for this worker has expired:
             </p>
-            <ul className="list-disc ml-4">
+            <ul className="ml-4 list-disc">
               {expiredItemsDetails.map((detail, index) => (
                 <li key={index} className="text-sm">
                   {detail}
                 </li>
               ))}
             </ul>
-            <p className="text-muted-foreground mt-2 border-t font-semibold">
+            <p className="mt-2 border-t font-semibold text-muted-foreground">
               You are seeing this because your organization enforces regulatory
               checks.
             </p>
@@ -199,7 +199,7 @@ function WorkerCard({
         `ring-accent-foreground/20 ${statusColor}`,
       )}
     >
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Avatar className="flex items-center justify-center">
           <AvatarImage
             src={worker?.thumbnail}
@@ -228,16 +228,16 @@ function WorkerCard({
           <p className="text-sm font-bold text-foreground group-hover:text-background">
             {workerFullName}
           </p>
-          <p className="text-xs group-hover:text-background truncate">
+          <p className="truncate text-xs group-hover:text-background">
             Current Status:{" "}
             {upperFirst(worker.currentHos?.currentStatus || "-")}
           </p>
           <div className="flex">
-            <p className="text-xs text-muted-foreground group-hover:text-background truncate">
+            <p className="truncate text-xs text-muted-foreground group-hover:text-background">
               On Duty Clock:{" "}
               {convertSecondsToHours(worker.currentHos?.onDutyTime) || "-"}
             </p>
-            <p className="text-xs text-muted-foreground group-hover:text-background truncate ml-3">
+            <p className="ml-3 truncate text-xs text-muted-foreground group-hover:text-background">
               Drive Time:{" "}
               {convertSecondsToHours(worker.currentHos?.driveTime) || "-"}
             </p>
@@ -261,7 +261,7 @@ export function WorkerList({
     <>
       {/* Scrollable list of workers */}
       <ScrollArea className="mt-2">
-        <ul className="p-3 h-[600px]">
+        <ul className="h-[600px] p-3">
           {workersData?.map((item) => (
             <ContextMenu key={item.id}>
               <ContextMenuTrigger>
@@ -317,9 +317,9 @@ export function WorkerList({
       </ScrollArea>
     </>
   ) : (
-    <div className="flex flex-col items-center justify-center mt-52">
-      <p className="text-foreground text-lg font-bold">No Workers Found</p>
-      <p className="text-muted-foreground text-sm">
+    <div className="mt-52 flex flex-col items-center justify-center">
+      <p className="text-lg font-bold text-foreground">No Workers Found</p>
+      <p className="text-sm text-muted-foreground">
         Try adjusting your search query or filters.
       </p>
     </div>

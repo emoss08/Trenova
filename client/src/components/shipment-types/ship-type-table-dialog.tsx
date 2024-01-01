@@ -43,7 +43,7 @@ export function ShipmentTypeForm({
 }) {
   return (
     <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="status"

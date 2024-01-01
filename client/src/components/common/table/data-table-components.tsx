@@ -45,7 +45,7 @@ export function DataNotFound({
   onButtonClick?: () => void;
 }) {
   return (
-    <div className="text-center my-10">
+    <div className="my-10 text-center">
       <Icon className="mx-auto h-10 w-10 text-foreground" />
       <h3 className="mt-2 text-sm font-semibold text-gray-900">
         No {upperFirst(name)}

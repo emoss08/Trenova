@@ -77,7 +77,7 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit(submitForm)}>
-      <div className="grid gap-4 mt-5">
+      <div className="mt-5 grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="email" className="required-label">
             Email
@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
             {...register("email")}
           />
         </div>
-        <Button disabled={isLoading} className="w-full my-2">
+        <Button disabled={isLoading} className="my-2 w-full">
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -131,7 +131,7 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className={"relative min-h-screen pt-28"}>
-      <h2 className="mt-10 text-center pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
+      <h2 className="mt-10 pb-2 text-center text-3xl font-semibold tracking-tight transition-colors first:mt-0">
         Reset your password?
       </h2>
       <p className="mb-5 text-center leading-7">
@@ -143,7 +143,7 @@ const ResetPasswordPage: React.FC = () => {
           Login instead
         </Link>
       </p>
-      <div className="flex flex-row justify-center items-start">
+      <div className="flex flex-row items-start justify-center">
         <Card className={cn("w-[420px]")}>
           <CardContent>
             <ResetPasswordForm />
