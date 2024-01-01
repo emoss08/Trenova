@@ -86,8 +86,15 @@ export function SiteSearch() {
     {} as Record<string, typeof routes>,
   );
 
+  const handleDialogOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setSearchText("");
+    }
+  };
+
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={handleDialogOpenChange}>
       <CommandInput
         placeholder="Search..."
         value={searchText}
