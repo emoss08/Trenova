@@ -99,7 +99,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    "waffle.middleware.WaffleMiddleware",
     # "core.middleware.logging_middleware.RocketLoggingMiddleware",
 ]
 
