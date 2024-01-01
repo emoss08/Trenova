@@ -17,6 +17,7 @@
 
 from typing import Any
 
+from accounts import models
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -40,8 +41,6 @@ from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-
-from accounts import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
@@ -93,6 +92,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
                     "department",
                     "username",
                     "email",
+                    "timezone",
                     "password",
                     "online",
                 )

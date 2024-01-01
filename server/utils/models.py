@@ -25,7 +25,6 @@ from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-
 from organization.models import Organization
 
 
@@ -213,6 +212,10 @@ class Weekdays(models.IntegerChoices):
 
 @final
 class CharWeekdays(models.TextChoices):
+    """
+    The weekdays for a weekly scheduled report.
+    """
+
     MONDAY = "MON", _("Monday")
     TUESDAY = "TUE", _("Tuesday")
     WEDNESDAY = "WED", _("Wednesday")
@@ -220,3 +223,15 @@ class CharWeekdays(models.TextChoices):
     FRIDAY = "FRI", _("Friday")
     SATURDAY = "SAT", _("Saturday")
     SUNDAY = "SUN", _("Sunday")
+
+
+@final
+class TimezoneChoices(models.TextChoices):
+    """
+    A class representing the possible timezone choices.
+    """
+
+    PACIFIC = "America/Los_Angeles", _("Pacific")
+    MOUNTAIN = "America/Denver", _("Mountain")
+    CENTRAL = "America/Chicago", _("Central")
+    EASTERN = "America/New_York", _("Eastern")

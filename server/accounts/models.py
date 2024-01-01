@@ -37,8 +37,13 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USZipCodeField
-
-from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
+from organization.validators import validate_org_timezone
+from utils.models import (
+    ChoiceField,
+    GenericModel,
+    PrimaryStatusChoices,
+    TimezoneChoices,
+)
 
 
 class CustomGroup(models.Model):
@@ -306,6 +311,13 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         _("Online"),
         default=False,
         help_text=_("Designates whether the user is currently online."),
+    )
+    timezone = ChoiceField(
+        _("Timezone"),
+        default=TimezoneChoices.EASTERN,
+        choices=TimezoneChoices.choices,
+        help_text=_("The timezone of the user."),
+        validators=[validate_org_timezone],
     )
     session_key = models.CharField(
         _("Session Key"),
