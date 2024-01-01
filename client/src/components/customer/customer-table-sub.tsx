@@ -67,7 +67,7 @@ function CustomerContactTable({
       <h2 className="scroll-m-20 pb-2 pl-3 text-2xl font-semibold tracking-tight">
         Customer Contacts
       </h2>
-      <div className="border-l-4 border-red-500 text-red-500 pl-2 ml-3">
+      <div className="ml-3 border-l-4 border-red-500 pl-2 text-red-500">
         Payable Contact
       </div>
       <Table className="flex flex-col overflow-hidden">
@@ -201,7 +201,7 @@ export function CustomerTableSub({ row }: { row: Row<Customer> }) {
     [row.original],
   );
   return (
-    <div className="flex border-b mt-5">
+    <div className="mt-5 flex border-b">
       <CustomerContactTable row={row} onClick={handleButtonClick} />
       <DeliverySlotTable row={row} onClick={handleButtonClick} />
     </div>

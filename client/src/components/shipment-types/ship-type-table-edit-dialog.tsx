@@ -75,7 +75,7 @@ function ShipmentTypeEditForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col h-full overflow-y-auto"
+      className="flex h-full flex-col overflow-y-auto"
     >
       <ServiceTypeForm control={control} />
       <DialogFooter className="mt-6">

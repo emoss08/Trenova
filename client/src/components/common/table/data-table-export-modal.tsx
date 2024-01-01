@@ -146,8 +146,8 @@ function TableExportModalBody({
 
   return isColumnsLoading ? (
     <>
-      <div className="flex flex-col items-center justify-center space-y-2 h-40 w-full">
-        <Loader2 className="animate-spin h-20 w-20 text-foreground" />
+      <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
+        <Loader2 className="h-20 w-20 animate-spin text-foreground" />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
         </p>
@@ -176,7 +176,7 @@ function TableExportModalBody({
           defaultValue="csv"
           render={({ field: { onChange, value } }) => (
             <RadioGroup
-              className="grid grid-cols-3 mt-1"
+              className="mt-1 grid grid-cols-3"
               onValueChange={onChange}
               defaultValue={value}
             >
@@ -195,10 +195,10 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="text-xs text-foreground/70 mt-1">
+        <p className="mt-1 text-xs text-foreground/70">
           Select a format to export (CSV, Excel, or PDF).
         </p>
-        <div className="flex justify-end gap-4 border-t pt-2 mt-5">
+        <div className="mt-5 flex justify-end gap-4 border-t pt-2">
           <Button
             type="button"
             variant="outline"

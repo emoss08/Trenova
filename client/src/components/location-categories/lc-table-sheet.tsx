@@ -38,7 +38,7 @@ import { Control, useForm } from "react-hook-form";
 export function LCForm({ control }: { control: Control<FormValues> }) {
   return (
     <div className="flex items-center justify-center">
-      <div className="grid gap-2 mb-2 content-stretch justify-items-center min-w-full">
+      <div className="mb-2 grid min-w-full content-stretch justify-items-center gap-2">
         <div className="w-full max-w-md">
           <InputField
             control={control}

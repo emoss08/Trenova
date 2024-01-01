@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -15,21 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, CardContent } from "@/components/ui/card";
+import { lazy } from "react";
+import AdminLayout from "@/components/admin-page/layout";
 
-export default function Index() {
+const FeatureList = lazy(
+  () => import("@/components/feature-management/feature-list"),
+);
+
+export default function FeatureManagementPage() {
   return (
-    <Card>
-      <CardContent>
-        <p className="text-lg mb-2 border-b border-dashed font-semibold">
-          Development in progress...
-        </p>
-        <p className="mt-1 text-sm text-gray-400">
-          Monta is currently undergoing comprehensive development. As a result,
-          certain features might not yet be accessible, or they may not perform
-          to their intended specifications.
-        </p>
-      </CardContent>
-    </Card>
+    <AdminLayout>
+      <FeatureList />
+    </AdminLayout>
   );
 }

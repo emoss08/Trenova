@@ -21,16 +21,16 @@ import { TimeField } from "../common/fields/input";
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { InfoCircledIcon, PlusIcon } from "@radix-ui/react-icons";
-import { AlertOctagonIcon } from "lucide-react";
+import { PlusIcon } from "@radix-ui/react-icons";
+import { AlertOctagonIcon, InfoIcon } from "lucide-react";
 import { SelectInput } from "../common/fields/select-input";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
 
 function DeliverySlotAlert() {
   return (
-    <Alert className="my-5">
-      <InfoCircledIcon className="h-5 w-5" />
+    <Alert className="my-5  bg-foreground text-background">
+      <InfoIcon className="h-5 w-5 stroke-background" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -66,16 +66,16 @@ export function DeliverySlotForm({
   return (
     <>
       <DeliverySlotAlert />
-      <div className="flex flex-col h-full w-full">
+      <div className="flex h-full w-full flex-col">
         {fields.length > 0 ? (
           <>
             <div className="max-h-[500px] overflow-y-auto">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-2 gap-2 my-4 pb-2 border-b"
+                  className="my-4 grid grid-cols-2 gap-2 border-b pb-2"
                 >
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
                         name={`deliverySlots.${index}.dayOfWeek`}
@@ -91,7 +91,7 @@ export function DeliverySlotForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
                         name={`deliverySlots.${index}.location`}
@@ -112,7 +112,7 @@ export function DeliverySlotForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <TimeField
                         rules={{ required: true }}
@@ -124,7 +124,7 @@ export function DeliverySlotForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between w-full max-w-sm gap-0.5">
+                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <TimeField
                         rules={{ required: true }}
@@ -136,7 +136,7 @@ export function DeliverySlotForm({
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col justify-between max-w-sm gap-1">
+                  <div className="flex max-w-sm flex-col justify-between gap-1">
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
@@ -162,7 +162,7 @@ export function DeliverySlotForm({
             </Button>
           </>
         ) : (
-          <div className="flex-grow flex flex-col items-center justify-center mt-44">
+          <div className="mt-44 flex grow flex-col items-center justify-center">
             <span className="text-6xl mb-4">
               <AlertOctagonIcon />
             </span>

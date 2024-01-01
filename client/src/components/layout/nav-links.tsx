@@ -140,9 +140,9 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
         <>
           <button
             onClick={handleBackClick}
-            className="absolute top-2 right-2 rounded-md text-sm transition duration-200 z-10"
+            className="absolute right-2 top-2 z-10 rounded-md text-sm transition duration-200"
           >
-            <ChevronsLeftIcon className="w-5 h-5" />
+            <ChevronsLeftIcon className="h-5 w-5" />
           </button>
           {activeSubLinks.map((subLink) => {
             if (subLink.permission && !userHasPermission(subLink.permission)) {

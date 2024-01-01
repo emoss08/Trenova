@@ -42,7 +42,7 @@ export function DocumentClassForm({
 }) {
   return (
     <Form>
-      <FormGroup className="grid md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-6">
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
         <FormControl className="w-full">
           <InputField
             control={control}

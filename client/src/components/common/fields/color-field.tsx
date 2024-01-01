@@ -73,12 +73,12 @@ export function ColorField<T extends FieldValues>({
         />
         <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-gray-300" />
         <div
-          className="absolute right-0 top-0 my-2.5 mx-2 h-5 w-5 rounded-xl"
+          className="absolute right-0 top-0 mx-2 my-2.5 h-5 w-5 rounded-xl"
           style={{ backgroundColor: field.value }}
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 top-0 right-0 mt-3 mr-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -89,7 +89,7 @@ export function ColorField<T extends FieldValues>({
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="absolute z-1000 w-auto mt-2">
+        <div ref={popoverRef} className="z-1000 absolute mt-2 w-auto">
           <HexColorPicker color={field.value} onChange={handleColorChange} />
         </div>
       )}

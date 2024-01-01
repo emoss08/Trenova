@@ -92,9 +92,9 @@ export function LocationEditForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col h-full overflow-y-auto"
+      className="flex h-full flex-col overflow-y-auto"
     >
-      <Tabs defaultValue="info" className="flex-1 w-full">
+      <Tabs defaultValue="info" className="w-full flex-1">
         <TabsList>
           <TabsTrigger value="info">Information</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>

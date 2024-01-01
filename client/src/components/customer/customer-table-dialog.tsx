@@ -53,7 +53,7 @@ export function CustomerForm({
     <Tabs
       defaultValue="info"
       value={activeTab}
-      className="flex-1 w-full"
+      className="w-full flex-1"
       onValueChange={setActiveTab}
     >
       <TabsList>
@@ -150,7 +150,7 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
         </SheetHeader>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col h-full overflow-y-auto"
+          className="flex h-full flex-col overflow-y-auto"
         >
           <CustomerForm control={control} open={open} />
           <SheetFooter className="mb-12">

@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { FeatureManagementPage } from "@/components/feature-management/feature-list";
-
 export default function AdminPage() {
-  return <FeatureManagementPage />;
+  return <></>;
 }

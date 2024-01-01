@@ -35,7 +35,7 @@ function Preferences() {
         </div>
         <Separator />
       </div>
-      <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12 mt-6">
+      <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12">
         <div className="md:col-span-4">
           <h2 className="text-base font-semibold leading-7 text-foreground">
             Interface Theme
@@ -56,7 +56,7 @@ function Preferences() {
 
 function ColorBlindPreferences() {
   return (
-    <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12 mt-6">
+    <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12">
       <div className="md:col-span-4">
         <h2 className="text-base font-semibold leading-7 text-foreground">
           Color Accessibility Options

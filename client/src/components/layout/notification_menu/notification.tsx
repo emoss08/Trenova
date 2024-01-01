@@ -36,7 +36,7 @@ export function Notifications({
 
   if (!notification || notification.unreadList.length === 0) {
     return (
-      <div className="flex flex-col justify-content-center items-center h-full w-full mt-10">
+      <div className="justify-content-center mt-10 flex h-full w-full flex-col items-center">
         <LazyLoadImage
           alt="Nothing found"
           src={nothingFound}
@@ -58,7 +58,7 @@ export function Notifications({
       return (
         <div
           key={notification.id}
-          className="group flex flex-col space-y-2 px-4 py-2 border-b border-accent cursor-pointer hover:bg-accent"
+          className="group flex cursor-pointer flex-col space-y-2 border-b border-accent px-4 py-2 hover:bg-accent"
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold leading-none">
@@ -66,7 +66,7 @@ export function Notifications({
             </p>
             <Badge
               withDot={false}
-              className="p-0.5 text-xs select-none bg-accent group-hover:bg-accent-foreground group-hover:text-accent text-accent-forground"
+              className="text-accent-forground select-none bg-accent p-0.5 text-xs group-hover:bg-accent-foreground group-hover:text-accent"
             >
               {humanReadableTime}
             </Badge>

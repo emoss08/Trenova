@@ -14,11 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.utils.functional import cached_property
-from rest_framework import serializers
-
 from accounts.models import Token
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.functional import cached_property
 from organization import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 
@@ -345,6 +345,9 @@ class OrganizationFeatureFlagSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     code = serializers.CharField()
     description = serializers.CharField()
+    beta = serializers.BooleanField()
+    paid_only = serializers.BooleanField()
+    preview = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -352,4 +355,23 @@ class OrganizationFeatureFlagSerializer(serializers.ModelSerializer):
         """
 
         model = models.OrganizationFeatureFlag
-        fields = ["name", "code", "description", "enabled"]
+        fields = [
+            "name",
+            "code",
+            "description",
+            "enabled",
+            "beta",
+            "preview",
+            "paid_only",
+        ]
+
+    def get_preview(self, obj):
+        if obj.feature_flag.preview_picture:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.feature_flag.preview_picture.url)
+            else:
+                # Fallback if request context is not available
+                domain = get_current_site(request).domain
+                return f"{domain}{obj.feature_flag.preview_picture.url}"
+        return None

@@ -33,15 +33,15 @@ export const useHeaderStyles = createStyles((theme) => ({
       height: rem(42),
       display: "flex",
       alignItems: "center",
-      width: "100%"
+      width: "100%",
     },
 
     ...theme.fn.hover({
       backgroundColor:
         theme.colorScheme === "dark"
           ? theme.colors.dark[6]
-          : theme.colors.gray[0]
-    })
+          : theme.colors.gray[0],
+    }),
   },
 
   subLink: {
@@ -53,13 +53,13 @@ export const useHeaderStyles = createStyles((theme) => ({
       backgroundColor:
         theme.colorScheme === "dark"
           ? theme.colors.dark[7]
-          : theme.colors.gray[0]
+          : theme.colors.gray[0],
     }),
 
-    "&:active": theme.activeStyles
+    "&:active": theme.activeStyles,
   },
   logoText: {
-    color: theme.colorScheme === "dark" ? "white" : "black"
+    color: theme.colorScheme === "dark" ? "white" : "black",
   },
   dropdownFooter: {
     backgroundColor:
@@ -72,32 +72,32 @@ export const useHeaderStyles = createStyles((theme) => ({
     paddingBottom: theme.spacing.xl,
     borderTop: `${rem(1)} solid ${
       theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[1]
-    }`
+    }`,
   },
 
   hiddenMobile: {
     [theme.fn.smallerThan("sm")]: {
-      display: "none"
-    }
+      display: "none",
+    },
   },
 
   hiddenDesktop: {
     [theme.fn.largerThan("sm")]: {
-      display: "none"
-    }
+      display: "none",
+    },
   },
   hoverEffect: {
     svg: {
       color:
         theme.colorScheme === "dark"
           ? theme.colors.gray[5]
-          : theme.colors.gray[9]
+          : theme.colors.gray[9],
     },
     "&:hover svg": {
       color:
         theme.colorScheme === "dark"
           ? theme.colors.gray[0]
-          : theme.colors.gray[7]
-    }
-  }
+          : theme.colors.gray[7],
+    },
+  },
 }));

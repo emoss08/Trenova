@@ -28,16 +28,16 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <ErrorBoundary
         onReset={reset}
         fallbackRender={({ resetErrorBoundary }) => (
-          <div className="flex items-center justify-center h-screen bg-gray-100">
+          <div className="flex h-screen items-center justify-center bg-gray-100">
             <div className="text-center">
-              <ExclamationTriangleIcon className="w-12 h-12 mx-auto text-red-500" />
+              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
               <h1 className="mt-4 text-2xl font-bold text-gray-800">
                 There was an error!
               </h1>
               <p className="text-gray-600">Please try again.</p>
               <Button
                 onClick={resetErrorBoundary}
-                className="mt-6 px-4 py-2 rounded-md shadow"
+                className="mt-6 rounded-md px-4 py-2 shadow"
               >
                 Try again
               </Button>

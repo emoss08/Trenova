@@ -109,13 +109,13 @@ function NotificationButton({
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <nav className="relative inline-flex mx-4 mt-1 cursor-pointer">
+          <nav className="relative mx-4 mt-1 inline-flex cursor-pointer">
             <BellIcon className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
-              <span className="flex absolute h-2 w-2 top-0 right-0 -mt-1 -mr-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-700 opacity-25"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-800"></span>
+              <span className="absolute right-0 top-0 -mr-1 -mt-1 flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-700 opacity-25"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-800"></span>
               </span>
             )}
           </nav>
@@ -142,7 +142,7 @@ function NotificationContent({
   return (
     <>
       {notificationsLoading ? (
-        <div className="flex flex-col space-y-2 px-4 py-2 border-b border-accent">
+        <div className="flex flex-col space-y-2 border-b border-accent px-4 py-2">
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">
               <Skeleton className="h-4 w-20" />
@@ -164,12 +164,12 @@ function NotificationContent({
         </ScrollArea>
       )}
       {userHasNotifications && (
-        <div className="border-t pt-2 text-center flex items-center justify-center">
+        <div className="flex items-center justify-center border-t pt-2 text-center">
           <button
-            className="text-sm flex items-center hover:bg-accent rounded-md p-2 outline-transparent"
+            className="flex items-center rounded-md p-2 text-sm outline-transparent hover:bg-accent"
             onClick={readAllNotifications}
           >
-            Read All Notifications <ChevronRight className="h-4 w-4 ml-1" />
+            Read All Notifications <ChevronRight className="ml-1 h-4 w-4" />
           </button>
         </div>
       )}

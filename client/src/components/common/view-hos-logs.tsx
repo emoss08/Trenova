@@ -106,7 +106,7 @@ export function HourGrid() {
       {/* Header */}
       <div className="flex justify-between border-b-2">
         {hours.map((hour, index) => (
-          <div key={index} className="text-xs p-1">
+          <div key={index} className="p-1 text-xs">
             {hour}
           </div>
         ))}
@@ -114,10 +114,10 @@ export function HourGrid() {
 
       {/* Status Rows */}
       {statusTypes.map((statusType, rowIndex) => (
-        <div key={statusType} className="flex relative">
+        <div key={statusType} className="relative flex">
           {" "}
           {/* Add relative positioning here */}
-          <div className="w-12 text-xs p-1 border-r-2">{statusType}</div>
+          <div className="w-12 border-r-2 p-1 text-xs">{statusType}</div>
           {hours.map((_, index) => (
             <div key={index} className="flex-1 border-b border-r">
               &nbsp;
@@ -137,7 +137,7 @@ export function HourGrid() {
                     width: `${(gridColumnEnd - gridColumnStart) * 4.1667}%`, // Convert grid column difference to percentage
                   }}
                 >
-                  <div className="border-b-2 h-full border-foreground" />
+                  <div className="h-full border-b-2 border-foreground" />
                 </div>
               );
             }
@@ -163,7 +163,7 @@ export function HourGridDialog({ onOpenChange, open }: TableSheetProps) {
             View logs for {fullName} for the past 24 hours.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col h-full overflow-y-auto">
+        <div className="flex h-full flex-col overflow-y-auto">
           <HourGrid />
           <VerticalLines serviceHours={serviceHours} />
         </div>

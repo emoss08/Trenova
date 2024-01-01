@@ -82,6 +82,9 @@ export type FeatureFlag = {
   code: string;
   description: string;
   enabled: boolean;
+  beta: boolean;
+  preview: string;
+  paidOnly: boolean;
 };
 
 /** Base Monta Interface

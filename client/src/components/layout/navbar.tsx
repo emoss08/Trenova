@@ -195,7 +195,7 @@ export function NavMenu() {
   return (
     <div ref={navMenuRef}>
       {/* Hamburger Menu (visible on small screens) */}
-      <button onClick={() => setMenuOpen(menuOpen)} className="md:hidden p-2">
+      <button onClick={() => setMenuOpen(menuOpen)} className="p-2 md:hidden">
         🍔
       </button>
       {/* Navigation Menu */}

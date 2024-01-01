@@ -63,7 +63,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
         ref={ref}
         {...props}
       >
-        <Avatar className="inline-block ml-4 m-auto">
+        <Avatar className="m-auto ml-4 inline-block">
           <AvatarImage
             src={avatarSrc}
             alt={user.username}
@@ -71,7 +71,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
           />
           <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
         </Avatar>
-        <div className="flex items-center ml-2 mb-1">
+        <div className="mb-1 ml-2 flex items-center">
           <ChevronDownIcon
             className="h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180"
             aria-hidden="true"
@@ -244,7 +244,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
 
 export function UserAvatarMenu({ user }: { user: User }) {
   return (
-    <div className="hidden md:flex flex-1 items-center justify-between space-x-2 md:justify-end focus-visible:outline-none">
+    <div className="hidden flex-1 items-center justify-between space-x-2 focus-visible:outline-none md:flex md:justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <UserAvatar user={user} />

@@ -72,7 +72,7 @@ function FilterOptions({
     <div className="flex flex-col space-y-4">
       <Button
         variant="outline"
-        className={`w-full hover:bg-foreground hover:text-background flex flex-row justify-between items-center select-none ${
+        className={`flex w-full select-none flex-row items-center justify-between hover:bg-foreground hover:text-background ${
           selectedStatus === null ? "bg-foreground text-background" : ""
         }`}
         onClick={() => {
@@ -80,15 +80,15 @@ function FilterOptions({
           setSelectedStatus(null);
         }}
       >
-        <div className="font-semibold text-sm">All Shipments</div>
-        <div className="font-semibold text-sm ml-2">{totalCount}</div>
+        <div className="text-sm font-semibold">All Shipments</div>
+        <div className="ml-2 text-sm font-semibold">{totalCount}</div>
       </Button>
       {sortedResults &&
         sortedResults.map(({ status, count }) => (
           <Button
             key={status}
             variant="outline"
-            className={`w-full hover:bg-foreground hover:text-background flex flex-row justify-between ${
+            className={`flex w-full flex-row justify-between hover:bg-foreground hover:text-background ${
               selectedStatus === status && "bg-foreground text-background"
             }`}
             onClick={() => {
@@ -96,10 +96,10 @@ function FilterOptions({
               setSelectedStatus(status);
             }}
           >
-            <div className="font-semibold text-sm">
+            <div className="text-sm font-semibold">
               {shipmentStatusToReadable(status)}
             </div>
-            <div className="font-semibold text-sm">{count}</div>
+            <div className="text-sm font-semibold">{count}</div>
           </Button>
         ))}
     </div>
@@ -129,7 +129,7 @@ export function ShipmentAsideMenus({
           }
         />
       </div>
-      <p className="text-sm font-semibold text-muted-foreground mb-4">
+      <p className="mb-4 text-sm font-semibold text-muted-foreground">
         Filter Shipments
       </p>
       <FilterOptions setValue={setValue} searchQuery={searchQuery} />

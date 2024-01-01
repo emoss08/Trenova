@@ -32,49 +32,49 @@ const links = [
     href: "/account/settings/",
     title: "User Settings",
     icon: (
-      <PersonIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <PersonIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "/account/settings/preferences/",
     title: "Preferences",
     icon: (
-      <TargetIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <TargetIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "#",
     title: "Notifications",
     icon: (
-      <RouterIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <RouterIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "#",
     title: "API Keys",
     icon: (
-      <ArrowRightLeftIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <ArrowRightLeftIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "#",
     title: "Connections",
     icon: (
-      <RocketIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <RocketIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "#",
     title: "Privacy",
     icon: (
-      <LinkBreak2Icon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <LinkBreak2Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
   {
     href: "#",
     title: "Advanced",
     icon: (
-      <GearIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+      <GearIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
   },
 ];
@@ -85,9 +85,9 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-background-primary justify-center">
+    <div className="bg-background-primary flex justify-center">
       <SidebarNav links={links} />
-      <div className="flex-1 max-w-4xl mx-12 w-full">
+      <div className="mx-12 w-full max-w-4xl flex-1">
         <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
           {children}
         </Suspense>

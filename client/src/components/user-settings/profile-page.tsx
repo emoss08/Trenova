@@ -107,7 +107,7 @@ function PersonalInformation({ user }: { user: User }) {
         </div>
         <Separator />
       </div>
-      <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3 mt-6">
+      <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3">
         <div>
           <h2 className="text-base font-semibold leading-7 text-foreground">
             Personal Information

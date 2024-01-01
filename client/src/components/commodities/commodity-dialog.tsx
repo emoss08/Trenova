@@ -51,7 +51,7 @@ export function CommodityForm({
 }) {
   return (
     <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-2 mb-2">
+      <div className="mb-2 grid gap-2 md:grid-cols-2 lg:grid-cols-2">
         <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="status"
@@ -78,7 +78,7 @@ export function CommodityForm({
           />
         </div>
       </div>
-      <div className="grid w-full items-center gap-0.5 my-2">
+      <div className="my-2 grid w-full items-center gap-0.5">
         <TextareaField
           name="description"
           control={control}
@@ -87,7 +87,7 @@ export function CommodityForm({
           description="Description of the Commodity"
         />
       </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-2">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-2">
         <div className="grid w-full max-w-sm items-center gap-0.5">
           <InputField
             name="minTemp"

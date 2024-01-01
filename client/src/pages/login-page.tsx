@@ -104,7 +104,7 @@ function UserAuthForm() {
 
   return (
     <form onSubmit={handleSubmit(login)}>
-      <div className="grid gap-4 mt-5">
+      <div className="mt-5 grid gap-4">
         <div className="grid gap-1">
           <InputField
             name="username"
@@ -117,7 +117,7 @@ function UserAuthForm() {
             autoComplete="username"
           />
         </div>
-        <div className="grid gap-1 relative">
+        <div className="relative grid gap-1">
           <InputField
             name="password"
             rules={{ required: true }}
@@ -132,16 +132,16 @@ function UserAuthForm() {
           {passwordValue && (
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 mt-6"
+              className="absolute inset-y-0 right-0 mt-6 flex items-center pr-3 text-sm leading-5"
               onClick={togglePasswordVisibility}
             >
-              <p className="text-xs text-black uppercase">
+              <p className="text-xs uppercase text-black">
                 {showPassword ? "hide" : "show"}
               </p>
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2 flex items-center justify-between">
           <div>
             <div className="flex items-center space-x-2">
               <Checkbox id="remember-me" />
@@ -155,7 +155,7 @@ function UserAuthForm() {
           </div>
         </div>
         <Button
-          className="w-full my-2"
+          className="my-2 w-full"
           isLoading={isLoading}
           loadingText="Signing In..."
         >
@@ -185,7 +185,7 @@ export default function LoginPage() {
 
   return (
     <div className={"relative min-h-screen pt-28"}>
-      <h2 className="mt-10 text-center pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
+      <h2 className="mt-10 pb-2 text-center text-3xl font-semibold tracking-tight transition-colors first:mt-0">
         Welcome Back
       </h2>
       <p className="mb-5 text-center leading-7">
@@ -203,7 +203,7 @@ export default function LoginPage() {
             <UserAuthForm />
           </CardContent>
         </Card>
-        <p className="px-8 text-center text-sm text-muted-foreground w-[350px]">
+        <p className="w-[350px] px-8 text-center text-sm text-muted-foreground">
           By clicking continue, you agree to our&nbsp;
           <a
             className="underline underline-offset-4 hover:text-primary"

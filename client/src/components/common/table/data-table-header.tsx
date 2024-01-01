@@ -140,15 +140,15 @@ export function DataTableTopBar<K>({
   );
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between">
-      <div className="flex-1 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mr-2">
+    <div className="flex flex-col justify-between sm:flex-row">
+      <div className="mr-2 flex flex-1 flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
         <Input
           placeholder="Filter..."
           value={
             (table.getColumn(filterColumn)?.getFilterValue() as string) ?? ""
           }
           onChange={handleFilterChange}
-          className="w-full lg:w-[250px] h-8"
+          className="h-8 w-full lg:w-[250px]"
         />
         {tableFacetedFilters && (
           <DataTableFacetedFilterList
@@ -167,7 +167,7 @@ export function DataTableTopBar<K>({
           </Button>
         )}
       </div>
-      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0">
+      <div className="mt-2 flex flex-col space-y-2 sm:mt-0 sm:flex-row sm:space-x-2 sm:space-y-0">
         <DataTableViewOptions table={table} />
         <DataTableImportExportOption />
         <ButtonConfig

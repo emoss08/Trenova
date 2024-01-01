@@ -62,7 +62,7 @@ const TabsTrigger = React.forwardRef<
   >
     {children}
     {isError && (
-      <span className="relative ml-2 px-2 text-xs font-medium text-white bg-red-500 rounded-full">
+      <span className="relative ml-2 rounded-full bg-red-500 px-2 text-xs font-medium text-white">
         {errorCount}
       </span>
     )}

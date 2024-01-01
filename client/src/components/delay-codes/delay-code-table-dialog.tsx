@@ -43,7 +43,7 @@ export function DelayCodeForm({
 }) {
   return (
     <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-2">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-2">
         <div className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
             name="status"
@@ -71,7 +71,7 @@ export function DelayCodeForm({
           />
         </div>
       </div>
-      <div className="grid w-full items-center gap-0.5 my-5">
+      <div className="my-5 grid w-full items-center gap-0.5">
         <TextareaField
           name="description"
           rules={{ required: true }}

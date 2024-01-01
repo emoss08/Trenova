@@ -50,7 +50,7 @@ export function RCForm({
 }) {
   return (
     <div className="flex-1 overflow-y-visible">
-      <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-2">
+      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-1">
         <div className="grid w-full items-center gap-0.5">
           <InputField
             control={control}
@@ -64,7 +64,7 @@ export function RCForm({
             description="Code for the Revenue Code"
           />
         </div>
-        <div className="grid w-full items-center gap-0.5 mb-2">
+        <div className="mb-2 grid w-full items-center gap-0.5">
           <TextareaField
             name="description"
             rules={{ required: true }}
@@ -75,7 +75,7 @@ export function RCForm({
           />
         </div>
       </div>
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <div className="grid w-full items-center gap-0.5">
           <SelectInput
             name="expenseAccount"
