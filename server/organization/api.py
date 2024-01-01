@@ -673,3 +673,36 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
             "custom_subject",
         )
         return queryset
+
+
+class OrganizationFeatureFlagView(views.APIView):
+    """
+    View that returns back the feature flags for the organization
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        """Get the feature flags for the organization
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a list of dictionaries representing the feature flags.
+        """
+        try:
+            organization_id = request.user.organization_id  # type: ignore
+
+            queryset = selectors.get_organization_feature_flags(
+                organization_id=organization_id
+            )
+
+            serializer = serializers.OrganizationFeatureFlagSerializer(
+                queryset, many=True
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AttributeError:
+            return Response(
+                {"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
+            )

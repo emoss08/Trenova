@@ -21,6 +21,7 @@ from email.utils import formatdate
 from smtplib import SMTP, SMTP_SSL
 
 from organization import exceptions, models
+from organization.models import OrganizationFeatureFlag
 
 
 def send_email_using_profile(
@@ -55,3 +56,16 @@ def send_email_using_profile(
 
         smtp.login(profile.username, profile.password)
         smtp.sendmail(profile.email, recipients, msg.as_string())
+
+
+def flag_is_active(organization_id: str, feature_flag_name: str) -> bool:
+    """Checks if a feature flag is active for a given organization.
+
+    Args:
+        organization_id (int or str): The ID of the organization.
+        feature_flag_name (str): The name of the feature flag.
+
+    Returns:
+        bool: True if the feature flag is active for the organization, False otherwise.
+    """
+    return OrganizationFeatureFlag.is_enabled(organization_id, feature_flag_name)

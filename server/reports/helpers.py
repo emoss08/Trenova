@@ -372,6 +372,26 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "Tractor": {
+        "app_label": "equipment",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Status"},
+            {"value": "code", "label": "Code"},
+            {"value": "equipment_type__name", "label": "Equipment Type Name"},
+            {"value": "model", "label": "Model"},
+            {"value": "year", "label": "Year"},
+            {"value": "state", "label": "State"},
+            {"value": "license_plate_number", "label": "License Plate #"},
+            {"value": "vin_number", "label": "Vin Number"},
+            {"value": "primary_worker__code", "label": "Primary Worker Code"},
+            {"value": "secondary_worker__code", "label": "Secondary Worker Code"},
+            {"value": "owner_operated", "label": "Owner Operated?"},
+            {"value": "fleet_code__code", "label": "Fleet Code"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
     "DocumentClassification": {
         "app_label": "billing",
         "allowed_fields": [

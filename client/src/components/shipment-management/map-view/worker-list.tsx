@@ -26,6 +26,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +38,25 @@ import { useShipmentStore } from "@/stores/ShipmentStore";
 import { DispatchControl } from "@/types/dispatch";
 import { Worker } from "@/types/worker";
 import { AvatarFallback } from "@radix-ui/react-avatar";
+
+export function WorkerListSkeleton({ count = 9 }: { count?: number }) {
+  return (
+    <ul className="p-3 h-[600px]">
+      {[...Array(count)].map((_, index) => (
+        <li
+          key={index}
+          className="group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground mb-2"
+        >
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-40 mt-1" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 const currentStatusColor = (status: string) => {
   switch (status) {
@@ -175,7 +195,7 @@ function WorkerCard({
   return (
     <li
       className={cn(
-        "group relative flex items-center space-x-3 rounded-lg border px-6 py-3 shadow-sm hover:bg-foreground mb-2",
+        "group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground mb-2",
         `ring-accent-foreground/20 ${statusColor}`,
       )}
     >
@@ -264,14 +284,24 @@ export function WorkerList({
                 <ContextMenuItem>Schedule Maintenance</ContextMenuItem>
                 <ContextMenuItem>Monitor Performance</ContextMenuItem>
                 <ContextMenuSeparator />
-                <ContextMenuItem>Review HOS Logs</ContextMenuItem>
+                <ContextMenuItem
+                  onClick={() => {
+                    // Set the current worker to currentWorker in the store.
+                    useShipmentStore.set("currentWorker", item);
+
+                    // Open the Review Logs Dialog.
+                    useShipmentStore.set("reviewLogDialogOpen", true);
+                  }}
+                >
+                  Review HOS Logs
+                </ContextMenuItem>
                 <ContextMenuItem>View Incident Reports</ContextMenuItem>
                 <ContextMenuItem>Vehicle Maintenance Logs</ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
                   onClick={() => {
-                    // Set the current worker to the id of the worker that was clicked.
-                    useShipmentStore.set("currentWorker", item.id);
+                    // Set the current worker to currentWorker in the store.
+                    useShipmentStore.set("currentWorker", item);
 
                     // Open the send message dialog.
                     useShipmentStore.set("sendMessageDialogOpen", true);

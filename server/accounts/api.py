@@ -470,7 +470,10 @@ class RemoveUserSessionView(views.APIView):
         # Replace 'user_id' with the actual user's ID
         async_to_sync(channel_layer.group_send)(
             f"logout_{user_id}",
-            {"type": "user_logout", "message": "logout", "user_id": user_id},
+            {
+                "type": "logout_message",
+                "message": "You have been logged out by an admin.",
+            },
         )
 
         return response.Response(status=status.HTTP_204_NO_CONTENT)

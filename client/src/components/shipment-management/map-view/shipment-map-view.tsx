@@ -16,6 +16,7 @@
  */
 import { InputField } from "@/components/common/fields/input";
 import { SendMessageDialog } from "@/components/common/send-message-dialog";
+import { HourGridDialog } from "@/components/common/view-hos-logs";
 import { ShipmentMapAside } from "@/components/shipment-management/map-view/shipment-map-aside";
 import { ShipmentMapOptions } from "@/components/shipment-management/map-view/shipment-map-options";
 import { ShipmentMapZoom } from "@/components/shipment-management/map-view/shipment-map-zoom";
@@ -30,7 +31,7 @@ import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import GoogleMapReact from "google-map-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 
 const markers = [
@@ -93,12 +94,15 @@ export function ShipmentMapView() {
   };
   const { control } = useForm();
 
-  const [mapType] = useShipmentMapStore.use("mapType");
-  const [mapLayers] = useShipmentMapStore.use("mapLayers");
-  const [map, setMap] = useShipmentMapStore.use("map");
-  const [, setMaps] = useShipmentMapStore.use("maps");
+  const mapType = useShipmentMapStore((state) => state.mapType);
+  const mapLayers = useShipmentMapStore((state) => state.mapLayers);
+  const [map, setMap] = useState<GoogleMap | null>(null);
+  const [, setMaps] = useState<GoogleMap | null>(null);
   const [sendMessageDialogOpen, setSendMessageDialogOpen] =
     useShipmentStore.use("sendMessageDialogOpen");
+  const [reviewLogDialogOpen, setReviewLogDialogOpen] = useShipmentStore.use(
+    "reviewLogDialogOpen",
+  );
 
   const handleApiLoaded = useCallback(
     ({ map, maps }: { map: GoogleMap; maps: GoogleMap }) => {
@@ -162,6 +166,12 @@ export function ShipmentMapView() {
         <SendMessageDialog
           open={sendMessageDialogOpen}
           onOpenChange={() => setSendMessageDialogOpen(false)}
+        />
+      )}
+      {reviewLogDialogOpen && (
+        <HourGridDialog
+          open={reviewLogDialogOpen}
+          onOpenChange={() => setReviewLogDialogOpen(false)}
         />
       )}
     </>

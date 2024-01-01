@@ -335,3 +335,21 @@ class NotificationSettingSerializer(GenericSerializer):
 
         model = models.NotificationSetting
         fields = "__all__"
+
+
+class OrganizationFeatureFlagSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the OrganizationFeatureFlag model
+    """
+
+    name = serializers.CharField()
+    code = serializers.CharField()
+    description = serializers.CharField()
+
+    class Meta:
+        """
+        Metaclass for the OrganizationFeatureFlagSerializer
+        """
+
+        model = models.OrganizationFeatureFlag
+        fields = ["name", "code", "description", "enabled"]

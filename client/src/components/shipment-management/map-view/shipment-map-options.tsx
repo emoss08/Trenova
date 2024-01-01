@@ -15,30 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ComponentIcon } from "lucide-react";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { Label } from "@/components/common/fields/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/common/fields/radio-group";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/common/fields/radio-group";
-import { Label } from "@/components/common/fields/label";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { MapType, useShipmentMapStore } from "@/stores/ShipmentStore";
+import { MapLayer, MapType, useShipmentMapStore } from "@/stores/ShipmentStore";
+import { ComponentIcon } from "lucide-react";
 
 function MapOptionsButton() {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -57,12 +57,15 @@ function MapOptionsButton() {
 }
 
 function onMapBaseOptionsChange(value: MapType) {
-  useShipmentMapStore.set("mapType", value);
+  useShipmentMapStore.setState({ mapType: value });
 }
 
 function MapPopoverContent() {
-  const mapType = useShipmentMapStore.get("mapType");
-  const [mapLayers, setMapLayers] = useShipmentMapStore.use("mapLayers");
+  const mapType = useShipmentMapStore((state) => state.mapType);
+  const [mapLayers, setMapLayers] = useShipmentMapStore((state) => [
+    state.mapLayers,
+    state.setMapLayers,
+  ]);
 
   return (
     <div className="grid gap-4">
@@ -104,14 +107,12 @@ function MapPopoverContent() {
           <Checkbox
             id="traffic"
             checked={mapLayers.includes("TrafficLayer")}
-            onClick={() =>
-              setMapLayers((prev) => {
-                if (prev.includes("TrafficLayer")) {
-                  return prev.filter((layer) => layer !== "TrafficLayer");
-                }
-                return [...prev, "TrafficLayer"];
-              })
-            }
+            onClick={() => {
+              const newMapLayers = mapLayers.includes("TrafficLayer")
+                ? mapLayers.filter((layer) => layer !== "TrafficLayer")
+                : [...mapLayers, "TrafficLayer"];
+              setMapLayers(newMapLayers as MapLayer[]);
+            }}
           />
           <label
             htmlFor="traffic"

@@ -16,6 +16,7 @@
  */
 
 import { JobFunctionChoiceProps } from "@/lib/choices";
+import { TimezoneChoices } from "@/lib/constants";
 import { StatusChoiceProps } from "@/types/index";
 
 export type UserProfile = {
@@ -50,6 +51,7 @@ export type User = {
   userPermissions: string[];
   online: boolean;
   lastLogin: string;
+  timezone: TimezoneChoices;
   profile?: UserProfile;
   fullName: string;
 };

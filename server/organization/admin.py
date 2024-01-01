@@ -166,7 +166,6 @@ class TableChangeAlertAdmin(GenericAdmin[models.TableChangeAlert]):
     """
 
     list_display = ("name", "table", "source", "topic")
-
     list_filter = ("name", "source", "topic", "table")
     search_fields = ("name", "source", "topic", "table")
 
@@ -190,7 +189,28 @@ class NotificationTypeAdmin(GenericAdmin[models.NotificationType]):
     """
 
     list_display = ("name", "description")
-
     list_filter = ("name",)
     search_fields = ("name",)
     inlines = (NotificationSettingStackedInline,)
+
+
+@admin.register(models.FeatureFlag)
+class FeatureFlagAdmin(admin.ModelAdmin[models.FeatureFlag]):
+    """
+    Feature Flag Admin
+    """
+
+    list_display = ("name", "description", "beta", "paid_only")
+    list_filter = ("name",)
+    search_fields = ("name",)
+
+
+@admin.register(models.OrganizationFeatureFlag)
+class OrganizationFeatureFlagAdmin(GenericAdmin[models.OrganizationFeatureFlag]):
+    """
+    Organization Feature Flag Admin
+    """
+
+    list_display = ("organization", "feature_flag", "enabled")
+    list_filter = ("organization", "feature_flag")
+    search_fields = ("organization", "feature_flag")

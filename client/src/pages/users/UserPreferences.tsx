@@ -15,30 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import SettingsLayout from "@/components/user-settings/layout";
-import { useUser } from "@/hooks/useQueries";
-import { useUserStore } from "@/stores/AuthStore";
-import { User } from "@/types/accounts";
 import { lazy } from "react";
 
-const UserProfilePage = lazy(
-  () => import("@/components/user-settings/profile-page"),
+const UserPreferencesPage = lazy(
+  () => import("@/components/user-settings/preference-page"),
 );
 
-export default function UserSettings() {
-  const { userId } = useUserStore.get("user");
-  const { data: userData, isError: userDataError } = useUser(userId);
-
-  if (userDataError) {
-    return (
-      <ErrorLoadingData message="An Error occurred, while loading your profile, plese contact your system administrator." />
-    );
-  }
-
+export default function UserPreferences() {
   return (
     <SettingsLayout>
-      {userData && <UserProfilePage user={userData as User} />}
+      <UserPreferencesPage />
     </SettingsLayout>
   );
 }

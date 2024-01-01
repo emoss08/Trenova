@@ -16,42 +16,45 @@
  */
 
 import { cn } from "@/lib/utils";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  items: {
+  links: {
     href: string;
     title: string;
+    icon?: React.ReactNode;
   }[];
 }
 
-export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
+export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
   const location = useLocation();
 
   return (
     <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-      <aside className="-mx-4 lg:w1/5">
+      <aside className="-mx-4 w-52">
         <nav
           className={cn(
-            "flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1",
+            "flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-2",
             className,
           )}
           {...props}
         >
-          {items.map((item) => (
+          {links.map((link) => (
             <Link
-              key={item.href}
-              to={item.href}
+              key={link.title}
+              to={link.href}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
-                location.pathname === item.href
+                location.pathname === link.href
                   ? "bg-muted hover:bg-muted"
-                  : "hover:bg-transparent hover:underline",
-                "justify-start",
+                  : "hover:bg-muted space-y-1",
+                "group justify-start flex items-center", // Add flex and items-center classes
               )}
             >
-              {item.title}
+              {link.icon && <span className="mr-2">{link.icon}</span>}{" "}
+              {link.title}
             </Link>
           ))}
         </nav>

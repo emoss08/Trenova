@@ -93,6 +93,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
                     "department",
                     "username",
                     "email",
+                    "timezone",
                     "password",
                     "online",
                 )
