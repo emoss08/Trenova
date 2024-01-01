@@ -15,6 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
+import AdminLayout from "@/components/admin-page/layout";
+
 export default function AdminPage() {
-  return <></>;
+  return <AdminLayout>Test</AdminLayout>;
 }
