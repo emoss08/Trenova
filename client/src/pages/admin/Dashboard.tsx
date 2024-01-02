@@ -15,9 +15,47 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import AdminLayout from "@/components/admin-page/layout";
+import { ErrorLoadingData } from "@/components/common/table/data-table-components";
+import { getUserOrganizationId } from "@/lib/auth";
+import { getUserOrganizationDetails } from "@/services/OrganizationRequestService";
+import { QueryKeys } from "@/types";
+import { Organization } from "@/types/organization";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { lazy } from "react";
+
+const GeneralPage = lazy(() => import("@/components/admin-page/general-page"));
 
 export default function AdminPage() {
-  return <AdminLayout>Test</AdminLayout>;
+  const queryClient = useQueryClient();
+
+  // Get User organization data
+  const organizationId = getUserOrganizationId() || "";
+
+  const { data: organizationData, isError } = useQuery({
+    queryKey: ["organization", organizationId] as QueryKeys[],
+    queryFn: async () => {
+      if (!organizationId) {
+        return Promise.resolve(null);
+      }
+      return getUserOrganizationDetails();
+    },
+    initialData: (): Organization | undefined =>
+      queryClient.getQueryData(["organization", organizationId]),
+    staleTime: Infinity,
+  });
+
+  if (isError) {
+    return (
+      <ErrorLoadingData message="An Error occurred, while loading your profile, plese contact your system administrator." />
+    );
+  }
+
+  return (
+    <AdminLayout>
+      {organizationData && (
+        <GeneralPage organization={organizationData as Organization} />
+      )}
+    </AdminLayout>
+  );
 }
