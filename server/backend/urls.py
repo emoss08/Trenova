@@ -418,7 +418,7 @@ urlpatterns = [
         org_api.UserOrganizationView.as_view(),
         name="user-organization",
     ),
-    path("graphql/", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
+    path("graphql", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

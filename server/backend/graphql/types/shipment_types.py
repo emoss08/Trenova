@@ -27,6 +27,25 @@ if typing.TYPE_CHECKING:
     from django.db.models import QuerySet
 
 
+class ShipmentControlNode(DjangoObjectType):
+    """Shipment Control Node for GraphQL.
+
+    Notes:
+        - This is only available to users with the `shipment.view_shipmentcontrol` permission.
+        - Available by default to anyone that is an admin.
+    """
+
+    class Meta:
+        model = models.ShipmentControl
+        interfaces = (graphene.relay.Node,)
+        fields = "__all__"
+
+    @staticmethod
+    def has_read_permission(*, info: "GraphQLResolveInfo") -> bool:
+        user = info.context.user
+        return user.is_superuser or user.has_perm("shipment.view_shipmentcontrol")
+
+
 class ShipmentTypeFilterSet(FilterSet):
     """
     FilterSet for ShipmentType

@@ -490,7 +490,7 @@ KAFKA_EXCLUDE_TOPICS = [
 GRAPHENE = {
     "SCHEMA": "backend.schema.schema",
     "ATOMIC_MUTATIONS": True,
-    "SCHEMA_OUTPUT": "data/schema.json",  # defaults to schema.json,
+    "SCHEMA_OUTPUT": "schema.json",  # defaults to schema.json,
     "SCHEMA_INDENT": 2,  # Defaults to None (displays all data on a single line)
 }
 
