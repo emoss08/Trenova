@@ -67,25 +67,22 @@ export function Layout({ children }: LayoutProps) {
   useQueryInvalidationListener();
 
   return (
-    // Use min-h-screen instead of h-screen to prevent overflow from causing double scrollbars
-    <div className="flex min-h-screen flex-col" id="app">
+    // The main container is set to full height and flex direction
+    <div className="flex h-screen flex-col overflow-hidden" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
           <RainbowTopBar />
           {ENVIRONMENT === "development" && <DevHeader />}
           <div className="flex h-14 w-full items-center justify-between px-4">
-            {/* Logo on the left */}
             <Logo />
-            {/* Centered Navigation Menu (visible on md screens and up) */}
             <div className="hidden flex-1 justify-center md:flex">
               <NavMenu />
             </div>
-            {/* User Avatar and Notification Bell on the right */}
             <div className="flex items-center">
               <AppGridMenu />
               <NotificationMenu />
-              <div className="mr-2 h-7 border-l border-muted-foreground/40 pl-2" />
+              <div className="border-muted-foreground/40 mr-2 h-7 border-l pl-2" />
               {isUserDataLoading ? (
                 <div className="flex items-center space-x-2">
                   <Skeleton className="h-10 w-10 rounded-full" />
@@ -98,19 +95,18 @@ export function Layout({ children }: LayoutProps) {
         </header>
       )}
 
-      {/* Main content should allow for y-axis overflow only */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
+      {/* Main content area including footer */}
+      <div className="flex-1 overflow-y-auto">
+        <main className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
           <Breadcrumb />
           <SiteSearch />
           {children}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-10 shrink-0">
-        <Footer />
-      </footer>
+        </main>
+        {/* Footer will now be part of the main scrollable content */}
+        <footer>
+          <Footer />
+        </footer>
+      </div>
     </div>
   );
 }
@@ -122,7 +118,7 @@ export function UnprotectedLayout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />
-      <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full shrink-0 border-b backdrop-blur">
         <RainbowTopBar />
         {ENVIRONMENT === "development" && <DevHeader />}
       </header>
