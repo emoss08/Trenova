@@ -52,3 +52,4 @@ rich==13.7.0
 sympy==1.12
 weasyprint==60.2
 whitenoise==6.6.0
+graphene-django==3.2.0

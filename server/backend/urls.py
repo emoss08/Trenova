@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -28,6 +28,7 @@ from rest_framework import routers
 
 from accounting import api as accounting_api
 from accounts import api as accounts_api
+from backend.schema import PrivateGraphQLView, schema
 from billing import api as billing_api
 from commodities import api as commodities_api
 from customer import api as customer_api
@@ -412,6 +413,12 @@ urlpatterns = [
         org_api.OrganizationFeatureFlagView.as_view(),
         name="organization-feature-flags",
     ),
+    path(
+        "api/me/organization/",
+        org_api.UserOrganizationView.as_view(),
+        name="user-organization",
+    ),
+    path("graphql/", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
