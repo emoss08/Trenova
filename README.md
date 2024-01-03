@@ -69,6 +69,7 @@ Our goal is to empower your business with a system that manages operational comp
 - [Python](https://www.python.org/)
 - [Django](https://wzww.djangoproject.com/)
 - [Django Rest Framework](https://www.django-rest-framework.org/)
+- [GraphQL](https://graphql.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Apache Kafka](https://kafka.apache.org/)
 - [Debezium](https://debezium.io/)
