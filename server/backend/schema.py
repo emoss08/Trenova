@@ -14,43 +14,28 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from graphene import relay, ObjectType, Schema, Field
-from graphene_django.filter import DjangoFilterConnectionField
+from graphene import ObjectType, Schema
 from graphene_django.views import GraphQLView
 
-from backend.graphql.types.dispatch_types import DelayCodeNode
-from backend.graphql.types.shipment_types import ShipmentTypeNode, ShipmentControlNode
-from shipment.models import ShipmentControl
-
-if typing.TYPE_CHECKING:
-    from graphql import GraphQLResolveInfo
+import accounting.schema
+import dispatch.schema
+import shipment.schema
 
 
 class PrivateGraphQLView(LoginRequiredMixin, GraphQLView):
     pass
 
 
-class Query(ObjectType):
+class Query(
+    dispatch.schema.Query, shipment.schema.Query, accounting.schema.Query, ObjectType
+):
     """
     The Query class defines the GraphQL queries that can be made to the server
     """
 
-    delay_code = relay.Node.Field(DelayCodeNode)
-    all_delay_codes = DjangoFilterConnectionField(DelayCodeNode)
-    shipment_type = relay.Node.Field(ShipmentTypeNode)
-    all_shipment_types = DjangoFilterConnectionField(ShipmentTypeNode)
-    shipment_control = Field(ShipmentControlNode)
-
-    def resolve_shipment_control(
-        self, info: "GraphQLResolveInfo", **kwargs: typing.Any
-    ):
-        if not ShipmentControlNode.has_read_permission(info=info):
-            raise PermissionError("You do not have permission to view ShipmentControl")
-
-        return ShipmentControl.objects.get(organization=info.context.user.organization)
+    pass
 
 
 schema = Schema(query=Query)
