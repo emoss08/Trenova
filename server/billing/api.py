@@ -51,7 +51,6 @@ class BillingControlViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = serializers.BillingControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
-    filterset_fields = ("organization_id",)
 
     def get_queryset(self) -> QuerySet[models.BillingControl]:
         """The get_queryset function is used to filter the queryset based on the request.

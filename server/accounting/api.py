@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -57,46 +57,17 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
         Returns:
             QuerySet[models.GeneralLedgerAccount]: A queryset of generalledgeraccount objects
         """
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .prefetch_related(
-                Prefetch(
-                    "tags",
-                    queryset=models.Tag.objects.only(
-                        "id",
-                    ).filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ),
-                ),
-            )
-            .only(
-                "organization_id",
-                "business_unit_id",
-                "id",
-                "status",
-                "account_number",
-                "account_type",
-                "cash_flow_type",
-                "account_sub_type",
-                "account_classification",
-                "balance",
-                "opening_balance",
-                "closing_balance",
-                "parent_account",
-                "is_reconciled",
-                "date_opened",
-                "date_closed",
-                "notes",
-                "owner",
-                "is_tax_relevant",
-                "attachment",
-                "interest_rate",
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).prefetch_related(
+            Prefetch(
                 "tags",
-                "modified",
-                "created",
-            )
+                queryset=models.Tag.objects.only(
+                    "id",
+                ).filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                ),
+            ),
         )
         return queryset
 

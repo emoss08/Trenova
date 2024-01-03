@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "notifications",
     "channels",
     "ckeditor",
+    "graphene_django",
     # Monta Apps
     "backend",
     "core",
@@ -484,6 +485,14 @@ KAFKA_EXCLUDE_TOPICS = [
     "monta_app_.public.user_profile",
     "monta_app_.public.user_report",
 ]
+
+# GraphQL Configurations
+GRAPHENE = {
+    "SCHEMA": "backend.schema.schema",
+    "ATOMIC_MUTATIONS": True,
+    "SCHEMA_OUTPUT": "schema.json",  # defaults to schema.json,
+    "SCHEMA_INDENT": 2,  # Defaults to None (displays all data on a single line)
+}
 
 # Development Configurations
 if DEBUG:
