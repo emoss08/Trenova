@@ -17,13 +17,14 @@
 
 import typing
 
-from accounting import models
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch, QuerySet
 from django_filters import FilterSet
 from graphene import Field, List, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+
+from accounting import models
 
 if typing.TYPE_CHECKING:
     from graphql import GraphQLResolveInfo

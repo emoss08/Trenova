@@ -17,11 +17,12 @@
 
 import typing
 
-from accounts import models
 from django_filters import FilterSet
 from graphene import Field, ObjectType, Schema, String, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+
+from accounts import models
 
 if typing.TYPE_CHECKING:
     from django.db.models import QuerySet

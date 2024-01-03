@@ -17,19 +17,20 @@
 
 import typing
 
-from billing import models
 from django.core.exceptions import PermissionDenied
 from django_filters import FilterSet
 from graphene import Field, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from billing import models
+
 if typing.TYPE_CHECKING:
     from django.db.models import QuerySet
     from graphql import GraphQLResolveInfo
 
 
-class BillingcontrolNode(DjangoObjectType):
+class BillingControlNode(DjangoObjectType):
     """Billing Control Node for GraphQL.
 
     Notes:
@@ -139,7 +140,7 @@ class Query(ObjectType):
     The Query class defines the GraphQL queries that can be made to the server
     """
 
-    billing_control = Field(BillingcontrolNode)
+    billing_control = Field(BillingControlNode)
     charge_type = relay.Node.Field(ChargeTypeNode)
     charge_types = DjangoFilterConnectionField(ChargeTypeNode)
     accessorial_charge = relay.Node.Field(AccessorialChargeNode)
@@ -150,7 +151,7 @@ class Query(ObjectType):
     def resolve_billing_control(
         self, info: "GraphQLResolveInfo", **kwargs: typing.Any
     ) -> models.BillingControl:
-        if not BillingcontrolNode.has_read_permission(info=info):
+        if not BillingControlNode.has_read_permission(info=info):
             raise PermissionDenied("You do not have permission to view billing control")
 
         return models.BillingControl.objects.get(
