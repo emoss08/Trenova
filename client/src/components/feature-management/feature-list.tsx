@@ -68,9 +68,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="hover:text-primary-darker text-sm text-primary">
-            Send Feedback
-          </button>
+          <button className="text-sm text-primary">Send Feedback</button>
         </div>
       </div>
     </li>

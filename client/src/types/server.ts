@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -134,4 +134,5 @@ export type API_ENDPOINTS =
   | "/tags/"
   | "/finance_transactions/"
   | "/reconciliation_queue/"
+  | "/me/organization/"
   | "/accounting_control/";

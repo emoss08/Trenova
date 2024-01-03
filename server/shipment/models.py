@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -175,28 +175,8 @@ class ShipmentControl(GenericModel):
 
 
 class ShipmentType(GenericModel):
-    """Stores the shipment type information for a related :model:`organization.Organization`.
-
-    The ShipmentType model stores information about a shipment type, such as its name,
-    description, and whether it is active. It also has metadata for ordering and
-    verbose names.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID.
-            Editable and unique.
-        status (ChoiceField): Verbose name is "Status". Choices are from the
-            PrimaryStatusChoices class. Default is PrimaryStatusChoices.ACTIVE.
-            Help text is "Status of the shipment type".
-        code (CharField): Verbose name is "Name". Max length is 10 and must be unique.
-            Help text is "Code of the shipment type".
-        description (TextField): Verbose name is "Description". Can be blank.
-            Help text is "Description of the shipment type".
-
-    Methods:
-        __str__(self) -> str:
-            Returns the name of the ShipmentType.
-        get_absolute_url(self) -> str:
-            Returns the absolute URL for the ShipmentType's detail view.
+    """
+    Stores the shipment type information for a related :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -261,28 +241,8 @@ class ShipmentType(GenericModel):
 
 
 class ServiceType(GenericModel):
-    """Stores the service type information for a related :model:`organization.Organization`.
-
-    The ServiceType model stores information about a shipment type, such as its name,
-    description, and whether it is active. It also has metadata for ordering and
-    verbose names.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID.
-            Editable and unique.
-        status (ChoiceField): Verbose name is "Status". Choices are from the
-            PrimaryStatusChoices class. Default is PrimaryStatusChoices.ACTIVE.
-            Help text is "Status of the service type".
-        code (CharField): Verbose name is "Code". Max length is 4 and must be unique.
-            Help text is "Code of the service type".
-        description (TextField): Verbose name is "Description". Can be blank.
-            Help text is "Description of the service type".
-
-    Methods:
-        __str__(self) -> str:
-            Returns the name of the ServiceType.
-        get_absolute_url(self) -> str:
-            Returns the absolute URL for the ShipmentType's detail view.
+    """
+    Stores the service type information for a related :model:`organization.Organization`.
     """
 
     id = models.UUIDField(

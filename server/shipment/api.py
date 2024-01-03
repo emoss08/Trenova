@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -97,15 +97,6 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.ShipmentType]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "business_unit_id",
-            "code",
-            "status",
-            "description",
-            "created",
-            "modified",
         )
         return queryset
 

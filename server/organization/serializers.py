@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -121,13 +121,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
     Organization Serializer
     """
 
-    depots = serializers.PrimaryKeyRelatedField(  # type: ignore
-        many=True,
-        queryset=models.Depot.objects.all(),
-        required=False,
-        allow_null=True,
-    )
-
     class Meta:
         """
         Metaclass for OrganizationSerializer
@@ -138,6 +131,14 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "scac_code",
+            "dot_number",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "zip_code",
+            "phone_number",
+            "website",
             "org_type",
             "timezone",
             "language",
@@ -146,7 +147,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "time_format",
             "logo",
             "dark_logo",
-            "depots",
+            "token_expiration_days",
         )
 
 

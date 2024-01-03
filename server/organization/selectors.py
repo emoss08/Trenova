@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -106,3 +106,14 @@ def get_organization_feature_flags(
         beta=F("feature_flag__beta"),
         paid_only=F("feature_flag__paid_only"),
     )
+
+
+def get_organization_by_id(
+    *, organization_id: str
+) -> QuerySet[models.Organization] | None:
+    """Get organization by id.
+
+    Returns:
+        QuerySet[models.Organization]: A queryset of organization.
+    """
+    return models.Organization.objects.get(id__exact=organization_id)

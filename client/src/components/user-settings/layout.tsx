@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -85,7 +85,7 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-background-primary flex justify-center">
+    <div className="flex bg-background">
       <SidebarNav links={links} />
       <div className="mx-12 w-full max-w-4xl flex-1">
         <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
