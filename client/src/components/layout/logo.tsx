@@ -16,43 +16,24 @@
  */
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { getUserOrganizationId } from "@/lib/auth";
-import { getUserOrganizationDetails } from "@/services/OrganizationRequestService";
-import { QueryKeys } from "@/types";
-import { Organization } from "@/types/organization";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTheme } from "../ui/theme-provider";
+import { useUserOrganization } from "@/hooks/useQueries";
 
 export function Logo() {
-  const queryClient = useQueryClient();
   const { theme } = useTheme();
+  const { userOrganizationData, userOrganizationLoading } =
+    useUserOrganization();
 
-  // Get User organization data
-  const organizationId = getUserOrganizationId() || "";
-
-  const { data: organizationData, isLoading } = useQuery({
-    queryKey: ["organization", organizationId] as QueryKeys[],
-    queryFn: async () => {
-      if (!organizationId) {
-        return Promise.resolve(null);
-      }
-      return getUserOrganizationDetails();
-    },
-    initialData: (): Organization | undefined =>
-      queryClient.getQueryData(["organization", organizationId]),
-    staleTime: Infinity,
-  });
-
-  if (isLoading) {
+  if (userOrganizationLoading) {
     return <Skeleton className="h-10 w-40" />;
   }
 
-  if (organizationData && organizationData.logo) {
+  if (userOrganizationData && userOrganizationData.logo) {
     const logoSource =
       theme === "light"
-        ? organizationData.logo
-        : organizationData.darkLogo || organizationData.logo;
+        ? userOrganizationData.logo
+        : userOrganizationData.darkLogo || userOrganizationData.logo;
 
     return <LogoLink src={logoSource} alt="Organization Logo" />;
   }
@@ -61,9 +42,9 @@ export function Logo() {
     <Link
       className="mr-5 max-w-[250px] truncate text-xl font-semibold text-accent-foreground"
       to="/"
-      title={organizationData?.name}
+      title={userOrganizationData?.name}
     >
-      {organizationData?.name}
+      {userOrganizationData?.name}
     </Link>
   );
 }

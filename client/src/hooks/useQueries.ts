@@ -47,6 +47,7 @@ import { getShipmentTypes } from "@/services/OrderRequestService";
 import {
   getDepots,
   getFeatureFlags,
+  getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
   getUserDetails,
@@ -68,7 +69,7 @@ import { CommentType, FleetCode } from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentType } from "@/types/order";
-import { Depot } from "@/types/organization";
+import { Depot, Organization } from "@/types/organization";
 import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -645,4 +646,29 @@ export function useFeatureFlags() {
   });
 
   return { featureFlagsData, featureFlagsLoading };
+}
+
+/**
+ * Get the Logged in Users Organization
+ *
+ */
+export function useUserOrganization() {
+  const queryClient = useQueryClient();
+  const {
+    data: userOrganizationData,
+    isLoading: userOrganizationLoading,
+    isError: userOrganizationError,
+  } = useQuery({
+    queryKey: ["userOrganization"] as QueryKeys[],
+    queryFn: async () => getUserOrganizationDetails(),
+    initialData: (): Organization | undefined =>
+      queryClient.getQueryData(["userOrganization"]),
+    staleTime: Infinity,
+  });
+
+  return {
+    userOrganizationData,
+    userOrganizationLoading,
+    userOrganizationError,
+  };
 }

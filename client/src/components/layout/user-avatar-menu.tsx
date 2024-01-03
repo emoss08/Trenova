@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -89,6 +89,8 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
   const navigate = useNavigate();
+
+  console.info("user 1", user);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {

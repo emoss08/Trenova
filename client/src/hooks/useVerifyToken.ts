@@ -46,7 +46,7 @@ export const useVerifyToken = () => {
         });
 
         if (response.status === 200) {
-          setUser(response.data);
+          setUser(response.data.results);
           setIsAuthenticated(true);
         }
       } catch (error) {

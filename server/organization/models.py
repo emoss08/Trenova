@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -36,7 +36,6 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -327,7 +326,6 @@ class Organization(TimeStampedModel):
         _("Address line 1"),
         max_length=255,
         help_text=_("The address line 1 of the organization."),
-        blank=True,
     )
     address_line_2 = models.CharField(
         _("Address line 2"),
@@ -349,7 +347,6 @@ class Organization(TimeStampedModel):
     zip_code = USZipCodeField(
         _("zip code"),
         help_text=_("The zip code of the organization."),
-        blank=True,
     )
     phone_number = PhoneNumberField(
         _("Phone Number"),

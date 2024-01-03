@@ -17,35 +17,15 @@
 
 import AdminLayout from "@/components/admin-page/layout";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
-import { getUserOrganizationId } from "@/lib/auth";
-import { getUserOrganizationDetails } from "@/services/OrganizationRequestService";
-import { QueryKeys } from "@/types";
 import { Organization } from "@/types/organization";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { lazy } from "react";
+import { useUserOrganization } from "@/hooks/useQueries";
 
 const GeneralPage = lazy(() => import("@/components/admin-page/general-page"));
 
 export default function AdminPage() {
-  const queryClient = useQueryClient();
-
-  // Get User organization data
-  const organizationId = getUserOrganizationId() || "";
-
-  const { data: organizationData, isError } = useQuery({
-    queryKey: ["organization", organizationId] as QueryKeys[],
-    queryFn: async () => {
-      if (!organizationId) {
-        return Promise.resolve(null);
-      }
-      return getUserOrganizationDetails();
-    },
-    initialData: (): Organization | undefined =>
-      queryClient.getQueryData(["organization", organizationId]),
-    staleTime: Infinity,
-  });
-
-  if (isError) {
+  const { userOrganizationData, userOrganizationError } = useUserOrganization();
+  if (userOrganizationError) {
     return (
       <ErrorLoadingData message="An Error occurred, while loading your profile, plese contact your system administrator." />
     );
@@ -53,8 +33,8 @@ export default function AdminPage() {
 
   return (
     <AdminLayout>
-      {organizationData && (
-        <GeneralPage organization={organizationData as Organization} />
+      {userOrganizationData && (
+        <GeneralPage organization={userOrganizationData as Organization} />
       )}
     </AdminLayout>
   );
