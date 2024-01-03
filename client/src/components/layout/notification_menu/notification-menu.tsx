@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -183,7 +183,7 @@ export function NotificationMenu() {
   );
   const [userHasNotifications, setUserHasNotifications] =
     useState<boolean>(false);
-  const { userId } = useUserStore.get("user");
+  const { id: userId } = useUserStore.get("user");
   const { notificationsData, notificationsLoading } = useNotifications(userId);
   const queryClient = useQueryClient();
 

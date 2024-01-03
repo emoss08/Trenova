@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -67,7 +67,7 @@ function UserAuthForm() {
       });
 
       if (response.status === 200) {
-        setUserDetails(response.data);
+        setUserDetails(response.data.results);
         setIsAuthenticated(true);
       }
     } catch (error) {

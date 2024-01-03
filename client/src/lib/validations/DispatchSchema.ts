@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -104,7 +104,6 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
         "is-decimal",
         "Deadhead Goal must be a decimal with no more than two decimal places",
         (value) => {
-          console.info("value", value);
           if (value === undefined || value === null || value === "") {
             return true; // Passes validation for null, undefined, or empty string
           }

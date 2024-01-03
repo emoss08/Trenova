@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -31,7 +31,7 @@ export const UserPermissionsProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = useUserStore.get("user").userIsStaff;
+  const isAdmin = useUserStore.get("user").isStaff;
   const permissions = useUserStore.get("user").userPermissions || [];
 
   const userHasPermission = (permission: string) =>
