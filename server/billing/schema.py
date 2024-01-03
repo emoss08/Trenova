@@ -144,6 +144,8 @@ class Query(ObjectType):
     charge_types = DjangoFilterConnectionField(ChargeTypeNode)
     accessorial_charge = relay.Node.Field(AccessorialChargeNode)
     accessorial_charges = DjangoFilterConnectionField(AccessorialChargeNode)
+    document_classification = relay.Node.Field(DocumentClassificationNode)
+    document_classifications = DjangoFilterConnectionField(DocumentClassificationNode)
 
     def resolve_billing_control(
         self, info: "GraphQLResolveInfo", **kwargs: typing.Any
