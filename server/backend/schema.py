@@ -15,13 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import accounting.schema
+import accounts.schema
+import dispatch.schema
+import shipment.schema
 from django.contrib.auth.mixins import LoginRequiredMixin
 from graphene import ObjectType, Schema
 from graphene_django.views import GraphQLView
-
-import accounting.schema
-import dispatch.schema
-import shipment.schema
 
 
 class PrivateGraphQLView(LoginRequiredMixin, GraphQLView):
@@ -29,7 +29,11 @@ class PrivateGraphQLView(LoginRequiredMixin, GraphQLView):
 
 
 class Query(
-    dispatch.schema.Query, shipment.schema.Query, accounting.schema.Query, ObjectType
+    dispatch.schema.Query,
+    shipment.schema.Query,
+    accounting.schema.Query,
+    accounts.schema.Query,
+    ObjectType,
 ):
     """
     The Query class defines the GraphQL queries that can be made to the server
