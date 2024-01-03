@@ -17,12 +17,13 @@
 
 import typing
 
-from customer import models
 from django.db.models import Count, F, Max, Prefetch, Q
 from django_filters import FilterSet
 from graphene import Date, Field, Int, List, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+
+from customer import models
 from utils.models import StatusChoices
 
 if typing.TYPE_CHECKING:

@@ -17,17 +17,19 @@
 
 import typing
 
-from dispatch import models
 from django.core.exceptions import PermissionDenied
 from django_filters import FilterSet
 from graphene import Field, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from dispatch import models
+
 if typing.TYPE_CHECKING:
-    from accounts.models import User
     from django.db.models import QuerySet
     from graphql import GraphQLResolveInfo
+
+    from accounts.models import User
 
 
 class DispatchControlNode(DjangoObjectType):

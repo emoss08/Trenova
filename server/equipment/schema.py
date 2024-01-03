@@ -19,15 +19,17 @@ import typing
 
 from django.db.models import Count
 from django_filters import FilterSet
-from equipment import models
 from graphene import Field, Int, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from equipment import models
+
 if typing.TYPE_CHECKING:
-    from dispatch.models import FleetCode
     from django.db.models import QuerySet
     from graphql import GraphQLResolveInfo
+
+    from dispatch.models import FleetCode
 
 
 class EquipmentTypeFilterSet(FilterSet):

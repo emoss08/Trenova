@@ -121,7 +121,7 @@ class GeneralLedgerAccountNode(DjangoObjectType):
             )
         )
 
-    def resolve_tags(self, info: "GraphQLResolveInfo") -> typing.List[models.Tag]:
+    def resolve_tags(self, info: "GraphQLResolveInfo") -> list[models.Tag]:
         # Since we have already prefetched tags, we can directly return them
         return self.tags.all()
 
