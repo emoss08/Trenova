@@ -20,14 +20,11 @@ import { NotificationMenu } from "@/components/layout/notification_menu/notifica
 import { SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "react-hot-toast";
 
 import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
-import { useUser } from "@/hooks/useQueries";
 import { ENVIRONMENT } from "@/lib/constants";
 import { useUserStore } from "@/stores/AuthStore";
-import { User } from "@/types/accounts";
 import React from "react";
 import { useLocation } from "react-router-dom";
 import { AppGridMenu } from "./app-grid";
@@ -58,12 +55,10 @@ type LayoutProps = {
  * Contains navigation, header, and footer.
  */
 export function Layout({ children }: LayoutProps) {
-  const { userId } = useUserStore.get("user");
-  const { data: userData, isLoading: isUserDataLoading } = useUser(userId);
+  const [user] = useUserStore.use("user");
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const hideHeader = queryParams.get("hideHeader") === "true";
-
   useQueryInvalidationListener();
 
   return (
@@ -71,7 +66,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex h-screen flex-col overflow-hidden" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           {ENVIRONMENT === "development" && <DevHeader />}
           <div className="flex h-14 w-full items-center justify-between px-4">
@@ -82,14 +77,8 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center">
               <AppGridMenu />
               <NotificationMenu />
-              <div className="border-muted-foreground/40 mr-2 h-7 border-l pl-2" />
-              {isUserDataLoading ? (
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                </div>
-              ) : (
-                (userData as User) && <UserAvatarMenu user={userData as User} />
-              )}
+              <div className="mr-2 h-7 border-l border-muted-foreground/40 pl-2" />
+              {user && <UserAvatarMenu user={user} />}
             </div>
           </div>
         </header>
@@ -118,7 +107,7 @@ export function UnprotectedLayout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />
-      <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full shrink-0 border-b backdrop-blur">
+      <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <RainbowTopBar />
         {ENVIRONMENT === "development" && <DevHeader />}
       </header>

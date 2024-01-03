@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -18,6 +18,7 @@
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
+import { User } from "@/types/accounts";
 
 type AuthState = {
   isAuthenticated: boolean;
@@ -46,24 +47,43 @@ export const useAuthStore = create<AuthState>(
   }) as StateCreator<AuthState>,
 );
 
-type UserState = {
-  userId: string;
-  organizationId: string;
-  userPermissions: string[];
-  userGroups: string[];
-  userIsStaff: boolean;
-};
-
 type UserStoreState = {
-  user: UserState;
+  user: User;
 };
 
 export const useUserStore = createGlobalStore<UserStoreState>({
   user: {
-    userId: "",
-    organizationId: "",
+    id: "",
+    username: "",
+    organization: "",
+    email: "",
+    department: "",
+    dateJoined: "",
+    isSuperuser: false,
+    isStaff: false,
+    isActive: false,
+    groups: [],
     userPermissions: [],
-    userGroups: [],
-    userIsStaff: false,
+    online: false,
+    lastLogin: "",
+    timezone: "America/New_York",
+    profile: {
+      id: "",
+      organization: "",
+      firstName: "",
+      lastName: "",
+      user: "",
+      jobTitle: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      phoneNumber: "",
+      profilePicture: "",
+      thumbnail: "",
+      isPhoneVerified: false,
+    },
+    fullName: "",
   },
 });

@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -273,44 +273,23 @@ class UserDetailView(views.APIView):
         get: Handles "GET" request and returns a response with the authenticated user's details.
     """
 
-    permission_classes = []
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get"]
 
-    def get(self, request, *args, **kwargs) -> response.Response:
-        """Handles sending of 'GET' request. Returns the authenticated user's details
-        or an error message if the user is not authenticated.
-
-        Args:
-            request: The incoming 'GET' request.
-            *args: Variable length arbitrary arguments from a user.
-            **kwargs: Variable length arbitrary keyword arguments from a user.
-
-        Returns:
-            A Response object containing the authenticated user's details in case
-            the user is authenticated, or an error message stating that the
-            session has expired or the user is not authenticated. The HTTP status
-            code is also included in the response.
-        """
-        # Ensure the user is authenticated
-        if not request.user.is_authenticated:
-            return response.Response(
-                {"error": "Session has expired or user is not authenticated."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         user = request.user
 
-        data = {
-            "userId": user.id,
-            "organizationId": user.organization_id
-            if hasattr(user, "organization")
-            else None,
-            "userPermissions": list(user.get_all_permissions()),
-            "userGroups": list(user.groups.values_list("name", flat=True)),
-            "userIsStaff": user.is_staff,
-        }
+        # Implement caching (if needed)
+        # cache_key = f"user_details_{user.id}"
+        # cached_data = cache.get(cache_key)
+        # if cached_data:
+        #     return response.Response(cached_data, status=status.HTTP_200_OK)
 
-        return response.Response(data, status=status.HTTP_200_OK)
+        serializer = serializers.UserSerializer(user)
+        data = serializer.data
+
+        # cache.set(cache_key, data, timeout=YOUR_CACHE_TIMEOUT)  # Set cache with a suitable timeout
+        return response.Response({"results": data}, status=status.HTTP_200_OK)
 
 
 class TokenProvisionView(ObtainAuthToken):

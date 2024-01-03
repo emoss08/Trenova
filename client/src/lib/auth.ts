@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -43,7 +43,7 @@ export function getCookie(name: string) {
  */
 export const getUserOrganizationId = (): string | null => {
   const user = useUserStore.get("user");
-  const userOrganization = user?.organizationId;
+  const userOrganization = user.organization;
   if (userOrganization) {
     return userOrganization;
   }

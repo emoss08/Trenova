@@ -46,10 +46,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-foreground">
             Manage Your Organization Information
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Keep your organization's profile up to date. This section allows you
             to maintain accurate information about your organization, which is
             crucial for efficient management, communication, and service
@@ -62,10 +62,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
       </div>
       <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
         <div className="px-4 sm:px-0">
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             General Information
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Essential for operational efficiency and compliance, this section
             captures your organization's core details. Accurate information
             ensures effective communication and customized service in the
@@ -74,7 +74,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
         </div>
 
         <form
-          className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2"
+          className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -97,7 +97,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   >
                     Change Logo
                   </Button>
-                  <p className="text-muted-foreground mt-2 text-xs leading-5">
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     JPG, GIF or PNG. 1MB max.
                   </p>
                 </div>
@@ -156,6 +156,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   control={control}
                   name="addressLine1"
                   label="Address Line 1"
+                  rules={{ required: true }}
                   placeholder="Address Line 1"
                   description="Specify the primary street address of your organization. This address is used for official correspondence and location-based services."
                 />
@@ -175,6 +176,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="city"
+                  rules={{ required: true }}
                   label="City"
                   placeholder="City"
                   description="Enter the city where your organization is based."
@@ -199,6 +201,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="zipCode"
+                  rules={{ required: true }}
                   label="Zip Code"
                   placeholder="Zip Code"
                   description="Input the zip code of your organization's primary location."
