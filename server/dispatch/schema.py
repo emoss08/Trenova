@@ -25,6 +25,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 if typing.TYPE_CHECKING:
+    from accounts.models import User
     from django.db.models import QuerySet
     from graphql import GraphQLResolveInfo
 
@@ -148,6 +149,8 @@ class FleetCodeNode(DjangoObjectType):
     DjangoObjectType for FleetCode
     """
 
+    manager = Field("accounts.schema.UserNode")
+
     class Meta:
         """
         Meta class defining the model and filter set for FleetCodeNode
@@ -156,7 +159,7 @@ class FleetCodeNode(DjangoObjectType):
         model = models.FleetCode
         filterset_class = FleetCodeFilterSet
         interfaces = (relay.Node,)
-        fields = "__all__"
+        exclude = ["tractor", "trailer"]
 
     @classmethod
     def get_queryset(
@@ -164,7 +167,10 @@ class FleetCodeNode(DjangoObjectType):
     ) -> "QuerySet[models.FleetCode]":
         return queryset.filter(
             organization_id=info.context.user.organization_id
-        ).select_related("manager")
+        ).select_related("manager", "manager__profiles", "manager__profiles__job_title")
+
+    def resolve_manager(self, info: "GraphQLResolveInfo") -> "User":
+        return self.manager
 
 
 class Query(ObjectType):
