@@ -17,6 +17,7 @@
 
 import accounting.schema
 import accounts.schema
+import billing.schema
 import dispatch.schema
 import shipment.schema
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -33,6 +34,7 @@ class Query(
     shipment.schema.Query,
     accounting.schema.Query,
     accounts.schema.Query,
+    billing.schema.Query,
     ObjectType,
 ):
     """

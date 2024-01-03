@@ -14,6 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from billing import models, selectors, serializers, services, tasks, validation
+from core.permissions import CustomObjectPermissions
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
@@ -22,9 +24,6 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from billing import models, selectors, serializers, services, tasks, validation
-from core.permissions import CustomObjectPermissions
 
 
 class BillingControlViewSet(viewsets.ModelViewSet):
@@ -51,7 +50,6 @@ class BillingControlViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = serializers.BillingControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
-    filterset_fields = ("organization_id",)
 
     def get_queryset(self) -> QuerySet[models.BillingControl]:
         """The get_queryset function is used to filter the queryset based on the request.

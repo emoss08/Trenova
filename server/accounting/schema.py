@@ -17,13 +17,13 @@
 
 import typing
 
-from django.db.models import QuerySet, Prefetch
+from accounting import models
+from django.core.exceptions import PermissionDenied
+from django.db.models import Prefetch, QuerySet
 from django_filters import FilterSet
-from graphene import ObjectType, relay, Schema, Field, List
+from graphene import Field, List, ObjectType, Schema, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
-
-from accounting import models
 
 if typing.TYPE_CHECKING:
     from graphql import GraphQLResolveInfo
@@ -200,7 +200,7 @@ class Query(ObjectType):
         self, info: "GraphQLResolveInfo", **kwargs: typing.Any
     ) -> models.AccountingControl:
         if not AccountingControlNode.has_read_permission(info=info):
-            raise PermissionError(
+            raise PermissionDenied(
                 "You do not have permission to view AccountingControl"
             )
 
