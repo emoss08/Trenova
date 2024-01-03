@@ -38,6 +38,8 @@ export type Organization = {
   tokenExpirationDays: number;
 };
 
+export type OrganizationFormValues = Omit<Organization, "id">;
+
 export type EmailProfile = {
   id: string;
   name: string;

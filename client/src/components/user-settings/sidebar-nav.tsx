@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
+
 type SidebarLink = {
   href: string;
   title: string;
@@ -48,14 +49,12 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
 
   return (
     <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-      <aside className="-mx-4 w-52">
+      <aside className="w-56">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (
             <div key={group} className="space-y-2">
               {group !== "ungrouped" && (
-                <h3 className="text-lg ml-4 select-none font-semibold">
-                  {group}
-                </h3>
+                <h3 className="ml-4 select-none font-semibold">{group}</h3>
               )}
               <div className="space-y-1">
                 {groupLinks.map((link) => (
@@ -65,7 +64,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
                     className={cn(
                       buttonVariants({ variant: "ghost" }),
                       location.pathname === link.href
-                        ? "bg-muted hover:bg-muted"
+                        ? "bg-muted"
                         : "hover:bg-muted",
                       "group justify-start flex items-center",
                     )}

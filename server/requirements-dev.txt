@@ -1,13 +1,13 @@
 black==23.12.1
 celery-types==0.20.0
-django-admin-interface==0.28.0
+django-admin-interface==0.28.1
 djangorestframework-stubs[compatible-mypy]==3.14.5
 factory_boy==3.3.0
 isort==5.13.2
 MonkeyType==23.3.0
 pretty_errors==1.2.25
 pydantic==2.5.3
-pytest==7.4.3
+pytest==7.4.4
 pytest-clarity==1.0.1
 pytest-cov==4.1.0
 pytest-django==4.7.0

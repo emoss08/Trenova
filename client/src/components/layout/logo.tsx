@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -17,7 +17,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserOrganizationId } from "@/lib/auth";
-import { getOrganizationDetails } from "@/services/OrganizationRequestService";
+import { getUserOrganizationDetails } from "@/services/OrganizationRequestService";
 import { QueryKeys } from "@/types";
 import { Organization } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ export function Logo() {
       if (!organizationId) {
         return Promise.resolve(null);
       }
-      return getOrganizationDetails(organizationId);
+      return getUserOrganizationDetails();
     },
     initialData: (): Organization | undefined =>
       queryClient.getQueryData(["organization", organizationId]),

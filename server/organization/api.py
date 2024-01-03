@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -22,6 +22,7 @@ import redis
 from cacheops import invalidate_model
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -36,8 +37,7 @@ from organization import exceptions, models, selectors, serializers
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing organization instances.
+    """A viewset for viewing and editing organization instances.
 
     The viewset provides default operations for creating, updating, and deleting organizations,
     as well as listing and retrieving organizations. It uses the `OrganizationSerializer`
@@ -658,9 +658,7 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
             QuerySet[models.NotificationSetting]: A queryset of notificationsetting objects
         """
 
-        queryset: QuerySet[
-            models.NotificationSetting
-        ] = models.NotificationSetting.objects.filter(
+        queryset = models.NotificationSetting.objects.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
@@ -704,6 +702,40 @@ class OrganizationFeatureFlagView(views.APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except AttributeError as e:
             print(e)
+            return Response(
+                {"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class UserOrganizationView(views.APIView):
+    """
+    View that returns back the organization for the user
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        """Returns back the current organization for the user. This view is meant to just give back a single
+        organization without having to use the OrganizationViewSet. That view will return all organizations business
+        unit.
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a dictionary representing the organization.
+        """
+
+        try:
+            organization_id = request.user.organization_id  # type: ignore
+
+            queryset = selectors.get_organization_by_id(organization_id=organization_id)
+
+            serializer = serializers.OrganizationSerializer(
+                queryset, context={"request": request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValidationError:
             return Response(
                 {"detail": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
             )

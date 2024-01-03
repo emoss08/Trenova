@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -49,6 +49,15 @@ export async function getOrganizationDetails(
   id: string,
 ): Promise<Organization> {
   const response = await axios.get(`/organizations/${id}/`);
+  return response.data;
+}
+
+/**
+ * Featches the details of the user currently assigned organization.
+ * @returns A promise that resolves to the organization's details.
+ */
+export async function getUserOrganizationDetails(): Promise<Organization> {
+  const response = await axios.get("/me/organization/");
   return response.data;
 }
 

@@ -32,10 +32,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
@@ -282,9 +281,9 @@ class Organization(TimeStampedModel):
         Organization Type Choices
         """
 
-        ASSET = "Asset", _("Asset")
-        BROKERAGE = "Brokerage", _("Brokerage")
-        BOTH = "Both", _("Both")
+        ASSET = "ASSET", _("Asset")
+        BROKERAGE = "BROKERAGE", _("Brokerage")
+        BOTH = "BOTH", _("Both")
 
     @final
     class LanguageChoices(models.TextChoices):
