@@ -141,8 +141,7 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing shipments in the system.
+    """A viewset for viewing and editing shipments in the system.
 
     The viewset provides default operations for creating, updating and deleting shipments,
     as well as listing and retrieving shipments. It uses the ``ShipmentSerializer`` class to
