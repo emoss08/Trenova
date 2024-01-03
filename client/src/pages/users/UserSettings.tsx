@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -15,9 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import SettingsLayout from "@/components/user-settings/layout";
-import { useUser } from "@/hooks/useQueries";
 import { useUserStore } from "@/stores/AuthStore";
 import { User } from "@/types/accounts";
 import { lazy } from "react";
@@ -27,14 +25,7 @@ const UserProfilePage = lazy(
 );
 
 export default function UserSettings() {
-  const { userId } = useUserStore.get("user");
-  const { data: userData, isError: userDataError } = useUser(userId);
-
-  if (userDataError) {
-    return (
-      <ErrorLoadingData message="An Error occurred, while loading your profile, plese contact your system administrator." />
-    );
-  }
+  const userData = useUserStore.get("user");
 
   return (
     <SettingsLayout>

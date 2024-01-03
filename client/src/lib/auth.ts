@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useUserStore } from "@/stores/AuthStore";
-
 /**
  * Retrieves the CSRF token from the user's cookies.
  * @returns The CSRF token, or undefined if it was not found.
@@ -36,16 +34,3 @@ export function getCookie(name: string) {
   }
   return cookieValue;
 }
-
-/**
- * Retrieves the current user's organization ID from session storage.
- * @returns The organization's ID, or null if it was not found.
- */
-export const getUserOrganizationId = (): string | null => {
-  const user = useUserStore.get("user");
-  const userOrganization = user.organization;
-  if (userOrganization) {
-    return userOrganization;
-  }
-  return null;
-};

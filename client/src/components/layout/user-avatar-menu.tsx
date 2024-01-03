@@ -90,8 +90,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [previousTheme, setPreviousTheme] = useState(theme);
   const navigate = useNavigate();
 
-  console.info("user 1", user);
-
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "q" && (e.metaKey || e.ctrlKey)) {
