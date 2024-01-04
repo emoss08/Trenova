@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -31,10 +31,10 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import {
-  MenuData,
-  NavigationMenuItemProps,
   calculatePosition,
   hasPermission,
+  MenuData,
+  NavigationMenuItemProps,
   userHasAccessToContent,
 } from "@/lib/navmenu";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,9 @@ import { LinksComponent } from "./nav-links";
 const NavigationMenuItemWithPermission = React.memo(
   React.forwardRef<HTMLLIElement, NavigationMenuItemProps>(
     ({ data, setMenuOpen, setMenuPosition, menuItemRefs }, ref) => {
-      const { userHasPermission, isAdmin } = useUserPermissions();
+      const { userHasPermission, isAdmin, permissions } = useUserPermissions();
+
+      console.info("user permissions", permissions);
 
       // Handle mouse enter event
       const handleMouseEnter = () => {

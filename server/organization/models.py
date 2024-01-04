@@ -36,7 +36,6 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -338,7 +337,6 @@ class Organization(TimeStampedModel):
         _("City"),
         max_length=255,
         help_text=_("The city of the organization."),
-        blank=True,
     )
     state = models.CharField(
         _("State"),

@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -268,6 +268,20 @@ export const shipmentNavLinks = [
             permission: "view_qualifiercode",
             description:
               "Manage codes that qualify different aspects of shipments. These codes are crucial for detailed categorization and analysis of shipment attributes.",
+          },
+          {
+            label: "Commodity Codes",
+            link: "/shipment-management/commodity-codes/",
+            permission: "view_commodity",
+            description:
+              "Categorize shipments based on the type of commodities being transported. This classification system helps in streamlining shipment operations and optimizing routes.",
+          },
+          {
+            label: "Hazardous Materials",
+            link: "/shipment-management/hazardous-materials/",
+            permission: "view_hazardousmaterial",
+            description:
+              "Manage and categorize shipments containing hazardous materials. This section includes detailed information and specific guidelines for handling hazardous materials.",
           },
           {
             label: "Reason Codes",

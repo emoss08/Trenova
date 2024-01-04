@@ -92,9 +92,7 @@ export function Layout({ children }: LayoutProps) {
           {children}
         </main>
         {/* Footer will now be part of the main scrollable content */}
-        <footer>
-          <Footer />
-        </footer>
+        <Footer />
       </div>
     </div>
   );
