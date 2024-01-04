@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -127,6 +127,7 @@ export default function CommodityPage() {
       tableFacetedFilters={filters}
       TableSheet={CommodityDialog}
       TableEditSheet={CommodityEditDialog}
+      addPermissionName="add_commodity"
     />
   );
 }

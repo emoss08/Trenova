@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -17,7 +17,7 @@
 
 export function Footer() {
   return (
-    <footer className="flex items-center justify-between px-10 py-2 font-semibold">
+    <footer className="mt-5 flex items-center justify-between px-10 py-2 font-semibold">
       {/* Copyright */}
       <div className="text-xs text-foreground">
         <span className="me-1">2023©</span>

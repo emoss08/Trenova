@@ -36,7 +36,7 @@ from rest_framework.request import Request
 
 from accounts import models, serializers
 from accounts.models import CustomGroup
-from accounts.permissions import ViewAllUsersPermission
+from accounts.permissions import OwnershipPermission
 from core.permissions import CustomObjectPermissions
 
 
@@ -83,7 +83,7 @@ class UserViewSet(viewsets.ModelViewSet):
         "is_staff",
         "username",
     )
-    permission_classes = [ViewAllUsersPermission, CustomObjectPermissions]
+    permission_classes = [OwnershipPermission]
 
     def get_queryset(self) -> QuerySet[models.User]:
         """The get_queryset function is used to filter the queryset of users by organization.
@@ -97,24 +97,48 @@ class UserViewSet(viewsets.ModelViewSet):
         Returns:
             A queryset of user objects that are filtered by the organization_id
         """
-        queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .select_related(
-                "profiles",
-            )
-            .prefetch_related(
-                Prefetch("groups", queryset=CustomGroup.objects.only("id", "name")),
-                Prefetch(
-                    "user_permissions",
-                    queryset=Permission.objects.only(
-                        "id", "name", "content_type__app_label", "codename"
+
+        user = self.request.user
+
+        if user.is_superuser:
+            queryset = (
+                self.queryset.filter(
+                    organization_id=self.request.user.organization_id  # type: ignore
+                )
+                .select_related(
+                    "profiles",
+                )
+                .prefetch_related(
+                    Prefetch("groups", queryset=CustomGroup.objects.only("id", "name")),
+                    Prefetch(
+                        "user_permissions",
+                        queryset=Permission.objects.only(
+                            "id", "name", "content_type__app_label", "codename"
+                        ),
                     ),
-                ),
+                )
+                .all()
             )
-            .all()
-        )
+        else:
+            queryset = (
+                self.queryset.filter(
+                    organization_id=self.request.user.organization_id,  # type: ignore
+                    id=user.id,
+                )
+                .select_related(
+                    "profiles",
+                )
+                .prefetch_related(
+                    Prefetch("groups", queryset=CustomGroup.objects.only("id", "name")),
+                    Prefetch(
+                        "user_permissions",
+                        queryset=Permission.objects.only(
+                            "id", "name", "content_type__app_label", "codename"
+                        ),
+                    ),
+                )
+                .all()
+            )
         return queryset
 
 

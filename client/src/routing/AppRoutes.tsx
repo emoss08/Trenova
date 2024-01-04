@@ -219,25 +219,6 @@ export const routes: RouteObjectWithPermission[] = [
     element: <BillingClientPage />,
     permission: "use_billing_client",
   },
-  // Commodities Pages
-  {
-    title: "Hazardous Materials",
-    group: "commodities",
-    subMenu: "configuration files",
-    path: "/commodities/hazardous-material",
-    description: "Manage hazardous materials",
-    element: <HazardousMaterialPage />,
-    permission: "view_hazardousmaterial",
-  },
-  {
-    title: "Commodities",
-    group: "commodities",
-    subMenu: "configuration files",
-    path: "/commodities/",
-    description: "Manage commodities",
-    element: <CommodityPage />,
-    permission: "view_commodity",
-  },
   // Customer Page
   {
     title: "Customers",
@@ -354,6 +335,24 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Management",
     element: <ShipmentManagementPage />,
     permission: "view_shipment",
+  },
+  {
+    title: "Hazardous Materials",
+    group: "Shipment Management",
+    subMenu: "configuration files",
+    path: "/shipment-management/hazardous-materials/",
+    description: "Manage hazardous materials",
+    element: <HazardousMaterialPage />,
+    permission: "view_hazardousmaterial",
+  },
+  {
+    title: "Commodity Codes",
+    group: "Shipment Management",
+    subMenu: "configuration files",
+    path: "/shipment-management/commodity-codes/",
+    description: "Manage Commodity Codes",
+    element: <CommodityPage />,
+    permission: "view_commodity",
   },
   {
     title: "Service Types",

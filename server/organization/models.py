@@ -338,7 +338,6 @@ class Organization(TimeStampedModel):
         _("City"),
         max_length=255,
         help_text=_("The city of the organization."),
-        blank=True,
     )
     state = models.CharField(
         _("State"),
