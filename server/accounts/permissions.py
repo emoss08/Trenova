@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -17,8 +17,6 @@
 
 from rest_framework import permissions, views
 from rest_framework.request import Request
-
-from accounts import models
 
 
 class ViewAllUsersPermission(permissions.BasePermission):
@@ -57,22 +55,29 @@ class ViewAllUsersPermission(permissions.BasePermission):
             or request.user.is_superuser
         )
 
-    def has_object_permission(
-        self, request: Request, view: views.APIView, obj: models.User
-    ) -> bool:
+
+class OwnershipPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object or admin users to edit or delete it.
+    """
+
+    def has_object_permission(self, request, view, obj):
         """
-        Checks if the user has 'accounts.view_all_users' permission or if the user is trying to access their own record.
+        Check if the request user is the owner of the object or an admin user.
 
         Args:
-            request (Request): The current Django Rest Framework request.
-            view (views.APIView): The view which is being accessed.
-            obj (models.User): The user object which is being accessed.
+            request: The HTTP request.
+            view: The view which is being accessed.
+            obj: The object being accessed or edited.
 
         Returns:
-            bool: True if the user has 'accounts.view_all_users' permission or if the user is trying to access their own record,
-                  False otherwise.
+            bool: True if the request user is the owner of the object or an admin, False otherwise.
         """
-        if obj == request.user:
+
+        # Check if the user is an admin (superuser)
+        if request.user and request.user.is_superuser:
             return True
 
-        return request.user.has_perm("accounts.view_all_users")
+        # Check if the user is trying to access, update or delete their own record
+        # Adjust `obj.user` to match your user relationship in the model
+        return obj == request.user
