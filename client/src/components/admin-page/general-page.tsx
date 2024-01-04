@@ -25,6 +25,7 @@ import { timezoneChoices } from "@/lib/constants";
 import { Organization, OrganizationFormValues } from "@/types/organization";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -34,14 +35,30 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     isError: isStateError,
   } = useUSStates();
 
-  const { control, handleSubmit } = useForm<OrganizationFormValues>({
+  const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     defaultValues: organization,
   });
 
+  const mutation = useCustomMutation<OrganizationFormValues>(
+    control,
+    {
+      method: "PUT",
+      path: `/organizations/${organization.id}/`,
+      successMessage: "Organization updated successfully.",
+      queryKeysToInvalidate: ["userOrganization"],
+      errorMessage: "Failed to update organization.",
+    },
+    () => setIsSubmitting(false),
+    reset,
+  );
+
   const onSubmit = (values: OrganizationFormValues) => {
     setIsSubmitting(true);
-    console.info(values);
+    mutation.mutate(values);
+
+    reset(values);
   };
+
   return (
     <>
       <div className="space-y-3">

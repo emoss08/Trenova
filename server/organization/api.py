@@ -59,8 +59,8 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        queryset: QuerySet[models.Organization] = self.queryset.filter(
-            id=self.request.user.organization_id
+        queryset = self.queryset.filter(
+            id=self.request.user.organization_id  # type: ignore
         ).prefetch_related(  # type: ignore
             Prefetch(
                 "depots",
