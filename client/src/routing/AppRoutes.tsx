@@ -39,6 +39,9 @@ const UserPreferencesPage = lazy(
 const FeatureManagementPage = lazy(
   () => import("../pages/admin/FeatureManagement"),
 );
+const AccountingControlPage = lazy(
+  () => import("../pages/admin/AccountingControl"),
+);
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
@@ -403,10 +406,19 @@ export const routes: RouteObjectWithPermission[] = [
   {
     title: "Feature Management",
     group: "Administration",
-    path: "/admin/dashboard/feature-management/",
+    path: "/admin/feature-management/",
     description: "Feature Flag Management",
     element: <FeatureManagementPage />,
     permission: "view_admin_dashboard",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Accounting Control",
+    group: "Administration",
+    path: "/admin/accounting-controls/",
+    description: "Accounting Controls",
+    element: <AccountingControlPage />,
+    permission: "view_accountingcontrol",
     excludeFromMenu: true,
   },
   // Error Page

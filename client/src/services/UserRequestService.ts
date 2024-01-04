@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -35,7 +35,7 @@ export async function getUserDetails(id: string): Promise<User> {
 export async function getUsers(): Promise<Array<User>> {
   const response = await axios.get("/users/", {
     params: {
-      limit: "all",
+      limit: 100,
     },
   });
   return response.data.results;
