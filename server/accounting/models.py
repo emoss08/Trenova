@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -78,8 +78,7 @@ class ThresholdActionChoices(models.TextChoices):
 
 
 class AccountingControl(GenericModel):
-    """
-    Stores the accounting control information for a related :model:`organization.Organization`.
+    """Stores the accounting control information for a related :model:`organization.Organization`.
 
     The AccountingControl model stores accounting configurations and controls for a related organization.
     It allows organizations to customize how their financial transactions are handled, including

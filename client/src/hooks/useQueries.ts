@@ -173,7 +173,7 @@ export function useAccessorialCharges(show?: boolean) {
 export function useAccountingControl() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, isFetched } = useQuery({
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["accountingControl"] as QueryKeys[],
     queryFn: async () => getAccountingControl(),
     initialData: () =>
@@ -182,9 +182,9 @@ export function useAccountingControl() {
     refetchOnWindowFocus: false,
   });
 
-  const dataArray = (data as AccountingControl[])?.[0];
+  const accountingControlData = (data as AccountingControl[])?.[0];
 
-  return { dataArray, isLoading, isError, isFetched };
+  return { accountingControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**

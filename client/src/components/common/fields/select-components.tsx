@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -289,7 +289,7 @@ export function ErrorMessage({
 /**
  * Popout window component for the SelectInput component.
  * @param popoutLink {string}
- * @param hasPopoutWindow {boolean}
+ * @param event
  */
 function openPopoutWindow(
   popoutLink: string,

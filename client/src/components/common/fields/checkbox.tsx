@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -80,7 +80,7 @@ export function CheckboxInput<T extends FieldValues>({
             {label}
           </label>
           {description && (
-            <p className="truncate text-sm text-muted-foreground">
+            <p className="text-wrap text-sm text-muted-foreground">
               {description}
             </p>
           )}

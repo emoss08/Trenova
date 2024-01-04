@@ -288,20 +288,5 @@ class AccountingControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.AccountingControl]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "auto_create_journal_entries",
-            "journal_entry_criteria",
-            "restrict_manual_journal_entries",
-            "require_journal_entry_approval",
-            "default_revenue_account",
-            "default_expense_account",
-            "enable_reconciliation_notifications",
-            "reconciliation_notification_recipients",
-            "reconciliation_threshold",
-            "reconciliation_threshold_action",
-            "halt_on_pending_reconciliation",
-            "critical_processes",
         )
         return queryset

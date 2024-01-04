@@ -53,7 +53,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/accounting-controls/",
     title: "Accounting Controls",
     icon: (
       <LandmarkIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -101,7 +101,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "/admin/dashboard/feature-management/",
+    href: "/admin/feature-management/",
     title: "Feature Management",
     icon: (
       <FlagIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
