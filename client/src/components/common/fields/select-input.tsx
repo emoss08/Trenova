@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -16,7 +16,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import { UseControllerProps, useController } from "react-hook-form";
+import { useController, UseControllerProps } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { Label } from "./label";
