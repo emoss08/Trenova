@@ -63,29 +63,27 @@ export function CheckboxInput<T extends FieldValues>({
   const { label, description, id } = props;
 
   return (
-    <div className="items-top flex space-x-2">
+    <label htmlFor={id} className="items-top flex cursor-pointer space-x-2">
       <Checkbox
         {...field}
         onCheckedChange={(e) => {
           field.onChange(e);
         }}
         checked={field.value as boolean}
+        id={id} // Ensure the checkbox has the same id as the label's htmlFor
       />
-      {label && (
-        <div className="grid gap-1.5 leading-none">
-          <label
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            htmlFor={id}
-          >
+      <div className="grid gap-1.5 leading-none">
+        {label && (
+          <span className="select-none text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             {label}
-          </label>
-          {description && (
-            <p className="text-wrap text-sm text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
+          </span>
+        )}
+        {description && (
+          <p className="select-none text-wrap text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
+    </label>
   );
 }
