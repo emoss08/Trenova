@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -42,38 +42,9 @@ class DispatchControl(GenericModel):
     """Stores dispatch control information for a related :model:organization.Organization.
 
     The DispatchControl model stores dispatch control information for a related organization. It is used to store
-        information such as the record service incident control, grace period, deadhead target,
-        driver assign, trailer continuity, distance method, duplicate trailer check, regulatory check,
-        prevention of shipments on hold, and the generation of routes.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.
-        organization (OneToOneField): ForeignKey to the related organization model with a CASCADE on delete. Has a
-            verbose name of "Organization" and related names of "dispatch_control" and "dispatch_controls".
-        record_service_incident (ChoiceField): ChoiceField that selects the record service incident control from the
-            available choices (Never, Pickup, Delivery, Pickup and Delivery, All except shipper). Default value is
-            "Never".
-        grace_period (PositiveIntegerField): Positive integer field that stores the grace period for the service
-            incident in minutes. Default value is 0.
-        deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default
-            value is 0.00.
-        driver_assign (BooleanField): Boolean field that enforces driver assign to shipments for the company. Default
-            value is True.
-        trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default
-            value is False.
-        dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company.
-            Default value is False.
-        regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default
-            value is False.
-        prev_shipments_on_hold (BooleanField): Boolean field that prevents dispatch of shipments on hold for the company.
-            Default value is False.
-
-    Methods:
-        meta: Meta class for the DispatchControl model.
-        __str__(self) -> str:
-            Returns the string representation of the DispatchControl model.
-        get_absolute_url(self) -> str:
-            Returns the URL for this object's detail view.
+    information such as the record service incident control, grace period, deadhead target,
+    driver assign, trailer continuity, distance method, duplicate trailer check, regulatory check,
+    prevention of shipments on hold, and the generation of routes.
     """
 
     @final
@@ -118,10 +89,10 @@ class DispatchControl(GenericModel):
         default=0.00,
         help_text=_("Deadhead Mileage target for the company."),
     )
-    driver_assign = models.BooleanField(
-        _("Enforce Driver Assign"),
+    enforce_worker_assign = models.BooleanField(
+        _("Enforce Worker Assign"),
         default=True,
-        help_text=_("Enforce driver assign to shipments for the company."),
+        help_text=_("Enforce worker assign to shipments for the company."),
     )
     trailer_continuity = models.BooleanField(
         _("Enforce Trailer Continuity"),
@@ -133,6 +104,22 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Enforce duplicate trailer check for the company."),
     )
+    maintenance_compliance = models.BooleanField(
+        _("Vehicle Maintenance Compliance"),
+        default=True,
+        help_text=_(
+            "Ensures that all vehicles are compliant with maintenance standards before dispatch. Dispatch is "
+            "disallowed if the assigned vehicle is not compliant."
+        ),
+    )
+    max_shipment_weight_limit = models.IntegerField(
+        _("Max Shipment Weight Limit"),
+        default=80000,
+        help_text=_(
+            "Sets the maximum allowable weight (in pounds) for any shipment. Dispatch is prevented if a shipment "
+            "exceeds this limit."
+        ),
+    )
     regulatory_check = models.BooleanField(
         _("Enforce Regulatory Check"),
         default=False,
@@ -143,10 +130,10 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Prevent dispatch of shipments on hold for the company."),
     )
-    driver_time_away_restriction = models.BooleanField(
-        _("Enforce Driver Time Away"),
+    worker_time_away_restriction = models.BooleanField(
+        _("Enforce Worker Time Away"),
         default=True,
-        help_text=_("Disallow assignments if the driver is on Time Away"),
+        help_text=_("Disallow assignments if the worker is on Time Away"),
     )
     tractor_worker_fleet_constraint = models.BooleanField(
         _("Enforce Tractor and Worker Fleet Continuity "),
@@ -165,6 +152,9 @@ class DispatchControl(GenericModel):
         verbose_name_plural = _("Dispatch Controls")
         ordering = ["organization"]
         db_table = "dispatch_control"
+        db_table_comment = (
+            "Stores dispatch control information for a related organization."
+        )
 
     def __str__(self) -> str:
         """Dispatch control string representation
@@ -172,7 +162,11 @@ class DispatchControl(GenericModel):
         Returns:
             str: Dispatch control string representation
         """
-        return textwrap.wrap(self.organization.name, 50)[0]
+        return textwrap.shorten(
+            f"Dispatch Control for {self.organization.name}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Dispatch control absolute URL

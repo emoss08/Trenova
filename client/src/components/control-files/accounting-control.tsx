@@ -242,11 +242,11 @@ function AccountingControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
-            console.log("cancel");
+            reset();
           }}
           type="button"
           variant="ghost"
@@ -266,7 +266,7 @@ export default function AccountingControl() {
   const { accountingControlData, isLoading } = useAccountingControl();
 
   return (
-    <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
         <h2 className="text-base font-semibold leading-7 text-foreground">
           Accounting Control

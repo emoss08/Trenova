@@ -50,7 +50,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.OrganizationSerializer
     queryset = models.Organization.objects.all()
-    permission_classes = [CustomObjectPermissions]
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self) -> QuerySet[models.Organization]:
         """Filter the queryset to only include the current user

@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -28,12 +28,12 @@ export const fuelMethodChoices = [
 
 /** Type for Auto Billing Criteria Choices */
 export type AutoBillingCriteriaChoicesProps =
-  | "ORDER_DELIVERY"
+  | "SHIPMENT_DELIVERY"
   | "TRANSFERRED_TO_BILL"
   | "MARKED_READY";
 
-export const AutoBillingCriteriaChoices = [
-  { value: "ORDER_DELIVERY", label: "Auto Bill when order is delivered" },
+export const autoBillingCriteriaChoices = [
+  { value: "SHIPMENT_DELIVERY", label: "Auto Bill when shipment is delivered" },
   {
     value: "TRANSFERRED_TO_BILL",
     label: "Auto Bill when order are transferred to billing",
@@ -45,16 +45,16 @@ export const AutoBillingCriteriaChoices = [
 ] as ReadonlyArray<IChoiceProps<AutoBillingCriteriaChoicesProps>>;
 
 /** Type for order transfer criteria */
-export type OrderTransferCriteriaChoicesProps =
+export type ShipmentTransferCriteriaChoicesProps =
   | "READY_AND_COMPLETED"
   | "COMPLETED"
   | "READY_TO_BILL";
 
-export const OrderTransferCriteriaChoices = [
+export const shipmentTransferCriteriaChoices = [
   { value: "READY_AND_COMPLETED", label: "Ready to bill & Completed" },
   { value: "COMPLETED", label: "Completed" },
   { value: "READY_TO_BILL", label: "Ready to bill" },
-] satisfies ReadonlyArray<IChoiceProps<OrderTransferCriteriaChoicesProps>>;
+] satisfies ReadonlyArray<IChoiceProps<ShipmentTransferCriteriaChoicesProps>>;
 
 /** Type for Bill Type choices */
 export type billTypeChoicesProps =

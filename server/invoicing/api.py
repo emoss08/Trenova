@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -53,20 +53,6 @@ class InvoiceControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.InvoiceControl]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "invoice_number_prefix",
-            "invoice_footer",
-            "credit_memo_number_prefix",
-            "attach_pdf",
-            "invoice_logo_width",
-            "invoice_terms",
-            "invoice_logo",
-            "show_amount_due",
-            "show_invoice_due_date",
-            "invoice_date_format",
-            "id",
-            "invoice_due_after_days",
-            "organization_id",
         )
+
         return queryset
