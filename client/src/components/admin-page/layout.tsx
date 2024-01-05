@@ -22,6 +22,7 @@ import {
   BellDotIcon,
   BookIcon,
   BuildingIcon,
+  CheckCircle,
   CircleDollarSignIcon,
   ConstructionIcon,
   ContainerIcon,
@@ -61,7 +62,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/billing-controls/",
     title: "Billing Controls",
     icon: (
       <ReceiptIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -69,7 +70,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/invoice-controls/",
     title: "Invoice Controls",
     icon: (
       <CircleDollarSignIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -77,7 +78,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/dispatch-controls/",
     title: "Dispatch Controls",
     icon: (
       <TruckIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -85,7 +86,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/shipment-controls/",
     title: "Shipment Controls",
     icon: (
       <ContainerIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -93,10 +94,18 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/route-controls/",
     title: "Route Controls",
     icon: (
       <ConstructionIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+    ),
+    group: "Organization",
+  },
+  {
+    href: "/admin/feasibility-controls/",
+    title: "Feasibility Controls",
+    icon: (
+      <CheckCircle className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
     ),
     group: "Organization",
   },

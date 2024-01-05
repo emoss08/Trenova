@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -18,19 +18,22 @@
 import { TRateMethodChoices } from "@/lib/constants";
 import { BaseModel } from "./organization";
 import { StatusChoiceProps } from "@/types/index";
+import { ServiceIncidentControlChoiceProps } from "@/lib/choices";
 
 export type DispatchControl = {
   id: string;
   organization: string;
-  recordServiceIncident: string;
+  recordServiceIncident: ServiceIncidentControlChoiceProps;
   gracePeriod: number;
   deadheadTarget: number;
-  driverAssign: boolean;
+  maxShipmentWeightLimit: number;
+  maintenanceCompliance: boolean;
+  enforceWorkerAssign: boolean;
   trailerContinuity: boolean;
   dupeTrailerCheck: boolean;
   regulatoryCheck: boolean;
-  prevOrdersOnHold: boolean;
-  driverTimeAwayRestriction: boolean;
+  prevShipmentsOnHold: boolean;
+  workerTimeAwayRestriction: boolean;
   tractorWorkerFleetConstraint: boolean;
 };
 

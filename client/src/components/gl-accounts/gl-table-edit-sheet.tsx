@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -27,9 +27,9 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { glAccountSchema } from "@/lib/validations/accounting";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { GLAccountFormValues, GeneralLedgerAccount } from "@/types/accounting";
+import { GeneralLedgerAccount, GLAccountFormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

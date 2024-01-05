@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -35,7 +35,7 @@ import {
   statusChoices,
 } from "@/lib/choices";
 import { cleanObject, cn } from "@/lib/utils";
-import { glAccountSchema } from "@/lib/validations/accounting";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { GLAccountFormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -43,9 +43,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import {
   Control,
+  useForm,
   UseFormGetValues,
   UseFormSetValue,
-  useForm,
 } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { FileField, InputField } from "../common/fields/input";

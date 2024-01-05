@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -22,7 +22,7 @@ import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { JobTitle, JobTitleFormValues as FormValues } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { jobTitleSchema } from "@/lib/validations/accounts";
+import { jobTitleSchema } from "@/lib/validations/AccountsSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { JobTitleForm } from "./CreateJobTitleModal";

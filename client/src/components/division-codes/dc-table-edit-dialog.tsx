@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -21,7 +21,7 @@ import {
   DivisionCodeFormValues as FormValues,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { divisionCodeSchema } from "@/lib/validations/accounting";
+import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useForm } from "react-hook-form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { DCForm } from "./dc-table-dialog";

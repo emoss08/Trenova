@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -18,78 +18,93 @@
 from django.db import connection
 
 
-class TableChoiceService:
-    """A service for retrieving table and column information from a Django database.
+def get_all_table_names() -> list[str]:
+    """Gets the names of all tables in the database, excluding those that start
+    with specified prefixes.
 
-    This service provides methods for retrieving the names of all tables in the
-    database, as well as the names of the columns in a specific table.
-
-    Attributes:
-        connection (django.db.Connection): The database connection.
-
+    Returns:
+        list[str]: A list of strings, where each string is the name of a table
+                   in the database, excluding tables with specified prefixes.
     """
 
-    def __init__(self) -> None:
-        """Initializes a new instance of the TableChoiceService class.
+    names = connection.introspection.table_names()
 
-        The database engine, connection, and cursor are retrieved from the
-        Django settings.
+    excluded_names = (
+        "silk_",
+        "django",
+        "auth_",
+        "contenttypes_",
+        "sessions_",
+        "notifications_",
+        "plugin",
+        "auditlog",
+        "admin_",
+        "flag",
+        "waffle_",
+        "edi",
+        "a_group",
+        "states",
+        "document",
+        "accounting_control",
+        "billing_control",
+        "doc_template_customization",
+        "scheduled_report",
+        "report",
+        "user",
+        "weekday",
+        "audit",
+        "auth",
+        "notification_setting",
+        "notification_type",
+        "route_control",
+        "feasibility_tool_control",
+        "feature_flag",
+        "google_api",
+        "integration",
+        "organization",
+        "shipment_control",
+        "formula_template",
+        "dispatch_control",
+        "email_control",
+        "invoice_control",
+        "table_change_alert",
+        "tax_rate",
+        "template",
+        "custom_report",
+    )
 
-        """
-        self.connection = connection
-
-    def get_all_table_names(self) -> list[str]:
-        """Gets the names of all tables in the database.
-
-        Returns:
-            list: A list of strings, where each string is the name of a table
-                in the database.
-
-        """
-
-        names: list[str] = self.connection.introspection.table_names()
-        for table_name in names:
-            excluded_names = (
-                "silk_",
-                "django",
-                "auth_",
-                "contenttypes_",
-                "sessions_",
-                "notifications_",
-                "plugin",
-                "auditlog",
-                "admin_",
-                "flag",
-            )
-            if table_name.startswith(excluded_names):
-                names.remove(table_name)
-        return names
-
-    def get_column_names(self, *, table_name: str) -> list[str]:
-        """Gets the names of all columns in a specified table.
-
-        Args:
-            table_name (str): The name of the table to retrieve column names
-                for.
-
-        Returns:
-            str: The name of the first column in the table.
-
-        Notes:
-            You have to pass an open cursor to the get_table_description otherwise,
-            you will get an error like this:
-                django.db.utils.ProgrammingError: cursor already closed
-            This is because the cursor is closed when the connection is closed.
-        """
-
-        return [
-            column.name
-            for column in self.connection.introspection.get_table_description(
-                self.connection.cursor(), table_name
-            )
-        ]
+    return [
+        name
+        for name in names
+        if not any(name.startswith(excluded) for excluded in excluded_names)
+    ]
 
 
-table_names: list[str] = TableChoiceService().get_all_table_names()
+def get_column_names(*, table_name: str) -> list[str]:
+    """Gets the names of all columns in a specified table.
+
+    Args:
+        table_name (str): The name of the table to retrieve column names
+            for.
+
+    Returns:
+        list[str]: A list of strings, where each string is the name of a column
+            in the specified table.
+
+    Notes:
+        You have to pass an open cursor to the get_table_description otherwise,
+        you will get an error like this:
+            django.db.utils.ProgrammingError: cursor already closed
+    """
+
+    return [
+        column.name
+        for column in connection.introspection.get_table_description(
+            connection.cursor(), table_name
+        )
+    ]
+
+
+table_names = get_all_table_names()
 
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]

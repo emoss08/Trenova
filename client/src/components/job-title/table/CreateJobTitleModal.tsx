@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -22,7 +22,7 @@ import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { JobTitle, JobTitleFormValues as FormValues } from "@/types/accounts";
-import { jobTitleSchema } from "@/lib/validations/accounts";
+import { jobTitleSchema } from "@/lib/validations/AccountsSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

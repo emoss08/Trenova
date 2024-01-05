@@ -43,23 +43,31 @@ import {
 } from "@/types/dispatch";
 import { TRateMethodChoices } from "@/lib/constants";
 import { StatusChoiceProps } from "@/types";
+import { ServiceIncidentControlChoiceProps } from "@/lib/choices";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
-    recordServiceIncident: Yup.string().required(
-      "Record Service Incident is required",
-    ),
+    recordServiceIncident:
+      Yup.string<ServiceIncidentControlChoiceProps>().required(
+        "Record Service Incident is required",
+      ),
     gracePeriod: Yup.number().required("Grace Period is required"),
     deadheadTarget: Yup.number().required("Deadhead Target is required"),
-    driverAssign: Yup.boolean().required("Driver Assign is required"),
+    enforceWorkerAssign: Yup.boolean().required("Worker Assign is required"),
     trailerContinuity: Yup.boolean().required("Trailer Continuity is required"),
     dupeTrailerCheck: Yup.boolean().required("Dupe Trailer Check is required"),
-    regulatoryCheck: Yup.boolean().required("Regulatory Check is required"),
-    prevOrdersOnHold: Yup.boolean().required(
-      "Previous Orders on Hold is required",
+    maintenanceCompliance: Yup.boolean().required(
+      "Maintenance Compliance is required",
     ),
-    driverTimeAwayRestriction: Yup.boolean().required(
-      "Driver Time Away Restriction is required",
+    maxShipmentWeightLimit: Yup.number().required(
+      "Max Load Weight Limit is required",
+    ),
+    regulatoryCheck: Yup.boolean().required("Regulatory Check is required"),
+    prevShipmentsOnHold: Yup.boolean().required(
+      "Previous Shipments on Hold is required",
+    ),
+    workerTimeAwayRestriction: Yup.boolean().required(
+      "Worker Time Away Restriction is required",
     ),
     tractorWorkerFleetConstraint: Yup.boolean().required(
       "Tractor Worker Fleet Constraint is required",

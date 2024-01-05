@@ -45,8 +45,13 @@ import {
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import {
+  getBillingControl,
   getDepots,
+  getDispatchControl,
   getFeatureFlags,
+  getInvoiceControl,
+  getRouteControl,
+  getShipmentControl,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
@@ -62,16 +67,27 @@ import {
   Tag,
 } from "@/types/accounting";
 import { User } from "@/types/accounts";
-import { AccessorialCharge, DocumentClassification } from "@/types/billing";
+import {
+  AccessorialCharge,
+  BillingControl,
+  DocumentClassification,
+} from "@/types/billing";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { Customer } from "@/types/customer";
-import { CommentType, FleetCode } from "@/types/dispatch";
+import {
+  CommentType,
+  DispatchControl,
+  FeasibilityToolControl,
+  FleetCode,
+} from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
-import { ShipmentType } from "@/types/order";
+import { ShipmentControl, ShipmentType } from "@/types/order";
 import { Depot, Organization } from "@/types/organization";
 import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { InvoiceControl } from "@/types/invoicing";
+import { RouteControl } from "@/types/route";
 
 /**
  * Get Tags for select options
@@ -168,7 +184,7 @@ export function useAccessorialCharges(show?: boolean) {
 }
 
 /**
- * Get Accounting Control for select options
+ * Use Accounting Control Hook to get Accounting Control Details
  */
 export function useAccountingControl() {
   const queryClient = useQueryClient();
@@ -185,6 +201,105 @@ export function useAccountingControl() {
   const accountingControlData = (data as AccountingControl[])?.[0];
 
   return { accountingControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use BillingControl Hook to get Billing Control Details
+ */
+export function useBillingControl() {
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["billingControl"] as QueryKeys[],
+    queryFn: () => getBillingControl(),
+    initialData: () =>
+      queryClient.getQueryData(["billingControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of BillingControlData in variable
+  const billingControlData = (data as BillingControl[])?.[0];
+
+  return { billingControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use InvoiceControl Hook to get Invoice Control Details
+ */
+export function useInvoiceControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["invoiceControl"] as QueryKeys[],
+    queryFn: () => getInvoiceControl(),
+    initialData: () =>
+      queryClient.getQueryData(["invoiceControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of invoiceControlData in variable
+  const invoiceControlData = (data as InvoiceControl[])?.[0];
+
+  return { invoiceControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use DispatchControl Hook to get Dispatch Control Details
+ */
+export function useDispatchControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["dispatchControl"] as QueryKeys[],
+    queryFn: () => getDispatchControl(),
+    initialData: () =>
+      queryClient.getQueryData(["dispatchControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of dispatchControlData in variable
+  const dispatchControlData = (data as DispatchControl[])?.[0];
+
+  return { dispatchControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use ShipmentControl hook to get Shipment Control Details
+ */
+export function useShipmentControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["shipmentControl"] as QueryKeys[],
+    queryFn: () => getShipmentControl(),
+    initialData: () =>
+      queryClient.getQueryData(["shipmentControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of shipmentControlData in variable
+  const shipmentControlData = (data as ShipmentControl[])?.[0];
+
+  return { shipmentControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use RouteControl hook to get Route Control Details
+ */
+export function useRouteControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["routeControl"] as QueryKeys[],
+    queryFn: () => getRouteControl(),
+    initialData: () =>
+      queryClient.getQueryData(["routeControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of dispatchControlData in variable
+  const routeControlData = (data as RouteControl[])?.[0];
+
+  return { routeControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**
@@ -299,8 +414,7 @@ export function useEquipmentTypes(show?: boolean, limit: number = 100) {
  */
 export function useFeasibilityControl() {
   const queryClient = useQueryClient();
-
-  return useQuery({
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["feasibilityControl"] as QueryKeys[],
     queryFn: async () => getFeasibilityControl(),
     initialData: () =>
@@ -309,6 +423,10 @@ export function useFeasibilityControl() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
+
+  return { feasibilityControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**

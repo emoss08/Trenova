@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -36,7 +36,7 @@ class CustomReportFactory(factory.django.DjangoModelFactory):
     table = factory.Faker(
         "random_element",
         elements=(
-            "organization",
+            "accessorial_charge",
             "depot",
             "email_profile",
         ),

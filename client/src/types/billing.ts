@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -20,18 +20,18 @@ import { BaseModel } from "@/types/organization";
 import {
   AutoBillingCriteriaChoicesProps,
   FuelMethodChoicesProps,
-  OrderTransferCriteriaChoicesProps,
+  ShipmentTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 
 /** Types for Billing Control */
 export interface BillingControl extends BaseModel {
   id: string;
   removeBillingHistory: boolean;
-  autoBillOrders: boolean;
+  autoBillShipment: boolean;
   autoMarkReadyToBill: boolean;
   validateCustomerRates: boolean;
   autoBillCriteria: AutoBillingCriteriaChoicesProps;
-  orderTransferCriteria: OrderTransferCriteriaChoicesProps;
+  shipmentTransferCriteria: ShipmentTransferCriteriaChoicesProps;
   enforceCustomerBilling: boolean;
 }
 
