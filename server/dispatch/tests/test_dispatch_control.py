@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -28,7 +28,7 @@ def test_dispatch_control_creation(organization: Organization) -> None:
     Test dispatch control is created from
     create_dispatch_control post_save signal
     """
-    assert organization.dispatch_control.driver_assign is True
+    assert organization.dispatch_control.enforce_worker_assign is True
     assert organization.dispatch_control.organization == organization
 
 
