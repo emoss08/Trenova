@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -884,3 +884,28 @@ def test_update_stops_on_shipment_change(shipment: models.Shipment) -> None:
         shipment_destination_stop.appointment_time_window_end
         == shipment.destination_appointment_window_end
     )
+
+
+def test_shipment_cannot_exceed_dispatch_control_weight_limit(
+    shipment: models.Shipment,
+) -> None:
+    """Based on the organization dispatch control, test validation error is thrown if the
+    shipment weight exceeds the max shipment weight limit.
+
+    Args:
+        shipment (Shipment): Shipment Object
+
+    Returns:
+        None: This function does not return anything.
+    """
+    shipment.organization.dispatch_control.max_shipment_weight_limit = 10000
+    shipment.organization.dispatch_control.save()
+
+    shipment.weight = 20000
+
+    with pytest.raises(ValidationError) as excinfo:
+        shipment.clean()
+
+    assert excinfo.value.message_dict["weight"] == [
+        "Shipment weight exceeds the maximum shipment weight limit. Please try again."
+    ]

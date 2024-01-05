@@ -15,24 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DateFormatChoiceProps } from "@/lib/choices";
+import { lazy } from "react";
+import AdminLayout from "@/components/admin-page/layout";
 
-export type InvoiceControl = {
-  id: string;
-  organization: string;
-  invoiceNumberPrefix: string;
-  creditMemoNumberPrefix: string;
-  invoiceDueAfterDays: number;
-  invoiceTerms?: string | null;
-  invoiceFooter?: string | null;
-  invoiceLogo?: any | null;
-  invoiceLogoWidth: number;
-  showInvoiceDueDate: boolean;
-  invoiceDateFormat: DateFormatChoiceProps;
-  showAmountDue: boolean;
-  attachPdf: boolean;
-};
-export type InvoiceControlFormValues = Omit<
-  InvoiceControl,
-  "id" | "organization"
->;
+const ShipmentControl = lazy(
+  () => import("@/components/control-files/shipment-control"),
+);
+
+export default function ShipmentControlPage() {
+  return (
+    <AdminLayout>
+      <ShipmentControl />
+    </AdminLayout>
+  );
+}

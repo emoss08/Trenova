@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -76,15 +76,6 @@ class BillingControl(GenericModel):
     The BillingControl model stores the billing control information for a related organization.
     It is used to store information such as whether to auto-bill invoices, or if users can or
     cannot delete records from billing history and more.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID.
-            Editable and unique.
-        organization (OneToOneField): ForeignKey to the related organization model
-            with a CASCADE on delete. Has a verbose name of "Organization" and
-            related names of "billing_control".
-        remove_billing_history (BooleanField): Default value is False.
-            Help text is "Whether users can remove records from billing history.".
     """
 
     @typing.final

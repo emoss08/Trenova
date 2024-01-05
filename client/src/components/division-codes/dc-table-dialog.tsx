@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -30,7 +30,7 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
-import { divisionCodeSchema } from "@/lib/validations/accounting";
+import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { TChoiceProps } from "@/types";
 import { DivisionCodeFormValues as FormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";

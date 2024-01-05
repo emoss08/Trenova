@@ -66,7 +66,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
                       location.pathname === link.href
                         ? "bg-muted"
                         : "hover:bg-muted",
-                      "group justify-start flex items-center",
+                      "group justify-start flex items-center ml-2",
                     )}
                   >
                     {link.icon && <span className="mr-2">{link.icon}</span>}

@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -133,14 +133,14 @@ export const DayOfWeekChoices = [
   { value: 6, label: "Sunday" },
 ] satisfies ReadonlyArray<IChoiceProps<number>>;
 
-type ServiceIncidentControlChoiceProps =
+export type ServiceIncidentControlChoiceProps =
   | "Never"
   | "Pickup"
   | "Delivery"
   | "Pickup and Delivery"
   | "All except shipper";
 
-export const ServiceIncidentControlChoices = [
+export const serviceIncidentControlChoices = [
   { value: "Never", label: "Never" },
   { value: "Pickup", label: "Pickup" },
   { value: "Delivery", label: "Delivery" },
@@ -156,7 +156,7 @@ export type DateFormatChoiceProps =
   | "%Y/%m/%d"
   | "";
 
-export const DateFormatChoices = [
+export const dateFormatChoices = [
   { value: "%m/%d/%Y", label: "MM/DD/YYYY" },
   { value: "%d/%m/%Y", label: "DD/MM/YYYY" },
   { value: "%Y/%d/%m", label: "YYYY/DD/MM" },
@@ -190,11 +190,11 @@ export const routeDistanceUnitChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
-export type DistanceMethodChoiceProps = "Google" | "Monta";
+export type DistanceMethodChoiceProps = "G" | "M";
 
 export const distanceMethodChoices = [
-  { value: "Google", label: "Google" },
-  { value: "Monta", label: "Monta" },
+  { value: "G", label: "Google" },
+  { value: "M", label: "Monta" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Feasibility Operator Choices */

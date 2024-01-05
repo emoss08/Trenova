@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { locationCategorySchema as formSchema } from "@/lib/validations/location";
+import { locationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { LocationCategoryFormValues as FormValues } from "@/types/location";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";

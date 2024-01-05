@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -26,7 +26,7 @@ import {
 import {
   AutoBillingCriteriaChoicesProps,
   FuelMethodChoicesProps,
-  OrderTransferCriteriaChoicesProps,
+  ShipmentTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 import { StatusChoiceProps } from "@/types";
 import { validateDecimal } from "@/lib/utils";
@@ -80,7 +80,7 @@ export const billingControlSchema: ObjectSchema<BillingControlFormValues> =
     removeBillingHistory: Yup.boolean().required(
       "Remove billing history is required",
     ),
-    autoBillOrders: Yup.boolean().required("Auto bill orders is required"),
+    autoBillShipment: Yup.boolean().required("Auto bill shipment is required"),
     autoMarkReadyToBill: Yup.boolean().required(
       "Auto mark ready to bill is required",
     ),
@@ -90,8 +90,8 @@ export const billingControlSchema: ObjectSchema<BillingControlFormValues> =
     autoBillCriteria: Yup.string<AutoBillingCriteriaChoicesProps>().required(
       "Auto bill criteria is required",
     ),
-    orderTransferCriteria:
-      Yup.string<OrderTransferCriteriaChoicesProps>().required(
+    shipmentTransferCriteria:
+      Yup.string<ShipmentTransferCriteriaChoicesProps>().required(
         "Order transfer criteria is required",
       ),
     enforceCustomerBilling: Yup.boolean().required(

@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
-import { revenueCodeSchema } from "@/lib/validations/accounting";
+import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { TChoiceProps } from "@/types";
 import { RevenueCodeFormValues as FormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";

@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -61,6 +61,8 @@ class ShipmentValidator:
         self.validate_per_weight_rating_method()
         self.validate_formula_template()
         self.validate_voided_shipment()
+        self.validate_shipment_weight_limit()
+
         if self.errors:
             raise ValidationError(self.errors)
 
@@ -368,4 +370,22 @@ class ShipmentValidator:
         if shipment.status == StatusChoices.VOIDED:
             self.errors["status"] = _(
                 "Cannot update an shipment that has been voided. Please contact your administrator."
+            )
+
+    def validate_shipment_weight_limit(self) -> None:
+        """Based on the organization dispatch control, validate if the shipment weight
+        exceeds the max shipment weight limit.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        dispatch_control = self.shipment.organization.dispatch_control
+
+        if (
+            dispatch_control.max_shipment_weight_limit
+            and self.shipment.weight
+            and self.shipment.weight > dispatch_control.max_shipment_weight_limit
+        ):
+            self.errors["weight"] = _(
+                "Shipment weight exceeds the maximum shipment weight limit. Please try again."
             )

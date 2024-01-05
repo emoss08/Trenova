@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -34,25 +34,6 @@ class InvoiceControl(GenericModel):
     :model: `organization.Organization` model. The invoice control information includes
     the invoice number prefix, invoice due after days, invoice terms, invoice footer,
     and invoice logo.
-
-    Attributes:
-        id (UUIDField): Primary key and default value is a randomly generated UUID.
-            Editable and unique.
-        organization (OneToOneField): ForeignKey to the related organization model
-            with a CASCADE on delete. Has a verbose name of "Organization" and
-            related names of "billing_control".
-        invoice_number_prefix (CharField): CharField with a max length of 10.
-            Has a verbose name of "Invoice Number Prefix", help text of "Define a prefix for
-            invoice numbers.", and a default value of "INV-".
-        invoice_due_after_days (PositiveIntegerField): PositiveIntegerField with a default
-            value of 30. Has a verbose name of "Invoice Due After Days", and help text of
-            "Define the number of days after invoice date that an invoice is due."
-        invoice_terms (TextField): TextField with a default value of "" and blank set to True.
-            Has a verbose name of "Invoice Terms", and help text of "Define invoice terms."
-        invoice_footer (TextField): TextField with a default value of "" and blank set to True.
-            Has a verbose name of "Invoice Footer", and help text of "Define invoice footer."
-        invoice_logo (ImageField): ImageField with a default value of None and blank set to True.
-            Has a verbose name of "Invoice Logo", and help text of "Define invoice logo."
     """
 
     @final

@@ -18,14 +18,14 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const AccountingControl = lazy(
-  () => import("@/components/control-files/account_control"),
+const InvoiceControl = lazy(
+  () => import("@/components/control-files/invoice-control"),
 );
 
-export default function AccountingControlPage() {
+export default function InvoiceControlPage() {
   return (
     <AdminLayout>
-      <AccountingControl />
+      <InvoiceControl />
     </AdminLayout>
   );
 }

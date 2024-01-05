@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -110,19 +110,6 @@ class DispatchControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.DispatchControl]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "record_service_incident",
-            "trailer_continuity",
-            "driver_time_away_restriction",
-            "id",
-            "grace_period",
-            "dupe_trailer_check",
-            "deadhead_target",
-            "driver_assign",
-            "prev_shipments_on_hold",
-            "regulatory_check",
-            "tractor_worker_fleet_constraint",
         )
         return queryset
 
@@ -208,17 +195,5 @@ class FeasibilityToolControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.FeasibilityToolControl]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "business_unit_id",
-            "mpw_operator",
-            "mpw_criteria",
-            "mpd_operator",
-            "mpd_criteria",
-            "mpg_operator",
-            "mpg_criteria",
-            "otp_operator",
-            "otp_criteria",
         )
         return queryset

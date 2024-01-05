@@ -36,12 +36,33 @@ const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const UserPreferencesPage = lazy(
   () => import("../pages/users/UserPreferences"),
 );
+
+// Admin Page
 const FeatureManagementPage = lazy(
   () => import("../pages/admin/FeatureManagement"),
 );
 const AccountingControlPage = lazy(
-  () => import("../pages/admin/AccountingControl"),
+  () => import("../pages/admin/control-files/AccountingControl"),
 );
+const BillingControlPage = lazy(
+  () => import("../pages/admin/control-files/BillingControl"),
+);
+const InvoiceControlPage = lazy(
+  () => import("../pages/admin/control-files/InvoiceControl"),
+);
+const DispatchControlPage = lazy(
+  () => import("../pages/admin/control-files/DispatchControl"),
+);
+const ShipmentControlPage = lazy(
+  () => import("../pages/admin/control-files/ShipmentControl"),
+);
+const RouteControlPage = lazy(
+  () => import("../pages/admin/control-files/RouteControl"),
+);
+const FeasibilityControlPage = lazy(
+  () => import("../pages/admin/control-files/FeasibilityControl"),
+);
+
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
@@ -419,6 +440,60 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Accounting Controls",
     element: <AccountingControlPage />,
     permission: "view_accountingcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Billing Control",
+    group: "Administration",
+    path: "/admin/billing-controls/",
+    description: "Billing Controls",
+    element: <BillingControlPage />,
+    permission: "view_billingcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Invoice Control",
+    group: "Administration",
+    path: "/admin/invoice-controls/",
+    description: "Invoice Controls",
+    element: <InvoiceControlPage />,
+    permission: "view_invoicecontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Dispatch Control",
+    group: "Administration",
+    path: "/admin/dispatch-controls/",
+    description: "Dispatch Controls",
+    element: <DispatchControlPage />,
+    permission: "view_dispatchcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Shipment Control",
+    group: "Administration",
+    path: "/admin/shipment-controls/",
+    description: "Shipment Controls",
+    element: <ShipmentControlPage />,
+    permission: "view_shipmentcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Route Control",
+    group: "Administration",
+    path: "/admin/route-controls/",
+    description: "Route Controls",
+    element: <RouteControlPage />,
+    permission: "view_routecontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Feasibility Control",
+    group: "Administration",
+    path: "/admin/feasibility-controls/",
+    description: "Feasibility Controls",
+    element: <FeasibilityControlPage />,
+    permission: "view_feasibilitytoolcontrol",
     excludeFromMenu: true,
   },
   // Error Page

@@ -48,9 +48,7 @@ import { LinksComponent } from "./nav-links";
 const NavigationMenuItemWithPermission = React.memo(
   React.forwardRef<HTMLLIElement, NavigationMenuItemProps>(
     ({ data, setMenuOpen, setMenuPosition, menuItemRefs }, ref) => {
-      const { userHasPermission, isAdmin, permissions } = useUserPermissions();
-
-      console.info("user permissions", permissions);
+      const { userHasPermission, isAdmin } = useUserPermissions();
 
       // Handle mouse enter event
       const handleMouseEnter = () => {
