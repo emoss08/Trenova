@@ -50,6 +50,7 @@ import {
   getDispatchControl,
   getFeatureFlags,
   getInvoiceControl,
+  getShipmentControl,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
@@ -75,7 +76,7 @@ import { Customer } from "@/types/customer";
 import { CommentType, DispatchControl, FleetCode } from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
-import { ShipmentType } from "@/types/order";
+import { ShipmentControl, ShipmentType } from "@/types/order";
 import { Depot, Organization } from "@/types/organization";
 import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -252,6 +253,26 @@ export function useDispatchControl() {
   const dispatchControlData = (data as DispatchControl[])?.[0];
 
   return { dispatchControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use ShipmentControl hook to get Shipment Control Details
+ */
+export function useShipmentControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["shipmentControl"] as QueryKeys[],
+    queryFn: () => getShipmentControl(),
+    initialData: () =>
+      queryClient.getQueryData(["shipmentControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of shipmentControlData in variable
+  const shipmentControlData = (data as ShipmentControl[])?.[0];
+
+  return { shipmentControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**

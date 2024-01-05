@@ -85,7 +85,7 @@ const links = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/shipment-controls/",
     title: "Shipment Controls",
     icon: (
       <ContainerIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />

@@ -31,6 +31,7 @@ import {
 } from "@/types/dispatch";
 import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
 import { InputField } from "@/components/common/fields/input";
+import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 
 function DispatchControlForm({
   dispatchControl,
@@ -201,7 +202,7 @@ function DispatchControlForm({
 }
 
 export default function DispatchControl() {
-  const { dispatchControlData, isLoading } = useDispatchControl();
+  const { dispatchControlData, isLoading, isError } = useDispatchControl();
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -220,6 +221,10 @@ export default function DispatchControl() {
       {isLoading ? (
         <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
+        </div>
+      ) : isError ? (
+        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+          <ErrorLoadingData message="Failed to load dispatch control." />
         </div>
       ) : (
         dispatchControlData && (

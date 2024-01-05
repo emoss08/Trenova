@@ -126,7 +126,7 @@ class DispatchControl(GenericModel):
         help_text=_("Enforce regulatory check for the company."),
     )
     prev_shipments_on_hold = models.BooleanField(
-        _("Prevent shipments On Hold"),
+        _("Prevent Shipments On Hold"),
         default=False,
         help_text=_("Prevent dispatch of shipments on hold for the company."),
     )

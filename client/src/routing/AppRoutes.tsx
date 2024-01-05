@@ -17,7 +17,6 @@
 
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
-import DispatchControlPage from "@/pages/admin/control-files/DispatchControl";
 
 const HomePage = lazy(() => import("../pages"));
 const LoginPage = lazy(() => import("../pages/login-page"));
@@ -51,7 +50,12 @@ const BillingControlPage = lazy(
 const InvoiceControlPage = lazy(
   () => import("../pages/admin/control-files/InvoiceControl"),
 );
-const c = lazy(() => import("../pages/admin/control-files/DispatchControl"));
+const DispatchControlPage = lazy(
+  () => import("../pages/admin/control-files/DispatchControl"),
+);
+const ShipmentControlPage = lazy(
+  () => import("../pages/admin/control-files/ShipmentControl"),
+);
 
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
@@ -457,6 +461,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Dispatch Controls",
     element: <DispatchControlPage />,
     permission: "view_dispatchcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Shipment Control",
+    group: "Administration",
+    path: "/admin/shipment-controls/",
+    description: "Shipment Controls",
+    element: <ShipmentControlPage />,
+    permission: "view_shipmentcontrol",
     excludeFromMenu: true,
   },
   // Error Page
