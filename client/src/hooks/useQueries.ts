@@ -48,6 +48,8 @@ import {
   getBillingControl,
   getDepots,
   getDispatchControl,
+  getEmailControl,
+  getEmailProfiles,
   getFeatureFlags,
   getInvoiceControl,
   getRouteControl,
@@ -81,13 +83,18 @@ import {
   FleetCode,
 } from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
+import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentControl, ShipmentType } from "@/types/order";
-import { Depot, Organization } from "@/types/organization";
+import {
+  Depot,
+  EmailControl,
+  EmailProfile,
+  Organization,
+} from "@/types/organization";
+import { RouteControl } from "@/types/route";
 import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { InvoiceControl } from "@/types/invoicing";
-import { RouteControl } from "@/types/route";
 
 /**
  * Get Tags for select options
@@ -727,6 +734,42 @@ export function useWorkers(show?: boolean, limit: number = 100) {
   return { data, selectWorkers, isError, isLoading };
 }
 
+export function useEmailProfiles() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["emailProfiles"] as QueryKeys[],
+    queryFn: () => getEmailProfiles(),
+    initialData: () =>
+      queryClient.getQueryData(["emailProfiles"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const selectEmailProfile =
+    (data as EmailProfile[])?.map((emailProfile: EmailProfile) => ({
+      value: emailProfile.id,
+      label: `${emailProfile.name} (${emailProfile.email})`,
+    })) || [];
+
+  return { selectEmailProfile, data, isError, isLoading };
+}
+
+export function useEmailControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isFetched, isError, isFetching } = useQuery({
+    queryKey: ["emailControl"] as QueryKeys[],
+    queryFn: () => getEmailControl(),
+    initialData: () =>
+      queryClient.getQueryData(["emailControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  const emailControlData = (data as EmailControl[])?.[0];
+
+  return { emailControlData, isLoading, isFetched, isError, isFetching };
+}
+
 /**
  * Get UserNotifications for notification menu
  * @param userId - user id
@@ -767,7 +810,7 @@ export function useFeatureFlags() {
 }
 
 /**
- * Get the Logged in Users Organization
+ * Get the Logged-in Users Organization
  *
  */
 export function useUserOrganization() {

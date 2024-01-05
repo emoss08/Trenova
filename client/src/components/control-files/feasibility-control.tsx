@@ -29,6 +29,8 @@ import {
   FeasibilityToolControlFormValues,
 } from "@/types/dispatch";
 import { InputField } from "@/components/common/fields/input";
+import { feasibilityControlSchema } from "@/lib/validations/DispatchSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 function FeasibilityControlForm({
   feasibilityControl,
@@ -39,7 +41,7 @@ function FeasibilityControlForm({
 
   const { control, handleSubmit, reset } =
     useForm<FeasibilityToolControlFormValues>({
-      // resolver: yupResolver(feasbilityControlSchema),
+      resolver: yupResolver(feasibilityControlSchema),
       defaultValues: feasibilityControl,
     });
 

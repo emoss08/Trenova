@@ -57,6 +57,7 @@ export type QueryKeys =
   | "documentClassifications"
   | "depots"
   | "emailControl"
+  | "emailProfiles"
   | "equipment-manufacturer-table-data"
   | "equipmentManufacturers"
   | "equipment-type-table-data"
