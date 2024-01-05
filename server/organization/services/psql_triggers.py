@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -18,11 +18,8 @@
 from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
 
+from organization.services.table_choices import get_column_names
 from utils.types import ModelUUID
-
-from .table_choices import TableChoiceService
-
-table_service = TableChoiceService()
 
 
 def create_insert_field_string(*, fields: list[str]) -> str:
@@ -50,7 +47,7 @@ def create_insert_function(
     fields: list[str],
     organization_id: ModelUUID,
 ) -> None:
-    fields_string: str = create_insert_field_string(fields=fields)
+    fields_string = create_insert_field_string(fields=fields)
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
@@ -82,7 +79,7 @@ def create_insert_trigger(
     listener_name: str,
     organization_id: ModelUUID,
 ) -> None:
-    fields: list[str] = table_service.get_column_names(table_name=table_name)
+    fields = get_column_names(table_name=table_name)
     create_insert_function(
         function_name=function_name,
         fields=fields,
@@ -105,8 +102,8 @@ def create_insert_trigger(
 
 
 def create_update_field_string(*, fields: list[str]) -> str:
-    excluded: set[str] = {"id", "created", "modified", "organization_id"}
-    comparisons: list[str] = [
+    excluded = {"id", "created", "modified", "organization_id"}
+    comparisons = [
         (
             f"OLD.{truncate_name(field, connection.ops.max_name_length())} IS DISTINCT FROM "
             f"NEW.{truncate_name(field, connection.ops.max_name_length())}"
@@ -171,7 +168,7 @@ def create_update_trigger(
     listener_name: str,
     organization_id: ModelUUID,
 ) -> None:
-    fields: list[str] = table_service.get_column_names(table_name=table_name)
+    fields = get_column_names(table_name=table_name)
 
     create_update_function(
         function_name=function_name,
