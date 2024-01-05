@@ -143,7 +143,7 @@ export type ServiceIncidentControlChoiceProps =
 export const serviceIncidentControlChoices = [
   { value: "Never", label: "Never" },
   { value: "Pickup", label: "Pickup" },
-  { value: "Delivery", label: "Delivery" },
+  { value: "elivery", label: "Delivery" },
   { value: "Pickup and Delivery", label: "Pickup and Delivery" },
   { value: "All except shipper", label: "All except shipper" },
 ] satisfies ReadonlyArray<IChoiceProps<ServiceIncidentControlChoiceProps>>;
@@ -190,11 +190,11 @@ export const routeDistanceUnitChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
-export type DistanceMethodChoiceProps = "Google" | "Monta";
+export type DistanceMethodChoiceProps = "G" | "M";
 
 export const distanceMethodChoices = [
-  { value: "Google", label: "Google" },
-  { value: "Monta", label: "Monta" },
+  { value: "G", label: "Google" },
+  { value: "M", label: "Monta" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Feasibility Operator Choices */

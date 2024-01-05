@@ -50,6 +50,7 @@ import {
   getDispatchControl,
   getFeatureFlags,
   getInvoiceControl,
+  getRouteControl,
   getShipmentControl,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
@@ -81,6 +82,7 @@ import { Depot, Organization } from "@/types/organization";
 import { Worker } from "@/types/worker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InvoiceControl } from "@/types/invoicing";
+import { RouteControl } from "@/types/route";
 
 /**
  * Get Tags for select options
@@ -273,6 +275,26 @@ export function useShipmentControl() {
   const shipmentControlData = (data as ShipmentControl[])?.[0];
 
   return { shipmentControlData, isLoading, isError, isFetched, isFetching };
+}
+
+/**
+ * Use RouteControl hook to get Route Control Details
+ */
+export function useRouteControl() {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
+    queryKey: ["routeControl"] as QueryKeys[],
+    queryFn: () => getRouteControl(),
+    initialData: () =>
+      queryClient.getQueryData(["routeControl"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  // Store first element of dispatchControlData in variable
+  const routeControlData = (data as RouteControl[])?.[0];
+
+  return { routeControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**

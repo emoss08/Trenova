@@ -56,6 +56,9 @@ const DispatchControlPage = lazy(
 const ShipmentControlPage = lazy(
   () => import("../pages/admin/control-files/ShipmentControl"),
 );
+const RouteControlPage = lazy(
+  () => import("../pages/admin/control-files/RouteControl"),
+);
 
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
@@ -470,6 +473,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Controls",
     element: <ShipmentControlPage />,
     permission: "view_shipmentcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Route Control",
+    group: "Administration",
+    path: "/admin/route-controls/",
+    description: "Route Controls",
+    element: <RouteControlPage />,
+    permission: "view_routecontrol",
     excludeFromMenu: true,
   },
   // Error Page

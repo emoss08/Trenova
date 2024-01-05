@@ -39,7 +39,19 @@ function ShipmentControlForm({
 
   const { control, handleSubmit, reset } = useForm<ShipmentControlFormValues>({
     resolver: yupResolver(shipmentControlSchema),
-    defaultValues: shipmentControl,
+    defaultValues: {
+      autoRateShipment: shipmentControl.autoRateShipment,
+      calculateDistance: shipmentControl.calculateDistance,
+      enforceRevCode: shipmentControl.enforceRevCode,
+      enforceVoidedComm: shipmentControl.enforceVoidedComm,
+      generateRoutes: shipmentControl.generateRoutes,
+      enforceCommodity: shipmentControl.enforceCommodity,
+      autoSequenceStops: shipmentControl.autoSequenceStops,
+      autoShipmentTotal: shipmentControl.autoShipmentTotal,
+      enforceOriginDestination: shipmentControl.enforceOriginDestination,
+      checkForDuplicateBol: shipmentControl.checkForDuplicateBol,
+      removeShipment: shipmentControl.removeShipment,
+    },
   });
 
   const mutation = useCustomMutation<ShipmentControlFormValues>(

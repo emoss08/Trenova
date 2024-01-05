@@ -1,0 +1,155 @@
+/*
+ * COPYRIGHT(c) 2024 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
+
+import { CheckboxInput } from "@/components/common/fields/checkbox";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useRouteControl } from "@/hooks/useQueries";
+import { distanceMethodChoices, routeDistanceUnitChoices } from "@/lib/choices";
+import { routeControlSchema } from "@/lib/validations/RouteSchema";
+import {
+  RouteControl as RouteControlType,
+  RouteControlFormValues,
+} from "@/types/route";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { ErrorLoadingData } from "../common/table/data-table-components";
+
+function RouteControlForm({
+  routeControl,
+}: {
+  routeControl: RouteControlType;
+}) {
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+
+  const { control, handleSubmit, reset } = useForm<RouteControlFormValues>({
+    resolver: yupResolver(routeControlSchema),
+    defaultValues: routeControl,
+  });
+
+  const mutation = useCustomMutation<RouteControlFormValues>(
+    control,
+    {
+      method: "PUT",
+      path: `/route_control/${routeControl.id}/`,
+      successMessage: "Route Control updated successfully.",
+      queryKeysToInvalidate: ["routeControl"],
+      errorMessage: "Failed to update route control.",
+    },
+    () => setIsSubmitting(false),
+    reset,
+  );
+
+  const onSubmit = (values: RouteControlFormValues) => {
+    setIsSubmitting(true);
+    mutation.mutate(values);
+    reset(values);
+  };
+
+  return (
+    <form
+      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      onSubmit={handleSubmit(onSubmit)}
+    >
+      <div className="px-4 py-6 sm:p-8">
+        <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+          <div className="col-span-3">
+            <SelectInput
+              name="distanceMethod"
+              control={control}
+              label="Distance Method"
+              options={distanceMethodChoices}
+              rules={{ required: true }}
+              placeholder="Distance Method"
+              description="Choose the preferred method for calculating distances for route planning."
+            />
+          </div>
+          <div className="col-span-3">
+            <SelectInput
+              name="mileageUnit"
+              control={control}
+              label="Mileage Unit"
+              options={routeDistanceUnitChoices}
+              rules={{ required: true }}
+              placeholder="Mileage Unit"
+              description="Select the unit of measurement for mileage, such as miles or kilometers."
+            />
+          </div>
+
+          <div className="col-span-full">
+            <CheckboxInput
+              name="generateRoutes"
+              control={control}
+              label="Generate Routes"
+              description="Enable automatic generation of shipment routes based on optimal pathing algorithms."
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            reset();
+          }}
+          type="button"
+          variant="ghost"
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" isLoading={isSubmitting}>
+          Save
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export default function RouteControl() {
+  const { routeControlData, isLoading, isError } = useRouteControl();
+
+  return (
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="px-4 sm:px-0">
+        <h2 className="text-base font-semibold leading-7 text-foreground">
+          Route Control
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          Streamline your route planning and management with our Routing
+          Optimization Panel. This module is engineered to enhance efficiency
+          and precision in route selection, ensuring optimal pathing and
+          distance calculations for your transportation needs.
+        </p>
+      </div>
+      {isLoading ? (
+        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+          <Skeleton className="h-screen w-full" />
+        </div>
+      ) : isError ? (
+        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+          <ErrorLoadingData message="Failed to load dispatch control." />
+        </div>
+      ) : (
+        routeControlData && <RouteControlForm routeControl={routeControlData} />
+      )}
+    </div>
+  );
+}

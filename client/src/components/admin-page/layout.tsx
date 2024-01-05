@@ -48,7 +48,7 @@ const links = [
     href: "/admin/dashboard/",
     title: "General Information",
     icon: (
-      <BuildingIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <BuildingIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -56,7 +56,7 @@ const links = [
     href: "/admin/accounting-controls/",
     title: "Accounting Controls",
     icon: (
-      <LandmarkIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <LandmarkIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -64,7 +64,7 @@ const links = [
     href: "/admin/billing-controls/",
     title: "Billing Controls",
     icon: (
-      <ReceiptIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <ReceiptIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -72,7 +72,7 @@ const links = [
     href: "/admin/invoice-controls/",
     title: "Invoice Controls",
     icon: (
-      <CircleDollarSignIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <CircleDollarSignIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -80,7 +80,7 @@ const links = [
     href: "/admin/dispatch-controls/",
     title: "Dispatch Controls",
     icon: (
-      <TruckIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <TruckIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -88,15 +88,15 @@ const links = [
     href: "/admin/shipment-controls/",
     title: "Shipment Controls",
     icon: (
-      <ContainerIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <ContainerIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/admin/route-controls/",
     title: "Route Controls",
     icon: (
-      <ConstructionIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <ConstructionIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -104,7 +104,7 @@ const links = [
     href: "/admin/feature-management/",
     title: "Feature Management",
     icon: (
-      <FlagIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FlagIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Organization",
   },
@@ -112,7 +112,7 @@ const links = [
     href: "#",
     title: "Custom Reports",
     icon: (
-      <BookIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <BookIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Reporting & Analytics",
   },
@@ -120,7 +120,7 @@ const links = [
     href: "#",
     title: "Scheduled Reports",
     icon: (
-      <Repeat2Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <Repeat2Icon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Reporting & Analytics",
   },
@@ -128,7 +128,7 @@ const links = [
     href: "#",
     title: "Email Controls",
     icon: (
-      <InboxIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <InboxIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Email & SMS",
   },
@@ -136,7 +136,7 @@ const links = [
     href: "#",
     title: "Email Logs",
     icon: (
-      <MailIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <MailIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Email & SMS",
   },
@@ -144,7 +144,7 @@ const links = [
     href: "#",
     title: "Email Profile(s)",
     icon: (
-      <SendIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <SendIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Email & SMS",
   },
@@ -152,7 +152,7 @@ const links = [
     href: "#",
     title: "Notification Types",
     icon: (
-      <BellDotIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <BellDotIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Notifications",
   },
@@ -160,7 +160,7 @@ const links = [
     href: "#",
     title: "Data Retention",
     icon: (
-      <DatabaseBackupIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <DatabaseBackupIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Data & Integrations",
   },
@@ -168,7 +168,7 @@ const links = [
     href: "#",
     title: "Table Change Alerts",
     icon: (
-      <DatabaseZapIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <DatabaseZapIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Data & Integrations",
   },
@@ -178,7 +178,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGoogle}
-        className="h-4 w-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
       />
     ),
     group: "Data & Integrations",
@@ -187,7 +187,7 @@ const links = [
     href: "#",
     title: "Integration Vendor(s)",
     icon: (
-      <AlignHorizontalDistributeCenterIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <AlignHorizontalDistributeCenterIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Data & Integrations",
   },
@@ -195,7 +195,7 @@ const links = [
     href: "#",
     title: "Document Templates",
     icon: (
-      <FilesIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FilesIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Document Management",
   },
@@ -203,7 +203,7 @@ const links = [
     href: "#",
     title: "Document Themes",
     icon: (
-      <FileIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FileIcon className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
     ),
     group: "Document Management",
   },
@@ -215,7 +215,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-background">
+    <div className="bg-background flex">
       <div className="sticky top-0 h-screen w-64">
         {/* Ensure there's no extra padding or margin that could cut off the content */}
         <ScrollArea className="m-0 h-full overflow-y-auto p-0">

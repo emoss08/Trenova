@@ -24,6 +24,7 @@ import {
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { ErrorMessage } from "@/components/common/fields/input";
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -58,7 +59,7 @@ type CheckboxInputProps = CheckboxPrimitive.CheckboxProps &
 export function CheckboxInput<T extends FieldValues>({
   ...props
 }: CheckboxInputProps & UseControllerProps<T>) {
-  const { field } = useController(props);
+  const { field, fieldState } = useController(props);
 
   const { label, description, id } = props;
 
@@ -82,6 +83,11 @@ export function CheckboxInput<T extends FieldValues>({
           <p className="select-none text-wrap text-sm text-muted-foreground">
             {description}
           </p>
+        )}
+        {fieldState.invalid && (
+          <>
+            <ErrorMessage formError={fieldState.error?.message} />
+          </>
         )}
       </div>
     </label>
