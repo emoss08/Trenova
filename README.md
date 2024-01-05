@@ -12,27 +12,40 @@ performance and operational efficiency.
 
 [**Application Change Announcement**](https://github.com/emoss08/Monta/blob/main/docs/update-announcement.md)
 
-[**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Monta/blob/main/beam.md)
+[**Monta Beam: Revolutionizing Logistics with Specialized LLM Technology
+**](https://github.com/emoss08/Monta/blob/main/beam.md)
 </div>
 
+#### Disclaimers:
+
+Please note that Monta Suite is currently in its development phase. The version available at this time is a prototype
+and is not intended for production deployment. Our team is dedicated to the ongoing development of this project, and we
+will consistently roll out new features and updates.
 
 
 ## Introduction
 
-**Monta Suite** emerges as a sophisticated web solution, meticulously crafted to meet the complex demands of the modern transportation and logistics industry. Built on the robust Django framework and enhanced with the latest frontend technologies, Monta offers unparalleled flexibility and dynamism, tailoring itself to your unique operational needs and enhancing your online presence.
+**Monta Suite** emerges as a sophisticated web solution, meticulously crafted to meet the complex demands of the modern
+transportation and logistics industry. Built on the robust Django framework and enhanced with the latest frontend
+technologies, Monta offers unparalleled flexibility and dynamism, tailoring itself to your unique operational needs and
+enhancing your online presence.
 
 ## Key Highlights
 
-* **Modular Architecture**: Designed to scale with your business, Monta provides a competitive edge in an ever-changing market.
-* **More Than Software**: A strategic partner in your enterprise's journey towards growth and success, equipped with a plethora of features to revolutionize your workflows.
+* **Modular Architecture**: Designed to scale with your business, Monta provides a competitive edge in an ever-changing
+  market.
+* **More Than Software**: A strategic partner in your enterprise's journey towards growth and success, equipped with a
+  plethora of features to revolutionize your workflows.
 
 ## Monta: A Comprehensive Overview
 
-Monta integrates the power of Machine Learning, specifically in predictive analytics and data-driven decision-making. It automates over 20 specialized tasks, increasing operational agility and reducing manual workload.
+Monta integrates the power of Machine Learning, specifically in predictive analytics and data-driven decision-making. It
+automates over 20 specialized tasks, increasing operational agility and reducing manual workload.
 
 ## Vision and Purpose
 
-Our goal is to empower your business with a system that manages operational complexities, freeing you to focus on strategic goals without the need for additional manpower or resources.
+Our goal is to empower your business with a system that manages operational complexities, freeing you to focus on
+strategic goals without the need for additional manpower or resources.
 
 ## Features
 
@@ -85,7 +98,3 @@ Our goal is to empower your business with a system that manages operational comp
 - [Tailwind UI](https://tailwindui.com/)
 - [Shadcn](https://ui.shadcn.com/)
 - [Vercel Avatars](https://github.com/vercel/avatar)
-
-#### Disclaimers:
-
-Monta Suite is provided “AS IS” without warranties of any kind, express or implied.
