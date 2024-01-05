@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
-import { userAuthSchema } from "@/lib/validations/accounts";
+import { userAuthSchema } from "@/lib/validations/AccountsSchema";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

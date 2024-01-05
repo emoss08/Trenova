@@ -74,7 +74,12 @@ import {
 } from "@/types/billing";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { Customer } from "@/types/customer";
-import { CommentType, DispatchControl, FleetCode } from "@/types/dispatch";
+import {
+  CommentType,
+  DispatchControl,
+  FeasibilityToolControl,
+  FleetCode,
+} from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import { ShipmentControl, ShipmentType } from "@/types/order";
@@ -409,8 +414,7 @@ export function useEquipmentTypes(show?: boolean, limit: number = 100) {
  */
 export function useFeasibilityControl() {
   const queryClient = useQueryClient();
-
-  return useQuery({
+  const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["feasibilityControl"] as QueryKeys[],
     queryFn: async () => getFeasibilityControl(),
     initialData: () =>
@@ -419,6 +423,10 @@ export function useFeasibilityControl() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
+
+  return { feasibilityControlData, isLoading, isError, isFetched, isFetching };
 }
 
 /**

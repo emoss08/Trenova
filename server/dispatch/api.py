@@ -195,17 +195,5 @@ class FeasibilityToolControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.FeasibilityToolControl]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "business_unit_id",
-            "mpw_operator",
-            "mpw_criteria",
-            "mpd_operator",
-            "mpd_criteria",
-            "mpg_operator",
-            "mpg_criteria",
-            "otp_operator",
-            "otp_criteria",
         )
         return queryset

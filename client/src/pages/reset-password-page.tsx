@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -22,7 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
-import { resetPasswordSchema } from "@/lib/validations/accounts";
+import { resetPasswordSchema } from "@/lib/validations/AccountsSchema";
 import { useAuthStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";

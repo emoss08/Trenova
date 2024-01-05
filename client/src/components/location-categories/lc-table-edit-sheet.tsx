@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -26,11 +26,11 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
-import { locationCategorySchema as formSchema } from "@/lib/validations/location";
+import { locationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  LocationCategoryFormValues as FormValues,
   LocationCategory,
+  LocationCategoryFormValues as FormValues,
 } from "@/types/location";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

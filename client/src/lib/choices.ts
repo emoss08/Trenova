@@ -143,7 +143,7 @@ export type ServiceIncidentControlChoiceProps =
 export const serviceIncidentControlChoices = [
   { value: "Never", label: "Never" },
   { value: "Pickup", label: "Pickup" },
-  { value: "elivery", label: "Delivery" },
+  { value: "Delivery", label: "Delivery" },
   { value: "Pickup and Delivery", label: "Pickup and Delivery" },
   { value: "All except shipper", label: "All except shipper" },
 ] satisfies ReadonlyArray<IChoiceProps<ServiceIncidentControlChoiceProps>>;
