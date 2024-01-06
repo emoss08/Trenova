@@ -91,7 +91,7 @@ const reconnect = () => {
         },
       },
     );
-  }, 5000);
+  }, 1000);
 
   return () => {
     if (intervalId) {
@@ -267,8 +267,8 @@ export function NotificationMenu() {
                   <div className="flex flex-col space-y-1">
                     <span className="font-semibold">Connection Closed</span>
                     <span className="text-xs">
-                      Websocket Connection died. Reconnect will be attempted in
-                      5 seconds.
+                      Websocket Connection died. We will attempt to reconnect
+                      shortly.
                     </span>
                   </div>
                 ),

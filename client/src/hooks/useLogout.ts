@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -18,6 +18,9 @@
 import axios from "@/lib/axiosConfig";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useNavigate } from "react-router-dom";
+import { createWebsocketManager } from "@/lib/websockets";
+
+const webSocketManager = createWebsocketManager();
 
 export function useLogout() {
   const navigate = useNavigate();
@@ -37,8 +40,10 @@ export function useLogout() {
       setIsAuthenticated(false);
 
       navigate("/login");
+
+      webSocketManager.disconnectFromAll();
     } catch (exception) {
-      // handle errors
+      console.error(exception);
     }
   };
 }

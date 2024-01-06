@@ -14,19 +14,17 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
-import { ReasonCode } from "@/types/order";
+
+import AdminLayout from "@/components/admin-page/layout";
 import { ReasonCodeDialog } from "@/components/reason-codes/reason-code-table-dialog";
 import { ReasonCodeEditDialog } from "@/components/reason-codes/reason-code-edit-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { DataTable } from "@/components/common/table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { EmailProfile } from "@/types/organization";
 
-const columns: ColumnDef<ReasonCode>[] = [
+const columns: ColumnDef<EmailProfile>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -49,52 +47,42 @@ const columns: ColumnDef<ReasonCode>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
-    ),
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
-  {
-    accessorKey: "code",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Code" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 30),
+    accessorKey: "email",
+    header: "Email Address",
   },
-];
-
-const filters: FilterConfig<ReasonCode>[] = [
   {
-    columnName: "status",
-    title: "Status",
-    options: tableStatusChoices,
+    accessorKey: "host",
+    header: "Host",
+  },
+  {
+    accessorKey: "port",
+    header: "Port",
   },
 ];
 
-export default function ReasonCodes() {
+export default function EmailProfiles() {
   return (
-    <DataTable
-      queryKey="reason-code-table-data"
-      columns={columns}
-      link="/reason_codes/"
-      name="Reason Codes"
-      exportModelName="ReasonCode"
-      filterColumn="code"
-      tableFacetedFilters={filters}
-      TableSheet={ReasonCodeDialog}
-      TableEditSheet={ReasonCodeEditDialog}
-      addPermissionName="add_reasoncode"
-    />
+    <AdminLayout>
+      <DataTable
+        queryKey="email-profile-table-data"
+        columns={columns}
+        link="/email_profiles/"
+        name="Email Profile"
+        exportModelName="EmailProfile"
+        filterColumn="name"
+        TableSheet={ReasonCodeDialog}
+        TableEditSheet={ReasonCodeEditDialog}
+        addPermissionName="add_emailprofile"
+      />
+    </AdminLayout>
   );
 }

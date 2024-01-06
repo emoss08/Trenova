@@ -44,17 +44,10 @@ function DevHeader() {
 }
 
 /**
- * LayoutProps defines the props for the Layout components.
- */
-type LayoutProps = {
-  children: React.ReactNode;
-};
-
-/**
  * Layout component that provides a common structure for protected pages.
  * Contains navigation, header, and footer.
  */
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children }: { children: React.ReactNode }) {
   const [user] = useUserStore.use("user");
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -63,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     // The main container is set to full height and flex direction
-    <div className="flex h-screen flex-col overflow-hidden" id="app">
+    <div className="flex min-h-screen flex-col overflow-hidden" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -101,7 +94,7 @@ export function Layout({ children }: LayoutProps) {
 /**
  * UnprotectedLayout component for pages that don't require authentication.
  */
-export function UnprotectedLayout({ children }: LayoutProps) {
+export function UnprotectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />
