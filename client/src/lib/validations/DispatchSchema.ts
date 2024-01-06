@@ -37,13 +37,17 @@ import {
   CommentTypeFormValues,
   DelayCodeFormValues,
   DispatchControlFormValues,
+  FeasibilityToolControlFormValues,
   FleetCodeFormValues,
   RateBillingTableFormValues,
   RateFormValues,
 } from "@/types/dispatch";
 import { TRateMethodChoices } from "@/lib/constants";
 import { StatusChoiceProps } from "@/types";
-import { ServiceIncidentControlChoiceProps } from "@/lib/choices";
+import {
+  FeasibilityOperatorChoiceProps,
+  ServiceIncidentControlChoiceProps,
+} from "@/lib/choices";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
@@ -71,6 +75,30 @@ export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
     ),
     tractorWorkerFleetConstraint: Yup.boolean().required(
       "Tractor Worker Fleet Constraint is required",
+    ),
+  });
+
+export const feasibilityControlSchema: ObjectSchema<FeasibilityToolControlFormValues> =
+  Yup.object().shape({
+    mpwOperator: Yup.string<FeasibilityOperatorChoiceProps>().required(
+      "Miles per week operator is required.",
+    ),
+    mpwCriteria: Yup.number().required("Miles per week criteria is required."),
+    mpdOperator: Yup.string<FeasibilityOperatorChoiceProps>().required(
+      "Miles per day operator is required.",
+    ),
+    mpdCriteria: Yup.number().required("Miles per day criteria is required."),
+    mpgOperator: Yup.string<FeasibilityOperatorChoiceProps>().required(
+      "Miles per gallon operator is required.",
+    ),
+    mpgCriteria: Yup.number().required(
+      "Miles per gallon criteria is required.",
+    ),
+    otpOperator: Yup.string<FeasibilityOperatorChoiceProps>().required(
+      "On-time performance operator is required.",
+    ),
+    otpCriteria: Yup.number().required(
+      "On-time performance criteria is required.",
     ),
   });
 

@@ -198,7 +198,13 @@ export const distanceMethodChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Feasibility Operator Choices */
-type FeasibilityOperatorChoiceProps = "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+export type FeasibilityOperatorChoiceProps =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte";
 
 export const feasibilityOperatorChoices = [
   { value: "eq", label: "Equals" },
