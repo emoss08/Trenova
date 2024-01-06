@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -398,6 +398,20 @@ ALLOWED_MODELS = {
             {"value": "organization__name", "label": "Organization Name"},
             {"value": "name", "label": "Name"},
             {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
+    "EmailProfile": {
+        "app_label": "organization",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "name", "label": "Name"},
+            {"value": "email", "label": "Email Address"},
+            {"value": "protocol", "label": "Protocol"},
+            {"value": "host", "label": "Host"},
+            {"value": "port", "label": "Port"},
+            {"value": "username", "label": "Username"},
             {"value": "created", "label": "Created"},
             {"value": "modified", "label": "Modified"},
         ],
