@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -17,10 +17,25 @@
 
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { EmailControlFormValues } from "@/types/organization";
+import {
+  EmailControlFormValues,
+  EmailProfileFormValues,
+} from "@/types/organization";
+import { EmailProtocolChoiceProps } from "@/lib/choices";
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
   Yup.object().shape({
     billingEmailProfile: Yup.string().notRequired(),
     rateExpirationEmailProfile: Yup.string().notRequired(),
+  });
+
+export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
+  Yup.object().shape({
+    name: Yup.string().required("Name is required."),
+    email: Yup.string().required("Email is required."),
+    protocol: Yup.string<EmailProtocolChoiceProps>().notRequired(),
+    host: Yup.string().notRequired(),
+    port: Yup.number().notRequired(),
+    username: Yup.string().notRequired(),
+    password: Yup.string().notRequired(),
   });

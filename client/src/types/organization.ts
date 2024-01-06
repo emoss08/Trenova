@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -14,6 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
+import { EmailProtocolChoiceProps } from "@/lib/choices";
 
 export type Organization = {
   id: string;
@@ -40,17 +42,21 @@ export type Organization = {
 
 export type OrganizationFormValues = Omit<Organization, "id">;
 
-export type EmailProfile = {
+export interface EmailProfile extends BaseModel {
   id: string;
   name: string;
-  organization: string;
   email: string;
-  protocol: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-};
+  protocol?: EmailProtocolChoiceProps | null;
+  host?: string | null;
+  port?: number | null;
+  username?: string | null;
+  password?: string | null;
+}
+
+export type EmailProfileFormValues = Omit<
+  EmailProfile,
+  "id" | "organization" | "created" | "modified"
+>;
 
 export type Department = {
   id: string;

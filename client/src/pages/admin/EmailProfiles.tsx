@@ -16,13 +16,13 @@
  */
 
 import AdminLayout from "@/components/admin-page/layout";
-import { ReasonCodeDialog } from "@/components/reason-codes/reason-code-table-dialog";
-import { ReasonCodeEditDialog } from "@/components/reason-codes/reason-code-edit-dialog";
 import { DataTable } from "@/components/common/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { EmailProfile } from "@/types/organization";
+import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
+import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
 
 const columns: ColumnDef<EmailProfile>[] = [
   {
@@ -79,8 +79,8 @@ export default function EmailProfiles() {
         name="Email Profile"
         exportModelName="EmailProfile"
         filterColumn="name"
-        TableSheet={ReasonCodeDialog}
-        TableEditSheet={ReasonCodeEditDialog}
+        TableSheet={EmailProfileDialog}
+        TableEditSheet={EmailProfileTableEditDialog}
         addPermissionName="add_emailprofile"
       />
     </AdminLayout>

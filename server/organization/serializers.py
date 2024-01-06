@@ -197,6 +197,11 @@ class EmailProfileSerializer(GenericSerializer):
 
         model = models.EmailProfile
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class EmailLogSerializer(GenericSerializer):
@@ -369,11 +374,9 @@ class OrganizationFeatureFlagSerializer(serializers.ModelSerializer):
 
     def get_preview(self, obj):
         if obj.feature_flag.preview_picture:
-            request = self.context.get("request")
-            if request:
+            if request := self.context.get("request"):
                 return request.build_absolute_uri(obj.feature_flag.preview_picture.url)
-            else:
-                # Fallback if request context is not available
-                domain = get_current_site(request).domain
-                return f"{domain}{obj.feature_flag.preview_picture.url}"
+            # Fallback if request context is not available
+            domain = get_current_site(request).domain
+            return f"{domain}{obj.feature_flag.preview_picture.url}"
         return None

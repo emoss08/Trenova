@@ -16,8 +16,6 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,134 +26,108 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useGLAccounts } from "@/hooks/useQueries";
-import { statusChoices } from "@/lib/choices";
-import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
-import { TChoiceProps } from "@/types";
-import { DivisionCodeFormValues as FormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { EmailProfileFormValues as FormValues } from "@/types/organization";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { emailProtocolChoices } from "@/lib/choices";
+import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
 
-export function DCForm({
+export function EmailProfileForm({
   control,
-  glAccounts,
-  isLoading,
-  isError,
 }: {
   control: Control<FormValues>;
-  glAccounts: TChoiceProps[];
-  isLoading: boolean;
-  isError: boolean;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full items-center gap-0.5">
-          <SelectInput
-            name="status"
-            rules={{ required: true }}
-            control={control}
-            label="Status"
-            options={statusChoices}
-            placeholder="Select Status"
-            description="Status of the Division Code"
-            isClearable={false}
-          />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+    <Form>
+      <FormGroup className="lg:grid-cols-1">
+        <FormControl>
           <InputField
+            name="name"
             control={control}
-            rules={{ required: true }}
-            name="code"
-            label="Code"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder="Code"
-            description="Code for the Division Code"
+            label="Name"
+            rules={{
+              required: true,
+            }}
+            description="The name of the email profile."
           />
-        </div>
-      </div>
-      <div className="my-2">
-        <TextareaField
-          name="description"
-          rules={{ required: true }}
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Division Code"
-        />
-      </div>
-      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl>
+          <InputField
+            name="email"
+            control={control}
+            label="Email"
+            rules={{
+              required: true,
+            }}
+            description="The email address that will be used for outgoing emails."
+          />
+        </FormControl>
+        <FormControl>
           <SelectInput
-            name="cashAccount"
+            name="protocol"
+            options={emailProtocolChoices}
             control={control}
-            label="Cash Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select Cash Account"
-            description="The Cash Account associated with the Division Code"
-            isClearable
-            hasPopoutWindow
-            popoutLink="/accounting/gl-accounts"
-            popoutLinkLabel="GL Account"
+            label="Protocol"
+            description="The protocol that will be used to send emails."
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            name="apAccount"
+        </FormControl>
+      </FormGroup>
+      <FormGroup className="lg:grid-cols-2">
+        <FormControl>
+          <InputField
+            name="host"
             control={control}
-            label="AP Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select AP Account"
-            description="The AP Account associated with the Division Code"
-            isClearable
-            hasPopoutWindow
-            popoutLink="/accounting/gl-accounts"
-            popoutLinkLabel="GL Account"
+            label="Host"
+            description="The host that will be used to send emails."
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
-          <SelectInput
-            name="expenseAccount"
+        </FormControl>
+        <FormControl>
+          <InputField
+            name="port"
             control={control}
-            label="Expense Account"
-            options={glAccounts}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select Expense Account"
-            description="The Expense Account associated with the Revenue Code"
-            isClearable
-            hasPopoutWindow
-            popoutLink="/accounting/gl-accounts"
-            popoutLinkLabel="GL Account"
+            label="Port"
+            description="The port that will be used to send emails."
           />
-        </div>
-      </div>
-    </div>
+        </FormControl>
+        <FormControl>
+          <InputField
+            name="username"
+            control={control}
+            label="Username"
+            description="The username that will be used to send emails."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            name="password"
+            control={control}
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            description="The password that will be used to send emails."
+          />
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
-export function DCDialog({ onOpenChange, open }: TableSheetProps) {
+export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(divisionCodeSchema),
+    resolver: yupResolver(emailProfileSchema),
     defaultValues: {
-      status: "A",
-      code: "",
-      description: "",
-      expenseAccount: "",
-      cashAccount: "",
-      apAccount: "",
+      name: "",
+      email: "",
+      protocol: "UNENCRYPTED",
+      host: "",
+      port: undefined,
+      username: "",
+      password: "",
     },
   });
 
@@ -163,11 +135,11 @@ export function DCDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/division_codes/",
-      successMessage: "Division Code created successfully.",
-      queryKeysToInvalidate: ["division-code-table-data"],
+      path: "/email_profiles/",
+      successMessage: "Email Profile created successfully.",
+      queryKeysToInvalidate: ["email-profile-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create new division code.",
+      errorMessage: "Failed to create new email profile.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -178,24 +150,17 @@ export function DCDialog({ onOpenChange, open }: TableSheetProps) {
     mutation.mutate(values);
   };
 
-  const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Division Code</DialogTitle>
+          <DialogTitle>Create New Email Profile</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Please fill out the form below to create a new Division Code.
+          Please fill out the form below to create a new Email Profile.
         </DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DCForm
-            control={control}
-            glAccounts={selectGLAccounts}
-            isLoading={isLoading}
-            isError={isError}
-          />
+          <EmailProfileForm control={control} />
           <DialogFooter className="mt-6">
             <Button
               type="submit"
