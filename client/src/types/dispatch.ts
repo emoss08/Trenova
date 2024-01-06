@@ -18,7 +18,10 @@
 import { TRateMethodChoices } from "@/lib/constants";
 import { BaseModel } from "./organization";
 import { StatusChoiceProps } from "@/types/index";
-import { ServiceIncidentControlChoiceProps } from "@/lib/choices";
+import {
+  FeasibilityOperatorChoiceProps,
+  ServiceIncidentControlChoiceProps,
+} from "@/lib/choices";
 
 export type DispatchControl = {
   id: string;
@@ -157,13 +160,13 @@ export type FeasibilityToolControl = {
   id: string;
   organization: string;
   businessUnit: string;
-  mpwOperator: string;
+  mpwOperator: FeasibilityOperatorChoiceProps;
   mpwCriteria: number;
-  mpdOperator: string;
+  mpdOperator: FeasibilityOperatorChoiceProps;
   mpdCriteria: number;
-  mpgOperator: string;
+  mpgOperator: FeasibilityOperatorChoiceProps;
   mpgCriteria: number;
-  otpOperator: string;
+  otpOperator: FeasibilityOperatorChoiceProps;
   otpCriteria: number;
   created: string;
   modified: string;
