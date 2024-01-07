@@ -36,9 +36,12 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
+from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
-from .validators import validate_format_string, validate_org_timezone
+from .validators import (
+    validate_format_string,
+    validate_org_timezone,
+)
 
 kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_available_topics()
@@ -1160,6 +1163,14 @@ class TableChangeAlert(TimeStampedModel):
         _("Email Recipients"),
         help_text=_("Comma separated list of email addresses to send the alert to."),
     )
+    conditional_logic = models.JSONField(
+        _("Conditional Logic"),
+        blank=True,
+        null=True,
+        help_text=_(
+            "JSON field to define specific conditions for triggering the alert."
+        ),
+    )
     custom_subject = models.CharField(
         _("Custom Subject"),
         max_length=255,
@@ -1276,6 +1287,21 @@ class TableChangeAlert(TimeStampedModel):
                 },
                 code="invalid",
             )
+
+        print("conditional logic", self.conditional_logic)
+
+        if self.conditional_logic:
+            try:
+                from organization.services.conditional_logic import (
+                    validate_conditional_logic,
+                )
+
+                validate_conditional_logic(data=self.conditional_logic)
+            except ConditionalStructureError as error:
+                raise ValidationError(
+                    {"conditional_logic": error}, code="invalid"
+                ) from error
+
         super().clean()
 
 

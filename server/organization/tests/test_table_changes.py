@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -24,12 +24,14 @@ from django.core.management import call_command
 
 from kafka.managers import KafkaManager
 from organization import factories, models
+from organization.exceptions import ConditionalStructureError
 from organization.models import TableChangeAlert
 from organization.services.psql_triggers import (
     check_function_exists,
     check_trigger_exists,
 )
 from organization.services.table_choices import TABLE_NAME_CHOICES
+from organization.validators import validate_conditional_logic
 
 pytestmark = pytest.mark.django_db
 
@@ -261,3 +263,299 @@ def test_cannot_save_delete_if_source_not_kafka(
         "Database action can only be delete when source is Kafka."
         " Please change the source to Kafka and try again."
     ]
+
+
+def test_conditional_is_missing_conditions_key() -> None:
+    """Tests that a ConditionalStructureError is raised when a required key is missing from the
+    conditional logic.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert (
+        excinfo.value.args[0]
+        == "Conditional Logic is missing required key: 'conditions'"
+    )
+
+
+def test_conditional_is_missing_join_fields_key() -> None:
+    """Tests that a ConditionalStructureError is raised when a required key is missing from the
+    conditional logic.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "equals",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert (
+        excinfo.value.args[0]
+        == "Conditional Logic is missing required key: 'join_fields'"
+    )
+
+
+def test_conditional_has_invalid_operation() -> None:
+    """Tests that a ConditionalStructureError is raised when the operation is invalid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "equals",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert excinfo.value.args[0] == "Invalid operation 'equals' in condition ID 1"
+
+
+def test_conditional_is_valid_structure() -> None:
+    """Tests that a ConditionalStructureError is not raised when the conditional logic is valid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "eq",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    assert validate_conditional_logic(data=data) is True
+
+
+def test_conditional_in_operation_valid_list() -> None:
+    """Tests that a ConditionalStructureError is raised when the operation is invalid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "in",
+                "value": ["123", "456"],
+                "data_type": "string",
+            }
+        ],
+    }
+
+    assert validate_conditional_logic(data=data) is True
+
+
+def test_conditional_in_operation_requires_list() -> None:
+    """Tests that a ConditionalStructureError is raised when the operation is invalid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "in",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert (
+        excinfo.value.args[0] == "Operation 'in' expects a list value in condition ID 1"
+    )
+
+
+def test_conditional_isnull_operation_requires_null() -> None:
+    """Tests that a ConditionalStructureError is raised when the operation is invalid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "isnull",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert (
+        excinfo.value.args[0]
+        == "Operation 'isnull' should not have a value in condition ID 1"
+    )
+
+
+def test_conditional_contains_operation_requires_string() -> None:
+    """Tests that a ConditionalStructureError is raised when the operation is invalid.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "table_change_name": "Add Shipment Condition where Customer ID is 123",
+        "table_change_description": "Send out table change alert when Customer ID is 123",
+        "table_change_table": "shipment",
+        "join_fields": [
+            {
+                "condition_id": 1,
+                "join_table": "customer",
+                "join_field_name": "customer_id",
+            }
+        ],
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_name": "Customer",
+                "column": "id",
+                "operation": "contains",
+                "value": 1,
+                "data_type": "string",
+            }
+        ],
+    }
+
+    with pytest.raises(ConditionalStructureError) as excinfo:
+        validate_conditional_logic(data=data)
+
+    assert (
+        excinfo.value.args[0]
+        == "Operation 'contains' expects a string value in condition ID 1"
+    )

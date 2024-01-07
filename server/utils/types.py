@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 from enum import Enum
-from typing import Any, TypedDict, Union
+from typing import Any, TypedDict, Union, Literal
 from uuid import UUID
 
 from django.db.models import UUIDField
@@ -38,6 +38,19 @@ type Coordinates = tuple[
     tuple[float | None, float | None], tuple[float | None, float | None]
 ] | None
 type Point = tuple[float | None, float | None] | Any
+
+type Operations = Literal[
+    "eq",
+    "ne",
+    "gt",
+    "ge",
+    "lt",
+    "le",
+    "contains",
+    "icontains",
+    "in",
+    "isnull",
+]
 
 
 class BillingClientActions(Enum):
@@ -104,3 +117,36 @@ class BillingClientResponse(TypedDict):
     status: BillingClientStatuses
     step: int
     message: Any
+
+
+class Condition(TypedDict):
+    """
+    Type dict for condition in conditional logic
+    """
+
+    id: int  # ID of condition
+    model_name: str  # Name of Django Model to query
+    app_name: str  # Name of Django App the Model belongs to.
+    column: str  # Column that has the value to compare to.
+    operation: Operations  # Operation to perform on the column
+    value: Any  # Value to compare to
+    data_type: str  # Data type of the column
+
+
+class JoinField(TypedDict):
+    """
+    Type dict for join field in conditional logic
+    """
+
+    condition_id: int  # ID of condition
+    join_table: str  # Table to join on
+    join_field_name: str  # Name of field to join on
+
+
+class ConditionalLogic(TypedDict):
+    name: str  # Name of conditional logic
+    table_change_name: str  # Name of Table Change Alert, conditional Logic is associated with
+    table_change_description: str  # Description of Table Change Alert, conditional Logic is associated with
+    table_change_table: str  # Table of Table Change Alert, conditional Logic is associated with
+    join_fields: list[JoinField]  # List of join fields
+    conditions: list[Condition]  # List of conditions

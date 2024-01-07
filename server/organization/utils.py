@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -45,7 +45,7 @@ def send_email_using_profile(
     ]:
         smtp_class = SMTP
     else:
-        raise exceptions.InvalidEmailProtocal("Invalid email protocol")
+        raise exceptions.InvalidEmailProtocol("Invalid email protocol")
 
     if not profile.port:
         raise exceptions.InvalidEmailProfile("Port is required.")
