@@ -62,6 +62,7 @@ export type QueryKeys =
   | "equipmentManufacturers"
   | "equipment-type-table-data"
   | "equipmentTypes"
+  | "email-profile-table-data"
   | "feasibilityControl"
   | "fleet-code-table-data"
   | "fleetCodes"

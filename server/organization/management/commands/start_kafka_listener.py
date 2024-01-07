@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **options: Any) -> None:
         # Close the existing database connections
         listener = services.KafkaListener()
-        listener._close_old_connections()
+        listener.close_old_connections()
         listener.listen()
         p = Process(target=listener.listen)
         p.start()

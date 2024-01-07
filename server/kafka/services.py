@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -29,7 +29,6 @@ from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
-from django.db.models import QuerySet
 
 from organization import models, selectors
 
@@ -44,18 +43,9 @@ NO_ALERTS_MSG = "No active table change alerts."
 
 
 class KafkaListener:
-    """`KafkaListener` is a class that provides functionality to listen to specific Kafka topics
+    """
+    KafkaListener is a class that provides functionality to listen to specific Kafka topics
     and process their messages accordingly. It is primarily responsible for handling table change alerts.
-
-    Class Attributes:
-        KAFKA_HOST (str): The hostname or IP address of the Kafka service to connect to.
-        KAFKA_PORT (str): The port number on which the Kafka service is running.
-        KAFKA_GROUP_ID (str): The unique group identifier for this Kafka consumer instance.
-        ALERT_UPDATE_TOPIC (str): The Kafka topic that this listener instance subscribes to for alert updates.
-        POLL_TIMEOUT (float): The time in seconds that the listener should wait for a response from the Kafka service.
-        NO_ALERTS_MSG (str): The default message to display when there are no active alerts.
-        running (bool): A flag that indicates whether the listener instance is currently running.
-        MAX_CONCURRENT_JOBS (int): The maximum number of jobs that this listener instance can process concurrently.
     """
 
     running = True
@@ -66,38 +56,15 @@ class KafkaListener:
         self.thread_pool_size = thread_pool_size
 
     @staticmethod
-    def _close_old_connections() -> None:
-        """A method that closes all old database connections.
-
-        Returns:
-            None: This function does not return anything.
-        """
+    def close_old_connections() -> None:
         for conn in connections.all(initialized_only=True):
             conn.close_if_unusable_or_obsolete()
 
     def _signal_handler(self, _signal: int, frame: types.FrameType | None) -> None:
-        """A signal handler method that sets the `running` attribute to False on receiving a termination signal,
-        thereby controlling the runtime of the listener.
-
-        Args:
-            _signal (int): The identification number of the received signal.
-            frame (types.FrameType | None): The current stack frame (relevant for traceback information).
-
-        Returns:
-            None: This function does not return anything.
-        """
-
         debug("Received termination signal. Stopping listener...")
         self.running = False
 
     def _connect(self) -> tuple[Consumer, Consumer] | None:
-        """A private method to establish a connection to the Kafka service.
-        In case of connection failure, it retries until the listener stops running or a connection is established.
-
-        Returns:
-            tuple[Consumer, Consumer] | None: Returns a tuple of Consumer instances if connection is successful, else None.
-        """
-
         config = {
             "bootstrap.servers": settings.KAFKA_BOOTSTRAP_SERVERS,
             "group.id": settings.KAFKA_GROUP_ID,
@@ -121,31 +88,21 @@ class KafkaListener:
         return None
 
     @staticmethod
-    def _get_topic_list() -> QuerySet | list:
-        """Fetches the list of currently active Kafka table change alerts from the database.
-
-        Returns:
-            QuerySet | list: Returns a QuerySet or list of active Kafka table change alerts.
+    def _get_topic_list() -> list[str]:
         """
-
-        return selectors.get_active_kafka_table_change_alerts() or []
+        Fetch the list of topics to subscribe to. Ensure no empty strings are included.
+        """
+        active_alerts = selectors.get_active_kafka_table_change_alerts() or []
+        return [
+            alert.get_topic_display()
+            for alert in active_alerts
+            if alert.get_topic_display().strip()
+        ]
 
     @staticmethod
     def _get_messages(
         *, consumer: Consumer, timeout: float, max_messages: int = 100
     ) -> list[Message]:
-        """Consumes a batch of messages from the Kafka topic within the specified timeout.
-        It filters out messages that are None or contain errors.
-
-        Args:
-            consumer (Consumer): Kafka Consumer instance to consume messages.
-            timeout (float): Maximum time, in seconds, to block waiting for a message.
-            max_messages (int, optional): Maximum number of messages to return. Defaults to 100.
-
-        Returns:
-            list[Message]: List of valid Kafka Message instances.
-        """
-
         messages = consumer.consume(max_messages, timeout)
         valid_messages = []
         for message in messages:
@@ -159,36 +116,16 @@ class KafkaListener:
 
     @staticmethod
     def _parse_message(*, message: Message) -> dict[str, Any] | None:
-        """Parses the JSON payload of a Kafka message. In case the message value can't be decoded as JSON,
-        it logs an error message and returns None.
-
-        Args:
-            message (Message): Kafka Message instance to parse.
-
-        Returns:
-            dict[str, Any] | None: The parsed JSON data as dictionary if the message is valid, else None.
-        """
-
         message_value = message.value().decode("utf-8")
         try:
             data = json.loads(message_value)
         except json.JSONDecodeError:
             error("Error decoding message value as JSON.")
             return None
-        return data.get("payload", {})
+        return data.get("payload", {})  # Accessing 'payload' key from the decoded JSON
 
     @staticmethod
     def _get_message(*, consumer: Consumer, timeout: float) -> Message | None:
-        """Fetches a single message from the Kafka topic within the specified timeout.
-
-        Args:
-            consumer (Consumer): Kafka Consumer instance to consume the message.
-            timeout (float): Maximum time, in seconds, to block waiting for a message.
-
-        Returns:
-            Message: A Kafka Message instance.
-        """
-
         message = consumer.poll(timeout)
         if message is None:
             return None
@@ -197,52 +134,26 @@ class KafkaListener:
             return None
         return message
 
+    @staticmethod
     def _update_subscriptions(
-        self,
-        *,
-        data_consumer: Consumer,
-        table_changes: QuerySet | list,
+        *, data_consumer: Consumer, table_changes: list[str]
     ) -> None:
-        """Updates the subscription list of the Kafka Consumer to include the topics specified in the table_changes.
-        It unsubscribes from any topics not present in the table_changes.
-
-        Args:
-            data_consumer (Consumer): Kafka Consumer instance.
-            table_changes (QuerySet | list): A QuerySet or list containing the updated list of Kafka topics.
-
-        Returns:
-            None: This function does not return anything.
         """
-
-        old_table_changes = {
-            table_change.get_topic_display() for table_change in table_changes
-        }
-        table_changes = self._get_topic_list()
-        new_table_changes = {
-            table_change.get_topic_display() for table_change in table_changes
-        }
-        if added_alerts := new_table_changes.difference(old_table_changes):
-            debug(f"New alerts added: {', '.join(added_alerts)}")
-        data_consumer.unsubscribe()
-        if table_changes:
-            data_consumer.subscribe(
-                [table_change.get_topic_display() for table_change in table_changes]
-            )
-            debug(
-                f"Subscribed to topics: {', '.join([table_change.get_topic_display() for table_change in table_changes])}"
-            )
+        Update the consumer's subscription list.
+        """
+        try:
+            if table_changes:
+                data_consumer.unsubscribe()
+                data_consumer.subscribe(table_changes)
+                logging.debug(f"Subscribed to topics: {', '.join(table_changes)}")
+            else:
+                logging.debug("No active table changes to subscribe to.")
+        except KafkaError as e:
+            logging.error(f"Failed to update subscriptions: {e}", exc_info=True)
+            raise
 
     @staticmethod
     def _format_message(*, field_value_dict: dict) -> str:
-        """Formats the Kafka message fields and their corresponding values into a human-readable string.
-
-        Args:
-            field_value_dict (dict): Dictionary where keys are field names and values are corresponding field values.
-
-        Returns:
-            Text: String representation of each field and its corresponding value, each on a new line.
-        """
-
         return "\n".join(
             f"Field: {field}, Value: {value}"
             for field, value in field_value_dict.items()
@@ -251,14 +162,6 @@ class KafkaListener:
     def _process_message(
         self, data_message: Message, associated_table_change: models.TableChangeAlert
     ) -> None:
-        """Processes an individual message from a Kafka topic. If the operation type matches the alert criteria,
-        it sends an email to the designated recipients.
-
-        Args:
-            data_message (Message): Kafka Message instance to process.
-            associated_table_change (models.TableChangeAlert): The table change alert associated with the topic of the message.
-        """
-
         if not data_message.value():
             return
 
@@ -305,13 +208,6 @@ class KafkaListener:
         )
 
     def listen(self) -> None:
-        """Entry point for Kafka listener. It establishes a connection, subscribes to the necessary topics,
-        and begins processing messages. This method runs indefinitely until the listener receives a termination signal.
-        It also handles exceptions due to lost connection to the Kafka service by attempting to reconnect.
-
-        Returns:
-            None: This function does not return anything.
-        """
         self.register_signals()
         consumers = self._connect()
 
@@ -333,27 +229,12 @@ class KafkaListener:
         debug("Consumers closed.")
 
     def register_signals(self) -> None:
-        """Register signals for termination. These signals are used to terminate the Kafka listener gracefully.
-
-        Returns:
-            None: This function does not return anything.
-        """
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
     def _subscribe_consumers_to_topics(
         self, *, data_consumer: Consumer, alert_update_consumer: Consumer
     ) -> None:
-        """
-        Subscribe the provided consumers to the necessary topics. The topics are fetched from the _get_topic_list method.
-
-        Args:
-            data_consumer (Consumer): Consumer for data messages.
-            alert_update_consumer (Consumer): Consumer for alert update messages.
-
-        Returns:
-            None: This function does not return anything.
-        """
         table_changes = self._get_topic_list()
         if not table_changes:
             debug(NO_ALERTS_MSG)
@@ -361,25 +242,12 @@ class KafkaListener:
 
         alert_update_consumer.subscribe([settings.KAFKA_ALERT_UPDATE_TOPIC])
         debug(f"Subscribed to alert update topic: {settings.KAFKA_ALERT_UPDATE_TOPIC}")
-        data_consumer.subscribe(
-            [table_change.get_topic_display() for table_change in table_changes]
-        )
-        debug(
-            f"Subscribed to topics: {[table_change.get_topic_display() for table_change in table_changes]}"
-        )
+        data_consumer.subscribe(list(table_changes))
+        debug(f"Subscribed to topics: {list(table_changes)}")
 
     def _execute_tasks(
         self, *, data_consumer: Consumer, alert_update_consumer: Consumer
     ) -> None:
-        """Start executing tasks based on the received Kafka messages.
-
-        Args:
-            data_consumer (Consumer): Consumer for data messages.
-            alert_update_consumer (Consumer): Consumer for alert update messages.
-
-        Returns:
-            None: This function does not return anything.
-        """
         futures = set()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=settings.KAFKA_THREAD_POOL_SIZE,
@@ -412,17 +280,6 @@ class KafkaListener:
         futures: set[concurrent.futures.Future],
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
-        """Handle alert and data messages from Kafka.
-
-        Args:
-            data_consumer (KafkaConsumer): Consumer for data messages.
-            alert_update_consumer (KafkaConsumer): Consumer for alert update messages.
-            futures (set[Future]): Set of futures for tracking ongoing tasks.
-            executor (ThreadPoolExecutor): Executor for running tasks.
-
-        Returns:
-            None: This function does not return anything.
-        """
         self._handle_alert_message(
             alert_update_consumer=alert_update_consumer, data_consumer=data_consumer
         )
@@ -433,15 +290,6 @@ class KafkaListener:
     def _handle_alert_message(
         self, *, alert_update_consumer: Consumer, data_consumer: Consumer
     ) -> None:
-        """Handle alert messages from Kafka and update subscriptions if necessary.
-
-        Args:
-            alert_update_consumer (Consumer): Consumer for alert update messages.
-            data_consumer (Consumer): Consumer for data messages.
-
-        Returns:
-            None: This function does not return anything.
-        """
         alert_message = self._get_message(
             consumer=alert_update_consumer, timeout=POLL_TIMEOUT
         )
@@ -459,16 +307,6 @@ class KafkaListener:
         futures: set[concurrent.futures.Future],
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
-        """Handle data messages from Kafka and submit tasks for processing.
-
-        Args:
-            data_consumer (KafkaConsumer): Consumer for data messages.
-            futures (set[Future]): Set of futures for tracking ongoing tasks.
-            executor (ThreadPoolExecutor): Executor for running tasks.
-
-        Returns:
-            None: This function does not return anything.
-        """
         data_messages = self._get_messages(consumer=data_consumer, timeout=POLL_TIMEOUT)
 
         for data_message in data_messages:
@@ -483,16 +321,6 @@ class KafkaListener:
         futures: set[concurrent.futures.Future],
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
-        """Process a single data message.
-
-        Args:
-            data_message (str): The data message to process.
-            futures (set[Future]): Set of futures for tracking ongoing tasks.
-            executor (ThreadPoolExecutor): Executor for running tasks.
-
-        Returns:
-            None: This function does not return anything.
-        """
         if (
             data_message is not None
             and not data_message.error()
@@ -506,11 +334,11 @@ class KafkaListener:
                 (
                     table_change
                     for table_change in self._get_topic_list()
-                    if table_change.get_topic_display() == data_message.topic()
+                    if table_change == data_message.topic()
                 ),
                 None,
             ):
-                debug(f"Table Change Alert found. {associated_table_change.name}")
+                debug(f"Table Change Alert found for topic {data_message.topic()}.")
                 future = executor.submit(
                     self._process_message,
                     data_message,
@@ -522,14 +350,6 @@ class KafkaListener:
     def _wait_for_futures_to_complete(
         *, futures: set[concurrent.futures.Future]
     ) -> None:
-        """Wait for tasks to complete, and if they raise any exceptions, log the error.
-
-        Args:
-            futures (set[Future]): Set of futures for tracking ongoing tasks.
-
-        Returns:
-            None: This function does not return anything.
-        """
         if len(futures) >= settings.KAFKA_MAX_CONCURRENT_JOBS:
             done, futures = concurrent.futures.wait(
                 futures, return_when=concurrent.futures.FIRST_COMPLETED
@@ -554,17 +374,6 @@ class KafkaListener:
         data_consumer: Consumer,
         alert_update_consumer: Consumer,
     ) -> None:
-        """Handle exceptions that occur while processing tasks. If the exception is due to all Kafka brokers being down,
-        it attempts to reconnect.
-
-        Args:
-            e (Exception): The exception to handle.
-            data_consumer (Consumer): Consumer for data messages.
-            alert_update_consumer (Consumer): Consumer for alert update messages.
-
-        Returns:
-            None: This function does not return anything.
-        """
         if (
             isinstance(e, KafkaException)
             and e.args[0].code() == KafkaError._ALL_BROKERS_DOWN

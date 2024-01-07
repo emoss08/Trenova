@@ -33,7 +33,6 @@ import { Footer } from "./footer";
 import { Logo } from "./logo";
 
 function DevHeader() {
-  // Simple header that puts div in the middle on a red background
   return (
     <header className="flex h-5 w-full items-center justify-center bg-indigo-700">
       <div className="text-white">
@@ -44,17 +43,10 @@ function DevHeader() {
 }
 
 /**
- * LayoutProps defines the props for the Layout components.
- */
-type LayoutProps = {
-  children: React.ReactNode;
-};
-
-/**
  * Layout component that provides a common structure for protected pages.
  * Contains navigation, header, and footer.
  */
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children }: { children: React.ReactNode }) {
   const [user] = useUserStore.use("user");
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -63,12 +55,12 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     // The main container is set to full height and flex direction
-    <div className="flex h-screen flex-col overflow-hidden" id="app">
+    <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
+      {ENVIRONMENT === "development" && <DevHeader />}
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
-          {ENVIRONMENT === "development" && <DevHeader />}
           <div className="flex h-14 w-full items-center justify-between px-4">
             <Logo />
             <div className="hidden flex-1 justify-center md:flex">
@@ -101,7 +93,7 @@ export function Layout({ children }: LayoutProps) {
 /**
  * UnprotectedLayout component for pages that don't require authentication.
  */
-export function UnprotectedLayout({ children }: LayoutProps) {
+export function UnprotectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />

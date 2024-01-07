@@ -205,7 +205,6 @@ export function NavMenu() {
         onMouseLeave={() => setMenuOpen(undefined)}
         menuPosition={menuPosition}
         className={cn(
-          "bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur",
           menuOpen ? "block" : "hidden",
           "md:flex",
           "md:space-x-8",
