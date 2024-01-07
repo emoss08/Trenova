@@ -53,20 +53,6 @@ class ShipmentControlViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.ShipmentControl]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "auto_rate_shipment",
-            "calculate_distance",
-            "enforce_rev_code",
-            "enforce_voided_comm",
-            "generate_routes",
-            "enforce_commodity",
-            "auto_sequence_stops",
-            "auto_shipment_total",
-            "enforce_origin_destination",
-            "check_for_duplicate_bol",
-            "remove_shipment",
         )
         return queryset
 
@@ -126,16 +112,6 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.ReasonCode]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "business_unit_id",
-            "organization_id",
-            "status",
-            "code",
-            "code_type",
-            "description",
-            "created",
-            "modified",
         )
         return queryset
 
@@ -344,15 +320,6 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.AdditionalCharge]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "accessorial_charge_id",
-            "shipment_id",
-            "description",
-            "charge_amount",
-            "unit",
-            "entered_by_id",
-            "sub_total",
         )
         return queryset
 
@@ -383,14 +350,5 @@ class ServiceTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> "QuerySet[models.ServiceType]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "business_unit_id",
-            "status",
-            "code",
-            "description",
-            "created",
-            "modified",
         )
         return queryset

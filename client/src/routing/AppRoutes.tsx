@@ -65,6 +65,7 @@ const FeasibilityControlPage = lazy(
 const EmailControlPage = lazy(
   () => import("../pages/admin/control-files/EmailControl"),
 );
+const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
 
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
@@ -506,6 +507,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Controls",
     element: <EmailControlPage />,
     permission: "view_emailcontrol",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Email Control",
+    group: "Administration",
+    path: "/admin/email-profiles/",
+    description: "Email Profiles",
+    element: <EmailProfilePage />,
+    permission: "view_emailprofile",
     excludeFromMenu: true,
   },
   // Error Page

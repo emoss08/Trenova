@@ -197,6 +197,15 @@ export const distanceMethodChoices = [
   { value: "M", label: "Monta" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
+/** Type for Email Protocol Choices */
+export type EmailProtocolChoiceProps = "TLS" | "SSL" | "UNENCRYPTED";
+
+export const emailProtocolChoices = [
+  { value: "TLS", label: "TLS" },
+  { value: "SSL", label: "SSL" },
+  { value: "UNENCRYPTED", label: "Unencrypted" },
+] satisfies ReadonlyArray<IChoiceProps<EmailProtocolChoiceProps>>;
+
 /** Type for Feasibility Operator Choices */
 export type FeasibilityOperatorChoiceProps =
   | "eq"

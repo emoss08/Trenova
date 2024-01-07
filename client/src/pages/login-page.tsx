@@ -50,13 +50,14 @@ function UserAuthForm() {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-  const { control, handleSubmit, setError, watch } = useForm<LoginFormValues>({
-    resolver: yupResolver(userAuthSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
+  const { control, handleSubmit, setError, watch, formState } =
+    useForm<LoginFormValues>({
+      resolver: yupResolver(userAuthSchema),
+      defaultValues: {
+        username: "",
+        password: "",
+      },
+    });
 
   const passwordValue = watch("password");
 
@@ -129,7 +130,7 @@ function UserAuthForm() {
             autoComplete="current-password"
             placeholder="Password"
           />
-          {passwordValue && (
+          {passwordValue && formState.isValid && (
             <button
               type="button"
               className="absolute inset-y-0 right-0 mt-6 flex items-center pr-3 text-sm leading-5"

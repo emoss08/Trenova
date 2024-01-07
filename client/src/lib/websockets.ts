@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -115,6 +115,7 @@ export interface WebSocketManager {
 
 export function createWebsocketManager(): {
   disconnect: (id: string) => WebSocketConnection;
+  disconnectFromAll: () => void;
   receive: (id: string, handler: (event: WebSocketEvent) => void) => void;
   sendJson: (id: string, data: any) => void;
   get: (id: string) => WebSocketConnection;
@@ -153,6 +154,13 @@ export function createWebsocketManager(): {
     connections.delete(id);
 
     return connection;
+  }
+
+  function disconnectFromAll() {
+    connections.forEach((connection) => {
+      connection.close();
+    });
+    connections.clear();
   }
 
   function send(id: string, data: any) {
@@ -194,6 +202,7 @@ export function createWebsocketManager(): {
     connect,
     disconnect,
     send,
+    disconnectFromAll,
     sendJson,
     receive,
     get,

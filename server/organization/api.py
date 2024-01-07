@@ -99,30 +99,9 @@ class DepotViewSet(viewsets.ModelViewSet):
         Returns:
             Queryset[models.Depot]: A queryset of depot objects
         """
-        queryset: QuerySet[models.Depot] = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
-            .select_related("detail")
-            .only(
-                "id",
-                "organization_id",
-                "name",
-                "description",
-                "detail__id",
-                "detail__organization_id",
-                "detail__address_line_1",
-                "detail__address_line_2",
-                "detail__city",
-                "detail__state",
-                "detail__zip_code",
-                "detail__phone_number",
-                "detail__alternate_phone_number",
-                "detail__fax_number",
-                "detail__created",
-                "detail__modified",
-            )
-        )
+        queryset: QuerySet[models.Depot] = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).select_related("detail")
         return queryset
 
 
@@ -149,12 +128,6 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         """
         queryset: QuerySet[models.Department] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "description",
-            "depot__id",
-            "name",
         )
         return queryset
 
@@ -182,16 +155,6 @@ class EmailProfileViewSet(viewsets.ModelViewSet):
         """
         queryset: QuerySet[models.EmailProfile] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "name",
-            "host",
-            "port",
-            "username",
-            "protocol",
-            "password",
-            "email",
         )
         return queryset
 
