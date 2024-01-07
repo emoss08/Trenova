@@ -50,7 +50,9 @@ import toast from "react-hot-toast";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
-  volume: 0.5,
+  volume: 0.2,
+  format: ["webm", "mp3"],
+  mute: false,
 });
 
 const webSocketManager = createWebsocketManager();

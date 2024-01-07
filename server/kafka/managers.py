@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -123,7 +123,7 @@ class KafkaManager:
 
         return admin.AdminClient({"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")})
 
-    def get_available_topics(self) -> list[tuple]:
+    def get_available_topics(self) -> list[tuple[str, str]]:
         """Fetches the list of available topics from the Kafka server.
 
         If the ``admin_client`` is not available or the Kafka server is not available,
@@ -132,10 +132,10 @@ class KafkaManager:
         for use in Django choices.
 
         Returns:
-            list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
+            list[tuple[str, str]]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
 
-        exclude_topics = settings.KAFKA_EXCLUDE_TOPICS
+        excluded_prefixes = settings.KAFKA_EXCLUDE_TOPIC_PREFIXES
 
         if self.admin_client() is None:
             return []
@@ -146,8 +146,8 @@ class KafkaManager:
             topic_metadata = self.admin_client().list_topics(timeout=5)
             return [
                 (topic, topic)
-                for topic in list(topic_metadata.topics.keys())
-                if not topic.startswith("__") and topic not in exclude_topics
+                for topic in topic_metadata.topics.keys()
+                if not any(topic.startswith(prefix) for prefix in excluded_prefixes)
             ]
         except KafkaException as ke:
             logger.error(f"Failed to fetch topics from Kafka: {ke}")
@@ -237,7 +237,8 @@ class KafkaManager:
 
         resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
         entries = {
-            key: admin.NewPartitions(value) for key, value in config_dict.items()
+            key: admin.NewPartitions(value, new_total_count=value)
+            for key, value in config_dict.items()
         }
         self.admin_client().alter_configs({resource: entries})
 

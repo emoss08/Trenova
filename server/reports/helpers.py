@@ -416,4 +416,15 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "ServiceType": {
+        "app_label": "shipment",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Name"},
+            {"value": "code", "label": "Code"},
+            {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }

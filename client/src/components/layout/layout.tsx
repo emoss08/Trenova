@@ -33,7 +33,6 @@ import { Footer } from "./footer";
 import { Logo } from "./logo";
 
 function DevHeader() {
-  // Simple header that puts div in the middle on a red background
   return (
     <header className="flex h-5 w-full items-center justify-center bg-indigo-700">
       <div className="text-white">
@@ -56,12 +55,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     // The main container is set to full height and flex direction
-    <div className="flex min-h-screen flex-col overflow-hidden" id="app">
+    <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
+      {ENVIRONMENT === "development" && <DevHeader />}
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
-          {ENVIRONMENT === "development" && <DevHeader />}
           <div className="flex h-14 w-full items-center justify-between px-4">
             <Logo />
             <div className="hidden flex-1 justify-center md:flex">
