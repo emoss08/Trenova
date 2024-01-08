@@ -126,7 +126,7 @@ class Condition(TypedDict):
 
     id: int  # ID of condition
     model_name: str  # Name of Django Model to query
-    app_name: str  # Name of Django App the Model belongs to.
+    app_label: str  # Name of Django App the Model belongs to.
     column: str  # Column that has the value to compare to.
     operation: Operations  # Operation to perform on the column
     value: Any  # Value to compare to
@@ -145,8 +145,8 @@ class JoinField(TypedDict):
 
 class ConditionalLogic(TypedDict):
     name: str  # Name of conditional logic
-    table_change_name: str  # Name of Table Change Alert, conditional Logic is associated with
-    table_change_description: str  # Description of Table Change Alert, conditional Logic is associated with
-    table_change_table: str  # Table of Table Change Alert, conditional Logic is associated with
+    description: str  # Description of Table Change Alert, conditional Logic is associated with
+    model_name: str  # Table of Table Change Alert, conditional Logic is associated with
+    app_label: str  # App Name the Table Change Table belongs to.
     join_fields: list[JoinField]  # List of join fields
     conditions: list[Condition]  # List of conditions
