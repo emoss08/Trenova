@@ -14,9 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.apps import apps
+
 from organization.exceptions import ConditionalStructureError
 from utils.types import ConditionalLogic
-
 
 AVAILABLE_OPERATIONS = [
     "eq",
@@ -35,9 +36,8 @@ AVAILABLE_OPERATIONS = [
 def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
     required_keys = [
         "name",
-        "table_change_name",
-        "table_change_description",
-        "table_change_table",
+        "description",
+        "model_name",
         "join_fields",
         "conditions",
     ]
@@ -59,7 +59,7 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
         for key in [
             "id",
             "model_name",
-            "app_name",
+            "app_label",
             "column",
             "operation",
             "value",
@@ -91,6 +91,42 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
         ):
             raise ConditionalStructureError(
                 f"Operation 'contains' expects a string value in condition ID {condition['id']}"
+            )
+
+    return True
+
+
+def validate_model_fields_exist(*, data: ConditionalLogic) -> bool:
+    """Validate the join field is able to be joined on the table_change_table. If not, throw a ConditionalStructureError
+
+    Args:
+        data (ConditionalLogic): data to validate
+    """
+
+    EXCLUDED_FIELDS = [
+        "id",
+        "organization",
+        "business_unit",
+    ]
+
+    try:
+        model = apps.get_model(data["model_name"], data["app_label"])
+    except LookupError as e:
+        raise ConditionalStructureError(
+            f"Model '{data['model_name']}' in app '{data['app_label']}' not found"
+        ) from e
+
+    fields = [field.name for field in model._meta.get_fields()]
+
+    for join_field in data["join_fields"]:
+        join_field_name = join_field["join_field_name"]
+        if join_field_name not in fields:
+            raise ConditionalStructureError(
+                f"Join Field '{join_field_name}' does not exist on model '{data['model_name']}'"
+            )
+        if join_field_name in EXCLUDED_FIELDS:
+            raise ConditionalStructureError(
+                f"Join Field '{join_field_name}' is not allowed for model '{data['model_name']}'"
             )
 
     return True
