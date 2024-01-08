@@ -36,12 +36,10 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
+
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
-from .validators import (
-    validate_format_string,
-    validate_org_timezone,
-)
+from .validators import validate_format_string, validate_org_timezone
 
 kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_available_topics()

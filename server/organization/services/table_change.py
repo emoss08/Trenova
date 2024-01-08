@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -111,6 +111,7 @@ def create_trigger_based_on_db_action(
             listener_name=instance.listener_name,
             table_name=instance.table,
             organization_id=organization_id,
+            conditional_logic=instance.conditional_logic,
         )
 
 

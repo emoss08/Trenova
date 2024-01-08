@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -169,6 +169,7 @@ class PSQLListener:
         # Iterate over the generator of notifications
         for notify in self.conn.notifies():
             logger.info(f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}")
+            print(f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}")
             if notify.channel == self.table_change_alert_channel:
                 self._restart_listening(self.conn.cursor())
 

@@ -21,7 +21,6 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-
 from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.exceptions import ConditionalStructureError
@@ -281,13 +280,6 @@ def test_conditional_is_missing_conditions_key() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
     }
 
     with pytest.raises(ConditionalStructureError) as excinfo:
@@ -296,41 +288,6 @@ def test_conditional_is_missing_conditions_key() -> None:
     assert (
         excinfo.value.args[0]
         == "Conditional Logic is missing required key: 'conditions'"
-    )
-
-
-def test_conditional_is_missing_join_fields_key() -> None:
-    """Tests that a ConditionalStructureError is raised when a required key is missing from the
-    conditional logic.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    data = {
-        "name": "Join Customer and Shipment Condition",
-        "description": "Send out table change alert when Customer ID is 123",
-        "model_name": "shipment",
-        "app_label": "Shipment",
-        "conditions": [
-            {
-                "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
-                "column": "id",
-                "operation": "equals",
-                "value": "123",
-                "data_type": "string",
-            }
-        ],
-    }
-
-    with pytest.raises(ConditionalStructureError) as excinfo:
-        validate_conditional_logic(data=data)
-
-    assert (
-        excinfo.value.args[0]
-        == "Conditional Logic is missing required key: 'join_fields'"
     )
 
 
@@ -346,13 +303,6 @@ def test_conditional_has_invalid_operation() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
@@ -384,13 +334,6 @@ def test_conditional_is_valid_structure() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
@@ -419,13 +362,6 @@ def test_conditional_in_operation_valid_list() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
@@ -454,13 +390,6 @@ def test_conditional_in_operation_requires_list() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
@@ -494,18 +423,9 @@ def test_conditional_isnull_operation_requires_null() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
                 "column": "id",
                 "operation": "isnull",
                 "value": "123",
@@ -535,18 +455,9 @@ def test_conditional_contains_operation_requires_string() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer_id",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
                 "column": "id",
                 "operation": "contains",
                 "value": 1,
@@ -576,19 +487,10 @@ def test_validate_model_fields_exist() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
-                "column": "id",
+                "column": "pro_number",
                 "operation": "eq",
                 "value": "123",
                 "data_type": "string",
@@ -611,18 +513,9 @@ def test_validate_model_fields_with_invalid_app_label() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "Test",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "customer",
-                "join_field_name": "customer",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
                 "column": "id",
                 "operation": "eq",
                 "value": "123",
@@ -637,7 +530,7 @@ def test_validate_model_fields_with_invalid_app_label() -> None:
     assert excinfo.value.args[0] == "Model 'shipment' in app 'Test' not found"
 
 
-def test_validate_model_fields_with_invalid_join_field() -> None:
+def test_validate_model_fields_with_invalid_conditional() -> None:
     """Test ConditionalStructureError is raised when app_label is invalid.
 
     Returns:
@@ -649,19 +542,10 @@ def test_validate_model_fields_with_invalid_join_field() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "test",
-                "join_field_name": "test",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
-                "column": "id",
+                "column": "test",
                 "operation": "eq",
                 "value": "123",
                 "data_type": "string",
@@ -673,7 +557,8 @@ def test_validate_model_fields_with_invalid_join_field() -> None:
         validate_model_fields_exist(data=data)
 
     assert (
-        excinfo.value.args[0] == "Join Field 'test' does not exist on model 'shipment'"
+        excinfo.value.args[0]
+        == "Conditional Field 'test' does not exist on model 'shipment'"
     )
 
 
@@ -689,19 +574,10 @@ def test_validate_model_field_with_excluded_field() -> None:
         "description": "Send out table change alert when Customer ID is 123",
         "model_name": "shipment",
         "app_label": "shipment",
-        "join_fields": [
-            {
-                "condition_id": 1,
-                "join_table": "organization",
-                "join_field_name": "organization",
-            }
-        ],
         "conditions": [
             {
                 "id": 1,
-                "model_name": "customer",
-                "app_label": "Customer",
-                "column": "id",
+                "column": "organization",
                 "operation": "eq",
                 "value": "123",
                 "data_type": "string",
@@ -714,5 +590,5 @@ def test_validate_model_field_with_excluded_field() -> None:
 
     assert (
         excinfo.value.args[0]
-        == "Join Field 'organization' is not allowed for model 'shipment'"
+        == "Conditional Field 'organization' is not allowed for model 'shipment'"
     )

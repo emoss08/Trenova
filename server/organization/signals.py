@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -392,6 +392,10 @@ def delete_and_add_new_trigger(
     if old_instance.database_action != instance.database_action:
         drop_trigger_and_create(instance=instance)
 
+    # Dropped if the conditional logic has changed.
+    if old_instance.conditional_logic != instance.conditional_logic:
+        drop_trigger_and_create(instance=instance)
+
 
 def delete_and_recreate_trigger_and_function(
     sender: models.TableChangeAlert, instance: models.TableChangeAlert, **kwargs: Any
@@ -427,6 +431,17 @@ def delete_and_recreate_trigger_and_function(
         )
 
     if old_instance.table != instance.table:
+        drop_trigger_and_function(
+            trigger_name=old_instance.trigger_name,
+            function_name=old_instance.function_name,
+            table_name=old_instance.table,
+        )
+        create_trigger_based_on_db_action(
+            instance=instance, organization_id=instance.organization_id
+        )
+
+    # Dropped if the conditional logic has changed.
+    if old_instance.conditional_logic != instance.conditional_logic:
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,

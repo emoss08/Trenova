@@ -18,10 +18,35 @@
 from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
 
+from organization.services.conditional_logic import OPERATION_MAPPING
 from organization.services.table_choices import get_column_names
 from utils.types import ModelUUID
 
 
+# fmt: off
+def build_conditional_logic_sql(conditional_logic: dict) -> str:
+    conditions = []
+    for condition in conditional_logic["conditions"]:
+        column = f"new.{condition['column']}"
+        operation = OPERATION_MAPPING[condition["operation"]]
+        value = condition["value"]
+
+        if condition["operation"] in ["contains", "icontains"]:
+            value = f"'%{value}%'"
+        elif condition["operation"] == "in":
+            value = f"({','.join(map(lambda x: f"'{x}'", value))})" if isinstance(value, list) else f"('{value}')"
+        elif condition["operation"] == "isnull":
+            conditions.append(f"{column} {operation}")
+        elif condition["operation"] == "eq":
+            conditions.append(f"{column} = '{value}'")
+            continue
+
+        conditions.append(f"{column} {operation} {value}")
+
+    return " AND ".join(conditions)
+
+
+# fmt: on
 def create_insert_field_string(*, fields: list[str]) -> str:
     excluded_fields = ["id", "created", "modified", "organization_id"]
     field_strings = [
@@ -46,27 +71,33 @@ def create_insert_function(
     function_name: str,
     fields: list[str],
     organization_id: ModelUUID,
+    conditional_logic: dict = None,
 ) -> None:
     fields_string = create_insert_field_string(fields=fields)
+    where_clause = (
+        build_conditional_logic_sql(conditional_logic) if conditional_logic else "TRUE"
+    )
+
+    print(f"Where Clause: {where_clause}")
+
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
-                CREATE or REPLACE FUNCTION {function_name}()
-                RETURNS trigger
-                LANGUAGE 'plpgsql'
-                as $BODY$
-                declare
-                begin
-                    if (tg_op = 'INSERT' AND NEW.organization_id = '{organization_id}')  then
-                    perform pg_notify('{listener_name}',
-                    json_build_object(
-                        {fields_string}
-                    )::text);
-                    end if;
-                    return null;
-                end
-                $BODY$;
-                """
+            CREATE OR REPLACE FUNCTION {function_name}()
+            RETURNS trigger
+            LANGUAGE 'plpgsql'
+            AS $BODY$
+            BEGIN
+                IF TG_OP = 'INSERT' AND NEW.organization_id = '{organization_id}' AND ({where_clause}) THEN
+                    PERFORM pg_notify('{listener_name}',
+                        json_build_object(
+                            {fields_string}
+                        )::text);
+                END IF;
+                RETURN NULL;
+            END
+            $BODY$;
+            """
         )
 
 
@@ -78,6 +109,7 @@ def create_insert_trigger(
     function_name: str,
     listener_name: str,
     organization_id: ModelUUID,
+    conditional_logic: dict = None,
 ) -> None:
     fields = get_column_names(table_name=table_name)
     create_insert_function(
@@ -85,6 +117,7 @@ def create_insert_trigger(
         fields=fields,
         listener_name=listener_name,
         organization_id=organization_id,
+        conditional_logic=conditional_logic,
     )
 
     with connection.cursor() as cursor:
@@ -121,9 +154,13 @@ def create_update_function(
     function_name: str,
     fields: list[str],
     organization_id: ModelUUID,
+    conditional_logic: dict = None,
 ) -> None:
     fields_string = create_insert_field_string(fields=fields)
     comparison_string = create_update_field_string(fields=fields)
+
+    print(f"fields_string: {fields_string}")
+    print(f"comparison_string: {comparison_string}")
 
     # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
     # and is safely quoted.
@@ -167,6 +204,7 @@ def create_update_trigger(
     function_name: str,
     listener_name: str,
     organization_id: ModelUUID,
+    conditional_logic: dict = None,
 ) -> None:
     fields = get_column_names(table_name=table_name)
 
@@ -175,6 +213,7 @@ def create_update_trigger(
         fields=fields,
         listener_name=listener_name,
         organization_id=organization_id,
+        conditional_logic=conditional_logic,
     )
 
     # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length

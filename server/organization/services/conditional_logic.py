@@ -32,13 +32,26 @@ AVAILABLE_OPERATIONS = [
     "isnull",
 ]
 
+OPERATION_MAPPING = {
+    "eq": "=",
+    "ne": "<>",
+    "gt": ">",
+    "ge": ">=",
+    "lt": "<",
+    "le": "<=",
+    "contains": "LIKE",  # Note: You'll need to format the value like '%value%'
+    "icontains": "ILIKE",  # Similarly, format the value like '%value%'
+    "in": "IN",  # Note: The value should be a list, formatted like "(val1, val2, ...)"
+    "isnull": "IS NULL",  # Special handling: no value should be appended
+    "not_isnull": "IS NOT NULL",  # Handling for not null
+}
+
 
 def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
     required_keys = [
         "name",
         "description",
         "model_name",
-        "join_fields",
         "conditions",
     ]
     for key in required_keys:
@@ -47,19 +60,9 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
                 f"Conditional Logic is missing required key: '{key}'"
             )
 
-    for join_field in data["join_fields"]:
-        join_field_keys = ["condition_id", "join_table", "join_field_name"]
-        for key in join_field_keys:
-            if key not in join_field:
-                raise ConditionalStructureError(
-                    f"Join Field is missing required key: '{key}'"
-                )
-
     for condition in data["conditions"]:
         for key in [
             "id",
-            "model_name",
-            "app_label",
             "column",
             "operation",
             "value",
@@ -97,12 +100,6 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
 
 
 def validate_model_fields_exist(*, data: ConditionalLogic) -> bool:
-    """Validate the join field is able to be joined on the table_change_table. If not, throw a ConditionalStructureError
-
-    Args:
-        data (ConditionalLogic): data to validate
-    """
-
     EXCLUDED_FIELDS = [
         "id",
         "organization",
@@ -118,15 +115,15 @@ def validate_model_fields_exist(*, data: ConditionalLogic) -> bool:
 
     fields = [field.name for field in model._meta.get_fields()]
 
-    for join_field in data["join_fields"]:
-        join_field_name = join_field["join_field_name"]
-        if join_field_name not in fields:
+    for conditional_field in data["conditions"]:
+        conditional_field_name = conditional_field["column"]
+        if conditional_field_name not in fields:
             raise ConditionalStructureError(
-                f"Join Field '{join_field_name}' does not exist on model '{data['model_name']}'"
+                f"Conditional Field '{conditional_field_name}' does not exist on model '{data['model_name']}'"
             )
-        if join_field_name in EXCLUDED_FIELDS:
+        if conditional_field_name in EXCLUDED_FIELDS:
             raise ConditionalStructureError(
-                f"Join Field '{join_field_name}' is not allowed for model '{data['model_name']}'"
+                f"Conditional Field '{conditional_field_name}' is not allowed for model '{data['model_name']}'"
             )
 
     return True
