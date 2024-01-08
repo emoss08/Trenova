@@ -1,0 +1,24 @@
+{
+  "name": "Join Customer and Shipment Condition",
+  "description": "Send out table change alert when Customer ID is 123",
+  "model_name": "shipment",
+  "app_label": "Shipment",
+  "join_fields": [
+    {
+      "condition_id": 1,
+      "join_table": "customer",
+      "join_field_name": "customer_id"
+    }
+  ],
+  "conditions": [
+    {
+      "id": 1,
+      "model_name": "customer",
+      "app_label": "Customer",
+      "column": "id",
+      "operation": "eq",
+      "value": 1,
+      "data_type": "string"
+    }
+  ]
+}
