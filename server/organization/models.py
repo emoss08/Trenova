@@ -1288,8 +1288,6 @@ class TableChangeAlert(TimeStampedModel):
                 code="invalid",
             )
 
-        print("conditional logic", self.conditional_logic)
-
         if self.conditional_logic:
             try:
                 from organization.services.conditional_logic import (
