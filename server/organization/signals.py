@@ -15,16 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 from typing import Any
-
-from django.conf import settings
-from django.db import connections
-from django.db.models.signals import post_migrate
-from django.dispatch import Signal, receiver
 
 from accounting.models import AccountingControl
 from billing.models import BillingControl
 from dispatch.models import DispatchControl, FeasibilityToolControl
+from django.conf import settings
+from django.db import connections
+from django.db.models.signals import post_migrate
+from django.dispatch import Signal, receiver
 from invoicing.models import InvoiceControl
 from organization import models
 from organization.models import EmailControl
@@ -36,6 +36,11 @@ from organization.services.table_change import (
 )
 from route.models import RouteControl
 from shipment.models import ShipmentControl
+
+# Logging Configuration
+logger = logging.getLogger(__name__)
+
+debug, error, info = logger.debug, logger.error, logger.info
 
 restart_psql_listener_signal = Signal()
 
@@ -421,6 +426,7 @@ def delete_and_recreate_trigger_and_function(
         return
 
     if old_instance.database_action != instance.database_action:
+        info(f"Database action changed for {instance.name} on {instance.table}")
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,
@@ -429,8 +435,10 @@ def delete_and_recreate_trigger_and_function(
         create_trigger_based_on_db_action(
             instance=instance, organization_id=instance.organization_id
         )
+        info(f"Trigger and function recreated for {instance.table}")
 
     if old_instance.table != instance.table:
+        info(f"Table name changed for {instance.table} on {instance.name}")
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,
@@ -439,17 +447,21 @@ def delete_and_recreate_trigger_and_function(
         create_trigger_based_on_db_action(
             instance=instance, organization_id=instance.organization_id
         )
+        info(f"Trigger and function recreated for {instance.table}")
 
     # Dropped if the conditional logic has changed.
     if old_instance.conditional_logic != instance.conditional_logic:
+        info(f"Conditional logic changed for {instance.name} on {instance.table}")
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,
             table_name=old_instance.table,
         )
+
         create_trigger_based_on_db_action(
             instance=instance, organization_id=instance.organization_id
         )
+        info(f"Trigger and function recreated for {instance.table}")
 
 
 def create_notification_settings(

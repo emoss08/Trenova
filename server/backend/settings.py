@@ -216,6 +216,12 @@ LOGGING = {
             "propagate": False,
             "formatter": "verbose",
         },
+        "organization": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+            "formatter": "verbose",
+        },
         "django": {
             "handlers": ["console"],
             "level": "INFO",

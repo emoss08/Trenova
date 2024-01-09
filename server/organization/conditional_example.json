@@ -1,8 +1,8 @@
 {
-  "name": "Join Customer and Shipment Condition",
+  "name": "Conditional for division Code",
   "description": "Send out table change alert when Customer ID is 123",
-  "model_name": "shipment",
-  "app_label": "Shipment",
+  "model_name": "division_code",
+  "app_label": "Organization",
   "conditions": [
     {
       "id": 1,

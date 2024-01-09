@@ -17,7 +17,6 @@
 
 from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
-
 from organization.services.conditional_logic import OPERATION_MAPPING
 from organization.services.table_choices import get_column_names
 from utils.types import ModelUUID
@@ -159,9 +158,6 @@ def create_update_function(
     fields_string = create_insert_field_string(fields=fields)
     comparison_string = create_update_field_string(fields=fields)
 
-    print(f"fields_string: {fields_string}")
-    print(f"comparison_string: {comparison_string}")
-
     # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
     # and is safely quoted.
     quoted_function_name = truncate_name(
@@ -170,9 +166,6 @@ def create_update_function(
     quoted_listener_name = truncate_name(
         listener_name, connection.ops.max_name_length()
     )
-
-    # Note: fields_string and comparison_string should be constructed in a way that they are safe
-    # from SQL injection. If they are based on user input, they should be carefully reviewed and sanitized.
 
     with connection.cursor() as cursor:
         cursor.execute(

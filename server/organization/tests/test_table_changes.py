@@ -122,6 +122,50 @@ def test_delete_table_change_removes_trigger() -> None:
     assert function_check_2 is False
 
 
+def test_conditional_log_drops_and_recreates_trigger() -> None:
+    """
+    Tests that the trigger is removed from the database when a table change alert is deleted.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    table_change = factories.TableChangeAlertFactory(database_action="INSERT")
+
+    trigger_check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
+    function_check = check_function_exists(function_name=table_change.function_name)
+    assert trigger_check is True
+    assert function_check is True
+
+    table_change.conditional_logic = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID is 123",
+        "model_name": "shipment",
+        "app_label": "Shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "model_name": "customer",
+                "app_label": "Customer",
+                "column": "id",
+                "operation": "eq",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+    table_change.save()
+
+    trigger_check_2 = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
+    function_check_2 = check_function_exists(function_name=table_change.function_name)
+
+    assert trigger_check_2 is True
+    assert function_check_2 is True
+
+
 def test_table_change_database_action_update() -> None:
     """Test changing the database action removes and adds the proper function, trigger, and listener
     names.
