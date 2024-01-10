@@ -18,13 +18,14 @@
 import logging
 from typing import Any
 
-from accounting.models import AccountingControl
-from billing.models import BillingControl
-from dispatch.models import DispatchControl, FeasibilityToolControl
 from django.conf import settings
 from django.db import connections
 from django.db.models.signals import post_migrate
 from django.dispatch import Signal, receiver
+
+from accounting.models import AccountingControl
+from billing.models import BillingControl
+from dispatch.models import DispatchControl, FeasibilityToolControl
 from invoicing.models import InvoiceControl
 from organization import models
 from organization.models import EmailControl

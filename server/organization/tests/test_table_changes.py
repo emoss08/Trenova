@@ -21,6 +21,7 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+
 from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.exceptions import ConditionalStructureError
@@ -30,6 +31,7 @@ from organization.services.conditional_logic import (
     validate_model_fields_exist,
 )
 from organization.services.psql_triggers import (
+    build_conditional_logic_sql,
     check_function_exists,
     check_trigger_exists,
 )
@@ -483,7 +485,7 @@ def test_conditional_isnull_operation_requires_null() -> None:
 
     assert (
         excinfo.value.args[0]
-        == "Operation 'isnull' should not have a value in condition ID 1"
+        == "Operation 'isnull or not_isnull' should not have a value in condition ID 1"
     )
 
 
@@ -515,7 +517,7 @@ def test_conditional_contains_operation_requires_string() -> None:
 
     assert (
         excinfo.value.args[0]
-        == "Operation 'contains' expects a string value in condition ID 1"
+        == "Operation 'contains or icontains' expects a string value in condition ID 1"
     )
 
 
@@ -636,3 +638,201 @@ def test_validate_model_field_with_excluded_field() -> None:
         excinfo.value.args[0]
         == "Conditional Field 'organization' is not allowed for model 'shipment'"
     )
+
+
+def test_build_eq_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID is 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "eq",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization = '123'"
+
+
+def test_build_isnull_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID is 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "isnull",
+                "value": None,
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization IS NULL"
+
+
+def test_build_less_than_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID is 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "lt",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization < '123'"
+
+
+def test_greater_than_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID is 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "gt",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization > '123'"
+
+
+def test_build_contains_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID contains 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "contains",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization LIKE '%123%'"
+
+
+def test_build_icontains_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID contains 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "icontains",
+                "value": "123",
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization ILIKE '%123%'"
+
+
+def test_build_in_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID contains 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "in",
+                "value": ["123", "456"],
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization IN ('123','456')"
+
+
+def test_build_not_in_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when Customer ID contains 123",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "not_in",
+                "value": ["123", "456"],
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization NOT IN ('123','456')"
+
+
+def test_build_not_isnull_conditional_logic_sql() -> None:
+    data = {
+        "name": "Join Customer and Shipment Condition",
+        "description": "Send out table change alert when organization is not null",
+        "model_name": "shipment",
+        "app_label": "shipment",
+        "conditions": [
+            {
+                "id": 1,
+                "column": "organization",
+                "operation": "not_isnull",
+                "value": None,
+                "data_type": "string",
+            }
+        ],
+    }
+
+    sql = build_conditional_logic_sql(conditional_logic=data)
+
+    assert sql == "new.organization IS NOT NULL"

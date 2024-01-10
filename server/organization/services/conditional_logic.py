@@ -29,7 +29,9 @@ AVAILABLE_OPERATIONS = [
     "contains",
     "icontains",
     "in",
+    "not_in",
     "isnull",
+    "not_isnull",
 ]
 
 OPERATION_MAPPING = {
@@ -39,11 +41,12 @@ OPERATION_MAPPING = {
     "ge": ">=",
     "lt": "<",
     "le": "<=",
-    "contains": "LIKE",  # Note: You'll need to format the value like '%value%'
-    "icontains": "ILIKE",  # Similarly, format the value like '%value%'
-    "in": "IN",  # Note: The value should be a list, formatted like "(val1, val2, ...)"
-    "isnull": "IS NULL",  # Special handling: no value should be appended
-    "not_isnull": "IS NOT NULL",  # Handling for not null
+    "contains": "LIKE",
+    "icontains": "ILIKE",
+    "in": "IN",
+    "not_in": "NOT IN",
+    "isnull": "IS NULL",
+    "not_isnull": "IS NOT NULL",
 }
 
 
@@ -79,21 +82,26 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
             )
 
         # Additional checks for specific operations
-        if condition["operation"] == "in" and not isinstance(condition["value"], list):
+        if condition["operation"] in ("in", "not_in") and not isinstance(
+            condition["value"], list
+        ):
             raise ConditionalStructureError(
                 f"Operation 'in' expects a list value in condition ID {condition['id']}"
             )
 
-        if condition["operation"] == "isnull" and condition["value"] is not None:
+        if (
+            condition["operation"] in ("isnull", "not_isnull")
+            and condition["value"] is not None
+        ):
             raise ConditionalStructureError(
-                f"Operation 'isnull' should not have a value in condition ID {condition['id']}"
+                f"Operation 'isnull or not_isnull' should not have a value in condition ID {condition['id']}"
             )
 
         if condition["operation"] == "contains" and not isinstance(
             condition["value"], str
         ):
             raise ConditionalStructureError(
-                f"Operation 'contains' expects a string value in condition ID {condition['id']}"
+                f"Operation 'contains or icontains' expects a string value in condition ID {condition['id']}"
             )
 
     return True

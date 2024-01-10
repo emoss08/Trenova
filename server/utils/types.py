@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 from enum import Enum
-from typing import Any, Literal, TypedDict, Union
+from typing import Any, TypedDict, Union
 from uuid import UUID
 
 from django.db.models import UUIDField
@@ -38,19 +38,6 @@ type Coordinates = tuple[
     tuple[float | None, float | None], tuple[float | None, float | None]
 ] | None
 type Point = tuple[float | None, float | None] | Any
-
-type Operations = Literal[
-    "eq",
-    "ne",
-    "gt",
-    "ge",
-    "lt",
-    "le",
-    "contains",
-    "icontains",
-    "in",
-    "isnull",
-]
 
 
 class BillingClientActions(Enum):
@@ -126,7 +113,7 @@ class Condition(TypedDict):
 
     id: int  # ID of condition
     column: str  # Column that has the value to compare to.
-    operation: Operations  # Operation to perform on the column
+    operation: str  # Operation to perform on the column
     value: Any  # Value to compare to
     data_type: str  # Data type of the column
 
