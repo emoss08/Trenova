@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -82,4 +82,4 @@ class ReportColumnForm(forms.ModelForm):
 
     class Meta:
         model = models.ReportColumn
-        fields = ("custom_report", "column_name", "column_shipment")
+        fields = ("custom_report", "column_name", "column_order")

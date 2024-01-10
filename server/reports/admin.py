@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -48,7 +48,7 @@ class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomR
                 "fields": (
                     "custom_report",
                     "column_name",
-                    "column_shipment",
+                    "column_order",
                 )
             },
         ),
