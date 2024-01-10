@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 import typing
 
 from django.db import connection, transaction
@@ -25,6 +26,7 @@ from organization.services.conditional_logic import (
     OPERATION_MAPPING,
 )
 from organization.services.table_choices import get_column_names
+from utils.models import OperationChoices
 from utils.types import ConditionalLogic, ModelUUID
 
 
@@ -53,9 +55,9 @@ def format_value_for_operation(operation: str, value: typing.Any) -> str | None:
     if operation not in AVAILABLE_OPERATIONS:
         raise InvalidOperationError(f"Operation {operation} is not supported.")
 
-    if operation in {"contains", "icontains"}:
+    if operation in {OperationChoices.CONTAINS, OperationChoices.ICONTAINS}:
         return f"'%{value}%'"
-    elif operation in {"in", "not_in"}:
+    elif operation in {OperationChoices.IN, OperationChoices.NOT_IN}:
         if isinstance(value, list):
             return f"({','.join([f'\'{x}\'' for x in value])})"
         else:
@@ -88,7 +90,7 @@ def build_condition_string(column: str, operation: str, value) -> str:
         raise InvalidOperationError(f"Operation {operation} is not supported.")
 
     formatted_value = format_value_for_operation(operation, value)
-    if operation in {"isnull", "not_isnull"}:
+    if operation in {OperationChoices.IS_NULL, OperationChoices.IS_NOT_NULL}:
         return f"{column} {OPERATION_MAPPING[operation]}"
     else:
         return f"{column} {OPERATION_MAPPING[operation]} {formatted_value}"
@@ -481,3 +483,39 @@ def check_function_exists(*, function_name: str) -> bool:
         query = "SELECT EXISTS (SELECT 1 FROM pg_proc WHERE proname = %s)"
         cursor.execute(query, [function_name])
         return bool(cursor.fetchone()[0])
+
+
+def _get_routine_definition(
+    *, routine_name: str, routine_schema: str = "public"
+) -> str:
+    """Retrieves the definition of a specified routine from the database.
+
+    This function queries the information_schema of the PostgreSQL database to get the definition
+    of a routine (such as a function or procedure) based on its name. It only searches within the
+    'public' schema.
+
+    Args:
+        routine_name (str): The name of the routine whose definition is to be retrieved.
+
+    Returns:
+        str: The definition of the routine as a string. If the routine is not found, returns None.
+
+    Raises:
+        OperationalError: If there's an issue executing the database query.
+
+    Notes:
+        - This function is intended for internal use (prefixed with an underscore).
+        - The routine is expected to be within the 'public' schema of the database.
+        - The function uses Django's database connection to execute the SQL query.
+    """
+    with connection.cursor() as cursor:
+        query = """
+        SELECT
+            routine_name,
+            routine_definition
+        FROM information_schema.routines
+        WHERE routine_name = %s
+        AND routine_schema = %s
+        """
+        cursor.execute(query, [routine_name, routine_schema])
+        return cursor.fetchone()[1]
