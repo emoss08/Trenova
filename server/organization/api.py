@@ -252,20 +252,6 @@ class TableChangeAlertViewSet(viewsets.ModelViewSet):
 
         queryset: QuerySet[models.TableChangeAlert] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "organization_id",
-            "is_active",
-            "name",
-            "database_action",
-            "table",
-            "description",
-            "email_profile_id",
-            "function_name",
-            "trigger_name",
-            "listener_name",
-            "effective_date",
-            "expiration_date",
         )
         return queryset
 

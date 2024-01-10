@@ -80,6 +80,7 @@ export type QueryKeys =
   | "reason-code-table-data"
   | "reasonCodes"
   | "routeControl"
+  | "table-change-alert-data"
   | "trailers"
   | "trailer-table-data"
   | "tractors"

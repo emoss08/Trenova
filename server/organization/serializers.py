@@ -216,6 +216,11 @@ class EmailLogSerializer(GenericSerializer):
 
         model = models.EmailLog
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class TaxRateSerializer(GenericSerializer):
@@ -243,7 +248,18 @@ class TableChangeAlertSerializer(GenericSerializer):
         """
 
         model = models.TableChangeAlert
-        read_only_fields = ("function_name", "trigger_name", "listener_name")
+        fields = "__all__"
+        read_only_fields = (
+            "function_name",
+            "trigger_name",
+            "listener_name",
+            "organization",
+            "business_unit",
+        )
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the TableChangeAlert model.

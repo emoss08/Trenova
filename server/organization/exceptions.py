@@ -58,3 +58,11 @@ class ConditionalStructureError(Exception):
     """
 
     pass
+
+
+class InvalidOperationError(Exception):
+    """
+    Exception raised when the conditional logic operation is not in the list of available operations
+    """
+
+    pass
