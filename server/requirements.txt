@@ -40,14 +40,14 @@ pandas==2.1.4
 phonenumbers==8.13.27
 Pillow==10.2.0
 psutil==5.9.7
-psycopg[binary]==3.1.16
+psycopg[binary]==3.1.17
 pyarrow==14.0.2
 pyftpdlib==1.5.9
 pypdf==3.17.4
 python-dateutil==2.8.2
 pytz==2023.3.post1
 redis==5.0.1
-reportlab==4.0.8
+reportlab==4.0.9
 requests==2.31.0
 rich==13.7.0
 sympy==1.12
