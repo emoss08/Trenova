@@ -582,7 +582,6 @@ def test_validate_model_fields_with_invalid_conditional() -> None:
     Returns:
         None: This function does not return anything.
     """
-
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -614,7 +613,6 @@ def test_validate_model_field_with_excluded_field() -> None:
     Returns:
         None: This function does not return anything.
     """
-
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -641,6 +639,11 @@ def test_validate_model_field_with_excluded_field() -> None:
 
 
 def test_build_eq_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for eq operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -663,6 +666,11 @@ def test_build_eq_conditional_logic_sql() -> None:
 
 
 def test_build_isnull_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for isnull operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -685,6 +693,11 @@ def test_build_isnull_conditional_logic_sql() -> None:
 
 
 def test_build_less_than_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for less than operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -707,6 +720,11 @@ def test_build_less_than_conditional_logic_sql() -> None:
 
 
 def test_greater_than_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for greater than operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID is 123",
@@ -729,6 +747,11 @@ def test_greater_than_conditional_logic_sql() -> None:
 
 
 def test_build_contains_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for contains operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID contains 123",
@@ -751,6 +774,11 @@ def test_build_contains_conditional_logic_sql() -> None:
 
 
 def test_build_icontains_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for icontains operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID contains 123",
@@ -773,6 +801,11 @@ def test_build_icontains_conditional_logic_sql() -> None:
 
 
 def test_build_in_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for in operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID contains 123",
@@ -795,6 +828,11 @@ def test_build_in_conditional_logic_sql() -> None:
 
 
 def test_build_not_in_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for not_in operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when Customer ID contains 123",
@@ -817,6 +855,11 @@ def test_build_not_in_conditional_logic_sql() -> None:
 
 
 def test_build_not_isnull_conditional_logic_sql() -> None:
+    """Validate that the conditional logic is built correctly for not_isnull operation.
+
+    Returns:
+        None: This function does not return anything.
+    """
     data = {
         "name": "Join Customer and Shipment Condition",
         "description": "Send out table change alert when organization is not null",
