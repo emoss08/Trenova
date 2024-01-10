@@ -17,15 +17,16 @@
 from django.apps import apps
 
 from organization.exceptions import ConditionalStructureError
+from utils.models import OperationChoices
 from utils.types import ConditionalLogic
 
 AVAILABLE_OPERATIONS = [
     "eq",
     "ne",
     "gt",
-    "ge",
+    "gte",
     "lt",
-    "le",
+    "lte",
     "contains",
     "icontains",
     "in",
@@ -38,9 +39,9 @@ OPERATION_MAPPING = {
     "eq": "=",
     "ne": "<>",
     "gt": ">",
-    "ge": ">=",
+    "gte": ">=",
     "lt": "<",
-    "le": "<=",
+    "lte": "<=",
     "contains": "LIKE",
     "icontains": "ILIKE",
     "in": "IN",
@@ -82,24 +83,27 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
             )
 
         # Additional checks for specific operations
-        if condition["operation"] in ("in", "not_in") and not isinstance(
-            condition["value"], list
-        ):
+        if condition["operation"] in (
+            OperationChoices.IN,
+            OperationChoices.NOT_IN,
+        ) and not isinstance(condition["value"], list):
             raise ConditionalStructureError(
                 f"Operation 'in' expects a list value in condition ID {condition['id']}"
             )
 
         if (
-            condition["operation"] in ("isnull", "not_isnull")
+            condition["operation"]
+            in (OperationChoices.IS_NULL, OperationChoices.IS_NOT_NULL)
             and condition["value"] is not None
         ):
             raise ConditionalStructureError(
                 f"Operation 'isnull or not_isnull' should not have a value in condition ID {condition['id']}"
             )
 
-        if condition["operation"] == "contains" and not isinstance(
-            condition["value"], str
-        ):
+        if condition["operation"] in (
+            OperationChoices.CONTAINS,
+            OperationChoices.ICONTAINS,
+        ) and not isinstance(condition["value"], str):
             raise ConditionalStructureError(
                 f"Operation 'contains or icontains' expects a string value in condition ID {condition['id']}"
             )
