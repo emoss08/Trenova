@@ -31,6 +31,7 @@ from organization.services.conditional_logic import (
     validate_model_fields_exist,
 )
 from organization.services.psql_triggers import (
+    _get_routine_definition,
     build_conditional_logic_sql,
     check_function_exists,
     check_trigger_exists,
@@ -879,3 +880,71 @@ def test_build_not_isnull_conditional_logic_sql() -> None:
     sql = build_conditional_logic_sql(conditional_logic=data)
 
     assert sql == "new.organization IS NOT NULL"
+
+
+def test_create_insert_function_with_conditional() -> None:
+    """Test that the insert function is created with conditional logic.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    table_change = factories.TableChangeAlertFactory(
+        database_action="INSERT",
+        conditional_logic={
+            "name": "Join Customer and Shipment Condition",
+            "description": "Send out table change alert when Customer ID contains 123",
+            "model_name": "shipment",
+            "app_label": "shipment",
+            "conditions": [
+                {
+                    "id": 1,
+                    "column": "organization",
+                    "operation": "contains",
+                    "value": "123",
+                    "data_type": "string",
+                }
+            ],
+        },
+    )
+
+    trigger_check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
+    function_check = check_function_exists(function_name=table_change.function_name)
+
+    assert trigger_check is True
+    assert function_check is True
+
+
+def test_routine_definition_contains_conditional() -> None:
+    """Test the routine definition for the table change alert contains the proper conditional
+    logic.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    table_change = factories.TableChangeAlertFactory(
+        database_action="INSERT",
+        conditional_logic={
+            "name": "Join Customer and Shipment Condition",
+            "description": "Send out table change alert when Customer ID contains 123",
+            "model_name": "shipment",
+            "app_label": "shipment",
+            "conditions": [
+                {
+                    "id": 1,
+                    "column": "organization",
+                    "operation": "contains",
+                    "value": "123",
+                    "data_type": "string",
+                }
+            ],
+        },
+    )
+
+    route_definition = _get_routine_definition(routine_name=table_change.function_name)
+
+    assert (
+        f"IF TG_OP = 'INSERT' AND NEW.organization_id = '{table_change.organization_id}' AND (new.organization LIKE '%123%')"
+        in route_definition
+    )

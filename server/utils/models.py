@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -236,3 +236,23 @@ class TimezoneChoices(models.TextChoices):
     MOUNTAIN = "America/Denver", _("Mountain")
     CENTRAL = "America/Chicago", _("Central")
     EASTERN = "America/New_York", _("Eastern")
+
+
+@final
+class OperationChoices(models.TextChoices):
+    """
+    Operation choices
+    """
+
+    EQUALS = "eq", _("Equals")
+    NOT_EQUALS = "ne", _("Not Equals")
+    GREATER_THAN = "gt", _("Greater Than")
+    GREATER_THAN_OR_EQUAL = "gte", _("Greater Than or Equal")
+    LESS_THAN = "lt", _("Less Than")
+    LESS_THAN_OR_EQUAL = "lte", _("Less Than or Equal")
+    CONTAINS = "contains", _("Contains")
+    ICONTAINS = "icontains", _("Icontains")
+    IN = "in", _("In")
+    NOT_IN = "not_in", _("Not In")
+    IS_NULL = "isnull", _("Is Null")
+    IS_NOT_NULL = "not_isnull", _("Is Not Null")
