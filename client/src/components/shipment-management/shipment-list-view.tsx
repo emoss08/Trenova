@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -34,7 +34,7 @@ export function ShipmentListView({
   watch: UseFormWatch<ShipmentSearchForm>;
 }) {
   return (
-    <>
+    <div className="flex">
       <div className="w-1/4">
         <ShipmentAsideMenus
           control={control}
@@ -49,6 +49,6 @@ export function ShipmentListView({
           watch={watch}
         />
       </div>
-    </>
+    </div>
   );
 }

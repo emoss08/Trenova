@@ -68,6 +68,7 @@ export type QueryKeys =
   | "fleetCodes"
   | "gl-account-table-data"
   | "glAccounts"
+  | "googleAPI"
   | "hazardous-material-table-data"
   | "hazardousMaterials"
   | "invoiceControl"

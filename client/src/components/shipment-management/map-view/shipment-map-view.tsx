@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -25,7 +25,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { GOOGLE_API_KEY } from "@/lib/constants";
 import { useShipmentMapStore, useShipmentStore } from "@/stores/ShipmentStore";
 import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
@@ -33,6 +32,9 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import GoogleMapReact from "google-map-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useGoogleAPI } from "@/hooks/useQueries";
+import { GoogleAPI } from "@/types/organization";
+import { Loader2 } from "lucide-react";
 
 const markers = [
   { id: 1, lat: 37.78, lng: -122.41, label: "San Francisco" },
@@ -76,7 +78,7 @@ function MapMarker({ text }: MapMarkerProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex h-4 w-4 cursor-auto items-center justify-center rounded-full border-2 border-white bg-black" />
+          <div className="relative h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-auto items-center justify-center rounded-full border-2 border-white bg-black" />
         </TooltipTrigger>
         <TooltipContent>{text}</TooltipContent>
       </Tooltip>
@@ -112,55 +114,64 @@ export function ShipmentMapView() {
     [],
   );
 
-  return (
+  // Get Google API Key
+  const { googleAPIData, isLoading } = useGoogleAPI();
+  const apiKey = (googleAPIData as GoogleAPI)?.apiKey as string;
+
+  return isLoading ? (
     <>
-      <div className="mx-auto flex h-[700px] w-screen space-x-10">
-        <ShipmentMapAside />
-        <div className="relative grow">
-          {/* Absolute positioned map options */}
-          <div className="absolute right-0 top-0 z-10 p-2">
-            <ShipmentMapOptions />
-          </div>
-          {/* Absolute positioned search field */}
-          <div className="absolute left-0 top-0 z-10 p-2">
-            <InputField
-              name="searchMapQuery"
-              control={control}
-              placeholder="Search Shipments..."
-              className="pl-10 shadow-md"
-              icon={
-                <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
-              }
-            />
-          </div>
-          {/* Absolute positioned zoom controls */}
-          <div className="absolute bottom-0 right-0 z-10 mb-4 p-2">
-            <ShipmentMapZoom map={map} />
-          </div>
-          {/* Google Map */}
-          <GoogleMapReact
-            bootstrapURLKeys={{ key: GOOGLE_API_KEY as string }}
-            defaultCenter={defaultProps.center}
-            defaultZoom={defaultProps.zoom}
-            style={{ width: "100%", height: "100%" }}
-            layerTypes={mapLayers}
-            yesIWantToUseGoogleMapApiInternals
-            onGoogleApiLoaded={handleApiLoaded}
-            options={{
-              mapTypeId: mapType,
-              disableDefaultUI: true,
-            }}
-          >
-            {markers.map((marker) => (
-              <MapMarker
-                key={marker.id}
-                lat={marker.lat}
-                lng={marker.lng}
-                text={marker.label}
-              />
-            ))}
-          </GoogleMapReact>
+      <div className="flex flex-col items-center justify-center">
+        <Loader2 className="h-20 w-20 animate-spin text-foreground" />
+        <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+      </div>
+    </>
+  ) : (
+    <div className="mx-auto flex h-[700px] w-screen space-x-10">
+      <ShipmentMapAside />
+      <div className="relative grow">
+        {/* Absolute positioned map options */}
+        <div className="absolute right-0 top-0 z-10 p-2">
+          <ShipmentMapOptions />
         </div>
+        {/* Absolute positioned search field */}
+        <div className="absolute left-0 top-0 z-10 p-2">
+          <InputField
+            name="searchMapQuery"
+            control={control}
+            placeholder="Search Shipments..."
+            className="pl-10 shadow-md"
+            icon={
+              <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
+            }
+          />
+        </div>
+        {/* Absolute positioned zoom controls */}
+        <div className="absolute bottom-0 right-0 z-10 mb-4 p-2">
+          <ShipmentMapZoom map={map} />
+        </div>
+        {/* Google Map */}
+        <GoogleMapReact
+          bootstrapURLKeys={{ key: apiKey }}
+          defaultCenter={defaultProps.center}
+          defaultZoom={defaultProps.zoom}
+          style={{ width: "100%", height: "100%" }}
+          layerTypes={mapLayers}
+          yesIWantToUseGoogleMapApiInternals
+          onGoogleApiLoaded={handleApiLoaded}
+          options={{
+            mapTypeId: mapType,
+            disableDefaultUI: true,
+          }}
+        >
+          {markers.map((marker) => (
+            <MapMarker
+              key={marker.id}
+              lat={marker.lat}
+              lng={marker.lng}
+              text={marker.label}
+            />
+          ))}
+        </GoogleMapReact>
       </div>
       {sendMessageDialogOpen && (
         <SendMessageDialog
@@ -174,6 +185,6 @@ export function ShipmentMapView() {
           onOpenChange={() => setReviewLogDialogOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }

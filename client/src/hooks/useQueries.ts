@@ -51,6 +51,7 @@ import {
   getEmailControl,
   getEmailProfiles,
   getFeatureFlags,
+  getGoogleApiInformation,
   getInvoiceControl,
   getRouteControl,
   getShipmentControl,
@@ -811,7 +812,6 @@ export function useFeatureFlags() {
 
 /**
  * Get the Logged-in Users Organization
- *
  */
 export function useUserOrganization() {
   const queryClient = useQueryClient();
@@ -832,4 +832,26 @@ export function useUserOrganization() {
     userOrganizationLoading,
     userOrganizationError,
   };
+}
+
+/**
+ * Get the Google API information for the organization
+ */
+export function useGoogleAPI() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: googleAPIData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["googleAPI"] as QueryKeys[],
+    queryFn: async () => getGoogleApiInformation(),
+    initialData: () => {
+      return queryClient.getQueryData(["googleAPI"] as QueryKeys[]);
+    },
+    staleTime: Infinity,
+  });
+
+  return { googleAPIData, isLoading, isError };
 }

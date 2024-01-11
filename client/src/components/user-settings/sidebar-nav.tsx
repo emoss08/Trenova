@@ -49,7 +49,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
 
   return (
     <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-      <aside className="w-56">
+      <aside className="mb-1 md:w-56">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (
             <div key={group} className="space-y-2">

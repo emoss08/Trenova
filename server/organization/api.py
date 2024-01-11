@@ -219,7 +219,7 @@ class TaxRateViewSet(viewsets.ModelViewSet):
         Returns:
             A queryset[models.TaxRate]: A queryset of tax rate objects
         """
-        queryset: QuerySet[models.TaxRate] = self.queryset.filter(
+        queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",

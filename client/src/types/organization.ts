@@ -95,6 +95,17 @@ export type FeatureFlag = {
   paidOnly: boolean;
 };
 
+export type GoogleAPI = BaseModel & {
+  id: string;
+  name: string;
+  apiKey?: string | null;
+  mileageUnit: string;
+  trafficModel: string;
+  addCustomerLocation: boolean;
+  addLocation: boolean;
+  autoGeocode: boolean;
+};
+
 /** Base Monta Interface
  *
  * @note This interface is used for all Monta models that have the following fields:

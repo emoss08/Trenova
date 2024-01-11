@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -49,4 +49,4 @@ def get_organization_google_api(
     try:
         return models.GoogleAPI.objects.get(organization=organization)
     except models.GoogleAPI.DoesNotExist:
-        return None
+        raise exceptions.GoogleAPINotFoundError(organization.name)

@@ -418,6 +418,11 @@ urlpatterns = [
         org_api.UserOrganizationView.as_view(),
         name="user-organization",
     ),
+    path(
+        "api/organization/google_api_details/",
+        integration_api.GoogleAPIDetailViewSet.as_view(),
+        name="organization-google-api-details",
+    ),
     path("graphql", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
 ]
 

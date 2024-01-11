@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -37,8 +37,6 @@ export const THEME_KEY = import.meta.env.VITE_THEME_KEY as string;
 // Environment constant
 export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT as string;
 
-export const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY as string;
-
 export const DEBOUNCE_DELAY = 500; // debounce delay in ms
 
 /**
@@ -53,23 +51,6 @@ export const tableStatusChoices = [
   },
   {
     value: "I",
-    label: "Inactive",
-    icon: MinusCircledIcon,
-  },
-] satisfies TableOptionProps[];
-
-/**
- * Returns status choices when using TableFacetedFilters.
- * @returns An array of table faceted filter choices.
- */
-export const boolTableStatusChoices = [
-  {
-    value: true,
-    label: "Active",
-    icon: CircleIcon,
-  },
-  {
-    value: false,
     label: "Inactive",
     icon: MinusCircledIcon,
   },

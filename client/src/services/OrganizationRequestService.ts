@@ -27,6 +27,7 @@ import {
   EmailControl,
   EmailProfile,
   FeatureFlag,
+  GoogleAPI,
   Organization,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
@@ -187,4 +188,13 @@ export async function getDepots(): Promise<Depot[]> {
 export async function getFeatureFlags(): Promise<FeatureFlag[]> {
   const response = await axios.get("/organization_feature_flags/");
   return response.data;
+}
+
+/**
+ * Fetches the Google api information for the organization from the server.
+ * @returns A promise that resolves to an array of Google api information.
+ */
+export async function getGoogleApiInformation(): Promise<GoogleAPI> {
+  const response = await axios.get("/organization/google_api_details/");
+  return response.data.results;
 }

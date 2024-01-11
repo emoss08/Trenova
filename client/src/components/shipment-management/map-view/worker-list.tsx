@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -153,7 +153,7 @@ function WorkerRegBadge({
       {isExpired && (
         <Tooltip>
           <TooltipTrigger>
-            <Badge className="absolute right-0 top-0 h-5 w-32 rounded-none rounded-bl rounded-tr bg-destructive p-1 text-xs text-destructive-foreground hover:bg-destructive/50 hover:text-background">
+            <Badge className="absolute right-0 top-0 h-5 w-[130px] rounded-none rounded-bl rounded-tr bg-destructive p-1 text-xs text-destructive-foreground hover:bg-destructive/50 hover:text-background">
               Attention Required
             </Badge>
           </TooltipTrigger>

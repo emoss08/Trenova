@@ -303,12 +303,6 @@ class UserDetailView(views.APIView):
     def get(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         user = request.user
 
-        # Implement caching (if needed)
-        # cache_key = f"user_details_{user.id}"
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     return response.Response(cached_data, status=status.HTTP_200_OK)
-
         serializer = serializers.UserSerializer(user)
         data = serializer.data
 
