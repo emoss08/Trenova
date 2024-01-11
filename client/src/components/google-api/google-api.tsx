@@ -32,6 +32,60 @@ import { routeDistanceUnitChoices, routeModelChoices } from "@/lib/choices";
 import { useGoogleAPI } from "@/hooks/useQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
+
+function GoogleAPIAlert() {
+  return (
+    <Alert className="mb-5 bg-foreground text-background">
+      <InfoIcon className="h-5 w-5 stroke-background" />
+      <AlertTitle>Information!</AlertTitle>
+      <AlertDescription>
+        <ul className="list-disc">
+          <li>
+            <strong>Google API Key:</strong> Required to access Google's mapping
+            services, including routing and geocoding. Ensure you have the
+            correct API permissions and billing set up in your Google Cloud
+            Platform account. For more details, see{" "}
+            <a
+              href="https://developers.google.com/maps/documentation/javascript/get-api-key"
+              target="_blank"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              Google's API Key Documentation
+            </a>
+          </li>
+          <li>
+            <strong>Mileage Unit:</strong> Choose the unit for distance
+            measurement (e.g., imperial, metric). For more details, see{" "}
+            <a
+              href="https://support.google.com/merchants/answer/14156166?hl=en"
+              target="_blank"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              Google's Unit Systems Documentation
+            </a>
+          </li>
+          <li>
+            <strong>Traffic Model:</strong> Determines how traffic conditions
+            affect route calculation. For more details, see{" "}
+            <a
+              href="https://developers.google.com/maps/documentation/distance-matrix/distance-matrix#traffic_model"
+              target="_blank"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              Google's Traffic Model Documentation
+            </a>
+            .
+          </li>
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -55,9 +109,9 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
     {
       method: "PUT",
       path: "/organization/google_api_details/", // Does not require an ID
-      successMessage: "Google API updated successfully.",
+      successMessage: "Google API settings updated successfully.",
       queryKeysToInvalidate: ["googleAPI"],
-      errorMessage: "Failed to update google api.",
+      errorMessage: "Failed to update google api settings.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -75,6 +129,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
+        <GoogleAPIAlert />
         <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           <div className="col-span-3">
             <SelectInput
@@ -104,7 +159,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               control={control}
               type={showAPIKey ? "text" : "password"}
               rules={{ required: true }}
-              label="Api Key"
+              label="Google API Key"
               placeholder="API Key"
               description="Securely input your Google API Key to access and integrate Google's mapping services."
             />
@@ -114,7 +169,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
                 className="absolute inset-y-0 right-0 mt-2 flex items-center pr-3 text-sm leading-5"
                 onClick={toggleAPIKeyVisibility}
               >
-                <p className="text-xs uppercase text-black">
+                <p className="text-xs uppercase text-foreground">
                   {showAPIKey ? "hide" : "show"}
                 </p>
               </button>
