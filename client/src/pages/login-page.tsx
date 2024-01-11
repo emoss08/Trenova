@@ -50,6 +50,7 @@ function UserAuthForm() {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
   const { control, handleSubmit, setError, watch, formState } =
     useForm<LoginFormValues>({
       resolver: yupResolver(userAuthSchema),

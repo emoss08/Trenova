@@ -89,14 +89,28 @@ class GoogleAPIDetailViewSet(views.APIView):
     """
 
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ["get"]
+    http_method_names = ["get", "options", "head", "put"]
 
     def get(
         self, request: Request, *args: typing.Any, **kwargs: typing.Any
     ) -> Response:
         user = request.user
 
-        key_details = get_organization_google_api(organization=user.organization)
+        key_details = get_organization_google_api(organization=user.organization)  # type: ignore
         serializer = serializers.GoogleAPISerializer(key_details)
 
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+    def put(
+        self, request: Request, *args: typing.Any, **kwargs: typing.Any
+    ) -> Response:
+        user = request.user
+
+        key_details = get_organization_google_api(organization=user.organization)  # type: ignore
+        serializer = serializers.GoogleAPISerializer(key_details, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
         return Response({"results": serializer.data}, status=status.HTTP_200_OK)

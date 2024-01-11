@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from rest_framework import serializers
 
 from integration import models
 from utils.serializers import GenericSerializer
@@ -54,7 +55,7 @@ class IntegrationSerializer(GenericSerializer):
         fields = "__all__"
 
 
-class GoogleAPISerializer(GenericSerializer):
+class GoogleAPISerializer(serializers.ModelSerializer):
     """
     A serializer for the `GoogleAPI` model.
 
@@ -70,3 +71,8 @@ class GoogleAPISerializer(GenericSerializer):
 
         model = models.GoogleAPI
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }

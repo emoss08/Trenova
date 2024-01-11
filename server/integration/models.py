@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -275,12 +275,6 @@ class GoogleAPI(GenericModel):
         editable=False,
         unique=True,
     )
-    name = models.CharField(
-        _("Name"),
-        max_length=50,
-        help_text=_("Name of the Google API"),
-        default="Google API",
-    )
     organization = models.OneToOneField(
         "organization.Organization",
         on_delete=models.CASCADE,
@@ -338,7 +332,11 @@ class GoogleAPI(GenericModel):
         Returns:
             str: Google API string representation
         """
-        return textwrap.shorten(self.name, width=30, placeholder="...")
+        return textwrap.shorten(
+            f"Google API information for {self.organization.name}",
+            width=30,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Google API absolute url

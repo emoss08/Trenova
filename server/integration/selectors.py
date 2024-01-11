@@ -48,5 +48,5 @@ def get_organization_google_api(
 ) -> models.GoogleAPI | None:
     try:
         return models.GoogleAPI.objects.get(organization=organization)
-    except models.GoogleAPI.DoesNotExist:
-        raise exceptions.GoogleAPINotFoundError(organization.name)
+    except models.GoogleAPI.DoesNotExist as e:
+        raise exceptions.GoogleAPINotFoundError(organization.name) from e

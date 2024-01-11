@@ -20,8 +20,13 @@ import { ObjectSchema } from "yup";
 import {
   EmailControlFormValues,
   EmailProfileFormValues,
+  GoogleAPIFormValues,
 } from "@/types/organization";
-import { EmailProtocolChoiceProps } from "@/lib/choices";
+import {
+  EmailProtocolChoiceProps,
+  RouteDistanceUnitProps,
+  RouteModelChoiceProps,
+} from "@/lib/choices";
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
   Yup.object().shape({
@@ -38,4 +43,20 @@ export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
     port: Yup.number().notRequired(),
     username: Yup.string().notRequired(),
     password: Yup.string().notRequired(),
+  });
+
+export const googleAPISchema: ObjectSchema<GoogleAPIFormValues> =
+  Yup.object().shape({
+    apiKey: Yup.string().required("API Key is required."),
+    mileageUnit: Yup.string<RouteDistanceUnitProps>().required(
+      "Mileage Unit is required.",
+    ),
+    trafficModel: Yup.string<RouteModelChoiceProps>().required(
+      "Traffic Model is required.",
+    ),
+    addCustomerLocation: Yup.boolean().required(
+      "Add Customer Location is required.",
+    ),
+    addLocation: Yup.boolean().required("Add Location is required."),
+    autoGeocode: Yup.boolean().required("Auto Geocode is required."),
   });

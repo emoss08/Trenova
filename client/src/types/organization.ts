@@ -15,7 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { EmailProtocolChoiceProps } from "@/lib/choices";
+import {
+  EmailProtocolChoiceProps,
+  RouteDistanceUnitProps,
+  RouteModelChoiceProps,
+} from "@/lib/choices";
 
 export type Organization = {
   id: string;
@@ -97,14 +101,18 @@ export type FeatureFlag = {
 
 export type GoogleAPI = BaseModel & {
   id: string;
-  name: string;
   apiKey?: string | null;
-  mileageUnit: string;
-  trafficModel: string;
+  mileageUnit: RouteDistanceUnitProps;
+  trafficModel: RouteModelChoiceProps;
   addCustomerLocation: boolean;
   addLocation: boolean;
   autoGeocode: boolean;
 };
+
+export type GoogleAPIFormValues = Omit<
+  GoogleAPI,
+  "id" | "organization" | "created" | "modified"
+>;
 
 /** Base Monta Interface
  *

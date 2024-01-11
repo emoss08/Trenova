@@ -182,7 +182,7 @@ const links = [
     group: "Data & Integrations",
   },
   {
-    href: "#",
+    href: "/admin/google-api/",
     title: "Google Integration",
     icon: (
       <FontAwesomeIcon

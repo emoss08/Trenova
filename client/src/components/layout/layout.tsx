@@ -21,8 +21,6 @@ import { SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { Toaster } from "react-hot-toast";
-
-import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
 import { ENVIRONMENT } from "@/lib/constants";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
@@ -51,13 +49,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const hideHeader = queryParams.get("hideHeader") === "true";
-  useQueryInvalidationListener();
+  // useQueryInvalidationListener();
 
   return (
     // The main container is set to full height and flex direction
     <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
-      {ENVIRONMENT === "development" && <DevHeader />}
+      {/* {ENVIRONMENT === "development" && <DevHeader />} */}
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
