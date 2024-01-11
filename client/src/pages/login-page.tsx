@@ -137,7 +137,7 @@ function UserAuthForm() {
               className="absolute inset-y-0 right-0 mt-6 flex items-center pr-3 text-sm leading-5"
               onClick={togglePasswordVisibility}
             >
-              <p className="text-xs uppercase text-black">
+              <p className="text-xs uppercase text-foreground">
                 {showPassword ? "hide" : "show"}
               </p>
             </button>
