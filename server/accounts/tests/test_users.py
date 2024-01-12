@@ -19,11 +19,11 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
-from PIL import Image
 from django.core import mail
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory
+from PIL import Image
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
