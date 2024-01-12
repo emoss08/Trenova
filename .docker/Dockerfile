@@ -1,7 +1,7 @@
 # Stage 1: Set up the Django application
 FROM python:3.11-slim-buster
 
-LABEL maintainer="montadev@dev.io"
+LABEL maintainer="emoss@trenova.app"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -19,9 +19,9 @@ RUN apt-get update \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/Monta-Application/Monta.git
+RUN git clone https://github.com/Trenova-Application/Trenova.git
 
-WORKDIR /Monta
+WORKDIR /Trenova
 
 RUN pip install --no-cache-dir -r requirements.txt
 

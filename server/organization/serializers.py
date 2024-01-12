@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -216,6 +216,11 @@ class EmailLogSerializer(GenericSerializer):
 
         model = models.EmailLog
         fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
 
 class TaxRateSerializer(GenericSerializer):
@@ -243,7 +248,18 @@ class TableChangeAlertSerializer(GenericSerializer):
         """
 
         model = models.TableChangeAlert
-        read_only_fields = ("function_name", "trigger_name", "listener_name")
+        fields = "__all__"
+        read_only_fields = (
+            "function_name",
+            "trigger_name",
+            "listener_name",
+            "organization",
+            "business_unit",
+        )
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the TableChangeAlert model.

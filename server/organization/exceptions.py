@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -32,9 +32,21 @@ class CacheOperationError(CacheManagerError):
     """Raised when there is an issue performing a cache operation."""
 
 
-class InvalidEmailProtocal(Exception):
+class InvalidEmailProtocol(Exception):
     """Raised when an invalid email protocol is used."""
 
 
 class InvalidEmailProfile(Exception):
     """Raised when an invalid email profile is used."""
+
+
+class ConditionalStructureError(Exception):
+    """
+    Exception raised when the structure of the conditional logic is not valid
+    """
+
+
+class InvalidOperationError(Exception):
+    """
+    Exception raised when the conditional logic operation is not in the list of available operations
+    """

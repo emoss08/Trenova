@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -27,6 +27,7 @@ import {
   EmailControl,
   EmailProfile,
   FeatureFlag,
+  GoogleAPI,
   Organization,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
@@ -187,4 +188,13 @@ export async function getDepots(): Promise<Depot[]> {
 export async function getFeatureFlags(): Promise<FeatureFlag[]> {
   const response = await axios.get("/organization_feature_flags/");
   return response.data;
+}
+
+/**
+ * Fetches the Google api information for the organization from the server.
+ * @returns A promise that resolves to an array of Google api information.
+ */
+export async function getGoogleApiInformation(): Promise<GoogleAPI> {
+  const response = await axios.get("/organization/google_api_details/");
+  return response.data.results;
 }

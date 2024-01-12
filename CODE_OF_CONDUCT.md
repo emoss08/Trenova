@@ -1,8 +1,8 @@
-# Monta Code of Conduct
+# Trenova Code of Conduct
 
 ## Our Pledge
 
-In the pursuit of fostering an open, welcoming, and inclusive atmosphere, we, as contributors and maintainers of Monta, commit to making participation in our project and community a harassment-free experience for everyone. This commitment is regardless of age, body size, visible or invisible disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+In the pursuit of fostering an open, welcoming, and inclusive atmosphere, we, as contributors and maintainers of Trenvoa, commit to making participation in our project and community a harassment-free experience for everyone. This commitment is regardless of age, body size, visible or invisible disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
 ## Our Standards
 
@@ -24,19 +24,19 @@ Examples of unacceptable behavior include:
 
 ## Our Responsibilities
 
-Project maintainers of Monta are responsible for setting standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any instances of unacceptable conduct.
+Project maintainers of Trenova are responsible for setting standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any instances of unacceptable conduct.
 
 Maintainers have the authority to remove, edit, or reject comments, commits, code, and other contributions that are not aligned with this Code of Conduct, and to ban temporarily or permanently any contributor for behaviors they find inappropriate, threatening, offensive, or harmful.
 
 ## Scope
 
-This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project or its community. Representation of Monta may include using an official project e-mail address, posting through official social media accounts, or acting as an appointed representative at online or offline events.
+This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project or its community. Representation of Trenova may include using an official project e-mail address, posting through official social media accounts, or acting as an appointed representative at online or offline events.
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the Monta project team at [Support Email](emoss@monta.io). All complaints will be reviewed, investigated, and will result in a response appropriate to the circumstances. The project team is obligated to maintain confidentiality regarding the reporter of an incident. Specific enforcement policies may be posted separately.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the Trenova project team at [Support Email](emoss@Trenova.io). All complaints will be reviewed, investigated, and will result in a response appropriate to the circumstances. The project team is obligated to maintain confidentiality regarding the reporter of an incident. Specific enforcement policies may be posted separately.
 
-Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of Monta's leadership.
+Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of Trenova's leadership.
 
 ## Attribution
 

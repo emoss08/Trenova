@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -303,13 +303,7 @@ class UserDetailView(views.APIView):
     def get(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         user = request.user
 
-        # Implement caching (if needed)
-        # cache_key = f"user_details_{user.id}"
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     return response.Response(cached_data, status=status.HTTP_200_OK)
-
-        serializer = serializers.UserSerializer(user)
+        serializer = serializers.UserSerializer(user, context={"request": request})
         data = serializer.data
 
         # cache.set(cache_key, data, timeout=YOUR_CACHE_TIMEOUT)  # Set cache with a suitable timeout

@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -18,7 +18,7 @@
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Shipment } from "@/types/order";
 import { Worker } from "@/types/worker";
-import { SetState, StateCreator, create } from "zustand";
+import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type ShipmentView = "list" | "calendar" | "map";
@@ -59,6 +59,6 @@ const createShipmentStore = (set: SetState<ShipmentMapStore>) => ({
 
 export const useShipmentMapStore = create<ShipmentMapStore>(
   persist(createShipmentStore, {
-    name: "monta-shipment-map-preferences",
+    name: "trenova-shipment-map-preferences",
   }) as StateCreator<ShipmentMapStore>,
 );

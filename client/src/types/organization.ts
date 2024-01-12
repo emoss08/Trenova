@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -15,7 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { EmailProtocolChoiceProps } from "@/lib/choices";
+import {
+  EmailProtocolChoiceProps,
+  RouteDistanceUnitProps,
+  RouteModelChoiceProps,
+} from "@/lib/choices";
 
 export type Organization = {
   id: string;
@@ -95,9 +99,24 @@ export type FeatureFlag = {
   paidOnly: boolean;
 };
 
-/** Base Monta Interface
+export type GoogleAPI = BaseModel & {
+  id: string;
+  apiKey?: string | null;
+  mileageUnit: RouteDistanceUnitProps;
+  trafficModel: RouteModelChoiceProps;
+  addCustomerLocation: boolean;
+  addLocation: boolean;
+  autoGeocode: boolean;
+};
+
+export type GoogleAPIFormValues = Omit<
+  GoogleAPI,
+  "id" | "organization" | "created" | "modified"
+>;
+
+/** Base Trenova Interface
  *
- * @note This interface is used for all Monta models that have the following fields:
+ * @note This interface is used for all Trenova models that have the following fields:
  * - organization
  * - created
  * - modified

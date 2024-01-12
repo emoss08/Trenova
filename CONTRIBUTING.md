@@ -1,4 +1,4 @@
-# Monta Contributing Guide
+# Trenova Contributing Guide
 
 ## Table of Contents
 
@@ -11,11 +11,11 @@
 
 ## Introduction
 
-Welcome to Monta, a cutting-edge web solution designed to revolutionize transportation and logistics operations. Combining the power of the Django framework with sophisticated frontend technologies, Monta stands as a testament to innovation and efficiency in the logistics domain. As a contributor, you're joining a mission to streamline logistics processes through advanced technology, including machine learning and automation.
+Welcome to Trenova, a cutting-edge web solution designed to revolutionize transportation and logistics operations. Combining the power of the Django framework with sophisticated frontend technologies, Trenova stands as a testament to innovation and efficiency in the logistics domain. As a contributor, you're joining a mission to streamline logistics processes through advanced technology, including machine learning and automation.
 
 ## Code of Conduct
 
-We are committed to maintaining a welcoming and inclusive community at Monta. Our Code of Conduct is a testament to our values and expectations for all contributors. We encourage you to review it in detail [here](https://github.com/emoss08/Monta/blob/main/CODE_OF_CONDUCT.md) to ensure a positive and respectful environment for collaboration.
+We are committed to maintaining a welcoming and inclusive community at Trenova. Our Code of Conduct is a testament to our values and expectations for all contributors. We encourage you to review it in detail [here](https://github.com/emoss08/Trenova/blob/main/CODE_OF_CONDUCT.md) to ensure a positive and respectful environment for collaboration.
 
 ## Getting Started
 
@@ -26,8 +26,8 @@ We are committed to maintaining a welcoming and inclusive community at Monta. Ou
 ### Setting Up the Development Environment
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/emoss08/Monta.git
-   cd monta
+   git clone https://github.com/emoss08/Trenova.git
+   cd Trenova
    ```
 
 2. **Docker Setup**:
@@ -44,7 +44,7 @@ We are committed to maintaining a welcoming and inclusive community at Monta. Ou
 ## How to Contribute
 
 ### Making Contributions
-1. **Fork and Branch**: Fork the Monta repository and create a feature branch from `main`.
+1. **Fork and Branch**: Fork the Trenova repository and create a feature branch from `main`.
 2. **Commit Changes**: Commit your changes with descriptive messages.
 3. **Testing**: Ensure functionality is intact.
 4. **Pull Request**: Push to your fork and open a pull request against our `main` branch.
@@ -80,4 +80,4 @@ We are committed to maintaining a welcoming and inclusive community at Monta. Ou
 
 ---
 
-Your contributions are vital in shaping Monta's future, a platform that redefines logistics efficiency and scalability. Thank you for being a part of this journey and helping us create a solution that not only addresses current industry needs but is also poised for future challenges and opportunities.
+Your contributions are vital in shaping Trenova's future, a platform that redefines logistics efficiency and scalability. Thank you for being a part of this journey and helping us create a solution that not only addresses current industry needs but is also poised for future challenges and opportunities.

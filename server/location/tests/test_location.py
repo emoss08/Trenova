@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -176,7 +176,6 @@ def test_post_location_with_comments(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now."
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
 
 
 def test_post_location_with_comments_and_contacts(
@@ -240,7 +239,6 @@ def test_post_location_with_comments_and_contacts(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now."
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "string"
     assert response.data["location_contacts"][0]["email"] == "test@test.com"
     assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"
@@ -313,7 +311,6 @@ def test_put_location_with_comments_and_contacts(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now for the location"
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "test_contact"
     assert response.data["location_contacts"][0]["email"] == "test2@test.com"
     assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"

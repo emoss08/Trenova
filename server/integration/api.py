@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -14,11 +14,15 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
 
-from rest_framework import viewsets
+from rest_framework import permissions, status, views, viewsets
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from integration import models, serializers
+from integration.selectors import get_organization_google_api
 
 
 class IntegrationVendorViewSet(viewsets.ModelViewSet):
@@ -65,3 +69,48 @@ class GoogleAPIViewSet(viewsets.ModelViewSet):
     queryset = models.GoogleAPI.objects.all()
     serializer_class = serializers.GoogleAPISerializer
     permission_classes = [CustomObjectPermissions]
+    read_only_fields = ("organization", "business_unit")
+    extra_kwargs = {
+        "organization": {"required": False},
+        "business_unit": {"required": False},
+    }
+
+
+class GoogleAPIDetailViewSet(views.APIView):
+    """A viewset that gets the Google API details from the system for a
+    specific organization.
+
+    The viewset provides a GET operation for retrieving the Google API details
+    for a specific organization. It uses the `GoogleAPISerializer` class to
+    convert the Google API key instances to and from JSON-formatted data.
+
+    Only authenticated users and admins are allowed to access the views
+    provided by this viewset.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "options", "head", "put"]
+
+    def get(
+        self, request: Request, *args: typing.Any, **kwargs: typing.Any
+    ) -> Response:
+        user = request.user
+
+        key_details = get_organization_google_api(organization=user.organization)  # type: ignore
+        serializer = serializers.GoogleAPISerializer(key_details)
+
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+    def put(
+        self, request: Request, *args: typing.Any, **kwargs: typing.Any
+    ) -> Response:
+        user = request.user
+
+        key_details = get_organization_google_api(organization=user.organization)  # type: ignore
+        serializer = serializers.GoogleAPISerializer(key_details, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)

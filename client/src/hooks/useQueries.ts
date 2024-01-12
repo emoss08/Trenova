@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -51,6 +51,7 @@ import {
   getEmailControl,
   getEmailProfiles,
   getFeatureFlags,
+  getGoogleApiInformation,
   getInvoiceControl,
   getRouteControl,
   getShipmentControl,
@@ -811,7 +812,6 @@ export function useFeatureFlags() {
 
 /**
  * Get the Logged-in Users Organization
- *
  */
 export function useUserOrganization() {
   const queryClient = useQueryClient();
@@ -832,4 +832,26 @@ export function useUserOrganization() {
     userOrganizationLoading,
     userOrganizationError,
   };
+}
+
+/**
+ * Get the Google API information for the organization
+ */
+export function useGoogleAPI() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: googleAPIData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["googleAPI"] as QueryKeys[],
+    queryFn: async () => getGoogleApiInformation(),
+    initialData: () => {
+      return queryClient.getQueryData(["googleAPI"] as QueryKeys[]);
+    },
+    staleTime: Infinity,
+  });
+
+  return { googleAPIData, isLoading, isError };
 }

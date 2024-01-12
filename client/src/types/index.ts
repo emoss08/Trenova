@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -31,7 +31,7 @@ export type StatusChoiceProps = "A" | "I";
 
 export type YesNoChoiceProps = "Y" | "N";
 
-/** Query Keys used in Monta by react-query
+/** Query Keys used in Trenova by react-query
  *
  * @note: Only written to give autocomplete & type checking so people don't invalidate or use
  * query keys that don't exist. THANK ME LATER!
@@ -68,6 +68,7 @@ export type QueryKeys =
   | "fleetCodes"
   | "gl-account-table-data"
   | "glAccounts"
+  | "googleAPI"
   | "hazardous-material-table-data"
   | "hazardousMaterials"
   | "invoiceControl"
@@ -80,6 +81,7 @@ export type QueryKeys =
   | "reason-code-table-data"
   | "reasonCodes"
   | "routeControl"
+  | "table-change-alert-data"
   | "trailers"
   | "trailer-table-data"
   | "tractors"

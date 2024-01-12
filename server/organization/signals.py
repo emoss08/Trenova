@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 from typing import Any
 
 from django.conf import settings
@@ -36,6 +37,11 @@ from organization.services.table_change import (
 )
 from route.models import RouteControl
 from shipment.models import ShipmentControl
+
+# Logging Configuration
+logger = logging.getLogger(__name__)
+
+debug, error, info = logger.debug, logger.error, logger.info
 
 restart_psql_listener_signal = Signal()
 
@@ -392,6 +398,10 @@ def delete_and_add_new_trigger(
     if old_instance.database_action != instance.database_action:
         drop_trigger_and_create(instance=instance)
 
+    # Dropped if the conditional logic has changed.
+    if old_instance.conditional_logic != instance.conditional_logic:
+        drop_trigger_and_create(instance=instance)
+
 
 def delete_and_recreate_trigger_and_function(
     sender: models.TableChangeAlert, instance: models.TableChangeAlert, **kwargs: Any
@@ -417,6 +427,7 @@ def delete_and_recreate_trigger_and_function(
         return
 
     if old_instance.database_action != instance.database_action:
+        info(f"Database action changed for {instance.name} on {instance.table}")
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,
@@ -425,8 +436,10 @@ def delete_and_recreate_trigger_and_function(
         create_trigger_based_on_db_action(
             instance=instance, organization_id=instance.organization_id
         )
+        info(f"Trigger and function recreated for {instance.table}")
 
     if old_instance.table != instance.table:
+        info(f"Table name changed for {instance.table} on {instance.name}")
         drop_trigger_and_function(
             trigger_name=old_instance.trigger_name,
             function_name=old_instance.function_name,
@@ -435,6 +448,21 @@ def delete_and_recreate_trigger_and_function(
         create_trigger_based_on_db_action(
             instance=instance, organization_id=instance.organization_id
         )
+        info(f"Trigger and function recreated for {instance.table}")
+
+    # Dropped if the conditional logic has changed.
+    if old_instance.conditional_logic != instance.conditional_logic:
+        info(f"Conditional logic changed for {instance.name} on {instance.table}")
+        drop_trigger_and_function(
+            trigger_name=old_instance.trigger_name,
+            function_name=old_instance.function_name,
+            table_name=old_instance.table,
+        )
+
+        create_trigger_based_on_db_action(
+            instance=instance, organization_id=instance.organization_id
+        )
+        info(f"Trigger and function recreated for {instance.table}")
 
 
 def create_notification_settings(
