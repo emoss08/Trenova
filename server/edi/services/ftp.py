@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -23,7 +23,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 
-class MontaFTPHandler(FTPHandler):
+class TrenovaFTPHandler(FTPHandler):
     def on_file_received(self, file: str) -> None:
         logging.info(f"File received: {file}")
         try:
@@ -44,9 +44,9 @@ class MontaFTPHandler(FTPHandler):
 def run_server() -> None:
     authorizer = DummyAuthorizer()
     authorizer.add_user("user", "12345", ".", perm="elradfmwMT")
-    handler = MontaFTPHandler
+    handler = TrenovaFTPHandler
     handler.authorizer = authorizer
-    handler.banner = "Monta FTP Server"
+    handler.banner = "Trenova FTP Server"
 
     logging.basicConfig(filename="ftp.log", level=logging.INFO)
 

@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -107,7 +107,7 @@ export default function GettingStarted({ websocketManager }: any) {
         <Image src={image} className={classes.mobileImage} />
         <div>
           <Title className={classes.title}>
-            🚀 Introducing the Monta Billing Client
+            🚀 Introducing the Trenova Billing Client
           </Title>
 
           <Text color="dimmed" size="lg">
@@ -115,7 +115,7 @@ export default function GettingStarted({ websocketManager }: any) {
             websocketMessage.step === 0 &&
             websocketMessage.status === "SUCCESS"
               ? (websocketMessage.message as string)
-              : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
+              : "The Trenova Billing Client is your efficient partner for end-to-end billing management." +
                 " This ingenious software client for interacting with the billing API offers a streamlined" +
                 " approach for handling your financial transactions."}
           </Text>

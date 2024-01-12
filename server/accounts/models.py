@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -30,7 +30,7 @@ from django.contrib.auth.models import (
 )
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
@@ -302,10 +302,10 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         default=False,
         help_text=_("Designates whether the user can log into this admin site."),
     )
-    is_monta_staff = models.BooleanField(
-        _("Monta Staff Status"),
+    is_trenova_staff = models.BooleanField(
+        _("Trenova Staff Status"),
         default=False,
-        help_text=_("Designates whether the user is staff for Monta."),
+        help_text=_("Designates whether the user is staff for Trenova."),
     )
     date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
     online = models.BooleanField(
@@ -485,13 +485,20 @@ class UserProfile(GenericModel):
         """Save the model
 
         Returns:
-            None
+            None: this fuinction does not return anything.
         """
+        from accounts import tasks
 
         self.first_name = self.first_name.title()
         self.last_name = self.last_name.title()
 
         super().save(*args, **kwargs)
+
+        if self.profile_picture and not self.thumbnail:
+            print("Generating thumbnail")
+            transaction.on_commit(
+                lambda: tasks.generate_thumbnail_task.delay(profile_id=str(self.id))
+            )
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the Profile.

@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -18,7 +18,7 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { MontaTable } from "@/components/common/table/MontaTable";
+import { TrenovaTable } from "@/components/common/table/TrenovaTable";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { JobTitleDrawer } from "@/components/job-title/table/JobTitleDrawer";
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
@@ -68,7 +68,7 @@ export function JobTitleTable() {
   );
 
   return (
-    <MontaTable
+    <TrenovaTable
       store={jobTitleTableStore}
       link="/job_titles"
       columns={columns}

@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -37,6 +37,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
 
+from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
@@ -289,7 +290,7 @@ class Organization(TimeStampedModel):
     @final
     class LanguageChoices(models.TextChoices):
         """
-        Supported Language Choices for Monta
+        Supported Language Choices for Trenova
         """
 
         ENGLISH = "en", _("English")
@@ -1160,6 +1161,14 @@ class TableChangeAlert(TimeStampedModel):
         _("Email Recipients"),
         help_text=_("Comma separated list of email addresses to send the alert to."),
     )
+    conditional_logic = models.JSONField(
+        _("Conditional Logic"),
+        blank=True,
+        null=True,
+        help_text=_(
+            "JSON field to define specific conditions for triggering the alert."
+        ),
+    )
     custom_subject = models.CharField(
         _("Custom Subject"),
         max_length=255,
@@ -1276,6 +1285,19 @@ class TableChangeAlert(TimeStampedModel):
                 },
                 code="invalid",
             )
+
+        if self.conditional_logic:
+            try:
+                from organization.services.conditional_logic import (
+                    validate_conditional_logic,
+                )
+
+                validate_conditional_logic(data=self.conditional_logic)
+            except ConditionalStructureError as error:
+                raise ValidationError(
+                    {"conditional_logic": error}, code="invalid"
+                ) from error
+
         super().clean()
 
 
@@ -1530,7 +1552,7 @@ class FeatureFlag(TimeStampedModel):
         verbose_name_plural = _("Feature Flags")
         ordering = ("name",)
         db_table = "feature_flag"
-        db_table_comment = "Stores list of available feature flags for Monta."
+        db_table_comment = "Stores list of available feature flags for Trenova."
 
     def __str__(self) -> str:
         """Feature flag string representation

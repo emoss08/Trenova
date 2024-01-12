@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -154,7 +154,7 @@ class RouteControl(GenericModel):
         """
 
         GOOGLE = "G", _("Google")
-        MONTA = "M", _("Monta")
+        TRENOVA = "T", _("Trenova")
 
     id = models.UUIDField(
         primary_key=True,
@@ -172,7 +172,7 @@ class RouteControl(GenericModel):
     distance_method = ChoiceField(
         _("Distance Method"),
         choices=DistanceMethodChoices.choices,
-        default=DistanceMethodChoices.MONTA,
+        default=DistanceMethodChoices.TRENOVA,
         help_text=_("Distance method for the company."),
     )
     mileage_unit = ChoiceField(
@@ -244,12 +244,12 @@ class RouteControl(GenericModel):
 
         if (
             self.generate_routes
-            and self.distance_method == self.DistanceMethodChoices.MONTA
+            and self.distance_method == self.DistanceMethodChoices.Trenova
         ):
             raise ValidationError(
                 {
                     "generate_routes": _(
-                        "'Monta' does not support automatic route generation. Please select Google as the distance "
+                        "'Trenova' does not support automatic route generation. Please select Google as the distance "
                         "method."
                     ),
                 },

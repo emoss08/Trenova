@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -18,6 +18,7 @@ from typing import Any, override
 
 from rest_framework import serializers
 
+from accounts.serializers import MinimalUserSerializer
 from location import helpers, models
 from utils.serializers import GenericSerializer
 
@@ -74,7 +75,7 @@ class LocationCommentSerializer(GenericSerializer):
     """
 
     comment_type_name = serializers.CharField(required=False, read_only=True)
-    entered_by_username = serializers.CharField(required=False, read_only=True)
+    entered_by = MinimalUserSerializer(required=False, read_only=True)
 
     class Meta:
         """
@@ -84,7 +85,12 @@ class LocationCommentSerializer(GenericSerializer):
 
         model = models.LocationComment
         fields = "__all__"
-        read_only_fields = ("location", "organization", "business_unit")
+        read_only_fields = (
+            "location",
+            "organization",
+            "business_unit",
+            "entered_by",
+        )
         extra_kwargs = {
             "organization": {"required": False},
             "business_unit": {"required": False},

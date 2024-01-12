@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -22,31 +22,6 @@ from django.core.exceptions import ValidationError
 from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
-
-
-def test_monta_distance_method_with_route_generation_error(
-    organization: Organization,
-) -> None:
-    """Test ValidationError is thrown when Monta is selected as the distance method and route generation is enabled.
-
-    Args:
-        organization: Organization Object.
-
-    Returns:
-        None: This function does not return anything.
-    """
-    route_control = organization.route_control
-    route_control.distance_method = "M"
-    route_control.generate_routes = True
-
-    with pytest.raises(ValidationError) as excinfo:
-        route_control.full_clean()
-
-    assert excinfo.value.message_dict == {
-        "generate_routes": [
-            "'Monta' does not support automatic route generation. Please select Google as the distance method."
-        ]
-    }
 
 
 def test_google_distance_method_without_integration_error(

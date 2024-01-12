@@ -1,6 +1,6 @@
-# Monta's Formula Template Feature
+# Trenova's Formula Template Feature
 
-Welcome to Monta's **Formula Template** feature, a groundbreaking addition to our Transportation Management System tailored for OTR trucking. This feature is designed to offer unparalleled flexibility and precision in your billing processes. Let's dive into what makes the Formula Template a game-changer for your business.
+Welcome to Trenova's **Formula Template** feature, a groundbreaking addition to our Transportation Management System tailored for OTR trucking. This feature is designed to offer unparalleled flexibility and precision in your billing processes. Let's dive into what makes the Formula Template a game-changer for your business.
 
 ---
 
@@ -28,9 +28,9 @@ Ensure all formulas are valid and error-free with our built-in validation system
 
 Avoid costly mistakes and ensure consistent billing.
 
-### 5. Integration with Monta's Core Features
+### 5. Integration with Trenova's Core Features
 
-Seamlessly integrate with other Monta features for a holistic management experience.
+Seamlessly integrate with other Trenova features for a holistic management experience.
 
 Use alongside route optimization, dynamic pricing, and more.
 
@@ -40,7 +40,7 @@ Use alongside route optimization, dynamic pricing, and more.
 
 #### Precision and Flexibility
 
-Craft billing methods that perfectly align with your business model. Whether you charge per mile, per stop, or have a unique pricing structure, Monta's Formula Template has got you covered.
+Craft billing methods that perfectly align with your business model. Whether you charge per mile, per stop, or have a unique pricing structure, Trenova's Formula Template has got you covered.
 
 #### Time and Cost Efficiency
 
@@ -56,26 +56,26 @@ Provide clear and detailed invoices to your clients, fostering trust and long-te
 
 #### 📘 How to Get Started
 
-**Login** to your Monta account.
+**Login** to your Trenova account.
 
 Navigate to the **'Formula Template'** section.
 
 Start by choosing a predefined template or create a new formula from scratch.
 
-Input the necessary variables and let Monta handle the calculations.
+Input the necessary variables and let Trenova handle the calculations.
 
 Review, save, and apply your formulas to relevant orders.
 
 #### 💡 Pro Tip
 
-Regularly review and update your formulas to align with market trends and business goals. Monta's analytics can provide insights to guide your adjustments.
+Regularly review and update your formulas to align with market trends and business goals. Trenova's analytics can provide insights to guide your adjustments.
 
 #### 🤝 Join the Future of OTR Trucking
 
-Monta's Formula Template feature is more than just a tool; it's a revolution in how OTR trucking businesses handle billing. Embrace the future, optimize your billing process, and watch your business soar to new heights.
+Trenova's Formula Template feature is more than just a tool; it's a revolution in how OTR trucking businesses handle billing. Embrace the future, optimize your billing process, and watch your business soar to new heights.
 
-**Experience precision, flexibility, and growth with Monta. 🚀**
+**Experience precision, flexibility, and growth with Trenova. 🚀**
 
 ---
 
-For further assistance or inquiries, please reach out to our dedicated support team. We're here to ensure your journey with Monta is smooth and rewarding.
+For further assistance or inquiries, please reach out to our dedicated support team. We're here to ensure your journey with Trenova is smooth and rewarding.
