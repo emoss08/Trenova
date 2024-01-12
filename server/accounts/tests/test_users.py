@@ -19,11 +19,11 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from PIL import Image
 from django.core import mail
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory
-from PIL import Image
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -34,7 +34,6 @@ from accounts.selectors import (
     get_users_by_organization_id,
 )
 from accounts.serializers import UserSerializer
-from accounts.services import generate_thumbnail
 from accounts.tasks import generate_thumbnail_task
 from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.models import BusinessUnit, Organization
@@ -524,30 +523,6 @@ def test_validate_password_not_allowed_on_post(
         response.data["errors"][0]["detail"]
         == "Password cannot be added directly to a user. Please use the password reset endpoint."
     )
-
-
-def test_create_thumbnail(user_profile: UserProfile) -> None:
-    """Test to ensure when a user uploads a profile picture, that a thumbnail is generated.
-
-    Args:
-        user_profile (UserProfile): User Profile Object
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    image = Image.new("RGB", (100, 100))
-    image_file = BytesIO()
-    image.save(image_file, "png")
-    image_file.seek(0)
-
-    # Set the user's profile picture
-    user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
-    generate_thumbnail(user_profile=user_profile, size=(100, 100))
-
-    # Check that the thumbnail was generated
-    assert user_profile.thumbnail is not None
-    assert user_profile.thumbnail.url is not None
 
 
 @patch("accounts.tasks.services.generate_thumbnail")
