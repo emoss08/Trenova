@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -18,9 +18,9 @@
 import logging
 import secrets
 
+from PIL import Image, UnidentifiedImageError
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from PIL import Image, UnidentifiedImageError
 
 from accounts import models
 from utils.helpers import optimize_image
@@ -84,6 +84,8 @@ def generate_thumbnail(
             optimized_img.getvalue(),
             f"{user_profile.user.username}_thumbnail.webp",
         )
+
+        user_profile.save()
 
         # Close the opened resources.
         img.close()

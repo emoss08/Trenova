@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -18,7 +18,6 @@
 from typing import TYPE_CHECKING
 
 from celery import shared_task
-from celery_singleton import Singleton
 from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
@@ -34,7 +33,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    base=Singleton,
     # queue="low_priority",
 )
 def send_scheduled_report(self: "Task", *, report_id: str) -> None:
@@ -63,7 +61,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
         email = EmailMessage(
             subject=f"Your scheduled report: {report.name}",
             body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
-            from_email="reports@monta.io",
+            from_email="reports@trenova.app",
             to=[user.email],  # TODO(Wolfred): Add support for multiple recipients
         )
 

@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -392,7 +392,9 @@ class LocationComment(GenericModel):
         Returns:
             str: LocationComment name
         """
-        return textwrap.wrap(self.comment, 50)[0]
+        return textwrap.shorten(
+            f"{self.comment_type.name}: {self.comment}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """LocationComment absolute URL

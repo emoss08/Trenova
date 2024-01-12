@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -30,7 +30,7 @@ from django.contrib.auth.models import (
 )
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
@@ -485,13 +485,20 @@ class UserProfile(GenericModel):
         """Save the model
 
         Returns:
-            None
+            None: this fuinction does not return anything.
         """
+        from accounts import tasks
 
         self.first_name = self.first_name.title()
         self.last_name = self.last_name.title()
 
         super().save(*args, **kwargs)
+
+        if self.profile_picture and not self.thumbnail:
+            print("Generating thumbnail")
+            transaction.on_commit(
+                lambda: tasks.generate_thumbnail_task.delay(profile_id=str(self.id))
+            )
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the Profile.

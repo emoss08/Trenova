@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -17,6 +17,7 @@
 
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
+import { MinimalUser } from "@/types/accounts";
 
 export interface LocationCategory extends BaseModel {
   id: string;
@@ -36,8 +37,7 @@ export interface LocationComment extends BaseModel {
   commentType: string;
   commentTypeName: string;
   comment: string;
-  enteredBy: string;
-  enteredByUsername: string;
+  enteredBy: MinimalUser;
 }
 
 export type LocationCommentFormValues = Omit<

@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -114,7 +114,7 @@ class Command(BaseCommand):
                     progress.update(task, advance=1)
                     continue
 
-                email = f"testuser-{i}@monta.io"
+                email = f"testuser-{i}@trenova.app"
                 password = "testuser".join(
                     random.choices(string.ascii_uppercase + string.digits, k=8)
                 )

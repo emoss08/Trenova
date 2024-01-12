@@ -21,7 +21,6 @@ import { SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { Toaster } from "react-hot-toast";
-import { ENVIRONMENT } from "@/lib/constants";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { useLocation } from "react-router-dom";
@@ -29,16 +28,6 @@ import { AppGridMenu } from "./app-grid";
 import { Breadcrumb } from "./breadcrumb";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
-
-function DevHeader() {
-  return (
-    <header className="flex h-5 w-full items-center justify-center bg-indigo-700">
-      <div className="text-white">
-        You're currently running Monta in development mode.
-      </div>
-    </header>
-  );
-}
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -55,7 +44,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // The main container is set to full height and flex direction
     <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
-      {/* {ENVIRONMENT === "development" && <DevHeader />} */}
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
@@ -97,7 +85,6 @@ export function UnprotectedLayout({ children }: { children: React.ReactNode }) {
       <Toaster position="bottom-right" />
       <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <RainbowTopBar />
-        {ENVIRONMENT === "development" && <DevHeader />}
       </header>
       <div className="h-screen">{children}</div>
     </div>

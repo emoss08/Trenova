@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -18,6 +18,7 @@ from typing import Any, override
 
 from rest_framework import serializers
 
+from accounts.serializers import MinimalUserSerializer
 from location import helpers, models
 from utils.serializers import GenericSerializer
 
@@ -74,7 +75,7 @@ class LocationCommentSerializer(GenericSerializer):
     """
 
     comment_type_name = serializers.CharField(required=False, read_only=True)
-    entered_by_username = serializers.CharField(required=False, read_only=True)
+    entered_by = MinimalUserSerializer(required=False, read_only=True)
 
     class Meta:
         """
@@ -84,7 +85,12 @@ class LocationCommentSerializer(GenericSerializer):
 
         model = models.LocationComment
         fields = "__all__"
-        read_only_fields = ("location", "organization", "business_unit")
+        read_only_fields = (
+            "location",
+            "organization",
+            "business_unit",
+            "entered_by",
+        )
         extra_kwargs = {
             "organization": {"required": False},
             "business_unit": {"required": False},

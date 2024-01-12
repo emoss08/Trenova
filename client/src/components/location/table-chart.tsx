@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -26,12 +26,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Location } from "@/types/location";
-import { truncateText, upperFirst } from "@/lib/utils";
-import { formatDateToHumanReadable } from "@/lib/date";
+import { Location, LocationComment } from "@/types/location";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getLocationPickupData } from "@/services/LocationRequestService";
 import { Loader2 } from "lucide-react";
+import { formatDateToHumanReadable } from "@/lib/date";
+import { upperFirst } from "@/lib/utils";
+import { MinimalUser } from "@/types/accounts";
+import { AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function SkeletonLoader() {
   return (
@@ -43,6 +47,89 @@ function SkeletonLoader() {
       <p className="mt-2 text-muted-foreground">
         If this takes longer than 10 seconds, please refresh the page.
       </p>
+    </div>
+  );
+}
+
+function classNames(...classes: (string | boolean)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function UserAvatar({ user }: { user: MinimalUser }) {
+  // Determine the initials for the fallback avatar
+  const initials = user.profile
+    ? user.profile.firstName.charAt(0) + user.profile.lastName.charAt(0)
+    : "";
+
+  // Determine the avatar image source
+  const avatarSrc = user.profile?.thumbnail
+    ? user.profile.thumbnail
+    : `https://avatar.vercel.sh/${user.email}`;
+
+  return (
+    <Avatar className="relative mt-3 h-6 w-6 flex-none rounded-full">
+      <AvatarImage
+        src={avatarSrc}
+        alt={user.username}
+        className="h-6 w-6 rounded-full"
+      />
+      <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
+    </Avatar>
+  );
+}
+
+export function CommentList({ comments }: { comments: LocationComment[] }) {
+  const userFullName = (comment: LocationComment) => {
+    return `${comment.enteredBy.profile?.firstName} ${comment.enteredBy.profile?.lastName}`;
+  };
+
+  return comments.length > 0 ? (
+    <ul role="list" className="space-y-6">
+      {comments.map((comment, commentIdx) => (
+        <li key={comment.id} className="relative mr-5 flex gap-x-4">
+          <div
+            className={classNames(
+              commentIdx === comments.length - 1 ? "h-6" : "-bottom-6",
+              "absolute left-0 top-0 flex w-6 justify-center",
+            )}
+          >
+            <div className="w-px bg-gray-200" />
+          </div>
+          <>
+            <UserAvatar user={comment.enteredBy} />
+            <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
+              <div className="flex justify-between gap-x-4">
+                <div className="py-0.5 text-xs leading-5 text-gray-500">
+                  <span className="font-medium text-gray-900">
+                    {upperFirst(userFullName(comment))}
+                  </span>
+                  {" posted a "}
+                  <span className="font-medium">
+                    {upperFirst(comment.commentTypeName)}
+                  </span>
+                </div>
+                <time
+                  dateTime={comment.created}
+                  className="flex-none py-0.5 text-xs leading-5 text-gray-500"
+                >
+                  {formatDateToHumanReadable(comment.created)}
+                </time>
+              </div>
+              <p className="text-sm leading-6 text-gray-500">
+                {comment.comment}
+              </p>
+            </div>
+          </>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
+      <div className="px-6 py-4">
+        <h4 className="mt-20 text-xl font-semibold text-foreground">
+          No Location Comments Available
+        </h4>
+      </div>
     </div>
   );
 }
@@ -99,38 +186,9 @@ export function LocationChart({ row }: { row: Row<Location> }) {
         <h2 className="scroll-m-20 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
           Recent Comments
         </h2>
-        {row.original.locationComments.length > 0 ? (
-          row.original.locationComments
-            .sort(
-              (a, b) =>
-                new Date(b.created).getTime() - new Date(a.created).getTime(),
-            )
-            .slice(0, 3)
-            .map((comment) => (
-              <div key={comment.id} className="flex flex-col overflow-hidden">
-                <div className="px-6 pt-4">
-                  <h4 className="text-xl font-semibold text-foreground">
-                    {comment.commentTypeName}
-                  </h4>
-                  <p className="mt-1">"{truncateText(comment.comment, 150)}"</p>
-                </div>
-                <div className="flex items-center px-6">
-                  <p className="ml-2 pt-1 text-sm text-gray-400">
-                    by&nbsp;{upperFirst(comment.enteredByUsername)}&nbsp;
-                    {formatDateToHumanReadable(comment.created)}
-                  </p>
-                </div>
-              </div>
-            ))
-        ) : (
-          <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
-            <div className="px-6 py-4">
-              <h4 className="mt-20 text-xl font-semibold text-foreground">
-                No Location Comments Available
-              </h4>
-            </div>
-          </div>
-        )}
+        <ScrollArea className="h-82 overflow-auto">
+          <CommentList comments={row.original.locationComments} />
+        </ScrollArea>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -20,7 +20,7 @@ from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import build_bearer_security_scheme_object
 
 
-class MontaAuthenticationSchema(OpenApiAuthenticationExtension):
+class TrenovaAuthenticationSchema(OpenApiAuthenticationExtension):
     target_class = "accounts.authentication.BearerTokenAuthentication"
     name = "Bearer Token Authentication"
     match_subclasses = True

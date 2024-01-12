@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -19,11 +19,11 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from PIL import Image
 from django.core import mail
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory
-from PIL import Image
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -314,7 +314,7 @@ def test_validate_reset_password(unauthenticated_api_client: APIClient) -> None:
 
     response = unauthenticated_api_client.post(
         "/api/reset_password/",
-        {"email": "random@monta.io"},
+        {"email": "random@trenova.app"},
     )
     assert response.status_code == 400
     assert (
@@ -390,7 +390,7 @@ def test_change_email(user: User) -> None:
 
     response = client.post(
         "/api/change_email/",
-        {"email": "anothertest@monta.io", "current_password": "new_password1234%"},
+        {"email": "anothertest@trenova.app", "current_password": "new_password1234%"},
     )
     assert response.status_code == 200
     assert response.data["message"] == "Email successfully changed."
@@ -416,7 +416,7 @@ def test_change_email_with_invalid_password(user: User) -> None:
 
     response = client.post(
         "/api/change_email/",
-        {"email": "test_email@monta.io", "current_password": "wrong_password"},
+        {"email": "test_email@trenova.app", "current_password": "wrong_password"},
     )
 
     assert response.status_code == 400
@@ -472,7 +472,7 @@ def test_change_email_with_other_users_email(user: User) -> None:
     user.save()
     user.refresh_from_db()
 
-    user_2 = UserFactory(username="test_user_2", email="test_another@monta.io")
+    user_2 = UserFactory(username="test_user_2", email="test_another@trenova.app")
 
     client = APIClient()
     client.force_authenticate(user=user)

@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -17,7 +17,6 @@
 from typing import TYPE_CHECKING
 
 from celery import shared_task
-from celery_singleton import Singleton
 from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
@@ -33,7 +32,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60 * 60 * 24,
-    base=Singleton,
     # queue="medium_priority",
 )
 def send_expired_rates_notification(self: "Task") -> None:

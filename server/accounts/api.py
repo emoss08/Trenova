@@ -303,7 +303,7 @@ class UserDetailView(views.APIView):
     def get(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         user = request.user
 
-        serializer = serializers.UserSerializer(user)
+        serializer = serializers.UserSerializer(user, context={"request": request})
         data = serializer.data
 
         # cache.set(cache_key, data, timeout=YOUR_CACHE_TIMEOUT)  # Set cache with a suitable timeout

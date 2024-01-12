@@ -153,7 +153,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               description="Choose a traffic model for enhanced route calculation, factoring in real-time traffic conditions for optimal routing."
             />
           </div>
-          <div className="relative col-span-full">
+          <div className="relative col-span-4">
             <InputField
               name="apiKey"
               control={control}

@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -36,7 +36,6 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
@@ -1552,7 +1551,7 @@ class FeatureFlag(TimeStampedModel):
         verbose_name_plural = _("Feature Flags")
         ordering = ("name",)
         db_table = "feature_flag"
-        db_table_comment = "Stores list of available feature flags for Monta."
+        db_table_comment = "Stores list of available feature flags for Trenova."
 
     def __str__(self) -> str:
         """Feature flag string representation

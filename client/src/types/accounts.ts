@@ -1,5 +1,5 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 MONTA
  *
  * This file is part of Monta.
  *
@@ -35,6 +35,16 @@ export type UserProfile = {
   profilePicture?: string;
   thumbnail?: string;
   isPhoneVerified: boolean;
+};
+
+/**
+ * MinimalUser is similar to the User type ,but does provide all the fields.
+ */
+export type MinimalUser = {
+  id: string;
+  username: string;
+  email: string;
+  profile?: UserProfile;
 };
 
 export type User = {

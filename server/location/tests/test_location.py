@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -240,7 +240,6 @@ def test_post_location_with_comments_and_contacts(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now."
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "string"
     assert response.data["location_contacts"][0]["email"] == "test@test.com"
     assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"
@@ -313,7 +312,6 @@ def test_put_location_with_comments_and_contacts(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now for the location"
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
     assert response.data["location_contacts"][0]["name"] == "test_contact"
     assert response.data["location_contacts"][0]["email"] == "test2@test.com"
     assert response.data["location_contacts"][0]["phone"] == "(123) 123-4567"

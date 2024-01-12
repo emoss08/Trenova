@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
@@ -146,9 +146,11 @@ class LocationViewSet(viewsets.ModelViewSet):
                     queryset=models.LocationComment.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
+                    .select_related(
+                        "entered_by", "comment_type", "entered_by__profiles"
+                    )
                     .annotate(
                         comment_type_name=F("comment_type__name"),
-                        entered_by_username=F("entered_by__username"),
                     )
                     .all(),
                 ),
