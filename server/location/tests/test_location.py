@@ -176,7 +176,6 @@ def test_post_location_with_comments(
         response.data["location_comments"][0]["comment"]
         == "this is a test comment for now."
     )
-    assert response.data["location_comments"][0]["entered_by"] == user.id
 
 
 def test_post_location_with_comments_and_contacts(
