@@ -302,7 +302,7 @@ class User(AbstractBaseUser, CustomPermissionMixin):  # type: ignore
         default=False,
         help_text=_("Designates whether the user can log into this admin site."),
     )
-    is_Trenova_staff = models.BooleanField(
+    is_trenova_staff = models.BooleanField(
         _("Trenova Staff Status"),
         default=False,
         help_text=_("Designates whether the user is staff for Trenova."),
