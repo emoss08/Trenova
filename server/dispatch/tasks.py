@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -17,7 +17,6 @@
 from typing import TYPE_CHECKING
 
 from celery import shared_task
-from celery_singleton import Singleton
 from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
@@ -33,7 +32,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60 * 60 * 24,
-    base=Singleton,
     # queue="medium_priority",
 )
 def send_expired_rates_notification(self: "Task") -> None:

@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -17,7 +17,6 @@
 from typing import TYPE_CHECKING
 
 from celery import shared_task
-from celery_singleton import Singleton
 from django.db.models import QuerySet
 
 from accounts.models import User
@@ -36,7 +35,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    base=Singleton,
     # queue="high_priority",
 )
 def automate_mass_shipments_billing(self: "Task") -> str:
@@ -56,7 +54,7 @@ def automate_mass_shipments_billing(self: "Task") -> str:
     """
 
     # TODO: Remove this once we have a better way to get the system user
-    system_user = User.objects.get(username="monta")
+    system_user = User.objects.get(username="Trenova")
 
     # Get the organizations that have auto bill shipments enabled
     organizations: QuerySet[Organization] = Organization.objects.filter(
@@ -83,7 +81,6 @@ def automate_mass_shipments_billing(self: "Task") -> str:
 @shared_task(
     name="transfer_to_billing_task",
     bind=True,
-    base=Singleton,
     # queue="high_priority"
 )
 def transfer_to_billing_task(
@@ -146,7 +143,6 @@ def transfer_to_billing_task(
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    base=Singleton,
     # queue="high_priority",
 )
 def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -> None:
@@ -183,7 +179,6 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    base=Singleton,
     # queue="high_priority",
 )
 def mass_shipments_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
@@ -212,7 +207,6 @@ def mass_shipments_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    base=Singleton,
 )
 def mark_shipment_as_paid_task(self: "Task") -> None:
     try:

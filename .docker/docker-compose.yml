@@ -24,7 +24,7 @@ services:
 
   db:
     image: postgres:latest
-    container_name: monta-db
+    container_name: trenova-db
     ports:
       - "5432:5432"
     environment:
@@ -67,7 +67,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: monta-pgadmin
+    container_name: trenova-pgadmin
     depends_on:
       - db
     ports:
@@ -77,9 +77,9 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     restart: always
 
-  monta_redis_stack:
+  trenova_redis_stack:
     image: redis/redis-stack:latest
-    container_name: monta-cache-stack
+    container_name: trenova-cache-stack
     ports:
       - "6379:6379"
     environment:
@@ -91,9 +91,9 @@ services:
     ports:
       - '8001:8001'
 
-  monta_rabbitmq:
+  trenova_rabbitmq:
     image: rabbitmq:3-management
-    container_name: monta-rabbitmq
+    container_name: trenova-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -101,6 +101,6 @@ services:
       - "5672"
       - "15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=monta # This is just for local development
-      - RABBITMQ_DEFAULT_PASS=monta # This is just for local development
+      - RABBITMQ_DEFAULT_USER=trenova # This is just for local development
+      - RABBITMQ_DEFAULT_PASS=trenova # This is just for local development
     restart: always

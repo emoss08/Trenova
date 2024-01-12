@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -17,14 +17,17 @@
 
 import typing
 
-from celery_singleton import Singleton
+from django.shortcuts import get_object_or_404
 
-from accounts import models, services
+from accounts import services
+from accounts.models import UserProfile
 from backend.celery import app
 from core.exceptions import ServiceException
 
 if typing.TYPE_CHECKING:
     from celery.app.task import Task
+
+    from utils import types
 
 
 @app.task(
@@ -32,12 +35,11 @@ if typing.TYPE_CHECKING:
     bind=True,
     max_retries=5,
     default_retry_delay=60,
-    base=Singleton,
 )
-def generate_thumbnail_task(
-    self: "Task", *, profile_instance: models.UserProfile
-) -> None:
+def generate_thumbnail_task(self: "Task", *, profile_id: "types.ModelUUID") -> None:
     try:
-        services.generate_thumbnail(size=(100, 100), user_profile=profile_instance)
+        user_profile = get_object_or_404(UserProfile, id=profile_id)
+
+        services.generate_thumbnail(size=(100, 100), user_profile=user_profile)
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

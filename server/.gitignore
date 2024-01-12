@@ -15,7 +15,7 @@ scripts/startup.sh
 */__pycache__
 static/
 rvenv
-monta_frontend/node_modules
+Trenova_frontend/node_modules
 *.local
 logs
 templates

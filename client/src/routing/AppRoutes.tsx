@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -66,12 +66,11 @@ const EmailControlPage = lazy(
   () => import("../pages/admin/control-files/EmailControl"),
 );
 const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
+const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
 
+// Other Pages
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
-const ControlFilesPage = lazy(
-  () => import("../pages/admin/control-files/ControlFiles"),
-);
 const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges"),
@@ -138,25 +137,6 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/reset-password",
     element: <ResetPasswordPage />,
     excludeFromMenu: true,
-  },
-  // Admin Pages
-  {
-    title: "User Management",
-    group: "admin",
-    subMenu: "users",
-    path: "/admin/users",
-    description: "Manage users and their permissions",
-    element: <UserManagementPage />,
-    permission: "view_all_users",
-  },
-  {
-    title: "Control Files",
-    group: "admin",
-    subMenu: "control files",
-    path: "/admin/control-files",
-    description: "Manage organization control files",
-    element: <ControlFilesPage />,
-    permission: "admin.can_view_all_controls",
   },
   // User Pages
   {
@@ -421,6 +401,15 @@ export const routes: RouteObjectWithPermission[] = [
   },
   // Admin Pages
   {
+    title: "User Management",
+    group: "admin",
+    subMenu: "users",
+    path: "/admin/users",
+    description: "Manage users and their permissions",
+    element: <UserManagementPage />,
+    permission: "view_all_users",
+  },
+  {
     title: "Dashboard",
     group: "Administration",
     path: "/admin/dashboard/",
@@ -516,6 +505,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Profiles",
     element: <EmailProfilePage />,
     permission: "view_emailprofile",
+    excludeFromMenu: true,
+  },
+  {
+    title: "Google API",
+    group: "Administration",
+    path: "/admin/google-api/",
+    description: "Google API",
+    element: <GoogleAPIPage />,
+    permission: "view_googleapi",
     excludeFromMenu: true,
   },
   // Error Page

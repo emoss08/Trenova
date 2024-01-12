@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -182,7 +182,7 @@ export const routeModelChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteModelChoiceProps>>;
 
 /** Type for Route Distance Unit Choices */
-type RouteDistanceUnitProps = "metric" | "imperial";
+export type RouteDistanceUnitProps = "metric" | "imperial";
 
 export const routeDistanceUnitChoices = [
   { value: "metric", label: "Metric" },
@@ -194,7 +194,7 @@ export type DistanceMethodChoiceProps = "G" | "M";
 
 export const distanceMethodChoices = [
   { value: "G", label: "Google" },
-  { value: "M", label: "Monta" },
+  { value: "M", label: "Trenova" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Email Protocol Choices */

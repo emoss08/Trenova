@@ -1,6 +1,6 @@
-# Monta Release Roadmap
+# Trenova Release Roadmap
 
-This document outlines the features that are planned for the Monta release. This is a living document, and will be
+This document outlines the features that are planned for the Trenova release. This is a living document, and will be
 updated as features are added or removed.
 
 ---
@@ -102,6 +102,6 @@ functionality. Please note that while all features are available for testing, so
 production use just yet.
 
 If you are eager to be among the first to experience our cutting-edge technology, we invite you to join the BETA program
-today! Simply reach out to our dedicated Monta Customer Support team
-at [Monta Customer Support](mailto:support@monta.io), and we will gladly provide you
+today! Simply reach out to our dedicated Trenova Customer Support team
+at [Trenova Customer Support](mailto:support@Trenova.io), and we will gladly provide you
 with all the information you need to get started.

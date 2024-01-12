@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -39,7 +39,7 @@ export const useQueryInvalidationListener = () => {
           Array.isArray(message.data.queryKeys)
         ) {
           console.log(
-            `%c[MONTA] Query invalidation message received: ${message.data.queryKeys}`,
+            `%c[Trenova] Query invalidation message received: ${message.data.queryKeys}`,
             "color: #a742f5; font-weight: bold",
           );
           message.data.queryKeys.forEach((queryKey: InvalidateQueryFilters) => {
@@ -57,14 +57,14 @@ export const useQueryInvalidationListener = () => {
     const broadcastChannel = new BroadcastChannel("query-invalidation");
     // Colored console log for logging purposes
     console.log(
-      "%c[MONTA] Query invalidation listener registered",
+      "%c[Trenova] Query invalidation listener registered",
       "color: #87f542; font-weight: bold",
     );
 
     broadcastChannel.addEventListener("message", handleInvalidationMessage);
     // Colored console log for logging purposes
     console.log(
-      "%c[MONTA] Listening for query invalidation messages...",
+      "%c[Trenova] Listening for query invalidation messages...",
       "color: #87f542; font-weight: bold",
     );
 
