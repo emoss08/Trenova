@@ -19,37 +19,25 @@
 class CacheManagerError(Exception):
     """Base exception class for CacheManager-related errors."""
 
-    pass
-
 
 class CacheKeyError(CacheManagerError):
     """Raised when there is an issue with a cache key."""
-
-    pass
 
 
 class CacheConnectionError(CacheManagerError):
     """Raised when there is an issue connecting to the cache."""
 
-    pass
-
 
 class CacheOperationError(CacheManagerError):
     """Raised when there is an issue performing a cache operation."""
-
-    pass
 
 
 class InvalidEmailProtocol(Exception):
     """Raised when an invalid email protocol is used."""
 
-    pass
-
 
 class InvalidEmailProfile(Exception):
     """Raised when an invalid email profile is used."""
-
-    pass
 
 
 class ConditionalStructureError(Exception):
@@ -57,12 +45,8 @@ class ConditionalStructureError(Exception):
     Exception raised when the structure of the conditional logic is not valid
     """
 
-    pass
-
 
 class InvalidOperationError(Exception):
     """
     Exception raised when the conditional logic operation is not in the list of available operations
     """
-
-    pass

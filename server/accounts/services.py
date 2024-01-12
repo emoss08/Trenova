@@ -18,9 +18,9 @@
 import logging
 import secrets
 
-from PIL import Image, UnidentifiedImageError
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from PIL import Image, UnidentifiedImageError
 
 from accounts import models
 from utils.helpers import optimize_image

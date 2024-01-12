@@ -26,6 +26,7 @@ from core.exceptions import ServiceException
 
 if typing.TYPE_CHECKING:
     from celery.app.task import Task
+
     from utils import types
 
 
