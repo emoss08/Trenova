@@ -23,7 +23,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 
-class MontaFTPHandler(FTPHandler):
+class TrenovaFTPHandler(FTPHandler):
     def on_file_received(self, file: str) -> None:
         logging.info(f"File received: {file}")
         try:
@@ -44,9 +44,9 @@ class MontaFTPHandler(FTPHandler):
 def run_server() -> None:
     authorizer = DummyAuthorizer()
     authorizer.add_user("user", "12345", ".", perm="elradfmwMT")
-    handler = MontaFTPHandler
+    handler = TrenovaFTPHandler
     handler.authorizer = authorizer
-    handler.banner = "Monta FTP Server"
+    handler.banner = "Trenova FTP Server"
 
     logging.basicConfig(filename="ftp.log", level=logging.INFO)
 

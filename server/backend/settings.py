@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -30,8 +30,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
-ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
+INTERNAL_IPS = ["127.0.0.1", "Trenova.local", "localhost"]
+ALLOWED_HOSTS = ["trenova.local", "127.0.0.1", "localhost"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     "channels",
     "ckeditor",
     "graphene_django",
-    # Monta Apps
+    # Trenova Apps
     "backend",
     "core",
     "accounts",
@@ -172,7 +172,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Eastern"
 USE_I18N = True
 USE_TZ = True
-LANGUAGE_COOKIE_NAME = "monta_language"
+LANGUAGE_COOKIE_NAME = "trenova_language"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
@@ -380,7 +380,7 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
 # Django Rest Framework Spectacular Configurations
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Monta API",
+    "TITLE": "Trenova API",
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,

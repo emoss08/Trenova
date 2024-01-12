@@ -289,7 +289,7 @@ class Organization(TimeStampedModel):
     @final
     class LanguageChoices(models.TextChoices):
         """
-        Supported Language Choices for Monta
+        Supported Language Choices for Trenova
         """
 
         ENGLISH = "en", _("English")

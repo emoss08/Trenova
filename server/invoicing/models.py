@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -143,7 +143,7 @@ class InvoiceControl(GenericModel):
 
         Returns:
             String representation of the InvoiceControl model. For example,
-            `Monta`
+            `Trenova`
         """
         return textwrap.shorten(
             f"Invoice Control: {self.organization.name}", width=30, placeholder="..."

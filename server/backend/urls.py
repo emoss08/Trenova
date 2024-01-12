@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -429,9 +429,9 @@ urlpatterns = [
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-admin.site.site_header = "Monta TMS Administration"
-admin.site.site_title = "Monta TMS Administration"
-admin.site.index_title = "Monta TMS Administration"
+admin.site.site_header = "Trenova TMS Administration"
+admin.site.site_title = "Trenova TMS Administration"
+admin.site.index_title = "Trenova TMS Administration"
 admin.site.empty_value_display = "N/A"
 
 if settings.DEBUG:

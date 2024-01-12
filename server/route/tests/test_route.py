@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -24,10 +24,10 @@ from organization.models import Organization
 pytestmark = pytest.mark.django_db
 
 
-def test_monta_distance_method_with_route_generation_error(
+def test_trenova_distance_method_with_route_generation_error(
     organization: Organization,
 ) -> None:
-    """Test ValidationError is thrown when Monta is selected as the distance method and route generation is enabled.
+    """Test ValidationError is thrown when Trenova is selected as the distance method and route generation is enabled.
 
     Args:
         organization: Organization Object.
@@ -44,7 +44,7 @@ def test_monta_distance_method_with_route_generation_error(
 
     assert excinfo.value.message_dict == {
         "generate_routes": [
-            "'Monta' does not support automatic route generation. Please select Google as the distance method."
+            "'Trenova' does not support automatic route generation. Please select Google as the distance method."
         ]
     }
 

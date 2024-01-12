@@ -1,26 +1,26 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT 2022 Trenova
 
-This file is part of Monta.
+This file is part of Trenova.
 
-Monta is free software: you can redistribute it and/or modify
+Trenova is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-Monta is distributed in the hope that it will be useful,
+Trenova is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+along with Trenova.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -

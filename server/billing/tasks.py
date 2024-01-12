@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
 #  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
@@ -54,7 +54,7 @@ def automate_mass_shipments_billing(self: "Task") -> str:
     """
 
     # TODO: Remove this once we have a better way to get the system user
-    system_user = User.objects.get(username="monta")
+    system_user = User.objects.get(username="Trenova")
 
     # Get the organizations that have auto bill shipments enabled
     organizations: QuerySet[Organization] = Organization.objects.filter(
