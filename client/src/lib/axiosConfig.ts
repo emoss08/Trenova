@@ -37,7 +37,7 @@ axios.interceptors.request.use(
     }
 
     console.log(
-      `%c[MONTA] Axios request: ${req.method?.toUpperCase()} ${req.url}`,
+      `%c[Trenova] Axios request: ${req.method?.toUpperCase()} ${req.url}`,
       "color: #34ebe5; font-weight: bold",
     );
     return req;

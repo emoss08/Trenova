@@ -194,7 +194,7 @@ export type DistanceMethodChoiceProps = "G" | "M";
 
 export const distanceMethodChoices = [
   { value: "G", label: "Google" },
-  { value: "M", label: "Monta" },
+  { value: "M", label: "Trenova" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Email Protocol Choices */

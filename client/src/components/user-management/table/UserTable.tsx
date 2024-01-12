@@ -1,7 +1,7 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
  * The Monta software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
@@ -21,7 +21,7 @@ import { Avatar, Badge, Box, Text, Tooltip } from "@mantine/core";
 import { CreateUserDrawer } from "@/components/user-management/table/CreateUserDrawer";
 import { ViewUserModal } from "./ViewUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
-import { MontaTable } from "@/components/common/table/MontaTable";
+import { TrenovaTable } from "@/components/common/table/TrenovaTable";
 import { User } from "@/types/accounts";
 import { formatDate, formatDateToHumanReadable } from "@/lib/date";
 
@@ -131,7 +131,7 @@ export function UsersAdminTable() {
   );
 
   return (
-    <MontaTable
+    <TrenovaTable
       store={userTableStore}
       link="/users"
       columns={columns}

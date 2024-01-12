@@ -1,7 +1,7 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
  * The Monta software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
@@ -18,7 +18,7 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { MontaTable } from "@/components/common/table/MontaTable";
+import { TrenovaTable } from "@/components/common/table/TrenovaTable";
 import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
 import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
 import { HMDrawer } from "@/components/hazardous-material/HMDrawer";
@@ -63,7 +63,7 @@ export function HazardousMaterialTable() {
     [],
   );
   return (
-    <MontaTable
+    <TrenovaTable
       store={hazardousMaterialTableStore}
       link="/hazardous_materials"
       columns={columns}

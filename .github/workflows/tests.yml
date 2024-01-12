@@ -1,4 +1,4 @@
-name: Monta Build
+name: Trenova Build
 
 on:
   - pull_request

@@ -1,7 +1,7 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
  * The Monta software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
@@ -20,7 +20,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { TractorDialog } from "@/components/tractors/tractor-table-dialog";
 import { TractorTableEditSheet } from "@/components/tractors/tractor-table-edit-dialog";
-import { Tractor, equipmentStatusChoices } from "@/types/equipment";
+import { equipmentStatusChoices, Tractor } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";

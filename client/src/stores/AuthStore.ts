@@ -1,7 +1,7 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
  * The Monta software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
@@ -43,7 +43,7 @@ const createStore = (set: SetState<AuthState>) => ({
 // TODO(WOLFRED): Switch this to createGlobalStore once we have a way to persist global stores
 export const useAuthStore = create<AuthState>(
   persist(createStore, {
-    name: "monta-auth-storage",
+    name: "Trenova-auth-storage",
   }) as StateCreator<AuthState>,
 );
 
