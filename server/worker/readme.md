@@ -1,4 +1,4 @@
-# Monta Worker Application
+# Trenova Worker Application
 
 ## Table of Contents
 
@@ -23,7 +23,7 @@
 
 ### Introduction <a name="introduction"></a>
 
-- Monta Worker is an application that is used for storing Worker(e.q. Driver) information.
+- Trenova Worker is an application that is used for storing Worker(e.q. Driver) information.
 
 ### Files <a name="files"></a>
 

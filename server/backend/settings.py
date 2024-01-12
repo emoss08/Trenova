@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -30,8 +30,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
-ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
+INTERNAL_IPS = ["127.0.0.1", "trenova.local", "localhost"]
+ALLOWED_HOSTS = ["trenova.local", "127.0.0.1", "localhost"]
 
 # Application definition
 INSTALLED_APPS = [
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     "channels",
     "ckeditor",
     "graphene_django",
-    # Monta Apps
+    # Trenova Apps
     "backend",
     "core",
     "accounts",
@@ -172,7 +172,7 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Eastern"
 USE_I18N = True
 USE_TZ = True
-LANGUAGE_COOKIE_NAME = "monta_language"
+LANGUAGE_COOKIE_NAME = "trenova_language"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
@@ -211,6 +211,12 @@ LOGGING = {
     },
     "loggers": {
         "kafka": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+            "formatter": "verbose",
+        },
+        "organization": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
@@ -374,7 +380,7 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
 # Django Rest Framework Spectacular Configurations
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Monta API",
+    "TITLE": "Trenova API",
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
@@ -465,44 +471,44 @@ KAFKA_AUTO_COMMIT = env("KAFKA_AUTO_COMMIT")
 KAFKA_AUTO_COMMIT_INTERVAL_MS = env("KAFKA_AUTO_COMMIT_INTERVAL_MS")
 KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
 KAFKA_EXCLUDE_TOPIC_PREFIXES = [
-    "monta_app_.public.silk_",
-    "monta_app_.public.auditlog_",
-    "monta_app_.public.admin_",
-    "monta_app_.public.django_",
-    "monta_app_.public.auth_",
-    "monta_app_.public.states",
-    "monta_app_.public.flag",
-    "monta_app_.public.user",
-    "monta_app_.public.a_group",
-    "monta_app_.public.audit_",
-    "monta_app_.public.user",
-    "monta_app_.public.organization",
-    "monta_app_.public.plugin",
-    "monta_app_.public.waffle_",
-    "monta_app_.public.edi",
-    "monta_app_.public.states",
-    "monta_app_.public.document",
-    "monta_app_.public.accounting_control",
-    "monta_app_.public.billing_control",
-    "monta_app_.public.doc_template_customization",
-    "monta_app_.public.scheduled_report",
-    "monta_app_.public.weekday",
-    "monta_app_.public.notification_setting",
-    "monta_app_.public.notification_type",
-    "monta_app_.public.route_control",
-    "monta_app_.public.feasibility_tool_control",
-    "monta_app_.public.google_api",
-    "monta_app_.public.integration",
-    "monta_app_.public.shipment_control",
-    "monta_app_.public.formula_template",
-    "monta_app_.public.dispatch_control",
-    "monta_app_.public.email_control",
-    "monta_app_.public.invoice_control",
-    "monta_app_.public.table_change_alert",
-    "monta_app_.public.tax_rate",
-    "monta_app_.public.template",
-    "monta_app_.public.custom_report",
-    "monta_app_.public.feature_flag",
+    "trenova_app_.public.silk_",
+    "trenova_app_.public.auditlog_",
+    "trenova_app_.public.admin_",
+    "trenova_app_.public.django_",
+    "trenova_app_.public.auth_",
+    "trenova_app_.public.states",
+    "trenova_app_.public.flag",
+    "trenova_app_.public.user",
+    "trenova_app_.public.a_group",
+    "trenova_app_.public.audit_",
+    "trenova_app_.public.user",
+    "trenova_app_.public.organization",
+    "trenova_app_.public.plugin",
+    "trenova_app_.public.waffle_",
+    "trenova_app_.public.edi",
+    "trenova_app_.public.states",
+    "trenova_app_.public.document",
+    "trenova_app_.public.accounting_control",
+    "trenova_app_.public.billing_control",
+    "trenova_app_.public.doc_template_customization",
+    "trenova_app_.public.scheduled_report",
+    "trenova_app_.public.weekday",
+    "trenova_app_.public.notification_setting",
+    "trenova_app_.public.notification_type",
+    "trenova_app_.public.route_control",
+    "trenova_app_.public.feasibility_tool_control",
+    "trenova_app_.public.google_api",
+    "trenova_app_.public.integration",
+    "trenova_app_.public.shipment_control",
+    "trenova_app_.public.formula_template",
+    "trenova_app_.public.dispatch_control",
+    "trenova_app_.public.email_control",
+    "trenova_app_.public.invoice_control",
+    "trenova_app_.public.table_change_alert",
+    "trenova_app_.public.tax_rate",
+    "trenova_app_.public.template",
+    "trenova_app_.public.custom_report",
+    "trenova_app_.public.feature_flag",
     "my_connect_offsets",
     "my_connect_configs",
     "my_connect_statuses",

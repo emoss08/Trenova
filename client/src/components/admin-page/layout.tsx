@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2024 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -182,7 +182,7 @@ const links = [
     group: "Data & Integrations",
   },
   {
-    href: "#",
+    href: "/admin/google-api/",
     title: "Google Integration",
     icon: (
       <FontAwesomeIcon
@@ -224,15 +224,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-background">
-      <div className="sticky top-0 h-screen w-64">
-        {/* Ensure there's no extra padding or margin that could cut off the content */}
+    <div className="flex flex-col bg-background md:flex-row">
+      <div className="sticky top-0 z-10 h-36 overflow-y-auto border-b bg-background md:h-screen md:w-64 md:border-none">
         <ScrollArea className="m-0 h-full overflow-y-auto p-0">
           <SidebarNav links={links} />
         </ScrollArea>
       </div>
 
-      {/* Scrollable Main Content */}
       <div className="mx-6 flex-1 overflow-auto">
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
           {children}

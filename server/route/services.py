@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -36,8 +36,8 @@ def generate_route(
     Args:
         shipment: An instance of the Shipment model representing a shipment to generate a new Route object for.
         distance: A float representing the total distance of the new Route object in miles.
-        method: A string representing the method used to calculate the distance ('Google' or 'Monta').
-        duration: A string representing the duration of the new Route object in hours, or None if the method is 'Monta'.
+        method: A string representing the method used to calculate the distance ('Google' or 'Trenova').
+        duration: A string representing the duration of the new Route object in hours, or None if the method is 'Trenova'.
 
     Returns:
         None: This function does not return anything.
@@ -111,8 +111,8 @@ def calculate_distance(
 
     Returns:
         A tuple containing three values: a float representing the distance between the two points in miles, a string
-        representing the method used to calculate the distance ('Google' or 'Monta'), and a float representing the
-        duration between the two points in hours if the method is 'Google', or None if the method is 'Monta'.
+        representing the method used to calculate the distance ('Google' or 'Trenova'), and a float representing the
+        duration between the two points in hours if the method is 'Google', or None if the method is 'Trenova'.
     """
 
     # Get the distance method from the Organization's RouteControl object

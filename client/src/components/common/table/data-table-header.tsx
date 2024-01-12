@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -21,7 +21,7 @@ import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { Table as TableType, flexRender } from "@tanstack/react-table";
+import { flexRender, Table as TableType } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
 import { Input } from "../fields/input";
@@ -93,10 +93,10 @@ const ButtonConfig: React.FC<{
     <Button
       variant={buttonVariant}
       onClick={() => store.set("sheetOpen", true)}
-      className="h-8"
+      className="h-8 bg-gradient-to-r hover:from-red-600 hover:to-blue-700 hover:text-white"
       disabled={isDisabled}
     >
-      <PlusIcon className="mr-2 h-4 w-4" /> {buttonLabel}
+      <PlusIcon className="mr-2 h-4 w-4 hover:text-white" /> {buttonLabel}
     </Button>
   );
 });

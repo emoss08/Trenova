@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -77,7 +77,7 @@ def test_post_customer_with_details(api_client: APIClient) -> None:
             "customer_contacts": [
                 {
                     "name": "Test Contact",
-                    "email": "test@monta.io",
+                    "email": "test@trenova.app",
                     "title": "Test Title",
                     "phone_number": "123-456-7890",
                     "is_payable_contact": True,
@@ -86,8 +86,8 @@ def test_post_customer_with_details(api_client: APIClient) -> None:
             "email_profile": {
                 "subject": "Test Subject",
                 "comment": "Test Comment",
-                "from_address": "test@monta.io",
-                "blind_copy": "test2@monta.io, test2@monta.io",
+                "from_address": "test@trenova.app",
+                "blind_copy": "test2@trenova.app, test2@trenova.app",
             },
             "rule_profile": {
                 "name": "Test Rule Profile",
@@ -116,9 +116,10 @@ def test_post_customer_with_details(api_client: APIClient) -> None:
     assert response.data["zip_code"] == "12345"
     assert response.data["email_profile"]["subject"] == "Test Subject"
     assert response.data["email_profile"]["comment"] == "Test Comment"
-    assert response.data["email_profile"]["from_address"] == "test@monta.io"
+    assert response.data["email_profile"]["from_address"] == "test@trenova.app"
     assert (
-        response.data["email_profile"]["blind_copy"] == "test2@monta.io, test2@monta.io"
+        response.data["email_profile"]["blind_copy"]
+        == "test2@trenova.app, test2@trenova.app"
     )
     assert response.data["rule_profile"]["name"] == "Test Rule Profile"
     assert response.data["rule_profile"]["document_class"] == [
@@ -155,7 +156,7 @@ def test_put_customer_with_details(
             "customer_contacts": [
                 {
                     "name": "Test Contact",
-                    "email": "test@monta.io",
+                    "email": "test@trenova.app",
                     "title": "Test Title",
                     "phone_number": "123-456-7890",
                     "is_payable_contact": True,

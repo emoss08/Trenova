@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -227,7 +227,7 @@ def _notify_reconciliation_required(
         send_mail(
             subject=f"Shipment {shipment.pro_number} requires reconciliation.",
             message=f"Shipment {shipment.pro_number} requires reconciliation. Reason: {reason}",
-            from_email="no-reply@monta.io",
+            from_email="no-reply@trenova.app",
             recipient_list=[user.email for user in recipients],
             fail_silently=False,
         )

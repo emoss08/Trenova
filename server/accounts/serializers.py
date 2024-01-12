@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -134,7 +134,6 @@ class UserProfileSerializer(GenericSerializer):
         model = models.UserProfile
         fields = "__all__"
         read_only_fields = (
-            "customer",
             "organization",
             "business_unit",
             "id",
@@ -298,7 +297,7 @@ class UserSerializer(GenericSerializer):
         send_mail(
             f"You have been added to {organization.name}",
             f"Your username is {user.username} and your password is {new_password}. Please change your password after logging in.",
-            "noreply@monta.io",
+            "noreply@trenova.app",
             [user.email],
             fail_silently=False,
         )
@@ -340,6 +339,14 @@ class UserSerializer(GenericSerializer):
         instance.update_user(**validated_data)
 
         return instance
+
+
+class MinimalUserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ["id", "username", "email", "profile"]
 
 
 class JobTitleSerializer(GenericSerializer):
@@ -567,7 +574,7 @@ class ResetPasswordSerializer(serializers.Serializer):
         send_mail(
             "Your password has been reset",
             f"Your new password is {new_password}. Please change it as soon as you log in.",
-            "noreply@monta.io",
+            "noreply@trenova.app",
             [user.email],
             fail_silently=False,
         )

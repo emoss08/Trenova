@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -34,7 +34,6 @@ from accounts.selectors import (
     get_users_by_organization_id,
 )
 from accounts.serializers import UserSerializer
-from accounts.services import generate_thumbnail
 from accounts.tasks import generate_thumbnail_task
 from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.models import BusinessUnit, Organization
@@ -314,7 +313,7 @@ def test_validate_reset_password(unauthenticated_api_client: APIClient) -> None:
 
     response = unauthenticated_api_client.post(
         "/api/reset_password/",
-        {"email": "random@monta.io"},
+        {"email": "random@trenova.app"},
     )
     assert response.status_code == 400
     assert (
@@ -390,7 +389,7 @@ def test_change_email(user: User) -> None:
 
     response = client.post(
         "/api/change_email/",
-        {"email": "anothertest@monta.io", "current_password": "new_password1234%"},
+        {"email": "anothertest@trenova.app", "current_password": "new_password1234%"},
     )
     assert response.status_code == 200
     assert response.data["message"] == "Email successfully changed."
@@ -416,7 +415,7 @@ def test_change_email_with_invalid_password(user: User) -> None:
 
     response = client.post(
         "/api/change_email/",
-        {"email": "test_email@monta.io", "current_password": "wrong_password"},
+        {"email": "test_email@trenova.app", "current_password": "wrong_password"},
     )
 
     assert response.status_code == 400
@@ -472,7 +471,7 @@ def test_change_email_with_other_users_email(user: User) -> None:
     user.save()
     user.refresh_from_db()
 
-    user_2 = UserFactory(username="test_user_2", email="test_another@monta.io")
+    user_2 = UserFactory(username="test_user_2", email="test_another@trenova.app")
 
     client = APIClient()
     client.force_authenticate(user=user)
@@ -526,30 +525,6 @@ def test_validate_password_not_allowed_on_post(
     )
 
 
-def test_create_thumbnail(user_profile: UserProfile) -> None:
-    """Test to ensure when a user uploads a profile picture, that a thumbnail is generated.
-
-    Args:
-        user_profile (UserProfile): User Profile Object
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    image = Image.new("RGB", (100, 100))
-    image_file = BytesIO()
-    image.save(image_file, "png")
-    image_file.seek(0)
-
-    # Set the user's profile picture
-    user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
-    generate_thumbnail(user_profile=user_profile, size=(100, 100))
-
-    # Check that the thumbnail was generated
-    assert user_profile.thumbnail is not None
-    assert user_profile.thumbnail.url is not None
-
-
 @patch("accounts.tasks.services.generate_thumbnail")
 def test_create_thumbnail_task(user_thumbnail, user_profile: UserProfile) -> None:
     """Test celery task to ensure when a user uploads a profile picture, that a thumbnail is generated.
@@ -570,7 +545,7 @@ def test_create_thumbnail_task(user_thumbnail, user_profile: UserProfile) -> Non
     # Set the user's profile picture
     user_profile.profile_picture.save("test.png", ContentFile(image_file.getvalue()))
 
-    generate_thumbnail_task(profile_instance=user_profile)
+    generate_thumbnail_task(profile_id=user_profile.id)
 
     user_thumbnail.assert_called_once_with(size=(100, 100), user_profile=user_profile)
     user_thumbnail.assert_called_once()

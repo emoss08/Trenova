@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------------------------------
-#  COPYRIGHT(c) 2024 MONTA                                                                         -
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
-#  This file is part of Monta.                                                                     -
+#  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -418,15 +418,20 @@ urlpatterns = [
         org_api.UserOrganizationView.as_view(),
         name="user-organization",
     ),
+    path(
+        "api/organization/google_api_details/",
+        integration_api.GoogleAPIDetailViewSet.as_view(),
+        name="organization-google-api-details",
+    ),
     path("graphql", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-admin.site.site_header = "Monta TMS Administration"
-admin.site.site_title = "Monta TMS Administration"
-admin.site.index_title = "Monta TMS Administration"
+admin.site.site_header = "Trenova TMS Administration"
+admin.site.site_title = "Trenova TMS Administration"
+admin.site.index_title = "Trenova TMS Administration"
 admin.site.empty_value_display = "N/A"
 
 if settings.DEBUG:

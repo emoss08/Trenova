@@ -1,9 +1,9 @@
 /*
- * COPYRIGHT(c) 2023 MONTA
+ * COPYRIGHT(c) 2024 Trenova
  *
- * This file is part of Monta.
+ * This file is part of Trenova.
  *
- * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
  * to copy, modify, and redistribute the software, but only for non-production use or with a total
  * of less than three server instances. Starting from the Change Date (November 16, 2026), the
  * software will be made available under version 2 or later of the GNU General Public License.
@@ -22,12 +22,12 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/constants";
-import { USDollarFormatString, truncateText } from "@/lib/utils";
+import { truncateText, USDollarFormatString } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
 import { FilterConfig } from "@/types/tables";
 import {
-  FuelMethodChoicesProps,
   fuelMethodChoices,
+  FuelMethodChoicesProps,
 } from "@/utils/apps/billing";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/common/table/data-table-components";
