@@ -3,7 +3,7 @@
 #                                                                                                  -
 #  This file is part of Trenova.                                                                   -
 #                                                                                                  -
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
 #  to copy, modify, and redistribute the software, but only for non-production use or with a total -
 #  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
 #  software will be made available under version 2 or later of the GNU General Public License.     -
@@ -30,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-INTERNAL_IPS = ["127.0.0.1", "Trenova.local", "localhost"]
+INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
 ALLOWED_HOSTS = ["trenova.local", "127.0.0.1", "localhost"]
 
 # Application definition
