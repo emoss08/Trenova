@@ -15,16 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { NavMenu } from "@/components/layout/navbar";
 import { NotificationMenu } from "@/components/layout/notification_menu/notification-menu";
-import { SiteSearch } from "@/components/layout/site-search";
+import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
-import { Toaster } from "react-hot-toast";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
+import { Toaster } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 import { AppGridMenu } from "./app-grid";
+import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
@@ -45,17 +45,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
-            <Logo />
-            <div className="hidden flex-1 justify-center md:flex">
-              <NavMenu />
+            <div className="flex items-center gap-x-4">
+              <Logo />
+              <div className="h-7 border-l border-muted-foreground/40" />
+              <AsideMenuSheet />
+              {/* <TeamSwitcher /> */}
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-x-4">
+              <SiteSearchInput />
               <AppGridMenu />
               <NotificationMenu />
-              <div className="mr-2 h-7 border-l border-muted-foreground/40 pl-2" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>
@@ -83,7 +86,7 @@ export function UnprotectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toaster position="bottom-right" />
-      <header className="sticky top-0 z-50 w-full shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full shrink-0 border-b">
         <RainbowTopBar />
       </header>
       <div className="h-screen">{children}</div>

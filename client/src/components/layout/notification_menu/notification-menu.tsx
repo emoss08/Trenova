@@ -18,6 +18,7 @@
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
 import NotificationSound from "@/assets/audio/notification.webm";
 import { Notifications } from "@/components/layout/notification_menu/notification";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -47,6 +48,7 @@ import { Howl } from "howler";
 import { BellIcon, ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
@@ -104,23 +106,32 @@ const reconnect = () => {
 
 function NotificationButton({
   userHasNotifications,
+  open,
 }: {
   userHasNotifications: boolean;
+  open: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <nav className="relative mx-4 mt-1 inline-flex cursor-pointer">
+          <Button
+            size="icon"
+            variant="outline"
+            role="button"
+            aria-label="Open Application Grid"
+            aria-expanded={open}
+            className="relative h-9 border-muted-foreground/40 hover:border-muted-foreground/80"
+          >
             <BellIcon className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
-              <span className="absolute right-0 top-0 -mr-1 -mt-1 flex h-2 w-2">
+              <span className="absolute -right-1 -top-1 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-700 opacity-25"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-800"></span>
               </span>
             )}
-          </nav>
+          </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>
           <span>Notifications</span>
@@ -164,6 +175,16 @@ function NotificationContent({
             notificationLoading={notificationsLoading}
           />
         </ScrollArea>
+      )}
+      {!userHasNotifications && (
+        <div className="select-none items-center justify-center border-t pt-2 text-center text-xs">
+          Know when you have new notifications by enabling text notifications in
+          your{" "}
+          <Link to="/account/settings/" className="font-semibold underline">
+            Account Settings
+          </Link>
+          .
+        </div>
       )}
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
@@ -315,10 +336,13 @@ export function NotificationMenu() {
   return (
     <Popover
       open={notificationsMenuOpen}
-      onOpenChange={(open) => setNotificationMenuOpen(open)}
+      onOpenChange={setNotificationMenuOpen}
     >
       <PopoverTrigger>
-        <NotificationButton userHasNotifications={userHasNotifications} />
+        <NotificationButton
+          userHasNotifications={userHasNotifications}
+          open={notificationsMenuOpen}
+        />
       </PopoverTrigger>
       <PopoverContent
         className="w-80"

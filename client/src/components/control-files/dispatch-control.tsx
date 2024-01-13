@@ -32,6 +32,7 @@ import {
 import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
 import { InputField } from "@/components/common/fields/input";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
+import { useTranslation } from "react-i18next";
 
 function DispatchControlForm({
   dispatchControl,
@@ -39,6 +40,7 @@ function DispatchControlForm({
   dispatchControl: DispatchControlType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.dispatchcontrol", "common"]);
 
   const { control, handleSubmit, reset } = useForm<DispatchControlFormValues>({
     resolver: yupResolver(dispatchControlSchema),
@@ -50,9 +52,9 @@ function DispatchControlForm({
     {
       method: "PUT",
       path: `/dispatch_control/${dispatchControl.id}/`,
-      successMessage: "Dispatch Control updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["dispatchControl"],
-      errorMessage: "Failed to update dispatch control.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
   );
@@ -66,7 +68,7 @@ function DispatchControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -77,9 +79,9 @@ function DispatchControlForm({
               control={control}
               options={serviceIncidentControlChoices}
               rules={{ required: true }}
-              label="Record Service Incident"
-              placeholder="Record Service Incident"
-              description="Option to log service incidents automatically for delayed shipments."
+              label={t("fields.recordServiceIncident.label")}
+              placeholder={t("fields.recordServiceIncident.placeholder")}
+              description={t("fields.recordServiceIncident.description")}
             />
           </div>
           <div className="col-span-3">
@@ -88,9 +90,9 @@ function DispatchControlForm({
               control={control}
               type="number"
               rules={{ required: true }}
-              label="Grace Period"
-              placeholder="Grace Period"
-              description="Enter the number of minutes to wait before recording a service incident."
+              label={t("fields.gracePeriod.label")}
+              placeholder={t("fields.gracePeriod.placeholder")}
+              description={t("fields.gracePeriod.description")}
             />
           </div>
           <div className="col-span-3">
@@ -99,9 +101,9 @@ function DispatchControlForm({
               type="number"
               control={control}
               rules={{ required: true }}
-              label="Deadhead Target"
-              placeholder="Deadhead Target"
-              description="Specify the maximum miles a driver can travel unloaded to optimize route efficiency."
+              label={t("fields.deadheadTarget.label")}
+              placeholder={t("fields.deadheadTarget.placeholder")}
+              description={t("fields.deadheadTarget.description")}
             />
           </div>
           <div className="col-span-3">
@@ -110,73 +112,73 @@ function DispatchControlForm({
               type="number"
               control={control}
               rules={{ required: true }}
-              label="Max Shipment Weight Limit"
-              placeholder="Max Shipment Weight Limit"
-              description="Sets the maximum allowable weight (in pounds) for any shipment. Dispatch is prevented if the weight exceeds this limit."
+              label={t("fields.maxShipmentWeightLimit.label")}
+              placeholder={t("fields.maxShipmentWeightLimit.placeholder")}
+              description={t("fields.maxShipmentWeightLimit.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceWorkerAssign"
               control={control}
-              label="Enforce Worker Assignment"
-              description="Mandate specific worker assignments for each shipment for better accountability."
+              label={t("fields.enforceWorkerAssign.label")}
+              description={t("fields.enforceWorkerAssign.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="trailerContinuity"
               control={control}
-              label="Enforce Trailer Continuity"
-              description="Ensure the same trailer is used throughout a shipment for consistency."
+              label={t("fields.trailerContinuity.label")}
+              description={t("fields.trailerContinuity.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="dupeTrailerCheck"
               control={control}
-              label="Enforce Duplicate Trailer Check"
-              description="Activate checks against using the same trailer for multiple simultaneous shipments."
+              label={t("fields.dupeTrailerCheck.label")}
+              description={t("fields.dupeTrailerCheck.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="regulatoryCheck"
               control={control}
-              label="Enforce Regulatory Check"
-              description="Implement a mandatory check to ensure all shipments comply with regulations."
+              label={t("fields.regulatoryCheck.label")}
+              description={t("fields.regulatoryCheck.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="prevShipmentsOnHold"
               control={control}
-              label="Prevent Shipments On Hold"
-              description="Prevent allocation of shipments to drivers who have ongoing shipments on hold."
+              label={t("fields.prevShipmentsOnHold.label")}
+              description={t("fields.prevShipmentsOnHold.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="workerTimeAwayRestriction"
               control={control}
-              label="Enforce Worker Time Away"
-              description="Disallow assignments to workers currently on approved time away."
+              label={t("fields.workerTimeAwayRestriction.label")}
+              description={t("fields.workerTimeAwayRestriction.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="tractorWorkerFleetConstraint"
               control={control}
-              label="Enforce Tractor and Worker Fleet Constraint"
-              description="Restrict dispatch assignments to workers and tractors from the same fleet."
+              label={t("fields.tractorWorkerFleetConstraint.label")}
+              description={t("fields.tractorWorkerFleetConstraint.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="maintenanceCompliance"
               control={control}
-              label="Vehicle Maintenance Compliance"
-              description="Ensures that all vehicles are compliant with maintenance standards before dispatch."
+              label={t("fields.maintenanceCompliance.label")}
+              description={t("fields.maintenanceCompliance.description")}
             />
           </div>
         </div>
@@ -191,10 +193,10 @@ function DispatchControlForm({
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>
@@ -203,19 +205,16 @@ function DispatchControlForm({
 
 export default function DispatchControl() {
   const { dispatchControlData, isLoading, isError } = useDispatchControl();
+  const { t } = useTranslation("admin.dispatchcontrol");
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
         <h2 className="text-base font-semibold leading-7 text-foreground">
-          Dispatch Control
+          {t("title")}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Elevate your dispatch operations with our comprehensive Dispatch
-          Control Panel. This module is designed to streamline dispatch
-          processes, enforce compliance, and optimize operational workflows,
-          ensuring a smooth and efficient management of your transportation
-          services.
+          {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
@@ -224,7 +223,7 @@ export default function DispatchControl() {
         </div>
       ) : isError ? (
         <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
-          <ErrorLoadingData message="Failed to load dispatch control." />
+          <ErrorLoadingData message={t("formErrorMessage")} />
         </div>
       ) : (
         dispatchControlData && (

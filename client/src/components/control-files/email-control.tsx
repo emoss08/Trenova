@@ -65,7 +65,7 @@ function EmailControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">

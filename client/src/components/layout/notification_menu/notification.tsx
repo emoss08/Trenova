@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import nothingFound from "@/assets/images/there-is-nothing-here.png";
+import nothingFound from "@/assets/images/notifications.webp";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTimestamp } from "@/lib/date";
@@ -36,16 +36,19 @@ export function Notifications({
 
   if (!notification || notification.unreadList.length === 0) {
     return (
-      <div className="justify-content-center mt-10 flex h-full w-full flex-col items-center">
+      <div className="mt-5 flex h-full w-full flex-col items-center justify-center gap-y-3">
         <LazyLoadImage
           alt="Nothing found"
           src={nothingFound}
-          className="h-40 w-40"
+          className="h-40 w-40 select-none"
           visibleByDefault={true}
         />
-        <h3 className="text-2xl font-medium">All Caught up!</h3>
-        <p className="text-sm text-muted-foreground">
-          You have no unread notifications
+        <h3 className="select-none text-2xl font-medium">
+          You're all up to date
+        </h3>
+        <p className="select-none text-center text-sm text-muted-foreground">
+          New notifications will appear here when there's activity on your
+          account.
         </p>
       </div>
     );
@@ -66,7 +69,7 @@ export function Notifications({
             </p>
             <Badge
               withDot={false}
-              className="text-accent-forground select-none bg-accent p-0.5 text-xs group-hover:bg-accent-foreground group-hover:text-accent"
+              className="select-none bg-accent p-0.5 text-xs text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent"
             >
               {humanReadableTime}
             </Badge>

@@ -14,16 +14,29 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import type { Meta, StoryObj } from "@storybook/react";
-import LoadingSkeleton from "@/components/layout/loading-skeleton";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import Backend from "i18next-http-backend";
 
-const meta: Meta<typeof LoadingSkeleton> = {
-  component: LoadingSkeleton,
-};
+i18n
+  .use(Backend)
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    fallbackLng: "en",
+    debug: true,
+    ns: [
+      "common",
+      "homepage",
+      "admin.generalpage",
+      "admin.accountingcontrol",
+      "admin.billingcontrol",
+      "admin.invoicecontrol",
+      "admin.dispatchcontrol",
+      "admin.shipmentcontrol",
+      "admin.googleapi",
+    ],
+  });
 
-export default meta;
-type Story = StoryObj<typeof LoadingSkeleton>;
-
-export const Default: Story = {
-  args: {},
-};
+export default i18n;

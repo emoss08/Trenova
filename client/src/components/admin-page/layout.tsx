@@ -224,14 +224,14 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col bg-background md:flex-row">
+    <div className="flex flex-col rounded-md border bg-background p-5 md:flex-row">
       <div className="sticky top-0 z-10 h-36 overflow-y-auto border-b bg-background md:h-screen md:w-64 md:border-none">
         <ScrollArea className="m-0 h-full overflow-y-auto p-0">
           <SidebarNav links={links} />
         </ScrollArea>
       </div>
 
-      <div className="mx-6 flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto md:border-l md:pl-4">
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
           {children}
         </Suspense>

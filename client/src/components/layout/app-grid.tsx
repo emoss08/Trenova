@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -27,16 +28,23 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LayoutGridIcon } from "lucide-react";
+import React from "react";
 
-function AppGridButton() {
+function AppGridButton({ open }: { open: boolean }) {
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <nav className="relative mt-1 inline-flex cursor-pointer">
+          <Button
+            size="icon"
+            variant="outline"
+            role="button"
+            aria-label="Open Application Grid"
+            aria-expanded={open}
+            className="relative h-9 border border-muted-foreground/40 hover:border-muted-foreground/80"
+          >
             <LayoutGridIcon className="h-5 w-5" />
-            <span className="sr-only">Application Grid</span>
-          </nav>
+          </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>
           <span>Application Grid</span>
@@ -47,10 +55,12 @@ function AppGridButton() {
 }
 
 export function AppGridMenu() {
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger>
-        <AppGridButton />
+        <AppGridButton open={open} />
       </PopoverTrigger>
       <PopoverContent
         className="w-80"

@@ -63,7 +63,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
         ref={ref}
         {...props}
       >
-        <Avatar className="m-auto ml-4 inline-block">
+        <Avatar className="m-auto inline-block">
           <AvatarImage
             src={avatarSrc}
             alt={user.username}
@@ -244,7 +244,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
 
 export function UserAvatarMenu({ user }: { user: User }) {
   return (
-    <div className="hidden flex-1 items-center justify-between space-x-2 focus-visible:outline-none md:flex md:justify-end">
+    <div className="flex-1 items-center justify-between space-x-2 focus-visible:outline-none md:flex md:justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <UserAvatar user={user} />

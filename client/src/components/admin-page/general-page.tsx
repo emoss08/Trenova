@@ -26,9 +26,12 @@ import { Organization, OrganizationFormValues } from "@/types/organization";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useTranslation } from "react-i18next";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.generalpage", "common"]);
+
   const {
     selectUSStates,
     isLoading: isStatesLoading,
@@ -44,9 +47,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     {
       method: "PUT",
       path: `/organizations/${organization.id}/`,
-      successMessage: "Organization updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["userOrganization"],
-      errorMessage: "Failed to update organization.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -64,37 +67,27 @@ function OrganizationForm({ organization }: { organization: Organization }) {
       <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
-            Manage Your Organization Information
+            {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Keep your organization's profile up to date. This section allows you
-            to maintain accurate information about your organization, which is
-            crucial for efficient management, communication, and service
-            delivery within the transportation management system. We are
-            committed to safeguarding your data. For more information on our
-            data handling practices, please review our Privacy Policy.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("subTitle")}</p>
         </div>
         <Separator />
       </div>
       <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
         <div className="px-4 sm:px-0">
           <h2 className="text-base font-semibold leading-7 text-foreground">
-            General Information
+            {t("organizationDetails")}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Essential for operational efficiency and compliance, this section
-            captures your organization's core details. Accurate information
-            ensures effective communication and customized service in the
-            transportation sector.
+            {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+          className="m-4 bg-background sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="px-4 py-6 sm:p-8">
+          <div className="px-4">
             <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="col-span-full flex items-center gap-x-8">
                 <Avatar className="h-24 w-24 flex-none rounded-lg">
@@ -112,10 +105,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                       console.log("Change Logo");
                     }}
                   >
-                    Change Logo
+                    {t("fields.logo.placeholder")}
                   </Button>
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    JPG, GIF or PNG. 1MB max.
+                    {t("fields.logo.description")}
                   </p>
                 </div>
               </div>
@@ -123,10 +116,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="name"
-                  label="Name"
+                  label={t("fields.name.label")}
                   rules={{ required: true }}
-                  placeholder="Name"
-                  description="Enter the official name of your organization. This name will be used in all system communications and documents."
+                  placeholder={t("fields.name.placeholder")}
+                  description={t("fields.name.description")}
                 />
               </div>
 
@@ -141,9 +134,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   ]}
                   rules={{ required: true }}
                   disabled
-                  label="Organization Type"
-                  placeholder="Organization Type"
-                  description="Specify the nature of your organization's operations. Choose 'Asset' for asset-based operations, 'Brokerage' for brokerage services, or 'Both' if your organization handles both operations."
+                  label={t("fields.orgType.label")}
+                  placeholder={t("fields.orgType.placeholder")}
+                  description={t("fields.orgType.description")}
                 />
               </div>
 
@@ -151,10 +144,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="scacCode"
-                  label="SCAC Code"
+                  label={t("fields.scacCode.label")}
                   rules={{ required: true }}
-                  placeholder="SCAC Code"
-                  description="Input your Standard Carrier Alpha Code. This unique code is vital for identifying your organization in transport-related activities."
+                  placeholder={t("fields.scacCode.placeholder")}
+                  description={t("fields.scacCode.description")}
                 />
               </div>
 
@@ -162,9 +155,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="dotNumber"
-                  label="DOT Number"
-                  placeholder="DOT Number"
-                  description="Provide your Department of Transportation number. This unique identifier is critical for legal and regulatory compliance in transportation."
+                  label={t("fields.dotNumber.label")}
+                  placeholder={t("fields.dotNumber.placeholder")}
+                  description={t("fields.dotNumber.description")}
                 />
               </div>
 
@@ -172,10 +165,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="addressLine1"
-                  label="Address Line 1"
+                  label={t("fields.addressLine1.label")}
                   rules={{ required: true }}
-                  placeholder="Address Line 1"
-                  description="Specify the primary street address of your organization. This address is used for official correspondence and location-based services."
+                  placeholder={t("fields.addressLine1.placeholder")}
+                  description={t("fields.addressLine1.description")}
                 />
               </div>
 
@@ -183,9 +176,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <InputField
                   control={control}
                   name="addressLine2"
-                  label="Address Line 2"
-                  placeholder="Address Line 2"
-                  description="Additional address information (if needed). Include suite numbers, building names, or other pertinent details."
+                  label={t("fields.addressLine2.label")}
+                  placeholder={t("fields.addressLine2.placeholder")}
+                  description={t("fields.addressLine2.description")}
                 />
               </div>
 
@@ -194,9 +187,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   control={control}
                   name="city"
                   rules={{ required: true }}
-                  label="City"
-                  placeholder="City"
-                  description="Enter the city where your organization is based."
+                  label={t("fields.city.label")}
+                  placeholder={t("fields.city.placeholder")}
+                  description={t("fields.city.description")}
                 />
               </div>
 
@@ -208,9 +201,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   isLoading={isStatesLoading}
                   isFetchError={isStateError}
                   rules={{ required: true }}
-                  label="State"
-                  placeholder="State"
-                  description="Select the state in which your organization operates."
+                  label={t("fields.state.label")}
+                  placeholder={t("fields.state.placeholder")}
+                  description={t("fields.state.description")}
                 />
               </div>
 
@@ -219,27 +212,27 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   control={control}
                   name="zipCode"
                   rules={{ required: true }}
-                  label="Zip Code"
-                  placeholder="Zip Code"
-                  description="Input the zip code of your organization's primary location."
+                  label={t("fields.zipCode.label")}
+                  placeholder={t("fields.zipCode.placeholder")}
+                  description={t("fields.zipCode.description")}
                 />
               </div>
               <div className="sm:col-span-full">
                 <InputField
                   control={control}
                   name="phoneNumber"
-                  label="Phone Number"
-                  placeholder="Phone Number"
-                  description="Your organization's primary contact number. This will be used for official communications and urgent contacts."
+                  label={t("fields.phoneNumber.label")}
+                  placeholder={t("fields.phoneNumber.placeholder")}
+                  description={t("fields.phoneNumber.description")}
                 />
               </div>
               <div className="sm:col-span-full">
                 <InputField
                   control={control}
                   name="website"
-                  label="Website"
-                  placeholder="Website"
-                  description="The official website of your organization. It will be referenced in your profile and used for digital communications."
+                  label={t("fields.website.label")}
+                  placeholder={t("fields.website.placeholder")}
+                  description={t("fields.website.description")}
                 />
               </div>
               <div className="sm:col-span-3">
@@ -251,42 +244,42 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     { label: "Spanish", value: "es" },
                   ]}
                   rules={{ required: true }}
-                  label="Language"
-                  placeholder="Language"
-                  description="Choose the primary language used in your organization. This facilitates effective communication and system localization."
+                  label={t("fields.language.label")}
+                  placeholder={t("fields.language.placeholder")}
+                  description={t("fields.language.description")}
                 />
               </div>
               <div className="sm:col-span-3">
                 <InputField
                   control={control}
                   name="currency"
-                  label="Currency"
                   rules={{ required: true }}
                   disabled
-                  placeholder="Currency"
-                  description="Specify the currency used for your financial transactions. This ensures accurate financial management within the system."
+                  label={t("fields.currency.label")}
+                  placeholder={t("fields.currency.placeholder")}
+                  description={t("fields.currency.description")}
                 />
               </div>
               <div className="sm:col-span-3">
                 <InputField
                   control={control}
                   name="dateFormat"
-                  label="Date Format"
                   rules={{ required: true }}
                   disabled
-                  placeholder="Date Format"
-                  description="Select the date format preferred by your organization. This setting will apply to all date references in the system."
+                  label={t("fields.dateFormat.label")}
+                  placeholder={t("fields.dateFormat.placeholder")}
+                  description={t("fields.dateFormat.description")}
                 />
               </div>
               <div className="col-span-3">
                 <InputField
                   control={control}
                   name="timeFormat"
-                  label="Time Format"
                   rules={{ required: true }}
                   disabled
-                  placeholder="Time Format"
-                  description="Choose the time format for your organization's operations. This affects how time is displayed across the system's interfaces."
+                  label={t("fields.timeFormat.label")}
+                  placeholder={t("fields.timeFormat.placeholder")}
+                  description={t("fields.timeFormat.description")}
                 />
               </div>
               <div className="col-span-3">
@@ -295,9 +288,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   control={control}
                   options={timezoneChoices}
                   rules={{ required: true }}
-                  label="Timezone"
-                  placeholder="Timezone"
-                  description="Set the timezone corresponding to your organization’s primary operation area. Accurate timezone settings are essential for synchronized scheduling and coordination in transportation activities."
+                  label={t("fields.timezone.label")}
+                  placeholder={t("fields.timezone.placeholder")}
+                  description={t("fields.timezone.description")}
                 />
               </div>
             </div>
@@ -312,10 +305,10 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               variant="ghost"
               disabled={isSubmitting}
             >
-              Cancel
+              {t("buttons.cancel", { ns: "common" })}
             </Button>
             <Button type="submit" isLoading={isSubmitting}>
-              Save
+              {t("buttons.save", { ns: "common" })}
             </Button>
           </div>
         </form>
