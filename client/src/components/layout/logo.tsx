@@ -18,10 +18,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserOrganization } from "@/hooks/useQueries";
 import { Link } from "react-router-dom";
-import { useTheme } from "../ui/theme-provider";
 
 export function Logo() {
-  const { theme } = useTheme();
   const { userOrganizationData, userOrganizationLoading } =
     useUserOrganization();
 
@@ -30,12 +28,7 @@ export function Logo() {
   }
 
   if (userOrganizationData && userOrganizationData.logo) {
-    const logoSource =
-      theme === "light"
-        ? userOrganizationData.logo
-        : userOrganizationData.darkLogo || userOrganizationData.logo;
-
-    return <LogoLink src={logoSource} alt="Organization Logo" />;
+    return <LogoLink src={userOrganizationData.logo} alt="Organization Logo" />;
   }
 
   return (

@@ -61,12 +61,12 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="group hidden h-9 w-[250px] items-center rounded-md border border-muted-foreground/40 bg-background px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
+            className="group hidden h-9 w-[250px] items-center rounded-md border border-muted-foreground/20 bg-muted/60 px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
           >
             <MagnifyingGlassIcon className="mr-2 h-5 w-5 text-muted-foreground group-hover:text-foreground" />
             <span className="text-muted-foreground">
               Type{" "}
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border border-muted-foreground/20 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                 <span className="text-xs">⌘K</span>
               </kbd>{" "}
               to search

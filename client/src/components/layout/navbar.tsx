@@ -40,7 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FooterContainer } from "../common/footer";
 import { LinksComponent } from "./nav-links";
 
@@ -49,6 +49,7 @@ const NavigationMenuItemWithPermission = React.memo(
   React.forwardRef<HTMLLIElement, NavigationMenuItemProps>(
     ({ data, setMenuOpen, setMenuPosition, menuItemRefs }, ref) => {
       const { userHasPermission, isAdmin } = useUserPermissions();
+      const location = useLocation();
 
       // Handle mouse enter event
       const handleMouseEnter = () => {
@@ -73,7 +74,13 @@ const NavigationMenuItemWithPermission = React.memo(
 
       // Render menu item with appropriate link or trigger
       return (
-        <NavigationMenuItem ref={ref} onMouseEnter={handleMouseEnter}>
+        <NavigationMenuItem
+          className={cn(
+            location.pathname === data.link && "bg-accent rounded-md",
+          )}
+          ref={ref}
+          onMouseEnter={handleMouseEnter}
+        >
           {data.link ? (
             <Link
               className={navigationMenuTriggerStyle()}

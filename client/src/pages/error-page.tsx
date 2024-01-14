@@ -17,11 +17,15 @@
 
 import React from "react";
 
-function ErrorPage(): React.ReactElement {
+import { Button } from "@/components/ui/button";
+
+function ErrorPage() {
   return (
-    <div>
-      <h1>404 Error</h1>
-      <p>Page not found</p>
+    <div className="space-y-3 p-10 text-center">
+      <h1 className="text-2xl font-bold">Well, this is awkward....</h1>
+      <p>You either don't have access to this page or it doesn't exist.</p>
+      <p>We recommend contacting your administrator for more information.</p>
+      <Button>Go back to the dashboard</Button>
     </div>
   );
 }
