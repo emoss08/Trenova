@@ -370,8 +370,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/admin/feature-management/",
     description: "Feature Flag Management",
     element: <FeatureManagementPage />,
-    permission: "view_admin_dashboard",
-    excludeFromMenu: true,
+    permission: "view_organizationfeatureflag",
   },
   {
     title: "Accounting Control",
@@ -380,7 +379,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Accounting Controls",
     element: <AccountingControlPage />,
     permission: "view_accountingcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Billing Control",
@@ -389,7 +387,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Billing Controls",
     element: <BillingControlPage />,
     permission: "view_billingcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Invoice Control",
@@ -398,7 +395,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Invoice Controls",
     element: <InvoiceControlPage />,
     permission: "view_invoicecontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Dispatch Control",
@@ -407,7 +403,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Dispatch Controls",
     element: <DispatchControlPage />,
     permission: "view_dispatchcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Shipment Control",
@@ -416,7 +411,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Controls",
     element: <ShipmentControlPage />,
     permission: "view_shipmentcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Route Control",
@@ -425,7 +419,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Route Controls",
     element: <RouteControlPage />,
     permission: "view_routecontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Feasibility Control",
@@ -434,7 +427,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Feasibility Controls",
     element: <FeasibilityControlPage />,
     permission: "view_feasibilitytoolcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Email Control",
@@ -443,7 +435,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Controls",
     element: <EmailControlPage />,
     permission: "view_emailcontrol",
-    excludeFromMenu: true,
   },
   {
     title: "Email Control",
@@ -452,7 +443,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Profiles",
     element: <EmailProfilePage />,
     permission: "view_emailprofile",
-    excludeFromMenu: true,
   },
   {
     title: "Google API",
@@ -461,7 +451,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Google API",
     element: <GoogleAPIPage />,
     permission: "view_googleapi",
-    excludeFromMenu: true,
   },
   // Error Page
   {
