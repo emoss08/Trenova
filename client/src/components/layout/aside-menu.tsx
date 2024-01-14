@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { Logo } from "@/components/layout/logo";
+import { OrganizationNameLogo } from "@/components/layout/logo";
 import {
   Sheet,
   SheetContent,
@@ -38,6 +38,7 @@ import { Separator } from "@/components/ui/separator";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGrid2, faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
 import { faBars } from "@fortawesome/pro-solid-svg-icons";
+import TeamSwitcher from "@/components/layout/team-switcher";
 
 type SubLinkData = {
   key: string;
@@ -272,7 +273,7 @@ export function AsideMenuSheet() {
         <Button
           size="icon"
           variant="outline"
-          className="h-9 w-9 border-muted-foreground/40 hover:border-muted-foreground/80"
+          className="flex h-9 w-9 border-muted-foreground/40 hover:border-muted-foreground/80 md:hidden"
         >
           <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
         </Button>
@@ -280,8 +281,9 @@ export function AsideMenuSheet() {
       <SheetContent className="w-[400px] overflow-auto" side="left">
         <SheetHeader>
           <SheetTitle>
-            <Logo />
+            <OrganizationNameLogo />
             <div className="mt-2 border-b border-muted-foreground/40" />
+            <TeamSwitcher className="mt-2" />
           </SheetTitle>
         </SheetHeader>
         <AsideMenu menuItems={menuItems} onLinkClick={toggleMenu} />

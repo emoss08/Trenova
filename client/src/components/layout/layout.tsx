@@ -28,6 +28,8 @@ import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
+import TeamSwitcher from "@/components/layout/team-switcher";
+import { NavMenu } from "@/components/layout/navbar";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -51,8 +53,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Logo />
               <div className="h-7 border-l border-muted-foreground/40" />
               <AsideMenuSheet />
-              {/* <TeamSwitcher /> */}
+              <TeamSwitcher />
             </div>
+            <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
               <AppGridMenu />

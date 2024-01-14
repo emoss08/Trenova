@@ -49,6 +49,25 @@ export function Logo() {
   );
 }
 
+export function OrganizationNameLogo() {
+  const { userOrganizationData, userOrganizationLoading } =
+    useUserOrganization();
+
+  if (userOrganizationLoading) {
+    return <Skeleton className="h-10 w-40" />;
+  }
+
+  return (
+    <Link
+      className="max-w-[250px] truncate text-xl font-bold text-accent-foreground"
+      to="/"
+      title={userOrganizationData?.name}
+    >
+      {userOrganizationData?.name}
+    </Link>
+  );
+}
+
 function LogoLink({ src, alt }: { src: string; alt: string }) {
   return (
     <Link to="/" style={{ textDecoration: "none" }}>

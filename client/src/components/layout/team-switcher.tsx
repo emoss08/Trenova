@@ -30,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { CheckIcon } from "lucide-react";
 import React from "react";
@@ -58,7 +58,7 @@ const groups = [
     label: "Personal Account",
     teams: [
       {
-        label: "Alicia Koch",
+        label: "Trenova Transportation",
         value: "personal",
       },
     ],
@@ -103,7 +103,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
             aria-expanded={open}
             aria-label="Select a team"
             className={cn(
-              "w-[200px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-9 hidden md:flex",
+              "w-[230px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-9 hidden md:flex",
               className,
             )}
           >
@@ -115,7 +115,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
               />
               <AvatarFallback>SC</AvatarFallback>
             </Avatar>
-            {selectedTeam.label}
+            {truncateText(selectedTeam.label, 20)}
             <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -143,7 +143,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                         />
                         <AvatarFallback>SC</AvatarFallback>
                       </Avatar>
-                      {team.label}
+                      {truncateText(team.label, 15)}
                       <CheckIcon
                         className={cn(
                           "ml-auto h-4 w-4",
