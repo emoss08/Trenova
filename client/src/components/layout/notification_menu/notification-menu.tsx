@@ -61,7 +61,7 @@ const sound = new Howl({
 
 const webSocketManager = createWebsocketManager();
 
-let intervalId: string | number | NodeJS.Timeout | undefined;
+let intervalId: number | undefined;
 
 const reconnect = () => {
   if (intervalId) {
