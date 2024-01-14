@@ -53,13 +53,12 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
       : "";
 
     // Determine the avatar image source
-    const avatarSrc = user.profile?.thumbnail
-      ? user.profile?.thumbnail
-      : `https://avatar.vercel.sh/${user.email}`;
+    const avatarSrc =
+      user.profile?.thumbnail || `https://avatar.vercel.sh/${user.email}`;
 
     return (
       <div
-        className="group flex items-center hover:cursor-pointer"
+        className="group flex select-none items-center hover:cursor-pointer"
         ref={ref}
         {...props}
       >
@@ -89,6 +88,8 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
   const navigate = useNavigate();
+
+  const fullName = `${user.profile?.firstName} ${user.profile?.lastName}`;
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -193,7 +194,9 @@ function UserAvatarMenuContent({ user }: { user: User }) {
     <DropdownMenuContent className="w-56" align="end" forceMount>
       <DropdownMenuLabel className="font-normal">
         <div className="flex flex-col space-y-1">
-          <p className="text-sm font-medium leading-none">{user.username}</p>
+          <p className="truncate text-sm font-medium leading-none">
+            {fullName}
+          </p>
           <p className="text-xs leading-none text-muted-foreground">
             {user.email}
           </p>

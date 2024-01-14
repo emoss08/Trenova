@@ -27,8 +27,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { LayoutGridIcon } from "lucide-react";
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
 
 function AppGridButton({ open }: { open: boolean }) {
   return (
@@ -43,7 +44,7 @@ function AppGridButton({ open }: { open: boolean }) {
             aria-expanded={open}
             className="relative h-9 border border-muted-foreground/40 hover:border-muted-foreground/80"
           >
-            <LayoutGridIcon className="h-5 w-5" />
+            <FontAwesomeIcon icon={faGrid2} className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>

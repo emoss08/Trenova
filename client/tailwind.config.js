@@ -57,6 +57,9 @@ module.exports = {
       "5xl": "3.052rem",
     },
     extend: {
+      transitionProperty: {
+        height: "height",
+      },
       backgroundImage: {
         "rainbow-gradient-light":
           "linear-gradient(90deg, rgba(129,26,188,0.9), rgba(219,52,52,0.9), rgba(241, 196, 15, .9), rgba(34,230,171,0.9), rgba(0,60,211,0.9), rgba(129,26,188,0.9))",

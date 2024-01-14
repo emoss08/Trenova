@@ -15,38 +15,62 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faContainerStorage,
+  faFileInvoiceDollar,
+  faFolders,
+  faMoneyBillTransfer,
+  faScrewdriverWrench,
+  faTruck,
+  faVault,
+} from "@fortawesome/pro-duotone-svg-icons";
+
 /** Links for Billing Navigation Menu */
 export const billingNavLinks = [
   {
     links: [
       {
+        key: "billingClient",
         label: "Billing Client",
         link: "/billing/client/",
         permission: "billing.use_billing_client",
         description:
           "This module enables the generation and dispatch of invoices to customers efficiently. It streamlines the billing cycle, ensuring timely and accurate invoicing, and supports various billing formats tailored to customer needs.",
+        icon: (
+          <FontAwesomeIcon icon={faMoneyBillTransfer} className="h-4 w-4" />
+        ),
       },
       {
+        key: "billingControl",
         label: "Billing Control",
         link: "/admin/control-files#billing-controls/",
         permission: "view_billingcontrol",
         description:
           "Provides comprehensive control over the entire billing process. This includes setting billing parameters, managing billing cycles, and ensuring compliance with financial regulations.",
+        icon: (
+          <FontAwesomeIcon icon={faFileInvoiceDollar} className="h-4 w-4" />
+        ),
       },
       {
+        key: "billingConfiguration",
         label: "Configuration Files",
         description:
           "Centralize configuration settings for the billing process. Adjust and customize billing workflows, rules, and parameters to align with business practices and financial strategies.",
         link: "#", // Placeholder, replace with the actual link
+        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
         subLinks: [
           {
             label: "Charge Types",
             link: "/billing/charge-types/",
+            key: "chargeTypes",
             permission: "view_chargetype",
             description:
               "Categorize and manage different types of charges. This facilitates accurate billing and reporting by distinguishing between various charge categories.",
           },
           {
+            key: "divisionCodes",
             label: "Division Codes",
             link: "/accounting/division-codes/",
             permission: "view_divisioncode",
@@ -54,6 +78,7 @@ export const billingNavLinks = [
               "Use these codes to segment charges and revenue by business divisions. This classification aids in detailed financial analysis and budgeting at the division level.",
           },
           {
+            key: "glAccounts",
             label: "GL Accounts",
             link: "/accounting/gl-accounts/",
             permission: "view_generalledgeraccount",
@@ -61,6 +86,7 @@ export const billingNavLinks = [
               "Manage and categorize revenue in the General Ledger. Essential for accurate financial reporting and analysis, ensuring clear visibility into revenue streams.",
           },
           {
+            key: "revenueCodes",
             label: "Revenue Codes",
             link: "/accounting/revenue-codes/",
             permission: "view_revenuecode",
@@ -68,6 +94,7 @@ export const billingNavLinks = [
               "Classify revenue sources for detailed financial tracking and analysis. These codes help in understanding revenue patterns and making informed financial decisions.",
           },
           {
+            key: "accessorialCharges",
             label: "Accessorial Charges",
             link: "/billing/accessorial-charges/",
             permission: "view_accessorialcharge",
@@ -75,6 +102,7 @@ export const billingNavLinks = [
               "Define and manage additional charges associated with transportation services. This includes detention, layover, and other incidental charges.",
           },
           {
+            key: "customers",
             label: "Customers",
             link: "/billing/customers/",
             permission: "view_customer",
@@ -92,19 +120,24 @@ export const dispatchNavLinks = [
   {
     links: [
       {
+        key: "rateManagement",
         label: "Rate Management",
         link: "/dispatch/rate-management/",
         permission: "view_rate",
         description:
           "This module allows for the comprehensive management of freight and transportation rates. It includes features for setting, adjusting, and analyzing rates, ensuring competitive pricing and operational efficiency.",
+        icon: <FontAwesomeIcon icon={faVault} className="h-4 w-4" />,
       },
       {
+        key: "dispatchConfiguration",
         label: "Configuration Files",
         description:
           "Central hub for configuring and customizing the dispatch process. This includes setting dispatch parameters, defining operational rules, and ensuring alignment with logistical strategies.",
         link: "#",
+        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
         subLinks: [
           {
+            key: "commentType",
             label: "Comment Type",
             link: "/dispatch/comment-types/",
             permission: "view_commenttype",
@@ -112,6 +145,7 @@ export const dispatchNavLinks = [
               "Categorize and manage different types of operational comments. This aids in streamlining communication and documenting specific details related to dispatch activities.",
           },
           {
+            key: "delayCodes",
             label: "Delay Codes",
             link: "/dispatch/delay-codes/",
             permission: "view_delaycode",
@@ -119,6 +153,7 @@ export const dispatchNavLinks = [
               "Identify and categorize various types of delays encountered during dispatch operations. Essential for analyzing and mitigating operational disruptions.",
           },
           {
+            key: "fleetCodes",
             label: "Fleet Codes",
             link: "/dispatch/fleet-codes/",
             permission: "view_fleetcode",
@@ -126,6 +161,7 @@ export const dispatchNavLinks = [
               "Organize and classify different fleet segments. Facilitates efficient fleet management and helps in tracking and analyzing fleet performance.",
           },
           {
+            key: "locations",
             label: "Locations",
             link: "/dispatch/locations/",
             permission: "view_location",
@@ -133,6 +169,7 @@ export const dispatchNavLinks = [
               "Manage and categorize operational locations, including depots, warehouses, and delivery points. Crucial for route planning and logistical coordination.",
           },
           {
+            key: "routes",
             label: "Routes",
             link: "/dispatch/routes/",
             permission: "view_route",
@@ -140,6 +177,7 @@ export const dispatchNavLinks = [
               "Define and categorize various transportation routes. Supports strategic route planning and optimization for enhanced delivery efficiency.",
           },
           {
+            key: "routeControl",
             label: "Route Control",
             link: "/admin/control-files#route-controls",
             permission: "view_routecontrol",
@@ -147,6 +185,7 @@ export const dispatchNavLinks = [
               "Manage and control route configurations, ensuring adherence to predefined operational and safety standards. Key for maintaining consistency in route planning.",
           },
           {
+            key: "routeTypes",
             label: "Location Categories",
             link: "/dispatch/location-categories/",
             permission: "view_locationcategory",
@@ -164,19 +203,26 @@ export const equipmentNavLinks = [
   {
     links: [
       {
+        key: "equipmentMaintenancePlan",
         label: "Equipment Maintenance Plan",
         link: "#",
         permission: "view_equipmentmaintenanceplan",
         description:
           "This section facilitates the creation and management of comprehensive maintenance schedules for various equipment. It enables precise tracking and proactive maintenance activities, ensuring optimal equipment performance and longevity.",
+        icon: (
+          <FontAwesomeIcon icon={faScrewdriverWrench} className="h-4 w-4" />
+        ),
       },
       {
+        key: "equipmentConfiguration",
         label: "Configuration Files",
         link: "#",
         description:
           "Access and modify the core configuration settings governing the equipment maintenance processes. This central hub allows for the customization and fine-tuning of maintenance workflows and parameters.",
+        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
         subLinks: [
           {
+            key: "equipmentTypes",
             label: "Equipment Types",
             link: "/equipment/equipment-types/",
             permission: "view_equipmenttype",
@@ -184,6 +230,7 @@ export const equipmentNavLinks = [
               "Define and manage the different categories of equipment. This classification system aids in streamlining maintenance protocols and inventory management based on equipment types.",
           },
           {
+            key: "equipmentManufacturers",
             label: "Equipment Manufacturers",
             link: "/equipment/equipment-manufacturers/",
             permission: "view_equipmentmanufacturer",
@@ -191,6 +238,7 @@ export const equipmentNavLinks = [
               "Organize and view equipment based on their manufacturers. This section helps in aligning maintenance strategies with specific manufacturer guidelines and specifications.",
           },
           {
+            key: "tractors",
             label: "Tractor",
             link: "/equipment/tractor/",
             permission: "view_tractor",
@@ -198,6 +246,7 @@ export const equipmentNavLinks = [
               "Dedicated section for managing and categorizing tractors. It includes detailed information and specific maintenance guidelines tailored to tractors, enhancing their operational efficiency.",
           },
           {
+            key: "trailers",
             label: "Trailer",
             link: "/equipment/trailer/",
             permission: "view_trailer",
@@ -215,26 +264,33 @@ export const shipmentNavLinks = [
   {
     links: [
       {
+        key: "shipmentManagement",
         label: "Shipment Management",
         link: "/shipment-management/",
         permission: "view_shipment",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
+        icon: <FontAwesomeIcon icon={faTruck} className="h-4 w-4" />,
       },
       {
+        key: "shipmentControl",
         label: "Shipment Controls",
         link: "/admin/control-files#order-controls/",
         permission: "view_shipmentcontrol",
         description:
           "Gain control over the shipment process with customizable settings and rules. This section allows for the fine-tuning of shipment operations, ensuring compliance with logistical standards and customer expectations.",
+        icon: <FontAwesomeIcon icon={faContainerStorage} className="h-4 w-4" />,
       },
       {
+        key: "shipmentConfiguration",
         label: "Configuration Files",
         link: "#",
         description:
           "Centralize the configuration for all shipment-related processes. Adjust parameters and settings to align shipment operations with business goals and operational efficiency.",
+        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
         subLinks: [
           {
+            key: "formulaTemplates",
             label: "Formula Templates",
             link: "/order/formula-template/",
             permission: "view_formulatemplate",
@@ -242,6 +298,7 @@ export const shipmentNavLinks = [
               "Create and manage formula templates for calculating shipment-related metrics. Essential for automating and standardizing complex calculations in the shipment process.",
           },
           {
+            key: "shipmentTypes",
             label: "Shipment Types",
             link: "/shipment-management/shipment-types/",
             permission: "view_shipmenttype",
@@ -249,6 +306,7 @@ export const shipmentNavLinks = [
               "Categorize shipments into distinct types for better management and tracking. This helps in tailoring operations to the specific requirements of different shipment categories.",
           },
           {
+            key: "serviceTypes",
             label: "Service Types",
             link: "/shipment-management/service-types/",
             permission: "view_servicetype",
@@ -256,6 +314,7 @@ export const shipmentNavLinks = [
               "Define and manage various service types offered in the shipping process. Facilitates customized service offerings and helps in aligning services with customer needs.",
           },
           {
+            key: "movements",
             label: "Movements",
             link: "/shipment-management/movements/",
             permission: "view_movement",
@@ -263,6 +322,7 @@ export const shipmentNavLinks = [
               "Organize and classify different types of shipment movements. Key for planning and optimizing logistical routes and schedules.",
           },
           {
+            key: "qualifierCodes",
             label: "Qualifier Codes",
             link: "/shipment-management/qualifier-codes/",
             permission: "view_qualifiercode",
@@ -270,6 +330,7 @@ export const shipmentNavLinks = [
               "Manage codes that qualify different aspects of shipments. These codes are crucial for detailed categorization and analysis of shipment attributes.",
           },
           {
+            key: "commodityCodes",
             label: "Commodity Codes",
             link: "/shipment-management/commodity-codes/",
             permission: "view_commodity",
@@ -277,6 +338,7 @@ export const shipmentNavLinks = [
               "Categorize shipments based on the type of commodities being transported. This classification system helps in streamlining shipment operations and optimizing routes.",
           },
           {
+            key: "hazardousMaterials",
             label: "Hazardous Materials",
             link: "/shipment-management/hazardous-materials/",
             permission: "view_hazardousmaterial",
@@ -284,6 +346,7 @@ export const shipmentNavLinks = [
               "Manage and categorize shipments containing hazardous materials. This section includes detailed information and specific guidelines for handling hazardous materials.",
           },
           {
+            key: "reasonCodes",
             label: "Reason Codes",
             link: "/shipment-management/reason-codes/",
             permission: "view_reasoncode",

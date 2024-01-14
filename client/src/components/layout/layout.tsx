@@ -41,7 +41,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // useQueryInvalidationListener();
 
   return (
-    // The main container is set to full height and flex direction
     <div className="relative flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
@@ -65,14 +64,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </header>
       )}
 
-      {/* Main content area including footer */}
       <div className="flex-1 overflow-y-auto">
         <main className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
           <Breadcrumb />
           <SiteSearch />
           {children}
         </main>
-        {/* Footer will now be part of the main scrollable content */}
         <Footer />
       </div>
     </div>

@@ -45,10 +45,12 @@ import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
 import { useQueryClient } from "@tanstack/react-query";
 import { Howl } from "howler";
-import { BellIcon, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell } from "@fortawesome/pro-duotone-svg-icons";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
@@ -123,12 +125,12 @@ function NotificationButton({
             aria-expanded={open}
             className="relative h-9 border-muted-foreground/40 hover:border-muted-foreground/80"
           >
-            <BellIcon className="h-5 w-5" />
+            <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
-              <span className="absolute -right-1 -top-1 flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-700 opacity-25"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-800"></span>
+              <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-600 ring-1 ring-background"></span>
               </span>
             )}
           </Button>

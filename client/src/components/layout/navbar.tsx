@@ -31,10 +31,10 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import {
-  calculatePosition,
-  hasPermission,
   MenuData,
   NavigationMenuItemProps,
+  calculatePosition,
+  hasPermission,
   userHasAccessToContent,
 } from "@/lib/navmenu";
 import { cn } from "@/lib/utils";
@@ -170,14 +170,6 @@ export function NavMenu() {
       menuKey: "equipmentMenu",
       label: "Equipment Management",
       content: <LinksComponent linkData={equipmentNavLinks} />,
-      footerContent: (
-        <p className="text-xs font-semibold">
-          <span className="text-accent-foreground">
-            Manage your equipment for your entire fleet, including trailers,
-            trucks, and chassis.
-          </span>
-        </p>
-      ),
     },
     {
       menuKey: "shipmentMenu",
@@ -195,9 +187,6 @@ export function NavMenu() {
   return (
     <div ref={navMenuRef}>
       {/* Hamburger Menu (visible on small screens) */}
-      <button onClick={() => setMenuOpen(menuOpen)} className="p-2 md:hidden">
-        🍔
-      </button>
       {/* Navigation Menu */}
       <NavigationMenu
         value={menuOpen}
