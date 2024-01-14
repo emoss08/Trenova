@@ -20,12 +20,12 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useUSStates } from "@/hooks/useQueries";
 import { timezoneChoices } from "@/lib/constants";
 import { Organization, OrganizationFormValues } from "@/types/organization";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useTranslation } from "react-i18next";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
@@ -39,7 +39,25 @@ function OrganizationForm({ organization }: { organization: Organization }) {
   } = useUSStates();
 
   const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
-    defaultValues: organization,
+    // resolver: yupResolver(organizationSchema),
+    defaultValues: {
+      name: organization.name,
+      orgType: organization.orgType,
+      scacCode: organization.scacCode,
+      dotNumber: organization.dotNumber,
+      addressLine1: organization.addressLine1,
+      addressLine2: organization.addressLine2,
+      city: organization.city,
+      state: organization.state,
+      zipCode: organization.zipCode,
+      phoneNumber: organization.phoneNumber,
+      website: organization.website,
+      language: organization.language,
+      currency: organization.currency,
+      dateFormat: organization.dateFormat,
+      timeFormat: organization.timeFormat,
+      timezone: organization.timezone,
+    },
   });
 
   const mutation = useCustomMutation<OrganizationFormValues>(
@@ -91,7 +109,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
             <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="col-span-full flex items-center gap-x-8">
                 <Avatar className="h-24 w-24 flex-none rounded-lg">
-                  <AvatarImage src={organization.logo} />
+                  <AvatarImage src={organization.logo || ""} />
                   <AvatarFallback className="h-24 w-24 flex-none rounded-lg">
                     {organization.scacCode}
                   </AvatarFallback>
@@ -122,7 +140,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   description={t("fields.name.description")}
                 />
               </div>
-
               <div className="col-span-full">
                 <SelectInput
                   name="orgType"
@@ -322,6 +339,7 @@ export default function GeneralPage({
 }: {
   organization: Organization;
 }) {
+  console.info("organization", organization);
   return (
     <>
       <OrganizationForm organization={organization} />
