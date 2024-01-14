@@ -24,15 +24,15 @@ import { HexColorPicker } from "react-colorful";
 import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 
 export type ColorFieldProps<T extends FieldValues> = {
   label?: string;
   description?: string;
 } & UseControllerProps<T> &
-  ColorInputBaseProps;
+  Omit<ColorInputBaseProps, "onChange">;
 
 export function ColorField<T extends FieldValues>({
   ...props
@@ -44,8 +44,14 @@ export function ColorField<T extends FieldValues>({
   const close = React.useCallback(() => setShowPicker(false), []);
   useClickOutside(popoverRef, close);
 
-  const handleColorChange = (color: string) => {
-    field.onChange(`${color}`);
+  // Handler for HexColorPicker
+  const handleColorPickerChange = (newColor: string) => {
+    field.onChange(newColor);
+  };
+
+  // Handler for Input
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    field.onChange(event.target.value);
   };
 
   return (
@@ -69,6 +75,7 @@ export function ColorField<T extends FieldValues>({
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
             props.className,
           )}
+          onChange={handleInputChange}
           {...props}
         />
         <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-gray-300" />
@@ -85,12 +92,12 @@ export function ColorField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="absolute z-100 mt-2 w-auto">
-          <HexColorPicker color={field.value} onChange={handleColorChange} />
+        <div ref={popoverRef} className="z-100 absolute mt-2 w-auto">
+          <HexColorPicker color={field.value} onChange={handleColorPickerChange} />
         </div>
       )}
     </div>
