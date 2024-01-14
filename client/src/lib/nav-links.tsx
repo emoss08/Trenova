@@ -43,17 +43,6 @@ export const billingNavLinks = [
         ),
       },
       {
-        key: "billingControl",
-        label: "Billing Control",
-        link: "/admin/control-files#billing-controls/",
-        permission: "view_billingcontrol",
-        description:
-          "Provides comprehensive control over the entire billing process. This includes setting billing parameters, managing billing cycles, and ensuring compliance with financial regulations.",
-        icon: (
-          <FontAwesomeIcon icon={faFileInvoiceDollar} className="h-4 w-4" />
-        ),
-      },
-      {
         key: "billingConfiguration",
         label: "Configuration Files",
         description:
@@ -177,14 +166,6 @@ export const dispatchNavLinks = [
               "Define and categorize various transportation routes. Supports strategic route planning and optimization for enhanced delivery efficiency.",
           },
           {
-            key: "routeControl",
-            label: "Route Control",
-            link: "/admin/control-files#route-controls",
-            permission: "view_routecontrol",
-            description:
-              "Manage and control route configurations, ensuring adherence to predefined operational and safety standards. Key for maintaining consistency in route planning.",
-          },
-          {
             key: "routeTypes",
             label: "Location Categories",
             link: "/dispatch/location-categories/",
@@ -271,15 +252,6 @@ export const shipmentNavLinks = [
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
         icon: <FontAwesomeIcon icon={faTruck} className="h-4 w-4" />,
-      },
-      {
-        key: "shipmentControl",
-        label: "Shipment Controls",
-        link: "/admin/control-files#order-controls/",
-        permission: "view_shipmentcontrol",
-        description:
-          "Gain control over the shipment process with customizable settings and rules. This section allows for the fine-tuning of shipment operations, ensuring compliance with logistical standards and customer expectations.",
-        icon: <FontAwesomeIcon icon={faContainerStorage} className="h-4 w-4" />,
       },
       {
         key: "shipmentConfiguration",
