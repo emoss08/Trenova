@@ -93,7 +93,7 @@ const ButtonConfig: React.FC<{
     <Button
       variant={buttonVariant}
       onClick={() => store.set("sheetOpen", true)}
-      className="h-8 bg-gradient-to-r hover:from-red-600 hover:to-blue-700 hover:text-white"
+      className="h-8 hover:bg-orange-600 hover:text-white"
       disabled={isDisabled}
     >
       <PlusIcon className="mr-2 h-4 w-4 hover:text-white" /> {buttonLabel}
