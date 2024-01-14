@@ -15,6 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 import { OrganizationNameLogo } from "@/components/layout/logo";
+import TeamSwitcher from "@/components/layout/team-switcher";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -30,15 +32,13 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import { useHeaderStore } from "@/stores/HeaderStore";
+import { faGrid2, faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
+import { faBars } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChevronDownIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
-import { Separator } from "@/components/ui/separator";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGrid2, faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
-import { faBars } from "@fortawesome/pro-solid-svg-icons";
-import TeamSwitcher from "@/components/layout/team-switcher";
 
 type SubLinkData = {
   key: string;

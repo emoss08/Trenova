@@ -38,7 +38,6 @@ import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { accountingControlSchema } from "@/lib/validations/AccountingSchema";
-import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 
@@ -127,7 +126,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             z
-            <AsyncSelectInput
+            <SelectInput
               name="defaultRevenueAccount"
               control={control}
               options={selectGLAccounts}
@@ -143,7 +142,7 @@ function AccountingControlForm({
             />
           </div>
           <div className="col-span-3">
-            <AsyncSelectInput
+            <SelectInput
               name="defaultExpenseAccount"
               control={control}
               options={selectGLAccounts}

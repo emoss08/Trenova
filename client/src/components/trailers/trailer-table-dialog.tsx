@@ -14,7 +14,6 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
@@ -107,7 +106,7 @@ export function TrailerForm({
       <Separator />
       <FormGroup>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="equipmentType"
             rules={{ required: true }}
             control={control}
@@ -124,7 +123,7 @@ export function TrailerForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="manufacturer"
             control={control}
             label="Manufacturer"
@@ -186,7 +185,7 @@ export function TrailerForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="fleetCode"
             control={control}
             label="Fleet Code"

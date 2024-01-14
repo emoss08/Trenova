@@ -186,28 +186,3 @@ export const rateBillingTableSchema: ObjectSchema<RateBillingTableFormValues> =
     chargeAmount: Yup.number().required("Charge Amount is required"),
     subTotal: Yup.number().required("Subtotal is required"),
   });
-
-export const rateSchema: ObjectSchema<RateFormValues> = Yup.object().shape({
-  isActive: Yup.boolean().required("Name is required"),
-  rateNumber: Yup.string()
-    .max(6, "Rate Number cannot be more than 6 characters")
-    .required("Rate Number is required"),
-  customer: Yup.string().nullable().notRequired(),
-  effectiveDate: Yup.date().required("Effective Date is required"),
-  expirationDate: Yup.date().required("Expiration Date is required"),
-  commodity: Yup.string().nullable().notRequired(),
-  orderType: Yup.string().nullable().notRequired(),
-  equipmentType: Yup.string().nullable().notRequired(),
-  originLocation: Yup.string().nullable().notRequired(),
-  destinationLocation: Yup.string().nullable().notRequired(),
-  rateMethod: Yup.string<TRateMethodChoices>().required(
-    "Rate Method is required",
-  ),
-  rateAmount: Yup.number().required("Rate Amount is required"),
-  distanceOverride: Yup.number().nullable().notRequired(),
-  comments: Yup.string().nullable().notRequired(),
-  rateBillingTables: Yup.array()
-    .of(rateBillingTableSchema)
-    .notRequired()
-    .nullable(),
-});

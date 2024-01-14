@@ -159,6 +159,7 @@ export function MenuList({
     maxOptions?: number;
     formError?: string;
     popoutLink?: string;
+    popoutLinkLabel?: string;
     hasPopoutWindow?: boolean;
   };
 }) {
@@ -199,6 +200,7 @@ export function NoOptionsMessage({
     maxOptions?: number;
     formError?: string;
     popoutLink?: string;
+    popoutLinkLabel?: string;
     hasPopoutWindow?: boolean;
   };
 }) {
