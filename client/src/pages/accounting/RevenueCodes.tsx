@@ -72,6 +72,7 @@ const columns: ColumnDef<RevenueCode>[] = [
 export default function RevenueCodes() {
   return (
     <DataTable
+      addPermissionName={"add_revenuecode"}
       queryKey="revenue-code-table-data"
       columns={columns}
       link="/revenue_codes/"

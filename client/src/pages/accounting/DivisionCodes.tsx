@@ -15,16 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { DCDialog } from "@/components/division-codes/dc-table-dialog";
+import { DCTableEditDialog } from "@/components/division-codes/dc-table-edit-dialog";
 import { tableStatusChoices } from "@/lib/constants";
 import { DivisionCode } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { DCDialog } from "@/components/division-codes/dc-table-dialog";
-import { DCTableEditDialog } from "@/components/division-codes/dc-table-edit-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
 
 const columns: ColumnDef<DivisionCode>[] = [
   {
@@ -84,6 +84,7 @@ const filters: FilterConfig<DivisionCode>[] = [
 export default function DivisionCodes() {
   return (
     <DataTable
+      addPermissionName="add_divisioncode"
       queryKey="division-code-table-data"
       columns={columns}
       link="/division_codes/"

@@ -75,7 +75,7 @@ function MapPopoverContent() {
           defaultValue="default"
           onValueChange={onMapBaseOptionsChange}
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex select-none items-center space-x-2">
             <RadioGroupItem
               value="roadmap"
               id="r1"
@@ -83,7 +83,7 @@ function MapPopoverContent() {
             />
             <Label htmlFor="r1">Default</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex select-none items-center space-x-2">
             <RadioGroupItem
               value="terrain"
               id="r2"
@@ -91,7 +91,7 @@ function MapPopoverContent() {
             />
             <Label htmlFor="r2">Terrain</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex select-none items-center space-x-2">
             <RadioGroupItem
               value="hybrid"
               id="r3"
@@ -103,7 +103,7 @@ function MapPopoverContent() {
       </div>
       <div className="grid gap-2">
         <h4 className="text-sm font-semibold leading-none">Overlay</h4>
-        <div className="flex items-center space-x-2">
+        <div className="flex select-none items-center space-x-2">
           <Checkbox
             id="traffic"
             checked={mapLayers.includes("TrafficLayer")}
@@ -121,7 +121,7 @@ function MapPopoverContent() {
             Traffic
           </label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex select-none items-center space-x-2">
           <Checkbox id="weather" disabled />
           <label
             htmlFor="weather"
@@ -130,7 +130,7 @@ function MapPopoverContent() {
             Weather
           </label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex select-none items-center space-x-2">
           <Checkbox id="addresses" disabled />
           <label
             htmlFor="addresses"

@@ -17,7 +17,7 @@
 
 import { GroupBase, Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
 
-type _ = Options; // Added just so auto sort import won't remove the import
+import type {} from "react-select/base";
 
 declare module "react-select/base" {
   export interface Props<
@@ -56,6 +56,26 @@ declare module "react-select/base" {
     hasPopoutWindow?: boolean; // Flag when to show the add new option
     popoutLink?: string; // Link to the popout page
     popoutLinkLabel?: string; // Label for the popout link
+  }
+}
+
+declare module "react-select/async/dist" {
+  export interface Props<
+    Option,
+    IsMulti extends boolean,
+    Group extends GroupBase<Option>,
+  > {
+    isFetchError?: boolean;
+    formError?: string;
+    maxOptions?: number;
+    hasPopoutWindow?: boolean; // Flag when to show the add new option
+    popoutLink?: string; // Link to the popout page
+    popoutLinkLabel?: string; // Label for the popout link
+    isDisabled?: boolean;
+    isClearable?: boolean;
+    isMulti?: IsMulti;
+    placeholder?: string;
+    Group?: Group;
   }
 }
 

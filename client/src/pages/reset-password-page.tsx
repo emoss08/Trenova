@@ -16,14 +16,12 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
 import { resetPasswordSchema } from "@/lib/validations/AccountsSchema";
-import { useAuthStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";
 import React from "react";
@@ -36,19 +34,9 @@ type FormValues = {
 
 export function ResetPasswordForm() {
   // const { toast } = useToast();
-  const [, setIsAuthenticated] = useAuthStore(
-    (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
-      state.isAuthenticated,
-      state.setIsAuthenticated,
-    ],
-  );
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { control, handleSubmit } = useForm({
     resolver: yupResolver(resetPasswordSchema),
   });
 
@@ -79,18 +67,15 @@ export function ResetPasswordForm() {
     <form onSubmit={handleSubmit(submitForm)}>
       <div className="mt-5 grid gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="email" className="required-label">
-            Email
-          </Label>
           <InputField
+            name="email"
+            control={control}
             id="email"
             autoCapitalize="none"
             type="email"
             autoCorrect="off"
             placeholder="Email Address"
             disabled={isLoading}
-            error={errors?.email?.message}
-            {...register("email")}
           />
         </div>
         <Button disabled={isLoading} className="my-2 w-full">

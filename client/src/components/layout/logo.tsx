@@ -16,9 +16,9 @@
  */
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUserOrganization } from "@/hooks/useQueries";
 import { Link } from "react-router-dom";
 import { useTheme } from "../ui/theme-provider";
-import { useUserOrganization } from "@/hooks/useQueries";
 
 export function Logo() {
   const { theme } = useTheme();
@@ -40,7 +40,26 @@ export function Logo() {
 
   return (
     <Link
-      className="mr-5 max-w-[250px] truncate text-xl font-semibold text-accent-foreground"
+      className="max-w-[250px] truncate text-xl font-semibold text-accent-foreground"
+      to="/"
+      title={userOrganizationData?.name}
+    >
+      {userOrganizationData?.name}
+    </Link>
+  );
+}
+
+export function OrganizationNameLogo() {
+  const { userOrganizationData, userOrganizationLoading } =
+    useUserOrganization();
+
+  if (userOrganizationLoading) {
+    return <Skeleton className="h-10 w-40" />;
+  }
+
+  return (
+    <Link
+      className="max-w-[250px] truncate text-xl font-bold text-accent-foreground"
       to="/"
       title={userOrganizationData?.name}
     >
@@ -52,7 +71,7 @@ export function Logo() {
 function LogoLink({ src, alt }: { src: string; alt: string }) {
   return (
     <Link to="/" style={{ textDecoration: "none" }}>
-      <img className="h-[60px] object-contain" src={src} alt={alt} />
+      <img className="h-[40px] object-contain" src={src} alt={alt} />
     </Link>
   );
 }

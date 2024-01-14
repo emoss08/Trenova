@@ -54,6 +54,10 @@ export type CustomerFormValues = Omit<
   | "advocateFullName"
   | "lastBillDate"
   | "lastShipDate"
+  | "deliverySlots"
+  | "emailProfile"
+  | "ruleProfile"
+  | "contacts"
   | "totalShipments"
 > & {
   deliverySlots?: DeliverySlotFormValues[] | null;

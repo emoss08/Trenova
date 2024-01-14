@@ -14,7 +14,6 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -114,7 +113,7 @@ export function TractorForm({
       <Separator />
       <FormGroup>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="equipmentType"
             rules={{ required: true }}
             control={control}
@@ -130,7 +129,7 @@ export function TractorForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="manufacturer"
             control={control}
             label="Manufacturer"
@@ -194,7 +193,7 @@ export function TractorForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="fleetCode"
             control={control}
             label="Fleet Code"
@@ -210,7 +209,7 @@ export function TractorForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="primaryWorker"
             control={control}
             label="Primary Worker"
@@ -226,7 +225,7 @@ export function TractorForm({
           />
         </FormControl>
         <FormControl>
-          <AsyncSelectInput
+          <SelectInput
             name="secondaryWorker"
             control={control}
             label="Secondary Worker"

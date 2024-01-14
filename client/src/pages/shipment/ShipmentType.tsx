@@ -15,17 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
-import { ShipmentType } from "@/types/order";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { ShipmentTypeDialog } from "@/components/shipment-types/ship-type-table-dialog";
 import { ShipmentTypeEditDialog } from "@/components/shipment-types/ship-type-table-edit-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { tableStatusChoices } from "@/lib/constants";
+import { truncateText } from "@/lib/utils";
+import { ShipmentType } from "@/types/order";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<ShipmentType>[] = [
   {
@@ -86,6 +86,7 @@ const filters: FilterConfig<ShipmentType>[] = [
 export default function ServiceTypes() {
   return (
     <DataTable
+      addPermissionName="add_shipmenttype"
       queryKey="shipment-type-table-data"
       columns={columns}
       link="/shipment_types/"

@@ -14,19 +14,29 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import Backend from "i18next-http-backend";
 
-import { createGlobalStore } from "@/lib/useGlobalStore";
+i18n
+  .use(Backend)
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    fallbackLng: "en",
+    debug: true,
+    ns: [
+      "common",
+      "homepage",
+      "admin.generalpage",
+      "admin.accountingcontrol",
+      "admin.billingcontrol",
+      "admin.invoicecontrol",
+      "admin.dispatchcontrol",
+      "admin.shipmentcontrol",
+      "admin.googleapi",
+    ],
+  });
 
-type HeaderStoreProps = {
-  menuOpen?: string;
-  notificationMenuOpen: boolean;
-  searchDialogOpen: boolean;
-  asideMenuOpen: boolean;
-};
-
-export const useHeaderStore = createGlobalStore<HeaderStoreProps>({
-  menuOpen: undefined,
-  notificationMenuOpen: false,
-  searchDialogOpen: false,
-  asideMenuOpen: false,
-});
+export default i18n;
