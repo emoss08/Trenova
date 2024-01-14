@@ -33,6 +33,7 @@ import { dateFormatChoices } from "@/lib/choices";
 import { FileField, InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { cleanObject } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 function InvoiceControlForm({
   invoiceControl,
@@ -40,6 +41,7 @@ function InvoiceControlForm({
   invoiceControl: InvoiceControlType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.invoicecontrol", "common"]);
 
   const { control, handleSubmit, reset } = useForm<InvoiceControlFormValues>({
     resolver: yupResolver(invoiceControlSchema),
@@ -63,9 +65,9 @@ function InvoiceControlForm({
     {
       method: "PUT",
       path: `/invoice_control/${invoiceControl.id}/`,
-      successMessage: "Invoice Control updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["invoiceControl"],
-      errorMessage: "Failed to update invoice control.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -80,7 +82,7 @@ function InvoiceControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -90,9 +92,9 @@ function InvoiceControlForm({
               name="invoiceNumberPrefix"
               rules={{ required: true }}
               control={control}
-              label="Invoice Number Prefix"
-              placeholder="Invoice Number Prefix"
-              description="Set a specific prefix for invoice numbers to maintain a consistent numbering system."
+              label={t("fields.invoiceNumberPrefix.label")}
+              placeholder={t("fields.invoiceNumberPrefix.placeholder")}
+              description={t("fields.invoiceNumberPrefix.description")}
             />
           </div>
           <div className="col-span-3">
@@ -100,9 +102,9 @@ function InvoiceControlForm({
               name="creditMemoNumberPrefix"
               rules={{ required: true }}
               control={control}
-              label="Credit Memo Number Prefix"
-              placeholder="Credit Memo Number Prefix"
-              description="Define a prefix for credit memo numbers to easily distinguish them from regular invoices."
+              label={t("fields.creditMemoNumberPrefix.label")}
+              placeholder={t("fields.creditMemoNumberPrefix.placeholder")}
+              description={t("fields.creditMemoNumberPrefix.description")}
             />
           </div>
           <div className="col-span-3">
@@ -110,9 +112,9 @@ function InvoiceControlForm({
               name="invoiceDueAfterDays"
               control={control}
               rules={{ required: true }}
-              label="Invoice Due After Days"
-              placeholder="Credit Memo Number Prefix"
-              description="Specify the default payment due period for invoices in days."
+              label={t("fields.invoiceDueAfterDays.label")}
+              placeholder={t("fields.invoiceDueAfterDays.placeholder")}
+              description={t("fields.invoiceDueAfterDays.description")}
             />
           </div>
           <div className="col-span-3">
@@ -121,18 +123,18 @@ function InvoiceControlForm({
               control={control}
               options={dateFormatChoices}
               rules={{ required: true }}
-              label="Invoice Date Format"
-              placeholder="Invoice Date Format"
-              description="Enter the prefix to be used for the credit memo number."
+              label={t("fields.invoiceDateFormat.label")}
+              placeholder={t("fields.invoiceDateFormat.placeholder")}
+              description={t("fields.invoiceDateFormat.description")}
             />
           </div>
           <div className="col-span-3">
             <FileField
               name="invoiceLogo"
               control={control}
-              label="Invoice Logo"
-              placeholder="Invoice Logo"
-              description="Upload your company logo to personalize invoices and enhance brand presence."
+              label={t("fields.invoiceLogo.label")}
+              placeholder={t("fields.invoiceLogo.placeholder")}
+              description={t("fields.invoiceLogo.description")}
             />
           </div>
           <div className="col-span-3">
@@ -140,51 +142,51 @@ function InvoiceControlForm({
               name="invoiceLogoWidth"
               control={control}
               rules={{ required: true }}
-              label="Invoice Logo Width"
-              placeholder="Invoice Logo Width"
-              description="Determine the display width of the logo on invoices, ensuring optimal visibility. (In pixels)"
+              label={t("fields.invoiceLogoWidth.label")}
+              placeholder={t("fields.invoiceLogoWidth.placeholder")}
+              description={t("fields.invoiceLogoWidth.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="attachPdf"
               control={control}
-              label="Attach PDF"
-              description="Option to attach a PDF version of the invoice with customer emails for easy access."
+              label={t("fields.attachPdf.label")}
+              description={t("fields.attachPdf.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="showAmountDue"
               control={control}
-              label="Show Amount Due"
-              description="Choose to display the total amount due on the invoice for clear communication."
+              label={t("fields.showAmountDue.label")}
+              description={t("fields.showAmountDue.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="showInvoiceDueDate"
               control={control}
-              label="Show Invoice Due Date"
-              description="Include the due date on invoices to remind customers of the payment timeline."
+              label={t("fields.showInvoiceDueDate.label")}
+              description={t("fields.showInvoiceDueDate.description")}
             />
           </div>
           <div className="col-span-full">
             <TextareaField
               name="invoiceTerms"
               control={control}
-              label="Invoice Terms"
-              placeholder="Invoice Terms"
-              description="Enter custom terms and conditions for your invoices to inform clients about payment policies."
+              label={t("fields.invoiceTerms.label")}
+              placeholder={t("fields.invoiceTerms.placeholder")}
+              description={t("fields.invoiceTerms.description")}
             />
           </div>
           <div className="col-span-full">
             <TextareaField
               name="invoiceFooter"
               control={control}
-              label="Invoice Footer"
-              placeholder="Invoice Footer"
-              description="Add a custom footer to invoices for additional notes or company information."
+              label={t("fields.invoiceFooter.label")}
+              placeholder={t("fields.invoiceFooter.placeholder")}
+              description={t("fields.invoiceFooter.description")}
             />
           </div>
         </div>
@@ -199,10 +201,10 @@ function InvoiceControlForm({
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>
@@ -211,19 +213,16 @@ function InvoiceControlForm({
 
 export default function InvoiceControl() {
   const { invoiceControlData, isLoading } = useInvoiceControl();
+  const { t } = useTranslation("admin.invoicecontrol");
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
         <h2 className="text-base font-semibold leading-7 text-foreground">
-          Invoice Control
+          {t("title")}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Enhance your billing accuracy and efficiency with our Invoice
-          Customization Panel. Tailor every aspect of your invoicing process,
-          from numbering to presentation, ensuring a seamless fit with your
-          company's branding and operational requirements in the transportation
-          sector.
+          {t("subTitle")}
         </p>
       </div>
       {isLoading ? (

@@ -20,30 +20,15 @@ export function Footer() {
     <footer className="mt-5 flex items-center justify-between px-10 py-2 font-semibold">
       {/* Copyright */}
       <div className="text-xs text-foreground">
-        <span className="me-1">2023©</span>
+        <span className="me-1">&copy; {new Date().getFullYear()}</span>
         <a href="#" target="_blank" rel="noopener noreferrer">
           Trenova Technologies
         </a>
       </div>
 
-      {/* Menu */}
-      <ul className="flex space-x-4 text-xs text-foreground">
-        <li>
-          <a href="#" target="_blank" rel="noopener noreferrer">
-            Terms & Conditions
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener noreferrer">
-            Support
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener noreferrer">
-            License
-          </a>
-        </li>
-      </ul>
+      <div className={"text-xs text-foreground"}>
+        Made with <span className="text-red-500">💙</span> by the Trenova Team
+      </div>
     </footer>
   );
 }

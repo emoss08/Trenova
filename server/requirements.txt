@@ -1,7 +1,6 @@
-art==6.1
 celery==5.3.6
 channels==4.0.0
-channels_redis==4.1.0
+channels_redis==4.2.0
 confluent-kafka==2.3.0
 cssutils==2.9.0
 daphne==4.0.0

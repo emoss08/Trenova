@@ -38,8 +38,8 @@ import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { accountingControlSchema } from "@/lib/validations/AccountingSchema";
-import { AsyncSelectInput } from "@/components/common/fields/async-select-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 function AccountingControlForm({
   accountingControl,
@@ -47,6 +47,8 @@ function AccountingControlForm({
   accountingControl: AccountingControlType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.accountingcontrol", "common"]);
+
   const {
     selectGLAccounts,
     isLoading: isGLAccountsLoading,
@@ -89,9 +91,9 @@ function AccountingControlForm({
     {
       method: "PUT",
       path: `/accounting_control/${accountingControl.id}/`,
-      successMessage: "Accounting Control updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["accountingControl"],
-      errorMessage: "Failed to update accounting control.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -106,7 +108,7 @@ function AccountingControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -117,21 +119,22 @@ function AccountingControlForm({
               control={control}
               options={automaticJournalEntryChoices}
               rules={{ required: true }}
-              label="Journal Entry Criteria"
-              placeholder="Journal Entry Criteria"
-              description="Set automated rules for journal entry creation to enhance financial recording efficiency."
+              label={t("fields.journalEntryCriteria.label")}
+              placeholder={t("fields.journalEntryCriteria.placeholder")}
+              description={t("fields.journalEntryCriteria.description")}
             />
           </div>
           <div className="col-span-3">
-            <AsyncSelectInput
+            z
+            <SelectInput
               name="defaultRevenueAccount"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}
               isFetchError={isGlAccountsError}
-              label="Default Revenue Account"
-              placeholder="Default Revenue Account"
-              description="Select a default revenue account for shipments lacking a specific RevenueCode."
+              label={t("fields.defaultRevenueAccount.label")}
+              placeholder={t("fields.defaultRevenueAccount.placeholder")}
+              description={t("fields.defaultRevenueAccount.description")}
               hasPopoutWindow
               popoutLink="/accounting/gl-accounts"
               isClearable
@@ -139,15 +142,15 @@ function AccountingControlForm({
             />
           </div>
           <div className="col-span-3">
-            <AsyncSelectInput
+            <SelectInput
               name="defaultExpenseAccount"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}
               isFetchError={isGlAccountsError}
-              label="Default Expense Account"
-              placeholder="Default Expense Account"
-              description="Choose a fallback expense account for shipments without a designated RevenueCode."
+              label={t("fields.defaultExpenseAccount.label")}
+              placeholder={t("fields.defaultExpenseAccount.placeholder")}
+              description={t("fields.defaultExpenseAccount.description")}
               hasPopoutWindow
               popoutLink="/accounting/gl-accounts"
               isClearable
@@ -158,32 +161,34 @@ function AccountingControlForm({
             <CheckboxInput
               name="autoCreateJournalEntries"
               control={control}
-              label="Auto Create Journal Entries"
-              description="Enable the system to automatically generate journal entries based on predefined triggers."
+              label={t("fields.autoCreateJournalEntries.label")}
+              description={t("fields.autoCreateJournalEntries.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="restrictManualJournalEntries"
               control={control}
-              label="Restrict Manual Journal Entries"
-              description="Toggle to restrict manual journal entries creation to authorized personnel only."
+              label={t("fields.restrictManualJournalEntries.label")}
+              description={t("fields.restrictManualJournalEntries.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="requireJournalEntryApproval"
               control={control}
-              label="Require Journal Entry Approval"
-              description="Activate mandatory approval for all journal entries by designated authorities before posting."
+              label={t("fields.requireJournalEntryApproval.label")}
+              description={t("fields.requireJournalEntryApproval.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enableReconciliationNotifications"
               control={control}
-              label="Enable Reconciliation Notifications"
-              description="Enable alerts for the addition of shipments to the reconciliation queue."
+              label={t("fields.enableReconciliationNotifications.label")}
+              description={t(
+                "fields.enableReconciliationNotifications.description",
+              )}
             />
           </div>
           <div className="col-span-full">
@@ -193,9 +198,13 @@ function AccountingControlForm({
               options={selectUsersData}
               isLoading={isUsersLoading}
               isFetchError={isUsersError}
-              label="Reconciliation Notification Recipients"
-              placeholder="Reconciliation Notification Recipients"
-              description="Designate users to receive alerts regarding new shipments in the reconciliation queue."
+              label={t("fields.reconciliationNotificationRecipients.label")}
+              placeholder={t(
+                "fields.reconciliationNotificationRecipients.placeholder",
+              )}
+              description={t(
+                "fields.reconciliationNotificationRecipients.description",
+              )}
               isMulti
               hasPopoutWindow
               popoutLink="#"
@@ -207,9 +216,9 @@ function AccountingControlForm({
             <InputField
               name="reconciliationThreshold"
               control={control}
-              label="Reconciliation Threshold"
-              placeholder="Reconciliation Threshold"
-              description="Set a threshold for pending reconciliation tasks, triggering alerts or process halts when exceeded."
+              label={t("fields.reconciliationThreshold.label")}
+              placeholder={t("fields.reconciliationThreshold.placeholder")}
+              description={t("fields.reconciliationThreshold.description")}
             />
           </div>
           <div className="col-span-3">
@@ -218,25 +227,30 @@ function AccountingControlForm({
               control={control}
               options={thresholdActionChoices}
               rules={{ required: true }}
-              label="Reconciliation Threshold Action"
-              placeholder="Reconciliation Threshold Action"
-              description="Define the actions to be taken when the set reconciliation threshold is reached."
+              label={t("fields.reconciliationThresholdAction.label")}
+              placeholder={t(
+                "fields.reconciliationThresholdAction.placeholder",
+              )}
+              description={t(
+                "fields.reconciliationThresholdAction.description",
+              )}
             />
           </div>
           <div className="col-span-full">
             <CheckboxInput
               name="haltOnPendingReconciliation"
               control={control}
-              label="Halt on Pending Reconciliation"
-              description="Stop essential operations if pending reconciliation tasks surpass the defined threshold."
+              label={t("fields.haltOnPendingReconciliation.label")}
+              description={t("fields.haltOnPendingReconciliation.description")}
             />
           </div>
           <div className="col-span-full">
             <TextareaField
               name="criticalProcesses"
               control={control}
-              label="Critical Processes"
-              description="Enumerate crucial operations that are to be paused when exceeding the reconciliation task threshold."
+              label={t("fields.criticalProcesses.label")}
+              placeholder={t("fields.criticalProcesses.placeholder")}
+              description={t("fields.criticalProcesses.description")}
               disabled
             />
           </div>
@@ -252,10 +266,10 @@ function AccountingControlForm({
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>
@@ -264,18 +278,16 @@ function AccountingControlForm({
 
 export default function AccountingControl() {
   const { accountingControlData, isLoading } = useAccountingControl();
+  const { t } = useTranslation(["admin.accountingcontrol"]);
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
         <h2 className="text-base font-semibold leading-7 text-foreground">
-          Accounting Control
+          {t("title")}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Streamline your financial operations with precision and compliance.
-          This module centralizes key financial elements of your transportation
-          business, ensuring accurate tracking, seamless communication, and
-          tailored service delivery within the transportation industry.
+          {t("subTitle")}
         </p>
       </div>
       {isLoading ? (

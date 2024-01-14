@@ -1,0 +1,60 @@
+{
+  "title": "Dispatch Control",
+  "subTitle": "Elevate your dispatch operations with our comprehensive Dispatch Control Panel. This module is designed to streamline dispatch processes, enforce compliance, and optimize operational workflows, ensuring a smooth and efficient management of your transportation services.",
+  "formSuccessMessage": "Dispatch Control updated successfully.",
+  "formErrorMessage": "Failed to update dispatch control.",
+  "fields": {
+    "recordServiceIncident": {
+      "placeholder": "Record Service Incident",
+      "label": "Record Service Incident",
+      "description": "Option to log service incidents automatically for delayed shipments."
+    },
+    "gracePeriod": {
+      "placeholder": "Grace Period",
+      "label": "Grace Period",
+      "description": "Enter the number of minutes to wait before recording a service incident."
+    },
+    "deadheadTarget": {
+      "placeholder": "Deadhead Target",
+      "label": "Deadhead Target",
+      "description": "Specify the maximum miles a driver can travel unloaded to optimize route efficiency."
+    },
+    "maxShipmentWeightLimit": {
+      "placeholder": "Max Shipment Weight Limit",
+      "label": "Max Shipment Weight Limit",
+      "description": "Sets the maximum allowable weight (in pounds) for any shipment. Dispatch is prevented if the weight exceeds this limit."
+    },
+    "enforceWorkerAssign": {
+      "label": "Enforce Worker Assignment",
+      "description": "Mandate specific worker assignments for each shipment for better accountability."
+    },
+    "trailerContinuity": {
+      "label": "Enforce Trailer Continuity",
+      "description": "Ensure the same trailer is used throughout a shipment for consistency."
+    },
+    "dupeTrailerCheck": {
+      "label": "Enforce Duplicate Trailer Check",
+      "description": "Activate checks against using the same trailer for multiple simultaneous shipments."
+    },
+    "regulatoryCheck": {
+      "label": "Enforce Regulatory Check",
+      "description": "Implement a mandatory check to ensure all shipments comply with regulations."
+    },
+    "prevShipmentsOnHold": {
+      "label": "Prevent Shipments On Hold",
+      "description": "Prevent allocation of shipments to drivers who have ongoing shipments on hold."
+    },
+    "workerTimeAwayRestriction": {
+      "label": "Enforce Worker Time Away",
+      "description": "Disallow assignments to workers currently on approved time away."
+    },
+    "tractorWorkerFleetConstraint": {
+      "label": "Enforce Tractor and Worker Fleet Constraint",
+      "description": "Restrict dispatch assignments to workers and tractors from the same fleet."
+    },
+    "maintenanceCompliance": {
+      "label": "Vehicle Maintenance Compliance",
+      "description": "Ensures that all vehicles are compliant with maintenance standards before dispatch."
+    }
+  }
+}

@@ -16,104 +16,13 @@
  */
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Button,
-  Container,
-  createStyles,
-  Flex,
-  Image,
-  rem,
-  SimpleGrid,
-  Text,
-  Title,
-} from "@mantine/core";
-
-import image from "../assets/images/404.svg";
-
-const useStyles = createStyles((theme) => ({
-  card: {
-    width: "100%",
-    // maxWidth: "100%",
-    // height: "auto",
-    "@media (max-width: 576px)": {
-      height: "auto",
-      maxHeight: "none",
-    },
-  },
-  root: {
-    paddingTop: rem(80),
-    paddingBottom: rem(80),
-  },
-
-  title: {
-    fontWeight: 900,
-    fontSize: rem(34),
-    marginBottom: theme.spacing.md,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: rem(32),
-    },
-  },
-
-  control: {
-    [theme.fn.smallerThan("sm")]: {
-      width: "100%",
-    },
-  },
-
-  mobileImage: {
-    [theme.fn.largerThan("sm")]: {
-      display: "none",
-    },
-  },
-
-  desktopImage: {
-    [theme.fn.smallerThan("sm")]: {
-      display: "none",
-    },
-  },
-}));
 
 function ErrorPage(): React.ReactElement {
-  const { classes } = useStyles();
-  const navigate = useNavigate();
-
   return (
-    <Flex
-      style={{
-        paddingTop: "20vh",
-      }}
-    >
-      <Container className={classes.root}>
-        <SimpleGrid
-          spacing={80}
-          cols={2}
-          breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
-        >
-          <Image src={image} className={classes.mobileImage} />
-          <div>
-            <Title className={classes.title}>Something is not right...</Title>
-            <Text color="dimmed" size="lg">
-              Page you are trying to open does not exist. You may have mistyped
-              the address, or the page has been moved to another URL. If you
-              think this is an error contact support.
-            </Text>
-            <Button
-              // variant="outline"
-              size="md"
-              mt="xl"
-              className={classes.control}
-              onClick={() => navigate("/")}
-            >
-              Get back to home page
-            </Button>
-          </div>
-          <Image src={image} className={classes.desktopImage} />
-        </SimpleGrid>
-      </Container>
-    </Flex>
+    <div>
+      <h1>404 Error</h1>
+      <p>Page not found</p>
+    </div>
   );
 }
 export default ErrorPage;

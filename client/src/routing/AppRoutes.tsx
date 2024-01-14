@@ -21,9 +21,6 @@ import { RouteObject } from "react-router-dom";
 const HomePage = lazy(() => import("../pages"));
 const LoginPage = lazy(() => import("../pages/login-page"));
 const ErrorPage = lazy(() => import("../pages/error-page"));
-const UserManagementPage = lazy(
-  () => import("../pages/admin/users/UserManagement"),
-);
 const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes"),
 );
@@ -70,14 +67,9 @@ const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
 
 // Other Pages
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
-const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges"),
-);
-const BillingClientPage = lazy(() => import("../pages/billing/BillingClient"));
-const HazardousMaterialPage = lazy(
-  () => import("../pages/commodities/HazardousMaterial"),
 );
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
@@ -85,7 +77,6 @@ const WorkerPage = lazy(() => import("../pages/worker/Worker"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCode"));
 const CommentTypePage = lazy(() => import("../pages/dispatch/CommentType"));
-const RatePage = lazy(() => import("../pages/dispatch/Rate"));
 const ShipmentManagementPage = lazy(() => import("../pages/shipment/Shipment"));
 const EquipmentTypePage = lazy(
   () => import("../pages/equipment/EquipmentType"),
@@ -181,16 +172,6 @@ export const routes: RouteObjectWithPermission[] = [
     element: <GLAccountsPage />,
     permission: "view_generalledgeraccount",
   },
-  // Accounts Pages
-  {
-    title: "Job Titles",
-    group: "accounts",
-    subMenu: "configuration files",
-    path: "/accounts/job-titles",
-    description: "Manage job titles",
-    element: <JobTitlePage />,
-    permission: "view_jobtitle",
-  },
   // Billing Pages
   {
     title: "Charge Types",
@@ -218,14 +199,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage accessorial charges",
     element: <AccessorialChargePage />,
     permission: "view_accessorialcharge",
-  },
-  {
-    title: "Billing Client",
-    group: "billing",
-    path: "/billing/client",
-    description: "Your efficient partner for end-to-end billing management",
-    element: <BillingClientPage />,
-    permission: "use_billing_client",
   },
   // Customer Page
   {
@@ -273,14 +246,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Comment Types",
     element: <CommentTypePage />,
     permission: "view_commenttype",
-  },
-  {
-    title: "Rate Management",
-    group: "dispatch",
-    path: "/dispatch/rate-management/",
-    description: "Rate Management",
-    element: <RatePage />,
-    permission: "view_rate",
   },
   {
     title: "Location Categories",
@@ -345,15 +310,6 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_shipment",
   },
   {
-    title: "Hazardous Materials",
-    group: "Shipment Management",
-    subMenu: "configuration files",
-    path: "/shipment-management/hazardous-materials/",
-    description: "Manage hazardous materials",
-    element: <HazardousMaterialPage />,
-    permission: "view_hazardousmaterial",
-  },
-  {
     title: "Commodity Codes",
     group: "Shipment Management",
     subMenu: "configuration files",
@@ -400,15 +356,6 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_qualifiercode",
   },
   // Admin Pages
-  {
-    title: "User Management",
-    group: "admin",
-    subMenu: "users",
-    path: "/admin/users",
-    description: "Manage users and their permissions",
-    element: <UserManagementPage />,
-    permission: "view_all_users",
-  },
   {
     title: "Dashboard",
     group: "Administration",

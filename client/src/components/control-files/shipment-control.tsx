@@ -29,6 +29,7 @@ import {
   ShipmentControl as ShipmentControlType,
   ShipmentControlFormValues,
 } from "@/types/order";
+import { useTranslation } from "react-i18next";
 
 function ShipmentControlForm({
   shipmentControl,
@@ -36,6 +37,7 @@ function ShipmentControlForm({
   shipmentControl: ShipmentControlType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.shipmentcontrol", "common"]); // Use the translation hook
 
   const { control, handleSubmit, reset } = useForm<ShipmentControlFormValues>({
     resolver: yupResolver(shipmentControlSchema),
@@ -59,13 +61,12 @@ function ShipmentControlForm({
     {
       method: "PUT",
       path: `/shipment_control/${shipmentControl.id}/`,
-      successMessage: "Shipment Control updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["shipmentControl"],
-      errorMessage: "Failed to update shipment control.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
   );
-
   const onSubmit = (values: ShipmentControlFormValues) => {
     setIsSubmitting(true);
     mutation.mutate(values);
@@ -75,7 +76,7 @@ function ShipmentControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -84,88 +85,88 @@ function ShipmentControlForm({
             <CheckboxInput
               name="autoRateShipment"
               control={control}
-              label="Auto Rate Shipment"
-              description="Automate the rating of shipments based on pre-established contractual rates."
+              label={t("fields.autoRateShipment.label")}
+              description={t("fields.autoRateShipment.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="calculateDistance"
               control={control}
-              label="Calculate Distance"
-              description="Enable automatic calculation of shipment distances for accurate logistics planning."
+              label={t("fields.calculateDistance.label")}
+              description={t("fields.calculateDistance.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceRevCode"
               control={control}
-              label="Enforce Revenue code"
-              description="Mandate the use of specific revenue codes for standardized shipment billing."
+              label={t("fields.enforceRevCode.label")}
+              description={t("fields.enforceRevCode.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceVoidedComm"
               control={control}
-              label="Enforce Voided Comm"
-              description="Implement checks against using voided commodity codes in shipment processing."
+              label={t("fields.enforceVoidedComm.label")}
+              description={t("fields.enforceVoidedComm.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="generateRoutes"
               control={control}
-              label="Generate Routes"
-              description="Automatically generate optimal routes for each shipment to enhance efficiency."
+              label={t("fields.generateRoutes.label")}
+              description={t("fields.generateRoutes.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceCommodity"
               control={control}
-              label="Enforce Commodity"
-              description="Require the use of commodity codes for all shipments for consistent categorization."
+              label={t("fields.enforceCommodity.label")}
+              description={t("fields.enforceCommodity.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="autoSequenceStops"
               control={control}
-              label="Auto Sequence Stops"
-              description="Automatically organize the sequence of stops in a shipment for optimal routing."
+              label={t("fields.autoSequenceStops.label")}
+              description={t("fields.autoSequenceStops.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="autoShipmentTotal"
               control={control}
-              label="Auto Calc. Shipment Total"
-              description="Automatically calculate the total charge for shipments, ensuring billing accuracy."
+              label={t("fields.autoShipmentTotal.label")}
+              description={t("fields.autoShipmentTotal.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceOriginDestination"
               control={control}
-              label="Compare Origin/Destination"
-              description="Validate that the origin and destination of each shipment are distinct."
+              label={t("fields.enforceOriginDestination.label")}
+              description={t("fields.enforceOriginDestination.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="checkForDuplicateBol"
               control={control}
-              label="Check for Duplicate BOL"
-              description="Check for and prevent duplicate Bill of Lading (BOL) numbers in the system."
+              label={t("fields.checkForDuplicateBol.label")}
+              description={t("fields.checkForDuplicateBol.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="removeShipment"
               control={control}
-              label="Remove Shipment"
-              description="Grant the ability to remove shipments from the system, with restrictions on active movements and stops."
+              label={t("fields.removeShipment.label")}
+              description={t("fields.removeShipment.description")}
             />
           </div>
         </div>
@@ -180,10 +181,10 @@ function ShipmentControlForm({
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>

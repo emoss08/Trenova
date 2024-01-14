@@ -34,50 +34,60 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 
 function GoogleAPIAlert() {
+  const { t } = useTranslation("admin.googleapi");
+
   return (
     <Alert className="mb-5 bg-foreground text-background">
       <InfoIcon className="h-5 w-5 stroke-background" />
-      <AlertTitle>Information!</AlertTitle>
+      <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc">
           <li>
-            <strong>Google API Key:</strong> Required to access Google's mapping
-            services, including routing and geocoding. Ensure you have the
-            correct API permissions and billing set up in your Google Cloud
-            Platform account. For more details, see{" "}
+            <Trans
+              components={[<strong />]}
+              i18nKey="alert.list.apiKey.description"
+              t={t}
+            />
             <a
               href="https://developers.google.com/maps/documentation/javascript/get-api-key"
               target="_blank"
               className="underline"
               rel="noopener noreferrer"
             >
-              Google's API Key Documentation
+              {t("alert.list.apiKey.link")}
             </a>
           </li>
           <li>
-            <strong>Mileage Unit:</strong> Choose the unit for distance
-            measurement (e.g., imperial, metric). For more details, see{" "}
+            <Trans
+              components={[<strong />]}
+              i18nKey="alert.list.mileageUnit.description"
+              t={t}
+            />
             <a
               href="https://support.google.com/merchants/answer/14156166?hl=en"
               target="_blank"
               className="underline"
               rel="noopener noreferrer"
             >
-              Google's Unit Systems Documentation
+              {t("alert.list.mileageUnit.link")}
             </a>
           </li>
           <li>
-            <strong>Traffic Model:</strong> Determines how traffic conditions
-            affect route calculation. For more details, see{" "}
+            <Trans
+              components={[<strong />]}
+              i18nKey="alert.list.trafficModel.description"
+              t={t}
+            />
             <a
               href="https://developers.google.com/maps/documentation/distance-matrix/distance-matrix#traffic_model"
               target="_blank"
               className="underline"
               rel="noopener noreferrer"
             >
-              Google's Traffic Model Documentation
+              {t("alert.list.trafficModel.link")}
             </a>
             .
           </li>
@@ -244,7 +254,7 @@ export default function GoogleApi() {
         </div>
       ) : isError ? (
         <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
-          <ErrorLoadingData message="Failed to load dispatch control." />
+          <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (
         (googleAPIData as GoogleAPIType) && (

@@ -159,6 +159,7 @@ export function MenuList({
     maxOptions?: number;
     formError?: string;
     popoutLink?: string;
+    popoutLinkLabel?: string;
     hasPopoutWindow?: boolean;
   };
 }) {
@@ -199,6 +200,7 @@ export function NoOptionsMessage({
     maxOptions?: number;
     formError?: string;
     popoutLink?: string;
+    popoutLinkLabel?: string;
     hasPopoutWindow?: boolean;
   };
 }) {
@@ -278,7 +280,7 @@ export function ErrorMessage({
   formError?: string;
 }) {
   return (
-    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500">
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
       {isFetchError
         ? "An error has occurred! Please try again later."
         : formError}

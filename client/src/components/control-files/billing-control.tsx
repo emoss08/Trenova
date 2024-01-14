@@ -33,6 +33,7 @@ import {
   autoBillingCriteriaChoices,
   shipmentTransferCriteriaChoices,
 } from "@/utils/apps/billing";
+import { useTranslation } from "react-i18next";
 
 function BillingControlForm({
   billingControl,
@@ -40,6 +41,7 @@ function BillingControlForm({
   billingControl: BillingControlType;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { t } = useTranslation(["admin.billingcontrol", "common"]);
 
   const { control, handleSubmit, reset } = useForm<BillingControlFormValues>({
     resolver: yupResolver(billingControlSchema),
@@ -59,9 +61,9 @@ function BillingControlForm({
     {
       method: "PUT",
       path: `/billing_control/${billingControl.id}/`,
-      successMessage: "Billing Control updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["billingControl"],
-      errorMessage: "Failed to update billing control.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -75,7 +77,7 @@ function BillingControlForm({
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -84,32 +86,32 @@ function BillingControlForm({
             <CheckboxInput
               name="removeBillingHistory"
               control={control}
-              label="Remove Billing History"
-              description="Enable users to delete records from the billing history."
+              label={t("fields.removeBillingHistory.label")}
+              description={t("fields.removeBillingHistory.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="autoBillShipment"
               control={control}
-              label="Auto Bill Shipments"
-              description="Automate the process of billing shipments directly to customers upon completion."
+              label={t("fields.autoBillShipment.label")}
+              description={t("fields.autoBillShipment.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="autoMarkReadyToBill"
               control={control}
-              label="Auto Mark Ready to Bill"
-              description="Automatically mark shipments as 'Ready to Bill' upon delivery and meeting customer billing criteria."
+              label={t("fields.autoMarkReadyToBill.label")}
+              description={t("fields.autoMarkReadyToBill.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="validateCustomerRates"
               control={control}
-              label="Validate Customer Rates"
-              description="Ensure billing rates align with customer contracts before processing, to maintain accuracy and compliance."
+              label={t("fields.validateCustomerRates.label")}
+              description={t("fields.validateCustomerRates.description")}
             />
           </div>
           <div className="col-span-3">
@@ -118,9 +120,9 @@ function BillingControlForm({
               control={control}
               options={autoBillingCriteriaChoices}
               rules={{ required: true }}
-              label="Auto Bill Criteria"
-              placeholder="Auto Bill Criteria"
-              description="Set specific conditions under which shipments are automatically billed."
+              label={t("fields.autoBillCriteria.label")}
+              placeholder={t("fields.autoBillCriteria.placeholder")}
+              description={t("fields.autoBillCriteria.description")}
             />
           </div>
           <div className="col-span-3">
@@ -129,17 +131,17 @@ function BillingControlForm({
               control={control}
               options={shipmentTransferCriteriaChoices}
               rules={{ required: true }}
-              label="Shipment Transfer Criteria"
-              placeholder="Shipment Transfer Criteria"
-              description="Establish guidelines for transferring shipments to the billing phase."
+              label={t("fields.shipmentTransferCriteria.label")}
+              placeholder={t("fields.shipmentTransferCriteria.placeholder")}
+              description={t("fields.shipmentTransferCriteria.description")}
             />
           </div>
           <div className="col-span-full">
             <CheckboxInput
               name="enforceCustomerBilling"
               control={control}
-              label="Enforce Customer Billing Requirements"
-              description="Mandate adherence to customer billing requirements during the billing process."
+              label={t("fields.enforceCustomerBilling.label")}
+              description={t("fields.enforceCustomerBilling.description")}
             />
           </div>
         </div>
@@ -154,10 +156,10 @@ function BillingControlForm({
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>
@@ -166,19 +168,16 @@ function BillingControlForm({
 
 export default function BillingControl() {
   const { billingControlData, isLoading } = useBillingControl();
+  const { t } = useTranslation("admin.billingcontrol");
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
         <h2 className="text-base font-semibold leading-7 text-foreground">
-          Billing Control
+          {t("title")}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Optimize and automate your billing processes for enhanced accuracy and
-          efficiency. This module consolidates essential billing
-          functionalities, ensuring precise invoicing, effective communication,
-          and customized financial handling specifically tailored for the
-          dynamics of the transportation industry.
+          {t("subTitle")}
         </p>
       </div>
       {isLoading ? (

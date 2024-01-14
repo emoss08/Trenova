@@ -138,6 +138,6 @@ export const customerSchema: ObjectSchema<CustomerFormValues> =
     advocate: Yup.string().notRequired(),
     deliverySlots: Yup.array().of(deliverySlotSchema).notRequired(),
     contacts: Yup.array().of(customerContactSchema).notRequired(),
-    ruleProfile: customerRuleProfileSchema.notRequired(),
-    emailProfile: customerEmailProfileSchema.notRequired(),
+    ruleProfile: customerRuleProfileSchema.required(),
+    emailProfile: customerEmailProfileSchema.required(),
   });

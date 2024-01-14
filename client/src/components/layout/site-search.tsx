@@ -17,6 +17,8 @@
 import { useUserPermissions } from "@/context/user-permissions";
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
+import { useHeaderStore } from "@/stores/HeaderStore";
+import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +31,12 @@ import {
   CommandList,
   CommandSeparator,
 } from "../ui/command";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 const prepareRouteGroups = (routeList: typeof routes) => {
   return routeList.reduce(
@@ -44,10 +52,39 @@ const prepareRouteGroups = (routeList: typeof routes) => {
   );
 };
 
+export function SiteSearchInput() {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            aria-label="Open site search"
+            aria-expanded={useHeaderStore.get("searchDialogOpen")}
+            onClick={() => useHeaderStore.set("searchDialogOpen", true)}
+            className="group hidden h-9 w-[250px] items-center rounded-md border border-muted-foreground/40 bg-background px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
+          >
+            <MagnifyingGlassIcon className="mr-2 h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+            <span className="text-muted-foreground">
+              Type{" "}
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <span className="text-xs">⌘K</span>
+              </kbd>{" "}
+              to search
+            </span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={5}>
+          <span>Site Search</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function SiteSearch() {
   const navigate = useNavigate();
   const { isAuthenticated, userHasPermission } = useUserPermissions();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useHeaderStore.use("searchDialogOpen");
   const [searchText, setSearchText] = React.useState("");
 
   React.useEffect(() => {

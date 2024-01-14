@@ -15,16 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { CommentType } from "@/types/dispatch";
 import { CommentTypeDialog } from "@/components/comment-type/comment-type-table-dialog";
 import { CommentTypeEditSheet } from "@/components/comment-type/comment-type-table-edit-dialog";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { tableStatusChoices } from "@/lib/constants";
+import { CommentType } from "@/types/dispatch";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<CommentType>[] = [
   {
@@ -81,6 +81,7 @@ const filters: FilterConfig<CommentType>[] = [
 export default function CommentTypes() {
   return (
     <DataTable
+      addPermissionName="add_commenttype"
       queryKey="comment-types-table-data"
       columns={columns}
       link="/comment_types/"

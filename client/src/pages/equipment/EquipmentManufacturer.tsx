@@ -14,17 +14,17 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { EquipmentManufacturer } from "@/types/equipment";
-import { truncateText } from "@/lib/utils";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { EquipManuDialog } from "@/components/equipment-manufacturer/eqiup-manu-table-dialog";
 import { EquipMenuEditDialog } from "@/components/equipment-manufacturer/equip-manu-edit-table-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { tableStatusChoices } from "@/lib/constants";
+import { truncateText } from "@/lib/utils";
+import { EquipmentManufacturer } from "@/types/equipment";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<EquipmentManufacturer>[] = [
   {
@@ -85,6 +85,7 @@ const filters: FilterConfig<EquipmentManufacturer>[] = [
 export default function EquipmentManufacturers() {
   return (
     <DataTable
+      addPermissionName="add_equipmentmanufacturer"
       queryKey="equipment-manufacturer-table-data"
       columns={columns}
       link="/equipment_manufacturers/"
