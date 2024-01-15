@@ -25,7 +25,7 @@ export type Organization = {
   id: string;
   name: string;
   scacCode: string;
-  dotNumber: number;
+  dotNumber?: number | null;
   addressLine1: string;
   addressLine2?: string | null;
   city: string;
@@ -40,7 +40,6 @@ export type Organization = {
   dateFormat: string;
   timeFormat: string;
   logo?: string | null;
-  tokenExpirationDays: number;
 };
 
 export type OrganizationFormValues = Omit<Organization, "id">;

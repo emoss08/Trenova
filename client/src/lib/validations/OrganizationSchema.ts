@@ -29,30 +29,26 @@ import {
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 
-export const organizationSchema: ObjectSchema<OrganizationFormValues> = Yup.object().shape({
-  name: Yup.string().required("Name is required."),
-  scacCode: Yup.string().required("SCAC Code is required."),
-  dotNumber: Yup.number().required("DOT Number is required."),
-  addressLine1: Yup.string().required("Address Line 1 is required."),
-  addressLine2: Yup.string().notRequired(),
-  city: Yup.string().required("City is required."),
-  state: Yup.string().required("State is required."),
-  zipCode: Yup.string().required("Zip Code is required."),
-  phoneNumber: Yup.string().notRequired(),
-  website: Yup.string().notRequired(),
-  orgType: Yup.string().required("Organization Type is required."),
-  timezone: Yup.string().required("Timezone is required."),
-  language: Yup.string().required("Language is required."),
-  currency: Yup.string().required("Currency is required."),
-  dateFormat: Yup.string().required("Date Format is required."),
-  timeFormat: Yup.string().required("Time Format is required."),
-  logo: Yup.string().notRequired(),
-  tokenExpirationDays: Yup.number().required(
-    "Token Expiration Days is required.",
-  ),
-});
-
-
+export const organizationSchema: ObjectSchema<OrganizationFormValues> =
+  Yup.object().shape({
+    name: Yup.string().required("Name is required."),
+    scacCode: Yup.string().required("SCAC Code is required."),
+    dotNumber: Yup.number().notRequired(),
+    addressLine1: Yup.string().required("Address Line 1 is required."),
+    addressLine2: Yup.string().notRequired(),
+    city: Yup.string().required("City is required."),
+    state: Yup.string().required("State is required."),
+    zipCode: Yup.string().required("Zip Code is required."),
+    phoneNumber: Yup.string().notRequired(),
+    website: Yup.string().notRequired(),
+    orgType: Yup.string().required("Organization Type is required."),
+    timezone: Yup.string().required("Timezone is required."),
+    language: Yup.string().required("Language is required."),
+    currency: Yup.string().required("Currency is required."),
+    dateFormat: Yup.string().required("Date Format is required."),
+    timeFormat: Yup.string().required("Time Format is required."),
+    logo: Yup.string().notRequired(),
+  });
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
   Yup.object().shape({
