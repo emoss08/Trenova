@@ -15,22 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
-import { Commodity } from "@/types/commodities";
-import { Badge } from "@/components/ui/badge";
 import { CommodityDialog } from "@/components/commodities/commodity-dialog";
 import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { Badge } from "@/components/ui/badge";
+import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
+import { truncateText } from "@/lib/utils";
+import { Commodity } from "@/types/commodities";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 function HazmatBadge({ isHazmat }: { isHazmat: string }) {
   return (
-    <Badge variant={isHazmat === "Y" ? "default" : "destructive"}>
+    <Badge variant={isHazmat === "Y" ? "active" : "inactive"}>
       {isHazmat === "Y" ? "Yes" : "No"}
     </Badge>
   );
