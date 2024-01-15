@@ -33,19 +33,19 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
   return (
     <li
       key={featureFlag.code}
-      className="flex flex-col overflow-hidden rounded-lg border bg-card text-center text-card-foreground"
+      className="bg-card text-card-foreground flex flex-col overflow-hidden rounded-lg border text-center"
     >
       <div className="flex flex-1 flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <h3 className="text-2xl font-semibold text-foreground">
+          <h3 className="text-foreground text-2xl font-semibold">
             {featureFlag.name}
           </h3>
           <div className="mt-2 flex">
-            <Badge className="mr-2" color="primary">
+            <Badge className="mr-2" variant="beta">
               {featureFlag.beta ? "Beta" : "Released"}
             </Badge>
             {featureFlag.paidOnly && (
-              <Badge className="mr-2" color="primary">
+              <Badge className="mr-2" variant="warning">
                 Paid only
               </Badge>
             )}
@@ -55,7 +55,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           <ScrollArea className="mb-4 h-48">
             <dd
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              className="p-4 text-sm text-muted-foreground"
+              className="text-muted-foreground p-4 text-sm"
             ></dd>
           </ScrollArea>
         </dl>
@@ -68,7 +68,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-sm text-primary">Send Feedback</button>
+          <button className="text-primary text-sm">Send Feedback</button>
         </div>
       </div>
     </li>
@@ -79,8 +79,8 @@ export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
   return (
     <>
-      <Alert className="mb-5 bg-foreground text-background">
-        <InfoIcon className="h-5 w-5 stroke-background" />
+      <Alert className="bg-foreground text-background mb-5">
+        <InfoIcon className="stroke-background h-5 w-5" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
           All features marked <u>Paid Only</u> are only available to non-paid
