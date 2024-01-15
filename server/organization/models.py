@@ -32,10 +32,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -405,13 +404,6 @@ class Organization(TimeStampedModel):
         null=True,
         blank=True,
         help_text=_("The logo that will be used on a light background."),
-    )
-    dark_logo = models.ImageField(
-        _("Dark Logo"),
-        upload_to="organizations/logo/",
-        null=True,
-        blank=True,
-        help_text=_("The logo that will be used on a dark background."),
     )
     token_expiration_days = models.PositiveIntegerField(
         _("Token Expiration Days"),
