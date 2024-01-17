@@ -41,9 +41,15 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
             {featureFlag.name}
           </h3>
           <div className="mt-2 flex">
-            <Badge className="mr-2" variant="beta">
-              {featureFlag.beta ? "Beta" : "Released"}
-            </Badge>
+            {featureFlag.beta ? (
+              <Badge className="mr-2" variant="info">
+                {featureFlag.beta ? "Beta" : "Released"}
+              </Badge>
+            ) : (
+              <Badge className="mr-2" variant="active">
+                Released
+              </Badge>
+            )}
             {featureFlag.paidOnly && (
               <Badge className="mr-2" variant="warning">
                 Paid only
@@ -79,8 +85,8 @@ export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
   return (
     <>
-      <Alert className="bg-foreground text-background mb-5">
-        <InfoIcon className="stroke-background h-5 w-5" />
+      <Alert variant="info" className="mb-5 border">
+        <InfoIcon className="h-5 w-5" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
           All features marked <u>Paid Only</u> are only available to non-paid

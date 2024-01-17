@@ -65,13 +65,18 @@ const EmailControlPage = lazy(
 const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
 const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
 
+// Commodity Pages
+const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
+const HazardousMaterialPage = lazy(
+  () => import("../pages/commodities/HazardousMaterial"),
+);
+
 // Other Pages
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges"),
 );
-const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
 const WorkerPage = lazy(() => import("../pages/worker/Worker"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
@@ -319,6 +324,15 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_commodity",
   },
   {
+    title: "Hazaroudous Material",
+    group: "Shipment Management",
+    subMenu: "configuration files",
+    path: "/shipment-management/hazardous-materials/",
+    description: "Manage Hazardous Material",
+    element: <HazardousMaterialPage />,
+    permission: "view_hazardousmaterial",
+  },
+  {
     title: "Service Types",
     group: "Shipment Management",
     subMenu: "configuration files",
@@ -437,7 +451,7 @@ export const routes: RouteObjectWithPermission[] = [
     permission: "view_emailcontrol",
   },
   {
-    title: "Email Control",
+    title: "Email Profiles",
     group: "Administration",
     path: "/admin/email-profiles/",
     description: "Email Profiles",

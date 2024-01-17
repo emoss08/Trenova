@@ -33,7 +33,7 @@ const badgeVariants = cva(
           "border border-lime-400/60 bg-lime-400/30 text-lime-700 group-data-[hover]:bg-lime-400/30 dark:bg-lime-400/10 dark:text-lime-300 dark:group-data-[hover]:bg-lime-400/15 forced-colors:outline",
         inactive:
           "border border-rose-400/60 bg-rose-400/30 text-rose-700 group-data-[hover]:bg-rose-400/25 dark:bg-rose-400/10 dark:text-rose-400 dark:group-data-[hover]:bg-rose-400/20 forced-colors:outline",
-        beta: "border border-blue-400/60 bg-blue-400/30 text-blue-700 group-data-[hover]:bg-blue-400/25 dark:bg-blue-400/10 dark:text-blue-400 dark:group-data-[hover]:bg-blue-400/20 forced-colors:outline",
+        info: "border border-blue-400/60 bg-blue-400/30 text-blue-700 group-data-[hover]:bg-blue-400/25 dark:bg-blue-400/10 dark:text-blue-400 dark:group-data-[hover]:bg-blue-400/20 forced-colors:outline",
         warning:
           "border border-yellow-400/60 bg-yellow-400/30 text-yellow-700 group-data-[hover]:bg-yellow-400/25 dark:bg-yellow-400/10 dark:text-yellow-400 dark:group-data-[hover]:bg-yellow-400/20 forced-colors:outline",
         outline: "text-foreground",

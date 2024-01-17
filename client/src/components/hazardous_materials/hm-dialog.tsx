@@ -27,26 +27,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useHazardousMaterial } from "@/hooks/useQueries";
-import { UnitOfMeasureChoices, statusChoices } from "@/lib/choices";
-import { yesAndNoChoices } from "@/lib/constants";
-import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
-import { CommodityFormValues as FormValues } from "@/types/commodities";
+import {
+  hazardousClassChoices,
+  packingGroupChoices,
+  statusChoices,
+} from "@/lib/choices";
+import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
+import { HazardousMaterialFormValues as FormValues } from "@/types/commodities";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Form, FormControl, FormGroup } from "../ui/form";
 
-export function CommodityForm({
+export function HazardousMaterialForm({
   control,
-  open,
 }: {
   control: Control<FormValues>;
-  open: boolean;
 }) {
-  const { selectHazardousMaterials, isLoading, isError } =
-    useHazardousMaterial(open);
+  const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
 
   return (
     <Form>
@@ -56,10 +56,10 @@ export function CommodityForm({
             name="status"
             rules={{ required: true }}
             control={control}
-            label="Status"
+            label={t("fields.status.label")}
             options={statusChoices}
-            placeholder="Select Status"
-            description="Status of the Commodity"
+            placeholder={t("fields.status.placeholder")}
+            description={t("fields.status.description")}
             isClearable={false}
           />
         </FormControl>
@@ -68,12 +68,12 @@ export function CommodityForm({
             control={control}
             rules={{ required: true }}
             name="name"
-            label="Name"
+            label={t("fields.name.label")}
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Name"
-            description="Name for the Commodity"
+            placeholder={t("fields.name.placeholder")}
+            description={t("fields.name.description")}
           />
         </FormControl>
       </FormGroup>
@@ -81,116 +81,104 @@ export function CommodityForm({
         <TextareaField
           name="description"
           control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Commodity"
+          label={t("fields.description.label")}
+          placeholder={t("fields.description.placeholder")}
+          description={t("fields.description.description")}
         />
       </div>
       <FormGroup className="grid gap-2 md:grid-cols-2 lg:grid-cols-2">
         <FormControl>
-          <InputField
-            name="minTemp"
+          <SelectInput
+            name="hazardClass"
+            rules={{ required: true }}
             control={control}
-            label="Min. Temp"
+            label={t("fields.hazardClass.label")}
+            options={hazardousClassChoices}
+            placeholder={t("fields.hazardClass.placeholder")}
+            description={t("fields.hazardClass.description")}
+            isClearable={false}
+          />
+        </FormControl>
+        <FormControl>
+          <SelectInput
+            name="packingGroup"
+            control={control}
+            label={t("fields.packingGroup.label")}
+            options={packingGroupChoices}
+            placeholder={t("fields.packingGroup.placeholder")}
+            description={t("fields.packingGroup.description")}
+            isClearable={false}
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            name="ergNumber"
+            label={t("fields.ergNumber.label")}
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Min. Temp"
-            description="Minimum Temperature of the Commodity"
+            placeholder={t("fields.ergNumber.placeholder")}
+            description={t("fields.ergNumber.description")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
-            name="maxTemp"
-            label="Max. Temp"
+            name="additionalCost"
+            label={t("fields.additionalCost.label")}
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Max. Temp"
-            description="Maximum Temperature of the Commodity"
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="hazardousMaterial"
-            control={control}
-            label="Hazardous Material"
-            options={selectHazardousMaterials}
-            maxOptions={10}
-            isLoading={isLoading}
-            isFetchError={isError}
-            placeholder="Select Hazardous Material"
-            description="The Hazardous Material associated with the Commodity"
-            isClearable
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="isHazmat"
-            control={control}
-            label="Is Hazmat"
-            options={yesAndNoChoices}
-            placeholder="Is Hazmat"
-            description="Is the Commodity a Hazardous Material?"
-            isClearable
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="unitOfMeasure"
-            control={control}
-            label="Unit of Measure"
-            options={UnitOfMeasureChoices}
-            placeholder="Unit of Measure"
-            description="Unit of Measure of the Commodity"
-            isClearable
+            placeholder={t("fields.additionalCost.placeholder")}
+            description={t("fields.additionalCost.description")}
           />
         </FormControl>
       </FormGroup>
+      <div className="my-2 grid w-full items-center gap-0.5">
+        <TextareaField
+          name="properShippingName"
+          control={control}
+          label={t("fields.properShippingName.label")}
+          placeholder={t("fields.properShippingName.placeholder")}
+          description={t("fields.properShippingName.description")}
+        />
+      </div>
     </Form>
   );
 }
 
-export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
+export function HazardousMaterialDialog({
+  onOpenChange,
+  open,
+}: TableSheetProps) {
+  const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
+
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const { control, reset, handleSubmit, watch, setValue } = useForm<FormValues>(
-    {
-      resolver: yupResolver(commoditySchema),
-      defaultValues: {
-        status: "A",
-        name: "",
-        description: undefined,
-        minTemp: undefined,
-        maxTemp: undefined,
-        setPointTemp: undefined,
-        unitOfMeasure: undefined,
-        hazardousMaterial: undefined,
-        isHazmat: "N",
-      },
+  const { control, reset, handleSubmit } = useForm<FormValues>({
+    resolver: yupResolver(hazardousMaterialSchema),
+    defaultValues: {
+      status: "A",
+      name: "",
+      description: undefined,
+      hazardClass: undefined,
+      packingGroup: undefined,
+      ergNumber: undefined,
+      additionalCost: undefined,
+      properShippingName: undefined,
     },
-  );
-
-  React.useEffect(() => {
-    const hazardousMaterial = watch("hazardousMaterial");
-
-    if (hazardousMaterial) {
-      setValue("isHazmat", "Y");
-    } else {
-      setValue("isHazmat", "N");
-    }
-  }, [watch("hazardousMaterial"), setValue]);
+  });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     {
       method: "POST",
-      path: "/commodities/",
-      successMessage: "Commodity created successfully.",
-      queryKeysToInvalidate: ["commodity-table-data"],
+      path: "/hazardous_materials/",
+      successMessage: t("formSuccessMessage"),
+      queryKeysToInvalidate: ["hazardous-material-table-data"],
       closeModal: true,
-      errorMessage: "Failed to create new commodity.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -203,22 +191,20 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create New Commodity</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
-        <DialogDescription>
-          Please fill out the form below to create a new Commodity.
-        </DialogDescription>
+        <DialogDescription>{t("description")}</DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CommodityForm control={control} open={open} />
+          <HazardousMaterialForm control={control} />
           <DialogFooter className="mt-6">
             <Button
               type="submit"
               isLoading={isSubmitting}
               loadingText="Saving Changes..."
             >
-              Save
+              {t("buttons.save", { ns: "common" })}
             </Button>
           </DialogFooter>
         </form>

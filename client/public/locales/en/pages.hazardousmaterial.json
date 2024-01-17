@@ -1,0 +1,48 @@
+{
+  "title": "Create New Hazardous Material",
+  "description": "Please fill out the form below to create a new Hazardous Material.",
+  "formSuccessMessage": "Hazardous Material updated successfully.",
+  "formErrorMessage": "Failed to update Hazardous Material.",
+  "fields": {
+    "status": {
+      "placeholder": "Select Current Status",
+      "label": "Material Status",
+      "description": "Current status of the Hazardous Material"
+    },
+    "name": {
+      "placeholder": "Enter Material Name",
+      "label": "Material Name",
+      "description": "Official name of the Hazardous Material"
+    },
+    "description": {
+      "placeholder": "Enter Material Description",
+      "label": "Material Description",
+      "description": "Detailed description of the Hazardous Material"
+    },
+    "hazardClass": {
+      "placeholder": "Enter Hazard Class",
+      "label": "Hazard Class",
+      "description": "Classification of the Hazardous Material according to hazard class"
+    },
+    "packingGroup": {
+      "placeholder": "Select Packing Group",
+      "label": "Packing Group",
+      "description": "Applicable packing group for the Hazardous Material"
+    },
+    "ergNumber": {
+      "placeholder": "Enter ERG Number",
+      "label": "ERG Number",
+      "description": "Emergency Response Guidebook (ERG) number associated with the Hazardous Material"
+    },
+    "additionalCost": {
+      "placeholder": "Specify Additional Cost",
+      "label": "Additional Cost",
+      "description": "Any additional costs associated with the transportation of the Hazardous Material"
+    },
+    "properShippingName": {
+      "placeholder": "Enter Proper Shipping Name",
+      "label": "Proper Shipping Name",
+      "description": "The designated shipping name for the Hazardous Material"
+    }
+  }
+}
