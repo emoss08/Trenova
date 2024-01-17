@@ -24,7 +24,6 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
@@ -104,6 +103,7 @@ class HazardousMaterial(GenericModel):
         _("Name"),
         max_length=255,
         help_text=_("Name of the Hazardous Material"),
+        db_index=True,
     )
     description = models.TextField(
         _("Description"),
@@ -138,14 +138,10 @@ class HazardousMaterial(GenericModel):
     class Meta:
         verbose_name = _("Hazardous Material")
         verbose_name_plural = _("Hazardous Materials")
-        ordering = ["name"]
         db_table = "hazardous_material"
         db_table_comment = (
             "Stores Hazardous Material information for related organization."
         )
-        indexes = [
-            models.Index(fields=["name"]),
-        ]
 
     def __str__(self) -> str:
         """Hazardous Material String Representation
