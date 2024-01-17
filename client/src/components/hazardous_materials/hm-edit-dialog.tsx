@@ -107,7 +107,7 @@ export function HazardousMaterialEditDialog({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on&nbsp
+          Last updated on&nbsp;
           {hazardousMaterial && formatDate(hazardousMaterial.modified)}
         </DialogDescription>
         {hazardousMaterial && (
