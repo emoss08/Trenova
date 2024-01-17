@@ -19,7 +19,7 @@ import { NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { useUserPermissions } from "@/context/user-permissions";
 import { cn } from "@/lib/utils";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 type PermissionType = string;
 
@@ -30,6 +30,7 @@ export const ListItem = React.forwardRef<
   }
 >(({ className, title, children, permission, to, ...props }, ref) => {
   const { userHasPermission } = useUserPermissions();
+  const location = useLocation();
 
   // If the ListItem has a permission and the user doesn't have it, return null
   if (permission && !userHasPermission(permission)) {
@@ -42,7 +43,8 @@ export const ListItem = React.forwardRef<
         ref={ref}
         to={to}
         className={cn(
-          "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/80 hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/70 hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          location.pathname === to && "bg-accent text-accent-foreground",
           className,
         )}
         {...props}

@@ -21,7 +21,7 @@ import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { flexRender, Table as TableType } from "@tanstack/react-table";
+import { Table as TableType, flexRender } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
 import { Input } from "../fields/input";
@@ -93,10 +93,10 @@ const ButtonConfig: React.FC<{
     <Button
       variant={buttonVariant}
       onClick={() => store.set("sheetOpen", true)}
-      className="h-8 hover:bg-orange-600 hover:text-white"
+      className="h-8"
       disabled={isDisabled}
     >
-      <PlusIcon className="mr-2 h-4 w-4 hover:text-white" /> {buttonLabel}
+      <PlusIcon className="mr-2 h-4 w-4" /> {buttonLabel}
     </Button>
   );
 });

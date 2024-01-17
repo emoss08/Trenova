@@ -277,7 +277,7 @@ export const UnitOfMeasureChoices = [
 /** Type for Hazardous Class Choices */
 export type PackingGroupChoiceProps = "I" | "II" | "III";
 
-export const PackingGroupChoices = [
+export const packingGroupChoices = [
   { value: "I", label: "I" },
   { value: "II", label: "II" },
   { value: "III", label: "III" },
@@ -306,7 +306,7 @@ export type HazardousClassChoiceProps =
   | "8"
   | "9";
 
-export const HazardousClassChoices = [
+export const hazardousClassChoices = [
   { value: "1.1", label: "Division 1.1: Mass Explosive Hazard" },
   { value: "1.2", label: "Division 1.2: Projection Hazard" },
   {
