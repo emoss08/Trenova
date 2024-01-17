@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { StatusChoiceProps, YesNoChoiceProps } from "@/types/index";
-import { BaseModel } from "@/types/organization";
 import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
+import { StatusChoiceProps, YesNoChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 
 export interface HazardousMaterial extends BaseModel {
   id: string;
@@ -31,6 +31,7 @@ export interface HazardousMaterial extends BaseModel {
   hazardClass: HazardousClassChoiceProps;
   packingGroup?: PackingGroupChoiceProps | null;
   ergNumber?: string | null;
+  additionalCost?: string | null;
   properShippingName?: string | null;
 }
 

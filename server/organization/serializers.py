@@ -146,7 +146,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "date_format",
             "time_format",
             "logo",
-            "dark_logo",
             "token_expiration_days",
         )
 

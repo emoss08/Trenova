@@ -15,33 +15,33 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  GoogleAPI as GoogleAPIType,
-  GoogleAPIFormValues,
-} from "@/types/organization";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { googleAPISchema } from "@/lib/validations/OrganizationSchema";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { routeDistanceUnitChoices, routeModelChoices } from "@/lib/choices";
-import { useGoogleAPI } from "@/hooks/useQueries";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useGoogleAPI } from "@/hooks/useQueries";
+import { routeDistanceUnitChoices, routeModelChoices } from "@/lib/choices";
+import { googleAPISchema } from "@/lib/validations/OrganizationSchema";
+import {
+  GoogleAPIFormValues,
+  GoogleAPI as GoogleAPIType,
+} from "@/types/organization";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { InfoIcon } from "lucide-react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 
 function GoogleAPIAlert() {
   const { t } = useTranslation("admin.googleapi");
 
   return (
-    <Alert className="mb-5 bg-foreground text-background">
-      <InfoIcon className="h-5 w-5 stroke-background" />
+    <Alert variant="info" className="mb-5">
+      <InfoIcon className="h-5 w-5" />
       <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc">

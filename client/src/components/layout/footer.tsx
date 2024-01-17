@@ -17,16 +17,16 @@
 
 export function Footer() {
   return (
-    <footer className="mt-5 flex items-center justify-between px-10 py-2 font-semibold">
+    <footer className="flex items-center justify-between px-10 py-2 font-semibold">
       {/* Copyright */}
-      <div className="text-xs text-foreground">
+      <div className="text-foreground text-xs">
         <span className="me-1">&copy; {new Date().getFullYear()}</span>
         <a href="#" target="_blank" rel="noopener noreferrer">
           Trenova Technologies
         </a>
       </div>
 
-      <div className={"text-xs text-foreground"}>
+      <div className={"text-foreground text-xs"}>
         Made with <span className="text-red-500">💙</span> by the Trenova Team
       </div>
     </footer>

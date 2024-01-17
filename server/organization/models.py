@@ -406,13 +406,6 @@ class Organization(TimeStampedModel):
         blank=True,
         help_text=_("The logo that will be used on a light background."),
     )
-    dark_logo = models.ImageField(
-        _("Dark Logo"),
-        upload_to="organizations/logo/",
-        null=True,
-        blank=True,
-        help_text=_("The logo that will be used on a dark background."),
-    )
     token_expiration_days = models.PositiveIntegerField(
         _("Token Expiration Days"),
         default=30,

@@ -15,8 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { NavMenu } from "@/components/layout/navbar";
 import { NotificationMenu } from "@/components/layout/notification_menu/notification-menu";
 import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
+import TeamSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { useUserStore } from "@/stores/AuthStore";
@@ -28,8 +30,6 @@ import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
-import TeamSwitcher from "@/components/layout/team-switcher";
-import { NavMenu } from "@/components/layout/navbar";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // useQueryInvalidationListener();
 
   return (
-    <div className="relative flex h-screen flex-col bg-background" id="app">
+    <div className="bg-background flex h-screen flex-col" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full border-b">
@@ -51,7 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <Logo />
-              <div className="h-7 border-l border-muted-foreground/40" />
+              <div className="border-muted-foreground/40 h-7 border-l" />
               <AsideMenuSheet />
               <TeamSwitcher />
             </div>
@@ -60,15 +60,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <SiteSearchInput />
               <AppGridMenu />
               <NotificationMenu />
-              <div className="h-7 border-l border-muted-foreground/40" />
+              <div className="border-muted-foreground/40 h-7 border-l" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>
         </header>
       )}
 
-      <div className="flex-1 overflow-y-auto">
-        <main className="mx-auto px-6 sm:px-6 md:px-12 xl:px-20">
+      <div className="flex flex-1 flex-col overflow-y-auto">
+        <main className="flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
           <Breadcrumb />
           <SiteSearch />
           {children}

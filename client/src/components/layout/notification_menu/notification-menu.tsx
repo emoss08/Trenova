@@ -129,8 +129,8 @@ function NotificationButton({
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-600 ring-1"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-100"></span>
+                <span className="ring-background relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600 ring-1"></span>
               </span>
             )}
           </Button>
@@ -191,7 +191,7 @@ function NotificationContent({
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
           <button
-            className="hover:bg-accent flex items-center rounded-md p-2 text-sm outline-transparent"
+            className="hover:bg-accent/80 flex items-center rounded-md p-2 text-sm outline-transparent"
             onClick={readAllNotifications}
           >
             Read All Notifications <ChevronRight className="ml-1 h-4 w-4" />
@@ -347,7 +347,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="w-80"
+        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 w-80 p-4 backdrop-blur"
         sideOffset={10}
         alignOffset={-40}
         align="end"

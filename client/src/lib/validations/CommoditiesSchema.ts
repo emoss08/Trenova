@@ -15,19 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
-import {
-  CommodityFormValues,
-  HazardousMaterialFormValues,
-} from "@/types/commodities";
-import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
 import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
 import { validateDecimal } from "@/lib/utils";
+import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
+import {
+  CommodityFormValues,
+  HazardousMaterialFormValues,
+} from "@/types/commodities";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 
 export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> =
   Yup.object().shape({
@@ -40,6 +40,7 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
     packingGroup: Yup.string<PackingGroupChoiceProps>().notRequired(),
     ergNumber: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
     properShippingName: Yup.string().notRequired(),
+    additionalCost: Yup.string().notRequired(),
   });
 
 export const commoditySchema: ObjectSchema<CommodityFormValues> =

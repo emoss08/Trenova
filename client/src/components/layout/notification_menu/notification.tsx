@@ -61,7 +61,7 @@ export function Notifications({
       return (
         <div
           key={notification.id}
-          className="group flex cursor-pointer flex-col space-y-2 border-b border-accent px-4 py-2 hover:bg-accent"
+          className="group flex cursor-pointer flex-col space-y-2 border-b border-accent px-4 py-2 hover:bg-accent/80"
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold leading-none">

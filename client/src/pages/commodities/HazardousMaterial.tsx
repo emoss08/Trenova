@@ -15,28 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CommodityDialog } from "@/components/commodities/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { Badge } from "@/components/ui/badge";
-import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
+import { HazardousMaterialDialog } from "@/components/hazardous_materials/hm-dialog";
+import { HazardousMaterialEditDialog } from "@/components/hazardous_materials/hm-edit-dialog";
+import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
-import { Commodity } from "@/types/commodities";
+import { HazardousMaterial } from "@/types/commodities";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
-function HazmatBadge({ isHazmat }: { isHazmat: string }) {
-  return (
-    <Badge variant={isHazmat === "Y" ? "active" : "inactive"}>
-      {isHazmat === "Y" ? "Yes" : "No"}
-    </Badge>
-  );
-}
-
-const columns: ColumnDef<Commodity>[] = [
+const columns: ColumnDef<HazardousMaterial>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -73,6 +64,9 @@ const columns: ColumnDef<Commodity>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "description",
@@ -80,54 +74,32 @@ const columns: ColumnDef<Commodity>[] = [
     cell: ({ row }) => truncateText(row.original.description as string, 25),
   },
   {
-    id: "temp_range",
-    accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
-    header: "Temperature Range",
-    cell: ({ row, column }) => {
-      if (row.original.minTemp === null && row.original.maxTemp === null) {
-        return "N/A";
-      }
-      return row.getValue(column.id);
-    },
-  },
-  {
-    accessorKey: "isHazmat",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Is Hazmat" />
-    ),
-    cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazmat} />,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    accessorKey: "packingGroup",
+    header: "Packing Group",
   },
 ];
 
-const filters: FilterConfig<Commodity>[] = [
+const filters: FilterConfig<HazardousMaterial>[] = [
   {
     columnName: "status",
     title: "Status",
     options: tableStatusChoices,
   },
-  {
-    columnName: "isHazmat",
-    title: "Is Hazmat",
-    options: yesAndNoChoices,
-  },
 ];
 
-export default function CommodityPage() {
+export default function HazardousMaterial() {
   return (
     <DataTable
-      queryKey="commodity-table-data"
+      queryKey="hazardous-material-table-data"
       columns={columns}
-      link="/commodities/"
-      name="Commodity"
-      exportModelName="Commodity"
+      link="/hazardous_materials/"
+      name="Hazardous Material"
+      exportModelName="HazardousMaterial"
       filterColumn="name"
       tableFacetedFilters={filters}
-      TableSheet={CommodityDialog}
-      TableEditSheet={CommodityEditDialog}
-      addPermissionName="add_commodity"
+      TableSheet={HazardousMaterialDialog}
+      TableEditSheet={HazardousMaterialEditDialog}
+      addPermissionName="add_hazardousmaterial"
     />
   );
 }

@@ -15,30 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CheckboxInput } from "@/components/common/fields/checkbox";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
   useAccountingControl,
   useGLAccounts,
   useUsers,
 } from "@/hooks/useQueries";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import {
-  AccountingControl as AccountingControlType,
-  AccountingControlFormValues,
-} from "@/types/accounting";
-import { SelectInput } from "@/components/common/fields/select-input";
 import {
   automaticJournalEntryChoices,
   thresholdActionChoices,
 } from "@/lib/choices";
-import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
-import { yupResolver } from "@hookform/resolvers/yup";
 import { accountingControlSchema } from "@/lib/validations/AccountingSchema";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AccountingControlFormValues,
+  AccountingControl as AccountingControlType,
+} from "@/types/accounting";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 function AccountingControlForm({
@@ -251,7 +251,7 @@ function AccountingControlForm({
               label={t("fields.criticalProcesses.label")}
               placeholder={t("fields.criticalProcesses.placeholder")}
               description={t("fields.criticalProcesses.description")}
-              disabled
+              readOnly
             />
           </div>
         </div>
