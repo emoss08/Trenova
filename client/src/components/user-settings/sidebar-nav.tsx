@@ -64,7 +64,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
                     className={cn(
                       buttonVariants({ variant: "ghost" }),
                       location.pathname === link.href
-                        ? "bg-muted"
+                        ? "bg-muted [&_svg]:text-foreground"
                         : "hover:bg-muted",
                       "group justify-start flex items-center ml-2",
                     )}

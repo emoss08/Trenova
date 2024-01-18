@@ -125,7 +125,6 @@ function AccountingControlForm({
             />
           </div>
           <div className="col-span-3">
-            z
             <SelectInput
               name="defaultRevenueAccount"
               control={control}

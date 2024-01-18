@@ -26,7 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useHazardousMaterial } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -43,9 +42,6 @@ function CommodityEditForm({
   open: boolean;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { selectHazardousMaterials, isLoading, isError } =
-    useHazardousMaterial(open);
 
   const { control, reset, handleSubmit, watch, setValue } =
     useForm<CommodityFormValues>({
@@ -94,12 +90,7 @@ function CommodityEditForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <CommodityForm
-        control={control}
-        hazardousMaterials={selectHazardousMaterials}
-        isLoading={isLoading}
-        isError={isError}
-      />
+      <CommodityForm control={control} open={open} />
       <DialogFooter className="mt-6">
         <Button
           type="submit"
