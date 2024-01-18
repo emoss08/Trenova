@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **Note:** Section for upcoming changes not yet released.
+### Added
+
+- GraphQL API.
+- Conditionals in Table Change Alerts (https://github.com/emoss08/Trenova/issues/203).
+- Worker on-boarding Client.
+- Worker Scorecards.
+- Color Accessibility Options to User Settings.
+- Font Size Switcher to User Settings.
+
+### Fixed
+
+- N+1 queries in Notifications API (https://github.com/emoss08/Trenova/issues/196).
 
 ## [0.0.2] - 2024-01-18
 

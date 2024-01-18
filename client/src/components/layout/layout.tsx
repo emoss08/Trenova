@@ -21,13 +21,10 @@ import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
 import TeamSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
-import { TOAST_STYLE } from "@/lib/constants";
 import { useUserStore } from "@/stores/AuthStore";
-import React, { useEffect } from "react";
-import { isChrome } from "react-device-detect";
-import toast, { Toaster } from "react-hot-toast";
+import React from "react";
+import { Toaster } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
-import { Button } from "../ui/button";
 import { AppGridMenu } from "./app-grid";
 import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
@@ -45,51 +42,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const hideHeader = queryParams.get("hideHeader") === "true";
   // useQueryInvalidationListener();
 
-  // React useEffect hook to show a warning that some UI features are disabled in Chrome. With Button that sets a value in local storage to hide the warning.
-  useEffect(() => {
-    const hideWarning = localStorage.getItem("hideChromeWarning");
-
-    if (isChrome && !hideWarning) {
-      toast(
-        (t) => (
-          <div className="text-foreground group pointer-events-auto relative flex w-full items-center justify-between space-x-2">
-            <div className="grid gap-1">
-              <div className="text-sm font-semibold [&+div]:text-xs">
-                Compatibility Warning
-              </div>
-              <div className="text-sm opacity-90">
-                Some UI features are disabled in Chrome
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="h-8 px-3 text-sm font-medium"
-              onClick={() => {
-                localStorage.setItem("hideChromeWarning", "true");
-                toast.dismiss(t.id);
-              }}
-            >
-              Acknowledge
-            </Button>
-          </div>
-        ),
-        {
-          style: TOAST_STYLE,
-          duration: Infinity,
-          ariaProps: {
-            role: "status",
-            "aria-live": "polite",
-          },
-        },
-      );
-    }
-  }, []);
-
   return (
     <div className="bg-background flex h-screen flex-col" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
+        <header className="border-border/40 bg-background sticky top-0 z-50 w-full border-b">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
