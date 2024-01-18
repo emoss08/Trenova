@@ -347,7 +347,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 w-80 p-4 backdrop-blur"
+        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 w-80 p-4 backdrop-blur-lg"
         sideOffset={10}
         alignOffset={-40}
         align="end"
