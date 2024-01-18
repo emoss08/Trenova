@@ -35,6 +35,7 @@ along with Trenova.  If not, see <https://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
+
 from stops import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
