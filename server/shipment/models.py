@@ -270,7 +270,7 @@ class ServiceType(GenericModel):
 
     class Meta:
         """
-        Metaclass for ShipmentType model
+        Metaclass for ServiceType model
         """
 
         verbose_name = _("Service Type")

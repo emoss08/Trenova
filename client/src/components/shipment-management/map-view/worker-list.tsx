@@ -274,7 +274,7 @@ export function WorkerList({
               </ContextMenuTrigger>
               <ContextMenuContent className="w-64">
                 <ContextMenuLabel>
-                  Viewing: {item.firstName} {item.lastName}
+                  Actions
                 </ContextMenuLabel>
                 <ContextMenuSeparator />
                 <ContextMenuItem>Edit Worker Information</ContextMenuItem>

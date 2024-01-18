@@ -37,7 +37,7 @@ along with Trenova.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from stops import models
-from utils.admin import GenericAdmin
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
 @admin.register(models.QualifierCode)
@@ -51,6 +51,15 @@ class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
         "description",
     )
     search_fields = ("code", "description")
+
+
+class StopCommentInline(GenericStackedInline[models.StopComment]):
+    """
+    Stop Comment Inline
+    """
+
+    model = models.StopComment
+    extra = 0
 
 
 @admin.register(models.Stop)
@@ -68,6 +77,7 @@ class StopAdmin(GenericAdmin[models.Stop]):
         "address_line",
     )
     search_fields = ("id", "movement__ref_num")
+    inlines = (StopCommentInline,)
 
 
 @admin.register(models.ServiceIncident)
