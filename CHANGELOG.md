@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.2] - 2024-01-18
 
 ### Changed
-- Disabled nested backdrop-filter on Chrome due to Chromium bug (#213)[https://github.com/emoss08/Trenova/pull/213].
-- Add toast to notify users of unsupported browsers (#213)[https://github.com/emoss08/Trenova/pull/213].
+- Disabled nested backdrop-filter on Chrome due to Chromium bug (https://github.com/emoss08/Trenova/pull/213).
+- Add toast to notify users of unsupported browsers (https://github.com/emoss08/Trenova/pull/213).
 
 ## [0.0.1] - 2024-01-16
 
