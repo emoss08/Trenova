@@ -130,7 +130,7 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
 
   return (
     <ul
-      className={`relative grid w-[400px] gap-3 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${
+      className={`relative grid w-[400px] gap-3 p-4 ${
         activeSubLinks ? "pt-8" : ""
       } md:w-[500px] md:grid-cols-2 lg:w-[700px]`}
     >
