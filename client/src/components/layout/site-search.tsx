@@ -169,21 +169,13 @@ export function SiteSearch() {
           </React.Fragment>
         ))}
       </CommandList>
-      <div className="bg-background sticky mx-2 flex items-center space-x-1 border-t py-2">
-        <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">↑</span>
-        </kbd>
-        <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">↓</span>
-        </kbd>
+      <div className="bg-background sticky mx-2 flex justify-center space-x-1 border-t py-2">
+        <span className="text-xs">&#8593;</span>
+        <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>
-        <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">↵</span>
-        </kbd>
+        <span className="text-xs">&#x23CE;</span>
         <p className="pr-2 text-xs">to select</p>
-        <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-          <span className="text-xs">esc</span>
-        </kbd>
+        <span className="text-xs">esc</span>
         <p className="text-xs">to close</p>
       </div>
     </CommandDialog>
