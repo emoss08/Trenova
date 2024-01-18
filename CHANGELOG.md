@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Disabled nested backdrop-filter on Chrome due to Chromium bug.
     - Related Chromium bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1318678&q=backdrop-filter%20nested&can=2
+- Add toast to notify users of unsupported browsers.
 
 ## [0.0.1] - 2024-01-16
 
