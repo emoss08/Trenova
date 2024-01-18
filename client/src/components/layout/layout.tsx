@@ -46,7 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="bg-background flex h-screen flex-col" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
