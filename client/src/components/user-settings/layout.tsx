@@ -16,13 +16,15 @@
  */
 
 import {
-  GearIcon,
-  LinkBreak2Icon,
-  PersonIcon,
-  RocketIcon,
-  TargetIcon,
-} from "@radix-ui/react-icons";
-import { ArrowRightLeftIcon, RouterIcon } from "lucide-react";
+  faBellRing,
+  faGear,
+  faRightLeft,
+  faSatelliteDish,
+  faShieldHalved,
+  faStarHalf,
+  faUser
+} from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Suspense } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { SidebarNav } from "./sidebar-nav";
@@ -32,49 +34,70 @@ const links = [
     href: "/account/settings/",
     title: "User Settings",
     icon: (
-      <PersonIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faUser}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "/account/settings/preferences/",
     title: "Preferences",
     icon: (
-      <TargetIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faStarHalf}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "#",
     title: "Notifications",
     icon: (
-      <RouterIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faBellRing}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "#",
     title: "API Keys",
     icon: (
-      <ArrowRightLeftIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faRightLeft}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "#",
     title: "Connections",
     icon: (
-      <RocketIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faSatelliteDish}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "#",
     title: "Privacy",
     icon: (
-      <LinkBreak2Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faShieldHalved}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
   {
     href: "#",
     title: "Advanced",
     icon: (
-      <GearIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+      <FontAwesomeIcon
+        icon={faGear}
+        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+      />
     ),
   },
 ];
@@ -85,7 +108,7 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-background">
+    <div className="bg-background flex">
       <SidebarNav links={links} />
       <div className="mx-12 w-full max-w-4xl flex-1">
         <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
