@@ -1,5 +1,3 @@
-# Trenova Suite: A Revolutionary Suite for Transportation and Logistics
-
 <div align="center">
 
 <img src="https://github.com/emoss08/Trenova/assets/66630775/33f8def4-1b78-4a96-8b35-c6551d333ed0" alt="Trenova Suite" width="300" height="auto">
