@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N+1 queries in Notifications API (https://github.com/emoss08/Trenova/issues/196).
 
+## [0.0.3] - 2024-01-19
+
+### Added
+- Add `en-US` translation to `Google API page`.
+
+### Changed
+- Change `inter` font to `geist` font.
+- Change Admin Page Sidebar icons to Font Awesome DuoTone icons.
+
+### Fixed
+- Fix typo on General Ledger Account sub table component.
+
 ## [0.0.2] - 2024-01-18
 
 ### Changed
