@@ -21,7 +21,6 @@ import ReactDOM from "react-dom/client";
 import { ErrorBoundary } from "react-error-boundary";
 import App from "./App";
 import { Button } from "./components/ui/button";
-import React from "react";
 import "./i18n";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
