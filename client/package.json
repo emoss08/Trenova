@@ -10,7 +10,6 @@
     "lint": "eslint --fix --ext .ts,.tsx ."
   },
   "dependencies": {
-    "@fontsource/inter": "^5.0.16",
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
     "@fortawesome/free-brands-svg-icons": "^6.5.1",
     "@fortawesome/pro-duotone-svg-icons": "^6.5.1",
@@ -35,7 +34,6 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
     "@tanstack/react-query": "^5.17.10",
-    "@tanstack/react-query-devtools": "^5.17.10",
     "@tanstack/react-table": "^8.11.6",
     "@use-gesture/react": "^10.3.0",
     "@vitejs/plugin-react": "^4.2.1",
@@ -51,6 +49,7 @@
     "i18next-browser-languagedetector": "^7.2.0",
     "i18next-http-backend": "^2.4.2",
     "lucide-react": "^0.309.0",
+    "non.geist": "^1.0.2",
     "path-to-regexp": "^6.2.1",
     "react": "^18.2.0",
     "react-big-calendar": "^1.8.6",
@@ -84,6 +83,7 @@
     "@types/howler": "^2.2.11",
     "@types/node": "^20.11.1",
     "@types/react": "^18.2.47",
+    "@tanstack/react-query-devtools": "^5.17.10",
     "@types/react-datepicker": "^4.19.5",
     "@types/react-dom": "^18.2.18",
     "@types/react-lazy-load-image-component": "^1.6.3",
