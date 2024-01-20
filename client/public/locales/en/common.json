@@ -2,6 +2,7 @@
   "buttons": {
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "save": "Save"
+    "save": "Save",
+    "savingText": "Saving changes..."
   }
 }

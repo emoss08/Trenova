@@ -1,0 +1,52 @@
+{
+    "title": "Create New Email Profile",
+    "subTitle": "Please fill out the form below to create a new Email Profile.",
+    "formMessages": {
+        "postSuccess": "Email profile saved successfully.",
+        "postError": "There was an error saving the email profile.",
+        "updateSuccess": "Email profile updated successfully.",
+        "updateError": "There was an error updating the email profile."
+    },
+    "fields": {
+        "defaultProfile": {
+            "placeholder": "Default?",
+            "label": "Default?",
+            "description": "Whether this email profile should be the default profile."
+        },
+        "name": {
+            "placeholder": "Name",
+            "label": "Name",
+            "description": "The name of the email profile."
+        },
+        "email": {
+            "placeholder": "Email",
+            "label": "Email",
+            "description": "The email address that will be used for outgoing emails."
+        },
+        "protocol": {
+            "placeholder": "Protocol",
+            "label": "Protocol",
+            "description": "The protocol that will be used to send emails."
+        },
+        "host": {
+            "placeholder": "Host",
+            "label": "Host",
+            "description": "The host that will be used to send emails."
+        },
+        "port": {
+            "placeholder": "Port",
+            "label": "Port",
+            "description": "The port that will be used to send emails."
+        },
+        "username": {
+            "placeholder": "Username",
+            "label": "Username",
+            "description": "The username that will be used to send emails."
+        },
+        "password": {
+            "placeholder": "Password",
+            "label": "Password",
+            "description": "The password of the email address that will be used to send emails."
+        }
+    }
+}

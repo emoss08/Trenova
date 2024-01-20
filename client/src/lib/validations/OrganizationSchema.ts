@@ -65,6 +65,7 @@ export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
     port: Yup.number().notRequired(),
     username: Yup.string().notRequired(),
     password: Yup.string().notRequired(),
+    defaultProfile: Yup.boolean().required("Default Profile is required."),
   });
 
 export const googleAPISchema: ObjectSchema<GoogleAPIFormValues> =
