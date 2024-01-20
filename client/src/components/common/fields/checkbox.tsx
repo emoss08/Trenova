@@ -15,16 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
 import * as React from "react";
 
+import { ErrorMessage } from "@/components/common/fields/input";
 import { cn } from "@/lib/utils";
+import { faCheck } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
-import { ErrorMessage } from "@/components/common/fields/input";
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -33,7 +34,7 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+      "peer h-4 w-4 shrink-0 rounded-sm border border-primary hover:bg-accent ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
       className,
     )}
     {...props}
@@ -41,7 +42,7 @@ const Checkbox = React.forwardRef<
     <CheckboxPrimitive.Indicator
       className={cn("flex items-center justify-center text-current")}
     >
-      <Check className="h-4 w-4" />
+      <FontAwesomeIcon icon={faCheck} className="h-3 w-3 font-bold" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));
@@ -80,7 +81,7 @@ export function CheckboxInput<T extends FieldValues>({
           </span>
         )}
         {description && (
-          <p className="select-none text-wrap text-sm text-muted-foreground">
+          <p className="text-muted-foreground select-none text-wrap text-sm">
             {description}
           </p>
         )}

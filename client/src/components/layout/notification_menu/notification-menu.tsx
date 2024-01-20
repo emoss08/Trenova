@@ -19,6 +19,7 @@ import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
 import NotificationSound from "@/assets/audio/notification.webm";
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
+import { InternalLink } from "@/components/ui/link";
 import {
   Popover,
   PopoverContent,
@@ -50,7 +51,6 @@ import { Howl } from "howler";
 import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
@@ -182,10 +182,7 @@ function NotificationContent({
         <div className="select-none items-center justify-center border-t pt-2 text-center text-xs">
           Know when you have new notifications by enabling text notifications in
           your{" "}
-          <Link to="/account/settings/" className="font-semibold underline">
-            Account Settings
-          </Link>
-          .
+          <InternalLink to="/account/settings/">Account Settings</InternalLink>
         </div>
       )}
       {userHasNotifications && (
@@ -347,7 +344,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="bg-background/95 supports-[backdrop-filter]:bg-background/80 w-80 p-4 backdrop-blur-lg"
+        className="bg-background w-80 p-4"
         sideOffset={10}
         alignOffset={-40}
         align="end"

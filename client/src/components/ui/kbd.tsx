@@ -15,29 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "../ui/button";
-
-export function Footer() {
+export function KBD({ children }: { children: React.ReactNode }) {
   return (
-    <footer className="mt-10 flex h-10 items-center justify-between border-t px-10 py-2 font-semibold">
-      {/* Copyright */}
-      <div className="text-foreground text-xs">
-        <span className="me-1">&copy; {new Date().getFullYear()}</span>
-        <a href="#" target="_blank" rel="noopener noreferrer">
-          Trenova Technologies
-        </a>
-      </div>
-
-      <Button
-        size="xs"
-        className="hover:bg-muted inline-flex gap-x-1.5 bg-transparent px-2.5 py-0.5 text-xs font-bold text-blue-600 transition-colors"
-      >
-        <span className="relative mb-0.5 flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 motion-safe:animate-ping"></span>
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600"></span>
-        </span>
-        All Systems Operational
-      </Button>
-    </footer>
+    <kbd className="border-muted text-foreground pointer-events-none inline-flex h-5 select-none items-center justify-center rounded border px-1 font-mono text-xs font-medium opacity-100">
+      {children}
+    </kbd>
   );
 }

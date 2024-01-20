@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import nothingFound from "@/assets/images/notifications.webp";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTimestamp } from "@/lib/date";
 import { truncateText } from "@/lib/utils";
 import { Notification, UserNotification } from "@/types/accounts";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+import { faInbox } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export function Notifications({
   notification,
@@ -36,20 +36,15 @@ export function Notifications({
 
   if (!notification || notification.unreadList.length === 0) {
     return (
-      <div className="mt-5 flex h-full w-full flex-col items-center justify-center gap-y-3">
-        <LazyLoadImage
-          alt="Nothing found"
-          src={nothingFound}
-          className="h-40 w-40 select-none"
-          visibleByDefault={true}
-        />
-        <h3 className="select-none text-2xl font-medium">
-          You're all up to date
-        </h3>
-        <p className="select-none text-center text-sm text-muted-foreground">
-          New notifications will appear here when there's activity on your
-          account.
-        </p>
+      <div className="flex h-80 w-full items-center justify-center p-4">
+        <div className="flex flex-col items-center justify-center gap-y-3">
+          <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-full">
+            <FontAwesomeIcon icon={faInbox} className="text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground select-none text-center text-sm">
+            No new notifications
+          </p>
+        </div>
       </div>
     );
   }
@@ -61,7 +56,7 @@ export function Notifications({
       return (
         <div
           key={notification.id}
-          className="group flex cursor-pointer flex-col space-y-2 border-b border-accent px-4 py-2 hover:bg-accent/80"
+          className="border-accent hover:bg-accent/80 group flex cursor-pointer flex-col space-y-2 border-b px-4 py-2"
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold leading-none">
@@ -69,12 +64,12 @@ export function Notifications({
             </p>
             <Badge
               withDot={false}
-              className="select-none bg-accent p-0.5 text-xs text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent"
+              className="bg-accent text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent select-none p-0.5 text-xs"
             >
               {humanReadableTime}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {truncateText(notification.description, 40)}
           </p>
         </div>
