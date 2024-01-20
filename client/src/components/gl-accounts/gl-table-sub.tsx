@@ -137,7 +137,7 @@ export function GLAccountTableSub() {
     <div>
       <div className="flex flex-col py-5 pl-3 ">
         <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-          General Ledger Account history
+          General Ledger Account History
         </h2>
         <p className="text-muted-foreground">
           The history of the General Ledger Account. It shows the beginning
