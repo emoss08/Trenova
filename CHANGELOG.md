@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add `en-US` translation to `Google API page`.
-- Add default profile field to `Email Profile` model. 
+- Add default profile field to `Email Profile` model.
 
 ### Changed
 - Change `inter` font to `geist` font.
