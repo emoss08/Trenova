@@ -19,6 +19,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django_celery_beat.models import IntervalSchedule
+
 from organization import factories, models
 
 pytestmark = pytest.mark.django_db
