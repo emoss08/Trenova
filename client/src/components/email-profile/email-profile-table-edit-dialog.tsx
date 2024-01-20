@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { EmailProfileForm } from "@/components/email-profile/email-profile-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,16 +27,15 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
-import { useTableStore } from "@/stores/TableStore";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { EmailProfileForm } from "@/components/email-profile/email-profile-table-dialog";
 import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
+import { useTableStore } from "@/stores/TableStore";
 import {
   EmailProfile,
   EmailProfileFormValues as FormValues,
 } from "@/types/organization";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
 function EmailProfileEditForm({
   emailProfile,
@@ -46,8 +46,19 @@ function EmailProfileEditForm({
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
-    defaultValues: emailProfile,
+    defaultValues: {
+      name: emailProfile.name,
+      email: emailProfile.email,
+      host: emailProfile.host,
+      port: emailProfile.port || undefined,
+      username: emailProfile.username,
+      password: emailProfile.password,
+      protocol: emailProfile.protocol,
+      defaultProfile: emailProfile.defaultProfile,
+    },
   });
+
+  console.info("emailProfile", emailProfile);
 
   const mutation = useCustomMutation<FormValues>(
     control,

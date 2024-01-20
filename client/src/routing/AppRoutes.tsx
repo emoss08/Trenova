@@ -64,6 +64,9 @@ const EmailControlPage = lazy(
 );
 const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
 const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
+const TableChangeAlertPage = lazy(
+  () => import("../pages/admin/TableChangeAlerts"),
+);
 
 // Commodity Pages
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
@@ -465,6 +468,14 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Google API",
     element: <GoogleAPIPage />,
     permission: "view_googleapi",
+  },
+  {
+    title: "Table Change Alerts",
+    group: "Administration",
+    path: "/admin/table-change-alerts/",
+    description: "Table Change Alerts",
+    element: <TableChangeAlertPage />,
+    permission: "view_tablechangealert",
   },
   // Error Page
   {

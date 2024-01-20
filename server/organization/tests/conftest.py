@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from organization.factories import DepotFactory, TableChangeAlertFactory
+from organization import factories
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def depot() -> Generator[Any, Any, None]:
     """
     Depot fixture
     """
-    yield DepotFactory()
+    yield factories.DepotFactory()
 
 
 @pytest.fixture
@@ -36,4 +36,12 @@ def table_alert_change() -> Generator[Any, Any, None]:
     """
     Table alert change fixture
     """
-    yield TableChangeAlertFactory()
+    yield factories.TableChangeAlertFactory()
+
+
+@pytest.fixture
+def email_profile() -> Generator[Any, Any, None]:
+    """
+    Email profile fixture
+    """
+    yield factories.EmailProfileFactory()

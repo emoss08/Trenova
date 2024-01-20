@@ -19,24 +19,9 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import { initReactI18next } from "react-i18next";
 
-i18n
-  .use(Backend)
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: "en",
-    ns: [
-      "common",
-      "homepage",
-      "admin.generalpage",
-      "admin.accountingcontrol",
-      "admin.billingcontrol",
-      "admin.invoicecontrol",
-      "admin.dispatchcontrol",
-      "admin.shipmentcontrol",
-      "admin.googleapi",
-      "pages.hazardousmaterial",
-    ],
-  });
+i18n.use(Backend).use(LanguageDetector).use(initReactI18next).init({
+  fallbackLng: "en",
+  debug: true,
+});
 
 export default i18n;

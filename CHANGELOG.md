@@ -23,14 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.3] - 2024-01-19
 
 ### Added
-- Add `en-US` translation to `Google API page`.
+- Add `en-US` translation to `Google API page` (https://github.com/emoss08/Trenova/pull/216).
+- Add default profile field to `Email Profile` model (https://github.com/emoss08/Trenova/pull/216).
 
 ### Changed
-- Change `inter` font to `geist` font.
-- Change Admin Page Sidebar icons to Font Awesome DuoTone icons.
+- Change `inter` font to `geist` font (https://github.com/emoss08/Trenova/pull/215).
+- Change Admin Page Sidebar icons to Font Awesome DuoTone icons (https://github.com/emoss08/Trenova/pull/215).
 
 ### Fixed
-- Fix typo on General Ledger Account sub table component.
+- Fix typo on General Ledger Account sub table component. (https://github.com/emoss08/Trenova/pull/215)
 
 ## [0.0.2] - 2024-01-18
 
