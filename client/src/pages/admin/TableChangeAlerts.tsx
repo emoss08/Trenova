@@ -16,15 +16,15 @@
  */
 
 import AdminLayout from "@/components/admin-page/layout";
-import { DataTable } from "@/components/common/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EmailProfile } from "@/types/organization";
 import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
+import { TableChangeAlert } from "@/types/organization";
+import { ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<EmailProfile>[] = [
+const columns: ColumnDef<TableChangeAlert>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -56,16 +56,16 @@ const columns: ColumnDef<EmailProfile>[] = [
     },
   },
   {
-    accessorKey: "email",
-    header: "Email Address",
+    accessorKey: "databaseAction",
+    header: "Database Action",
   },
   {
-    accessorKey: "host",
-    header: "Host",
+    accessorKey: "source",
+    header: "Source",
   },
   {
-    accessorKey: "port",
-    header: "Port",
+    accessorKey: "table",
+    header: "Table",
   },
 ];
 

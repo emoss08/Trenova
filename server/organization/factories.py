@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import factory
-
 from organization.models import BusinessUnit, Organization
 
 
@@ -103,6 +102,7 @@ class EmailProfileFactory(factory.django.DjangoModelFactory):
     port = 20
     username = factory.Faker("name", locale="en_US")
     password = factory.Faker("password")
+    default_profile = False
 
 
 class TableChangeAlertFactory(factory.django.DjangoModelFactory):

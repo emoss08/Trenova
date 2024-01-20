@@ -44,6 +44,32 @@ export type Organization = {
 
 export type OrganizationFormValues = Omit<Organization, "id">;
 
+/* Type for Database Actions */
+type DatabaseActionChoices = "INSERT" | "UPDATE" | "DELETE" | "BOTH";
+
+/* Type for Table Change Alert Source */
+type SourceChoices = "KAFKA" | "POSTGRES";
+
+export interface TableChangeAlert extends BaseModel {
+  id: string;
+  isActive: boolean;
+  name: string;
+  databaseAction: DatabaseActionChoices;
+  table?: string;
+  source: SourceChoices;
+  topic?: string;
+  description?: string;
+  emailProfile?: string | null;
+  emailRecipients: string;
+  conditionalLogic?: object | null;
+  customSubject?: string;
+  functionName?: string;
+  triggerName?: string;
+  listenerName?: string;
+  effectiveDate?: string | null;
+  expirationDate?: string | null;
+}
+
 export interface EmailProfile extends BaseModel {
   id: string;
   name: string;
@@ -53,6 +79,7 @@ export interface EmailProfile extends BaseModel {
   port?: number | null;
   username?: string | null;
   password?: string | null;
+  defaultProfile: boolean;
 }
 
 export type EmailProfileFormValues = Omit<

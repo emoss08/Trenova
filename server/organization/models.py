@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import textwrap
@@ -32,10 +33,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -815,6 +815,11 @@ class EmailProfile(TimeStampedModel):
         help_text=_("The password that will be used for outgoing email."),
         blank=True,
     )
+    default_profile = models.BooleanField(
+        _("Default Email Profile?"),
+        default=False,
+        help_text=_("Whether the email profile is the default email profile."),
+    )
 
     class Meta:
         """
@@ -833,7 +838,33 @@ class EmailProfile(TimeStampedModel):
             str: String representation of the email profile.
         """
 
-        return textwrap.wrap(self.email, 50)[0]
+        return textwrap.shorten(
+            f"{self.name} ({self.email})", width=50, placeholder="..."
+        )
+
+    def clean(self) -> None:
+        """EmailProfile clean method
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        # Ensure there is only one email profile that is marked as default for the organization.
+        if self.default_profile:
+            if (
+                EmailProfile.objects.filter(
+                    organization=self.organization, default_profile=True
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                raise ValidationError(
+                    {
+                        "default_profile": _(
+                            "You cannot have more than one email profile marked as default."
+                        )
+                    }
+                )
 
     def get_absolute_url(self) -> str:
         """EmailProfile absolute URL

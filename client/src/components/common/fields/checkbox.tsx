@@ -62,10 +62,13 @@ export function CheckboxInput<T extends FieldValues>({
 }: CheckboxInputProps & UseControllerProps<T>) {
   const { field, fieldState } = useController(props);
 
-  const { label, description, id } = props;
+  const { label, description, id, className } = props;
 
   return (
-    <label htmlFor={id} className="items-top flex cursor-pointer space-x-2">
+    <label
+      htmlFor={id}
+      className={cn("items-top flex cursor-pointer space-x-2", className)}
+    >
       <Checkbox
         {...field}
         onCheckedChange={(e) => {

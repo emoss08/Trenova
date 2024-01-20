@@ -16,10 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django_celery_beat.models import IntervalSchedule
-
-from organization import models
+from organization import factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -118,3 +118,30 @@ def test_create_celery_beat_configurations_command() -> None:
 
     # Check that configurations have been created
     assert IntervalSchedule.objects.count() > 0
+
+
+def test_email_profile_can_only_have_one_default(
+    email_profile: models.EmailProfile,
+) -> None:
+    """Test that only one email profile can be marked as default.
+
+    args:
+        email_profile (models.EmailProfile): Email profile instance.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    email_profile.default_profile = True
+
+    # Create a new email profile
+    factories.EmailProfileFactory(default_profile=True)
+
+    with pytest.raises(ValidationError) as excinfo:
+        email_profile.clean()
+
+    assert excinfo.value.message_dict == {
+        "default_profile": [
+            "You cannot have more than one email profile marked as default."
+        ]
+    }

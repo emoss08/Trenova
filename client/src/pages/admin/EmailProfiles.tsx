@@ -16,13 +16,14 @@
  */
 
 import AdminLayout from "@/components/admin-page/layout";
-import { DataTable } from "@/components/common/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EmailProfile } from "@/types/organization";
+import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
+import { EmailProfile } from "@/types/organization";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<EmailProfile>[] = [
   {
@@ -45,6 +46,13 @@ const columns: ColumnDef<EmailProfile>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "defaultProfile",
+    header: "Default Profile",
+    cell: ({ row }) => (
+      <BoolStatusBadge status={row.getValue("defaultProfile")} />
+    ),
   },
   {
     accessorKey: "name",

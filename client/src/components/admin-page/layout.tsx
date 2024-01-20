@@ -222,7 +222,7 @@ const links = [
     group: "Data & Integrations",
   },
   {
-    href: "#",
+    href: "/admin/table-change-alerts/",
     title: "Table Change Alerts",
     icon: (
       <FontAwesomeIcon
