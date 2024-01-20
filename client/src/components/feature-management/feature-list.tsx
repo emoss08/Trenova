@@ -85,7 +85,7 @@ export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
   return (
     <>
-      <Alert variant="info" className="mb-5 border">
+      <Alert className="mb-5">
         <InfoIcon className="h-5 w-5" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>

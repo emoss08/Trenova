@@ -35,12 +35,13 @@ import { InfoIcon } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
+import { ExternalLink } from "../ui/link";
 
 function GoogleAPIAlert() {
   const { t } = useTranslation("admin.googleapi");
 
   return (
-    <Alert variant="info" className="mb-5">
+    <Alert className="mb-5">
       <InfoIcon className="h-5 w-5" />
       <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
@@ -51,14 +52,9 @@ function GoogleAPIAlert() {
               i18nKey="alert.list.apiKey.description"
               t={t}
             />
-            <a
-              href="https://developers.google.com/maps/documentation/javascript/get-api-key"
-              target="_blank"
-              className="underline"
-              rel="noopener noreferrer"
-            >
+            <ExternalLink href="https://developers.google.com/maps/documentation/javascript/get-api-key">
               {t("alert.list.apiKey.link")}
-            </a>
+            </ExternalLink>
           </li>
           <li>
             <Trans
@@ -66,14 +62,9 @@ function GoogleAPIAlert() {
               i18nKey="alert.list.mileageUnit.description"
               t={t}
             />
-            <a
-              href="https://support.google.com/merchants/answer/14156166?hl=en"
-              target="_blank"
-              className="underline"
-              rel="noopener noreferrer"
-            >
+            <ExternalLink href="https://support.google.com/merchants/answer/14156166?hl=en">
               {t("alert.list.mileageUnit.link")}
-            </a>
+            </ExternalLink>
           </li>
           <li>
             <Trans
@@ -81,15 +72,9 @@ function GoogleAPIAlert() {
               i18nKey="alert.list.trafficModel.description"
               t={t}
             />
-            <a
-              href="https://developers.google.com/maps/documentation/distance-matrix/distance-matrix#traffic_model"
-              target="_blank"
-              className="underline"
-              rel="noopener noreferrer"
-            >
+            <ExternalLink href="https://developers.google.com/maps/documentation/distance-matrix/distance-matrix#traffic_model">
               {t("alert.list.trafficModel.link")}
-            </a>
-            .
+            </ExternalLink>
           </li>
         </ul>
       </AlertDescription>
@@ -98,6 +83,7 @@ function GoogleAPIAlert() {
 }
 
 function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
+  const { t } = useTranslation(["admin.googleapi", "common"]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const [showAPIKey, setShowAPIKey] = React.useState(false);
@@ -119,9 +105,9 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
     {
       method: "PUT",
       path: "/organization/google_api_details/", // Does not require an ID
-      successMessage: "Google API settings updated successfully.",
+      successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["googleAPI"],
-      errorMessage: "Failed to update google api settings.",
+      errorMessage: t("formErrorMessage"),
     },
     () => setIsSubmitting(false),
     reset,
@@ -135,7 +121,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -147,9 +133,9 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               control={control}
               options={routeDistanceUnitChoices}
               rules={{ required: true }}
-              label="Mileage Unit"
-              placeholder="Mileage Unit"
-              description="Select the unit of measurement for mileage to ensure accurate distance tracking across different regions."
+              label={t("fields.mileageUnit.label")}
+              placeholder={t("fields.mileageUnit.placeholder")}
+              description={t("fields.mileageUnit.description")}
             />
           </div>
           <div className="col-span-3">
@@ -158,9 +144,9 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               control={control}
               options={routeModelChoices}
               rules={{ required: true }}
-              label="Traffic Model"
-              placeholder="Traffic Model"
-              description="Choose a traffic model for enhanced route calculation, factoring in real-time traffic conditions for optimal routing."
+              label={t("fields.trafficModel.label")}
+              placeholder={t("fields.trafficModel.placeholder")}
+              description={t("fields.trafficModel.description")}
             />
           </div>
           <div className="relative col-span-4">
@@ -169,9 +155,9 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               control={control}
               type={showAPIKey ? "text" : "password"}
               rules={{ required: true }}
-              label="Google API Key"
-              placeholder="API Key"
-              description="Securely input your Google API Key to access and integrate Google's mapping services."
+              label={t("fields.apiKey.label")}
+              placeholder={t("fields.apiKey.placeholder")}
+              description={t("fields.apiKey.description")}
             />
             {apiKeyValue && formState.isValid && (
               <button
@@ -179,7 +165,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
                 className="absolute inset-y-0 right-0 mt-2 flex items-center pr-3 text-sm leading-5"
                 onClick={toggleAPIKeyVisibility}
               >
-                <p className="text-xs uppercase text-foreground">
+                <p className="text-foreground text-xs uppercase">
                   {showAPIKey ? "hide" : "show"}
                 </p>
               </button>
@@ -189,29 +175,29 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
             <CheckboxInput
               name="addCustomerLocation"
               control={control}
-              label="Add Customer Location"
-              description="Enable this to utilize and enforce the usage of the Google Places API for adding customer locations, ensuring accurate and standardized data entry."
+              label={t("fields.addLocation.label")}
+              description={t("fields.addCustomerLocation.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="addLocation"
               control={control}
-              label="Add Location"
-              description="Activate to mandate the use of the Google Places API when adding new locations, promoting consistency and precision in location data."
+              label={t("fields.addLocation.label")}
+              description={t("fields.addLocation.description")}
             />
           </div>
           <div className="col-span-3">
             <CheckboxInput
               name="autoGeocode"
               control={control}
-              label="Auto Geocode"
-              description="Automatically convert addresses into geographical coordinates for accurate and hassle-free location mapping."
+              label={t("fields.autoGeocode.label")}
+              description={t("fields.autoGeocode.description")}
             />
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-6 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -221,10 +207,10 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           variant="ghost"
           disabled={isSubmitting}
         >
-          Cancel
+          {t("buttons.cancel", { ns: "common" })}
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          Save
+          {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
     </form>
@@ -232,28 +218,25 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 }
 
 export default function GoogleApi() {
+  const { t } = useTranslation("admin.googleapi");
   const { googleAPIData, isLoading, isError } = useGoogleAPI();
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
-          Google API
+        <h2 className="text-foreground text-base font-semibold leading-7">
+          {t("title")}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Empower your dispatch system with Google API integration. Configure
-          settings for advanced routing, precise geocoding, and dynamic map
-          views to streamline your fleet management. Enhance route planning,
-          location accuracy, and visual data representation for an optimal
-          operational experience.
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
+          {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (

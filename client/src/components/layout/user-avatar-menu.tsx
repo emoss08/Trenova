@@ -40,6 +40,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { KBD } from "../ui/kbd";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -206,11 +207,25 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       <DropdownMenuGroup>
         <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
           Account Settings
-          <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+          <DropdownMenuShortcut>
+            <KBD>
+              <span>⌘</span>
+            </KBD>
+            <KBD>
+              <span>B</span>
+            </KBD>
+          </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
           Inbox
-          <DropdownMenuShortcut>⌘H</DropdownMenuShortcut>
+          <DropdownMenuShortcut>
+            <KBD>
+              <span>⌘</span>
+            </KBD>
+            <KBD>
+              <span>H</span>
+            </KBD>
+          </DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSub>
@@ -239,7 +254,14 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => logout()}>
         Log out
-        <DropdownMenuShortcut>⌘Q</DropdownMenuShortcut>
+        <DropdownMenuShortcut>
+          <KBD>
+            <span>⌘</span>
+          </KBD>
+          <KBD>
+            <span>Q</span>
+          </KBD>
+        </DropdownMenuShortcut>
       </DropdownMenuItem>
     </DropdownMenuContent>
   );

@@ -77,6 +77,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
   const onSubmit = (values: OrganizationFormValues) => {
     setIsSubmitting(true);
     mutation.mutate(values);
+    reset(values);
   };
 
   return (

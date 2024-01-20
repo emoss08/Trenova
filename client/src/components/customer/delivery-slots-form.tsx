@@ -29,8 +29,8 @@ import { Button } from "../ui/button";
 
 function DeliverySlotAlert() {
   return (
-    <Alert className="my-5  bg-foreground text-background">
-      <InfoIcon className="h-5 w-5 stroke-background" />
+    <Alert className="my-5">
+      <InfoIcon className="h-5 w-5" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can

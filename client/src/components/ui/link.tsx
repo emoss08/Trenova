@@ -15,29 +15,44 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "../ui/button";
+import { ExternalLinkIcon } from "@radix-ui/react-icons";
+import React from "react";
+import { Link } from "react-router-dom";
 
-export function Footer() {
+export function ExternalLink({
+  href,
+  children,
+  openNewTab = true,
+  ...props
+}: {
+  href: string;
+  children: React.ReactNode;
+  openNewTab?: boolean;
+} & React.HTMLAttributes<HTMLAnchorElement>) {
   return (
-    <footer className="mt-10 flex h-10 items-center justify-between border-t px-10 py-2 font-semibold">
-      {/* Copyright */}
-      <div className="text-foreground text-xs">
-        <span className="me-1">&copy; {new Date().getFullYear()}</span>
-        <a href="#" target="_blank" rel="noopener noreferrer">
-          Trenova Technologies
-        </a>
-      </div>
-
-      <Button
-        size="xs"
-        className="hover:bg-muted inline-flex gap-x-1.5 bg-transparent px-2.5 py-0.5 text-xs font-bold text-blue-600 transition-colors"
-      >
-        <span className="relative mb-0.5 flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 motion-safe:animate-ping"></span>
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600"></span>
-        </span>
-        All Systems Operational
-      </Button>
-    </footer>
+    <a
+      href={href}
+      target={openNewTab ? "_blank" : undefined}
+      rel={openNewTab ? "noopener noreferrer" : undefined}
+      className="inline-flex items-center gap-x-0.5 font-semibold text-blue-600 hover:underline"
+      {...props}
+    >
+      {children}
+      <ExternalLinkIcon />
+    </a>
   );
 }
+
+// Small Wrapper around react router <Link> to keep up with the design system
+export const InternalLink = React.forwardRef<
+  HTMLAnchorElement,
+  React.ComponentProps<typeof Link>
+>((props, ref) => (
+  <Link
+    ref={ref}
+    className="inline-flex items-center font-semibold text-blue-600 hover:underline"
+    {...props}
+  >
+    {props.children}
+  </Link>
+));
