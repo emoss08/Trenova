@@ -20,12 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
+import { TOAST_STYLE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { resetPasswordSchema } from "@/lib/validations/AccountsSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 
 type FormValues = {
@@ -45,19 +47,47 @@ export function ResetPasswordForm() {
     try {
       const response = await axios.post("/reset_password/", values);
       if (response.status === 200) {
-        // toast({
-        //   title: "Email Sent",
-        //   description: "Please check your email for the reset link.",
-        // });
+        toast.success(
+          () => (
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold">
+                Great! Password reset email sent.
+              </span>
+              <span className="text-xs">{response.data.message}</span>
+            </div>
+          ),
+          {
+            duration: 4000,
+            id: "notification-toast",
+            style: TOAST_STYLE,
+            ariaProps: {
+              role: "status",
+              "aria-live": "polite",
+            },
+          },
+        );
       }
     } catch (error: any) {
       console.info("error", error);
-      // toast({
-      //   variant: "destructive",
-      //   title: "Uh oh! Something went wrong.",
-      //   description: "There was a problem with your request.",
-      //   action: <ToastAction altText="Try again">Try again</ToastAction>,
-      // });
+      toast.error(
+        () => (
+          <div className="flex flex-col space-y-1">
+            <span className="font-semibold">Oops! Something went wrong.</span>
+            <span className="text-xs">
+              We were unable to send you a password reset email.
+            </span>
+          </div>
+        ),
+        {
+          duration: 4000,
+          id: "notification-toast",
+          style: TOAST_STYLE,
+          ariaProps: {
+            role: "status",
+            "aria-live": "polite",
+          },
+        },
+      );
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +153,7 @@ const ResetPasswordPage: React.FC = () => {
         Remember your password?&nbsp;
         <Link
           to="/login"
-          className="font-medium text-primary underline underline-offset-4"
+          className="text-primary font-medium underline underline-offset-4"
         >
           Login instead
         </Link>
