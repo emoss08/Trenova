@@ -21,7 +21,6 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-
 from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.exceptions import ConditionalStructureError
@@ -50,14 +49,14 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
     table_charge = models.TableChangeAlert.objects.create(
         business_unit=organization.business_unit,
         organization=organization,
-        is_active=True,
+        status="A",
         name="Test",
         database_action="INSERT",
         table=TABLE_NAME_CHOICES[0][0],
     )
 
     assert table_charge.organization == organization
-    assert table_charge.is_active is True
+    assert table_charge.status == "A"
     assert table_charge.name == "Test"
     assert (
         table_charge.database_action

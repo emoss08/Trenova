@@ -33,10 +33,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -1108,6 +1107,11 @@ class TableChangeAlert(TimeStampedModel):
         },
     }
 
+    @final
+    class StatusChoices(models.TextChoices):
+        ACTIVE = "A", _("Active")
+        INACTIVE = "I", _("Inactive")
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -1119,19 +1123,20 @@ class TableChangeAlert(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="table_change_alerts",
         verbose_name=_("Business Unit"),
-        help_text=_("The business unit that the organization belongs to."),
+        help_text=_("The business unit that the table change alert belongs to."),
     )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
         verbose_name=_("Organization"),
         related_name="table_change_alerts",
-        help_text=_("The organization that the tax rate belongs to."),
+        help_text=_("The organization that the table change alert belongs to."),
     )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("Whether the table change alert is active."),
+    status = models.CharField(
+        _("Status"),
+        choices=StatusChoices.choices,
+        help_text=_("Status of the Table Change Alert."),
+        default=StatusChoices.ACTIVE,
     )
     name = models.CharField(
         _("Name"),
