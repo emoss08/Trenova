@@ -26,6 +26,7 @@ from django.dispatch import Signal, receiver
 from accounting.models import AccountingControl
 from billing.models import BillingControl
 from dispatch.models import DispatchControl, FeasibilityToolControl
+from integration.models import GoogleAPI
 from invoicing.models import InvoiceControl
 from organization import models
 from organization.models import EmailControl
@@ -476,6 +477,20 @@ def create_notification_settings(
             business_unit=instance.business_unit,
             organization=instance.organization,
             notification_type=instance,
+        )
+
+
+def create_google_api(
+    sender: GoogleAPI,
+    instance: GoogleAPI,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    if created:
+        GoogleAPI.objects.get_or_create(
+            business_unit=instance.business_unit,
+            organization=instance.organization,
+            api_key="API_KEY_HERE",
         )
 
 
