@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { TrailerForm } from "@/components/trailers/trailer-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -27,14 +28,13 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
+import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
+import { TrailerFormValues as FormValues, Trailer } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { Trailer, TrailerFormValues as FormValues } from "@/types/equipment";
-import { TrailerForm } from "@/components/trailers/trailer-table-dialog";
-import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 
 function TrailerEditForm({
   trailer,
@@ -107,7 +107,6 @@ function TrailerEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
           className="w-full"
         >
           Save Changes

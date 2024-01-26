@@ -15,8 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDateToHumanReadable } from "@/lib/date";
+import { upperFirst } from "@/lib/utils";
+import { getLocationPickupData } from "@/services/LocationRequestService";
+import { MinimalUser } from "@/types/accounts";
+import { Location, LocationComment } from "@/types/location";
+import { AvatarImage } from "@radix-ui/react-avatar";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Row } from "@tanstack/react-table";
+import { Loader2 } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -26,25 +35,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Location, LocationComment } from "@/types/location";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getLocationPickupData } from "@/services/LocationRequestService";
-import { Loader2 } from "lucide-react";
-import { formatDateToHumanReadable } from "@/lib/date";
-import { upperFirst } from "@/lib/utils";
-import { MinimalUser } from "@/types/accounts";
-import { AvatarImage } from "@radix-ui/react-avatar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ErrorLoadingData } from "../common/table/data-table-components";
 
 function SkeletonLoader() {
   return (
     <div className="mt-20 flex flex-col items-center justify-center">
-      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      <p className="mt-2 font-semibold text-accent-foreground">
+      <Loader2 className="mr-2 size-4 animate-spin" />
+      <p className="text-accent-foreground mt-2 font-semibold">
         Loading Chart...
       </p>
-      <p className="mt-2 text-muted-foreground">
+      <p className="text-muted-foreground mt-2">
         If this takes longer than 10 seconds, please refresh the page.
       </p>
     </div>
@@ -67,11 +67,11 @@ function UserAvatar({ user }: { user: MinimalUser }) {
     : `https://avatar.vercel.sh/${user.email}`;
 
   return (
-    <Avatar className="relative mt-3 h-6 w-6 flex-none rounded-full">
+    <Avatar className="relative mt-3 size-6 flex-none rounded-full">
       <AvatarImage
         src={avatarSrc}
         alt={user.username}
-        className="h-6 w-6 rounded-full"
+        className="size-6 rounded-full"
       />
       <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
     </Avatar>
@@ -93,14 +93,14 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
               "absolute left-0 top-0 flex w-6 justify-center",
             )}
           >
-            <div className="w-px bg-gray-200" />
+            <div className="bg-border w-px" />
           </div>
           <>
             <UserAvatar user={comment.enteredBy} />
-            <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
+            <div className="border-border flex-auto rounded-md border p-3">
               <div className="flex justify-between gap-x-4">
-                <div className="py-0.5 text-xs leading-5 text-gray-500">
-                  <span className="font-medium text-gray-900">
+                <div className="text-foreground py-0.5 text-xs leading-5">
+                  <span className="text-accent-foreground font-medium">
                     {upperFirst(userFullName(comment))}
                   </span>
                   {" posted a "}
@@ -110,12 +110,12 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
                 </div>
                 <time
                   dateTime={comment.created}
-                  className="flex-none py-0.5 text-xs leading-5 text-gray-500"
+                  className="text-muted-foreground flex-none py-0.5 text-xs leading-5"
                 >
                   {formatDateToHumanReadable(comment.created)}
                 </time>
               </div>
-              <p className="text-sm leading-6 text-gray-500">
+              <p className="text-muted-foreground text-sm leading-6">
                 {comment.comment}
               </p>
             </div>
@@ -126,7 +126,7 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
   ) : (
     <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
       <div className="px-6 py-4">
-        <h4 className="mt-20 text-xl font-semibold text-foreground">
+        <h4 className="text-foreground mt-20 text-xl font-semibold">
           No Location Comments Available
         </h4>
       </div>
@@ -137,7 +137,7 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
 export function LocationChart({ row }: { row: Row<Location> }) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["locationPickupData", row.original.id],
     queryFn: async () => getLocationPickupData(row.original.id),
     enabled: row.original.id !== undefined,
@@ -146,8 +146,17 @@ export function LocationChart({ row }: { row: Row<Location> }) {
       row.original.id,
     ]),
     retry: false,
+    staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
+
+  if (isError) {
+    return (
+      <div className="m-4">
+        <ErrorLoadingData message="Failed to loading the proper information to display the chart." />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-7 flex border-b">
@@ -175,7 +184,7 @@ export function LocationChart({ row }: { row: Row<Location> }) {
               />
               <Tooltip />
               <Legend />
-              <Bar dataKey="total" fill="#ad1dfa" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="total" fill="#84cc16" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

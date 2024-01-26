@@ -30,8 +30,9 @@ import {
   GoogleAPIFormValues,
   GoogleAPI as GoogleAPIType,
 } from "@/types/organization";
+import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { InfoIcon } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
@@ -42,7 +43,7 @@ function GoogleAPIAlert() {
 
   return (
     <Alert className="mb-5">
-      <InfoIcon className="h-5 w-5" />
+      <FontAwesomeIcon icon={faCircleInfo} />
       <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc">
@@ -121,7 +122,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 
   return (
     <form
-      className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2"
+      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -165,7 +166,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
                 className="absolute inset-y-0 right-0 mt-2 flex items-center pr-3 text-sm leading-5"
                 onClick={toggleAPIKeyVisibility}
               >
-                <p className="text-foreground text-xs uppercase">
+                <p className="text-xs uppercase text-foreground">
                   {showAPIKey ? "hide" : "show"}
                 </p>
               </button>
@@ -197,7 +198,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           </div>
         </div>
       </div>
-      <div className="border-muted flex items-center justify-end gap-x-6 border-t p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -224,19 +225,19 @@ export default function GoogleApi() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-foreground text-base font-semibold leading-7">
+        <h2 className="text-base font-semibold leading-7 text-foreground">
           {t("title")}
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-6">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
+        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
+        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (

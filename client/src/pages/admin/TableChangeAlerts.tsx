@@ -19,8 +19,8 @@ import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
+import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
 import { TableChangeAlert } from "@/types/organization";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -79,7 +79,7 @@ export default function TableChangeAlerts() {
         name="Table Change Alert"
         exportModelName="TableChangeAlert"
         filterColumn="name"
-        TableSheet={EmailProfileDialog}
+        TableSheet={TableChangeAlertSheet}
         TableEditSheet={EmailProfileTableEditDialog}
         addPermissionName="view_tablechangealert"
       />

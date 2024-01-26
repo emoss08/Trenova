@@ -108,7 +108,7 @@ filterwarnings = [
     "ignore::ImportWarning",
     "ignore::ResourceWarning",
 ]
-addopts = "-s --cov-report html --cov=."
+addopts = "-s"
 
 [tool.bandit]
 exclude_dirs = [

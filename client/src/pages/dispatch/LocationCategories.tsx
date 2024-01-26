@@ -23,6 +23,7 @@ import { LCTableSheet } from "@/components/location-categories/lc-table-sheet";
 import { truncateText } from "@/lib/utils";
 import { LocationCategory } from "@/types/location";
 import { ColumnDef } from "@tanstack/react-table";
+import { Card, CardContent } from "@/components/ui/card";
 
 const columns: ColumnDef<LocationCategory>[] = [
   {
@@ -56,7 +57,7 @@ const columns: ColumnDef<LocationCategory>[] = [
         return (
           <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
-              className={"mx-2 h-2 w-2 rounded-xl"}
+              className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: row.original.color }}
             />
             {row.original.name}
@@ -76,16 +77,20 @@ const columns: ColumnDef<LocationCategory>[] = [
 
 export default function LocationCategories() {
   return (
-    <DataTable
-      queryKey="location-categories-table-data"
-      columns={columns}
-      link="/location_categories/"
-      name="Location Category"
-      exportModelName="LocationCategory"
-      filterColumn="name"
-      TableSheet={LCTableSheet}
-      TableEditSheet={LCTableEditDialog}
-      addPermissionName="add_locationcategory"
-    />
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="location-categories-table-data"
+          columns={columns}
+          link="/location_categories/"
+          name="Location Category"
+          exportModelName="LocationCategory"
+          filterColumn="name"
+          TableSheet={LCTableSheet}
+          TableEditSheet={LCTableEditDialog}
+          addPermissionName="add_locationcategory"
+        />
+      </CardContent>
+    </Card>
   );
 }

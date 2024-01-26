@@ -17,6 +17,50 @@
 
 from django.db import connection
 
+EXCLUDED_NAMES = (
+    "silk_",
+    "django",
+    "auth_",
+    "contenttypes_",
+    "sessions_",
+    "notifications_",
+    "plugin",
+    "auditlog",
+    "admin_",
+    "flag",
+    "waffle_",
+    "edi",
+    "a_group",
+    "states",
+    "document",
+    "accounting_control",
+    "billing_control",
+    "doc_template_customization",
+    "scheduled_report",
+    "report",
+    "user",
+    "weekday",
+    "audit",
+    "auth",
+    "notification_setting",
+    "notification_type",
+    "route_control",
+    "feasibility_tool_control",
+    "feature_flag",
+    "google_api",
+    "integration",
+    "organization",
+    "shipment_control",
+    "formula_template",
+    "dispatch_control",
+    "email_control",
+    "invoice_control",
+    "table_change_alert",
+    "tax_rate",
+    "template",
+    "custom_report",
+)
+
 
 def get_all_table_names() -> list[str]:
     """Gets the names of all tables in the database, excluding those that start
@@ -29,54 +73,28 @@ def get_all_table_names() -> list[str]:
 
     names = connection.introspection.table_names()
 
-    excluded_names = (
-        "silk_",
-        "django",
-        "auth_",
-        "contenttypes_",
-        "sessions_",
-        "notifications_",
-        "plugin",
-        "auditlog",
-        "admin_",
-        "flag",
-        "waffle_",
-        "edi",
-        "a_group",
-        "states",
-        "document",
-        "accounting_control",
-        "billing_control",
-        "doc_template_customization",
-        "scheduled_report",
-        "report",
-        "user",
-        "weekday",
-        "audit",
-        "auth",
-        "notification_setting",
-        "notification_type",
-        "route_control",
-        "feasibility_tool_control",
-        "feature_flag",
-        "google_api",
-        "integration",
-        "organization",
-        "shipment_control",
-        "formula_template",
-        "dispatch_control",
-        "email_control",
-        "invoice_control",
-        "table_change_alert",
-        "tax_rate",
-        "template",
-        "custom_report",
-    )
-
     return [
         name
         for name in names
-        if not any(name.startswith(excluded) for excluded in excluded_names)
+        if not any(name.startswith(excluded) for excluded in EXCLUDED_NAMES)
+    ]
+
+
+def get_all_table_names_dict() -> list[dict[str, str]]:
+    """Gets the names of all tables in the database, excluding those that start
+    with specified prefixes.
+
+    Returns:
+        list[str]: A list of strings, where each string is the name of a table
+                   in the database, excluding tables with specified prefixes.
+    """
+
+    names = connection.introspection.table_names()
+
+    return [
+        {"value": name, "label": name}
+        for name in names
+        if not any(name.startswith(excluded) for excluded in EXCLUDED_NAMES)
     ]
 
 

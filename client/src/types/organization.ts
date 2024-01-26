@@ -16,10 +16,13 @@
  */
 
 import {
+  DatabaseActionChoicesProps,
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
+  SourceChoicesProps,
 } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types/index";
 
 export type Organization = {
   id: string;
@@ -44,31 +47,27 @@ export type Organization = {
 
 export type OrganizationFormValues = Omit<Organization, "id">;
 
-/* Type for Database Actions */
-type DatabaseActionChoices = "INSERT" | "UPDATE" | "DELETE" | "BOTH";
-
-/* Type for Table Change Alert Source */
-type SourceChoices = "KAFKA" | "POSTGRES";
-
 export interface TableChangeAlert extends BaseModel {
   id: string;
-  isActive: boolean;
+  status: StatusChoiceProps;
   name: string;
-  databaseAction: DatabaseActionChoices;
-  table?: string;
-  source: SourceChoices;
-  topic?: string;
-  description?: string;
+  databaseAction: DatabaseActionChoicesProps;
+  table?: string | null;
+  source: SourceChoicesProps;
+  topic?: string | null;
+  description?: string | null;
   emailProfile?: string | null;
   emailRecipients: string;
   conditionalLogic?: object | null;
-  customSubject?: string;
-  functionName?: string;
-  triggerName?: string;
-  listenerName?: string;
+  customSubject?: string | null;
   effectiveDate?: string | null;
   expirationDate?: string | null;
 }
+
+export type TableChangeAlertFormValues = Omit<
+  TableChangeAlert,
+  "id" | "organization" | "created" | "modified"
+>;
 
 export interface EmailProfile extends BaseModel {
   id: string;
@@ -132,6 +131,11 @@ export type GoogleAPI = BaseModel & {
   addCustomerLocation: boolean;
   addLocation: boolean;
   autoGeocode: boolean;
+};
+
+export type TableName = {
+  value: string;
+  label: string;
 };
 
 export type GoogleAPIFormValues = Omit<

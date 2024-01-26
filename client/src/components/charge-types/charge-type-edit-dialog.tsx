@@ -75,7 +75,6 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

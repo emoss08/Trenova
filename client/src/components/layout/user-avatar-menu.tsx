@@ -67,13 +67,13 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
           <AvatarImage
             src={avatarSrc}
             alt={user.username}
-            className="h-9 w-9 rounded-full"
+            className="size-9 rounded-full"
           />
           <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
         </Avatar>
         <div className="mb-1 ml-2 flex items-center">
           <ChevronDownIcon
-            className="h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180"
+            className="size-4 transition duration-200 group-data-[state=open]:rotate-180"
             aria-hidden="true"
           />
         </div>
@@ -209,7 +209,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           Account Settings
           <DropdownMenuShortcut>
             <KBD>
-              <span>⌘</span>
+              <span className="tracking-tight">Ctrl</span>
             </KBD>
             <KBD>
               <span>B</span>
@@ -220,7 +220,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           Inbox
           <DropdownMenuShortcut>
             <KBD>
-              <span>⌘</span>
+              <span className="tracking-tight">Ctrl</span>
             </KBD>
             <KBD>
               <span>H</span>
@@ -256,7 +256,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
         Log out
         <DropdownMenuShortcut>
           <KBD>
-            <span>⌘</span>
+            <span className="tracking-tight">Ctrl</span>
           </KBD>
           <KBD>
             <span>Q</span>

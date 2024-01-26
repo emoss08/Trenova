@@ -427,3 +427,25 @@ export const booleanStatusChoices: ReadonlyArray<IChoiceProps<boolean>> = [
   { value: true, label: "Active" },
   { value: false, label: "Inactive" },
 ];
+
+/* Type for Database Actions */
+export type DatabaseActionChoicesProps =
+  | "INSERT"
+  | "UPDATE"
+  | "DELETE"
+  | "BOTH";
+
+export const databaseActionChoices = [
+  { value: "INSERT", label: "Insert" },
+  { value: "UPDATE", label: "Update" },
+  { value: "DELETE", label: "Delete" },
+  { value: "BOTH", label: "Both" },
+] satisfies ReadonlyArray<IChoiceProps<DatabaseActionChoicesProps>>;
+
+/* Type for Table Change Alert Source */
+export type SourceChoicesProps = "KAFKA" | "POSTGRES";
+
+export const sourceChoices = [
+  { value: "KAFKA", label: "Kafka" },
+  { value: "POSTGRES", label: "Postgres" },
+] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;

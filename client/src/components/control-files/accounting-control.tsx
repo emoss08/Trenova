@@ -255,7 +255,7 @@ function AccountingControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-6 border-t border-border p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

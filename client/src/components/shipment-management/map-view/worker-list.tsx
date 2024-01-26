@@ -47,7 +47,7 @@ export function WorkerListSkeleton({ count = 9 }: { count?: number }) {
           key={index}
           className="group relative mb-2 flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground"
         >
-          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="size-10 rounded-full" />
           <div className="min-w-0 flex-1">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="mt-1 h-4 w-40" />
@@ -195,7 +195,7 @@ function WorkerCard({
   return (
     <li
       className={cn(
-        "group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground mb-2",
+        "group relative flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm bg-background hover:bg-foreground mb-2",
         `ring-accent-foreground/20 ${statusColor}`,
       )}
     >
@@ -204,7 +204,7 @@ function WorkerCard({
           <AvatarImage
             src={worker?.thumbnail}
             alt={worker.code}
-            className="h-10 w-10 rounded-full"
+            className="size-10 rounded-full"
           />
           <AvatarFallback
             className={cn(
@@ -273,9 +273,7 @@ export function WorkerList({
                 />
               </ContextMenuTrigger>
               <ContextMenuContent className="w-64">
-                <ContextMenuLabel>
-                  Actions
-                </ContextMenuLabel>
+                <ContextMenuLabel>Actions</ContextMenuLabel>
                 <ContextMenuSeparator />
                 <ContextMenuItem>Edit Worker Information</ContextMenuItem>
                 <ContextMenuItem>View Schedule</ContextMenuItem>

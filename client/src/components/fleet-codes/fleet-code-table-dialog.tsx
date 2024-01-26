@@ -28,17 +28,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useUsers } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
+import { cleanObject } from "@/lib/utils";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { FleetCodeFormValues as FormValues } from "@/types/dispatch";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { cleanObject } from "@/lib/utils";
 
 export function FleetCodeForm({
   control,
@@ -192,7 +192,6 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
             >
               Save
             </Button>

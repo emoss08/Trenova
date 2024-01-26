@@ -30,8 +30,8 @@ import { formatDate } from "@/lib/date";
 import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ServiceType,
   ServiceTypeFormValues as FormValues,
+  ServiceType,
 } from "@/types/order";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -78,7 +78,6 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

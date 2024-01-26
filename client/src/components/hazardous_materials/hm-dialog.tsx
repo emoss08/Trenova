@@ -202,7 +202,6 @@ export function HazardousMaterialDialog({
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
             >
               {t("buttons.save", { ns: "common" })}
             </Button>

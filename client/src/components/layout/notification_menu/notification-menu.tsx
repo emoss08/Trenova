@@ -123,14 +123,14 @@ function NotificationButton({
             role="button"
             aria-label="Open Application Grid"
             aria-expanded={open}
-            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative h-9"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
           >
-            <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
+            <FontAwesomeIcon icon={faBell} className="size-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
-              <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600 ring-1"></span>
+              <span className="absolute -right-1 -top-1 flex size-2.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
+                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-orange-600 ring-1"></span>
               </span>
             )}
           </Button>
@@ -191,7 +191,7 @@ function NotificationContent({
             className="hover:bg-accent/80 flex items-center rounded-md p-2 text-sm outline-transparent"
             onClick={readAllNotifications}
           >
-            Read All Notifications <ChevronRight className="ml-1 h-4 w-4" />
+            Read All Notifications <ChevronRight className="ml-1 size-4" />
           </button>
         </div>
       )}

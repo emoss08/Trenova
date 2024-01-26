@@ -74,7 +74,9 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-primary text-sm">Send Feedback</button>
+          <button className="text-primary text-sm hover:underline hover:decoration-lime-600">
+            Send Feedback
+          </button>
         </div>
       </div>
     </li>
@@ -86,12 +88,14 @@ export default function FeatureList() {
   return (
     <>
       <Alert className="mb-5">
-        <InfoIcon className="h-5 w-5" />
+        <InfoIcon className="size-5" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
-          All features marked <u>Paid Only</u> are only available to non-paid
-          users during the beta phase. Once the beta phase is over, these
-          features will be available to paid users only.
+          All features marked{" "}
+          <u className="font-bold underline decoration-lime-600">Paid Only</u>{" "}
+          are only available to non-paid users during the beta phase. Once the
+          beta phase is over, these features will be available to paid users
+          only.
         </AlertDescription>
       </Alert>
       <ul

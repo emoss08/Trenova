@@ -25,18 +25,10 @@ export function ShipmentMapZoom({ map }: { map: GoogleMap }) {
 
   return (
     <div className="flex flex-col space-y-2">
-      <Button
-        className="bg-background text-foreground hover:text-background"
-        size="icon"
-        onClick={() => map.setZoom(map.getZoom() + 1)}
-      >
+      <Button size="icon" onClick={() => map.setZoom(map.getZoom() + 1)}>
         <PlusIcon size={24} />
       </Button>
-      <Button
-        className="bg-background text-foreground hover:text-background"
-        size="icon"
-        onClick={() => map.setZoom(map.getZoom() - 1)}
-      >
+      <Button size="icon" onClick={() => map.setZoom(map.getZoom() - 1)}>
         <MinusIcon size={24} />
       </Button>
     </div>

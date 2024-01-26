@@ -15,22 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { faSpinnerThird } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 export default function LoadingSkeleton() {
   return (
-    <div className="flex min-h-screen flex-row items-center justify-center">
-      <div className="border">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center">
-          <div className="p-8">
-            <p className="text-lg mb-2 font-semibold">
-              Trenova is loading. Please wait.
-            </p>
-            <p className="mt-1 text-sm text-gray-400">
-              If the operation exceeds a duration of 10 seconds, kindly verify
-              the status of your internet connectivity. <br />
-              In case of persistent difficulty, please get in touch with your
-              designated system administrator.
-            </p>
-          </div>
+    <div className="flex min-h-screen flex-row items-center justify-center text-center">
+      <div className="border-border bg-card flex w-[700px] flex-col rounded-md border sm:flex-row sm:items-center sm:justify-center">
+        <div className="space-y-4 p-8">
+          <FontAwesomeIcon
+            icon={faSpinnerThird}
+            size="3x"
+            className="motion-safe:animate-spin"
+          />
+          <p className="font-xl mb-2 font-semibold">
+            Hang tight!{" "}
+            <u className="font-bold underline decoration-lime-600">Trenova</u>{" "}
+            is gearing up for you.
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            We're working at lightning speed to get things ready. If this takes
+            longer than a coffee break (10 seconds), please check your internet
+            connection. <br />
+            <u className="text-foreground decoration-lime-600">
+              Still stuck?
+            </u>{" "}
+            Your friendly system administrator is just a call away for a swift
+            rescue!
+          </p>
         </div>
       </div>
     </div>

@@ -33,6 +33,7 @@ import { Location } from "@/types/location";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { Card, CardContent } from "@/components/ui/card";
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
   return <LocationChart row={row} />;
@@ -53,7 +54,7 @@ function LocationColor({
         <TooltipTrigger asChild>
           <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
-              className={"mx-2 h-2 w-2 rounded-xl"}
+              className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: color }}
             />
             {locationName}
@@ -156,19 +157,23 @@ const filters: FilterConfig<Location>[] = [
 
 export default function Locations() {
   return (
-    <DataTable
-      queryKey="locations-table-data"
-      columns={columns}
-      link="/locations/"
-      name="Locations"
-      exportModelName="Location"
-      filterColumn="name"
-      tableFacetedFilters={filters}
-      TableSheet={LocationTableSheet}
-      TableEditSheet={LocationTableEditSheet}
-      renderSubComponent={renderSubComponent}
-      getRowCanExpand={() => true}
-      addPermissionName="add_location"
-    />
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="locations-table-data"
+          columns={columns}
+          link="/locations/"
+          name="Locations"
+          exportModelName="Location"
+          filterColumn="name"
+          tableFacetedFilters={filters}
+          TableSheet={LocationTableSheet}
+          TableEditSheet={LocationTableEditSheet}
+          renderSubComponent={renderSubComponent}
+          getRowCanExpand={() => true}
+          addPermissionName="add_location"
+        />
+      </CardContent>
+    </Card>
   );
 }

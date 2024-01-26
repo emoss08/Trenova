@@ -147,7 +147,7 @@ export function ShipmentMapAside() {
 
   if (isError) {
     return (
-      <aside className="w-96 items-center rounded-md border p-4 ring-accent-foreground/20">
+      <aside className="w-96 items-center rounded-md border p-4">
         <div className="mt-52">
           <ErrorLoadingData />
         </div>
@@ -156,7 +156,7 @@ export function ShipmentMapAside() {
   }
 
   return (
-    <aside className="w-96 rounded-md border p-4 ring-accent-foreground/20">
+    <aside className="w-96 rounded-md border border-border bg-card p-4">
       {isLoading ? (
         <WorkerListSkeleton />
       ) : (
@@ -167,7 +167,7 @@ export function ShipmentMapAside() {
             control={control}
             placeholder="Search Workers..."
             icon={
-              <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
             }
           />
           {/* Worker Sort Options */}

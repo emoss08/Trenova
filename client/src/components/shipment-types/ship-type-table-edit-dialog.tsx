@@ -30,8 +30,8 @@ import { formatDate } from "@/lib/date";
 import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ShipmentType,
   ShipmentTypeFormValues as FormValues,
+  ShipmentType,
 } from "@/types/order";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -82,7 +82,6 @@ function ShipmentTypeEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

@@ -485,6 +485,7 @@ KAFKA_EXCLUDE_TOPIC_PREFIXES = [
     "trenova_app_.public.audit_",
     "trenova_app_.public.user",
     "trenova_app_.public.organization",
+    "trenova_app_.public.business_unit",
     "trenova_app_.public.plugin",
     "trenova_app_.public.waffle_",
     "trenova_app_.public.edi",

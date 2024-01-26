@@ -120,7 +120,6 @@ export function SendMessageDialog({
             <Button
               type="submit"
               isLoading={isSending}
-              loadingText="Send Message..."
             >
               Send Message
             </Button>

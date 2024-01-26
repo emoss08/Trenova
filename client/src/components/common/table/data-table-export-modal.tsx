@@ -40,12 +40,13 @@ import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { TExportModelFormValues } from "@/types/forms";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -147,7 +148,7 @@ function TableExportModalBody({
   return isColumnsLoading ? (
     <>
       <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
-        <Loader2 className="h-20 w-20 animate-spin text-foreground" />
+        <Loader2 className="size-20 animate-spin text-foreground" />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
         </p>
@@ -246,8 +247,12 @@ export function DataTableImportExportOption() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default" className="h-8 lg:flex">
-            <DotsVerticalIcon className="mr-2 h-4 w-4" /> Options
+          <Button size="sm" variant="outline" className="h-8 lg:flex">
+            <FontAwesomeIcon
+              icon={faEllipsisVertical}
+              className="mr-1 size-4"
+            />
+            Options
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[150px]">
