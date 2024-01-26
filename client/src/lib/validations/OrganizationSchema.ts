@@ -16,18 +16,22 @@
  */
 
 import {
+  DatabaseActionChoicesProps,
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
+  SourceChoicesProps,
 } from "@/lib/choices";
 import {
   EmailControlFormValues,
   EmailProfileFormValues,
   GoogleAPIFormValues,
   OrganizationFormValues,
+  TableChangeAlertFormValues,
 } from "@/types/organization";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
+import { StatusChoiceProps } from "@/types";
 
 export const organizationSchema: ObjectSchema<OrganizationFormValues> =
   Yup.object().shape({
@@ -48,6 +52,25 @@ export const organizationSchema: ObjectSchema<OrganizationFormValues> =
     dateFormat: Yup.string().required("Date Format is required."),
     timeFormat: Yup.string().required("Time Format is required."),
     logo: Yup.string().notRequired(),
+  });
+
+export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
+  Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required."),
+    name: Yup.string().required("Name is required."),
+    databaseAction: Yup.string<DatabaseActionChoicesProps>().required(
+      "Database Action is required.",
+    ),
+    source: Yup.string<SourceChoicesProps>().required("Source is required."),
+    table: Yup.string().notRequired(),
+    topic: Yup.string().notRequired(),
+    description: Yup.string().notRequired(),
+    emailProfile: Yup.string().notRequired(),
+    emailRecipients: Yup.string().required("Email Recipients is required."),
+    conditionalLogic: Yup.object().notRequired(),
+    customSubject: Yup.string().notRequired(),
+    effectiveDate: Yup.string().notRequired(),
+    expirationDate: Yup.string().notRequired(),
   });
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
