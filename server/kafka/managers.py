@@ -153,6 +153,36 @@ class KafkaManager:
             logger.error(f"Failed to fetch topics from Kafka: {ke}")
             return []
 
+    def get_available_topics_dict(self) -> list[dict[str, str]]:
+        """Fetches the list of available topics from the Kafka server.
+
+        If the ``admin_client`` is not available or the Kafka server is not available,
+        this method returns an empty list. Otherwise, it fetches the metadata from the
+        Kafka server, extracts the topic names, and returns them as a list of tuples
+        for use in Django choices.
+
+        Returns:
+            list[tuple[str, str]]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
+        """
+
+        excluded_prefixes = settings.KAFKA_EXCLUDE_TOPIC_PREFIXES
+
+        if self.admin_client() is None:
+            return []
+        if not self.is_kafka_available(timeout=5):
+            return []
+
+        try:
+            topic_metadata = self.admin_client().list_topics(timeout=5)
+            return [
+                {"value": topic, "label": topic}
+                for topic in topic_metadata.topics.keys()
+                if not any(topic.startswith(prefix) for prefix in excluded_prefixes)
+            ]
+        except KafkaException as ke:
+            logger.error(f"Failed to fetch topics from Kafka: {ke}")
+            return []
+
     def create_topic(
         self, *, topic: str, num_partitions: int, replication_factor: int
     ) -> None:
