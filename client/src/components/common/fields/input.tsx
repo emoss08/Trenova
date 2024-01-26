@@ -17,7 +17,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
 import {
   FieldValues,
   useController,
@@ -27,7 +27,7 @@ import { Label } from "./label";
 
 export function ErrorMessage({ formError }: { formError?: string }) {
   return (
-    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs  leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
       {formError ? formError : "An Error has occurred. Please try again."}
     </div>
   );
@@ -42,7 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50 sm:text-sm sm:leading-6",
+          "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50 sm:text-sm sm:leading-6",
           className,
         )}
         ref={ref}
@@ -106,7 +106,7 @@ export function InputField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -156,7 +156,7 @@ export function FileField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -166,7 +166,6 @@ export function FileField<T extends FieldValues>({
 export function TimeField<T extends FieldValues>({
   ...props
 }: ExtendedInputProps & UseControllerProps<T>) {
-  // Forces time input to be in 24 hour format (ex: 17:00:00)
   const { field, fieldState } = useController(props);
 
   return (
@@ -202,7 +201,77 @@ export function TimeField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function PasswordField<T extends FieldValues>({
+  icon,
+  ...props
+}: ExtendedInputProps & UseControllerProps<T>) {
+  const { field, fieldState } = useController(props);
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  return (
+    <>
+      {props.label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            props.rules?.required && "required",
+          )}
+          htmlFor={props.id}
+        >
+          {props.label}
+        </Label>
+      )}
+      <div className="relative">
+        {icon && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            {icon}
+          </div>
+        )}
+        <Input
+          {...field}
+          className={cn(
+            icon && "pl-10",
+            fieldState.invalid &&
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+            props.className,
+          )}
+          type={showPassword ? "text" : "password"}
+          {...props}
+        />
+        {field.value && !fieldState.invalid && (
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
+            onClick={togglePasswordVisibility}
+          >
+            {showPassword ? (
+              <EyeOffIcon className="size-5" />
+            ) : (
+              <EyeIcon className="size-5" />
+            )}
+          </button>
+        )}
+        {fieldState.invalid && (
+          <>
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+              <AlertTriangle size={15} className="text-red-500" />
+            </div>
+            <ErrorMessage formError={fieldState.error?.message} />
+          </>
+        )}
+        {props.description && !fieldState.invalid && (
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>

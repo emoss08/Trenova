@@ -150,8 +150,8 @@ export function SelectInput<T extends Record<string, unknown>>(
             control: ({ isFocused }) =>
               cn(
                 isFocused
-                  ? "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
-                  : "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
+                  ? "flex h-10 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
+                  : "flex h-10 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
                 props.className,
               ),
@@ -317,8 +317,8 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             control: ({ isFocused }) =>
               cn(
                 isFocused
-                  ? "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
-                  : "flex h-10 w-full rounded-md border border-input bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
+                  ? "flex h-10 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
+                  : "flex h-10 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
               ),
             placeholder: () =>

@@ -70,7 +70,7 @@ export function ColorField<T extends FieldValues>({
         <Input
           {...field}
           className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+            "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
             fieldState.invalid &&
               "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
             props.className,
@@ -78,11 +78,15 @@ export function ColorField<T extends FieldValues>({
           onChange={handleInputChange}
           {...props}
         />
-        <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-gray-300" />
-        <div
-          className="absolute right-0 top-0 mx-2 my-2.5 h-5 w-5 rounded-xl"
-          style={{ backgroundColor: field.value }}
-        />
+        {field.value && (
+          <>
+            <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-border" />
+            <div
+              className="absolute right-0 top-0 mx-2 my-2.5 size-5 rounded-xl"
+              style={{ backgroundColor: field.value }}
+            />
+          </>
+        )}
         {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
@@ -92,12 +96,15 @@ export function ColorField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="z-100 absolute mt-2 w-auto">
-          <HexColorPicker color={field.value} onChange={handleColorPickerChange} />
+        <div ref={popoverRef} className="absolute z-100 mt-2 w-auto">
+          <HexColorPicker
+            color={field.value}
+            onChange={handleColorPickerChange}
+          />
         </div>
       )}
     </div>

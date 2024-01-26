@@ -33,7 +33,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-1 focus-visible:outline-none focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50",
+          "flex min-h-[80px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-1 focus-visible:outline-none focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50",
           className,
         )}
         ref={ref}
@@ -90,7 +90,7 @@ export function TextareaField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
