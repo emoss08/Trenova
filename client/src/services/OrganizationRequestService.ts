@@ -198,3 +198,10 @@ export async function getGoogleApiInformation(): Promise<GoogleAPI> {
   const response = await axios.get("/organization/google_api_details/");
   return response.data.results;
 }
+
+export async function getTableNames(): Promise<
+  { value: string; label: string }[]
+> {
+  const response = await axios.get("/table_names/");
+  return response.data.results;
+}
