@@ -18,6 +18,7 @@
 import { InputField } from "@/components/common/fields/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { InternalLink } from "@/components/ui/link";
 import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
 import { TOAST_STYLE } from "@/lib/constants";
@@ -28,7 +29,6 @@ import { Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 
 type FormValues = {
   email: string;
@@ -111,7 +111,7 @@ export function ResetPasswordForm() {
         <Button disabled={isLoading} className="my-2 w-full">
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
               Sending Email
             </>
           ) : (
@@ -123,44 +123,24 @@ export function ResetPasswordForm() {
   );
 }
 
-const ResetPasswordPage: React.FC = () => {
-  // const [loading, setLoading] = React.useState<boolean>(false);
-  // const navigate = useNavigate();
-  //
-  // interface FormValues {
-  //   email: string;
-  // }
-  //
-  // const schema = Yup.object().shape({
-  //   email: Yup.string()
-  //     .email("Invalid email address")
-  //     .required("Email address is required"),
-  // });
-
-  // const form = useForm<FormValues>({
-  //   validate: yupResolver(schema),
-  //   initialValues: {
-  //     email: "",
-  //   },
-  // });
-
+function ResetPasswordPage() {
   return (
     <div className={"relative min-h-screen pt-28"}>
-      <h2 className="mt-10 pb-2 text-center text-3xl font-semibold tracking-tight transition-colors first:mt-0">
-        Reset your password?
-      </h2>
-      <p className="mb-5 text-center leading-7">
-        Remember your password?&nbsp;
-        <Link
-          to="/login"
-          className="text-primary font-medium underline underline-offset-4"
-        >
-          Login instead
-        </Link>
-      </p>
       <div className="flex flex-row items-start justify-center">
         <Card className={cn("w-[420px]")}>
-          <CardContent>
+          <CardContent className="pt-0">
+            <h2 className="pb-2 text-center text-xl font-semibold tracking-tight transition-colors first:mt-5">
+              Reset your password?
+            </h2>
+            <span className="flex justify-center space-y-5 text-sm">
+              Remember your password?&nbsp;
+              <InternalLink
+                to="/login"
+                className="text-primary font-medium underline underline-offset-4 hover:decoration-lime-500"
+              >
+                Login instead
+              </InternalLink>
+            </span>
             <ResetPasswordForm />
           </CardContent>
         </Card>
@@ -170,5 +150,5 @@ const ResetPasswordPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 export default ResetPasswordPage;
