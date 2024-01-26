@@ -28,7 +28,6 @@ import { useLocation } from "react-router-dom";
 import { AppGridMenu } from "./app-grid";
 import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
-import { Footer } from "./footer";
 import { Logo } from "./logo";
 
 /**
@@ -43,15 +42,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // useQueryInvalidationListener();
 
   return (
-    <div className="bg-background flex h-screen flex-col" id="app">
+    <div className="flex h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="border-border/40 bg-background sticky top-0 z-50 w-full border-b">
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <Logo />
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               <AsideMenuSheet />
               <TeamSwitcher />
             </div>
@@ -60,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <SiteSearchInput />
               <AppGridMenu />
               <NotificationMenu />
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>
@@ -68,12 +67,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex flex-1 flex-col">
-        <main className="flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
+        <main className="mb-10 flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
           <Breadcrumb />
           <SiteSearch />
           {children}
         </main>
-        <Footer />
       </div>
     </div>
   );

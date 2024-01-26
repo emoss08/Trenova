@@ -29,8 +29,8 @@ import { formatDate } from "@/lib/date";
 import { locationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  LocationCategory,
   LocationCategoryFormValues as FormValues,
+  LocationCategory,
 } from "@/types/location";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -78,7 +78,6 @@ export function LCEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

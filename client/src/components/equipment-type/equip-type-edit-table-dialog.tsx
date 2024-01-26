@@ -103,7 +103,6 @@ function EquipTypeEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
           className="w-full"
         >
           Save Changes

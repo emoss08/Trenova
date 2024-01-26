@@ -118,7 +118,6 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
             >
               Save
             </Button>

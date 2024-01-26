@@ -30,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn, truncateText } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { CheckIcon } from "lucide-react";
 import React from "react";
@@ -103,11 +103,11 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
             aria-expanded={open}
             aria-label="Select a team"
             className={cn(
-              "w-[230px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-9 hidden md:flex",
+              "w-[200px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-8 hidden md:flex",
               className,
             )}
           >
-            <Avatar className="mr-2 h-5 w-5">
+            <Avatar className="mr-2 size-5">
               <AvatarImage
                 src={`https://avatar.vercel.sh/${selectedTeam.value}.png`}
                 alt={selectedTeam.label}
@@ -115,11 +115,14 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
               />
               <AvatarFallback>SC</AvatarFallback>
             </Avatar>
-            {truncateText(selectedTeam.label, 20)}
-            <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+            <span className="truncate">{selectedTeam.label}</span>
+            <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
+        <PopoverContent
+          align="start"
+          className="w-[250px] p-0"
+        >
           <Command>
             <CommandList>
               <CommandInput placeholder="Search team..." />
@@ -135,7 +138,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                       }}
                       className="text-sm"
                     >
-                      <Avatar className="mr-2 h-5 w-5">
+                      <Avatar className="mr-2 size-5">
                         <AvatarImage
                           src={`https://avatar.vercel.sh/${team.value}.png`}
                           alt={team.label}
@@ -143,7 +146,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                         />
                         <AvatarFallback>SC</AvatarFallback>
                       </Avatar>
-                      {truncateText(team.label, 15)}
+                      <span className="truncate">{team.label}</span>
                       <CheckIcon
                         className={cn(
                           "ml-auto h-4 w-4",
@@ -167,7 +170,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                       setShowNewTeamDialog(true);
                     }}
                   >
-                    <PlusCircledIcon className="mr-2 h-5 w-5" />
+                    <PlusCircledIcon className="mr-2 size-5" />
                     Create Team
                   </CommandItem>
                 </DialogTrigger>

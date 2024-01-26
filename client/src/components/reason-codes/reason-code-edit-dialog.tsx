@@ -29,7 +29,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { ReasonCode, ReasonCodeFormValues as FormValues } from "@/types/order";
+import { ReasonCodeFormValues as FormValues, ReasonCode } from "@/types/order";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -76,7 +76,6 @@ function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

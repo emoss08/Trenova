@@ -43,9 +43,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import {
   Control,
-  useForm,
   UseFormGetValues,
   UseFormSetValue,
+  useForm,
 } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { FileField, InputField } from "../common/fields/input";
@@ -358,7 +358,6 @@ export function GLTableSheet({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
               className="w-full"
             >
               Save

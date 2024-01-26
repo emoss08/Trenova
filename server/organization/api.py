@@ -33,7 +33,9 @@ from rest_framework.response import Response
 
 from core import checks
 from core.permissions import CustomObjectPermissions
+from kafka.managers import KafkaManager
 from organization import exceptions, models, selectors, serializers
+from organization.services.table_choices import get_all_table_names_dict
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -227,6 +229,51 @@ class TaxRateViewSet(viewsets.ModelViewSet):
             "name",
         )
         return queryset
+
+
+class TableNamesView(views.APIView):
+    """
+    TableNames ViewSet to manage requests to the table names endpoint
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request: Request) -> Response:
+        """Returns a list of all table names in the database.
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a list of table names.
+        """
+        table_names = get_all_table_names_dict()
+        return Response({"results": table_names}, status=status.HTTP_200_OK)
+
+
+class TopicNamesView(views.APIView):
+    """
+    TopicNames ViewSet to manage requests to the topic names endpoint
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request: Request) -> Response:
+        """Returns a list of all topic names in the database.
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a list of topic names.
+        """
+        kafka_manager = KafkaManager()
+        topic_names = kafka_manager.get_available_topics_dict()
+
+        return Response(
+            {"results": topic_names},
+            status=status.HTTP_200_OK,
+        )
 
 
 class TableChangeAlertViewSet(viewsets.ModelViewSet):

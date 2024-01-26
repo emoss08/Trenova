@@ -82,13 +82,13 @@ class Command(BaseCommand):
             "--organization",
             type=str,
             help="Name of the system organization.",
-            default="sys",
+            default="Trenova Transportation",
         )
         parser.add_argument(
             "--business_unit",
             type=str,
             help="Name of the system business unit.",
-            default="sys",
+            default="Trenova Transportation",
         )
 
     @staticmethod

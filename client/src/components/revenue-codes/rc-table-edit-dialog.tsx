@@ -31,8 +31,8 @@ import { formatDate } from "@/lib/date";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  RevenueCode,
   RevenueCodeFormValues as FormValues,
+  RevenueCode,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -90,7 +90,6 @@ function RCEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

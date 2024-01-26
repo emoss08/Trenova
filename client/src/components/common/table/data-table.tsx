@@ -261,7 +261,7 @@ export function DataTable<TData extends Record<string, any>>({
             userHasPermission={userHasPermission}
             store={store}
           />
-          <div className="rounded-md border">
+          <div className="rounded-md border border-border">
             <Table>
               <DataTableHeader table={table} />
               <DataTableBody

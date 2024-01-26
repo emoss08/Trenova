@@ -124,7 +124,6 @@ export function LCTableSheet({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
             >
               Save
             </Button>

@@ -81,7 +81,6 @@ function FleetCodeEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

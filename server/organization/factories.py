@@ -120,7 +120,7 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory(BusinessUnitFactory)
     organization = factory.SubFactory(OrganizationFactory)
-    is_active = True
+    status = "A"
     name = factory.Faker("name", locale="en_US")
     database_action = factory.Faker(
         "random_element",

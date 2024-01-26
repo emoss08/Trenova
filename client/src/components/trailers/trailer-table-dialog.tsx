@@ -37,8 +37,8 @@ import {
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  equipmentStatusChoices,
   TrailerFormValues as FormValues,
+  equipmentStatusChoices,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -363,7 +363,6 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
               className="w-full"
             >
               Save

@@ -165,7 +165,6 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
               className="w-full"
             >
               Save

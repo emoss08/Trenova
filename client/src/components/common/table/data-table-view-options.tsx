@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 import { Button } from "../../ui/button";
 import {
@@ -26,6 +25,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSlidersSimple } from "@fortawesome/pro-duotone-svg-icons";
 
 type DataTableViewOptionsProps<TData> = {
   table: Table<TData>;
@@ -38,8 +39,8 @@ export function DataTableViewOptions<TData>({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default" size="sm" className="h-8">
-            <MixerHorizontalIcon className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" className="h-8">
+            <FontAwesomeIcon icon={faSlidersSimple} className="mr-2 size-4" />
             View
           </Button>
         </DropdownMenuTrigger>

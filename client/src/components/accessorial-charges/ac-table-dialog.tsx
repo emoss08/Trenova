@@ -162,11 +162,7 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <ACForm control={control} />
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              loadingText="Saving Changes..."
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               Save
             </Button>
           </DialogFooter>

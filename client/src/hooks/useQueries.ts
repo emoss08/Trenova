@@ -55,6 +55,7 @@ import {
   getInvoiceControl,
   getRouteControl,
   getShipmentControl,
+  getTableNames,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
@@ -92,6 +93,7 @@ import {
   EmailControl,
   EmailProfile,
   Organization,
+  TableName,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
 import { Worker } from "@/types/worker";
@@ -735,12 +737,13 @@ export function useWorkers(show?: boolean, limit: number = 100) {
   return { data, selectWorkers, isError, isLoading };
 }
 
-export function useEmailProfiles() {
+export function useEmailProfiles(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["emailProfiles"] as QueryKeys[],
     queryFn: () => getEmailProfiles(),
+    enabled: show,
     initialData: () =>
       queryClient.getQueryData(["emailProfiles"] as QueryKeys[]),
     staleTime: Infinity,
@@ -854,4 +857,28 @@ export function useGoogleAPI() {
   });
 
   return { googleAPIData, isLoading, isError };
+}
+
+/**
+ * Get Table Names for select options
+ * @param show - show or hide the query
+ */
+export function useTableNames(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["tableNames"] as QueryKeys[],
+    queryFn: async () => getTableNames(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["tableNames"] as QueryKeys[]),
+    refetchOnWindowFocus: true,
+  });
+
+  const selectTableNames =
+    (data as TableName[])?.map((table: TableName) => ({
+      value: table.value,
+      label: table.label,
+    })) || [];
+
+  return { selectTableNames, isError, isLoading };
 }

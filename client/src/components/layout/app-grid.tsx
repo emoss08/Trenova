@@ -27,9 +27,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React from "react";
 
 function AppGridButton({ open }: { open: boolean }) {
   return (
@@ -42,9 +42,9 @@ function AppGridButton({ open }: { open: boolean }) {
             role="button"
             aria-label="Open Application Grid"
             aria-expanded={open}
-            className="relative h-9 border border-muted-foreground/40 hover:border-muted-foreground/80"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
           >
-            <FontAwesomeIcon icon={faGrid2} className="h-5 w-5" />
+            <FontAwesomeIcon icon={faGrid2} className="size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>

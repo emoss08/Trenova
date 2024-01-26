@@ -423,6 +423,8 @@ urlpatterns = [
         integration_api.GoogleAPIDetailViewSet.as_view(),
         name="organization-google-api-details",
     ),
+    path("api/table_names/", org_api.TableNamesView.as_view(), name="table-names"),
+    path("api/topic_names/", org_api.TopicNamesView.as_view(), name="topic-names"),
     path("graphql", PrivateGraphQLView.as_view(graphiql=True, schema=schema)),
 ]
 

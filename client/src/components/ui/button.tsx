@@ -15,23 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 import { cn } from "@/lib/utils";
+import { faSpinnerThird } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
 import * as React from "react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50",
+  "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-lime-400 text-black hover:bg-lime-500",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border-border bg-background hover:bg-accent hover:text-accent-foreground border",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-foreground/20",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         blue: "bg-blue-800 text-white hover:bg-blue-700",
@@ -41,7 +42,7 @@ const buttonVariants = cva(
         xs: "h-6 rounded-md px-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        icon: "size-10",
       },
     },
     defaultVariants: {
@@ -59,7 +60,7 @@ export interface ButtonProps
 
 const Button = React.forwardRef<
   HTMLButtonElement,
-  ButtonProps & { isLoading?: boolean; loadingText?: string }
+  ButtonProps & { isLoading?: boolean; }
 >(
   (
     {
@@ -68,7 +69,6 @@ const Button = React.forwardRef<
       size,
       asChild = false,
       isLoading,
-      loadingText,
       disabled,
       ...props
     },
@@ -87,10 +87,10 @@ const Button = React.forwardRef<
         {...props}
       >
         {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {loadingText || "Loading"}
-          </>
+          <FontAwesomeIcon
+            icon={faSpinnerThird}
+            className="size-6 animate-spin"
+          />
         ) : (
           props.children || "Button"
         )}

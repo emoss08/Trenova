@@ -28,9 +28,8 @@ from organization.models import BusinessUnit
 
 def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
     business_unit: BusinessUnit
-    created: bool
 
-    business_unit, created = BusinessUnit.objects.get_or_create(name=bs_name)
+    business_unit, _ = BusinessUnit.objects.get_or_create(name=bs_name)
     return business_unit
 
 

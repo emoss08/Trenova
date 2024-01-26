@@ -76,7 +76,6 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>
