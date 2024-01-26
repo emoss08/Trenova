@@ -17,6 +17,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserOrganization } from "@/hooks/useQueries";
+import { Image } from "@unpic/react";
 import { Link } from "react-router-dom";
 
 export function Logo() {
@@ -32,13 +33,15 @@ export function Logo() {
   }
 
   return (
-    <Link
-      className="max-w-[250px] truncate text-xl font-semibold text-accent-foreground"
-      to="/"
-      title={userOrganizationData?.name}
-    >
-      {userOrganizationData?.name}
-    </Link>
+    <span className=" max-w-[200px] truncate">
+      <Link
+        className="text-accent-foreground text-xl font-semibold"
+        to="/"
+        title={userOrganizationData?.name}
+      >
+        {userOrganizationData?.name}
+      </Link>
+    </span>
   );
 }
 
@@ -51,20 +54,29 @@ export function OrganizationNameLogo() {
   }
 
   return (
-    <Link
-      className="max-w-[250px] truncate text-xl font-bold text-accent-foreground"
-      to="/"
-      title={userOrganizationData?.name}
-    >
-      {userOrganizationData?.name}
-    </Link>
+    <span className=" max-w-[200px] truncate">
+      <Link
+        className="text-accent-foreground text-xl font-bold"
+        to="/"
+        title={userOrganizationData?.name}
+      >
+        {userOrganizationData?.name}
+      </Link>
+    </span>
   );
 }
 
 function LogoLink({ src, alt }: { src: string; alt: string }) {
   return (
     <Link to="/" style={{ textDecoration: "none" }}>
-      <img className="h-[40px] object-contain" src={src} alt={alt} />
+      <Image
+        src={src}
+        layout="constrained"
+        className="object-contain"
+        width={40}
+        height={40}
+        alt={alt}
+      />
     </Link>
   );
 }
