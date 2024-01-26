@@ -118,7 +118,6 @@ export function CustomerEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
           className="w-full"
         >
           Save

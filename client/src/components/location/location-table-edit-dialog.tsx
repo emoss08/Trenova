@@ -32,7 +32,7 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { locationSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { Location, LocationFormValues as FormValues } from "@/types/location";
+import { LocationFormValues as FormValues, Location } from "@/types/location";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
@@ -122,7 +122,6 @@ export function LocationEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
           className="w-full"
         >
           Save

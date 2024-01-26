@@ -20,7 +20,7 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { Tractor, TractorFormValues as FormValues } from "@/types/equipment";
+import { TractorFormValues as FormValues, Tractor } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
@@ -109,7 +109,6 @@ export function TractorEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
           className="w-full"
         >
           Save

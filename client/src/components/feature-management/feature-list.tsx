@@ -33,11 +33,11 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
   return (
     <li
       key={featureFlag.code}
-      className="flex flex-col overflow-hidden rounded-lg border bg-card text-center text-card-foreground"
+      className="bg-card text-card-foreground flex flex-col overflow-hidden rounded-lg border text-center"
     >
       <div className="flex flex-1 flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <h3 className="text-2xl font-semibold text-foreground">
+          <h3 className="text-foreground text-2xl font-semibold">
             {featureFlag.name}
           </h3>
           <div className="mt-2 flex">
@@ -61,7 +61,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           <ScrollArea className="mb-4 h-48">
             <dd
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              className="p-4 text-sm text-muted-foreground"
+              className="text-muted-foreground p-4 text-sm"
             ></dd>
           </ScrollArea>
         </dl>
@@ -74,7 +74,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-sm text-primary hover:underline hover:decoration-orange-600">
+          <button className="text-primary text-sm hover:underline hover:decoration-lime-600">
             Send Feedback
           </button>
         </div>
@@ -92,7 +92,7 @@ export default function FeatureList() {
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
           All features marked{" "}
-          <u className="font-bold underline decoration-orange-600">Paid Only</u>{" "}
+          <u className="font-bold underline decoration-lime-600">Paid Only</u>{" "}
           are only available to non-paid users during the beta phase. Once the
           beta phase is over, these features will be available to paid users
           only.

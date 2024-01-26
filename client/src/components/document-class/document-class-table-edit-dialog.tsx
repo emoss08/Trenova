@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { DocumentClassForm } from "@/components/document-class/document-class-table-dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { documentClassSchema } from "@/lib/validations/BillingSchema";
@@ -36,7 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { DocumentClassForm } from "@/components/document-class/document-class-table-dialog";
 
 function DocumentClassEditForm({
   documentClass,
@@ -78,7 +78,6 @@ function DocumentClassEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

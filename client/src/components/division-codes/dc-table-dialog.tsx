@@ -200,7 +200,6 @@ export function DCDialog({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
             >
               Save
             </Button>

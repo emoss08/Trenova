@@ -188,11 +188,7 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <EmailProfileForm control={control} />
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              loadingText={t("buttons.savingText", { ns: "common" })}
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               {t("buttons.save", { ns: "common" })}
             </Button>
           </DialogFooter>

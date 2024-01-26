@@ -15,17 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import {
-  DivisionCode,
-  DivisionCodeFormValues as FormValues,
-} from "@/types/accounting";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
-import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { DCForm } from "./dc-table-dialog";
-import { useGLAccounts } from "@/hooks/useQueries";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -34,10 +24,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useTableStore } from "@/stores/TableStore";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useGLAccounts } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
+import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
+import { useTableStore } from "@/stores/TableStore";
+import {
+  DivisionCode,
+  DivisionCodeFormValues as FormValues,
+} from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { DCForm } from "./dc-table-dialog";
 
 export function DCEditForm({
   divisionCode,
@@ -93,7 +93,6 @@ export function DCEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

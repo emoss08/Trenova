@@ -272,7 +272,6 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText={t("buttons.savingText", { ns: "common" })}
               className="w-full"
             >
               {t("buttons.save", { ns: "common" })}

@@ -30,8 +30,8 @@ import { formatDate } from "@/lib/date";
 import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  QualifierCode,
   QualifierCodeFormValues as FormValues,
+  QualifierCode,
 } from "@/types/stop";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -82,7 +82,6 @@ function QualifierCodeEditForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Saving Changes..."
         >
           Save
         </Button>

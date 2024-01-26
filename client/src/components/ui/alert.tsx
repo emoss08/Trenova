@@ -25,7 +25,7 @@ const alertVariants = cva(
     variants: {
       variant: {
         default:
-          "border-orange-600 bg-orange-400/30 text-orange-900 dark:bg-orange-800/30 dark:text-orange-100 dark:[&>svg]:text-orange-600",
+          "border-lime-600 bg-lime-400/30 text-lime-900 dark:bg-lime-800/30 dark:text-lime-100 dark:[&>svg]:text-lime-600",
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
       },

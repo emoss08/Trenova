@@ -37,8 +37,8 @@ import {
 import { cleanObject, cn } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  equipmentStatusChoices,
   TractorFormValues as FormValues,
+  equipmentStatusChoices,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -362,7 +362,6 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
             <Button
               type="submit"
               isLoading={isSubmitting}
-              loadingText="Saving Changes..."
               className="w-full"
             >
               Save
