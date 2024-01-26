@@ -17,11 +17,10 @@
 import re
 from typing import Any
 
+from accounts.models import JobTitle, User, UserProfile
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 from django.db.transaction import atomic
-
-from accounts.models import JobTitle, User, UserProfile
 from organization.models import BusinessUnit, Organization
 from utils.helpers import get_or_create_business_unit
 
@@ -82,13 +81,13 @@ class Command(BaseCommand):
             "--organization",
             type=str,
             help="Name of the system organization.",
-            default="sys",
+            default="Trenova Transportation",
         )
         parser.add_argument(
             "--business_unit",
             type=str,
             help="Name of the system business unit.",
-            default="sys",
+            default="Trenova Transportation",
         )
 
     @staticmethod
