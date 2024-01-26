@@ -20,7 +20,6 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
-import { PlusIcon } from "@radix-ui/react-icons";
 import { Table as TableType, flexRender } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
@@ -28,6 +27,8 @@ import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableViewOptions } from "./data-table-view-options";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 
 export function DataTableHeader<K extends Record<string, any>>({
   table,
@@ -96,7 +97,7 @@ const ButtonConfig: React.FC<{
       className="h-8"
       disabled={isDisabled}
     >
-      <PlusIcon className="mr-2 h-4 w-4" /> {buttonLabel}
+      <FontAwesomeIcon icon={faPlus} className="mr-1 size-4" /> {buttonLabel}
     </Button>
   );
 });
@@ -163,7 +164,7 @@ export function DataTableTopBar<K>({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X className="ml-2 h-4 w-4" />
+            <X className="ml-2 size-4" />
           </Button>
         )}
       </div>
