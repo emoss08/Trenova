@@ -97,7 +97,7 @@ const NavigationMenuItemWithPermission = React.memo(
               >
                 {data.label}
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur-lg">
+              <NavigationMenuContent className="bg-popover/95 backdrop-blur-lg supports-[backdrop-filter]:bg-popover/80">
                 {data.content}
                 {data.footerContent && (
                   <FooterContainer className="p-3">

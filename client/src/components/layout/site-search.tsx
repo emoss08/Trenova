@@ -61,16 +61,15 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 bg-muted/60 hover:border-muted-foreground/80 hover:bg-accent group hidden h-9 w-[250px] items-center rounded-md border px-3 py-2 text-sm md:flex"
+            className="group flex h-8 w-[250px] items-center justify-between rounded-md border border-foreground/20 bg-secondary px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
           >
-            <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 h-5 w-5" />
-            <span className="text-muted-foreground">
-              Type{" "}
-              <kbd className="border-muted-foreground/20 bg-muted text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-                <span className="text-xs">⌘K</span>
-              </kbd>{" "}
-              to search
-            </span>
+            <div className="flex items-center">
+              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
+              <span className="text-muted-foreground">Search...</span>
+            </div>
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-foreground opacity-100">
+              <span className="text-xs">⌘ K</span>
+            </kbd>
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>
@@ -85,7 +84,7 @@ export function SiteSearch() {
   const navigate = useNavigate();
   const { isAuthenticated, userHasPermission } = useUserPermissions();
   const [open, setOpen] = useHeaderStore.use("searchDialogOpen");
-  const [searchText, setSearchText] = React.useState("");
+  const [searchText, setSearchText] = React.useState<string>("");
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -140,11 +139,11 @@ export function SiteSearch() {
       <CommandList>
         {Object.entries(filteredGroups).length === 0 && (
           <CommandEmpty>
-            <AlertCircle className="text-accent-foreground mx-auto h-6 w-6" />
-            <p className="text-accent-foreground mt-4 font-semibold">
+            <AlertCircle className="mx-auto size-6 text-accent-foreground" />
+            <p className="mt-4 font-semibold text-accent-foreground">
               No results found
             </p>
-            <p className="text-muted-foreground mt-2">
+            <p className="mt-2 text-muted-foreground">
               No pages found for this search term. Please try again.
             </p>
           </CommandEmpty>
@@ -169,7 +168,7 @@ export function SiteSearch() {
           </React.Fragment>
         ))}
       </CommandList>
-      <div className="bg-background sticky mx-2 flex justify-center space-x-1 border-t py-2">
+      <div className="sticky flex justify-center space-x-1 border-t bg-background py-2">
         <span className="text-xs">&#8593;</span>
         <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>
