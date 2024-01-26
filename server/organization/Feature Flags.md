@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document provides a comprehensive list of all feature flags implemented in the Trenova application. Feature flags are
+This document provides a comprehensive list of all feature flags implemented in the Trenova application. Feature flags
+are
 a powerful tool to control the rollout of features, allowing for phased releases and beta testing.
 
 ## Feature Flag Catalog
@@ -18,7 +19,6 @@ a powerful tool to control the rollout of features, allowing for phased releases
 | Pricing Tool                | `ENABLE_PRICING_TOOL`      | Yes         | No                | This feature flag enables the Pricing Tool, which allows users to manage their pricing information. For more information, please refer to the [Pricing Tool documentation](#)                                                                                                                                                                                                                                                            |
 | Worker Feasibility Tool     | `ENABLE_WORKER_FEAS_TOOL`  | Yes         | Yes               | This feature flag enables the Worker Feasibility Tool, which allows users to manage their worker feasibility information. For more information, please refer to the [Worker Feasibility Tool documentation](#)                                                                                                                                                                                                                           |
 | Document Studio             | `ENABLE_DOC_STUDIO`        | Yes         | Yes               | This feature flag enables the Document Studio, which allows users to manage their document templates. For more information, please refer to the [Document Studio documentation](#)                                                                                                                                                                                                                                                       |
-
 
 Note: Links to detailed descriptions and further information are placeholders and should be replaced with actual URLs or
 references to the respective sections in the application's documentation.
