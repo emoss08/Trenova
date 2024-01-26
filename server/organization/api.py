@@ -35,10 +35,7 @@ from core import checks
 from core.permissions import CustomObjectPermissions
 from kafka.managers import KafkaManager
 from organization import exceptions, models, selectors, serializers
-from organization.services.table_choices import (
-    get_all_table_names,
-    get_all_table_names_dict,
-)
+from organization.services.table_choices import get_all_table_names_dict
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):

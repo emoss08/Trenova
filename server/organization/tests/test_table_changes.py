@@ -21,6 +21,7 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+
 from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.exceptions import ConditionalStructureError
