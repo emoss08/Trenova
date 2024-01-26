@@ -1,3 +1,19 @@
+/*
+ * COPYRIGHT(c) 2024 Trenova
+ *
+ * This file is part of Trenova.
+ *
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
 import { DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import * as React from "react";
@@ -27,7 +43,7 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0 shadow-lg">
-        <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:size-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:size-5">
           {children}
         </Command>
       </DialogContent>
@@ -40,7 +56,7 @@ const CommandInput = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
   <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-    <MagnifyingGlassIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+    <MagnifyingGlassIcon className="mr-2 size-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
