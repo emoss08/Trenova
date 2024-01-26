@@ -41,10 +41,7 @@ function MapOptionsButton() {
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            className="bg-background text-foreground hover:text-background"
-            size="icon"
-          >
+          <Button size="icon">
             <ComponentIcon size={24} />
           </Button>
         </TooltipTrigger>
