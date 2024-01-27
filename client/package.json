@@ -59,6 +59,7 @@
     "react-hook-form": "^7.49.3",
     "react-hot-toast": "^2.4.1",
     "react-i18next": "^14.0.1",
+    "react-device-detect": "^2.2.3",
     "react-router-dom": "^6.21.3",
     "react-select": "^5.8.0",
     "recharts": "^2.10.4",
