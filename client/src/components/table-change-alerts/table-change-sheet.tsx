@@ -27,7 +27,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useEmailProfiles, useTableNames } from "@/hooks/useQueries";
+import { useEmailProfiles, useTableNames, useTopics } from "@/hooks/useQueries";
 import {
   databaseActionChoices,
   sourceChoices,
@@ -54,13 +54,20 @@ function SourceField({
 }) {
   const { t } = useTranslation("admin.tablechangealert");
   const { selectTableNames, isError, isLoading } = useTableNames();
+  const {
+    selectTopics,
+    isError: isTopicError,
+    isLoading: isTopicsLoading,
+  } = useTopics();
 
   return sourceChoice === "KAFKA" ? (
     <FormControl>
       <SelectInput
         name="topic"
         rules={{ required: true }}
-        options={sourceChoices}
+        options={selectTopics}
+        isLoading={isTopicsLoading}
+        isFetchError={isTopicError}
         control={control}
         label={t("fields.topic.label")}
         placeholder={t("fields.topic.placeholder")}
@@ -258,7 +265,6 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
           onSubmit={handleSubmit(onSubmit)}
           className="flex h-full flex-col overflow-y-auto"
         >
-          {/* <TableChangeAlertNotice /> */}
           <TableChangeAlertForm control={control} open={open} watch={watch} />
           <SheetFooter className="mb-12">
             <Button

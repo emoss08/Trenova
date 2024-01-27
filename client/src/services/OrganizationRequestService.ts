@@ -29,6 +29,7 @@ import {
   FeatureFlag,
   GoogleAPI,
   Organization,
+  Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
 
@@ -199,9 +200,22 @@ export async function getGoogleApiInformation(): Promise<GoogleAPI> {
   return response.data.results;
 }
 
+/**
+ * Fetches topic values from the server.
+ * @returns A promise that resolves to an array of Table Names.
+ */
 export async function getTableNames(): Promise<
   { value: string; label: string }[]
 > {
   const response = await axios.get("/table_names/");
+  return response.data.results;
+}
+
+/**
+ * Fetches topic values from the server.
+ * @returns A promise that resolves to an array of Table Names.
+ */
+export async function getTopicNames(): Promise<Topic[]> {
+  const response = await axios.get("/topic_names/");
   return response.data.results;
 }

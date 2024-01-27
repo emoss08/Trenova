@@ -50,7 +50,7 @@ export function DataTablePagination<TData>({
   return table.getPageCount() > 0 ? (
     <div className="flex items-center justify-between px-2">
       <div className="hidden sm:block">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Showing <span className="font-medium">{fromValue}</span> to&nbsp;
           <span className="font-medium">{toValue}</span> of&nbsp;
           <span className="font-medium">{totalCount}</span>&nbsp;results
