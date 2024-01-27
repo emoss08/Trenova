@@ -140,7 +140,7 @@ export function DataTableTopBar<K>({
     [table],
   );
 
-  return table.getPageCount() > 1 ? (
+  return table.getPageCount() > 0 ? (
     <div className="flex flex-col justify-between sm:flex-row">
       <div className="mr-2 flex flex-1 flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
         <Input
