@@ -247,7 +247,6 @@ export function NotificationMenu() {
           onOpen: () => console.info("Notifications Websocket Connected"),
           onMessage: (event: MessageEvent) => {
             const data = JSON.parse(event.data);
-            console.log(data);
             queryClient
               .invalidateQueries({
                 queryKey: ["userNotifications", userId],

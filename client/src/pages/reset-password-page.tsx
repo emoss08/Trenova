@@ -68,7 +68,6 @@ export function ResetPasswordForm() {
         );
       }
     } catch (error: any) {
-      console.info("error", error);
       toast.error(
         () => (
           <div className="flex flex-col space-y-1">
@@ -136,7 +135,7 @@ function ResetPasswordPage() {
               Remember your password?&nbsp;
               <InternalLink
                 to="/login"
-                className="font-medium text-primary underline underline-offset-4 hover:decoration-lime-500"
+                className="text-primary font-medium underline underline-offset-4 hover:decoration-lime-500"
               >
                 Login instead
               </InternalLink>

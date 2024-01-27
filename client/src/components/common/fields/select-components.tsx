@@ -55,7 +55,7 @@ export type SelectOption = {
 export function Option({ ...props }: OptionProps) {
   return (
     <components.Option {...props}>
-      <div className="relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
+      <div className="hover:bg-accent relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm">
         {props.label}
         {props.isSelected && (
           <CheckIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />
@@ -142,7 +142,7 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
  * @constructor SelectDescription
  */
 export function SelectDescription({ description }: { description: string }) {
-  return <p className="text-xs text-foreground/70">{description}</p>;
+  return <p className="text-foreground/70 text-xs">{description}</p>;
 }
 
 /**
@@ -206,12 +206,10 @@ export function NoOptionsMessage({
 }) {
   const { popoutLink, hasPopoutWindow } = props.selectProps || {};
 
-  console.info("selectProps", props.selectProps);
-
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="my-1 text-sm text-accent-foreground">
+        <p className="text-accent-foreground my-1 text-sm">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -318,7 +316,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-background py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
+      className="bg-background text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm py-3.5 pl-3 text-xs font-normal"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

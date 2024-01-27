@@ -338,7 +338,6 @@ export default function GeneralPage({
 }: {
   organization: Organization;
 }) {
-  console.info("organization", organization);
   return (
     <>
       <OrganizationForm organization={organization} />

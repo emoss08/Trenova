@@ -58,8 +58,6 @@ function EmailProfileEditForm({
     },
   });
 
-  console.info("emailProfile", emailProfile);
-
   const mutation = useCustomMutation<FormValues>(
     control,
     {
