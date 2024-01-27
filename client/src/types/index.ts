@@ -105,8 +105,9 @@ export type QueryKeys =
   | "reconciliationQueue"
   | "users"
   | "usStates"
+  | "userOrganization"
+  | "userFavorites"
   | "qualifier-code-table-data"
   | "qualifierCodes"
-  | "userOrganization"
   | "worker-table-data"
   | "workers";

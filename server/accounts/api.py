@@ -16,11 +16,16 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
+from accounts import models, serializers
+from accounts.models import CustomGroup
+from accounts.permissions import OwnershipPermission
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.permissions import CustomObjectPermissions
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Permission
 from django.db.models import Prefetch, QuerySet
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import (
     exceptions,
@@ -32,12 +37,8 @@ from rest_framework import (
     viewsets,
 )
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
 from rest_framework.request import Request
-
-from accounts import models, serializers
-from accounts.models import CustomGroup
-from accounts.permissions import OwnershipPermission
-from core.permissions import CustomObjectPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -472,5 +473,31 @@ class RemoveUserSessionView(views.APIView):
                 "message": "You have been logged out by an admin.",
             },
         )
+
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserFavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.UserFavoriteSerializer
+    queryset = models.UserFavorite.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self) -> QuerySet[models.UserFavorite]:
+        return self.queryset.filter(user=self.request.user)
+
+    @action(detail=False, methods=["post"])
+    def delete(self, request: Request) -> response.Response:
+        # Make sure you're parsing the JSON body correctly
+        page_id = request.data.get("page")
+        if not page_id:
+            return response.Response(
+                {"error": "Page is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Find and delete the UserFavorite instance
+        user_favorite = get_object_or_404(
+            models.UserFavorite, user=request.user, page=page_id
+        )
+        user_favorite.delete()
 
         return response.Response(status=status.HTTP_204_NO_CONTENT)

@@ -15,6 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from accounting import api as accounting_api
+from accounts import api as accounts_api
+from backend.schema import PrivateGraphQLView, schema
+from billing import api as billing_api
+from commodities import api as commodities_api
+from customer import api as customer_api
+from dispatch import api as dispatch_api
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -24,15 +31,6 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework import routers
-
-from accounting import api as accounting_api
-from accounts import api as accounts_api
-from backend.schema import PrivateGraphQLView, schema
-from billing import api as billing_api
-from commodities import api as commodities_api
-from customer import api as customer_api
-from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
 from invoicing import api as invoicing_api
@@ -42,6 +40,7 @@ from organization import api as org_api
 from plugin import api as plugin_api
 from reports import api as reports_api
 from reports import views as reports_views
+from rest_framework import routers
 from route import api as route_api
 from shipment import api as shipment_api
 from stops import api as stops_api
@@ -54,6 +53,7 @@ router.register(r"users", accounts_api.UserViewSet, basename="users")
 router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job-titles")
 router.register(r"groups", accounts_api.GroupViewSet, basename="groups")
 router.register(r"permissions", accounts_api.PermissionViewSet, basename="permissions")
+router.register(r"favorites", accounts_api.UserFavoriteViewSet, basename="favorites")
 
 # Accounting Routes
 router.register(

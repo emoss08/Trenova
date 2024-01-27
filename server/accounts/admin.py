@@ -17,6 +17,7 @@
 
 from typing import Any
 
+from accounts import models
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
@@ -40,8 +41,6 @@ from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-
-from accounts import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
@@ -50,7 +49,7 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     Profile inline
     """
 
-    model = models.UserProfile  # type: ignore
+    model = models.UserProfile
     fk_name = "user"
 
 
@@ -364,3 +363,8 @@ class SessionAdmin(ModelAdmin):
 @admin.register(models.CustomGroup)
 class CustomGroupAdmin(GroupAdmin):
     list_display = ("name", "organization", "business_unit")
+
+
+@admin.register(models.UserFavorite)
+class UserFavoriteAdmin(admin.ModelAdmin):
+    list_display = ("user", "page")

@@ -379,7 +379,7 @@ CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_BEAT_SCHEDULER = env("CELERY_BEAT_SCHEDULER")
-CELERY_TASK_ACKS_LATE = env("CELERY_TASK_ACKS_LATE", default=True, cast=bool)
+CELERY_TASK_ACKS_LATE = env("CELERY_TAK_ACKS_LATE", default=True, cast=bool)
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 CELERY_BROKER_TRANSPORT_OPTIONS = {"confirm_publish": True, "confirm_timeout": 5.0}
 CELERY_TASK_REJECT_ON_WORKER_LOST = env(
@@ -430,6 +430,7 @@ CACHEOPS = {
     "organization.OrganizationFeatureFlag": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
     "location.states": {"ops": "all"},
+    "accounts.userfavorite": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
 

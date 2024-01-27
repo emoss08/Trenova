@@ -37,7 +37,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USZipCodeField
-
 from organization.validators import validate_org_timezone
 from utils.models import (
     ChoiceField,
@@ -767,3 +766,57 @@ class Token(models.Model):
         """
 
         return self.expires is not None and timezone.now() >= self.expires
+
+
+class UserFavorite(GenericModel):
+    """
+    Stores the pages for a :model:`accounts.User` that they have favorited.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="favorites",
+        related_query_name="favorite",
+        verbose_name=_("User"),
+    )
+    page = models.CharField(
+        _("Page"),
+        max_length=255,
+        help_text=_("The page that the user favorited"),
+        unique=True,
+    )
+    created = models.DateTimeField(
+        _("Created"),
+        auto_now_add=True,
+        help_text=_("The date and time the favorite was created"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the UserFavorites model
+        """
+
+        verbose_name = _("User Favorite")
+        verbose_name_plural = _("User Favorites")
+        db_table = "user_favorite"
+        db_table_comment = "Stores the pages favorited by a user."
+
+    def __str__(self) -> str:
+        return textwrap.shorten(
+            f"{self.page} ({self.user.username})", width=30, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """Absolute URL for the UserFavorite.
+
+        Returns:
+            str: Get the absolute url of the user favorite
+        """
+        return reverse("user-favorite-detail", kwargs={"pk": self.pk})
