@@ -179,8 +179,8 @@ export function ShipmentList({
               {/* Shipment origin and appointment */}
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
-                  <div className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-foreground">
-                    <ArrowUp className="inline-block h-3 w-3 text-background" />
+                  <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-foreground">
+                    <ArrowUp className="inline-block size-3 text-background" />
                   </div>
                   <span className="font-semibold text-foreground">
                     {shipment.originAddress}
@@ -194,8 +194,8 @@ export function ShipmentList({
               {/* Shipment destination and appointment */}
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
-                  <div className="mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-blue-700">
-                    <ArrowDown className="inline-block h-3 w-3 text-white" />
+                  <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-blue-700">
+                    <ArrowDown className="inline-block size-3 text-white" />
                   </div>
                   <span>
                     <span className="font-semibold text-foreground">

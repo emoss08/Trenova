@@ -84,25 +84,25 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-foreground">
             {t("title")}
           </h1>
-          <p className="text-muted-foreground text-sm">{t("subTitle")}</p>
+          <p className="text-sm text-muted-foreground">{t("subTitle")}</p>
         </div>
         <Separator />
       </div>
       <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
         <div className="px-4 sm:px-0">
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             {t("organizationDetails")}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="border-border bg-background m-4 border sm:rounded-xl md:col-span-2"
+          className="m-4 border border-border bg-background sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -125,7 +125,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   >
                     {t("fields.logo.placeholder")}
                   </Button>
-                  <p className="text-muted-foreground mt-2 text-xs leading-5">
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     {t("fields.logo.description")}
                   </p>
                 </div>
@@ -311,7 +311,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
+          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

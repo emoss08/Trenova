@@ -30,7 +30,7 @@ import { Button } from "../ui/button";
 function DeliverySlotAlert() {
   return (
     <Alert className="my-5">
-      <InfoIcon className="h-5 w-5" />
+      <InfoIcon className="size-5" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -66,7 +66,7 @@ export function DeliverySlotForm({
   return (
     <>
       <DeliverySlotAlert />
-      <div className="flex h-full w-full flex-col">
+      <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
             <div className="max-h-[500px] overflow-y-auto">
@@ -157,7 +157,7 @@ export function DeliverySlotForm({
               className="mb-10 w-fit"
               onClick={handleAddSlot}
             >
-              <PlusIcon className="mr-2 h-4 w-4" />
+              <PlusIcon className="mr-2 size-4" />
               Add Another Delivery Slot
             </Button>
           </>

@@ -38,9 +38,7 @@ export const billingNavLinks = [
         permission: "billing.use_billing_client",
         description:
           "This module enables the generation and dispatch of invoices to customers efficiently. It streamlines the billing cycle, ensuring timely and accurate invoicing, and supports various billing formats tailored to customer needs.",
-        icon: (
-          <FontAwesomeIcon icon={faMoneyBillTransfer} className="h-4 w-4" />
-        ),
+        icon: <FontAwesomeIcon icon={faMoneyBillTransfer} className="size-4" />,
       },
       {
         key: "billingConfiguration",
@@ -48,7 +46,7 @@ export const billingNavLinks = [
         description:
           "Centralize configuration settings for the billing process. Adjust and customize billing workflows, rules, and parameters to align with business practices and financial strategies.",
         link: "#", // Placeholder, replace with the actual link
-        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faFolders} className="size-4" />,
         subLinks: [
           {
             label: "Charge Types",
@@ -115,7 +113,7 @@ export const dispatchNavLinks = [
         permission: "view_rate",
         description:
           "This module allows for the comprehensive management of freight and transportation rates. It includes features for setting, adjusting, and analyzing rates, ensuring competitive pricing and operational efficiency.",
-        icon: <FontAwesomeIcon icon={faVault} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faVault} className="size-4" />,
       },
       {
         key: "dispatchConfiguration",
@@ -123,7 +121,7 @@ export const dispatchNavLinks = [
         description:
           "Central hub for configuring and customizing the dispatch process. This includes setting dispatch parameters, defining operational rules, and ensuring alignment with logistical strategies.",
         link: "#",
-        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faFolders} className="size-4" />,
         subLinks: [
           {
             key: "commentType",
@@ -190,9 +188,7 @@ export const equipmentNavLinks = [
         permission: "view_equipmentmaintenanceplan",
         description:
           "This section facilitates the creation and management of comprehensive maintenance schedules for various equipment. It enables precise tracking and proactive maintenance activities, ensuring optimal equipment performance and longevity.",
-        icon: (
-          <FontAwesomeIcon icon={faScrewdriverWrench} className="h-4 w-4" />
-        ),
+        icon: <FontAwesomeIcon icon={faScrewdriverWrench} className="size-4" />,
       },
       {
         key: "equipmentConfiguration",
@@ -200,7 +196,7 @@ export const equipmentNavLinks = [
         link: "#",
         description:
           "Access and modify the core configuration settings governing the equipment maintenance processes. This central hub allows for the customization and fine-tuning of maintenance workflows and parameters.",
-        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faFolders} className="size-4" />,
         subLinks: [
           {
             key: "equipmentTypes",
@@ -251,7 +247,7 @@ export const shipmentNavLinks = [
         permission: "view_shipment",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
-        icon: <FontAwesomeIcon icon={faTruck} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faTruck} className="size-4" />,
       },
       {
         key: "shipmentConfiguration",
@@ -259,7 +255,7 @@ export const shipmentNavLinks = [
         link: "#",
         description:
           "Centralize the configuration for all shipment-related processes. Adjust parameters and settings to align shipment operations with business goals and operational efficiency.",
-        icon: <FontAwesomeIcon icon={faFolders} className="h-4 w-4" />,
+        icon: <FontAwesomeIcon icon={faFolders} className="size-4" />,
         subLinks: [
           {
             key: "formulaTemplates",

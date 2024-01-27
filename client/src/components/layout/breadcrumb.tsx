@@ -94,7 +94,7 @@ export function Breadcrumb() {
           {currentRoute.title}
         </h2>
         <div className="flex items-center">
-          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
+          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
             {breadcrumbText}
           </a>
         </div>

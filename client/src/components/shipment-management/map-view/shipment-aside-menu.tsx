@@ -125,7 +125,7 @@ export function ShipmentAsideMenus({
           control={control}
           placeholder="Search Shipments..."
           icon={
-            <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
+            <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
           }
         />
       </div>

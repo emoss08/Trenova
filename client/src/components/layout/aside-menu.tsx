@@ -171,7 +171,7 @@ const LinksComponent = ({
                 {linkItem.label}
               </div>
               <ChevronDownIcon
-                className={`h-4 w-4 ${
+                className={`size-4 ${
                   openSubMenu === linkItem.key ? "rotate-180" : ""
                 }`}
               />
@@ -228,7 +228,7 @@ export function AsideMenuSheet() {
       menuKey: "dashboardMenu",
       label: "Dashboard",
       link: "/",
-      icon: <FontAwesomeIcon icon={faGrid2} className="h-4 w-4" />,
+      icon: <FontAwesomeIcon icon={faGrid2} className="size-4" />,
     },
     {
       menuKey: "billingMenu",
@@ -263,7 +263,7 @@ export function AsideMenuSheet() {
       label: "Administrator",
       link: "/admin/dashboard/",
       permission: "view_admin_dashboard",
-      icon: <FontAwesomeIcon icon={faUserCrown} className="h-4 w-4" />,
+      icon: <FontAwesomeIcon icon={faUserCrown} className="size-4" />,
     },
   ];
 
@@ -273,9 +273,9 @@ export function AsideMenuSheet() {
         <Button
           size="icon"
           variant="outline"
-          className="flex h-9 w-9 border-muted-foreground/40 hover:border-muted-foreground/80 md:hidden"
+          className="flex size-9 border-muted-foreground/40 hover:border-muted-foreground/80 md:hidden"
         >
-          <FontAwesomeIcon icon={faBars} className="h-5 w-5" />
+          <FontAwesomeIcon icon={faBars} className="size-5" />
         </Button>
       </SheetTrigger>
       <SheetContent className="w-[400px] overflow-auto" side="left">

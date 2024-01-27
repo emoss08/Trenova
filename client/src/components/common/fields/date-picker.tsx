@@ -133,12 +133,12 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
         {isOpen && (
           <div
             ref={popoverRef}
-            className="z-1000 border-muted bg-background absolute bottom-full mb-2 rounded-sm border shadow-md"
+            className="z-1000 absolute bottom-full mb-2 rounded-sm border border-muted bg-background shadow-md"
           >
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select

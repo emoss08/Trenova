@@ -56,7 +56,7 @@ function Filter({ title, options, loading }: FilterOptions) {
       <PopoverTrigger asChild>
         <div className="flex items-center space-x-2 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
           <span className="truncate">{title}</span>
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="size-4" />
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">

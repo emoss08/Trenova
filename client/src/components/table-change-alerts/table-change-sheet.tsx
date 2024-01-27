@@ -269,11 +269,7 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
             >
               {t("buttons.cancel", { ns: "common" })}
             </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              className="w-full"
-            >
+            <Button type="submit" isLoading={isSubmitting} className="w-full">
               {t("buttons.save", { ns: "common" })}
             </Button>
           </SheetFooter>

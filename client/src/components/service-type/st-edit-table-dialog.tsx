@@ -75,10 +75,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
     >
       <ServiceTypeForm control={control} />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

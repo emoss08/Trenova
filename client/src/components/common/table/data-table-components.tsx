@@ -46,7 +46,7 @@ export function DataNotFound({
 }) {
   return (
     <div className="my-10 text-center">
-      <Icon className="text-foreground mx-auto h-10 w-10" />
+      <Icon className="mx-auto size-10 text-foreground" />
       <h3 className="mt-2 text-sm font-semibold text-gray-900">
         No {upperFirst(name)}
       </h3>
@@ -58,7 +58,7 @@ export function DataNotFound({
           size="sm"
           onClick={onButtonClick}
         >
-          <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+          <PlusIcon className="-ml-0.5 mr-1.5 size-5" aria-hidden="true" />
           Add {upperFirst(name)}
         </Button>
       </div>
@@ -116,11 +116,11 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
 export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <div className="text-center">
-      <AlertTriangle className="text-accent-foreground mx-auto h-10 w-10" />
-      <p className="text-accent-foreground mt-2 font-semibold">
+      <AlertTriangle className="mx-auto size-10 text-accent-foreground" />
+      <p className="mt-2 font-semibold text-accent-foreground">
         Well, this is embarrassing...
       </p>
-      <p className="text-muted-foreground mt-2">
+      <p className="mt-2 text-muted-foreground">
         {message || "There was an error loading the data."}
       </p>
     </div>

@@ -73,10 +73,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
     <form onSubmit={handleSubmit(onSubmit)}>
       <CommentTypeForm control={control} />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

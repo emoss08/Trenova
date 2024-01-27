@@ -115,10 +115,7 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DocumentClassForm control={control} />
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               Save
             </Button>
           </DialogFooter>

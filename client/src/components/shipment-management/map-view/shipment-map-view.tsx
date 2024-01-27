@@ -121,8 +121,8 @@ export function ShipmentMapView() {
   return isLoading ? (
     <>
       <div className="flex flex-col items-center justify-center">
-        <Loader2 className="text-foreground size-20 animate-spin" />
-        <p className="text-foreground mt-4 font-medium">Loading Map...</p>
+        <Loader2 className="size-20 animate-spin text-foreground" />
+        <p className="mt-4 font-medium text-foreground">Loading Map...</p>
       </div>
     </>
   ) : (
@@ -141,7 +141,7 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
+              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
             }
           />
         </div>

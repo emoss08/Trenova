@@ -122,14 +122,14 @@ function NotificationButton({
             role="button"
             aria-label="Open Application Grid"
             aria-expanded={open}
-            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
+            className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
           >
             <FontAwesomeIcon icon={faBell} className="size-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1"></span>
+                <span className="relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1 ring-background"></span>
               </span>
             )}
           </Button>
@@ -156,16 +156,16 @@ function NotificationContent({
   return (
     <>
       {notificationsLoading ? (
-        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
+        <div className="flex flex-col space-y-2 border-b border-accent px-4 py-2">
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">
               <Skeleton className="h-4 w-20" />
             </h4>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               <Skeleton className="h-4 w-20" />
             </span>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             <Skeleton className="h-4 w-20" />
           </p>
         </div>
@@ -341,7 +341,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="bg-background w-80 p-4"
+        className="w-80 bg-background p-4"
         sideOffset={10}
         alignOffset={-40}
         align="end"

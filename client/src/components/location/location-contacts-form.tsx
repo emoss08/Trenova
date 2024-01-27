@@ -38,7 +38,7 @@ export function LocationContactForm({
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex size-full flex-col">
       {fields.length > 0 ? (
         <>
           <div className="max-h-[600px] overflow-y-auto">

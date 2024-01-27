@@ -199,10 +199,7 @@ export function HazardousMaterialDialog({
         <form onSubmit={handleSubmit(onSubmit)}>
           <HazardousMaterialForm control={control} />
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               {t("buttons.save", { ns: "common" })}
             </Button>
           </DialogFooter>
