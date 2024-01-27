@@ -210,7 +210,7 @@ const links = [
     group: "Notifications",
   },
   {
-    href: "#",
+    href: "/admin/data-retention/",
     title: "Data Retention",
     icon: (
       <FontAwesomeIcon
