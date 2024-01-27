@@ -99,34 +99,6 @@ export function ThemeSwitcher() {
             </span>
           </label>
         </div>
-        <div className="space-y-2">
-          <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            <button
-              type="button"
-              onClick={() => switchTheme("slate-dark")}
-              className="border-primary text-primary focus-visible:ring-ring sr-only aspect-square size-4 rounded-full border shadow focus:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
-            ></button>
-            <div className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground items-center rounded-md border-2 p-1">
-              <div className="space-y-2 rounded-sm bg-slate-950 p-2">
-                <div className="space-y-2 rounded-md bg-slate-800 p-2 shadow-sm">
-                  <div className="h-2 w-[80px] rounded-lg bg-slate-400"></div>
-                  <div className="h-2 w-[100px] rounded-lg bg-slate-400"></div>
-                </div>
-                <div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-sm">
-                  <div className="size-4 rounded-full bg-slate-400"></div>
-                  <div className="h-2 w-[100px] rounded-lg bg-slate-400"></div>
-                </div>
-                <div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-sm">
-                  <div className="size-4 rounded-full bg-slate-400"></div>
-                  <div className="h-2 w-[100px] rounded-lg bg-slate-400"></div>
-                </div>
-              </div>
-            </div>
-            <span className="block w-full p-2 text-center font-normal">
-              Slate Dark
-            </span>
-          </label>
-        </div>
       </div>
       <Label>Topbar</Label>
       <p className="text-muted-foreground text-[0.8rem]">

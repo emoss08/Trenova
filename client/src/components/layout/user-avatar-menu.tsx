@@ -238,9 +238,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
             <DropdownMenuItem onClick={() => switchTheme("dark")}>
               Dark
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => switchTheme("slate-dark")}>
-              Slate Dark
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => switchTheme("system")}>
               System
