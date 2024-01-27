@@ -61,7 +61,7 @@ function OptionsDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="h-9 font-semibold lg:flex">
-          <MoreVerticalIcon className="mr-1 mt-0.5 h-4 w-4" />
+          <MoreVerticalIcon className="mr-1 mt-0.5 size-4" />
           Options
         </Button>
       </DropdownMenuTrigger>

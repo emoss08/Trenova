@@ -87,10 +87,7 @@ function RCEditForm({
         isError={isError}
       />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

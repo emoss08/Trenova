@@ -72,10 +72,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
     <form onSubmit={handleSubmit(onSubmit)}>
       <ChargeTypeForm control={control} />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

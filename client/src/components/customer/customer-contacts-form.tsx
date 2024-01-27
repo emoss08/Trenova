@@ -50,7 +50,7 @@ export function CustomerContactForm({
 
   return (
     <>
-      <div className="flex h-full w-full flex-col">
+      <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
             <div className="max-h-[600px] overflow-y-auto">
@@ -152,7 +152,7 @@ export function CustomerContactForm({
               className="mb-10 w-fit"
               onClick={handleAddContact}
             >
-              <PlusIcon className="mr-2 h-4 w-4" />
+              <PlusIcon className="mr-2 size-4" />
               Add Another Contacts
             </Button>
           </>

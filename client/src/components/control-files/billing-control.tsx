@@ -15,24 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "@/components/ui/button";
-import { useBillingControl } from "@/hooks/useQueries";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { SelectInput } from "@/components/common/fields/select-input";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  BillingControl as BillingControlType,
-  BillingControlFormValues,
-} from "@/types/billing";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useBillingControl } from "@/hooks/useQueries";
 import { billingControlSchema } from "@/lib/validations/BillingSchema";
+import {
+  BillingControlFormValues,
+  BillingControl as BillingControlType,
+} from "@/types/billing";
 import {
   autoBillingCriteriaChoices,
   shipmentTransferCriteriaChoices,
 } from "@/utils/apps/billing";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 function BillingControlForm({
@@ -146,7 +146,7 @@ function BillingControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

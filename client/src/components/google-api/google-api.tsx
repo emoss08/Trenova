@@ -16,7 +16,7 @@
  */
 
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { InputField } from "@/components/common/fields/input";
+import { PasswordField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -150,27 +150,15 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               description={t("fields.trafficModel.description")}
             />
           </div>
-          <div className="relative col-span-4">
-            <InputField
+          <div className="col-span-4">
+            <PasswordField
               name="apiKey"
               control={control}
-              type={showAPIKey ? "text" : "password"}
               rules={{ required: true }}
               label={t("fields.apiKey.label")}
               placeholder={t("fields.apiKey.placeholder")}
               description={t("fields.apiKey.description")}
             />
-            {apiKeyValue && formState.isValid && (
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 mt-2 flex items-center pr-3 text-sm leading-5"
-                onClick={toggleAPIKeyVisibility}
-              >
-                <p className="text-xs uppercase text-foreground">
-                  {showAPIKey ? "hide" : "show"}
-                </p>
-              </button>
-            )}
           </div>
           <div className="col-span-3">
             <CheckboxInput
@@ -198,7 +186,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

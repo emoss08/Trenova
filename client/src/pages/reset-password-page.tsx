@@ -68,7 +68,6 @@ export function ResetPasswordForm() {
         );
       }
     } catch (error: any) {
-      console.info("error", error);
       toast.error(
         () => (
           <div className="flex flex-col space-y-1">

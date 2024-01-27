@@ -75,10 +75,7 @@ export function LCEditForm({
     <form onSubmit={handleSubmit(onSubmit)}>
       <LCForm control={control} />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

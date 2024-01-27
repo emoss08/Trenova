@@ -117,10 +117,7 @@ export function SendMessageDialog({
             </FormControl>
           </Form>
           <DialogFooter>
-            <Button
-              type="submit"
-              isLoading={isSending}
-            >
+            <Button type="submit" isLoading={isSending}>
               Send Message
             </Button>
           </DialogFooter>

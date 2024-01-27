@@ -359,11 +359,7 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              className="w-full"
-            >
+            <Button type="submit" isLoading={isSubmitting} className="w-full">
               Save
             </Button>
           </SheetFooter>

@@ -38,10 +38,10 @@ export function Notifications({
     return (
       <div className="flex h-80 w-full items-center justify-center p-4">
         <div className="flex flex-col items-center justify-center gap-y-3">
-          <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-full">
+          <div className="flex size-10 items-center justify-center rounded-full bg-accent">
             <FontAwesomeIcon icon={faInbox} className="text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground select-none text-center text-sm">
+          <p className="select-none text-center text-sm text-muted-foreground">
             No new notifications
           </p>
         </div>
@@ -56,7 +56,7 @@ export function Notifications({
       return (
         <div
           key={notification.id}
-          className="border-accent hover:bg-accent/80 group flex cursor-pointer flex-col space-y-2 border-b px-4 py-2"
+          className="group flex cursor-pointer flex-col space-y-2 border-b border-accent px-4 py-2 hover:bg-accent/80"
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold leading-none">
@@ -64,12 +64,12 @@ export function Notifications({
             </p>
             <Badge
               withDot={false}
-              className="bg-accent text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent select-none p-0.5 text-xs"
+              className="select-none bg-accent p-0.5 text-xs text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent"
             >
               {humanReadableTime}
             </Badge>
           </div>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {truncateText(notification.description, 40)}
           </p>
         </div>

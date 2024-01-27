@@ -44,11 +44,10 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { faBell } from "@fortawesome/pro-duotone-svg-icons";
+import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { Howl } from "howler";
-import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -123,14 +122,14 @@ function NotificationButton({
             role="button"
             aria-label="Open Application Grid"
             aria-expanded={open}
-            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
+            className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
           >
             <FontAwesomeIcon icon={faBell} className="size-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-orange-600 ring-1"></span>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime-400 opacity-100"></span>
+                <span className="relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1 ring-background"></span>
               </span>
             )}
           </Button>
@@ -157,16 +156,16 @@ function NotificationContent({
   return (
     <>
       {notificationsLoading ? (
-        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
+        <div className="flex flex-col space-y-2 border-b border-accent px-4 py-2">
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">
               <Skeleton className="h-4 w-20" />
             </h4>
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               <Skeleton className="h-4 w-20" />
             </span>
           </div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             <Skeleton className="h-4 w-20" />
           </p>
         </div>
@@ -187,12 +186,10 @@ function NotificationContent({
       )}
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
-          <button
-            className="hover:bg-accent/80 flex items-center rounded-md p-2 text-sm outline-transparent"
-            onClick={readAllNotifications}
-          >
-            Read All Notifications <ChevronRight className="ml-1 size-4" />
-          </button>
+          <Button onClick={readAllNotifications} className="w-full">
+            <FontAwesomeIcon icon={faCheck} className="mr-2 size-4" /> Mark all
+            as read
+          </Button>
         </div>
       )}
     </>
@@ -250,7 +247,6 @@ export function NotificationMenu() {
           onOpen: () => console.info("Notifications Websocket Connected"),
           onMessage: (event: MessageEvent) => {
             const data = JSON.parse(event.data);
-            console.log(data);
             queryClient
               .invalidateQueries({
                 queryKey: ["userNotifications", userId],
@@ -344,7 +340,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="bg-background w-80 p-4"
+        className="w-80 bg-background p-4"
         sideOffset={10}
         alignOffset={-40}
         align="end"

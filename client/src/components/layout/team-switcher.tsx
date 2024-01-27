@@ -119,10 +119,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
             <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="w-[250px] p-0"
-        >
+        <PopoverContent align="start" className="w-[250px] p-0">
           <Command>
             <CommandList>
               <CommandInput placeholder="Search team..." />

@@ -33,11 +33,11 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
   return (
     <li
       key={featureFlag.code}
-      className="bg-card text-card-foreground flex flex-col overflow-hidden rounded-lg border text-center"
+      className="flex flex-col overflow-hidden rounded-lg border bg-card text-center text-card-foreground"
     >
       <div className="flex flex-1 flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <h3 className="text-foreground text-2xl font-semibold">
+          <h3 className="text-2xl font-semibold text-foreground">
             {featureFlag.name}
           </h3>
           <div className="mt-2 flex">
@@ -61,7 +61,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           <ScrollArea className="mb-4 h-48">
             <dd
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              className="text-muted-foreground p-4 text-sm"
+              className="p-4 text-sm text-muted-foreground"
             ></dd>
           </ScrollArea>
         </dl>
@@ -74,7 +74,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-primary text-sm hover:underline hover:decoration-lime-600">
+          <button className="text-sm text-primary hover:underline hover:decoration-lime-600">
             Send Feedback
           </button>
         </div>

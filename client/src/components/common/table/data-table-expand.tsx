@@ -27,9 +27,9 @@ export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
       }}
     >
       {row.getIsExpanded() ? (
-        <ChevronDownIcon className="h-4 w-4" /> // Apply rotation
+        <ChevronDownIcon className="size-4" /> // Apply rotation
       ) : (
-        <ChevronRightIcon className="h-4 w-4" />
+        <ChevronRightIcon className="size-4" />
       )}
     </button>
   ) : (

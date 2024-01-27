@@ -130,7 +130,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   </p>
                 </div>
               </div>
-              <div className="sm:col-span-full">
+              <div className="col-span-full">
                 <InputField
                   control={control}
                   name="name"
@@ -311,7 +311,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-x-6 border-t border-border p-4 sm:px-8">
+          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();
@@ -338,7 +338,6 @@ export default function GeneralPage({
 }: {
   organization: Organization;
 }) {
-  console.info("organization", organization);
   return (
     <>
       <OrganizationForm organization={organization} />

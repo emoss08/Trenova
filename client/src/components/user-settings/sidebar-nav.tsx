@@ -16,9 +16,11 @@
  */
 
 import { cn } from "@/lib/utils";
+import { debounce } from "lodash";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
 
 type SidebarLink = {
   href: string;
@@ -33,23 +35,42 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 
 export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
   const location = useLocation();
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  const scrollThreshold = 80;
 
-  // Define the type for the accumulator
-  type GroupedLinks = Record<string, SidebarLink[]>;
+  const handleScroll = React.useMemo(
+    () =>
+      debounce(() => {
+        setIsScrolled(window.scrollY > scrollThreshold);
+      }, 30),
+    [scrollThreshold],
+  );
 
-  // Group links by 'group' property
-  const groupedLinks = links.reduce((acc: GroupedLinks, link) => {
-    const groupName = link.group || "ungrouped"; // Use 'ungrouped' as a default group
-    if (!acc[groupName]) {
-      acc[groupName] = [];
-    }
-    acc[groupName].push(link);
-    return acc;
-  }, {} as GroupedLinks); // Initialize acc as an empty object of type GroupedLinks
+  React.useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      handleScroll.cancel(); // Ensure debounce is cancelled on unmount
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
+
+  const groupedLinks = React.useMemo(() => {
+    type GroupedLinks = Record<string, SidebarLink[]>;
+    return links.reduce((acc: GroupedLinks, link) => {
+      const groupName = link.group || "ungrouped";
+      acc[groupName] = acc[groupName] || [];
+      acc[groupName].push(link);
+      return acc;
+    }, {} as GroupedLinks);
+  }, [links]);
 
   return (
-    <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-      <aside className="mb-1 md:w-56">
+    <aside
+      className={`fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 transition-spacing duration-500 md:sticky md:block ${
+        isScrolled ? "pt-10" : ""
+      }`}
+    >
+      <ScrollArea className="size-full rounded-lg border bg-card p-3 text-card-foreground">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (
             <div key={group} className="space-y-2">
@@ -66,7 +87,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
                       location.pathname === link.href
                         ? "bg-muted [&_svg]:text-foreground"
                         : "hover:bg-muted",
-                      "group justify-start flex items-center ml-2",
+                      "group justify-start flex items-center mx-2",
                     )}
                   >
                     {link.icon && <span className="mr-2">{link.icon}</span>}
@@ -77,7 +98,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
             </div>
           ))}
         </nav>
-      </aside>
-    </div>
+      </ScrollArea>
+    </aside>
   );
 }

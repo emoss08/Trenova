@@ -41,10 +41,10 @@ function SkeletonLoader() {
   return (
     <div className="mt-20 flex flex-col items-center justify-center">
       <Loader2 className="mr-2 size-4 animate-spin" />
-      <p className="text-accent-foreground mt-2 font-semibold">
+      <p className="mt-2 font-semibold text-accent-foreground">
         Loading Chart...
       </p>
-      <p className="text-muted-foreground mt-2">
+      <p className="mt-2 text-muted-foreground">
         If this takes longer than 10 seconds, please refresh the page.
       </p>
     </div>
@@ -93,14 +93,14 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
               "absolute left-0 top-0 flex w-6 justify-center",
             )}
           >
-            <div className="bg-border w-px" />
+            <div className="w-px bg-border" />
           </div>
           <>
             <UserAvatar user={comment.enteredBy} />
-            <div className="border-border flex-auto rounded-md border p-3">
+            <div className="flex-auto rounded-md border border-border p-3">
               <div className="flex justify-between gap-x-4">
-                <div className="text-foreground py-0.5 text-xs leading-5">
-                  <span className="text-accent-foreground font-medium">
+                <div className="py-0.5 text-xs leading-5 text-foreground">
+                  <span className="font-medium text-accent-foreground">
                     {upperFirst(userFullName(comment))}
                   </span>
                   {" posted a "}
@@ -110,12 +110,12 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
                 </div>
                 <time
                   dateTime={comment.created}
-                  className="text-muted-foreground flex-none py-0.5 text-xs leading-5"
+                  className="flex-none py-0.5 text-xs leading-5 text-muted-foreground"
                 >
                   {formatDateToHumanReadable(comment.created)}
                 </time>
               </div>
-              <p className="text-muted-foreground text-sm leading-6">
+              <p className="text-sm leading-6 text-muted-foreground">
                 {comment.comment}
               </p>
             </div>
@@ -126,7 +126,7 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
   ) : (
     <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
       <div className="px-6 py-4">
-        <h4 className="text-foreground mt-20 text-xl font-semibold">
+        <h4 className="mt-20 text-xl font-semibold text-foreground">
           No Location Comments Available
         </h4>
       </div>
