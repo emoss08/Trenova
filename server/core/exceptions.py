@@ -76,7 +76,7 @@ class CustomExceptionFormatter(ExceptionFormatter):
     ) -> dict[str, typing.Any]:
         error_response.type = self.snake_to_camel(error_response.type)  # type: ignore
         for error in error_response.errors:
-            error.attr = self.snake_to_camel(error.attr)  # type: ignore
+            error.attr = self.snake_to_camel(error.attr)
         return super().format_error_response(error_response)
 
 

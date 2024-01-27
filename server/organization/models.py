@@ -33,10 +33,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -1600,7 +1599,7 @@ class FeatureFlag(TimeStampedModel):
         if is_new:
             from organization.tasks import create_organization_feature_flags
 
-            create_organization_feature_flags.delay(feature_flag_id=self.id)
+            create_organization_feature_flags.delay(feature_flag_id=str(self.id))
 
     def get_absolute_url(self) -> str:
         """FeatureFlag absolute URL

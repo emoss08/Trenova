@@ -648,7 +648,7 @@ class Trailer(GenericModel):
         super().clean()
 
         if (
-            self.equipment_type
+            self.equipment_type.exists()
             and self.equipment_type.equipment_class
             != EquipmentType.EquipmentClassChoices.TRAILER
         ):
