@@ -138,6 +138,11 @@ export type TableName = {
   label: string;
 };
 
+export type Topic = {
+  value: string;
+  label: string;
+};
+
 export type GoogleAPIFormValues = Omit<
   GoogleAPI,
   "id" | "organization" | "created" | "modified"

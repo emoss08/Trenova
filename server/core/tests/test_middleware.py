@@ -14,49 +14,34 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from collections.abc import Generator
-from typing import Any
-
 import pytest
+from rest_framework.test import APIClient
 
-from accounts.tests.factories import JobTitleFactory
+from accounts.models import Token
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def job_title() -> Generator[Any, Any, None]:
-    """
-    Job title fixture
-    """
-    yield JobTitleFactory()
-
-
-@pytest.fixture
-def user_api(api_client, organization, business_unit) -> Generator[Any, Any, None]:
-    """
-    User Fixture
-    """
-    job_title = JobTitleFactory()
-    yield api_client.post(
-        "/api/users/",
+def test_idempotency_middleware_fails_with_missing_header(
+    token: Token, organization: Organization
+) -> None:
+    api_client = APIClient()
+    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.key}")
+    response = api_client.post(
+        "/api/document_classifications/",
         {
             "organization": organization.id,
-            "business_unit": business_unit.id,
-            "username": "foobar",
-            "email": "foobar@user.com",
-            "profile": {
-                "business_unit": business_unit.id,
-                "organization": organization.id,
-                "first_name": "foo",
-                "last_name": "bar",
-                "address_line_1": "test address line 1",
-                "city": "test",
-                "state": "NC",
-                "zip_code": "12345",
-                "job_title": job_title.id,
-            },
+            "name": "test",
+            "description": "Test Description",
         },
-        format="json",
     )
+
+    data = response.json()
+
+    assert response.status_code == 400
+    assert (
+        data["message"]
+        == "Idempotency key validation failed. Please provide a valid idempotency key in the request header."
+    )
+    assert data["code"] == "idempotency_key_validation_failed"

@@ -56,6 +56,7 @@ def validate_conditional_logic(*, data: ConditionalLogic) -> bool:
         "name",
         "description",
         "model_name",
+        "app_label",
         "conditions",
     ]
     for key in required_keys:

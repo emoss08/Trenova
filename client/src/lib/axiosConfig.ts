@@ -18,6 +18,7 @@
 import { getCookie } from "@/lib/auth";
 import { API_URL } from "@/lib/constants";
 import axios from "axios";
+import { generateIdempotencyKey } from "@/lib/utils";
 
 /**
  * Axios request interceptor.
@@ -34,6 +35,7 @@ axios.interceptors.request.use(
 
     if (csrfToken) {
       req.headers["X-CSRFToken"] = csrfToken;
+      req.headers["X-Idempotency-Key"] = generateIdempotencyKey();
     }
 
     console.log(

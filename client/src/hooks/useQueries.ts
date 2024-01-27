@@ -56,6 +56,7 @@ import {
   getRouteControl,
   getShipmentControl,
   getTableNames,
+  getTopicNames,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
@@ -94,6 +95,7 @@ import {
   EmailProfile,
   Organization,
   TableName,
+  Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
 import { Worker } from "@/types/worker";
@@ -881,4 +883,28 @@ export function useTableNames(show?: boolean) {
     })) || [];
 
   return { selectTableNames, isError, isLoading };
+}
+
+/**
+ * Get Topic Names for select options
+ * @param show - show or hide the query
+ */
+export function useTopics(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["topicNames"] as QueryKeys[],
+    queryFn: async () => getTopicNames(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["topicNames"] as QueryKeys[]),
+    refetchOnWindowFocus: true,
+  });
+
+  const selectTopics =
+    (data as Topic[])?.map((table: Topic) => ({
+      value: table.value,
+      label: table.label,
+    })) || [];
+
+  return { selectTopics, isError, isLoading };
 }
