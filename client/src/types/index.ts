@@ -83,6 +83,7 @@ export type QueryKeys =
   | "routeControl"
   | "table-change-alert-data"
   | "tableNames"
+  | "topicNames"
   | "trailers"
   | "trailer-table-data"
   | "tractors"

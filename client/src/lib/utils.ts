@@ -17,6 +17,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
+import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -224,6 +225,14 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
   });
   return cleanedObj;
 };
+
+/**
+ * Function to generate Idempotency Key
+ * @returns {string}
+ */
+export function generateIdempotencyKey(): string {
+  return uuidv4();
+}
 
 export function shipmentStatusToReadable(status: string) {
   switch (status) {

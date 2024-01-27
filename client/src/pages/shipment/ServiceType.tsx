@@ -14,17 +14,18 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-dialog";
+import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { tableStatusChoices } from "@/lib/constants";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
 import { ServiceType } from "@/types/order";
-import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
-import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<ServiceType>[] = [
   {
@@ -84,17 +85,21 @@ const filters: FilterConfig<ServiceType>[] = [
 
 export default function ServiceTypes() {
   return (
-    <DataTable
-      queryKey="service-type-table-data"
-      columns={columns}
-      link="/service_types/"
-      name="Service Types"
-      exportModelName="ServiceType"
-      filterColumn="code"
-      tableFacetedFilters={filters}
-      TableSheet={ServiceTypeDialog}
-      TableEditSheet={ServiceTypeEditDialog}
-      addPermissionName="add_servicetype"
-    />
+    <Card>
+      <CardContent>
+        <DataTable
+          queryKey="service-type-table-data"
+          columns={columns}
+          link="/service_types/"
+          name="Service Types"
+          exportModelName="ServiceType"
+          filterColumn="code"
+          tableFacetedFilters={filters}
+          TableSheet={ServiceTypeDialog}
+          TableEditSheet={ServiceTypeEditDialog}
+          addPermissionName="add_servicetype"
+        />
+      </CardContent>
+    </Card>
   );
 }

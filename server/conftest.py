@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import uuid
 from collections.abc import Generator
 from typing import Any
 
@@ -78,7 +79,10 @@ def api_client(token: Token) -> Generator[APIClient, Any, None]:
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.key}")
+    client.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {token.key}",
+        HTTP_X_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+    )
     yield client
 
 

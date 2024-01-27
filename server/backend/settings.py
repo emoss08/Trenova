@@ -100,7 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    # "core.middleware.logging_middleware.RocketLoggingMiddleware",
+    "core.middleware.idempotency_middleware.IdempotencyMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -289,6 +289,13 @@ CACHES = {
             },
         },
     },
+    "idempotency": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("IDEMPOTENCY_LOCATION"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 
 # Cors Configurations
@@ -298,8 +305,17 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-idempotency-key",
+)
+
 
 # CSRF Configurations
 CSRF_TRUSTED_ORIGINS = [
@@ -309,6 +325,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
+
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
@@ -525,6 +542,11 @@ GRAPHENE = {
     "SCHEMA_OUTPUT": "schema.json",  # defaults to schema.json,
     "SCHEMA_INDENT": 2,  # Defaults to None (displays all data on a single line)
 }
+
+# Idempotency Configurations
+IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
+IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
+IDEMPOTENCY_KEY_TTL = env("IDEMPOTENCY_KEY_TTL")
 
 # Development Configurations
 if DEBUG:
