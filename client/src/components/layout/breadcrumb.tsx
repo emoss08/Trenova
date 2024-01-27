@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { useUserOrganization } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
@@ -28,6 +29,8 @@ export function Breadcrumb() {
   const [currentRoute, setCurrentRoute] =
     useBreadcrumbStore.use("currentRoute");
   const [loading, setLoading] = useBreadcrumbStore.use("loading");
+  const { userOrganizationData, userOrganizationLoading } =
+    useUserOrganization();
 
   // Find the matching route based on the current pathname
   useEffect(() => {
@@ -70,7 +73,7 @@ export function Breadcrumb() {
     return parts.join(" - ");
   }, [currentRoute]);
 
-  if (loading) {
+  if (loading && userOrganizationLoading) {
     return (
       <>
         <Skeleton className="h-[30px] w-[200px]" />
@@ -91,7 +94,7 @@ export function Breadcrumb() {
           {currentRoute.title}
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             {breadcrumbText}
           </a>
         </div>

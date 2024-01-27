@@ -40,7 +40,6 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { Suspense } from "react";
-import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
 import { SidebarNav } from "../user-settings/sidebar-nav";
 
@@ -284,18 +283,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-card flex flex-col rounded-md border p-5 md:flex-row">
-      <div className="bg-card sticky top-0 z-10 h-36 overflow-y-auto border-b md:h-screen md:w-64 md:border-none">
-        <ScrollArea className="m-0 h-full overflow-y-auto p-0">
-          <SidebarNav links={links} />
-        </ScrollArea>
-      </div>
-
-      <div className="flex-1 overflow-auto md:border-l md:pl-4">
-        <Suspense fallback={<Skeleton className="size-full" />}>
-          {children}
-        </Suspense>
-      </div>
+    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+      <SidebarNav links={links} />
+      <main className="relative lg:gap-10">
+        <div className="mx-auto min-w-0">
+          <Suspense fallback={<Skeleton className="size-full" />}>
+            {children}
+          </Suspense>
+        </div>
+      </main>
     </div>
   );
 }
