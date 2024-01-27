@@ -223,10 +223,6 @@ class TaxRateViewSet(viewsets.ModelViewSet):
         """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "rate",
-            "name",
         )
         return queryset
 
