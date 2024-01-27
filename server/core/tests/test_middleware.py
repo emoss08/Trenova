@@ -14,8 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from rest_framework.test import APIClient
 import pytest
+from rest_framework.test import APIClient
 
 from accounts.models import Token
 from organization.models import Organization

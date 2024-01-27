@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import uuid
 from collections.abc import Generator
 from typing import Any
-import uuid
+
 import pytest
 from rest_framework.test import APIClient
 
