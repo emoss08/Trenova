@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
+import { lazy } from "react";
 
 const GoogleAPI = lazy(() => import("@/components/google-api/google-api"));
 
-export default function BillingControlPage() {
+export default function GoogleAPIPage() {
   return (
     <AdminLayout>
       <GoogleAPI />
