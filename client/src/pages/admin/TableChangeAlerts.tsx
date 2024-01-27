@@ -21,6 +21,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
 import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { TableChangeAlert } from "@/types/organization";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -72,17 +73,21 @@ const columns: ColumnDef<TableChangeAlert>[] = [
 export default function TableChangeAlerts() {
   return (
     <AdminLayout>
-      <DataTable
-        queryKey="table-change-alert-data"
-        columns={columns}
-        link="/table_change_alerts/"
-        name="Table Change Alert"
-        exportModelName="TableChangeAlert"
-        filterColumn="name"
-        TableSheet={TableChangeAlertSheet}
-        TableEditSheet={EmailProfileTableEditDialog}
-        addPermissionName="view_tablechangealert"
-      />
+      <Card>
+        <CardContent>
+          <DataTable
+            queryKey="table-change-alert-data"
+            columns={columns}
+            link="/table_change_alerts/"
+            name="Table Change Alert"
+            exportModelName="TableChangeAlert"
+            filterColumn="name"
+            TableSheet={TableChangeAlertSheet}
+            TableEditSheet={EmailProfileTableEditDialog}
+            addPermissionName="view_tablechangealert"
+          />
+        </CardContent>
+      </Card>
     </AdminLayout>
   );
 }
