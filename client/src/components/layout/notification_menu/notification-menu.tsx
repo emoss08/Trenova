@@ -44,11 +44,10 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { faBell } from "@fortawesome/pro-duotone-svg-icons";
+import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { Howl } from "howler";
-import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -187,12 +186,10 @@ function NotificationContent({
       )}
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
-          <button
-            className="hover:bg-accent/80 flex items-center rounded-md p-2 text-sm outline-transparent"
-            onClick={readAllNotifications}
-          >
-            Read All Notifications <ChevronRight className="ml-1 size-4" />
-          </button>
+          <Button onClick={readAllNotifications} className="w-full">
+            <FontAwesomeIcon icon={faCheck} className="mr-2 size-4" /> Mark all
+            as read
+          </Button>
         </div>
       )}
     </>
