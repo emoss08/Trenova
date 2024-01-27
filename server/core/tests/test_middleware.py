@@ -14,82 +14,34 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from collections.abc import Generator
-from typing import Any
-import uuid
-import pytest
 from rest_framework.test import APIClient
+import pytest
 
 from accounts.models import Token
-from accounts.tests.factories import ProfileFactory, TokenFactory, UserFactory
-from organization.factories import BusinessUnitFactory, OrganizationFactory
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def token() -> Generator[Any, Any, None]:
-    """
-    Token Fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def business_unit() -> Generator[Any, Any, None]:
-    """Business Unit Fixture
-
-    Yields:
-        Generator[Any, Any, None]: Business Unit object
-    """
-    yield BusinessUnitFactory()
-
-
-@pytest.fixture
-def organization() -> Generator[Any, Any, None]:
-    """
-    Organization Fixture
-    """
-    yield OrganizationFactory()
-
-
-@pytest.fixture
-def user() -> Generator[Any, Any, None]:
-    """
-    User Fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def user_profile() -> Generator[Any, Any, None]:
-    """
-    User Profile Fixture
-    """
-    yield ProfileFactory()
-
-
-@pytest.fixture
-def api_client(token: Token) -> Generator[APIClient, Any, None]:
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(
-        HTTP_AUTHORIZATION=f"Bearer {token.key}",
-        HTTP_X_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+def test_idempotency_middleware_fails_with_missing_header(
+    token: Token, organization: Organization
+) -> None:
+    api_client = APIClient()
+    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.key}")
+    response = api_client.post(
+        "/api/document_classifications/",
+        {
+            "organization": organization.id,
+            "name": "test",
+            "description": "Test Description",
+        },
     )
-    yield client
 
+    data = response.json()
 
-@pytest.fixture
-def unauthenticated_api_client() -> Generator[APIClient, Any, None]:
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    yield APIClient()
+    assert response.status_code == 400
+    assert (
+        data["message"]
+        == "Idempotency key validation failed. Please provide a valid idempotency key in the request header."
+    )
+    assert data["code"] == "idempotency_key_validation_failed"

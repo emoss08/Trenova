@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db
@@ -39,7 +38,6 @@ def user_api(api_client, organization, business_unit) -> Generator[Any, Any, Non
     User Fixture
     """
     job_title = JobTitleFactory()
-
     yield api_client.post(
         "/api/users/",
         {
