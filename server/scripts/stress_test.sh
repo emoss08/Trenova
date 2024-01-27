@@ -12,7 +12,7 @@ random_number() {
 # Function to send a single request, measure the time taken, and log the result
 send_request() {
     local name="test$(random_number 10000)"  # Adjust the range as needed
-    
+
     # Send POST request and write detailed response to log file
     curl -s -o log_file.txt -D - \
         -H "Authorization: Bearer 67452d16bb616760d2d90b45691d446eef904c90" \
