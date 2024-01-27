@@ -129,8 +129,8 @@ function NotificationButton({
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-orange-600 ring-1"></span>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime-400 opacity-100"></span>
+                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1"></span>
               </span>
             )}
           </Button>

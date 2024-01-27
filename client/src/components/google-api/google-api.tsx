@@ -16,7 +16,7 @@
  */
 
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { InputField } from "@/components/common/fields/input";
+import { PasswordField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -122,7 +122,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -150,27 +150,15 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
               description={t("fields.trafficModel.description")}
             />
           </div>
-          <div className="relative col-span-4">
-            <InputField
+          <div className="col-span-4">
+            <PasswordField
               name="apiKey"
               control={control}
-              type={showAPIKey ? "text" : "password"}
               rules={{ required: true }}
               label={t("fields.apiKey.label")}
               placeholder={t("fields.apiKey.placeholder")}
               description={t("fields.apiKey.description")}
             />
-            {apiKeyValue && formState.isValid && (
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 mt-2 flex items-center pr-3 text-sm leading-5"
-                onClick={toggleAPIKeyVisibility}
-              >
-                <p className="text-xs uppercase text-foreground">
-                  {showAPIKey ? "hide" : "show"}
-                </p>
-              </button>
-            )}
           </div>
           <div className="col-span-3">
             <CheckboxInput
@@ -198,7 +186,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -225,19 +213,19 @@ export default function GoogleApi() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           {t("title")}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (

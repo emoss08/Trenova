@@ -34,7 +34,7 @@ export function ExternalLink({
       href={href}
       target={openNewTab ? "_blank" : undefined}
       rel={openNewTab ? "noopener noreferrer" : undefined}
-      className="inline-flex items-center gap-x-0.5 font-semibold text-blue-600 hover:underline"
+      className="text-foreground-600 inline-flex items-center gap-x-0.5 font-semibold underline decoration-lime-600"
       {...props}
     >
       {children}

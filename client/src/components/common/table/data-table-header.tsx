@@ -20,6 +20,8 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
+import { faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Table as TableType, flexRender } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
@@ -27,8 +29,6 @@ import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableViewOptions } from "./data-table-view-options";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 
 export function DataTableHeader<K extends Record<string, any>>({
   table,
@@ -140,7 +140,7 @@ export function DataTableTopBar<K>({
     [table],
   );
 
-  return (
+  return table.getPageCount() > 1 ? (
     <div className="flex flex-col justify-between sm:flex-row">
       <div className="mr-2 flex flex-1 flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
         <Input
@@ -171,6 +171,17 @@ export function DataTableTopBar<K>({
       <div className="mt-2 flex flex-col space-y-2 sm:mt-0 sm:flex-row sm:space-x-2 sm:space-y-0">
         <DataTableViewOptions table={table} />
         <DataTableImportExportOption />
+        <ButtonConfig
+          selectedRowCount={selectedRowCount}
+          name={name}
+          store={store}
+          isDisabled={!userHasPermission(addPermissionName)}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="flex flex-col justify-end sm:flex-row">
+      <div className="mt-2 flex flex-col space-y-2 sm:mt-0 sm:flex-row sm:space-x-2 sm:space-y-0">
         <ButtonConfig
           selectedRowCount={selectedRowCount}
           name={name}

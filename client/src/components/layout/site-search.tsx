@@ -61,13 +61,13 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="group flex h-8 w-[250px] items-center justify-between rounded-md border border-foreground/20 bg-secondary px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
+            className="border-border bg-secondary hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm md:flex"
           >
             <div className="flex items-center">
-              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
               <span className="text-muted-foreground">Search...</span>
             </div>
-            <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-foreground opacity-100">
+            <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
               <span className="text-xs">⌘ K</span>
             </kbd>
           </button>
@@ -139,11 +139,11 @@ export function SiteSearch() {
       <CommandList>
         {Object.entries(filteredGroups).length === 0 && (
           <CommandEmpty>
-            <AlertCircle className="mx-auto size-6 text-accent-foreground" />
-            <p className="mt-4 font-semibold text-accent-foreground">
+            <AlertCircle className="text-accent-foreground mx-auto size-6" />
+            <p className="text-accent-foreground mt-4 font-semibold">
               No results found
             </p>
-            <p className="mt-2 text-muted-foreground">
+            <p className="text-muted-foreground mt-2">
               No pages found for this search term. Please try again.
             </p>
           </CommandEmpty>
@@ -168,7 +168,7 @@ export function SiteSearch() {
           </React.Fragment>
         ))}
       </CommandList>
-      <div className="sticky flex justify-center space-x-1 border-t bg-background py-2">
+      <div className="bg-background sticky flex justify-center space-x-1 border-t py-2">
         <span className="text-xs">&#8593;</span>
         <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>

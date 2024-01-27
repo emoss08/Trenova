@@ -36,7 +36,7 @@ import {
   NoticeProps,
   OptionProps,
   OptionsOrGroups,
-  ValueContainerProps,
+  ValueContainerProps
 } from "react-select";
 
 /**
@@ -55,10 +55,10 @@ export type SelectOption = {
 export function Option({ ...props }: OptionProps) {
   return (
     <components.Option {...props}>
-      <div className="relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
+      <div className="hover:bg-accent relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm">
         {props.label}
         {props.isSelected && (
-          <CheckIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <CheckIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />
         )}
       </div>
     </components.Option>
@@ -76,7 +76,7 @@ export function DropdownIndicator(props: DropdownIndicatorProps) {
       {props.selectProps["aria-invalid"] ? (
         <AlertTriangle size={15} className="text-red-500" />
       ) : (
-        <CaretSortIcon className="h-4 w-4 shrink-0" />
+        <CaretSortIcon className="size-4 shrink-0" />
       )}
     </components.DropdownIndicator>
   );
@@ -106,7 +106,7 @@ export function IndicatorSeparator(props: IndicatorSeparatorProps) {
 export function ClearIndicator(props: ClearIndicatorProps) {
   return (
     <components.ClearIndicator {...props}>
-      <Cross2Icon className="h-4 w-4 shrink-0" />
+      <Cross2Icon className="size-4 shrink-0" />
     </components.ClearIndicator>
   );
 }
@@ -142,7 +142,7 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
  * @constructor SelectDescription
  */
 export function SelectDescription({ description }: { description: string }) {
-  return <p className="text-xs text-foreground/70">{description}</p>;
+  return <p className="text-foreground/70 text-xs">{description}</p>;
 }
 
 /**
@@ -211,7 +211,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="my-1 text-sm text-accent-foreground">
+        <p className="text-accent-foreground my-1 text-sm">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -318,12 +318,12 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-background py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
+      className="bg-background text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm py-3.5 pl-3 text-xs font-normal"
       size="xs"
       onClick={(event) => handleClick(event)}
     >
       <span className="mr-2">{label} Entry</span>
-      <PlusIcon className="h-4 w-4" />
+      <PlusIcon className="size-4" />
     </Button>
   );
 }
