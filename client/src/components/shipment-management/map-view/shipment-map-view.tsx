@@ -25,16 +25,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useGoogleAPI } from "@/hooks/useQueries";
 import { useShipmentMapStore, useShipmentStore } from "@/stores/ShipmentStore";
+import { GoogleAPI } from "@/types/organization";
 import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import GoogleMapReact from "google-map-react";
+import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useGoogleAPI } from "@/hooks/useQueries";
-import { GoogleAPI } from "@/types/organization";
-import { Loader2 } from "lucide-react";
 
 const markers = [
   { id: 1, lat: 37.78, lng: -122.41, label: "San Francisco" },
@@ -78,7 +78,7 @@ function MapMarker({ text }: MapMarkerProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-auto items-center justify-center rounded-full border-2 border-white bg-black" />
+          <div className="relative size-4 -translate-x-1/2 -translate-y-1/2 cursor-auto items-center justify-center rounded-full border-2 border-white bg-black" />
         </TooltipTrigger>
         <TooltipContent>{text}</TooltipContent>
       </Tooltip>
@@ -121,12 +121,12 @@ export function ShipmentMapView() {
   return isLoading ? (
     <>
       <div className="flex flex-col items-center justify-center">
-        <Loader2 className="h-20 w-20 animate-spin text-foreground" />
-        <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+        <Loader2 className="text-foreground size-20 animate-spin" />
+        <p className="text-foreground mt-4 font-medium">Loading Map...</p>
       </div>
     </>
   ) : (
-    <div className="mx-auto flex h-[700px] w-screen space-x-10">
+    <div className="mx-auto flex w-screen space-x-10">
       <ShipmentMapAside />
       <div className="relative grow">
         {/* Absolute positioned map options */}
@@ -141,7 +141,7 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="h-4 w-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
             }
           />
         </div>
