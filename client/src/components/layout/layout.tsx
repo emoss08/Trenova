@@ -21,6 +21,7 @@ import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
 import TeamSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
+import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { Toaster } from "react-hot-toast";
@@ -39,13 +40,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const hideHeader = queryParams.get("hideHeader") === "true";
-  // useQueryInvalidationListener();
+  useQueryInvalidationListener();
 
   return (
-    <div className="flex h-screen flex-col bg-background" id="app">
+    <div className="relative flex min-h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
@@ -65,14 +66,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
       )}
-
-      <div className="flex flex-1 flex-col">
-        <main className="mb-10 flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
-          <Breadcrumb />
-          <SiteSearch />
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
+        <Breadcrumb />
+        <SiteSearch />
+        {children}
+      </main>
     </div>
   );
 }

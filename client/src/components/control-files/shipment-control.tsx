@@ -15,20 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "@/components/ui/button";
-import { useShipmentControl } from "@/hooks/useQueries";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useShipmentControl } from "@/hooks/useQueries";
 import { shipmentControlSchema } from "@/lib/validations/OrderSchema";
 import {
-  ShipmentControl as ShipmentControlType,
   ShipmentControlFormValues,
+  ShipmentControl as ShipmentControlType,
 } from "@/types/order";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 function ShipmentControlForm({
@@ -171,7 +171,7 @@ function ShipmentControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

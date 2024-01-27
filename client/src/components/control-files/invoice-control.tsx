@@ -15,24 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CheckboxInput } from "@/components/common/fields/checkbox";
+import { FileField, InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useInvoiceControl } from "@/hooks/useQueries";
+import { dateFormatChoices } from "@/lib/choices";
+import { cleanObject } from "@/lib/utils";
+import { invoiceControlSchema } from "@/lib/validations/InvoicingSchema";
+import {
+  InvoiceControlFormValues,
+  InvoiceControl as InvoiceControlType,
+} from "@/types/invoicing";
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  InvoiceControl as InvoiceControlType,
-  InvoiceControlFormValues,
-} from "@/types/invoicing";
-import { invoiceControlSchema } from "@/lib/validations/InvoicingSchema";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { dateFormatChoices } from "@/lib/choices";
-import { FileField, InputField } from "@/components/common/fields/input";
-import { TextareaField } from "@/components/common/fields/textarea";
-import { cleanObject } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 function InvoiceControlForm({
@@ -191,7 +191,7 @@ function InvoiceControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

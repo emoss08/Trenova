@@ -17,7 +17,7 @@
 
 export function KBD({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="border-border text-foreground pointer-events-none inline-flex h-5 select-none items-center justify-center rounded border px-1 font-mono text-xs font-medium opacity-100">
+    <kbd className="pointer-events-none inline-flex h-5 select-none items-center justify-center rounded border border-border px-1 font-mono text-xs font-medium text-foreground opacity-100">
       {children}
     </kbd>
   );

@@ -15,23 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CheckboxInput } from "@/components/common/fields/checkbox";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useDispatchControl } from "@/hooks/useQueries";
+import { serviceIncidentControlChoices } from "@/lib/choices";
+import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
+import {
+  DispatchControlFormValues,
+  DispatchControl as DispatchControlType,
+} from "@/types/dispatch";
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { CheckboxInput } from "@/components/common/fields/checkbox";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { serviceIncidentControlChoices } from "@/lib/choices";
-import {
-  DispatchControl as DispatchControlType,
-  DispatchControlFormValues,
-} from "@/types/dispatch";
-import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
-import { InputField } from "@/components/common/fields/input";
-import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { useTranslation } from "react-i18next";
 
 function DispatchControlForm({
@@ -183,7 +183,7 @@ function DispatchControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

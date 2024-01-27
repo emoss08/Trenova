@@ -42,7 +42,7 @@ const Checkbox = React.forwardRef<
     <CheckboxPrimitive.Indicator
       className={cn("flex items-center justify-center text-current")}
     >
-      <FontAwesomeIcon icon={faCheck} className="h-3 w-3 font-bold" />
+      <FontAwesomeIcon icon={faCheck} className="size-3 font-bold" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));
@@ -84,7 +84,7 @@ export function CheckboxInput<T extends FieldValues>({
           </span>
         )}
         {description && (
-          <p className="text-muted-foreground select-none text-wrap text-sm">
+          <p className="select-none text-wrap text-sm text-muted-foreground">
             {description}
           </p>
         )}

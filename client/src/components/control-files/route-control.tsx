@@ -24,8 +24,8 @@ import { useRouteControl } from "@/hooks/useQueries";
 import { distanceMethodChoices, routeDistanceUnitChoices } from "@/lib/choices";
 import { routeControlSchema } from "@/lib/validations/RouteSchema";
 import {
-  RouteControl as RouteControlType,
   RouteControlFormValues,
+  RouteControl as RouteControlType,
 } from "@/types/route";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -103,7 +103,7 @@ function RouteControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

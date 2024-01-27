@@ -100,11 +100,7 @@ function EquipTypeEditForm({
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-          className="w-full"
-        >
+        <Button type="submit" isLoading={isSubmitting} className="w-full">
           Save Changes
         </Button>
       </SheetFooter>

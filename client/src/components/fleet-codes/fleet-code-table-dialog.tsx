@@ -189,10 +189,7 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <FleetCodeForm control={control} open={open} />
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               Save
             </Button>
           </DialogFooter>

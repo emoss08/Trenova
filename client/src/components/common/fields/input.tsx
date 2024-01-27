@@ -42,7 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50 sm:text-sm sm:leading-6",
+          "flex h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:pb-5 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 read-only:cursor-not-allowed read-only:opacity-50 sm:text-sm sm:leading-6",
           className,
         )}
         ref={ref}
@@ -106,7 +106,7 @@ export function InputField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -156,7 +156,7 @@ export function FileField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -201,7 +201,7 @@ export function TimeField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>
@@ -233,35 +233,37 @@ export function PasswordField<T extends FieldValues>({
         </Label>
       )}
       <div className="relative">
-        {icon && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            {icon}
-          </div>
-        )}
-        <Input
-          {...field}
-          className={cn(
-            icon && "pl-10",
-            fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
+        <div className="relative">
+          {icon && (
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              {icon}
+            </div>
           )}
-          type={showPassword ? "text" : "password"}
-          {...props}
-        />
-        {field.value && !fieldState.invalid && (
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
-            onClick={togglePasswordVisibility}
-          >
-            {showPassword ? (
-              <EyeOffIcon className="size-5" />
-            ) : (
-              <EyeIcon className="size-5" />
+          <Input
+            {...field}
+            className={cn(
+              icon && "pl-10",
+              fieldState.invalid &&
+                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              props.className,
             )}
-          </button>
-        )}
+            type={showPassword ? "text" : "password"}
+            {...props}
+          />
+          {field.value && !fieldState.invalid && (
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
+              onClick={togglePasswordVisibility}
+            >
+              {showPassword ? (
+                <EyeOffIcon className="size-4" />
+              ) : (
+                <EyeIcon className="size-4" />
+              )}
+            </button>
+          )}
+        </div>
         {fieldState.invalid && (
           <>
             <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
@@ -271,7 +273,7 @@ export function PasswordField<T extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>

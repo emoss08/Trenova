@@ -23,8 +23,8 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useEmailControl, useEmailProfiles } from "@/hooks/useQueries";
 import { emailControlSchema } from "@/lib/validations/OrganizationSchema";
 import {
-  EmailControl as EmailControlType,
   EmailControlFormValues,
+  EmailControl as EmailControlType,
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -104,7 +104,7 @@ function EmailControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="4 flex items-center justify-end border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

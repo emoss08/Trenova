@@ -70,10 +70,7 @@ function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
     <form onSubmit={handleSubmit(onSubmit)}>
       <DelayCodeForm control={control} />
       <DialogFooter className="mt-6">
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           Save
         </Button>
       </DialogFooter>

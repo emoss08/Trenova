@@ -15,22 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useFeasibilityControl } from "@/hooks/useQueries";
 import { feasibilityOperatorChoices } from "@/lib/choices";
+import { feasibilityControlSchema } from "@/lib/validations/DispatchSchema";
+import {
+  FeasibilityToolControlFormValues,
+  FeasibilityToolControl as FeasibilityToolControlType,
+} from "@/types/dispatch";
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { ErrorLoadingData } from "../common/table/data-table-components";
-import {
-  FeasibilityToolControl as FeasibilityToolControlType,
-  FeasibilityToolControlFormValues,
-} from "@/types/dispatch";
-import { InputField } from "@/components/common/fields/input";
-import { feasibilityControlSchema } from "@/lib/validations/DispatchSchema";
-import { yupResolver } from "@hookform/resolvers/yup";
 
 function FeasibilityControlForm({
   feasibilityControl,
@@ -157,7 +157,7 @@ function FeasibilityControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-6 border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
