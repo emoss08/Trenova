@@ -49,7 +49,7 @@ async function manageFavoriteRequest(
     return response.data;
   } catch (error) {
     console.error("Failed to manage favorite:", error);
-    throw error; // Re-throw to handle it in the caller function if needed
+    throw error;
   }
 }
 
