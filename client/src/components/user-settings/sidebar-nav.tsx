@@ -16,6 +16,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { debounce } from "lodash";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
@@ -34,22 +35,41 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 
 export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
   const location = useLocation();
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  const scrollThreshold = 80;
 
-  // Define the type for the accumulator
-  type GroupedLinks = Record<string, SidebarLink[]>;
+  const handleScroll = React.useMemo(
+    () =>
+      debounce(() => {
+        setIsScrolled(window.scrollY > scrollThreshold);
+      }, 30),
+    [scrollThreshold],
+  );
 
-  // Group links by 'group' property
-  const groupedLinks = links.reduce((acc: GroupedLinks, link) => {
-    const groupName = link.group || "ungrouped"; // Use 'ungrouped' as a default group
-    if (!acc[groupName]) {
-      acc[groupName] = [];
-    }
-    acc[groupName].push(link);
-    return acc;
-  }, {} as GroupedLinks); // Initialize acc as an empty object of type GroupedLinks
+  React.useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      handleScroll.cancel(); // Ensure debounce is cancelled on unmount
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
+
+  const groupedLinks = React.useMemo(() => {
+    type GroupedLinks = Record<string, SidebarLink[]>;
+    return links.reduce((acc: GroupedLinks, link) => {
+      const groupName = link.group || "ungrouped";
+      acc[groupName] = acc[groupName] || [];
+      acc[groupName].push(link);
+      return acc;
+    }, {} as GroupedLinks);
+  }, [links]);
 
   return (
-    <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 md:sticky md:block">
+    <aside
+      className={`transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block ${
+        isScrolled ? "pt-10" : ""
+      }`}
+    >
       <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (

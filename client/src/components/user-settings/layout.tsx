@@ -22,7 +22,7 @@ import {
   faSatelliteDish,
   faShieldHalved,
   faStarHalf,
-  faUser
+  faUser,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Suspense } from "react";
@@ -36,7 +36,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faUser}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -46,7 +46,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faStarHalf}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -56,7 +56,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBellRing}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -66,7 +66,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faRightLeft}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -76,7 +76,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faSatelliteDish}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -86,7 +86,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faShieldHalved}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -96,7 +96,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGear}
-        className="text-muted-foreground group-hover:text-foreground h-4 w-4"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -108,13 +108,15 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-background flex">
+    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
       <SidebarNav links={links} />
-      <div className="mx-12 w-full max-w-4xl flex-1">
-        <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
-          {children}
-        </Suspense>
-      </div>
+      <main className="relative lg:gap-10">
+        <div className="mx-auto min-w-0">
+          <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
+            {children}
+          </Suspense>
+        </div>
+      </main>
     </div>
   );
 }

@@ -59,6 +59,7 @@ module.exports = {
     extend: {
       transitionProperty: {
         height: "height",
+        spacing: "margin, padding",
       },
       backgroundImage: {
         "rainbow-gradient-light":
