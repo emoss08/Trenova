@@ -21,17 +21,8 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
-import { Badge } from "@/components/ui/badge";
 import { Worker } from "@/types/worker";
 import { ColumnDef } from "@tanstack/react-table";
-
-function HazmatBadge({ isHazmat }: { isHazmat: string }) {
-  return (
-    <Badge variant={isHazmat === "Y" ? "default" : "destructive"}>
-      {isHazmat === "Y" ? "Yes" : "No"}
-    </Badge>
-  );
-}
 
 const columns: ColumnDef<Worker>[] = [
   {

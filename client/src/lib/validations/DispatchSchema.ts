@@ -31,8 +31,11 @@ import { validateDecimal } from "@/lib/utils";
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import {
+  FeasibilityOperatorChoiceProps,
+  ServiceIncidentControlChoiceProps,
+} from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 import {
   CommentTypeFormValues,
   DelayCodeFormValues,
@@ -40,14 +43,9 @@ import {
   FeasibilityToolControlFormValues,
   FleetCodeFormValues,
   RateBillingTableFormValues,
-  RateFormValues,
 } from "@/types/dispatch";
-import { TRateMethodChoices } from "@/lib/constants";
-import { StatusChoiceProps } from "@/types";
-import {
-  FeasibilityOperatorChoiceProps,
-  ServiceIncidentControlChoiceProps,
-} from "@/lib/choices";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({

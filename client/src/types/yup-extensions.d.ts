@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { StringSchema } from "yup";
+import "yup";
 
 declare module "yup" {
   // eslint-disable-next-line no-shadow
