@@ -16,12 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
-from accounts import models, serializers
-from accounts.models import CustomGroup
-from accounts.permissions import OwnershipPermission
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from core.permissions import CustomObjectPermissions
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Permission
 from django.db.models import Prefetch, QuerySet
@@ -39,6 +35,11 @@ from rest_framework import (
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.request import Request
+
+from accounts import models, serializers
+from accounts.models import CustomGroup
+from accounts.permissions import OwnershipPermission
+from core.permissions import CustomObjectPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
