@@ -33,6 +33,16 @@
     "HTMLDivElement": true,
     "File": true
   },
+  "overrides": [
+    {
+      "files": [
+        "*.ts",
+        "*.tsx",
+        "*.js"
+      ],
+      "parser": "@typescript-eslint/parser"
+    }
+  ],
   "rules": {
     "react/jsx-no-useless-fragment": "off",
     "prettier/prettier": "error",
@@ -55,6 +65,7 @@
     "react/display-name": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "react/no-unstable-nested-components": "off",
+    "tailwindcss/no-custom-classname": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
