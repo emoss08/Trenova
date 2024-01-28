@@ -50,7 +50,7 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     Profile inline
     """
 
-    model = models.UserProfile  # type: ignore
+    model = models.UserProfile
     fk_name = "user"
 
 
@@ -364,3 +364,8 @@ class SessionAdmin(ModelAdmin):
 @admin.register(models.CustomGroup)
 class CustomGroupAdmin(GroupAdmin):
     list_display = ("name", "organization", "business_unit")
+
+
+@admin.register(models.UserFavorite)
+class UserFavoriteAdmin(admin.ModelAdmin):
+    list_display = ("user", "page")

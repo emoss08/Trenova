@@ -54,6 +54,7 @@ router.register(r"users", accounts_api.UserViewSet, basename="users")
 router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job-titles")
 router.register(r"groups", accounts_api.GroupViewSet, basename="groups")
 router.register(r"permissions", accounts_api.PermissionViewSet, basename="permissions")
+router.register(r"favorites", accounts_api.UserFavoriteViewSet, basename="favorites")
 
 # Accounting Routes
 router.register(

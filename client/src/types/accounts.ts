@@ -37,6 +37,13 @@ export type UserProfile = {
   isPhoneVerified: boolean;
 };
 
+export type UserFavorite = {
+  id: string;
+  user: string;
+  created: string;
+  page: string;
+};
+
 /**
  * MinimalUser is similar to the User type ,but does provide all the fields.
  */

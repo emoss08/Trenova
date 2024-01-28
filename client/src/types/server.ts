@@ -32,6 +32,7 @@ export type APIError = {
 
 export type API_ENDPOINTS =
   | "/shipment_types/"
+  | "/favorites/"
   | "/order_types/"
   | "/users/"
   | "/job_titles/"

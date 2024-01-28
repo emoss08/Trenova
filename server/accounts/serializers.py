@@ -770,3 +770,67 @@ class TokenProvisionSerializer(serializers.Serializer):
 
         attrs["user"] = auth_user
         return attrs
+
+
+class UserFavoriteSerializer(GenericSerializer):
+    """Serializer for the UserFavorite model.
+
+    This serializer converts the UserFavorites model into a format that
+    can be easily converted to and from JSON, and allows for easy validation
+    of the data.
+    """
+
+    class Meta:
+        """Metaclass for UserFavoriteSerializer
+
+        Attributes:
+            model (models.UserFavorites): The model that the serializer
+            is for.
+
+            fields (list[str]): The fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.UserFavorite
+        fields = [
+            "id",
+            "user",
+            "page",
+            "created",
+        ]
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+            "user": {"required": False},
+        }
+
+    def create(self, validated_data) -> models.UserFavorite:
+        """Create a user favorite
+
+        Args:
+            validated_data (Any): Validated data
+
+        Returns:
+            models.UserFavorite: UserFavorite instance
+        """
+
+        # Get the organization of the user from the request.
+        organization = super().get_organization
+        validated_data["organization"] = organization
+
+        # Get the business unit of the user from the request.
+        business_unit = super().get_business_unit
+        validated_data["business_unit"] = business_unit
+
+        # Get User from request and add to validated data
+        validated_data["user"] = self.context["request"].user
+
+        # Create the user favorite
+        user_favorite = models.UserFavorite.objects.create(
+            user=validated_data["user"],
+            page=validated_data["page"],
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        return user_favorite

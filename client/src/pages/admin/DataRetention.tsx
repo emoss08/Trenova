@@ -18,12 +18,14 @@
 import AdminLayout from "@/components/admin-page/layout";
 import { lazy } from "react";
 
-const GoogleAPI = lazy(() => import("@/components/google-api/google-api"));
+const DataRetention = lazy(
+  () => import("@/components/data-retention/data-retention"),
+);
 
-export default function GoogleAPIPage() {
+export default function DataRetentionPage() {
   return (
     <AdminLayout>
-      <GoogleAPI />
+      <DataRetention />
     </AdminLayout>
   );
 }
