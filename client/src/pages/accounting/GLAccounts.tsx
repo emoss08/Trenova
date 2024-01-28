@@ -17,6 +17,7 @@
 
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { GLTableEditSheet } from "@/components/gl-accounts/gl-table-edit-sheet";
 import { GLTableSheet } from "@/components/gl-accounts/gl-table-sheet";
@@ -25,10 +26,9 @@ import { tableAccountTypeChoices } from "@/lib/choices";
 import { tableStatusChoices } from "@/lib/constants";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { ColumnDef } from "@tanstack/react-table";
 
-const renderSubComponent = ({ row }: { row: Row<GeneralLedgerAccount> }) => {
+const renderSubComponent = () => {
   // const original = row.original;
   return <GLAccountTableSub />;
 };

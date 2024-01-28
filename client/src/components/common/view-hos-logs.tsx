@@ -114,7 +114,7 @@ export function HourGrid() {
 
       {/* Status Rows */}
       {statusTypes.map((statusType, rowIndex) => (
-        <div key={statusType} className="relative flex">
+        <div key={rowIndex} className="relative flex">
           {" "}
           {/* Add relative positioning here */}
           <div className="w-12 border-r-2 p-1 text-xs">{statusType}</div>

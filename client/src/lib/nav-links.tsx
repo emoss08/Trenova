@@ -15,17 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faContainerStorage,
-  faFileInvoiceDollar,
   faFolders,
   faMoneyBillTransfer,
   faScrewdriverWrench,
   faTruck,
   faVault,
 } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 /** Links for Billing Navigation Menu */
 export const billingNavLinks = [

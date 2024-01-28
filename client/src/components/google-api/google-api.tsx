@@ -87,19 +87,10 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
   const { t } = useTranslation(["admin.googleapi", "common"]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const [showAPIKey, setShowAPIKey] = React.useState(false);
-
-  const toggleAPIKeyVisibility = () => {
-    setShowAPIKey(!showAPIKey);
-  };
-
-  const { control, handleSubmit, reset, watch, formState } =
-    useForm<GoogleAPIFormValues>({
-      resolver: yupResolver(googleAPISchema),
-      defaultValues: googleApi,
-    });
-
-  const apiKeyValue = watch("apiKey");
+  const { control, handleSubmit, reset } = useForm<GoogleAPIFormValues>({
+    resolver: yupResolver(googleAPISchema),
+    defaultValues: googleApi,
+  });
 
   const mutation = useCustomMutation<GoogleAPIFormValues>(
     control,
