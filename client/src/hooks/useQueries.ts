@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { getUserFavorites } from "@/services/AccountRequestService";
 import {
   getAccountingControl,
   getGLAccounts,
@@ -907,4 +908,19 @@ export function useTopics(show?: boolean) {
     })) || [];
 
   return { selectTopics, isError, isLoading };
+}
+
+export function useUserFavorites(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["userFavorites"] as QueryKeys[],
+    queryFn: async () => getUserFavorites(),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData(["userFavorites"] as QueryKeys[]),
+    staleTime: Infinity,
+  });
+
+  return { data, isError, isLoading };
 }

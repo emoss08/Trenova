@@ -63,7 +63,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
         queryset = self.queryset.filter(
             id=self.request.user.organization_id  # type: ignore
-        ).prefetch_related(  # type: ignore
+        ).prefetch_related(
             Prefetch(
                 "depots",
                 queryset=models.Depot.objects.filter(

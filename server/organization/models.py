@@ -1600,7 +1600,7 @@ class FeatureFlag(TimeStampedModel):
         if is_new:
             from organization.tasks import create_organization_feature_flags
 
-            create_organization_feature_flags.delay(feature_flag_id=self.id)
+            create_organization_feature_flags.delay(feature_flag_id=str(self.id))
 
     def get_absolute_url(self) -> str:
         """FeatureFlag absolute URL

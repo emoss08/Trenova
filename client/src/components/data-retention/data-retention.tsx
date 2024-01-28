@@ -15,15 +15,31 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import AdminLayout from "@/components/admin-page/layout";
-import { lazy } from "react";
+import { useTranslation } from "react-i18next";
+import { Separator } from "../ui/separator";
 
-const GoogleAPI = lazy(() => import("@/components/google-api/google-api"));
+export default function GoogleApi() {
+  const { t } = useTranslation(["admin.generalpage", "common"]);
 
-export default function GoogleAPIPage() {
   return (
-    <AdminLayout>
-      <GoogleAPI />
-    </AdminLayout>
+    <>
+      <div className="space-y-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {t("title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("subTitle")}</p>
+        </div>
+        <Separator />
+      </div>
+      <ul role="list" className="divide-y divide-foreground">
+        <li className="flex py-4">
+          <div className="ml-3">
+            <p className="text-sm font-medium text-foreground">TEST</p>
+            <p className="text-sm text-muted-foreground">TEST</p>
+          </div>
+        </li>
+      </ul>
+    </>
   );
 }

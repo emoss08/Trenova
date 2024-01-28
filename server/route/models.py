@@ -244,7 +244,7 @@ class RouteControl(GenericModel):
 
         if (
             self.generate_routes
-            and self.distance_method == self.DistanceMethodChoices.Trenova
+            and self.distance_method == self.DistanceMethodChoices.TRENOVA
         ):
             raise ValidationError(
                 {

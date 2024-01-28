@@ -67,6 +67,7 @@ const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
 const TableChangeAlertPage = lazy(
   () => import("../pages/admin/TableChangeAlerts"),
 );
+const DataRetentionPage = lazy(() => import("../pages/admin/DataRetention"));
 
 // Commodity Pages
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
@@ -476,6 +477,14 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Table Change Alerts",
     element: <TableChangeAlertPage />,
     permission: "view_tablechangealert",
+  },
+  {
+    title: "Data Retention",
+    group: "Administration",
+    path: "/admin/data-retention/",
+    description: "Data Retention",
+    element: <DataRetentionPage />,
+    permission: "view_dataretention",
   },
   // Error Page
   {

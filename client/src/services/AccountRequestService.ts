@@ -15,15 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import AdminLayout from "@/components/admin-page/layout";
-import { lazy } from "react";
+import axios from "@/lib/axiosConfig";
+import { UserFavorite } from "@/types/accounts";
 
-const GoogleAPI = lazy(() => import("@/components/google-api/google-api"));
-
-export default function GoogleAPIPage() {
-  return (
-    <AdminLayout>
-      <GoogleAPI />
-    </AdminLayout>
-  );
+/**
+ * Gets user favorites from the server
+ * @returns An array of user favorites from the server
+ */
+export async function getUserFavorites(): Promise<UserFavorite> {
+  const response = await axios.get("/favorites/");
+  return response.data.results;
 }

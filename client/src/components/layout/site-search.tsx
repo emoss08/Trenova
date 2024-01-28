@@ -15,13 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 import { useUserPermissions } from "@/context/user-permissions";
+import { useUserFavorites } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
-import { routes } from "@/routing/AppRoutes";
+import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { UserFavorite } from "../../types/accounts";
 import {
   CommandDialog,
   CommandEmpty,
@@ -61,13 +63,13 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="group hidden h-8 w-[250px] items-center justify-between rounded-md border border-border bg-secondary px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
+            className="border-border bg-secondary hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm md:flex"
           >
             <div className="flex items-center">
-              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
               <span className="text-muted-foreground">Search...</span>
             </div>
-            <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-foreground opacity-100">
+            <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
               <span className="text-xs">⌘ K</span>
             </kbd>
           </button>
@@ -85,6 +87,11 @@ export function SiteSearch() {
   const { isAuthenticated, userHasPermission } = useUserPermissions();
   const [open, setOpen] = useHeaderStore.use("searchDialogOpen");
   const [searchText, setSearchText] = React.useState<string>("");
+  const {
+    data: userFavorites,
+    isLoading: isFavoritesLoading,
+    isError: isFavoritesError,
+  } = useUserFavorites();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -97,7 +104,10 @@ export function SiteSearch() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Filtering and preparing route groups
+  const favoritePaths = new Set(
+    (userFavorites as UserFavorite[])?.map((favorite) => favorite.page),
+  );
+
   const filteredRoutes = routes.filter((route) => {
     if (route.excludeFromMenu) return false;
     if (route.path.endsWith("/:id")) return false;
@@ -105,7 +115,20 @@ export function SiteSearch() {
     return isAuthenticated;
   });
 
-  const groupedRoutes = prepareRouteGroups(filteredRoutes);
+  // Partitioning routes into favorite and other routes
+  const favoriteRoutes = filteredRoutes.filter((route) =>
+    favoritePaths.has(route.path),
+  );
+  const otherRoutes = filteredRoutes.filter(
+    (route) => !favoritePaths.has(route.path),
+  );
+
+  const groupedRoutes = prepareRouteGroups(otherRoutes); // Prepare groups only for non-favorite routes
+
+  // Prepare favorite commands for rendering
+  const favoriteCommands = favoriteRoutes.filter((route) =>
+    route.title.toLowerCase().includes(searchText.toLowerCase()),
+  );
 
   const filteredGroups = Object.entries(groupedRoutes).reduce(
     (acc, [group, groupRoutes]) => {
@@ -119,7 +142,7 @@ export function SiteSearch() {
 
       return acc;
     },
-    {} as Record<string, typeof routes>,
+    {} as Record<string, RouteObjectWithPermission[]>,
   );
 
   const handleDialogOpenChange = (isOpen: boolean) => {
@@ -137,28 +160,50 @@ export function SiteSearch() {
         onValueChange={setSearchText}
       />
       <CommandList>
-        {Object.entries(filteredGroups).length === 0 && (
-          <CommandEmpty>
-            <AlertCircle className="mx-auto size-6 text-accent-foreground" />
-            <p className="mt-4 font-semibold text-accent-foreground">
-              No results found
-            </p>
-            <p className="mt-2 text-muted-foreground">
-              No pages found for this search term. Please try again.
-            </p>
-          </CommandEmpty>
+        {/* Render favorite commands first */}
+        {favoriteCommands.length > 0 && (
+          <React.Fragment key="favorites">
+            <CommandGroup heading="Favorites">
+              {favoriteCommands.map((cmd) => (
+                <CommandItem
+                  key={cmd.path + "-favorite-item"}
+                  onSelect={() => {
+                    navigate(cmd.path);
+                    setOpen(false);
+                  }}
+                  className="text-mono hover:cursor-pointer"
+                >
+                  {cmd.title}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator key="favorites-separator" />
+          </React.Fragment>
         )}
+        {/* Render other groups */}
+        {Object.keys(filteredGroups).length === 0 &&
+          favoriteCommands.length === 0 && (
+            <CommandEmpty key="empty">
+              <AlertCircle className="text-accent-foreground mx-auto size-6" />
+              <p className="text-accent-foreground mt-4 font-semibold">
+                No results found
+              </p>
+              <p className="text-muted-foreground mt-2">
+                No pages found for this search term. Please try again.
+              </p>
+            </CommandEmpty>
+          )}
         {Object.entries(filteredGroups).map(([group, groupCommands]) => (
           <React.Fragment key={group}>
             <CommandGroup heading={upperFirst(group)}>
               {groupCommands.map((cmd) => (
                 <CommandItem
-                  key={cmd.path + "-item"}
+                  key={cmd.path + "-group-item"}
                   onSelect={() => {
                     navigate(cmd.path);
                     setOpen(false);
                   }}
-                  className="hover:cursor-pointer"
+                  className="text-mono hover:cursor-pointer"
                 >
                   {cmd.title}
                 </CommandItem>
@@ -168,7 +213,7 @@ export function SiteSearch() {
           </React.Fragment>
         ))}
       </CommandList>
-      <div className="sticky flex justify-center space-x-1 border-t bg-background py-2">
+      <div className="bg-background sticky flex justify-center space-x-1 border-t py-2">
         <span className="text-xs">&#8593;</span>
         <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>
