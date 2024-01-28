@@ -14,7 +14,8 @@
   "plugins": [
     "@tanstack/query",
     "@typescript-eslint",
-    "prettier"
+    "prettier",
+    "promise"
   ],
   "globals": {
     "document": true,
@@ -66,6 +67,7 @@
     "@typescript-eslint/no-explicit-any": "off",
     "react/no-unstable-nested-components": "off",
     "tailwindcss/no-custom-classname": "off",
+    "@typescript-eslint/triple-slash-reference": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
