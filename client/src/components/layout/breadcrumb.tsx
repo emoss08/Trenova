@@ -22,8 +22,8 @@ import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { UserFavorite } from "@/types/accounts";
-import { faStarSharpHalf } from "@fortawesome/pro-duotone-svg-icons";
 import { faStar } from "@fortawesome/pro-regular-svg-icons";
+import { faStar as faStarFilled } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
@@ -137,7 +137,7 @@ function FavoriteIcon({
       <Tooltip>
         <TooltipTrigger asChild>
           <FontAwesomeIcon
-            icon={isFavorite ? faStarSharpHalf : faStar}
+            icon={isFavorite ? faStarFilled : faStar}
             title="Favorite"
             className="mx-1 size-5 cursor-pointer text-yellow-400 transition-colors hover:text-yellow-300"
             onClick={onFavoriteToggle.bind(null, !isFavorite)}
