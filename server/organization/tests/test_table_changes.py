@@ -196,8 +196,9 @@ def test_command() -> None:
     Returns:
         None: This function does not return anything.
     """
-    with patch("psycopg.connect"), patch(
-        "django.core.management.color.supports_color", return_value=False
+    with (
+        patch("psycopg.connect"),
+        patch("django.core.management.color.supports_color", return_value=False),
     ):
         out = StringIO()
         call_command("psql_listener", stdout=out)

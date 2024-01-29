@@ -1331,6 +1331,17 @@ class TableChangeAlert(TimeStampedModel):
 
         super().clean()
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # clear out the table and topic input depdning on the source.
+        # if source is Kafka clear out the table input
+        # if source is Postgres clear out the topic input
+        if self.source == self.SourceChoices.KAFKA:
+            self.table = ""
+        elif self.source == self.SourceChoices.POSTGRES:
+            self.topic = ""
+
+        super().save(*args, **kwargs)
+
 
 class NotificationType(TimeStampedModel):
     """
