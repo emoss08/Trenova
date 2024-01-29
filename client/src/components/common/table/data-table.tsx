@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table } from "@/components/ui/table";
 import { useUserPermissions } from "@/context/user-permissions";
@@ -29,6 +30,11 @@ import {
   ColumnFilter,
   ColumnFiltersState,
   ColumnSort,
+  OnChangeFn,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
+  VisibilityState,
   getCoreRowModel,
   getExpandedRowModel,
   getFacetedRowModel,
@@ -36,12 +42,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  OnChangeFn,
-  PaginationState,
-  RowSelectionState,
-  SortingState,
   useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import React, { SetStateAction } from "react";
 import { DataTableBody } from "./data-table-body";
@@ -249,34 +250,37 @@ export function DataTable<TData extends Record<string, any>>({
 
   return (
     <>
-      <div className="my-2">
-        <div className="space-y-4">
-          <DataTableTopBar
-            table={table}
-            name={name}
-            filterColumn={filterColumn}
-            selectedRowCount={selectedRowCount}
-            tableFacetedFilters={tableFacetedFilters}
-            addPermissionName={addPermissionName}
-            userHasPermission={userHasPermission}
-            store={store}
-          />
-          <div className="rounded-md border border-border">
-            <Table>
-              <DataTableHeader table={table} />
-              <DataTableBody
-                columns={columns}
-                setCurrentRecord={setCurrentRecord}
-                setEditDrawerOpen={setEditDrawerOpen}
+      <Card className="w-full">
+        <CardContent>
+          <div className="my-2">
+            <div className="space-y-4">
+              <DataTableTopBar
                 table={table}
-                renderSubComponent={renderSubComponent}
+                name={name}
+                filterColumn={filterColumn}
+                selectedRowCount={selectedRowCount}
+                tableFacetedFilters={tableFacetedFilters}
+                addPermissionName={addPermissionName}
+                userHasPermission={userHasPermission}
+                store={store}
               />
-            </Table>
+              <div className="border-border rounded-md border">
+                <Table>
+                  <DataTableHeader table={table} />
+                  <DataTableBody
+                    columns={columns}
+                    setCurrentRecord={setCurrentRecord}
+                    setEditDrawerOpen={setEditDrawerOpen}
+                    table={table}
+                    renderSubComponent={renderSubComponent}
+                  />
+                </Table>
+              </div>
+              <DataTablePagination table={table} pagination={pagination} />
+            </div>
           </div>
-          <DataTablePagination table={table} pagination={pagination} />
-        </div>
-      </div>
-
+        </CardContent>
+      </Card>
       <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableSheet && (
         <TableSheet open={drawerOpen} onOpenChange={setDrawerOpen} />

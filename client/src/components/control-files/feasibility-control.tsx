@@ -66,7 +66,7 @@ function FeasibilityControlForm({
 
   return (
     <form
-      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
+      className="bg-card border-border m-4 border sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -86,6 +86,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpwCriteria"
               control={control}
+              type="number"
               label="Miles Per Week Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Week Criteria"
@@ -107,6 +108,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpdCriteria"
               control={control}
+              type="number"
               label="Miles Per Day Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Day Criteria"
@@ -128,6 +130,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpgCriteria"
               control={control}
+              type="number"
               label="Miles Per Gallon Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Gallon Criteria"
@@ -149,6 +152,7 @@ function FeasibilityControlForm({
             <InputField
               name="otpCriteria"
               control={control}
+              type="number"
               label="On-Time Percentage Criteria"
               rules={{ required: true }}
               placeholder="On-Time Percentage Criteria"
@@ -157,7 +161,7 @@ function FeasibilityControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -184,10 +188,10 @@ export default function FeasibilityControl() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           Feasibility Control
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           Optimize your workforce allocation with our Worker Feasibility Tool
           Panel. This tool dynamically assesses the suitability of workers for
           shipments based on their performance metrics and Hours of Service
@@ -195,11 +199,11 @@ export default function FeasibilityControl() {
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load feasibility control." />
         </div>
       ) : (
