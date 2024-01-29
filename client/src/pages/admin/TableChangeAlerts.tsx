@@ -19,7 +19,7 @@ import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
+import { TableChangeAlertEditSheet } from "@/components/table-change-alerts/table-change-edit-sheet";
 import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableChangeAlert } from "@/types/organization";
@@ -83,7 +83,7 @@ export default function TableChangeAlerts() {
             exportModelName="TableChangeAlert"
             filterColumn="name"
             TableSheet={TableChangeAlertSheet}
-            TableEditSheet={EmailProfileTableEditDialog}
+            TableEditSheet={TableChangeAlertEditSheet}
             addPermissionName="view_tablechangealert"
           />
         </CardContent>
