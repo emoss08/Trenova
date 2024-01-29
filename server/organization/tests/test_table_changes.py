@@ -21,7 +21,6 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-
 from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.exceptions import ConditionalStructureError
@@ -196,8 +195,9 @@ def test_command() -> None:
     Returns:
         None: This function does not return anything.
     """
-    with patch("psycopg.connect"), patch(
-        "django.core.management.color.supports_color", return_value=False
+    with (
+        patch("psycopg.connect"),
+        patch("django.core.management.color.supports_color", return_value=False),
     ):
         out = StringIO()
         call_command("psql_listener", stdout=out)

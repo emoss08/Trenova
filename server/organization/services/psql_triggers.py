@@ -15,11 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 import typing
 
 from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
-
 from organization.exceptions import InvalidOperationError
 from organization.services.conditional_logic import (
     AVAILABLE_OPERATIONS,
@@ -28,6 +28,15 @@ from organization.services.conditional_logic import (
 from organization.services.table_choices import get_column_names
 from utils.models import OperationChoices
 from utils.types import ConditionalLogic, ModelUUID
+
+logger = logging.getLogger(__name__)
+
+info, warning, exception, debug = (
+    logger.info,
+    logger.warning,
+    logger.exception,
+    logger.debug,
+)
 
 
 # fmt: off
@@ -254,6 +263,7 @@ def create_insert_trigger(
             EXECUTE PROCEDURE {e_function_name}();
             """
         cursor.execute(query)
+    info(f"Created function {function_name} and trigger {trigger_name}.")
 
 
 def create_update_field_string(*, fields: list[str]) -> str:
@@ -339,6 +349,7 @@ def create_update_function(
             $BODY$;
             """
         )
+    info(f"Created function {function_name}.")
 
 
 @transaction.atomic
@@ -397,6 +408,7 @@ def create_update_trigger(
             EXECUTE PROCEDURE {quoted_function_name}();
             """
         )
+    info(f"Created function {function_name} and trigger {trigger_name}.")
 
 
 @transaction.atomic
@@ -422,10 +434,12 @@ def drop_trigger_and_function(
     trigger = check_trigger_exists(table_name=table_name, trigger_name=trigger_name)
     function = check_function_exists(function_name=function_name)
 
+    # If the trigger or function do not exist, return early.
     if not trigger or not function:
-        raise ValueError(
-            f"Trigger {trigger_name} or function {function_name} does not exist."
+        info(
+            f"Trigger {trigger_name} or function {function_name} does not exist. Skipping drop."
         )
+        return
 
     # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
     # and is safely quoted.
@@ -442,6 +456,7 @@ def drop_trigger_and_function(
                 DROP FUNCTION IF EXISTS {quoted_function_name}();
                 """
         )
+    info(f"Dropped trigger {trigger_name} and function {function_name}.")
 
 
 def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
