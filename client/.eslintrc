@@ -2,20 +2,17 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
-    "plugin:prettier/recommended",
     "plugin:@tanstack/eslint-plugin-query/recommended",
-    "plugin:tailwindcss/recommended"
+    "plugin:tailwindcss/recommended",
+    "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@tanstack/query",
-    "@typescript-eslint",
-    "prettier",
-    "promise"
+    "@typescript-eslint"
   ],
   "globals": {
     "document": true,
@@ -34,16 +31,6 @@
     "HTMLDivElement": true,
     "File": true
   },
-  "overrides": [
-    {
-      "files": [
-        "*.ts",
-        "*.tsx",
-        "*.js"
-      ],
-      "parser": "@typescript-eslint/parser"
-    }
-  ],
   "rules": {
     "react/jsx-no-useless-fragment": "off",
     "prettier/prettier": "error",
