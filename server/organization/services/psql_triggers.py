@@ -20,6 +20,7 @@ import typing
 
 from django.db import connection, transaction
 from django.db.backends.utils import truncate_name
+
 from organization.exceptions import InvalidOperationError
 from organization.services.conditional_logic import (
     AVAILABLE_OPERATIONS,

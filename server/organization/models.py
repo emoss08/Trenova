@@ -33,9 +33,10 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
+
+from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -1331,7 +1332,6 @@ class TableChangeAlert(TimeStampedModel):
         super().clean()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-
         # clear out the table and topic input depdning on the source.
         # if source is Kafka clear out the table input
         # if source is Postgres clear out the topic input
@@ -1341,7 +1341,8 @@ class TableChangeAlert(TimeStampedModel):
             self.topic = ""
 
         super().save(*args, **kwargs)
-        
+
+
 class NotificationType(TimeStampedModel):
     """
     Stores the notification type information for a related :model:`organization.Organization`
