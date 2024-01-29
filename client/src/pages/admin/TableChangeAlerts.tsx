@@ -18,11 +18,15 @@
 import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import {
+  DataTableColumnHeader,
+  DataTableTooltipColumnHeader,
+} from "@/components/common/table/data-table-column-header";
 import { TableChangeAlertEditSheet } from "@/components/table-change-alerts/table-change-edit-sheet";
 import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
-import { Card, CardContent } from "@/components/ui/card";
+import { databaseActionChoices, sourceChoices } from "@/lib/choices";
 import { TableChangeAlert } from "@/types/organization";
+import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<TableChangeAlert>[] = [
@@ -59,35 +63,65 @@ const columns: ColumnDef<TableChangeAlert>[] = [
   {
     accessorKey: "databaseAction",
     header: "Database Action",
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "source",
     header: "Source",
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "table",
-    header: "Table",
+    header: () => (
+      <DataTableTooltipColumnHeader
+        title="Table"
+        tooltip="Table is the name of the table that will be monitored for changes."
+      />
+    ),
+  },
+  {
+    accessorKey: "topic",
+    header: () => (
+      <DataTableTooltipColumnHeader
+        title="Topic"
+        tooltip="Topic is the name of the Kafka topic that will be used to publish the message."
+      />
+    ),
+  },
+];
+
+const filters: FilterConfig<TableChangeAlert>[] = [
+  {
+    columnName: "databaseAction",
+    title: "Database Action",
+    options: databaseActionChoices,
+  },
+  {
+    columnName: "source",
+    title: "Source",
+    options: sourceChoices,
   },
 ];
 
 export default function TableChangeAlerts() {
   return (
     <AdminLayout>
-      <Card>
-        <CardContent>
-          <DataTable
-            queryKey="table-change-alert-data"
-            columns={columns}
-            link="/table_change_alerts/"
-            name="Table Change Alert"
-            exportModelName="TableChangeAlert"
-            filterColumn="name"
-            TableSheet={TableChangeAlertSheet}
-            TableEditSheet={TableChangeAlertEditSheet}
-            addPermissionName="view_tablechangealert"
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        queryKey="table-change-alert-data"
+        columns={columns}
+        link="/table_change_alerts/"
+        name="Table Change Alert"
+        exportModelName="TableChangeAlert"
+        filterColumn="name"
+        tableFacetedFilters={filters}
+        TableSheet={TableChangeAlertSheet}
+        TableEditSheet={TableChangeAlertEditSheet}
+        addPermissionName="view_tablechangealert"
+      />
     </AdminLayout>
   );
 }
