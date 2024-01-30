@@ -50,7 +50,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBuilding}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -61,7 +61,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBuildingColumns}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -72,7 +72,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faMoneyBillTransfer}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -83,7 +83,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faFileInvoice}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -94,7 +94,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faTruck}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -105,7 +105,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBoxTaped}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -116,7 +116,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faRoad}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -127,7 +127,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faCircleCheck}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -138,7 +138,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faFlag}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Organization",
@@ -149,7 +149,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBook}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Reporting & Analytics",
@@ -160,7 +160,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faArrowsRepeat}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Reporting & Analytics",
@@ -171,7 +171,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faInboxes}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Email & SMS",
@@ -182,7 +182,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faMailbox}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Email & SMS",
@@ -193,7 +193,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faPaperPlane}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Email & SMS",
@@ -204,7 +204,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faSatelliteDish}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Notifications",
@@ -215,7 +215,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faDatabase}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Data & Integrations",
@@ -226,7 +226,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faTable}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Data & Integrations",
@@ -237,7 +237,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGoogle}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Data & Integrations",
@@ -248,7 +248,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faWebhook}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Data & Integrations",
@@ -259,7 +259,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faFiles}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Document Management",
@@ -270,7 +270,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faFile}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
     group: "Document Management",
@@ -285,13 +285,13 @@ export default function AdminLayout({
   return (
     <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
       <SidebarNav links={links} />
-      <main className="relative lg:gap-10">
+      <div className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
           <Suspense fallback={<Skeleton className="size-full" />}>
             {children}
           </Suspense>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
