@@ -30,6 +30,7 @@ import {
   Option,
   SelectDescription,
   SelectOption,
+  SingleValueComponent,
   ValueContainer,
   ValueProcessor,
 } from "./select-components";
@@ -146,6 +147,7 @@ export function SelectInput<T extends Record<string, unknown>>(
             MenuList: MenuList,
             Option: Option,
             NoOptionsMessage: NoOptionsMessage,
+            SingleValue: SingleValueComponent,
           }}
           classNames={{
             control: ({ isFocused }) =>
