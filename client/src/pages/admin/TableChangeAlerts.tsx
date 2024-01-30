@@ -22,9 +22,11 @@ import {
   DataTableColumnHeader,
   DataTableTooltipColumnHeader,
 } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { TableChangeAlertEditSheet } from "@/components/table-change-alerts/table-change-edit-sheet";
 import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
 import { databaseActionChoices, sourceChoices } from "@/lib/choices";
+import { tableStatusChoices } from "@/lib/constants";
 import { TableChangeAlert } from "@/types/organization";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
@@ -50,6 +52,16 @@ const columns: ColumnDef<TableChangeAlert>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "name",
@@ -96,10 +108,16 @@ const columns: ColumnDef<TableChangeAlert>[] = [
 
 const filters: FilterConfig<TableChangeAlert>[] = [
   {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+  {
     columnName: "databaseAction",
     title: "Database Action",
     options: databaseActionChoices,
   },
+
   {
     columnName: "source",
     title: "Source",
