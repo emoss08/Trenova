@@ -25,6 +25,7 @@ export type ThemeOptions = "light" | "dark" | "system";
 export interface IChoiceProps<T extends string | boolean | number> {
   value: T;
   label: string;
+  color?: string;
 }
 
 export type StatusChoiceProps = "A" | "I";
