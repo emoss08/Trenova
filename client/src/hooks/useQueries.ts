@@ -19,6 +19,7 @@ import { getUserFavorites } from "@/services/AccountRequestService";
 import {
   getAccountingControl,
   getGLAccounts,
+  getRevenueCodes,
   getTags,
 } from "@/services/AccountingRequestService";
 import {
@@ -70,6 +71,7 @@ import { QueryKeys } from "@/types";
 import {
   AccountingControl,
   GeneralLedgerAccount,
+  RevenueCode,
   Tag,
 } from "@/types/accounting";
 import { User } from "@/types/accounts";
@@ -319,7 +321,7 @@ export function useRouteControl() {
  * Get Commodities for select options
  * @param show - show or hide the query
  */
-export function useCommodities(show: boolean) {
+export function useCommodities(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
@@ -338,7 +340,7 @@ export function useCommodities(show: boolean) {
       label: item.name,
     })) || [];
 
-  return { selectCommodityData, isLoading, isError, isFetched };
+  return { selectCommodityData, isLoading, isError, isFetched, data };
 }
 
 /**
@@ -466,7 +468,7 @@ export function useHazardousMaterial(show?: boolean) {
       label: item.name,
     })) || [];
 
-  return { selectHazardousMaterials, isLoading, isError, isFetched };
+  return { selectHazardousMaterials, isLoading, isError, isFetched, data };
 }
 
 /**
@@ -498,7 +500,7 @@ export function useLocations(show?: boolean) {
  * @param show - show or hide the query
  * @returns
  */
-export function useShipmentTypes(show: boolean) {
+export function useShipmentTypes(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
@@ -923,4 +925,28 @@ export function useUserFavorites(show?: boolean) {
   });
 
   return { data, isError, isLoading };
+}
+
+export function useRevenueCodes(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: revenueCodesData,
+    isError: isRevenueCodeError,
+    isLoading: isRevenueCodeLoading,
+  } = useQuery({
+    queryKey: ["revenueCodes"] as QueryKeys[],
+    queryFn: async () => getRevenueCodes(),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData(["revenueCodes"] as QueryKeys[]),
+  });
+
+  const selectRevenueCodes =
+    (revenueCodesData as RevenueCode[])?.map((revenueCode: RevenueCode) => ({
+      value: revenueCode.id,
+      label: revenueCode.code,
+    })) || [];
+
+  return { selectRevenueCodes, isRevenueCodeError, isRevenueCodeLoading };
 }

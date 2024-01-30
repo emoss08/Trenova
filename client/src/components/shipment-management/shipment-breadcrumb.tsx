@@ -20,6 +20,7 @@ import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { MoreVerticalIcon } from "lucide-react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,6 +84,8 @@ function OptionsDropdown() {
 }
 
 export function ShipmentBreadcrumb() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex justify-between pb-4 pt-5 md:py-4">
       <div>
@@ -90,14 +93,18 @@ export function ShipmentBreadcrumb() {
           Shipment Management
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             Shipment Management - Shipment Management
           </a>
         </div>
       </div>
       <div className="mt-3 flex">
         <OptionsDropdown />
-        <Button size="sm" className="ml-3 h-9 font-semibold">
+        <Button
+          size="sm"
+          className="ml-3 h-9 font-semibold"
+          onClick={() => navigate("/shipment-management/new-shipment/")}
+        >
           Add New Shipment
         </Button>
       </div>

@@ -401,8 +401,8 @@ type TStatusChoiceProps = "A" | "I";
  * @returns An array of status choices.
  */
 export const statusChoices = [
-  { value: "A", label: "Active" },
-  { value: "I", label: "Inactive" },
+  { value: "A", label: "Active", color: "#15803d" },
+  { value: "I", label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;
 
 /**

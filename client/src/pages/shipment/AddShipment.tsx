@@ -15,40 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ShipmentAsideMenus } from "@/components/shipment-management/map-view/shipment-aside-menu";
-import { ShipmentList } from "@/components/shipment-management/shipment-list";
-import { ShipmentSearchForm } from "@/types/order";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense, lazy } from "react";
 
-export function ShipmentListView({
-  finalStatuses,
-  progressStatuses,
-  control,
-  setValue,
-  watch,
-}: {
-  finalStatuses: string[];
-  progressStatuses: string[];
-  control: Control<ShipmentSearchForm>;
-  setValue: UseFormSetValue<ShipmentSearchForm>;
-  watch: UseFormWatch<ShipmentSearchForm>;
-}) {
+const AddShipment = lazy(
+  () => import("@/components/shipment-management/add-shipment"),
+);
+
+export default function AddShipmentPage() {
   return (
-    <div className="flex w-full space-x-10">
-      <div className="w-1/4">
-        <ShipmentAsideMenus
-          control={control}
-          setValue={setValue}
-          watch={watch}
-        />
-      </div>
-      <div className="w-3/4">
-        <ShipmentList
-          finalStatuses={finalStatuses}
-          progressStatuses={progressStatuses}
-          watch={watch}
-        />
-      </div>
-    </div>
+    <Suspense fallback={<Skeleton className="size-full" />}>
+      <AddShipment />
+    </Suspense>
   );
 }

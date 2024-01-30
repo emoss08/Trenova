@@ -60,24 +60,9 @@ export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
   return response.data.results;
 }
 
-/**
- * Fetches the details of the general ledger account with the specified ID.
- * @param id
- */
-export async function getGLAccountDetail(
-  id: string,
-): Promise<GeneralLedgerAccount> {
-  const response = await axios.get(`/gl_accounts/${id}/`);
-  return response.data;
-}
-
-/**
- * Fetches the details of the revenue code with the specified ID.
- * @param id
- */
-export async function getRevenueCodeDetail(id: string): Promise<RevenueCode> {
-  const response = await axios.get(`/revenue_codes/${id}/`);
-  return response.data;
+export async function getRevenueCodes(): Promise<RevenueCode[]> {
+  const response = await axios.get("/revenue_codes/");
+  return response.data.results;
 }
 
 /**

@@ -14,9 +14,11 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { InputField } from "@/components/common/fields/input";
 import { SendMessageDialog } from "@/components/common/send-message-dialog";
 import { HourGridDialog } from "@/components/common/view-hos-logs";
+import { MAP_STYLES } from "@/components/shipment-management/map-view/map-styles";
 import { ShipmentMapAside } from "@/components/shipment-management/map-view/shipment-map-aside";
 import { ShipmentMapOptions } from "@/components/shipment-management/map-view/shipment-map-options";
 import { ShipmentMapZoom } from "@/components/shipment-management/map-view/shipment-map-zoom";
@@ -128,7 +130,7 @@ export function ShipmentMapView() {
   ) : (
     <div className="mx-auto flex w-screen space-x-10">
       <ShipmentMapAside />
-      <div className="relative grow">
+      <div className="relative w-full grow">
         {/* Absolute positioned map options */}
         <div className="absolute right-0 top-0 z-10 p-2">
           <ShipmentMapOptions />
@@ -154,13 +156,13 @@ export function ShipmentMapView() {
           bootstrapURLKeys={{ key: apiKey }}
           defaultCenter={defaultProps.center}
           defaultZoom={defaultProps.zoom}
-          style={{ width: "100%", height: "100%" }}
           layerTypes={mapLayers}
           yesIWantToUseGoogleMapApiInternals
           onGoogleApiLoaded={handleApiLoaded}
           options={{
             mapTypeId: mapType,
             disableDefaultUI: true,
+            styles: MAP_STYLES,
           }}
         >
           {markers.map((marker) => (
