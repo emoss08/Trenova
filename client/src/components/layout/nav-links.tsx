@@ -16,6 +16,7 @@
  */
 
 import { useUserPermissions } from "@/context/user-permissions";
+import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { ChevronsLeftIcon } from "lucide-react";
 import React, { useState } from "react";
@@ -130,9 +131,11 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
 
   return (
     <ul
-      className={`relative grid w-[400px] gap-3 p-4 ${
-        activeSubLinks ? "pt-8" : ""
-      } md:w-[500px] md:grid-cols-2 lg:w-[700px]`}
+      className={cn(
+        "relative grid w-[400px] gap-3 p-4",
+        activeSubLinks ? "pt-8" : "",
+        "md:w-[500px] md:grid-cols-2 lg:w-[700px]",
+      )}
     >
       {!activeSubLinks ? (
         permittedLinks

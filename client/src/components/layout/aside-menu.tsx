@@ -31,6 +31,7 @@ import {
   equipmentNavLinks,
   shipmentNavLinks,
 } from "@/lib/nav-links";
+import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { faGrid2, faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
 import { faBars } from "@fortawesome/pro-solid-svg-icons";
@@ -79,7 +80,7 @@ const SubMenu = React.memo(
       {links.map((subLink) => (
         <li
           key={subLink.key}
-          className="select-none rounded-md p-2 hover:bg-muted focus:bg-muted"
+          className="hover:bg-muted focus:bg-muted select-none rounded-md p-2"
         >
           <Link
             to={subLink.link || "#"}
@@ -106,7 +107,7 @@ const MenuItem = React.memo(
     }
 
     return (
-      <li className="select-none rounded-md p-2 hover:bg-accent focus:bg-accent">
+      <li className="hover:bg-accent focus:bg-accent select-none rounded-md p-2">
         <Link
           to={item.link || "#"}
           onClick={onLinkClick}
@@ -145,7 +146,7 @@ const LinksComponent = ({
         return (
           <li
             key={linkItem.key}
-            className="select-none rounded-md p-2 hover:bg-accent focus:bg-accent"
+            className="hover:bg-accent focus:bg-accent select-none rounded-md p-2"
           >
             <Link
               to={linkItem.link || "#"}
@@ -164,16 +165,17 @@ const LinksComponent = ({
           <li key={linkItem.key} className="space-y-2">
             <div
               onClick={() => handleToggleSubMenu(linkItem.key)}
-              className="flex cursor-pointer select-none items-center justify-between rounded-md p-2 text-sm leading-6 hover:bg-accent focus:bg-accent"
+              className="hover:bg-accent focus:bg-accent flex cursor-pointer select-none items-center justify-between rounded-md p-2 text-sm leading-6"
             >
               <div className="flex">
                 <div className="pr-2">{linkItem.icon}</div>
                 {linkItem.label}
               </div>
               <ChevronDownIcon
-                className={`size-4 ${
-                  openSubMenu === linkItem.key ? "rotate-180" : ""
-                }`}
+                className={cn(
+                  "size-4",
+                  openSubMenu === linkItem.key ? "rotate-180" : "",
+                )}
               />
             </div>
             {linkItem.subLinks && openSubMenu === linkItem.key && (
@@ -206,7 +208,7 @@ function AsideMenu({
   onLinkClick: () => void;
 }) {
   return (
-    <div className="mt-5 overflow-hidden bg-background sm:rounded-md">
+    <div className="bg-background mt-5 overflow-hidden sm:rounded-md">
       <ul>
         {menuItems.map((item) => (
           <MenuItem key={item.menuKey} item={item} onLinkClick={onLinkClick} />
@@ -273,7 +275,7 @@ export function AsideMenuSheet() {
         <Button
           size="icon"
           variant="outline"
-          className="flex size-9 border-muted-foreground/40 hover:border-muted-foreground/80 md:hidden"
+          className="border-muted-foreground/40 hover:border-muted-foreground/80 flex size-9 md:hidden"
         >
           <FontAwesomeIcon icon={faBars} className="size-5" />
         </Button>
@@ -282,7 +284,7 @@ export function AsideMenuSheet() {
         <SheetHeader>
           <SheetTitle>
             <OrganizationNameLogo />
-            <div className="mt-2 border-b border-muted-foreground/40" />
+            <div className="border-muted-foreground/40 mt-2 border-b" />
             <TeamSwitcher className="mt-2" />
           </SheetTitle>
         </SheetHeader>

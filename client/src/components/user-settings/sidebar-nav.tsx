@@ -66,9 +66,10 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
 
   return (
     <aside
-      className={`transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block ${
-        isScrolled ? "pt-10" : ""
-      }`}
+      className={cn(
+        "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
+        isScrolled ? "pt-10" : "",
+      )}
     >
       <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>

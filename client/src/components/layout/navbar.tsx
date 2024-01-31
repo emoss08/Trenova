@@ -99,10 +99,11 @@ const NavigationMenuItemWithPermission = React.memo(
                 {data.label}
               </NavigationMenuTrigger>
               <NavigationMenuContent
-                className={`bg-background ${
+                className={cn(
+                  "bg-background",
                   !isChrome &&
-                  "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-                }`}
+                    "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                )}
               >
                 {data.content}
                 {data.footerContent && (

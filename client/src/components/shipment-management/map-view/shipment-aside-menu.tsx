@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { shipmentStatusToReadable } from "@/lib/utils";
+import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
 import { QueryKeys } from "@/types";
 import { ShipmentSearchForm } from "@/types/order";
@@ -72,9 +72,10 @@ function FilterOptions({
     <div className="flex flex-col space-y-4">
       <Button
         variant="outline"
-        className={`flex w-full select-none flex-row items-center justify-between hover:bg-foreground hover:text-background ${
-          selectedStatus === null ? "bg-foreground text-background" : ""
-        }`}
+        className={cn(
+          "hover:bg-foreground hover:text-background flex w-full select-none flex-row items-center justify-between",
+          selectedStatus === null ? "bg-foreground text-background" : "",
+        )}
         onClick={() => {
           setValue("statusFilter", "");
           setSelectedStatus(null);
@@ -88,9 +89,10 @@ function FilterOptions({
           <Button
             key={status}
             variant="outline"
-            className={`flex w-full flex-row justify-between hover:bg-foreground hover:text-background ${
-              selectedStatus === status && "bg-foreground text-background"
-            }`}
+            className={cn(
+              "hover:bg-foreground hover:text-background flex w-full flex-row justify-between",
+              selectedStatus === status && "bg-foreground text-background",
+            )}
             onClick={() => {
               setValue("statusFilter", status);
               setSelectedStatus(status);
@@ -125,11 +127,11 @@ export function ShipmentAsideMenus({
           control={control}
           placeholder="Search Shipments..."
           icon={
-            <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+            <MagnifyingGlassIcon className="text-muted-foreground size-4" />
           }
         />
       </div>
-      <p className="mb-4 text-sm font-semibold text-muted-foreground">
+      <p className="text-muted-foreground mb-4 text-sm font-semibold">
         Filter Shipments
       </p>
       <FilterOptions setValue={setValue} searchQuery={searchQuery} />

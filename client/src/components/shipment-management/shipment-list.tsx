@@ -17,7 +17,7 @@
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { DEBOUNCE_DELAY } from "@/lib/constants";
-import { shipmentStatusToReadable } from "@/lib/utils";
+import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { QueryKeys } from "@/types";
@@ -55,11 +55,12 @@ const ShipmentProgressIndicator = ({
       {progressStatuses.map((status, index) => (
         <React.Fragment key={status}>
           <div
-            className={`h-1 flex-1 ${
+            className={cn(
+              "h-1 flex-1",
               index <= currentStatusIndex
                 ? "bg-foreground"
-                : "animate-pulse bg-muted-foreground/40"
-            }`}
+                : "animate-pulse bg-muted-foreground/40",
+            )}
           />
           {/* Render a spacer after each line except the last one */}
           {index < progressStatuses.length - 1 && <div className="w-1" />}
@@ -79,7 +80,7 @@ function SkeletonShipmentList() {
       {skeletonItems.map((item) => (
         <li
           key={item}
-          className="group relative overflow-hidden rounded-md bg-background p-4 ring-1 ring-accent-foreground/20 hover:cursor-pointer hover:bg-muted/50 sm:px-6"
+          className="bg-background ring-accent-foreground/20 hover:bg-muted/50 group relative overflow-hidden rounded-md p-4 ring-1 hover:cursor-pointer sm:px-6"
         >
           <Skeleton key={item} className="h-28" />
         </li>
@@ -142,7 +143,7 @@ export function ShipmentList({
       {shipments?.map((shipment) => (
         <li
           key={shipment.id}
-          className="group relative overflow-hidden rounded-md bg-background p-4 ring-1 ring-accent-foreground/20 hover:cursor-pointer hover:bg-muted/50 sm:px-6"
+          className="bg-background ring-accent-foreground/20 hover:bg-muted/50 group relative overflow-hidden rounded-md p-4 ring-1 hover:cursor-pointer sm:px-6"
           onClick={() => {
             useShipmentStore.set("currentShipment", shipment);
           }}
@@ -159,10 +160,10 @@ export function ShipmentList({
               <p className="text-muted-foregrounds text-xs font-semibold">
                 #{shipment.proNumber}
               </p>
-              <h4 className="text-xl font-semibold text-foreground">
+              <h4 className="text-foreground text-xl font-semibold">
                 {shipmentStatusToReadable(shipment.status)}
               </h4>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {formatDate(shipment.created)}
               </p>
               {/* Shipment progress indicator directly below the status */}
@@ -179,10 +180,10 @@ export function ShipmentList({
               {/* Shipment origin and appointment */}
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
-                  <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-foreground">
-                    <ArrowUp className="inline-block size-3 text-background" />
+                  <div className="bg-foreground mr-2 flex size-4 items-center justify-center rounded-full">
+                    <ArrowUp className="text-background inline-block size-3" />
                   </div>
-                  <span className="font-semibold text-foreground">
+                  <span className="text-foreground font-semibold">
                     {shipment.originAddress}
                   </span>
                 </div>
@@ -198,7 +199,7 @@ export function ShipmentList({
                     <ArrowDown className="inline-block size-3 text-white" />
                   </div>
                   <span>
-                    <span className="font-semibold text-foreground">
+                    <span className="text-foreground font-semibold">
                       {shipment.destinationAddress}
                     </span>
                   </span>
