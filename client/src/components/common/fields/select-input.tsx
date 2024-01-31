@@ -25,6 +25,7 @@ import {
   DropdownIndicator,
   ErrorMessage,
   IndicatorSeparator,
+  InputComponent,
   MenuList,
   NoOptionsMessage,
   Option,
@@ -55,6 +56,7 @@ interface SelectInputProps<T extends Record<string, unknown>>
   hasPopoutWindow?: boolean; // Set to true to open the popout window
   popoutLink?: string; // Link to the popout page
   popoutLinkLabel?: string; // Label for the popout link
+  isReadOnly?: boolean;
 }
 
 /**
@@ -89,6 +91,8 @@ export function SelectInput<T extends Record<string, unknown>>(
   const dataLoading = props.isLoading || props.isDisabled;
   const errorOccurred = props.isFetchError || fieldState.invalid;
   const processedValue = ValueProcessor(field.value, options, isMulti);
+
+  const menuIsOpen = props.isReadOnly ? false : props.menuIsOpen;
 
   return (
     <>
@@ -126,6 +130,7 @@ export function SelectInput<T extends Record<string, unknown>>(
           maxMenuHeight={200}
           menuPlacement={menuPlacement}
           menuPosition={menuPosition}
+          menuIsOpen={menuIsOpen}
           styles={{
             input: (base) => ({
               ...base,
@@ -146,6 +151,7 @@ export function SelectInput<T extends Record<string, unknown>>(
             IndicatorSeparator: IndicatorSeparator,
             MenuList: MenuList,
             Option: Option,
+            Input: InputComponent,
             NoOptionsMessage: NoOptionsMessage,
             SingleValue: SingleValueComponent,
           }}
@@ -154,7 +160,7 @@ export function SelectInput<T extends Record<string, unknown>>(
               cn(
                 isFocused
                   ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
-                  : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
+                  : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6",
                 errorOccurred && "ring-1 ring-inset ring-red-500",
               ),
             placeholder: () =>
@@ -163,14 +169,18 @@ export function SelectInput<T extends Record<string, unknown>>(
                 errorOccurred && "text-red-500",
               ),
             input: () => "pl-1 py-0.5",
-            valueContainer: () => "p-1 gap-1",
+            container: () =>
+              cn(props.isReadOnly && "cursor-not-allowed opacity-50"),
+            valueContainer: () =>
+              cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
             singleValue: () => "leading-7 ml-1",
             multiValue: () =>
               "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
             multiValueLabel: () => "text-xs leading-4",
             multiValueRemove: () =>
               "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
-            indicatorsContainer: () => "p-1 gap-1",
+            indicatorsContainer: () =>
+              cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
             clearIndicator: () =>
               "text-foreground/50 p-1 hover:text-foreground",
             dropdownIndicator: () =>
