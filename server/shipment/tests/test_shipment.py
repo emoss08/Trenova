@@ -19,21 +19,20 @@ import datetime
 import decimal
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from accounting.models import RevenueCode
 from accounts.models import User
 from customer.models import Customer
 from dispatch.factories import FleetCodeFactory
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from equipment.models import EquipmentType
-from equipment.tests.factories import TractorFactory
+from equipment.tests.factories import EquipmentTypeFactory, TractorFactory
 from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from organization.models import BusinessUnit, Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 from shipment import models, selectors
 from shipment.selectors import get_shipment_stops
 from shipment.tests.factories import ShipmentFactory
@@ -80,7 +79,7 @@ def test_create(
         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
-        equipment_type=equipment_type,
+        trailer_type=equipment_type,
         entered_by=user,
         bol_number="1234567890",
     )
@@ -91,7 +90,7 @@ def test_create(
     assert shipment.origin_location == origin_location
     assert shipment.destination_location == destination_location
     assert shipment.customer == customer
-    assert shipment.equipment_type == equipment_type
+    assert shipment.trailer_type == equipment_type
     assert shipment.entered_by == user
     assert shipment.bol_number == "1234567890"
 
@@ -144,7 +143,7 @@ def test_first_stop_completion_puts_shipment_movement_in_progress(
         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
-        equipment_type=equipment_type,
+        trailer_type=equipment_type,
         entered_by=user,
         bol_number="1234567890",
     )
@@ -212,7 +211,7 @@ def test_create_initial_movement_signal(
         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
-        equipment_type=equipment_type,
+        trailer_type=equipment_type,
         entered_by=user,
         bol_number="1234567890",
     )
@@ -256,7 +255,7 @@ def test_get_by_id(
         == destination_location.get_address_combination
     )
     assert response.data["customer"] == customer.id
-    assert response.data["equipment_type"] == equipment_type.id
+    assert response.data["trailer_type"] == equipment_type.id
     assert response.data["entered_by"] == user.id
     assert response.data["bol_number"] == "newbol"
 
@@ -287,7 +286,7 @@ def test_put(
             "destination_appointment_window_start": f"{timezone.now() + datetime.timedelta(days=2)}",
             "destination_appointment_window_end": f"{timezone.now() + datetime.timedelta(days=2)}",
             "customer": f"{customer.id}",
-            "equipment_type": f"{equipment_type.id}",
+            "trailer_type": f"{equipment_type.id}",
             "entered_by": f"{user.id}",
             "bol_number": "anotherbol",
         },
@@ -303,7 +302,7 @@ def test_put(
     assert response.data["shipment_type"] == shipment_type.id
     assert response.data["revenue_code"] == revenue_code.id
     assert response.data["customer"] == customer.id
-    assert response.data["equipment_type"] == equipment_type.id
+    assert response.data["trailer_type"] == equipment_type.id
     assert response.data["entered_by"] == user.id
     assert response.data["bol_number"] == "anotherbol"
 
@@ -788,7 +787,7 @@ def test_formula_template_validation(
         organization=organization,
         business_unit=business_unit,
         name="Refrigerated Shipment Formula",
-        formula_text="(freight_charge + other_charge + temperature_differential * equipment_cost_per_mile) * mileage",
+        formula_text="(freight_charge + other_charge + temperature_differential) * mileage",
         description="Formula for refrigerated shipments considering temperature differential",
         template_type="REFRIGERATED",
     )
@@ -908,4 +907,30 @@ def test_shipment_cannot_exceed_dispatch_control_weight_limit(
 
     assert excinfo.value.message_dict["weight"] == [
         "Shipment weight exceeds the maximum shipment weight limit. Please try again."
+    ]
+
+
+def test_invalid_trailer_type(shipment: models.Shipment) -> None:
+    equipment_type = EquipmentTypeFactory(equipment_class="TRACTOR")
+
+    shipment.trailer_type = equipment_type
+
+    with pytest.raises(ValidationError) as excinfo:
+        shipment.clean()
+
+    assert excinfo.value.message_dict["trailer_type"] == [
+        "Cannot select a non-trailer type for the trailer type. Please try again."
+    ]
+
+
+def test_invalid_tractor_type(shipment: models.Shipment) -> None:
+    equipment_type = EquipmentTypeFactory(equipment_class="TRAILER")
+
+    shipment.tractor_type = equipment_type
+
+    with pytest.raises(ValidationError) as excinfo:
+        shipment.clean()
+
+    assert excinfo.value.message_dict["tractor_type"] == [
+        "Cannot select a non-tractor type for the tractor type. Please try again."
     ]

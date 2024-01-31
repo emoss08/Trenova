@@ -17,9 +17,8 @@
 
 from typing import TYPE_CHECKING
 
-from django.utils import timezone
-
 from dispatch import models, selectors
+from django.utils import timezone
 from shipment.models import AdditionalCharge, Shipment
 from shipment.selectors import sum_shipment_additional_charges
 
@@ -41,7 +40,6 @@ def get_rate(*, shipment: Shipment) -> models.Rate | None:
         customer=shipment.customer,
         commodity=shipment.commodity,
         shipment_type=shipment.shipment_type,
-        equipment_type=shipment.equipment_type,
         origin_location=shipment.origin_location,
         destination_location=shipment.destination_location,
         effective_date__lte=today,

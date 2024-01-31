@@ -104,9 +104,6 @@ class RateFactory(factory.django.DjangoModelFactory):
     expiration_date = timezone.now().date() + datetime.timedelta(days=365)
     commodity = factory.SubFactory("commodities.factories.CommodityFactory")
     shipment_type = factory.SubFactory("shipment.tests.factories.ShipmentTypeFactory")
-    equipment_type = factory.SubFactory(
-        "equipment.tests.factories.EquipmentTypeFactory"
-    )
     rate_amount = 1_000_000.00
 
     class Meta:

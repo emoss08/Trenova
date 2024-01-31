@@ -26,7 +26,6 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from organization.models import Organization
 from utils.models import (
     ChoiceField,
@@ -544,14 +543,6 @@ class Rate(GenericModel):
         "shipment.ShipmentType",
         on_delete=models.SET_NULL,
         verbose_name=_("shipment type"),
-        related_name="rates",
-        null=True,
-        blank=True,
-    )
-    equipment_type = models.ForeignKey(
-        "equipment.EquipmentType",
-        on_delete=models.SET_NULL,
-        verbose_name=_("Equipment Type"),
         related_name="rates",
         null=True,
         blank=True,

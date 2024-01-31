@@ -30,7 +30,6 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
 from location.models import Location
 from utils.models import (
     ChoiceField,
@@ -520,13 +519,23 @@ class Shipment(GenericModel):
     )
 
     # Dispatch Information
-    equipment_type = models.ForeignKey(
+    trailer_type = models.ForeignKey(
         "equipment.EquipmentType",
         on_delete=models.PROTECT,
         related_name="shipments",
         related_query_name="shipment",
-        verbose_name=_("Equipment Type"),
-        help_text=_("Equipment Type"),
+        verbose_name=_("Trailer Type"),
+        help_text=_("Type of trailer for the shipment."),
+    )
+    tractor_type = models.ForeignKey(
+        "equipment.EquipmentType",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="tractor_type_shipments",
+        related_query_name="tractor_type_shipment",
+        verbose_name=_("Tractor Type"),
+        help_text=_("Type of tractor for the shipment."),
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -643,8 +652,15 @@ class Shipment(GenericModel):
         ]
         indexes = [
             models.Index(fields=["status"], name="shipment_status_idx"),
-            models.Index(fields=["bill_date"], name="bill_date_idx"),
-            models.Index(fields=["ship_date"], name="ship_date_idx"),
+            models.Index(
+                fields=["bill_date", "organization"], name="bill_date_org_idx"
+            ),
+            models.Index(
+                fields=["ship_date", "organization"], name="ship_date_org_idx"
+            ),
+            models.Index(
+                fields=["bol_number", "organization"], name="bol_number_org_idx"
+            ),
         ]
 
     def __str__(self) -> str:

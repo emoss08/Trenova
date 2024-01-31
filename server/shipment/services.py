@@ -17,12 +17,11 @@
 from collections.abc import Callable
 from decimal import Decimal
 
+from billing.models import DocumentClassification
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
-from pypdf import PdfMerger
-
-from billing.models import DocumentClassification
 from movements.models import Movement
+from pypdf import PdfMerger
 from shipment import helpers, models, selectors, types
 
 
@@ -96,10 +95,11 @@ def gather_formula_variables(*, shipment: models.Shipment) -> types.FormulaVaria
         "weight": shipment.weight,
         "stops": selectors.get_shipment_stops(shipment=shipment).count(),
         "rating_units": shipment.rating_units,
-        "equipment_cost_per_mile": shipment.equipment_type.cost_per_mile,
-        "hazmat_additional_cost": shipment.hazardous_material.additional_cost
-        if shipment.hazardous_material
-        else 0,
+        "hazmat_additional_cost": (
+            shipment.hazardous_material.additional_cost
+            if shipment.hazardous_material
+            else 0
+        ),
         "temperature_differential": shipment.temperature_differential,
     }
 

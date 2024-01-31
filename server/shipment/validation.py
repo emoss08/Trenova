@@ -18,7 +18,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
-
+from equipment.models import EquipmentType
 from shipment import models
 from shipment.selectors import get_shipment_by_id
 from utils.models import RatingMethodChoices, StatusChoices
@@ -62,6 +62,7 @@ class ShipmentValidator:
         self.validate_formula_template()
         self.validate_voided_shipment()
         self.validate_shipment_weight_limit()
+        self.validate_trailer_and_tractor_type()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -388,4 +389,31 @@ class ShipmentValidator:
         ):
             self.errors["weight"] = _(
                 "Shipment weight exceeds the maximum shipment weight limit. Please try again."
+            )
+
+    def validate_trailer_and_tractor_type(self) -> None:
+        """Validate that when a tractor and trailer type is selected, the equipment class is correct.
+        
+        Returns:
+            None: This function does not return anything.
+            
+        Raises:
+            ValidationError: If the equipment class is not correct for the tractor or trailer type.
+        """
+        if (
+            self.shipment.trailer_type
+            and self.shipment.trailer_type.equipment_class
+            != EquipmentType.EquipmentClassChoices.TRAILER
+        ):
+            self.errors["trailer_type"] = _(
+                "Cannot select a non-trailer type for the trailer type. Please try again."
+            )
+
+        if (
+            self.shipment.tractor_type
+            and self.shipment.tractor_type.equipment_class
+            != EquipmentType.EquipmentClassChoices.TRACTOR
+        ):
+            self.errors["tractor_type"] = _(
+                "Cannot select a non-tractor type for the tractor type. Please try again."
             )

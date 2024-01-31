@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
-
 from shipment import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
@@ -161,7 +160,8 @@ class OrderAdmin(GenericAdmin[models.Shipment]):
             "Dispatch Details",
             {
                 "fields": (
-                    "equipment_type",
+                    "trailer_type",
+                    "tractor_type",
                     "commodity",
                     "hazardous_material",
                     "temperature_min",
