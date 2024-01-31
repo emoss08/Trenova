@@ -32,6 +32,7 @@ import {
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
+  InputProps,
   MenuListProps,
   NoticeProps,
   OptionProps,
@@ -263,6 +264,14 @@ export function ValueProcessor<T extends Record<string, unknown>>(
     value: value,
     label: getLabelByValue(value, options),
   };
+}
+
+export function InputComponent(
+  props: InputProps & { selectProps: { isReadOnly?: boolean } },
+) {
+  return (
+    <components.Input {...props} readOnly={props.selectProps.isReadOnly} />
+  );
 }
 
 export function SingleValueComponent(props: SingleValueProps<any>) {
