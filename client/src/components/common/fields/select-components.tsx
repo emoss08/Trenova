@@ -211,7 +211,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-accent-foreground my-1 text-sm">
+        <p className="text-accent-foreground text-xs">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -358,7 +358,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="bg-background text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm py-3.5 pl-3 text-xs font-normal"
+      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

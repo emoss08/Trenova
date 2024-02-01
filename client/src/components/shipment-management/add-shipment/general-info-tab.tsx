@@ -265,6 +265,17 @@ function DispatchDetails({ control, setValue, watch }: ShipmentFormProps) {
               description={t("fields.entryMethod.description")}
             />
           </div>
+          <div className="col-span-1">
+            <SelectInput
+              name="serviceType"
+              control={control}
+              options={shipmentSourceChoices}
+              rules={{ required: true }}
+              label={t("fields.entryMethod.label")}
+              placeholder={t("fields.entryMethod.placeholder")}
+              description={t("fields.entryMethod.description")}
+            />
+          </div>
         </div>
       </div>
     </div>

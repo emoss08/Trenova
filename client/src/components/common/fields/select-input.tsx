@@ -364,10 +364,10 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
               "text-foreground/50 p-1 hover:text-foreground",
             dropdownIndicator: () =>
               "p-1 text-foreground/50 rounded-md hover:text-foreground",
-            menu: () => "mt-2 p-1 border rounded-md bg-background shadow-lg",
+            menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
             groupHeading: () => "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
             noOptionsMessage: () =>
-              "text-muted-foreground p-2 bg-background rounded-sm",
+              "text-muted-foreground p-2 bg-popover rounded-sm",
           }}
         />
         {errorOccurred ? (

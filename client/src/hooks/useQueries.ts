@@ -995,3 +995,15 @@ export function getLatestProNumber() {
 
   return { proNumber, isProNumberError, isProNumberLoading };
 }
+
+export function getServiceTypes() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: serviceTypes,
+    isError: isServiceTypeError,
+    isLoading: isServiceTypeLoading,
+  } = useQuery({
+    
+  })
+}
