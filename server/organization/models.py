@@ -33,10 +33,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from kafka.managers import KafkaManager
 from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
@@ -1279,6 +1278,8 @@ class TableChangeAlert(TimeStampedModel):
             None: This function does not return anything.
         """
 
+        super().clean()
+
         if self.source == self.SourceChoices.KAFKA and not self.topic:
             raise ValidationError(
                 {"topic": _("Topic is required when source is Kafka.")}, code="invalid"
@@ -1329,12 +1330,24 @@ class TableChangeAlert(TimeStampedModel):
                     {"conditional_logic": error}, code="invalid"
                 ) from error
 
-        super().clean()
+        if self.effective_date and self.effective_date > self.expiration_date:
+            print(self.effective_date, self.expiration_date)
+            raise ValidationError(
+                {
+                    "expiration_date": _(
+                        "Expiration date cannot be before the effective date. Please try again."
+                    )
+                },
+                code="invalid",
+            )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         # clear out the table and topic input depdning on the source.
         # if source is Kafka clear out the table input
         # if source is Postgres clear out the topic input
+
+        self.full_clean()
+
         if self.source == self.SourceChoices.KAFKA:
             self.table = ""
         elif self.source == self.SourceChoices.POSTGRES:
