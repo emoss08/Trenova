@@ -39,6 +39,7 @@ import {
 import {
   getEquipmentManufacturers,
   getEquipmentTypes,
+  getTrailers,
 } from "@/services/EquipmentRequestService";
 import {
   getLocationCategories,
@@ -61,6 +62,7 @@ import {
   getTopicNames,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
+import { getNextProNumber } from "@/services/ShipmentRequestService";
 import {
   getUserDetails,
   getUserNotifications,
@@ -478,7 +480,11 @@ export function useHazardousMaterial(show?: boolean) {
 export function useLocations(show?: boolean) {
   const queryClient = useQueryClient();
 
-  const { data, isError, isLoading } = useQuery({
+  const {
+    data: locations,
+    isError,
+    isLoading,
+  } = useQuery({
     queryKey: ["locations"] as QueryKeys[],
     queryFn: async () => getLocations(),
     enabled: show,
@@ -487,12 +493,12 @@ export function useLocations(show?: boolean) {
   });
 
   const selectLocationData =
-    (data as Location[])?.map((location: Location) => ({
+    (locations as Location[])?.map((location: Location) => ({
       value: location.id,
       label: location.code,
     })) || [];
 
-  return { selectLocationData, isError, isLoading };
+  return { selectLocationData, isError, isLoading, locations };
 }
 
 /**
@@ -949,4 +955,43 @@ export function useRevenueCodes(show?: boolean) {
     })) || [];
 
   return { selectRevenueCodes, isRevenueCodeError, isRevenueCodeLoading };
+}
+
+export function useTrailers(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: trailerData,
+    isError: isTrailerError,
+    isLoading: isTrailerLoading,
+  } = useQuery({
+    queryKey: ["trailers"] as QueryKeys[],
+    queryFn: async () => getTrailers(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["trailers"] as QueryKeys[]),
+  });
+
+  const selectTrailers =
+    (trailerData as RevenueCode[])?.map((trailer: RevenueCode) => ({
+      value: trailer.id,
+      label: trailer.code,
+    })) || [];
+
+  return { selectTrailers, isTrailerError, isTrailerLoading, trailerData };
+}
+
+export function getLatestProNumber() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: proNumber,
+    isError: isProNumberError,
+    isLoading: isProNumberLoading,
+  } = useQuery({
+    queryKey: ["proNumber"],
+    queryFn: async () => getNextProNumber(),
+    initialData: () => queryClient.getQueryData(["proNumber"]),
+  });
+
+  return { proNumber, isProNumberError, isProNumberLoading };
 }

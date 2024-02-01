@@ -17,92 +17,185 @@
 
 import { BillingTab } from "@/components/shipment-management/add-shipment/billing-info-tab";
 import { ShipmentGeneralForm } from "@/components/shipment-management/add-shipment/general-info-tab";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
+import { ShipmentFormProps, ShipmentFormValues } from "@/types/order";
+import {
+  faBoxTaped,
+  faCommentQuote,
+  faFile,
+  faMoneyBillTransfer,
+  faOctagon,
+  faWebhook,
+} from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { debounce } from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-const tabs = {
+type Tab = {
+  name: string;
+  component: React.ComponentType<ShipmentFormProps>;
+  icon: JSX.Element;
+  description: string;
+};
+
+const tabs: Record<string, Tab> = {
   general: {
-    name: "General",
-    component: (props: any) => <ShipmentGeneralForm {...props} />,
+    name: "General Information",
+    component: ShipmentGeneralForm,
+    icon: <FontAwesomeIcon icon={faBoxTaped} />,
+    description: "General information about the shipment",
+  },
+  stops: {
+    name: "Additional Stops",
+    component: () => <div>Stops</div>,
+    icon: <FontAwesomeIcon icon={faOctagon} />,
+    description: "Stops for the shipment",
   },
   billing: {
-    name: "Billing",
-    component: (props: any) => <BillingTab {...props} />,
+    name: "Billing Information",
+    component: (props: ShipmentFormProps) => <BillingTab {...props} />,
+    icon: <FontAwesomeIcon icon={faMoneyBillTransfer} />,
+    description: "Billing information for the shipment",
+  },
+  comments: {
+    name: "Comments",
+    component: () => <div>Comments</div>,
+    icon: <FontAwesomeIcon icon={faCommentQuote} />,
+    description: "Comments about the shipment",
+  },
+  documents: {
+    name: "Documents",
+    component: () => <div>Documents</div>,
+    icon: <FontAwesomeIcon icon={faFile} />,
+    description: "Documents for the shipment",
+  },
+  edi: {
+    name: "EDI Information",
+    component: () => <div>EDI Information</div>,
+    icon: <FontAwesomeIcon icon={faWebhook} />,
+    description: "EDI information for the shipment",
   },
 };
 
 export default function AddShipment() {
-  const [tab, setTab] = useState<string>("general");
-
-  const handleTabClick = (tabName: string) => {
-    setTab(tabName);
-  };
-  const { control, setValue, watch } = useForm();
-
-  const tabProps = {
-    control,
-    setValue,
-    watch,
-  };
-
-  const ActiveTabComponent = tabs[tab as keyof typeof tabs].component(tabProps);
-
+  const [activeTab, setActiveTab] = useState<string>("general");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const scrollThreshold = 80;
+  const { control, setValue, watch, reset, handleSubmit } =
+    useForm<ShipmentFormValues>({
+      defaultValues: {
+        status: "N",
+        entryMethod: "MANUAL",
+        originLocation: "",
+        originAddress: "",
+        destinationLocation: "",
+        destinationAddress: "",
+      },
+    });
 
-  const handleScroll = useMemo(
-    () =>
-      debounce(() => {
-        setIsScrolled(window.scrollY > scrollThreshold);
-      }, 30),
-    [scrollThreshold],
+  const handleTabClick = useCallback((tabName: string) => {
+    setActiveTab(tabName);
+  }, []);
+
+  const mutation = useCustomMutation<ShipmentFormValues>(
+    control,
+    {
+      method: "POST",
+      path: "/locations/",
+      successMessage: "Location created successfully.",
+      queryKeysToInvalidate: ["locations-table-data"],
+      additionalInvalidateQueries: ["locations"],
+      closeModal: true,
+      errorMessage: "Failed to create new location.",
+    },
+    () => setIsSubmitting(false),
+    reset,
+  );
+
+  const onSubmit = useCallback(
+    (values: ShipmentFormValues) => {
+      setIsSubmitting(true);
+      mutation.mutate(values);
+    },
+    [mutation],
+  );
+
+  const ActiveTabComponent = tabs[activeTab].component;
+
+  const handleScroll = useCallback(
+    debounce(() => {
+      setIsScrolled(window.scrollY > 80);
+    }, 100),
+    [],
   );
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
-      handleScroll.cancel(); // Ensure debounce is cancelled on unmount
+      handleScroll.cancel();
       window.removeEventListener("scroll", handleScroll);
     };
   }, [handleScroll]);
 
   return (
-    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
       <aside
-        className={`transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block ${
-          isScrolled ? "pt-10" : ""
-        }`}
+        className={cn(
+          "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
+          isScrolled && "pt-10",
+        )}
       >
-        <div className="bg-card text-card-foreground mt-4 rounded-lg border p-3">
+        <div className="bg-card text-card-foreground rounded-lg border p-2">
           <nav className="lg:flex-col lg:space-y-2">
             {Object.entries(tabs).map(([tabKey, tabInfo]) => (
-              <div key={tabKey} className="space-y-1">
+              <div key={tabKey} className="space-y-2">
                 <div
                   onClick={() => handleTabClick(tabKey)}
                   className={cn(
-                    buttonVariants({ variant: "ghost" }),
-                    tab === tabKey
+                    buttonVariants({ variant: "ghost", size: "nosize" }),
+                    activeTab === tabKey
                       ? "bg-muted [&_svg]:text-foreground"
                       : "hover:bg-muted",
-                    "group justify-start flex items-center mx-2",
+                    "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
                   )}
                 >
-                  {tabInfo.name}
+                  {/* Flex container for icon and name */}
+                  <div className="flex items-center space-x-2">
+                    <span>{tabInfo.icon}</span>
+                    <span>{tabInfo.name}</span>
+                  </div>
+                  {/* Description text */}
+                  <div className="text-muted-foreground text-xs">
+                    {tabInfo.description}
+                  </div>
                 </div>
               </div>
             ))}
           </nav>
         </div>
       </aside>
-      <div className="relative lg:gap-10">
-        <div className="mx-auto min-w-0">
-          <div className="bg-card border-border m-4 rounded-md border md:col-span-2">
-            {ActiveTabComponent}
+      <div className="relative mb-10 lg:gap-10">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
+        >
+          <ActiveTabComponent
+            control={control}
+            setValue={setValue}
+            watch={watch}
+          />
+          <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
+            <Button type="button" variant="outline">
+              Save & Add Another
+            </Button>
+            <Button type="submit" isLoading={isSubmitting}>
+              Save
+            </Button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

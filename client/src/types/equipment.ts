@@ -64,18 +64,23 @@ export const equipmentStatusChoices = [
     icon: CircleIcon,
   },
   {
-    value: "UA",
-    label: "Unavailable",
-    icon: MinusCircledIcon,
-  },
-  {
     value: "OOS",
     label: "Out of Service",
     icon: MinusCircledIcon,
   },
   {
-    value: "IM",
-    label: "In Maintenance",
+    value: "AM",
+    label: "At Maintenance",
+    icon: MinusCircledIcon,
+  },
+  {
+    value: "S",
+    label: "Sold",
+    icon: MinusCircledIcon,
+  },
+  {
+    value: "L",
+    label: "Lost",
     icon: MinusCircledIcon,
   },
 ] satisfies TableOptionProps[];

@@ -1,104 +1,137 @@
 {
-    "titles": {
+    "card": {
+        "generalInfo": {
+            "label": "General Information",
+            "description": "Specifies the basic details of the shipment, including the Pro Number, status, and revenue code."
+        },
         "origin": {
             "label": "Origin Location",
-            "description": "The location where the shipment is being picked up."
+            "description": "Specifies the starting point of the shipment, including the facility or dock where the cargo is initially loaded."
         },
         "destination": {
             "label": "Destination Location",
-            "description": "The location where the shipment is being delivered."
+            "description": "Denotes the final drop-off point of the shipment, detailing the specific receiving facility or delivery address."
+        },
+        "additionalInfo": {
+            "label": "Additional Information",
+            "description": "Provides space for extra details or special instructions that may be crucial for handling and transporting the shipment effectively."
         }
     },
     "fields": {
+        "proNumber": {
+            "placeholder": "Pro Number",
+            "label": "Pro Number",
+            "description": "Enter the unique Pro Number assigned for tracking and billing."
+        },
         "status": {
             "placeholder": "Status",
             "label": "Status",
-            "description": "Indicates the current state of the shipment. Reflects the operational status within the system."
+            "description": "Select the current status that best describes the shipment's phase."
         },
         "revenueCode": {
             "placeholder": "Revenue Code",
             "label": "Renenue Code",
-            "description": "The revenue code associated with the shipment."
+            "description": "Enter the Revenue Code for financial categorization and analysis."
         },
         "shipmentType": {
             "placeholder": "Shipment Type",
             "label": "Shipment Type",
-            "description": "The type of shipment."
+            "description": "Select the category that best describes the shipment's nature and requirements."
         },
         "originLocation": {
             "placeholder": "Origin Location",
             "label": "Origin Location",
-            "description": "The location where the shipment is being picked up."
+            "description": "Enter the detailed location or facility name where the shipment will be picked up."
         },
         "originAddress": {
             "placeholder": "Origin Address",
             "label": "Origin Address",
-            "description": "The address of the location where the shipment is being picked up."
+            "description": "Provide the full pickup address including street, city, and postal code."
         },
         "originAppointmentWindowStart": {
-            "placeholder": "Origin Appointment Window Start",
-            "label": "Origin Appointment Window Start",
-            "description": "The start of the appointment window for the origin location."
+            "placeholder": "Origin Appt. Window Start",
+            "label": "Origin Appt. Window Start",
+            "description": "Specify the start time for the shipment pickup window at the origin."
         },
         "originAppointmentWindowEnd": {
-            "placeholder": "Origin Appointment Window End",
-            "label": "Origin Appointment Window End",
-            "description": "The end of the appointment window for the origin location."
+            "placeholder": "Origin Appt. Window End",
+            "label": "Origin Appt. Window End",
+            "description": "Specify the end time for the shipment pickup window at the origin."
         },
         "destinationLocation": {
             "placeholder": "Destination Location",
             "label": "Destination Location",
-            "description": "The location where the shipment is being delivered."
+            "description": "Enter the detailed location or facility name where the shipment will be delivered."
         },
         "destinationAddress": {
             "placeholder": "Destination Address",
             "label": "Destination Address",
-            "description": "The address of the location where the shipment is being delivered."
+            "description": "Provide the full delivery address including street, city, and postal code."
         },
         "destinationAppointmentWindowStart": {
-            "placeholder": "Destination Appointment Window Start",
-            "label": "Destination Appointment Window Start",
-            "description": "The start of the appointment window for the destination location."
+            "placeholder": "Destination Appt. Window Start",
+            "label": "Destination Appt. Window Start",
+            "description": "Specify the start time for the delivery window at the destination."
         },
         "destinationAppointmentWindowEnd": {
-            "placeholder": "Destination Appointment Window End",
-            "label": "Destination Appointment Window End",
-            "description": "The end of the appointment window for the destination location."
+            "placeholder": "Destination Appt. Window End",
+            "label": "Destination Appt. Window End",
+            "description": "Specify the end time for the delivery window at the destination."
         },
-        "equipmentType": {
-            "placeholder": "Equipment Type",
-            "label": "Equipment Type",
-            "description": "The type of equipment being used for the shipment."
+        "tractorType": {
+            "placeholder": "Tractor Type",
+            "label": "Tractor Type",
+            "description": "Enter the type or model of the tractor unit used for the shipment."
+        },
+        "trailerType": {
+            "placeholder": "Trailer Type",
+            "label": "Trailer Type",
+            "description": "Enter the type of trailer used, considering any special requirements (e.g., refrigeration)."
+        },
+        "trailer": {
+            "placeholder": "Trailer",
+            "label": "Trailer",
+            "description": "Enter the trailer's unique identification number or code."
         },
         "commodity": {
             "placeholder": "Commodity",
             "label": "Commodity",
-            "description": "The type of commodity being shipped."
+            "description": "Describe the goods being shipped, including any special handling needs."
         },
         "hazardousMaterial": {
             "placeholder": "Hazardous Material",
             "label": "Hazardous Material",
-            "description": "Indicates whether the shipment contains hazardous material."
+            "description": "Indicate if the shipment contains hazardous material (Yes/No)."
         },
         "bolNumber": {
             "placeholder": "BOL Number",
             "label": "BOL Number",
-            "description": "The bill of lading number associated with the shipment."
+            "description": "Enter the Bill of Lading number associated with this shipment."
         },
         "consigneeRefNumber": {
             "placeholder": "Consignee Reference Number",
             "label": "Consignee Reference Number",
-            "description": "The reference number associated with the consignee."
+            "description": "Enter the reference number provided by the consignee for this shipment."
         },
         "temperatureMin": {
             "placeholder": "Temperature Min",
             "label": "Temperature Min",
-            "description": "The minimum temperature required for the shipment."
+            "description": "Enter the minimum temperature required during transport."
         },
         "temperatureMax": {
             "placeholder": "Temperature Max",
             "label": "Temperature Max",
-            "description": "The maximum temperature required for the shipment."
+            "description": "Enter the maximum temperature allowed during transport."
+        },
+        "enteredBy": {
+            "placeholder": "Entered By",
+            "label": "Entered By",
+            "description": "Enter the name of the person who entered the shipment details."
+        },
+        "entryMethod": {
+            "placeholder": "Entry Method",
+            "label": "Entry Method",
+            "description": "Select the method used to enter the shipment details (e.g., manual, automated)."
         }
     }
 }

@@ -405,6 +405,30 @@ export const statusChoices = [
   { value: "I", label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;
 
+/** Returns status choices for a select input. */
+type ShipmentStatusChoiceProps = "N" | "P" | "C" | "H" | "B" | "V";
+
+/**
+ * Returns shipment status choices for a select input.
+ * @returns An array of shipment status choices.
+ */
+export const shipmentStatusChoices = [
+  { value: "N", label: "New", color: "#16a34a" },
+  { value: "P", label: "In Progress", color: "#ca8a04" },
+  { value: "C", label: "Completed", color: "#9333ea" },
+  { value: "H", label: "On Hold", color: "#2563eb" },
+  { value: "B", label: "Billed", color: "#0891b2" },
+  { value: "V", label: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentStatusChoiceProps>>;
+
+type ShipmentSourceChoiceProps = "MANUAL" | "EDI" | "API";
+
+export const shipmentSourceChoices = [
+  { value: "MANUAL", label: "Manual" },
+  { value: "EDI", label: "EDI" },
+  { value: "API", label: "API" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentSourceChoiceProps>>;
+
 /**
  * Returns code type choices for a select input.
  */

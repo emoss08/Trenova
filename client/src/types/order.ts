@@ -17,6 +17,7 @@
 
 import { CodeTypeProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { BaseModel } from "./organization";
 
 export interface ShipmentControl extends BaseModel {
@@ -85,12 +86,12 @@ export interface Shipment extends BaseModel {
   revenueCode?: string | null;
   originLocation?: string | null;
   originAddress?: string;
-  originAppointmentWindowStart: string;
-  originAppointmentWindowEnd: string;
+  originAppointmentWindowStart: Date;
+  originAppointmentWindowEnd: Date;
   destinationLocation?: string | null;
   destinationAddress?: string;
-  destinationAppointmentWindowStart: string;
-  destinationAppointmentWindowEnd: string;
+  destinationAppointmentWindowStart: Date;
+  destinationAppointmentWindowEnd: Date;
   ratingUnits: number;
   rate?: string | null;
   mileage?: number | null;
@@ -101,13 +102,15 @@ export interface Shipment extends BaseModel {
   pieces: number;
   weight: string;
   readyToBill: boolean;
-  billDate?: string | null;
-  shipDate?: string | null;
+  billDate?: Date | null;
+  shipDate?: Date | null;
   billed: boolean;
   transferredToBilling: boolean;
   billingTransferDate?: Date | null;
   subTotal: string;
-  equipmentType: string;
+  trailer?: string | null;
+  trailerType: string;
+  tractorType?: string | null;
   commodity?: string | null;
   enteredBy: string;
   hazardousMaterial?: string | null;
@@ -122,6 +125,17 @@ export interface Shipment extends BaseModel {
   formulaTemplate?: string | null;
   entryMethod: string;
 }
+
+export type ShipmentFormValues = Omit<
+  Shipment,
+  "id" | "organization" | "created" | "modified"
+>;
+
+export type ShipmentFormProps = {
+  control: Control<ShipmentFormValues>;
+  setValue: UseFormSetValue<ShipmentFormValues>;
+  watch: UseFormWatch<ShipmentFormValues>;
+};
 
 export type ShipmentSearchForm = {
   searchQuery: string;

@@ -15,12 +15,42 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ShipmentFormProps } from "@/types/order";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export function BillingTab({ control, watch, setValue }: ShipmentFormProps) {
+interface TitleWithTooltipProps extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  tooltip: string;
+}
+
+export function TitleWithTooltip({
+  title,
+  tooltip,
+  className,
+}: TitleWithTooltipProps) {
   return (
-    <div>
-      <h1>Billing Information</h1>
+    <div className={cn("flex items-center space-x-1.5")}>
+      <h2 className={cn("text-lg font-semibold", className)}>{title}</h2>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <FontAwesomeIcon
+              icon={faCircleInfo}
+              className="text-muted-foreground mb-0.5 size-3.5"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <span>{tooltip}</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

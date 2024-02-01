@@ -55,3 +55,8 @@ export async function getShipmentCountByStatus(
   });
   return response.data;
 }
+
+export async function getNextProNumber(): Promise<string> {
+  const response = await axios.get("/shipments/get_new_pro_number/");
+  return response.data.proNumber;
+}
