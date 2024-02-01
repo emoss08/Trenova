@@ -285,8 +285,6 @@ export function SingleValueComponent(props: SingleValueProps<any>) {
   // Extract color from the selected option
   const color = selectedOption ? selectedOption.color : null;
 
-  console.info("Selected option color", color);
-
   return (
     <components.SingleValue {...props}>
       <div className="flex items-center">
@@ -325,7 +323,7 @@ export function ErrorMessage({
     <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
       {isFetchError
         ? "An error has occurred! Please try again later."
-        : formError}
+        : formError || "An error has occurred! Please try again later."}
     </div>
   );
 }

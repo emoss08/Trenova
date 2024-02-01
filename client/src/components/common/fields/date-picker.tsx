@@ -18,10 +18,9 @@
 import { ErrorMessage, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
-import { parseLocalDate } from "@/lib/date";
 import { cn, useClickOutside } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
-import { addDays, format } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import {
@@ -58,26 +57,27 @@ export function DatepickerField<TFieldValues extends FieldValues>({
   ...props
 }: DatepickerFieldProps & UseControllerProps<TFieldValues>) {
   const { field, fieldState } = useController(props);
-  const [date, setDate] = useState<Date | undefined>(props.initialDate);
+  const [date] = useState<Date | undefined>(props.initialDate);
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [stringDate, setStringDate] = React.useState(
     props.initialDate ? format(props.initialDate, "yyyy-MM-dd") : "",
   );
 
-  const close = React.useCallback(() => setIsOpen(false), []);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      const formattedDate = format(date, "yyyy-MM-dd");
+      field.onChange(formattedDate);
+    } else {
+      field.onChange(""); // Clear the value if the date is removed
+    }
+    setIsOpen(false);
+  };
+
+  const close = () => setIsOpen(false);
   useClickOutside(popoverRef, close);
 
-  const handleDateChange = React.useCallback(
-    (selectedDate: Date | undefined) => {
-      if (selectedDate) {
-        setDate(selectedDate);
-        setStringDate(format(selectedDate, "PPP"));
-        field.onChange(format(selectedDate, "yyyy-MM-dd"));
-      }
-    },
-    [field],
-  );
+  const formattedDate = field.value ? format(parseISO(field.value), "PPP") : "";
 
   return (
     <>
@@ -97,7 +97,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           onClick={() => setIsOpen(true)}
           {...field}
           aria-invalid={fieldState.invalid}
-          value={field.value || stringDate}
+          value={formattedDate}
           className={cn(
             "flex h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
             fieldState.invalid &&
@@ -133,12 +133,12 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
         {isOpen && (
           <div
             ref={popoverRef}
-            className="z-1000 absolute bottom-full mb-2 rounded-sm border border-muted bg-background shadow-md"
+            className="z-1000 border-muted bg-background absolute bottom-full mb-2 rounded-sm border shadow-md"
           >
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select
@@ -159,9 +159,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
               </Select>
               <Calendar
                 mode="single"
-                selected={
-                  field.value ? parseLocalDate(field.value) : new Date()
-                }
+                selected={field.value ? parseISO(field.value) : undefined}
                 onSelect={handleDateChange}
               />
             </div>
