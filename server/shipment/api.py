@@ -14,15 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from core.permissions import CustomObjectPermissions
 from django.db.models import Count, Prefetch, Q, QuerySet
-from rest_framework import permissions, viewsets
+from movements.models import Movement
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from core.permissions import CustomObjectPermissions
-from movements.models import Movement
-from shipment import models, serializers
+from shipment import models, selectors, serializers
 
 
 class ShipmentControlViewSet(viewsets.ModelViewSet):
@@ -136,6 +135,20 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         "status",
     )
     search_fields = ("pro_number", "customer__name", "bol_number")
+
+    @action(detail=False, methods=["get"])
+    def get_new_pro_number(self, request: Request) -> Response:
+        """Get the latest pro number
+
+        Args:
+            request(Request): Request objects
+
+        Returns:
+            Response: Response Object
+        """
+        new_pro_number = selectors.next_pro_number(organization=request.user.organization_id)  # type: ignore
+
+        return Response({"pro_number": new_pro_number}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
     def get_shipment_count_by_status(self, request: Request) -> Response:
