@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Column } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ export function DataTableColumnHeader<TData, TValue>({
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 focus-visible:ring-transparent data-[state=open]:bg-accent"
+            className="data-[state=open]:bg-accent -ml-3 h-8 focus-visible:ring-transparent"
           >
             <span>{title}</span>
             {column.getIsSorted() === "desc" ? (
@@ -76,16 +77,16 @@ export function DataTableColumnHeader<TData, TValue>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-            <ArrowUpIcon className="mr-2 size-3.5 text-muted-foreground/70" />
+            <ArrowUpIcon className="text-muted-foreground/70 mr-2 size-3.5" />
             Asc
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-            <ArrowDownIcon className="mr-2 size-3.5 text-muted-foreground/70" />
+            <ArrowDownIcon className="text-muted-foreground/70 mr-2 size-3.5" />
             Desc
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            <EyeNoneIcon className="mr-2 size-3.5 text-muted-foreground/70" />
+            <EyeNoneIcon className="text-muted-foreground/70 mr-2 size-3.5" />
             Hide
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -113,7 +114,7 @@ export function DataTableTooltipColumnHeader({
           <TooltipTrigger asChild>
             <FontAwesomeIcon
               icon={faCircleInfo}
-              className="mb-0.5 size-3.5 text-muted-foreground"
+              className="text-muted-foreground mb-0.5 size-3.5"
             />
           </TooltipTrigger>
           <TooltipContent>

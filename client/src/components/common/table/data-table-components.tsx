@@ -46,7 +46,7 @@ export function DataNotFound({
 }) {
   return (
     <div className="my-10 text-center">
-      <Icon className="mx-auto size-10 text-foreground" />
+      <Icon className="text-foreground mx-auto size-10" />
       <h3 className="mt-2 text-sm font-semibold text-gray-900">
         No {upperFirst(name)}
       </h3>
@@ -107,7 +107,7 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   };
 
   return (
-    <Badge variant={status === "A" ? "default" : "destructive"}>
+    <Badge variant={status === "A" ? "active" : "inactive"}>
       {mapToStatus[status]}
     </Badge>
   );
@@ -116,11 +116,11 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
 export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <div className="text-center">
-      <AlertTriangle className="mx-auto size-10 text-accent-foreground" />
-      <p className="mt-2 font-semibold text-accent-foreground">
+      <AlertTriangle className="text-accent-foreground mx-auto size-10" />
+      <p className="text-accent-foreground mt-2 font-semibold">
         Well, this is embarrassing...
       </p>
-      <p className="mt-2 text-muted-foreground">
+      <p className="text-muted-foreground mt-2">
         {message || "There was an error loading the data."}
       </p>
     </div>
