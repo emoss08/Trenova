@@ -281,6 +281,7 @@ class Command(BaseCommand):
         defaults = {
             "description": DESCRIPTION,
             "business_unit": organization.business_unit,
+            "equipment_class": "TRAILER",
         }
         equipment_type, created = EquipmentType.objects.get_or_create(
             organization=organization, name="systemgen", defaults=defaults
@@ -396,7 +397,7 @@ class Command(BaseCommand):
                     + timedelta(days=2),
                     destination_appointment_window_end=timezone.now()
                     + timedelta(days=2),
-                    equipment_type=equipment_type,
+                    trailer_type=equipment_type,
                     entered_by=user,
                     bol_number="123456789",
                     comment=DESCRIPTION,
