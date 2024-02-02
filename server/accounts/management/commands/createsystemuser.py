@@ -61,7 +61,7 @@ class Command(BaseCommand):
             "--username",
             type=str,
             help="Username for the system user account.",
-            default="sys",
+            default="trenova",
         )
 
         parser.add_argument(
