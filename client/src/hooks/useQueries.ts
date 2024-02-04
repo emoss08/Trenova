@@ -126,9 +126,6 @@ export function useTags(show: boolean) {
     initialData: () => {
       return queryClient.getQueryData(["tags"] as QueryKeys[]);
     },
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectTags =
@@ -157,9 +154,6 @@ export function useGLAccounts(show?: boolean) {
     queryFn: async () => getGLAccounts(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["glAccounts"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectGLAccounts =
@@ -186,9 +180,6 @@ export function useAccessorialCharges(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["accessorialCharges"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectAccessorialChargeData =
@@ -211,8 +202,6 @@ export function useAccountingControl() {
     queryFn: async () => getAccountingControl(),
     initialData: () =>
       queryClient.getQueryData(["accountingControl"] as QueryKeys[]),
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
   });
 
   const accountingControlData = (data as AccountingControl[])?.[0];
@@ -230,7 +219,6 @@ export function useBillingControl() {
     queryFn: () => getBillingControl(),
     initialData: () =>
       queryClient.getQueryData(["billingControl"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   // Store first element of BillingControlData in variable
@@ -250,7 +238,6 @@ export function useInvoiceControl() {
     queryFn: () => getInvoiceControl(),
     initialData: () =>
       queryClient.getQueryData(["invoiceControl"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   // Store first element of invoiceControlData in variable
@@ -290,7 +277,6 @@ export function useShipmentControl() {
     queryFn: () => getShipmentControl(),
     initialData: () =>
       queryClient.getQueryData(["shipmentControl"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   // Store first element of shipmentControlData in variable
@@ -310,7 +296,6 @@ export function useRouteControl() {
     queryFn: () => getRouteControl(),
     initialData: () =>
       queryClient.getQueryData(["routeControl"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   // Store first element of dispatchControlData in variable
@@ -331,9 +316,6 @@ export function useCommodities(show?: boolean) {
     queryFn: async () => getCommodities(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["commodities"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectCommodityData =
@@ -357,9 +339,6 @@ export function useCustomers(show: boolean) {
     queryFn: async () => getCustomers(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["customers"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectCustomersData =
@@ -384,9 +363,6 @@ export function useDocumentClass(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["documentClassifications"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectDocumentClassData =
@@ -412,9 +388,6 @@ export function useEquipmentTypes(show?: boolean, limit: number = 100) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["equipmentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectEquipmentType =
@@ -436,9 +409,6 @@ export function useFeasibilityControl() {
     queryFn: async () => getFeasibilityControl(),
     initialData: () =>
       queryClient.getQueryData(["feasibilityControl"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
@@ -459,9 +429,6 @@ export function useHazardousMaterial(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["hazardousMaterials"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectHazardousMaterials =
@@ -489,7 +456,6 @@ export function useLocations(show?: boolean) {
     queryFn: async () => getLocations(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["locations"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectLocationData =
@@ -515,9 +481,6 @@ export function useShipmentTypes(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["shipmentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectShipmentType =
@@ -542,7 +505,6 @@ export function useUsers(show?: boolean) {
     queryFn: async () => getUsers(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["users"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectUsersData =
@@ -566,7 +528,6 @@ export function useUser(userId: string) {
     queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
     initialData: (): User | undefined =>
       queryClient.getQueryData(["users", userId] as QueryKeys[]),
-    staleTime: Infinity,
   });
 }
 
@@ -583,7 +544,6 @@ export function useLocationCategories(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["locationCategories"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
   });
 
   const selectLocationCategories =
@@ -608,7 +568,6 @@ export function useUSStates(show?: boolean, limit?: number) {
     queryFn: async () => getUSStates(limit),
     enabled: show,
     initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   // Create an array of objects with value and label for each state
@@ -634,7 +593,6 @@ export function useCommentTypes(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["commentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectCommentTypes =
@@ -658,7 +616,6 @@ export function useDepots(show?: boolean) {
     queryFn: async () => getDepots(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["depots"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectDepots =
@@ -683,7 +640,6 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
     queryFn: async () => getFleetCodes(limit),
     enabled: show,
     initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectFleetCodes =
@@ -709,7 +665,6 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["equipmentManufacturers"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectEquipManufacturers =
@@ -736,7 +691,6 @@ export function useWorkers(show?: boolean, limit: number = 100) {
     queryFn: async () => getWorkers(limit),
     enabled: show,
     initialData: () => queryClient.getQueryData(["workers"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectWorkers =
@@ -757,7 +711,6 @@ export function useEmailProfiles(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["emailProfiles"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const selectEmailProfile =
@@ -777,7 +730,6 @@ export function useEmailControl() {
     queryFn: () => getEmailControl(),
     initialData: () =>
       queryClient.getQueryData(["emailControl"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   const emailControlData = (data as EmailControl[])?.[0];
@@ -799,7 +751,6 @@ export function useNotifications(userId: string) {
       initialData: () => {
         return queryClient.getQueryData(["userNotifications", userId]);
       },
-      staleTime: Infinity,
     },
   );
 
@@ -818,7 +769,6 @@ export function useFeatureFlags() {
     initialData: () => {
       return queryClient.getQueryData(["featureFlags"]);
     },
-    staleTime: Infinity,
   });
 
   return { featureFlagsData, featureFlagsLoading };
@@ -838,7 +788,6 @@ export function useUserOrganization() {
     queryFn: async () => getUserOrganizationDetails(),
     initialData: (): Organization | undefined =>
       queryClient.getQueryData(["userOrganization"]),
-    staleTime: Infinity,
   });
 
   return {
@@ -864,7 +813,6 @@ export function useGoogleAPI() {
     initialData: () => {
       return queryClient.getQueryData(["googleAPI"] as QueryKeys[]);
     },
-    staleTime: Infinity,
   });
 
   return { googleAPIData, isLoading, isError };
@@ -882,7 +830,6 @@ export function useTableNames(show?: boolean) {
     queryFn: async () => getTableNames(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["tableNames"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
   });
 
   const selectTableNames =
@@ -906,7 +853,6 @@ export function useTopics(show?: boolean) {
     queryFn: async () => getTopicNames(),
     enabled: show,
     initialData: () => queryClient.getQueryData(["topicNames"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
   });
 
   const selectTopics =
@@ -927,7 +873,6 @@ export function useUserFavorites(show?: boolean) {
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["userFavorites"] as QueryKeys[]),
-    staleTime: Infinity,
   });
 
   return { data, isError, isLoading };
@@ -994,16 +939,4 @@ export function getLatestProNumber() {
   });
 
   return { proNumber, isProNumberError, isProNumberLoading };
-}
-
-export function getServiceTypes() {
-  const queryClient = useQueryClient();
-
-  const {
-    data: serviceTypes,
-    isError: isServiceTypeError,
-    isLoading: isServiceTypeLoading,
-  } = useQuery({
-    
-  })
 }
