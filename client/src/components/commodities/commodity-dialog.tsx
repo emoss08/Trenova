@@ -117,12 +117,14 @@ export function CommodityForm({
             control={control}
             label="Hazardous Material"
             options={selectHazardousMaterials}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Hazardous Material"
             description="The Hazardous Material associated with the Commodity"
             isClearable
+            hasPopoutWindow
+            popoutLink="/shipment-management/hazardous-materials/"
+            popoutLinkLabel="Hazardous Material"
           />
         </FormControl>
         <FormControl>
