@@ -864,6 +864,10 @@ export function useTopics(show?: boolean) {
   return { selectTopics, isError, isLoading };
 }
 
+/**
+ * Get the User's Favorites
+ * @param show - show or hide the query
+ */
 export function useUserFavorites(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -878,6 +882,10 @@ export function useUserFavorites(show?: boolean) {
   return { data, isError, isLoading };
 }
 
+/**
+ * Get the Accounting Control for select options
+ * @param show - show or hide the query
+ */
 export function useRevenueCodes(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -902,6 +910,11 @@ export function useRevenueCodes(show?: boolean) {
   return { selectRevenueCodes, isRevenueCodeError, isRevenueCodeLoading };
 }
 
+/**
+ * Get the Trailers for select options
+ * @param show - show or hide the query
+ * @returns selectTrailers, isTrailerError, isTrailerLoading, trailerData
+ */
 export function useTrailers(show?: boolean) {
   const queryClient = useQueryClient();
 
@@ -925,6 +938,9 @@ export function useTrailers(show?: boolean) {
   return { selectTrailers, isTrailerError, isTrailerLoading, trailerData };
 }
 
+/**
+ * Get the latest Pro Number for the organization
+ */
 export function getLatestProNumber() {
   const queryClient = useQueryClient();
 
