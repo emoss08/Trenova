@@ -148,24 +148,13 @@ DATABASES = {
             "connect_timeout": 10,  # Timeout for establishing a new connection
             "client_encoding": "UTF8",  # Ensure UTF8 encoding for compatibility
             "sslmode": env(
-                "DB_SSL_MODE", cast=str
-            ),  # Force SSL connection for security
+                "DB_SSL_MODE", cast=str  # Force SSL connection for security
+            ),
         },
         "CONN_MAX_AGE": 0,  # Needs to be set to 0 for Celery Beat to work
         "DISABLE_SERVER_SIDE_CURSORS": False,  # Enables server-side cursors for large result sets
     },
-    # "replica1": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": env("DB_REPLICA_NAME"),
-    #     "USER": env("DB_REPLICA_USER"),
-    #     "PASSWORD": env("DB_REPLICA_PASSWORD"),
-    #     "HOST": env("DB_REPLICA_HOST"),
-    #     "PORT": env("DB_REPLICA_PORT"),
-    #     "ATOMIC_REQUESTS": True,
-    #     "CONN_HEALTH_CHECK": True,
-    # },
 }
-# DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
