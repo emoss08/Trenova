@@ -405,8 +405,17 @@ export const statusChoices = [
   { value: "I", label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;
 
+/** Entry methods for shipments */
+export type EntryMethodChoiceProps = "MANUAL" | "EDI" | "API";
+
+export const entryMethodChoices = [
+  { value: "MANUAL", label: "Manual" },
+  { value: "EDI", label: "EDI" },
+  { value: "API", label: "API" },
+] satisfies ReadonlyArray<IChoiceProps<EntryMethodChoiceProps>>;
+
 /** Returns status choices for a select input. */
-type ShipmentStatusChoiceProps = "N" | "P" | "C" | "H" | "B" | "V";
+export type ShipmentStatusChoiceProps = "N" | "P" | "C" | "H" | "B" | "V";
 
 /**
  * Returns shipment status choices for a select input.

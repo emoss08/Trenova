@@ -30,11 +30,12 @@ import {
 import { useGoogleAPI } from "@/hooks/useQueries";
 import { useShipmentMapStore, useShipmentStore } from "@/stores/ShipmentStore";
 import { GoogleAPI } from "@/types/organization";
+import { faSpinnerThird } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import GoogleMapReact from "google-map-react";
-import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -120,15 +121,19 @@ export function ShipmentMapView() {
   const { googleAPIData, isLoading } = useGoogleAPI();
   const apiKey = (googleAPIData as GoogleAPI)?.apiKey as string;
 
-  return isLoading ? (
+  const loading = true
+
+  return loading ? (
     <>
-      <div className="flex flex-col items-center justify-center">
-        <Loader2 className="size-20 animate-spin text-foreground" />
-        <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+      <div className="flex h-[50vh] w-screen items-center justify-center">
+        <div className="flex flex-col items-center justify-center text-center">
+          <FontAwesomeIcon icon={faSpinnerThird} className="size-14 animate-spin text-foreground" />
+          <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+        </div>
       </div>
     </>
   ) : (
-    <div className="mx-auto flex w-screen space-x-10">
+    <div className="mx-auto flex w-screen h-[700px] space-x-10">
       <ShipmentMapAside />
       <div className="relative w-full grow">
         {/* Absolute positioned map options */}

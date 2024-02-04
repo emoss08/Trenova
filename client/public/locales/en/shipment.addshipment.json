@@ -15,6 +15,10 @@
         "additionalInfo": {
             "label": "Additional Information",
             "description": "Provides space for extra details or special instructions that may be crucial for handling and transporting the shipment effectively."
+        },
+        "equipmentInfo": {
+            "label": "Equipment Information",
+            "description": "Includes the type and identification of the tractor and trailer units used for the shipment, as well as the commodity being transported."
         }
     },
     "fields": {
@@ -132,6 +136,11 @@
             "placeholder": "Entry Method",
             "label": "Entry Method",
             "description": "Select the method used to enter the shipment details (e.g., manual, automated)."
+        },
+        "serviceType": {
+            "placeholder": "Service Type",
+            "label": "Service Type",
+            "description": "Select the type of service required for the shipment (e.g., standard, expedited)."
         }
     }
 }

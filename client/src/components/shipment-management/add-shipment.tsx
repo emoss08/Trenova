@@ -20,6 +20,8 @@ import { ShipmentGeneralForm } from "@/components/shipment-management/add-shipme
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
+import { shipmentSchema } from "@/lib/validations/ShipmentSchema";
+import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentFormProps, ShipmentFormValues } from "@/types/order";
 import {
   faBoxTaped,
@@ -30,6 +32,7 @@ import {
   faWebhook,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { debounce } from "lodash";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -84,15 +87,19 @@ export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user] = useUserStore.use("user");
+
   const { control, setValue, watch, reset, handleSubmit } =
     useForm<ShipmentFormValues>({
+      resolver: yupResolver(shipmentSchema),
       defaultValues: {
         status: "N",
-        entryMethod: "MANUAL",
         originLocation: "",
         originAddress: "",
         destinationLocation: "",
         destinationAddress: "",
+        entryMethod: "MANUAL",
+        enteredBy: user?.id,
       },
     });
 
@@ -104,12 +111,11 @@ export default function AddShipment() {
     control,
     {
       method: "POST",
-      path: "/locations/",
-      successMessage: "Location created successfully.",
-      queryKeysToInvalidate: ["locations-table-data"],
-      additionalInvalidateQueries: ["locations"],
+      path: "/shipment/",
+      successMessage: "Shipment created successfully.",
+      queryKeysToInvalidate: ["shipments"],
       closeModal: true,
-      errorMessage: "Failed to create new location.",
+      errorMessage: "Failed to create new shipment.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -162,12 +168,10 @@ export default function AddShipment() {
                     "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
                   )}
                 >
-                  {/* Flex container for icon and name */}
                   <div className="flex items-center space-x-2">
                     <span>{tabInfo.icon}</span>
                     <span>{tabInfo.name}</span>
                   </div>
-                  {/* Description text */}
                   <div className="text-muted-foreground text-xs">
                     {tabInfo.description}
                   </div>
