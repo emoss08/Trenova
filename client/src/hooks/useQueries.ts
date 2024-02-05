@@ -45,6 +45,7 @@ import {
   getLocationCategories,
   getLocations,
   getUSStates,
+  searchLocation,
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import {
@@ -939,9 +940,9 @@ export function useTrailers(show?: boolean) {
 }
 
 /**
- * Get the latest Pro Number for the organization
+ * Get the next shipment pro number for the organization
  */
-export function getLatestProNumber() {
+export function useNextProNumber() {
   const queryClient = useQueryClient();
 
   const {
@@ -955,4 +956,26 @@ export function getLatestProNumber() {
   });
 
   return { proNumber, isProNumberError, isProNumberLoading };
+}
+
+export function useLocationAutoComplete(searchQuery: string) {
+  const queryClient = useQueryClient();
+  const isQueryEnabled = searchQuery.trim().length > 0;
+
+  const {
+    data: searchResults = [],
+    isError: searchResultError,
+    isLoading: isSearchLoading,
+  } = useQuery({
+    queryKey: ["locationAutoComplete", searchQuery] as QueryKeys[],
+    queryFn: async () => searchLocation(searchQuery),
+    enabled: isQueryEnabled,
+    initialData: () =>
+      queryClient.getQueryData([
+        "locationAutoComplete",
+        searchQuery,
+      ] as QueryKeys[]),
+  });
+
+  return { searchResults, searchResultError, isSearchLoading };
 }

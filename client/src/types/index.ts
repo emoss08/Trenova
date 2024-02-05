@@ -90,6 +90,7 @@ export type QueryKeys =
   | "tractors"
   | "tractor-table-data"
   | "locations"
+  | "locationAutoComplete"
   | "locations-table-data"
   | "locationCategories"
   | "location-categories-table-data"

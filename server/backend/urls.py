@@ -400,6 +400,11 @@ urlpatterns = [
         name="user-notifications",
     ),
     path(
+        "api/location/auto_complete/",
+        integration_api.autocomplete_location,
+        name="autocomplete-location",
+    ),
+    path(
         "api/billing/shipments_ready/",
         billing_api.get_shipments_ready,
         name="get-shipments-ready",
