@@ -14,10 +14,9 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import * as React from "react";
-
 import { cn } from "@/lib/utils";
 import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
+import * as React from "react";
 import {
   FieldValues,
   UseControllerProps,
