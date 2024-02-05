@@ -94,6 +94,7 @@ export default function AddShipment() {
       resolver: yupResolver(shipmentSchema),
       defaultValues: {
         status: "N",
+        proNumber: "",
         originLocation: "",
         originAddress: "",
         destinationLocation: "",
