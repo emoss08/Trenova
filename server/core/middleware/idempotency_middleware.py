@@ -42,7 +42,7 @@ EXCLUDED_PATHS = {
     "/api/reset_password/",
     "/api/change_email/",
 }
-IDEMPOTENCY_KEY_TTL = 86400  # 1 day
+IDEMPOTENCY_KEY_TTL = settings.IDEMPOTENCY_KEY_TTL
 
 
 def encode_key(key: str) -> str:
