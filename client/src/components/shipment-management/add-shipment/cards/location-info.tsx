@@ -15,31 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-import { InputField, TimeField } from "@/components/common/fields/input";
+import { TimeField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useLocations } from "@/hooks/useQueries";
 import { ShipmentFormValues } from "@/types/order";
 import { Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function LocationInformation({ control }: { control: Control<ShipmentFormValues>}) {
+export function LocationInformation({
+  control,
+}: {
+  control: Control<ShipmentFormValues>;
+}) {
   const { t } = useTranslation(["shipment.addshipment", "common"]);
   const {
     selectLocationData,
-    locations,
     isError: isLocationError,
     isLoading: isLocationsLoading,
   } = useLocations();
 
   return (
-    <div className="rounded-md border border-border bg-card p-4">
+    <div className="border-border bg-card rounded-md border p-4">
       <div className="flex space-x-10">
         <div className="flex-1">
           <div className="flex flex-col">
-            <div className="rounded-md border border-border">
-              <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+            <div className="border-border rounded-md border">
+              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.origin.label")}
                   tooltip={t("card.origin.description")}
@@ -63,7 +66,7 @@ export function LocationInformation({ control }: { control: Control<ShipmentForm
                   />
                 </div>
                 <div className="col-span-3">
-                  <InputField
+                  <LocationAutoComplete
                     control={control}
                     name="originAddress"
                     rules={{ required: true }}
@@ -111,8 +114,8 @@ export function LocationInformation({ control }: { control: Control<ShipmentForm
         </div>
         <div className="flex-1">
           <div className="flex flex-col">
-            <div className="rounded-md border border-border">
-              <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+            <div className="border-border rounded-md border">
+              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.destination.label")}
                   tooltip={t("card.destination.description")}
@@ -136,7 +139,7 @@ export function LocationInformation({ control }: { control: Control<ShipmentForm
                   />
                 </div>
                 <div className="col-span-3">
-                  <InputField
+                  <LocationAutoComplete
                     control={control}
                     name="destinationAddress"
                     rules={{ required: true }}

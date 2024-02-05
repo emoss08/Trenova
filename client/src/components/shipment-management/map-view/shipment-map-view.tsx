@@ -121,9 +121,8 @@ export function ShipmentMapView() {
   const { googleAPIData, isLoading } = useGoogleAPI();
   const apiKey = (googleAPIData as GoogleAPI)?.apiKey as string;
 
-  const loading = true
 
-  return loading ? (
+  return isLoading ? (
     <>
       <div className="flex h-[50vh] w-screen items-center justify-center">
         <div className="flex flex-col items-center justify-center text-center">

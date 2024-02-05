@@ -29,9 +29,7 @@ export function ShipmentGeneralForm({
   return (
     <div className="grid grid-cols-1 gap-y-8">
       <GeneralInformation control={control} setValue={setValue} />
-      <LocationInformation
-        control={control}
-      />
+      <LocationInformation control={control} />
       <EquipmentInformation
         control={control}
         setValue={setValue}

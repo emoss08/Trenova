@@ -20,7 +20,7 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import {
-  getLatestProNumber,
+  useNextProNumber,
   useRevenueCodes,
   useShipmentTypes,
 } from "@/hooks/useQueries";
@@ -48,7 +48,7 @@ export function GeneralInformation({
     isLoading: isShipmentTypesLoading,
   } = useShipmentTypes();
 
-  const { proNumber, isProNumberLoading } = getLatestProNumber();
+  const { proNumber, isProNumberLoading } = useNextProNumber();
 
   useEffect(() => {
     if (proNumber) {
@@ -57,8 +57,8 @@ export function GeneralInformation({
   }, [proNumber, setValue]);
 
   return (
-    <div className="rounded-md border border-border bg-card">
-      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+    <div className="border-border bg-card rounded-md border">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.generalInfo.label")}
           tooltip={t("card.generalInfo.description")}
