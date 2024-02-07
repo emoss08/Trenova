@@ -124,6 +124,7 @@ export interface Shipment extends BaseModel {
   currentSuffix?: string | null;
   formulaTemplate?: string | null;
   entryMethod: string;
+  copyAmount?: number | null;
 }
 
 export type ShipmentFormValues = Omit<

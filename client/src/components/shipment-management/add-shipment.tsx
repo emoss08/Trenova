@@ -35,6 +35,7 @@ import { debounce } from "lodash-es";
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Skeleton } from "../ui/skeleton";
+import { CopyShipmentDialog } from "./add-shipment/dialogs/copy-dialog";
 
 type Tab = {
   name: string;
@@ -95,10 +96,11 @@ const tabs: Record<string, Tab> = {
 export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [copyDialogOpen, setCopyDialogOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user] = useUserStore.use("user");
 
-  const { control, setValue, watch, reset, handleSubmit } =
+  const { control, setValue, watch, reset, handleSubmit, formState } =
     useForm<ShipmentFormValues>({
       resolver: yupResolver(shipmentSchema),
       defaultValues: {
@@ -111,6 +113,7 @@ export default function AddShipment() {
         entryMethod: "MANUAL",
         ratingUnits: 1,
         autoRate: false,
+        copyAmount: 0,
         enteredBy: user?.id,
       },
     });
@@ -150,6 +153,15 @@ export default function AddShipment() {
     [],
   );
 
+  const submitForm = () => {
+    handleSubmit(onSubmit)();
+
+    if (!formState.isValid) {
+      setIsSubmitting(false);
+      setCopyDialogOpen(false);
+    }
+  };
+
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -159,62 +171,77 @@ export default function AddShipment() {
   }, [handleScroll]);
 
   return (
-    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
-      <aside
-        className={cn(
-          "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
-          isScrolled && "pt-10",
-        )}
-      >
-        <div className="bg-card text-card-foreground rounded-lg border p-2">
-          <nav className="lg:flex-col lg:space-y-2">
-            {Object.entries(tabs).map(([tabKey, tabInfo]) => (
-              <div key={tabKey} className="space-y-2">
-                <div
-                  onClick={() => handleTabClick(tabKey)}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "nosize" }),
-                    activeTab === tabKey
-                      ? "bg-muted [&_svg]:text-foreground"
-                      : "hover:bg-muted",
-                    "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
-                  )}
-                >
-                  <div className="flex items-center space-x-2">
-                    <span>{tabInfo.icon}</span>
-                    <span>{tabInfo.name}</span>
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    {tabInfo.description}
+    <>
+      <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
+        <aside
+          className={cn(
+            "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
+            isScrolled && "pt-10",
+          )}
+        >
+          <div className="bg-card text-card-foreground rounded-lg border p-2">
+            <nav className="lg:flex-col lg:space-y-2">
+              {Object.entries(tabs).map(([tabKey, tabInfo]) => (
+                <div key={tabKey} className="space-y-2">
+                  <div
+                    onClick={() => handleTabClick(tabKey)}
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "nosize" }),
+                      activeTab === tabKey
+                        ? "bg-muted [&_svg]:text-foreground"
+                        : "hover:bg-muted",
+                      "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
+                    )}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span>{tabInfo.icon}</span>
+                      <span>{tabInfo.name}</span>
+                    </div>
+                    <div className="text-muted-foreground text-xs">
+                      {tabInfo.description}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </nav>
-        </div>
-      </aside>
-      <div className="relative mb-10 lg:gap-10">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
-        >
-          <Suspense fallback={<Skeleton className="h-[60vh] w-full" />}>
-            <ActiveTabComponent
-              control={control}
-              setValue={setValue}
-              watch={watch}
-            />
-          </Suspense>
-          <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
-            <Button type="button" variant="outline">
-              Save & Add Another
-            </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              Save
-            </Button>
+              ))}
+            </nav>
           </div>
-        </form>
+        </aside>
+        <div className="relative mb-10 lg:gap-10">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
+          >
+            <Suspense fallback={<Skeleton className="h-[60vh] w-full" />}>
+              <ActiveTabComponent
+                control={control}
+                setValue={setValue}
+                watch={watch}
+              />
+            </Suspense>
+            <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
+              <Button type="button" variant="outline">
+                Save & Add Another
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setCopyDialogOpen(true)}
+                isLoading={isSubmitting}
+              >
+                Save
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+      {copyDialogOpen && (
+        <CopyShipmentDialog
+          open={copyDialogOpen}
+          onOpenChange={setCopyDialogOpen}
+          control={control}
+          submitForm={submitForm}
+          isSubmitting={isSubmitting}
+        />
+      )}
+    </>
   );
 }

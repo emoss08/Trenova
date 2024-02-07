@@ -244,5 +244,18 @@
                 }
             }
         }
-    }
+    },
+    "dialog": {
+        "saveCopy": {
+            "title": "Save Copy",
+            "content": "Do you want to save a copy of the current shipment?",
+            "fields": {
+                "copyAmount": {
+                    "placeholder": "Copy Amount",
+                    "label": "Copy Amount",
+                    "description": "Enter the number of copies to save for the current shipment."
+                }
+            }
+        }
+    } 
 }
