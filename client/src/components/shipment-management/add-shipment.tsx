@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BillingTab } from "@/components/shipment-management/add-shipment/billing-info-tab";
-import { ShipmentGeneralForm } from "@/components/shipment-management/add-shipment/general-info-tab";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
@@ -33,9 +31,10 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { debounce } from "lodash";
-import { useCallback, useEffect, useState } from "react";
+import { debounce } from "lodash-es";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Skeleton } from "../ui/skeleton";
 
 type Tab = {
   name: string;
@@ -44,10 +43,20 @@ type Tab = {
   description: string;
 };
 
+// Lazy load the tabs
+const GeneralTab = lazy(
+  () =>
+    import("@/components/shipment-management/add-shipment/general-info-tab"),
+);
+const BillingTab = lazy(
+  () =>
+    import("@/components/shipment-management/add-shipment/billing-info-tab"),
+);
+
 const tabs: Record<string, Tab> = {
   general: {
     name: "General Information",
-    component: ShipmentGeneralForm,
+    component: GeneralTab,
     icon: <FontAwesomeIcon icon={faBoxTaped} />,
     description: "General information about the shipment",
   },
@@ -59,7 +68,7 @@ const tabs: Record<string, Tab> = {
   },
   billing: {
     name: "Billing Information",
-    component: (props: ShipmentFormProps) => <BillingTab {...props} />,
+    component: BillingTab,
     icon: <FontAwesomeIcon icon={faMoneyBillTransfer} />,
     description: "Billing information for the shipment",
   },
@@ -100,6 +109,8 @@ export default function AddShipment() {
         destinationLocation: "",
         destinationAddress: "",
         entryMethod: "MANUAL",
+        ratingUnits: 1,
+        autoRate: false,
         enteredBy: user?.id,
       },
     });
@@ -187,11 +198,13 @@ export default function AddShipment() {
           onSubmit={handleSubmit(onSubmit)}
           className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
         >
-          <ActiveTabComponent
-            control={control}
-            setValue={setValue}
-            watch={watch}
-          />
+          <Suspense fallback={<Skeleton className="h-[60vh] w-full" />}>
+            <ActiveTabComponent
+              control={control}
+              setValue={setValue}
+              watch={watch}
+            />
+          </Suspense>
           <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
             <Button type="button" variant="outline">
               Save & Add Another

@@ -95,12 +95,12 @@ export interface Shipment extends BaseModel {
   ratingUnits: number;
   rate?: string | null;
   mileage?: number | null;
-  otherChargeAmount: string;
+  otherChargeAmount?: string | null;
   freightChargeAmount?: string | null;
   rateMethod?: string | null;
   customer: string;
-  pieces: number;
-  weight: string;
+  pieces?: number | null;
+  weight?: string | null;
   readyToBill: boolean;
   billDate?: string | null;
   shipDate?: string | null;
@@ -150,3 +150,14 @@ export type ShipmentSearchForm = {
   searchQuery: string;
   statusFilter: string;
 };
+
+export interface FormulaTemplate extends BaseModel {
+  id: string;
+  name: string;
+  formulaText: string;
+  description?: string;
+  templateType: string;
+  customer?: string | null;
+  shipmentType?: string | null;
+  autoApply: boolean;
+}

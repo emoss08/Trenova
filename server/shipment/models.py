@@ -440,6 +440,8 @@ class Shipment(GenericModel):
         decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
+        null=True,
+        blank=True,
     )
     freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
@@ -468,14 +470,16 @@ class Shipment(GenericModel):
     pieces = models.PositiveIntegerField(
         _("Pieces"),
         help_text=_("Total Piece Count of the Shipment"),
-        default=0,
+        null=True,
+        blank=True,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
         help_text=_("Total Weight of the Shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     ready_to_bill = models.BooleanField(
         _("Ready to Bill"),

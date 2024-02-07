@@ -417,9 +417,9 @@ class CommentType(GenericModel):
 
     class Meta:
         """
-        Metaclass for the Rate model.
+        Metaclass for the Comment Type model.
 
-        The Meta class defines some options for the Rate model.
+        The Meta class defines some options for the Comment Type model.
         """
 
         verbose_name = _("Comment Type")

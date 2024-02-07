@@ -37,7 +37,7 @@ export function GeneralInformation({
   control: Control<ShipmentFormValues>;
   setValue: UseFormSetValue<ShipmentFormValues>;
 }) {
-  const { t } = useTranslation(["shipment.addshipment", "common"]);
+  const { t } = useTranslation("shipment.addshipment");
 
   const { selectRevenueCodes, isRevenueCodeLoading, isRevenueCodeError } =
     useRevenueCodes();
@@ -58,7 +58,7 @@ export function GeneralInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.generalInfo.label")}
           tooltip={t("card.generalInfo.description")}

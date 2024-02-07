@@ -21,7 +21,7 @@ import { EquipmentInformation } from "./cards/equipment-info";
 import { GeneralInformation } from "./cards/general-info";
 import { LocationInformation } from "./cards/location-info";
 
-export function ShipmentGeneralForm({
+export default function GeneralInfoTab({
   control,
   setValue,
   watch,

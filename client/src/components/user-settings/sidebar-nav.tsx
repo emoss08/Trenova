@@ -16,7 +16,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";

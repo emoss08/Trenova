@@ -17,7 +17,7 @@
 
 import axios from "@/lib/axiosConfig";
 import {
-  GoogleAutoCompleteResults,
+  GoogleAutoCompleteResult,
   Location,
   LocationCategory,
   MonthlyPickupData,
@@ -86,7 +86,7 @@ export async function getUSStates(limit: number = 100): Promise<USStates[]> {
  */
 export async function searchLocation(
   searchQuery: string,
-): Promise<GoogleAutoCompleteResults> {
+): Promise<GoogleAutoCompleteResult> {
   const response = await axios.get("/location/auto_complete/", {
     params: {
       search: searchQuery,

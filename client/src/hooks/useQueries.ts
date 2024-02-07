@@ -35,6 +35,7 @@ import {
   getCommentTypes,
   getFeasibilityControl,
   getFleetCodes,
+  getRates,
 } from "@/services/DispatchRequestService";
 import {
   getEquipmentManufacturers,
@@ -63,7 +64,10 @@ import {
   getTopicNames,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
-import { getNextProNumber } from "@/services/ShipmentRequestService";
+import {
+  getFormulaTemplates,
+  getNextProNumber,
+} from "@/services/ShipmentRequestService";
 import {
   getUserDetails,
   getUserNotifications,
@@ -90,11 +94,12 @@ import {
   DispatchControl,
   FeasibilityToolControl,
   FleetCode,
+  Rate,
 } from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
-import { ShipmentControl, ShipmentType } from "@/types/order";
+import { FormulaTemplate, ShipmentControl, ShipmentType } from "@/types/order";
 import {
   Depot,
   EmailControl,
@@ -332,7 +337,7 @@ export function useCommodities(show?: boolean) {
  * Get Customers for select options
  * @param show - show or hide the query
  */
-export function useCustomers(show: boolean) {
+export function useCustomers(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
@@ -978,4 +983,57 @@ export function useLocationAutoComplete(searchQuery: string) {
   });
 
   return { searchResults, searchResultError, isSearchLoading };
+}
+
+/**
+ * Get the Rates for select options
+ * @param limit - limit the number of results
+ * @param show - show or hide the query
+ * @returns selectRates, isRateError, isRatesLoading, ratesData
+ */
+export function useRates(limit?: number, show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: ratesData,
+    isError: isRateError,
+    isLoading: isRatesLoading,
+  } = useQuery({
+    queryKey: ["rates", limit] as QueryKeys[],
+    queryFn: async () => getRates(limit),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["rates"] as QueryKeys[]),
+  });
+
+  const selectRates =
+    (ratesData as Rate[])?.map((rate: Rate) => ({
+      value: rate.id,
+      label: rate.rateNumber,
+    })) || [];
+
+  return { selectRates, isRateError, isRatesLoading, ratesData };
+}
+
+export function useFormulaTemplates() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: formulaTemplates,
+    isError: isFormulaError,
+    isLoading: isFormulaLoading,
+  } = useQuery({
+    queryKey: ["formulaTemplates"],
+    queryFn: async () => getFormulaTemplates(),
+    initialData: () => queryClient.getQueryData(["formulaTemplates"]),
+  });
+
+  const selectFormulaTemplates =
+    (formulaTemplates as FormulaTemplate[])?.map(
+      (template: FormulaTemplate) => ({
+        value: template.id,
+        label: template.name,
+      }),
+    ) || [];
+
+  return { selectFormulaTemplates, isFormulaError, isFormulaLoading };
 }

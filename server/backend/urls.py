@@ -281,6 +281,11 @@ router.register(
     shipment_api.ServiceTypeViewSet,
     basename="service-types",
 )
+router.register(
+    r"formula_templates",
+    shipment_api.FormulaTemplateViewSet,
+    basename="formula-templates",
+)
 
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")

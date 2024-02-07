@@ -482,3 +482,14 @@ export const sourceChoices = [
   { value: "KAFKA", label: "Kafka" },
   { value: "POSTGRES", label: "Postgres" },
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
+
+/** Type for RatingMethod for Shipment */
+export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
+
+export const ratingMethodChoies = [
+  { value: "F", label: "Flat" },
+  { value: "PM", label: "Per Mile" },
+  { value: "PS", label: "Per Stop" },
+  { value: "PP", label: "Per Pound" },
+  { value: "O", label: "Other" },
+] satisfies ReadonlyArray<IChoiceProps<RatingMethodChoiceProps>>;

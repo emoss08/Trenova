@@ -26,7 +26,7 @@ import { GoogleAutoCompleteResult } from "@/types/location";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import {
@@ -49,7 +49,7 @@ const AutocompleteResults = React.forwardRef<
 >(({ searchResults, onSelectResult }, ref) => {
   if (!searchResults || searchResults.length === 0) {
     return (
-      <div className="bg-background border-border p-2" ref={ref}>
+      <div className="bg-popover border-border p-2 shadow-lg" ref={ref}>
         <p className="text-muted-foreground text-sm">No results found.</p>
       </div>
     );
@@ -57,10 +57,10 @@ const AutocompleteResults = React.forwardRef<
 
   return (
     <div
-      className="z-100 border-border absolute w-auto rounded-md border"
+      className="z-100 border-border absolute w-auto rounded-md border shadow-lg"
       ref={ref}
     >
-      <Command className="bg-card">
+      <Command className="bg-popover">
         <CommandList>
           <CommandGroup>
             {searchResults.map((result) => (
@@ -80,7 +80,10 @@ const AutocompleteResults = React.forwardRef<
             ))}
           </CommandGroup>
         </CommandList>
-        <div className="bg-card border-border flex select-none items-center justify-end border-t p-2">
+        <div className="bg-card border-border flex select-none items-center justify-between border-t p-2">
+          <p className="text-muted-foreground text-xs">
+            {searchResults.length} results
+          </p>
           <p className="text-muted-foreground text-xs">
             Powered by <FontAwesomeIcon icon={faGoogle} />
           </p>

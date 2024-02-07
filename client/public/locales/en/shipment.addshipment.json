@@ -4,6 +4,10 @@
             "label": "General Information",
             "description": "Specifies the basic details of the shipment, including the Pro Number, status, and revenue code."
         },
+        "billingInfo": {
+            "label": "Billing Information",
+            "description": "Includes Rate and Revenue details, as well as the Additional Charges and Payment Terms for the shipment."
+        },
         "origin": {
             "label": "Origin Location",
             "description": "Specifies the starting point of the shipment, including the facility or dock where the cargo is initially loaded."
@@ -19,6 +23,22 @@
         "equipmentInfo": {
             "label": "Equipment Information",
             "description": "Includes the type and identification of the tractor and trailer units used for the shipment, as well as the commodity being transported."
+        },
+        "customerInfo": {
+            "label": "Customer Information",
+            "description": "Specifies the customer or company that requested the shipment, as well as the service type and rating details."
+        },
+        "shipmentInfo": {
+            "label": "Shipment Information",
+            "description": "Includes the total weight and number of pieces in the shipment, as well as the mileage and rate details."
+        },
+        "rateCalcInfo": {
+            "label": "Rate Calculation Information",
+            "description": "Specifies the method and formula used to calculate the shipment's rate, as well as the subtotal and total charges."
+        },
+        "chargeInfo": {
+            "label": "Charge Information",
+            "description": "Includes the total amount for freight charges, as well as the subtotal and additional charges for the shipment."
         }
     },
     "fields": {
@@ -141,6 +161,66 @@
             "placeholder": "Service Type",
             "label": "Service Type",
             "description": "Select the type of service required for the shipment (e.g., standard, expedited)."
+        },
+        "customer": {
+            "placeholder": "Customer",
+            "label": "Customer",
+            "description": "Enter the name of the customer or company that requested the shipment."
+        },
+        "ratingUnits": {
+            "placeholder": "Rating Units",
+            "label": "Rating Units",
+            "description": "Enter the units used for rating the shipment (e.g., miles, kilometers)."
+        },
+        "mileage": {
+            "placeholder": "Mileage",
+            "label": "Mileage",
+            "description": "Enter the total distance to be covered during the shipment."
+        },
+        "rate": {
+            "placeholder": "Rate",
+            "label": "Rate",
+            "description": "Enter the standard rate for the shipment, excluding additional charges."
+        },
+        "ratingMethod": {
+            "placeholder": "Rating Method",
+            "label": "Rating Method",
+            "description": "Select the method used to calculate the shipment's rate (e.g., per mile, flat rate)."
+        },
+        "formulaTemplate": {
+            "placeholder": "Formula Template",
+            "label": "Formula Template",
+            "description": "Select the predefined formula template used to calculate the shipment's rate."
+        },
+        "weight": {
+            "placeholder": "Weight",
+            "label": "Weight",
+            "description": "Enter the total weight of the shipment, including the units used (e.g., lbs, kg)."
+        },
+        "pieces": {
+            "placeholder": "Pieces",
+            "label": "Pieces",
+            "description": "Enter the total number of pieces or packages included in the shipment."
+        },
+        "autoRate": {
+            "placeholder": "Auto Rate",
+            "label": "Auto Rate",
+            "description": "Indicate if the shipment's rate was automatically calculated (Yes/No)."
+        },
+        "otherChargeAmount": {
+            "placeholder": "Other Charge Amount",
+            "label": "Other Charge Amount",
+            "description": "Enter the total amount for additional charges not included in the standard rate."
+        },
+        "freightChargeAmount": {
+            "placeholder": "Freight Charge Amount",
+            "label": "Freight Charge Amount",
+            "description": "Enter the total amount for the shipment's freight charges."
+        },
+        "subTotal": {
+            "placeholder": "Sub Total",
+            "label": "Sub Total",
+            "description": "Enter the subtotal amount for the shipment, including the standard rate and additional charges."
         }
     }
 }

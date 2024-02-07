@@ -16,11 +16,22 @@
  */
 
 import { ShipmentFormProps } from "@/types/order";
+import { ChargeInformation } from "./cards/charge-info";
+import { CustomerInformation } from "./cards/customer-info";
+import { RateCalcInformation } from "./cards/rate-calc-info";
+import { ShipmentInformation } from "./cards/shipment-info";
 
-export function BillingTab({ control, watch, setValue }: ShipmentFormProps) {
+export default function BillingInfoTab({
+  control,
+  setValue,
+  watch,
+}: ShipmentFormProps) {
   return (
-    <div>
-      <h1>Billing Information</h1>
+    <div className="grid grid-cols-1 gap-y-8">
+      <CustomerInformation control={control} />
+      <ShipmentInformation control={control} />
+      <RateCalcInformation control={control} watch={watch} />
+      <ChargeInformation control={control} />
     </div>
   );
 }

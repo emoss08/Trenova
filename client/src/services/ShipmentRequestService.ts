@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { Shipment } from "@/types/order";
+import { FormulaTemplate, Shipment } from "@/types/order";
 
 /**
  * Fetches the shipments from the server.
@@ -35,16 +35,23 @@ export async function getShipments(
   return response.data.results;
 }
 
+/** Type for the response of the getShipmentCountByStatus function. */
 type ShipmentCount = {
   status: string;
   count: number;
 };
 
+/** Type for the response of the getShipmentCountByStatus function. */
 type ShipmentsByStatusResponse = {
   results: ShipmentCount[];
   totalCount: number;
 };
 
+/**
+ * Fetches the shipment count by status from the server.
+ * @param searchQuery The search query to filter the shipments.
+ * @returns A promise that resolves to a ShipmentCount object.
+ */
 export async function getShipmentCountByStatus(
   searchQuery?: string,
 ): Promise<ShipmentsByStatusResponse> {
@@ -56,7 +63,21 @@ export async function getShipmentCountByStatus(
   return response.data;
 }
 
+/**
+ * Fetches the next pro number from the server.
+ * @param proNumber The pro number of the shipment.
+ * @returns A promise that resolves to a Shipment object.
+ */
 export async function getNextProNumber(): Promise<string> {
   const response = await axios.get("/shipments/get_new_pro_number/");
   return response.data.proNumber;
+}
+
+/**
+ * Fetches the formula templates from the server.
+ * @returns A promise that resolves to a FormulaTemplate object.
+ */
+export async function getFormulaTemplates(): Promise<FormulaTemplate[]> {
+  const response = await axios.get("/formula_templates/");
+  return response.data.results;
 }

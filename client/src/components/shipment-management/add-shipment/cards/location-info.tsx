@@ -42,7 +42,7 @@ export function LocationInformation({
         <div className="flex-1">
           <div className="flex flex-col">
             <div className="border-border rounded-md border">
-              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+              <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.origin.label")}
                   tooltip={t("card.origin.description")}
@@ -115,7 +115,7 @@ export function LocationInformation({
         <div className="flex-1">
           <div className="flex flex-col">
             <div className="border-border rounded-md border">
-              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+              <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.destination.label")}
                   tooltip={t("card.destination.description")}

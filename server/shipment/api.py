@@ -365,3 +365,31 @@ class ServiceTypeViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         )
         return queryset
+
+
+class FormulaTemplateViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Formula Templates in the system.
+
+    The viewset provides default operations for creating, updating and deleting Formula Templates,
+    as well as listing and retrieving Formula Templates. It uses the ``FormulaTemplateSerializer``
+    class to convert the Formula Template instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by formula template by name, and status.
+
+    Attributes:
+        queryset (QuerySet): A queryset of FormulaTemplate objects that will be used to
+        retrieve and update FormulaTemplate objects.
+
+        serializer_class (FormulaTemplateSerializer): A serializer class that will be used to
+        convert FormulaTemplate objects to and from JSON-formatted data.
+    """
+
+    queryset = models.FormulaTemplate.objects.all()
+    serializer_class = serializers.FormulaTemplateSerializer
+    filterset_fields = (
+        "name",
+        "shipment_type",
+        "customer",
+        "template_type",
+    )

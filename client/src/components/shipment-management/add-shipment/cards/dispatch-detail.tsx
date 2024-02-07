@@ -1,11 +1,11 @@
-import { Control } from "react-hook-form";
-import { ShipmentFormValues } from "@/types/order";
-import { useTranslation } from "react-i18next";
-import { useUsers } from "@/hooks/useQueries";
-import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
+import { useUsers } from "@/hooks/useQueries";
 import { entryMethodChoices } from "@/lib/choices";
+import { ShipmentFormValues } from "@/types/order";
+import { Control } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 export function DispatchInformation({
   control,
@@ -21,8 +21,8 @@ export function DispatchInformation({
   } = useUsers();
 
   return (
-    <div className="rounded-md border border-border bg-card">
-      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+    <div className="border-border bg-card rounded-md border">
+      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.additionalInfo.label")}
           tooltip={t("card.additionalInfo.description")}

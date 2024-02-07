@@ -20,6 +20,7 @@ import {
   CommentType,
   FeasibilityToolControl,
   FleetCode,
+  Rate,
 } from "@/types/dispatch";
 
 /**
@@ -42,6 +43,10 @@ export async function getFeasibilityControl(): Promise<
   return response.data.results;
 }
 
+/**
+ * Fetches the comment types from the server.
+ * @returns A promise that resolves to a CommentType object.
+ */
 export async function getCommentTypes(): Promise<CommentType[]> {
   const response = await axios.get("/comment_types/", {
     params: {
@@ -51,8 +56,28 @@ export async function getCommentTypes(): Promise<CommentType[]> {
   return response.data.results;
 }
 
+/**
+ * Fetches the fleet codes from the server.
+ * @param limit The maximum number of fleet codes to return.
+ * @returns A promise that resolves to a FleetCode object.
+ */
 export async function getFleetCodes(limit?: number): Promise<FleetCode[]> {
   const response = await axios.get("/fleet_codes/", {
+    params: {
+      status: "A",
+      limit: limit,
+    },
+  });
+  return response.data.results;
+}
+
+/**
+ * Fetches the rates from the server.
+ * @param limit The maximum number of rates to return.
+ * @returns A promise that resolves to a Rate object.
+ */
+export async function getRates(limit?: number): Promise<Rate[]> {
+  const response = await axios.get("/rates/", {
     params: {
       status: "A",
       limit: limit,

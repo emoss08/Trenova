@@ -293,6 +293,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:4173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (
@@ -311,6 +312,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:4173",
 ]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
@@ -536,7 +538,6 @@ GRAPHENE = {
 # Idempotency Configurations
 IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
 IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
-IDEMPOTENCY_KEY_TTL = env("IDEMPOTENCY_KEY_TTL")
 
 # Development Configurations
 if DEBUG:

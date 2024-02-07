@@ -321,3 +321,28 @@ class ServiceTypeSerializer(GenericSerializer):
             "organization": {"required": False},
             "business_unit": {"required": False},
         }
+
+
+class FormulaTemplateSerializer(GenericSerializer):
+    """A serializer for the `FormulaTemplate` model.
+
+    A serializer class for the FormulaTemplate Model. This serializer is used
+    to convert the FormulaTemplate model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+    """
+
+    class Meta:
+        """Metaclass for Formula Template Serializer
+
+        Attributes:
+            model (models.FormulaTemplate): The model that the serializer is for.
+        """
+
+        model = models.FormulaTemplate
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
