@@ -29,7 +29,7 @@ export function LocationInformation({
 }: {
   control: Control<ShipmentFormValues>;
 }) {
-  const { t } = useTranslation(["shipment.addshipment", "common"]);
+  const { t } = useTranslation("shipment.addshipment");
   const {
     selectLocationData,
     isError: isLocationError,
@@ -42,7 +42,7 @@ export function LocationInformation({
         <div className="flex-1">
           <div className="flex flex-col">
             <div className="border-border rounded-md border">
-              <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.origin.label")}
                   tooltip={t("card.origin.description")}
@@ -56,9 +56,13 @@ export function LocationInformation({
                     options={selectLocationData}
                     isLoading={isLocationsLoading}
                     isFetchError={isLocationError}
-                    label={t("fields.originLocation.label")}
-                    placeholder={t("fields.originLocation.placeholder")}
-                    description={t("fields.originLocation.description")}
+                    label={t("card.origin.fields.originLocation.label")}
+                    placeholder={t(
+                      "card.origin.fields.originLocation.placeholder",
+                    )}
+                    description={t(
+                      "card.origin.fields.originLocation.description",
+                    )}
                     hasPopoutWindow
                     popoutLink="/dispatch/locations/"
                     isClearable
@@ -73,9 +77,13 @@ export function LocationInformation({
                     autoCapitalize="none"
                     autoCorrect="off"
                     type="text"
-                    label={t("fields.originAddress.label")}
-                    placeholder={t("fields.originAddress.placeholder")}
-                    description={t("fields.originAddress.description")}
+                    label={t("card.origin.fields.originAddress.label")}
+                    placeholder={t(
+                      "card.origin.fields.originAddress.placeholder",
+                    )}
+                    description={t(
+                      "card.origin.fields.originAddress.description",
+                    )}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-x-4">
@@ -84,12 +92,14 @@ export function LocationInformation({
                       control={control}
                       rules={{ required: true }}
                       name="originAppointmentWindowStart"
-                      label={t("fields.originAppointmentWindowStart.label")}
+                      label={t(
+                        "card.origin.fields.originAppointmentWindowStart.label",
+                      )}
                       placeholder={t(
-                        "fields.originAppointmentWindowStart.placeholder",
+                        "card.origin.fields.originAppointmentWindowStart.placeholder",
                       )}
                       description={t(
-                        "fields.originAppointmentWindowStart.description",
+                        "card.origin.fields.originAppointmentWindowStart.description",
                       )}
                     />
                   </div>
@@ -98,12 +108,14 @@ export function LocationInformation({
                       control={control}
                       rules={{ required: true }}
                       name="originAppointmentWindowEnd"
-                      label={t("fields.originAppointmentWindowEnd.label")}
+                      label={t(
+                        "card.origin.fields.originAppointmentWindowEnd.label",
+                      )}
                       placeholder={t(
-                        "fields.originAppointmentWindowEnd.placeholder",
+                        "card.origin.fields.originAppointmentWindowEnd.placeholder",
                       )}
                       description={t(
-                        "fields.originAppointmentWindowEnd.description",
+                        "card.origin.fields.originAppointmentWindowEnd.description",
                       )}
                     />
                   </div>
@@ -115,7 +127,7 @@ export function LocationInformation({
         <div className="flex-1">
           <div className="flex flex-col">
             <div className="border-border rounded-md border">
-              <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
                 <TitleWithTooltip
                   title={t("card.destination.label")}
                   tooltip={t("card.destination.description")}
@@ -129,9 +141,15 @@ export function LocationInformation({
                     options={selectLocationData}
                     isLoading={isLocationsLoading}
                     isFetchError={isLocationError}
-                    label={t("fields.destinationLocation.label")}
-                    placeholder={t("fields.destinationLocation.placeholder")}
-                    description={t("fields.destinationLocation.description")}
+                    label={t(
+                      "card.destination.fields.destinationLocation.label",
+                    )}
+                    placeholder={t(
+                      "card.destination.fields.destinationLocation.placeholder",
+                    )}
+                    description={t(
+                      "card.destination.fields.destinationLocation.description",
+                    )}
                     hasPopoutWindow
                     popoutLink="/dispatch/locations/"
                     isClearable
@@ -146,9 +164,15 @@ export function LocationInformation({
                     autoCapitalize="none"
                     autoCorrect="off"
                     type="text"
-                    label={t("fields.destinationAddress.label")}
-                    placeholder={t("fields.destinationAddress.placeholder")}
-                    description={t("fields.destinationAddress.description")}
+                    label={t(
+                      "card.destination.fields.destinationAddress.label",
+                    )}
+                    placeholder={t(
+                      "card.destination.fields.destinationAddress.placeholder",
+                    )}
+                    description={t(
+                      "card.destination.fields.destinationAddress.description",
+                    )}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-x-4">
@@ -158,13 +182,13 @@ export function LocationInformation({
                       rules={{ required: true }}
                       name="destinationAppointmentWindowStart"
                       label={t(
-                        "fields.destinationAppointmentWindowStart.label",
+                        "card.destination.fields.destinationAppointmentWindowStart.label",
                       )}
                       placeholder={t(
-                        "fields.destinationAppointmentWindowStart.placeholder",
+                        "card.destination.fields.destinationAppointmentWindowStart.placeholder",
                       )}
                       description={t(
-                        "fields.destinationAppointmentWindowStart.description",
+                        "card.destination.fields.destinationAppointmentWindowStart.description",
                       )}
                     />
                   </div>
@@ -173,12 +197,14 @@ export function LocationInformation({
                       control={control}
                       rules={{ required: true }}
                       name="destinationAppointmentWindowEnd"
-                      label={t("fields.destinationAppointmentWindowEnd.label")}
+                      label={t(
+                        "card.destination.fields.destinationAppointmentWindowEnd.label",
+                      )}
                       placeholder={t(
-                        "fields.destinationAppointmentWindowEnd.placeholder",
+                        "card.destination.fields.destinationAppointmentWindowEnd.placeholder",
                       )}
                       description={t(
-                        "fields.destinationAppointmentWindowEnd.description",
+                        "card.destination.fields.destinationAppointmentWindowEnd.description",
                       )}
                     />
                   </div>

@@ -32,7 +32,8 @@ export function RateCalcInformation({
   control: Control<ShipmentFormValues>;
   watch: UseFormWatch<ShipmentFormValues>;
 }) {
-  const { t } = useTranslation(["shipment.addshipment", "common"]);
+  const { t } = useTranslation("shipment.addshipment");
+
   const { selectRates, isRateError, isRatesLoading } = useRates();
 
   const { selectFormulaTemplates, isFormulaError, isFormulaLoading } =
@@ -44,7 +45,7 @@ export function RateCalcInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.rateCalcInfo.label")}
           tooltip={t("card.rateCalcInfo.description")}
@@ -58,9 +59,13 @@ export function RateCalcInformation({
               options={ratingMethodChoies}
               control={control}
               rules={{ required: true }}
-              label={t("fields.ratingMethod.label")}
-              placeholder={t("fields.ratingMethod.placeholder")}
-              description={t("fields.ratingMethod.description")}
+              label={t("card.rateCalcInfo.fields.ratingMethod.label")}
+              placeholder={t(
+                "card.rateCalcInfo.fields.ratingMethod.placeholder",
+              )}
+              description={t(
+                "card.rateCalcInfo.fields.ratingMethod.description",
+              )}
             />
           </div>
           <div className="col-span-3">
@@ -70,9 +75,13 @@ export function RateCalcInformation({
               control={control}
               rules={{ required: true }}
               readOnly={ratingMethod !== "O"}
-              label={t("fields.ratingUnits.label")}
-              placeholder={t("fields.ratingUnits.placeholder")}
-              description={t("fields.ratingUnits.description")}
+              label={t("card.rateCalcInfo.fields.ratingUnits.label")}
+              placeholder={t(
+                "card.rateCalcInfo.fields.ratingUnits.placeholder",
+              )}
+              description={t(
+                "card.rateCalcInfo.fields.ratingUnits.description",
+              )}
             />
           </div>
           <div className="col-span-3">
@@ -82,9 +91,9 @@ export function RateCalcInformation({
               isLoading={isRatesLoading}
               isFetchError={isRateError}
               control={control}
-              label={t("fields.rate.label")}
-              placeholder={t("fields.rate.placeholder")}
-              description={t("fields.rate.description")}
+              label={t("card.rateCalcInfo.fields.rate.label")}
+              placeholder={t("card.rateCalcInfo.fields.rate.placeholder")}
+              description={t("card.rateCalcInfo.fields.rate.description")}
               popoutLink="/dispatch/rate-management/"
               hasPopoutWindow
               popoutLinkLabel="Rate"
@@ -97,9 +106,13 @@ export function RateCalcInformation({
               isLoading={isFormulaLoading}
               isFetchError={isFormulaError}
               control={control}
-              label={t("fields.formulaTemplate.label")}
-              placeholder={t("fields.formulaTemplate.placeholder")}
-              description={t("fields.formulaTemplate.description")}
+              label={t("card.rateCalcInfo.fields.formulaTemplate.label")}
+              placeholder={t(
+                "card.rateCalcInfo.fields.formulaTemplate.placeholder",
+              )}
+              description={t(
+                "card.rateCalcInfo.fields.formulaTemplate.description",
+              )}
               popoutLink="/shipment-management/formula-templates/"
               hasPopoutWindow
               popoutLinkLabel="Formula Template"
@@ -110,8 +123,8 @@ export function RateCalcInformation({
               name="autoRate"
               control={control}
               rules={{ required: true }}
-              label={t("fields.autoRate.label")}
-              description={t("fields.autoRate.description")}
+              label={t("card.rateCalcInfo.fields.autoRate.label")}
+              description={t("card.rateCalcInfo.fields.autoRate.description")}
             />
           </div>
         </div>

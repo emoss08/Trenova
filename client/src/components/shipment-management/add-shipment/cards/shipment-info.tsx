@@ -30,7 +30,7 @@ export function ShipmentInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.shipmentInfo.label")}
           tooltip={t("card.shipmentInfo.description")}
@@ -43,9 +43,9 @@ export function ShipmentInformation({
               name="mileage"
               type="number"
               control={control}
-              label={t("fields.mileage.label")}
-              placeholder={t("fields.mileage.placeholder")}
-              description={t("fields.mileage.description")}
+              label={t("card.shipmentInfo.fields.mileage.label")}
+              placeholder={t("card.shipmentInfo.fields.mileage.placeholder")}
+              description={t("card.shipmentInfo.fields.mileage.description")}
             />
           </div>
         </div>
@@ -56,9 +56,9 @@ export function ShipmentInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              label={t("fields.pieces.label")}
-              placeholder={t("fields.pieces.placeholder")}
-              description={t("fields.pieces.description")}
+              label={t("card.shipmentInfo.fields.pieces.label")}
+              placeholder={t("card.shipmentInfo.fields.pieces.placeholder")}
+              description={t("card.shipmentInfo.fields.pieces.description")}
             />
           </div>
           <div className="col-span-1">
@@ -67,9 +67,9 @@ export function ShipmentInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              label={t("fields.weight.label")}
-              placeholder={t("fields.weight.placeholder")}
-              description={t("fields.weight.description")}
+              label={t("card.shipmentInfo.fields.weight.label")}
+              placeholder={t("card.shipmentInfo.fields.weight.placeholder")}
+              description={t("card.shipmentInfo.fields.weight.description")}
             />
           </div>
         </div>

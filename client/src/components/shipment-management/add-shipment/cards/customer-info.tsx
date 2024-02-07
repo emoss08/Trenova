@@ -36,7 +36,7 @@ export function CustomerInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.customerInfo.label")}
           tooltip={t("card.customerInfo.description")}
@@ -52,9 +52,9 @@ export function CustomerInformation({
               isLoading={isCustomersLoading}
               isFetchError={isCustomersError}
               rules={{ required: true }}
-              label={t("fields.customer.label")}
-              placeholder={t("fields.customer.placeholder")}
-              description={t("fields.customer.description")}
+              label={t("card.customerInfo.fields.customer.label")}
+              placeholder={t("card.customerInfo.fields.customer.placeholder")}
+              description={t("card.customerInfo.fields.customer.description")}
               popoutLink="/billing/customers/"
               hasPopoutWindow
               popoutLinkLabel="Customer"

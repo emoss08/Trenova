@@ -30,7 +30,7 @@ export function ChargeInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.chargeInfo.label")}
           tooltip={t("card.chargeInfo.description")}
@@ -44,9 +44,13 @@ export function ChargeInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              label={t("fields.otherChargeAmount.label")}
-              placeholder={t("fields.otherChargeAmount.placeholder")}
-              description={t("fields.otherChargeAmount.description")}
+              label={t("card.chargeInfo.fields.otherChargeAmount.label")}
+              placeholder={t(
+                "card.chargeInfo.fields.otherChargeAmount.placeholder",
+              )}
+              description={t(
+                "card.chargeInfo.fields.otherChargeAmount.description",
+              )}
             />
           </div>
           <div className="col-span-3">
@@ -55,9 +59,13 @@ export function ChargeInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              label={t("fields.freightChargeAmount.label")}
-              placeholder={t("fields.freightChargeAmount.placeholder")}
-              description={t("fields.freightChargeAmount.description")}
+              label={t("card.chargeInfo.fields.freightChargeAmount.label")}
+              placeholder={t(
+                "card.chargeInfo.fields.freightChargeAmount.placeholder",
+              )}
+              description={t(
+                "card.chargeInfo.fields.freightChargeAmount.description",
+              )}
             />
           </div>
           <div className="col-span-3">
@@ -66,9 +74,9 @@ export function ChargeInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              label={t("fields.subTotal.label")}
-              placeholder={t("fields.subTotal.placeholder")}
-              description={t("fields.subTotal.description")}
+              label={t("card.chargeInfo.fields.subTotal.label")}
+              placeholder={t("card.chargeInfo.fields.subTotal.placeholder")}
+              description={t("card.chargeInfo.fields.subTotal.description")}
             />
           </div>
         </div>

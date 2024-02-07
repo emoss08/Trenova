@@ -19,10 +19,10 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import {
-    useCommodities,
-    useEquipmentTypes,
-    useHazardousMaterial,
-    useTrailers,
+  useCommodities,
+  useEquipmentTypes,
+  useHazardousMaterial,
+  useTrailers,
 } from "@/hooks/useQueries";
 import { Commodity } from "@/types/commodities";
 import { Trailer } from "@/types/equipment";
@@ -35,7 +35,7 @@ export function EquipmentInformation({
   setValue,
   watch,
 }: ShipmentFormProps) {
-  const { t } = useTranslation(["shipment.addshipment", "common"]);
+  const { t } = useTranslation("shipment.addshipment");
 
   const {
     selectEquipmentType,
@@ -101,7 +101,7 @@ export function EquipmentInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.equipmentInfo.label")}
           tooltip={t("card.equipmentInfo.description")}
@@ -116,9 +116,9 @@ export function EquipmentInformation({
             rules={{ required: true }}
             isLoading={isTrailerLoading}
             isFetchError={isTrailerError}
-            label={t("fields.trailer.label")}
-            placeholder={t("fields.trailer.placeholder")}
-            description={t("fields.trailer.description")}
+            label={t("card.equipmentInfo.fields.trailer.label")}
+            placeholder={t("card.equipmentInfo.fields.trailer.placeholder")}
+            description={t("card.equipmentInfo.fields.trailer.description")}
             hasPopoutWindow
             popoutLink="/equipment/trailer/"
             popoutLinkLabel="Trailer"
@@ -132,9 +132,9 @@ export function EquipmentInformation({
             rules={{ required: true }}
             isLoading={isEquipmentTypesLoading}
             isFetchError={isEquipmentTypeError}
-            label={t("fields.trailerType.label")}
-            placeholder={t("fields.trailerType.placeholder")}
-            description={t("fields.trailerType.description")}
+            label={t("card.equipmentInfo.fields.trailerType.label")}
+            placeholder={t("card.equipmentInfo.fields.trailerType.placeholder")}
+            description={t("card.equipmentInfo.fields.trailerType.description")}
             hasPopoutWindow
             popoutLink="/equipment/equipment-types/"
             popoutLinkLabel="Equipment Type"
@@ -147,9 +147,9 @@ export function EquipmentInformation({
             options={selectEquipmentType}
             isLoading={isEquipmentTypesLoading}
             isFetchError={isEquipmentTypeError}
-            label={t("fields.tractorType.label")}
-            placeholder={t("fields.tractorType.placeholder")}
-            description={t("fields.tractorType.description")}
+            label={t("card.equipmentInfo.fields.tractorType.label")}
+            placeholder={t("card.equipmentInfo.fields.tractorType.placeholder")}
+            description={t("card.equipmentInfo.fields.tractorType.description")}
             hasPopoutWindow
             popoutLink="/equipment/equipment-types/"
             popoutLinkLabel="Equipment Type"
@@ -163,9 +163,9 @@ export function EquipmentInformation({
             isLoading={isCommoditiesLoading}
             isFetchError={isCommodityError}
             rules={{ required: true }}
-            label={t("fields.commodity.label")}
-            placeholder={t("fields.commodity.placeholder")}
-            description={t("fields.commodity.description")}
+            label={t("card.equipmentInfo.fields.commodity.label")}
+            placeholder={t("card.equipmentInfo.fields.commodity.placeholder")}
+            description={t("card.equipmentInfo.fields.commodity.description")}
             hasPopoutWindow
             popoutLink="/shipment-management/commodity-codes/"
             isClearable
@@ -179,9 +179,13 @@ export function EquipmentInformation({
             options={selectHazardousMaterials}
             isLoading={isHazmatLoading}
             isFetchError={isHazmatError}
-            label={t("fields.hazardousMaterial.label")}
-            placeholder={t("fields.hazardousMaterial.placeholder")}
-            description={t("fields.hazardousMaterial.description")}
+            label={t("card.equipmentInfo.fields.hazardousMaterial.label")}
+            placeholder={t(
+              "card.equipmentInfo.fields.hazardousMaterial.placeholder",
+            )}
+            description={t(
+              "card.equipmentInfo.fields.hazardousMaterial.description",
+            )}
             hasPopoutWindow
             popoutLink="/shipment-management/hazardous-materials/"
             isClearable
@@ -192,18 +196,26 @@ export function EquipmentInformation({
           <InputField
             name="temperatureMin"
             control={control}
-            label={t("fields.temperatureMin.label")}
-            placeholder={t("fields.temperatureMin.placeholder")}
-            description={t("fields.temperatureMin.description")}
+            label={t("card.equipmentInfo.fields.temperatureMin.label")}
+            placeholder={t(
+              "card.equipmentInfo.fields.temperatureMin.placeholder",
+            )}
+            description={t(
+              "card.equipmentInfo.fields.temperatureMin.description",
+            )}
           />
         </div>
         <div className="col-span-1">
           <InputField
             name="temperatureMax"
             control={control}
-            label={t("fields.temperatureMax.label")}
-            placeholder={t("fields.temperatureMax.placeholder")}
-            description={t("fields.temperatureMax.description")}
+            label={t("card.equipmentInfo.fields.temperatureMax.label")}
+            placeholder={t(
+              "card.equipmentInfo.fields.temperatureMax.placeholder",
+            )}
+            description={t(
+              "card.equipmentInfo.fields.temperatureMax.description",
+            )}
           />
         </div>
       </div>

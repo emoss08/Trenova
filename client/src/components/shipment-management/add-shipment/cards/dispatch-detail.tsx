@@ -1,5 +1,6 @@
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useUsers } from "@/hooks/useQueries";
 import { entryMethodChoices } from "@/lib/choices";
@@ -12,7 +13,7 @@ export function DispatchInformation({
 }: {
   control: Control<ShipmentFormValues>;
 }) {
-  const { t } = useTranslation(["shipment.addshipment", "common"]);
+  const { t } = useTranslation("shipment.addshipment");
 
   const {
     selectUsersData,
@@ -22,7 +23,7 @@ export function DispatchInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.additionalInfo.label")}
           tooltip={t("card.additionalInfo.description")}
@@ -33,9 +34,13 @@ export function DispatchInformation({
           <InputField
             name="consigneeRefNumber"
             control={control}
-            label={t("fields.consigneeRefNumber.label")}
-            placeholder={t("fields.consigneeRefNumber.placeholder")}
-            description={t("fields.consigneeRefNumber.description")}
+            label={t("card.additionalInfo.fields.consigneeRefNumber.label")}
+            placeholder={t(
+              "card.additionalInfo.fields.consigneeRefNumber.placeholder",
+            )}
+            description={t(
+              "card.additionalInfo.fields.consigneeRefNumber.description",
+            )}
           />
         </div>
         <div className="col-span-1">
@@ -43,9 +48,9 @@ export function DispatchInformation({
             name="bolNumber"
             control={control}
             rules={{ required: true }}
-            label={t("fields.bolNumber.label")}
-            placeholder={t("fields.bolNumber.placeholder")}
-            description={t("fields.bolNumber.description")}
+            label={t("card.additionalInfo.fields.bolNumber.label")}
+            placeholder={t("card.additionalInfo.fields.bolNumber.placeholder")}
+            description={t("card.additionalInfo.fields.bolNumber.description")}
           />
         </div>
         <div className="col-span-1">
@@ -55,9 +60,13 @@ export function DispatchInformation({
             options={entryMethodChoices}
             isReadOnly
             rules={{ required: true }}
-            label={t("fields.entryMethod.label")}
-            placeholder={t("fields.entryMethod.placeholder")}
-            description={t("fields.entryMethod.description")}
+            label={t("card.additionalInfo.fields.entryMethod.label")}
+            placeholder={t(
+              "card.additionalInfo.fields.entryMethod.placeholder",
+            )}
+            description={t(
+              "card.additionalInfo.fields.entryMethod.description",
+            )}
           />
         </div>
         <div className="col-span-1">
@@ -69,9 +78,19 @@ export function DispatchInformation({
             control={control}
             isReadOnly
             rules={{ required: true }}
-            label={t("fields.enteredBy.label")}
-            placeholder={t("fields.enteredBy.placeholder")}
-            description={t("fields.enteredBy.description")}
+            label={t("card.additionalInfo.fields.enteredBy.label")}
+            placeholder={t("card.additionalInfo.fields.enteredBy.placeholder")}
+            description={t("card.additionalInfo.fields.enteredBy.description")}
+          />
+        </div>
+        <div className="col-span-2">
+          <TextareaField
+            name="comment"
+            control={control}
+            rules={{ required: true }}
+            label={t("card.additionalInfo.fields.comment.label")}
+            placeholder={t("card.additionalInfo.fields.comment.placeholder")}
+            description={t("card.additionalInfo.fields.comment.description")}
           />
         </div>
       </div>

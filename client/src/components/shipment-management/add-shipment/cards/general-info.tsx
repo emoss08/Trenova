@@ -58,7 +58,7 @@ export function GeneralInformation({
 
   return (
     <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-accent flex justify-center rounded-t-md border-b p-2">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.generalInfo.label")}
           tooltip={t("card.generalInfo.description")}
@@ -72,9 +72,9 @@ export function GeneralInformation({
             options={shipmentStatusChoices}
             rules={{ required: true }}
             isReadOnly
-            label={t("fields.status.label")}
-            placeholder={t("fields.status.placeholder")}
-            description={t("fields.status.description")}
+            label={t("card.generalInfo.fields.status.label")}
+            placeholder={t("card.generalInfo.fields.status.placeholder")}
+            description={t("card.generalInfo.fields.status.description")}
           />
         </div>
         <div className="col-span-1">
@@ -86,9 +86,9 @@ export function GeneralInformation({
               control={control}
               rules={{ required: true }}
               readOnly
-              label={t("fields.proNumber.label")}
-              placeholder={t("fields.proNumber.placeholder")}
-              description={t("fields.proNumber.description")}
+              label={t("card.generalInfo.fields.proNumber.label")}
+              placeholder={t("card.generalInfo.fields.proNumber.placeholder")}
+              description={t("card.generalInfo.fields.proNumber.description")}
             />
           )}
         </div>
@@ -99,9 +99,9 @@ export function GeneralInformation({
             options={selectRevenueCodes}
             isLoading={isRevenueCodeLoading}
             isFetchError={isRevenueCodeError}
-            label={t("fields.revenueCode.label")}
-            placeholder={t("fields.revenueCode.placeholder")}
-            description={t("fields.revenueCode.description")}
+            label={t("card.generalInfo.fields.revenueCode.label")}
+            placeholder={t("card.generalInfo.fields.revenueCode.placeholder")}
+            description={t("card.generalInfo.fields.revenueCode.description")}
             hasPopoutWindow
             popoutLink="/accounting/revenue-codes"
             isClearable
@@ -116,9 +116,9 @@ export function GeneralInformation({
             isLoading={isShipmentTypesLoading}
             isFetchError={isShipmentTypeError}
             rules={{ required: true }}
-            label={t("fields.shipmentType.label")}
-            placeholder={t("fields.shipmentType.placeholder")}
-            description={t("fields.shipmentType.description")}
+            label={t("card.generalInfo.fields.shipmentType.label")}
+            placeholder={t("card.generalInfo.fields.shipmentType.placeholder")}
+            description={t("card.generalInfo.fields.shipmentType.description")}
             hasPopoutWindow
             popoutLink="/shipment-management/shipment-types/"
             isClearable
@@ -132,9 +132,9 @@ export function GeneralInformation({
             control={control}
             options={shipmentSourceChoices}
             rules={{ required: true }}
-            label={t("fields.serviceType.label")}
-            placeholder={t("fields.serviceType.placeholder")}
-            description={t("fields.serviceType.description")}
+            label={t("card.generalInfo.fields.serviceType.label")}
+            placeholder={t("card.generalInfo.fields.serviceType.placeholder")}
+            description={t("card.generalInfo.fields.serviceType.description")}
           />
         </div>
       </div>
