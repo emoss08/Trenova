@@ -194,6 +194,18 @@ export function MenuList({
   );
 }
 
+export function LoadingMessage({ children, ...props }: NoticeProps) {
+  return (
+    <components.LoadingMessage {...props}>
+      <div className="my-1 flex flex-col items-center justify-center">
+        <p className="text-accent-foreground text-xs">
+          {children || "Loading..."}
+        </p>
+      </div>
+    </components.LoadingMessage>
+  );
+}
+
 export function NoOptionsMessage({
   children,
   ...props
