@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
 import * as React from "react";
 import {
+  Controller,
   FieldValues,
   UseControllerProps,
   useController,
@@ -65,7 +66,7 @@ export function InputField<T extends FieldValues>({
   icon,
   ...props
 }: ExtendedInputProps & UseControllerProps<T>) {
-  const { field, fieldState } = useController(props);
+  const { fieldState } = useController(props);
 
   return (
     <>
@@ -86,19 +87,25 @@ export function InputField<T extends FieldValues>({
             {icon}
           </div>
         )}
-        <Input
-          {...field}
-          className={cn(
-            icon && "pl-10",
-            fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
+        <Controller
+          name={props.name}
+          control={props.control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              className={cn(
+                icon && "pl-10",
+                fieldState.invalid &&
+                  "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+                props.className,
+              )}
+              {...props}
+            />
           )}
-          {...props}
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -148,7 +155,7 @@ export function FileField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -193,7 +200,7 @@ export function TimeField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
@@ -265,7 +272,7 @@ export function PasswordField<T extends FieldValues>({
         </div>
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />

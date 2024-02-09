@@ -25,8 +25,8 @@ import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
 
 const controlKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
@@ -98,14 +98,14 @@ export function DecimalField<T extends FieldValues>({
         />
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
           </>
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>

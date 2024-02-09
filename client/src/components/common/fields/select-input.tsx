@@ -16,7 +16,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import { useController, UseControllerProps } from "react-hook-form";
+import { Controller, useController, UseControllerProps } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { Label } from "./label";
@@ -108,102 +108,109 @@ export function SelectInput<T extends Record<string, unknown>>(
         </Label>
       )}
       <div className="relative">
-        <Select
-          unstyled
-          aria-invalid={errorOccurred}
-          aria-labelledby={controllerProps.id}
-          inputId={controllerProps.id}
-          closeMenuOnSelect={!isMulti}
-          hideSelectedOptions={hideSelectedOptions}
-          popoutLinkLabel={popoutLinkLabel}
-          options={options}
-          isMulti={isMulti}
-          isLoading={isLoading}
-          hasPopoutWindow={hasPopoutWindow}
-          popoutLink={popoutLink}
-          isDisabled={dataLoading || isFetchError}
-          isClearable={isClearable}
-          maxOptions={maxOptions}
-          placeholder={placeholder}
-          isFetchError={isFetchError}
-          formError={fieldState.error?.message}
-          maxMenuHeight={200}
-          menuPlacement={menuPlacement}
-          menuPosition={menuPosition}
-          menuIsOpen={menuIsOpen}
-          styles={{
-            input: (base) => ({
-              ...base,
-              "input:focus": {
-                boxShadow: "none",
-              },
-            }),
-            control: (base) => ({
-              ...base,
-              transition: "none",
-              minHeight: "2.25rem",
-            }),
-          }}
-          components={{
-            ClearIndicator: ClearIndicator,
-            ValueContainer: ValueContainer,
-            DropdownIndicator: DropdownIndicator,
-            IndicatorSeparator: IndicatorSeparator,
-            MenuList: MenuList,
-            Option: Option,
-            Input: InputComponent,
-            NoOptionsMessage: NoOptionsMessage,
-            SingleValue: SingleValueComponent,
-          }}
-          classNames={{
-            control: ({ isFocused }) =>
-              cn(
-                isFocused
-                  ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
-                  : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6",
-                errorOccurred && "ring-1 ring-inset ring-red-500",
-              ),
-            placeholder: () =>
-              cn(
-                "text-muted-foreground pl-1 py-0.5 truncate",
-                errorOccurred && "text-red-500",
-              ),
-            input: () => "pl-1 py-0.5",
-            container: () =>
-              cn(props.isReadOnly && "cursor-not-allowed opacity-50"),
-            valueContainer: () =>
-              cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
-            singleValue: () => "leading-7 ml-1",
-            multiValue: () =>
-              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
-            multiValueLabel: () => "text-xs leading-4",
-            multiValueRemove: () =>
-              "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
-            indicatorsContainer: () =>
-              cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
-            clearIndicator: () =>
-              "text-foreground/50 p-1 hover:text-foreground",
-            dropdownIndicator: () =>
-              "p-1 text-foreground/50 rounded-md hover:text-foreground",
-            menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
-            groupHeading: () => "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
-            noOptionsMessage: () =>
-              "text-muted-foreground p-2 bg-popover rounded-sm",
-          }}
-          {...field}
-          value={processedValue}
-          onChange={(selected) => {
-            if (isMulti) {
-              const values = (selected as SelectOption[]).map(
-                (opt) => opt.value,
-              );
-              field.onChange(values);
-            } else {
-              field.onChange(
-                selected ? (selected as SelectOption).value : undefined,
-              );
-            }
-          }}
+        <Controller
+          name={props.name}
+          control={props.control}
+          render={({ field }) => (
+            <Select
+              unstyled
+              aria-invalid={errorOccurred}
+              aria-labelledby={controllerProps.id}
+              inputId={controllerProps.id}
+              closeMenuOnSelect={!isMulti}
+              hideSelectedOptions={hideSelectedOptions}
+              popoutLinkLabel={popoutLinkLabel}
+              options={options}
+              isMulti={isMulti}
+              isLoading={isLoading}
+              hasPopoutWindow={hasPopoutWindow}
+              popoutLink={popoutLink}
+              isDisabled={dataLoading || isFetchError}
+              isClearable={isClearable}
+              maxOptions={maxOptions}
+              placeholder={placeholder}
+              isFetchError={isFetchError}
+              formError={fieldState.error?.message}
+              maxMenuHeight={200}
+              menuPlacement={menuPlacement}
+              menuPosition={menuPosition}
+              menuIsOpen={menuIsOpen}
+              styles={{
+                input: (base) => ({
+                  ...base,
+                  "input:focus": {
+                    boxShadow: "none",
+                  },
+                }),
+                control: (base) => ({
+                  ...base,
+                  transition: "none",
+                  minHeight: "2.25rem",
+                }),
+              }}
+              components={{
+                ClearIndicator: ClearIndicator,
+                ValueContainer: ValueContainer,
+                DropdownIndicator: DropdownIndicator,
+                IndicatorSeparator: IndicatorSeparator,
+                MenuList: MenuList,
+                Option: Option,
+                Input: InputComponent,
+                NoOptionsMessage: NoOptionsMessage,
+                SingleValue: SingleValueComponent,
+              }}
+              classNames={{
+                control: ({ isFocused }) =>
+                  cn(
+                    isFocused
+                      ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
+                      : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6",
+                    errorOccurred && "ring-1 ring-inset ring-red-500",
+                  ),
+                placeholder: () =>
+                  cn(
+                    "text-muted-foreground pl-1 py-0.5 truncate",
+                    errorOccurred && "text-red-500",
+                  ),
+                input: () => "pl-1 py-0.5",
+                container: () =>
+                  cn(props.isReadOnly && "cursor-not-allowed opacity-50"),
+                valueContainer: () =>
+                  cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
+                singleValue: () => "leading-7 ml-1",
+                multiValue: () =>
+                  "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+                multiValueLabel: () => "text-xs leading-4",
+                multiValueRemove: () =>
+                  "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
+                indicatorsContainer: () =>
+                  cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
+                clearIndicator: () =>
+                  "text-foreground/50 p-1 hover:text-foreground",
+                dropdownIndicator: () =>
+                  "p-1 text-foreground/50 rounded-md hover:text-foreground",
+                menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
+                groupHeading: () =>
+                  "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
+                noOptionsMessage: () =>
+                  "text-muted-foreground p-2 bg-popover rounded-sm",
+              }}
+              {...field}
+              value={processedValue}
+              onChange={(selected) => {
+                if (isMulti) {
+                  const values = (selected as SelectOption[]).map(
+                    (opt) => opt.value,
+                  );
+                  field.onChange(values);
+                } else {
+                  field.onChange(
+                    selected ? (selected as SelectOption).value : undefined,
+                  );
+                }
+              }}
+            />
+          )}
         />
         {errorOccurred ? (
           <ErrorMessage
@@ -283,93 +290,101 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
         </Label>
       )}
       <div className="relative">
-        <CreatableSelect
-          unstyled
-          aria-invalid={fieldState.invalid || isFetchError}
-          isMulti={isMulti}
-          isLoading={isLoading}
-          isDisabled={dataLoading || isFetchError}
-          isClearable={isClearable}
-          placeholder={placeholder || "Select"}
-          closeMenuOnSelect={!isMulti}
-          options={options}
-          value={processedValue}
-          onCreateOption={async (inputValue) => {
-            const newOption = await onCreate(inputValue);
-            const currentValues = Array.isArray(processedValue)
-              ? processedValue
-              : [];
-            const updatedValues = [...currentValues, newOption];
-            field.onChange(
-              (updatedValues as Array<{ value: string }>).map(
-                (opt) => opt.value,
-              ),
-            );
-          }}
-          onChange={(selected) => {
-            if (isMulti) {
-              const values = (selected as SelectOption[]).map(
-                (opt) => opt.value,
-              );
-              field.onChange(values);
-            } else {
-              field.onChange((selected as SelectOption).value);
-            }
-          }}
-          styles={{
-            input: (base) => ({
-              ...base,
-              "input:focus": {
-                boxShadow: "none",
-              },
-            }),
-            control: (base) => ({
-              ...base,
-              transition: "none",
-              minHeight: "2.25rem",
-            }),
-          }}
-          components={{
-            ClearIndicator: ClearIndicator,
-            ValueContainer: ValueContainer,
-            DropdownIndicator: DropdownIndicator,
-            IndicatorSeparator: IndicatorSeparator,
-            MenuList: MenuList,
-            Option: Option,
-            NoOptionsMessage: NoOptionsMessage,
-          }}
-          classNames={{
-            control: ({ isFocused }) =>
-              cn(
-                isFocused
-                  ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
-                  : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
-                errorOccurred && "ring-1 ring-inset ring-red-500",
-              ),
-            placeholder: () =>
-              cn(
-                "text-muted-foreground pl-1 py-0.5 truncate",
-                errorOccurred && "text-red-500",
-              ),
-            input: () => "pl-1 py-0.5",
-            valueContainer: () => "p-1 gap-1",
-            singleValue: () => "leading-7 ml-1",
-            multiValue: () =>
-              "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
-            multiValueLabel: () => "text-xs leading-4",
-            multiValueRemove: () =>
-              "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
-            indicatorsContainer: () => "p-1 gap-1",
-            clearIndicator: () =>
-              "text-foreground/50 p-1 hover:text-foreground",
-            dropdownIndicator: () =>
-              "p-1 text-foreground/50 rounded-md hover:text-foreground",
-            menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
-            groupHeading: () => "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
-            noOptionsMessage: () =>
-              "text-muted-foreground p-2 bg-popover rounded-sm",
-          }}
+        <Controller
+          name={controllerProps.name}
+          control={controllerProps.control}
+          render={({ field }) => (
+            <CreatableSelect
+              unstyled
+              aria-invalid={fieldState.invalid || isFetchError}
+              isMulti={isMulti}
+              isLoading={isLoading}
+              isDisabled={dataLoading || isFetchError}
+              isClearable={isClearable}
+              placeholder={placeholder || "Select"}
+              closeMenuOnSelect={!isMulti}
+              options={options}
+              value={processedValue}
+              onCreateOption={async (inputValue) => {
+                const newOption = await onCreate(inputValue);
+                const currentValues = Array.isArray(processedValue)
+                  ? processedValue
+                  : [];
+                const updatedValues = [...currentValues, newOption];
+                field.onChange(
+                  (updatedValues as Array<{ value: string }>).map(
+                    (opt) => opt.value,
+                  ),
+                );
+              }}
+              onChange={(selected) => {
+                if (isMulti) {
+                  const values = (selected as SelectOption[]).map(
+                    (opt) => opt.value,
+                  );
+                  field.onChange(values);
+                } else {
+                  field.onChange((selected as SelectOption).value);
+                }
+              }}
+              styles={{
+                input: (base) => ({
+                  ...base,
+                  "input:focus": {
+                    boxShadow: "none",
+                  },
+                }),
+                control: (base) => ({
+                  ...base,
+                  transition: "none",
+                  minHeight: "2.25rem",
+                }),
+              }}
+              components={{
+                ClearIndicator: ClearIndicator,
+                ValueContainer: ValueContainer,
+                DropdownIndicator: DropdownIndicator,
+                IndicatorSeparator: IndicatorSeparator,
+                MenuList: MenuList,
+                Option: Option,
+                NoOptionsMessage: NoOptionsMessage,
+              }}
+              classNames={{
+                control: ({ isFocused }) =>
+                  cn(
+                    isFocused
+                      ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
+                      : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
+                    errorOccurred && "ring-1 ring-inset ring-red-500",
+                  ),
+                placeholder: () =>
+                  cn(
+                    "text-muted-foreground pl-1 py-0.5 truncate",
+                    errorOccurred && "text-red-500",
+                  ),
+                input: () => "pl-1 py-0.5",
+                valueContainer: () => "p-1 gap-1",
+                singleValue: () => "leading-7 ml-1",
+                multiValue: () =>
+                  "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+                multiValueLabel: () => "text-xs leading-4",
+                multiValueRemove: () =>
+                  "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
+                indicatorsContainer: () => "p-1 gap-1",
+                clearIndicator: () =>
+                  "text-foreground/50 p-1 hover:text-foreground",
+                dropdownIndicator: () =>
+                  "p-1 text-foreground/50 rounded-md hover:text-foreground",
+                menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
+                groupHeading: () =>
+                  "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
+                noOptionsMessage: () =>
+                  "text-muted-foreground p-2 bg-popover rounded-sm",
+              }}
+            />
+          )}
         />
+
         {errorOccurred ? (
           <ErrorMessage
             isFetchError={isFetchError}

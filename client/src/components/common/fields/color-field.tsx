@@ -88,7 +88,7 @@ export function ColorField<T extends FieldValues>({
         )}
         {fieldState.invalid && (
           <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
+            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
               <AlertTriangle size={15} className="text-red-500" />
             </div>
             <ErrorMessage formError={fieldState.error?.message} />
