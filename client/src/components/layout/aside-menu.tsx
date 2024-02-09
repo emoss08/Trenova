@@ -208,7 +208,7 @@ function AsideMenu({
   onLinkClick: () => void;
 }) {
   return (
-    <div className="bg-background mt-5 overflow-hidden sm:rounded-md">
+    <div className="bg-card mt-5 overflow-hidden sm:rounded-md">
       <ul>
         {menuItems.map((item) => (
           <MenuItem key={item.menuKey} item={item} onLinkClick={onLinkClick} />

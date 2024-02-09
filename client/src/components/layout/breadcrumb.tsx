@@ -139,7 +139,7 @@ function FavoriteIcon({
           <FontAwesomeIcon
             icon={isFavorite ? faStarFilled : faStar}
             title="Favorite"
-            className="mx-1 size-5 cursor-pointer text-yellow-400 transition-colors hover:text-yellow-300"
+            className="mx-1.5 mb-0.5 size-4 cursor-pointer text-center text-orange-400 transition-colors hover:text-orange-300"
             onClick={onFavoriteToggle.bind(null, !isFavorite)}
           />
         </TooltipTrigger>
@@ -238,7 +238,7 @@ export function Breadcrumb() {
           />
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             {breadcrumbText}
           </a>
         </div>

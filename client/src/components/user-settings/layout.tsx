@@ -36,7 +36,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faUser}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -46,7 +46,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faStarHalf}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -56,7 +56,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBellRing}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -66,7 +66,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faRightLeft}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -76,7 +76,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faSatelliteDish}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -86,7 +86,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faShieldHalved}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -96,7 +96,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGear}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
   },
@@ -112,7 +112,7 @@ export default function SettingsLayout({
       <SidebarNav links={links} />
       <main className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
+          <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
             {children}
           </Suspense>
         </div>
