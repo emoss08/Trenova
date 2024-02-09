@@ -198,7 +198,10 @@ export default function AddShipment() {
       temperatureMax: yup.string().notRequired(),
       bolNumber: yup.string().required("BOL number is required."),
       consigneeRefNumber: yup.string().notRequired(),
-      comment: yup.string().notRequired(),
+      comment: yup
+        .string()
+        .max(100, "Comment must be less than 100 characters.")
+        .notRequired(),
       voidedComm: yup.string().notRequired(),
       autoRate: yup.boolean().required("Auto rate is required."),
       formulaTemplate: yup.string().notRequired(),
@@ -220,10 +223,11 @@ export default function AddShipment() {
         destinationLocation: "",
         destinationAddress: "",
         entryMethod: "MANUAL",
+        comment: "",
         ratingUnits: 1,
         autoRate: false,
         copyAmount: 0,
-        enteredBy: user?.id,
+        enteredBy: user?.id || "",
       },
     });
 
@@ -247,6 +251,7 @@ export default function AddShipment() {
 
   const onSubmit = (values: ShipmentFormValues) => {
     setIsSubmitting(true);
+    console.info("form values", values);
     mutation.mutate(values);
   };
 

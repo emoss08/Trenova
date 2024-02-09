@@ -16,25 +16,59 @@
  */
 
 import { TimeField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
+import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useLocations } from "@/hooks/useQueries";
+import { Location } from "@/types/location";
 import { ShipmentFormValues } from "@/types/order";
-import { Control } from "react-hook-form";
+import { useEffect } from "react";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export function LocationInformation({
   control,
+  setValue,
+  watch,
 }: {
+  setValue: UseFormSetValue<ShipmentFormValues>;
+  watch: UseFormWatch<ShipmentFormValues>;
   control: Control<ShipmentFormValues>;
 }) {
   const { t } = useTranslation("shipment.addshipment");
-  const {
-    selectLocationData,
-    isError: isLocationError,
-    isLoading: isLocationsLoading,
-  } = useLocations();
+  const { locations } = useLocations();
+
+  const originLocationValue = watch("originLocation");
+  console.info("originLocationValue", originLocationValue);
+  const destinationLocationValue = watch("destinationLocation");
+
+  useEffect(() => {
+    if (originLocationValue && locations) {
+      const selectedOriginLocation = (locations as Location[]).find(
+        (location) => location.id === originLocationValue,
+      );
+
+      if (selectedOriginLocation) {
+        setValue(
+          "originAddress",
+          `${selectedOriginLocation.addressLine1}, ${selectedOriginLocation.city}, ${selectedOriginLocation.state} ${selectedOriginLocation.zipCode}`,
+        );
+      }
+    }
+
+    if (destinationLocationValue && locations) {
+      const selectedDestinationLocation = (locations as Location[]).find(
+        (location) => location.id === destinationLocationValue,
+      );
+
+      if (selectedDestinationLocation) {
+        setValue(
+          "destinationAddress",
+          `${selectedDestinationLocation.addressLine1}, ${selectedDestinationLocation.city}, ${selectedDestinationLocation.state} ${selectedDestinationLocation.zipCode}`,
+        );
+      }
+    }
+  }, [originLocationValue, destinationLocationValue, locations, setValue]);
 
   return (
     <div className="flex space-x-10">
@@ -49,12 +83,10 @@ export function LocationInformation({
             </div>
             <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
               <div className="col-span-3">
-                <SelectInput
+                <AsyncSelectInput
                   name="originLocation"
+                  link="/locations/"
                   control={control}
-                  options={selectLocationData}
-                  isLoading={isLocationsLoading}
-                  isFetchError={isLocationError}
                   label={t("card.origin.fields.originLocation.label")}
                   placeholder={t(
                     "card.origin.fields.originLocation.placeholder",
@@ -134,12 +166,10 @@ export function LocationInformation({
             </div>
             <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
               <div className="col-span-3">
-                <SelectInput
+                <AsyncSelectInput
                   name="destinationLocation"
+                  link="/locations/"
                   control={control}
-                  options={selectLocationData}
-                  isLoading={isLocationsLoading}
-                  isFetchError={isLocationError}
                   label={t("card.destination.fields.destinationLocation.label")}
                   placeholder={t(
                     "card.destination.fields.destinationLocation.placeholder",

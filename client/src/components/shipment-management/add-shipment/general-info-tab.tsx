@@ -41,7 +41,11 @@ export default function GeneralInfoTab({
         shipmentControlData={shipmentControlData}
         isShipmentControlLoading={isShipmentControlLoading}
       />
-      <LocationInformation control={control} />
+      <LocationInformation
+        control={control}
+        watch={watch}
+        setValue={setValue}
+      />
       <EquipmentInformation
         control={control}
         setValue={setValue}

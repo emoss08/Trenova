@@ -87,7 +87,6 @@ export function DispatchInformation({
           <TextareaField
             name="comment"
             control={control}
-            rules={{ required: true }}
             label={t("card.additionalInfo.fields.comment.label")}
             placeholder={t("card.additionalInfo.fields.comment.placeholder")}
             description={t("card.additionalInfo.fields.comment.description")}
