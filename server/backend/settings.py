@@ -548,4 +548,3 @@ if DEBUG:
         "silk.middleware.SilkyMiddleware",
     ]
     X_FRAME_OPTIONS = "SAMEORIGIN"
-    SILK_PYTHON_PROFILER = True
