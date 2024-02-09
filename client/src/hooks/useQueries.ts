@@ -99,7 +99,12 @@ import {
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
-import { FormulaTemplate, ShipmentControl, ShipmentType } from "@/types/order";
+import {
+  FormulaTemplate,
+  ServiceType,
+  ShipmentControl,
+  ShipmentType,
+} from "@/types/order";
 import {
   Depot,
   EmailControl,
@@ -1014,6 +1019,10 @@ export function useRates(limit?: number, show?: boolean) {
   return { selectRates, isRateError, isRatesLoading, ratesData };
 }
 
+/**
+ * Get the Formula Templates for select options
+ * @returns selectFormulaTemplates, isFormulaError, isFormulaLoading
+ */
 export function useFormulaTemplates() {
   const queryClient = useQueryClient();
 
@@ -1036,4 +1045,31 @@ export function useFormulaTemplates() {
     ) || [];
 
   return { selectFormulaTemplates, isFormulaError, isFormulaLoading };
+}
+
+/**
+ * Get the Service Types for select options
+ * @returns selectServiceTypes, isServiceTypeError, isServiceTypeLoading
+ */
+export function useServiceTypes() {
+  const queryCLient = useQueryClient();
+
+  const {
+    data: serviceTypes,
+    isError: isServiceTypeError,
+    isLoading: isServiceTypeLoading,
+  } = useQuery({
+    queryKey: ["serviceTypes"],
+    queryFn: async () => getShipmentTypes(),
+    initialData: () =>
+      queryCLient.getQueryData(["serviceTypes"] as QueryKeys[]),
+  });
+
+  const selectServiceTypes =
+    (serviceTypes as ServiceType[])?.map((serviceType: ServiceType) => ({
+      value: serviceType.id,
+      label: serviceType.code,
+    })) || [];
+
+  return { selectServiceTypes, isServiceTypeError, isServiceTypeLoading };
 }

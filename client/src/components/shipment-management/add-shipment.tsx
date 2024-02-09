@@ -17,8 +17,9 @@
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { useShipmentControl } from "@/hooks/useQueries";
+import { ShipmentStatusChoiceProps } from "@/lib/choices";
 import { cn } from "@/lib/utils";
-import { shipmentSchema } from "@/lib/validations/ShipmentSchema";
 import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentFormProps, ShipmentFormValues } from "@/types/order";
 import {
@@ -36,6 +37,8 @@ import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Skeleton } from "../ui/skeleton";
 import { CopyShipmentDialog } from "./add-shipment/dialogs/copy-dialog";
+
+import * as yup from "yup";
 
 type Tab = {
   name: string;
@@ -99,6 +102,112 @@ export default function AddShipment() {
   const [copyDialogOpen, setCopyDialogOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user] = useUserStore.use("user");
+  const { shipmentControlData, isLoading: isShipmentControlLoading } =
+    useShipmentControl();
+
+  if (isShipmentControlLoading && !shipmentControlData && !user) {
+    return <Skeleton className="h-[100vh] w-full" />;
+  }
+
+  const shipmentSchema: yup.ObjectSchema<ShipmentFormValues> = yup
+    .object()
+    .shape({
+      proNumber: yup.string().required("Pro number is required."),
+      shipmentType: yup.string().required("Shipment type is required."),
+      serviceType: yup.string().notRequired(),
+      status: yup
+        .string<ShipmentStatusChoiceProps>()
+        .required("Status is required."),
+      revenueCode:
+        shipmentControlData && shipmentControlData.enforceRevCode
+          ? yup.string().required("Revenue code is required.")
+          : yup.string().notRequired(),
+      originLocation: yup.string().test({
+        name: "originLocation",
+        test: function (value) {
+          if (!value) {
+            return this.parent.originAddress !== "";
+          }
+          return true;
+        },
+        message: "Origin location is required.",
+      }),
+      originAddress: yup.string().test({
+        name: "originAddress",
+        test: function (value) {
+          if (!value) {
+            return false;
+          }
+          return true;
+        },
+        message: "Origin address is required.",
+      }),
+      originAppointmentWindowStart: yup
+        .string()
+        .required("Origin appointment window start is required."),
+      originAppointmentWindowEnd: yup
+        .string()
+        .required("Origin appointment window end is required."),
+      destinationLocation: yup.string().test({
+        name: "destinationLocation",
+        test: function (value) {
+          if (!value) {
+            return this.parent.destinationAddress !== "";
+          }
+          return true;
+        },
+        message: "Destination location is required.",
+      }),
+      destinationAddress: yup.string().test({
+        name: "destinationAddress",
+        test: function (value) {
+          if (!value) {
+            return this.parent.destinationLocation !== "";
+          }
+          return true;
+        },
+        message: "Destination address is required.",
+      }),
+      destinationAppointmentWindowStart: yup
+        .string()
+        .required("Destination appointment window start is required."),
+      destinationAppointmentWindowEnd: yup
+        .string()
+        .required("Destination appointment window end is required."),
+      ratingUnits: yup.number().required("Rating units is required."),
+      rate: yup.string().notRequired(),
+      mileage: yup.number().notRequired(),
+      otherChargeAmount: yup
+        .string()
+        .required("Other charge amount is required."),
+      freightChargeAmount: yup.string().notRequired(),
+      rateMethod: yup.string().notRequired(),
+      customer: yup.string().required("Customer is required."),
+      pieces: yup.number().required("Pieces is required."),
+      weight: yup.string().required("Weight is required."),
+      readyToBill: yup.boolean().required("Ready to bill is required."),
+      trailer: yup.string().notRequired(),
+      trailerType: yup.string().required("Trailer type is required."),
+      tractorType: yup.string().notRequired(),
+      commodity:
+        shipmentControlData && shipmentControlData.enforceCommodity
+          ? yup.string().required("Commodity is required.")
+          : yup.string().notRequired(),
+      hazardousMaterial: yup.string().notRequired(),
+      temperatureMin: yup.string().notRequired(),
+      temperatureMax: yup.string().notRequired(),
+      bolNumber: yup.string().required("BOL number is required."),
+      consigneeRefNumber: yup.string().notRequired(),
+      comment: yup.string().notRequired(),
+      voidedComm: yup.string().notRequired(),
+      autoRate: yup.boolean().required("Auto rate is required."),
+      formulaTemplate: yup.string().notRequired(),
+      enteredBy: yup.string().required("Entered by is required."),
+      subTotal: yup.string().required("Sub total is required."),
+      serviceTye: yup.string().notRequired(),
+      entryMethod: yup.string().required("Entry method is required."),
+      copyAmount: yup.number().required("Copy amount is required."),
+    });
 
   const { control, setValue, watch, reset, handleSubmit, formState } =
     useForm<ShipmentFormValues>({
@@ -136,13 +245,10 @@ export default function AddShipment() {
     reset,
   );
 
-  const onSubmit = useCallback(
-    (values: ShipmentFormValues) => {
-      setIsSubmitting(true);
-      mutation.mutate(values);
-    },
-    [mutation],
-  );
+  const onSubmit = (values: ShipmentFormValues) => {
+    setIsSubmitting(true);
+    mutation.mutate(values);
+  };
 
   const ActiveTabComponent = tabs[activeTab].component;
 
@@ -152,6 +258,14 @@ export default function AddShipment() {
     }, 100),
     [],
   );
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      handleScroll.cancel();
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [handleScroll]);
 
   const submitForm = () => {
     handleSubmit(onSubmit)();
@@ -211,7 +325,7 @@ export default function AddShipment() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
           >
-            <Suspense fallback={<Skeleton className="h-[60vh] w-full" />}>
+            <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
               <ActiveTabComponent
                 control={control}
                 setValue={setValue}

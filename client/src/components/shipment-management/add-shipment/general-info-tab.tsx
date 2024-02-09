@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
 import { ShipmentFormProps } from "@/types/order";
 import { DispatchInformation } from "./cards/dispatch-detail";
 import { EquipmentInformation } from "./cards/equipment-info";
@@ -26,14 +27,27 @@ export default function GeneralInfoTab({
   setValue,
   watch,
 }: ShipmentFormProps) {
+  const { shipmentControlData, isLoading: isShipmentControlLoading } =
+    useShipmentControl();
+  const { proNumber, isProNumberLoading } = useNextProNumber();
+
   return (
     <div className="grid grid-cols-1 gap-y-8">
-      <GeneralInformation control={control} setValue={setValue} />
+      <GeneralInformation
+        proNumber={proNumber as string}
+        isProNumberLoading={isProNumberLoading}
+        control={control}
+        setValue={setValue}
+        shipmentControlData={shipmentControlData}
+        isShipmentControlLoading={isShipmentControlLoading}
+      />
       <LocationInformation control={control} />
       <EquipmentInformation
         control={control}
         setValue={setValue}
         watch={watch}
+        shipmentControlData={shipmentControlData}
+        isShipmentControlLoading={isShipmentControlLoading}
       />
       <DispatchInformation control={control} />
     </div>

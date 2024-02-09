@@ -37,177 +37,171 @@ export function LocationInformation({
   } = useLocations();
 
   return (
-    <div className="border-border bg-card rounded-md border p-4">
-      <div className="flex space-x-10">
-        <div className="flex-1">
-          <div className="flex flex-col">
-            <div className="border-border rounded-md border">
-              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
-                <TitleWithTooltip
-                  title={t("card.origin.label")}
-                  tooltip={t("card.origin.description")}
+    <div className="flex space-x-10">
+      <div className="flex-1">
+        <div className="flex flex-col">
+          <div className="border-border rounded-md border">
+            <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+              <TitleWithTooltip
+                title={t("card.origin.label")}
+                tooltip={t("card.origin.description")}
+              />
+            </div>
+            <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
+              <div className="col-span-3">
+                <SelectInput
+                  name="originLocation"
+                  control={control}
+                  options={selectLocationData}
+                  isLoading={isLocationsLoading}
+                  isFetchError={isLocationError}
+                  label={t("card.origin.fields.originLocation.label")}
+                  placeholder={t(
+                    "card.origin.fields.originLocation.placeholder",
+                  )}
+                  description={t(
+                    "card.origin.fields.originLocation.description",
+                  )}
+                  hasPopoutWindow
+                  popoutLink="/dispatch/locations/"
+                  isClearable
+                  popoutLinkLabel="Location"
                 />
               </div>
-              <div className="grid grid-cols-1 gap-y-4 p-4">
-                <div className="col-span-3">
-                  <SelectInput
-                    name="originLocation"
+              <div className="col-span-3">
+                <LocationAutoComplete
+                  control={control}
+                  name="originAddress"
+                  rules={{ required: true }}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  type="text"
+                  label={t("card.origin.fields.originAddress.label")}
+                  placeholder={t(
+                    "card.origin.fields.originAddress.placeholder",
+                  )}
+                  description={t(
+                    "card.origin.fields.originAddress.description",
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-x-4">
+                <div className="col-span-1">
+                  <TimeField
                     control={control}
-                    options={selectLocationData}
-                    isLoading={isLocationsLoading}
-                    isFetchError={isLocationError}
-                    label={t("card.origin.fields.originLocation.label")}
-                    placeholder={t(
-                      "card.origin.fields.originLocation.placeholder",
-                    )}
-                    description={t(
-                      "card.origin.fields.originLocation.description",
-                    )}
-                    hasPopoutWindow
-                    popoutLink="/dispatch/locations/"
-                    isClearable
-                    popoutLinkLabel="Location"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <LocationAutoComplete
-                    control={control}
-                    name="originAddress"
                     rules={{ required: true }}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    type="text"
-                    label={t("card.origin.fields.originAddress.label")}
+                    name="originAppointmentWindowStart"
+                    label={t(
+                      "card.origin.fields.originAppointmentWindowStart.label",
+                    )}
                     placeholder={t(
-                      "card.origin.fields.originAddress.placeholder",
+                      "card.origin.fields.originAppointmentWindowStart.placeholder",
                     )}
                     description={t(
-                      "card.origin.fields.originAddress.description",
+                      "card.origin.fields.originAppointmentWindowStart.description",
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-x-4">
-                  <div className="col-span-1">
-                    <TimeField
-                      control={control}
-                      rules={{ required: true }}
-                      name="originAppointmentWindowStart"
-                      label={t(
-                        "card.origin.fields.originAppointmentWindowStart.label",
-                      )}
-                      placeholder={t(
-                        "card.origin.fields.originAppointmentWindowStart.placeholder",
-                      )}
-                      description={t(
-                        "card.origin.fields.originAppointmentWindowStart.description",
-                      )}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <TimeField
-                      control={control}
-                      rules={{ required: true }}
-                      name="originAppointmentWindowEnd"
-                      label={t(
-                        "card.origin.fields.originAppointmentWindowEnd.label",
-                      )}
-                      placeholder={t(
-                        "card.origin.fields.originAppointmentWindowEnd.placeholder",
-                      )}
-                      description={t(
-                        "card.origin.fields.originAppointmentWindowEnd.description",
-                      )}
-                    />
-                  </div>
+                <div className="col-span-1">
+                  <TimeField
+                    control={control}
+                    rules={{ required: true }}
+                    name="originAppointmentWindowEnd"
+                    label={t(
+                      "card.origin.fields.originAppointmentWindowEnd.label",
+                    )}
+                    placeholder={t(
+                      "card.origin.fields.originAppointmentWindowEnd.placeholder",
+                    )}
+                    description={t(
+                      "card.origin.fields.originAppointmentWindowEnd.description",
+                    )}
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex-1">
-          <div className="flex flex-col">
-            <div className="border-border rounded-md border">
-              <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
-                <TitleWithTooltip
-                  title={t("card.destination.label")}
-                  tooltip={t("card.destination.description")}
+      </div>
+      <div className="flex-1">
+        <div className="flex flex-col">
+          <div className="border-border rounded-md border">
+            <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+              <TitleWithTooltip
+                title={t("card.destination.label")}
+                tooltip={t("card.destination.description")}
+              />
+            </div>
+            <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
+              <div className="col-span-3">
+                <SelectInput
+                  name="destinationLocation"
+                  control={control}
+                  options={selectLocationData}
+                  isLoading={isLocationsLoading}
+                  isFetchError={isLocationError}
+                  label={t("card.destination.fields.destinationLocation.label")}
+                  placeholder={t(
+                    "card.destination.fields.destinationLocation.placeholder",
+                  )}
+                  description={t(
+                    "card.destination.fields.destinationLocation.description",
+                  )}
+                  hasPopoutWindow
+                  popoutLink="/dispatch/locations/"
+                  isClearable
+                  popoutLinkLabel="Location"
                 />
               </div>
-              <div className="grid grid-cols-1 gap-y-4 p-4">
-                <div className="col-span-3">
-                  <SelectInput
-                    name="destinationLocation"
+              <div className="col-span-3">
+                <LocationAutoComplete
+                  control={control}
+                  name="destinationAddress"
+                  rules={{ required: true }}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  type="text"
+                  label={t("card.destination.fields.destinationAddress.label")}
+                  placeholder={t(
+                    "card.destination.fields.destinationAddress.placeholder",
+                  )}
+                  description={t(
+                    "card.destination.fields.destinationAddress.description",
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-x-4">
+                <div className="col-span-1">
+                  <TimeField
                     control={control}
-                    options={selectLocationData}
-                    isLoading={isLocationsLoading}
-                    isFetchError={isLocationError}
-                    label={t(
-                      "card.destination.fields.destinationLocation.label",
-                    )}
-                    placeholder={t(
-                      "card.destination.fields.destinationLocation.placeholder",
-                    )}
-                    description={t(
-                      "card.destination.fields.destinationLocation.description",
-                    )}
-                    hasPopoutWindow
-                    popoutLink="/dispatch/locations/"
-                    isClearable
-                    popoutLinkLabel="Location"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <LocationAutoComplete
-                    control={control}
-                    name="destinationAddress"
                     rules={{ required: true }}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    type="text"
+                    name="destinationAppointmentWindowStart"
                     label={t(
-                      "card.destination.fields.destinationAddress.label",
+                      "card.destination.fields.destinationAppointmentWindowStart.label",
                     )}
                     placeholder={t(
-                      "card.destination.fields.destinationAddress.placeholder",
+                      "card.destination.fields.destinationAppointmentWindowStart.placeholder",
                     )}
                     description={t(
-                      "card.destination.fields.destinationAddress.description",
+                      "card.destination.fields.destinationAppointmentWindowStart.description",
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-x-4">
-                  <div className="col-span-1">
-                    <TimeField
-                      control={control}
-                      rules={{ required: true }}
-                      name="destinationAppointmentWindowStart"
-                      label={t(
-                        "card.destination.fields.destinationAppointmentWindowStart.label",
-                      )}
-                      placeholder={t(
-                        "card.destination.fields.destinationAppointmentWindowStart.placeholder",
-                      )}
-                      description={t(
-                        "card.destination.fields.destinationAppointmentWindowStart.description",
-                      )}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <TimeField
-                      control={control}
-                      rules={{ required: true }}
-                      name="destinationAppointmentWindowEnd"
-                      label={t(
-                        "card.destination.fields.destinationAppointmentWindowEnd.label",
-                      )}
-                      placeholder={t(
-                        "card.destination.fields.destinationAppointmentWindowEnd.placeholder",
-                      )}
-                      description={t(
-                        "card.destination.fields.destinationAppointmentWindowEnd.description",
-                      )}
-                    />
-                  </div>
+                <div className="col-span-1">
+                  <TimeField
+                    control={control}
+                    rules={{ required: true }}
+                    name="destinationAppointmentWindowEnd"
+                    label={t(
+                      "card.destination.fields.destinationAppointmentWindowEnd.label",
+                    )}
+                    placeholder={t(
+                      "card.destination.fields.destinationAppointmentWindowEnd.placeholder",
+                    )}
+                    description={t(
+                      "card.destination.fields.destinationAppointmentWindowEnd.description",
+                    )}
+                  />
                 </div>
               </div>
             </div>

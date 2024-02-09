@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { FormulaTemplate, Shipment } from "@/types/order";
+import { FormulaTemplate, ServiceType, Shipment } from "@/types/order";
 
 /**
  * Fetches the shipments from the server.
@@ -79,5 +79,14 @@ export async function getNextProNumber(): Promise<string> {
  */
 export async function getFormulaTemplates(): Promise<FormulaTemplate[]> {
   const response = await axios.get("/formula_templates/");
+  return response.data.results;
+}
+
+/**
+ * Fetches the service types from the server.
+ * @returns A promise that resolves to a ServiceType object.
+ */
+export async function getServiceTypes(): Promise<ServiceType[]> {
+  const response = await axios.get("/service_types/");
   return response.data.results;
 }

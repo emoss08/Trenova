@@ -20,12 +20,12 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import {
-  useNextProNumber,
   useRevenueCodes,
+  useServiceTypes,
   useShipmentTypes,
 } from "@/hooks/useQueries";
-import { shipmentSourceChoices, shipmentStatusChoices } from "@/lib/choices";
-import { ShipmentFormValues } from "@/types/order";
+import { shipmentStatusChoices } from "@/lib/choices";
+import { ShipmentControl, ShipmentFormValues } from "@/types/order";
 import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -33,9 +33,17 @@ import { useTranslation } from "react-i18next";
 export function GeneralInformation({
   control,
   setValue,
+  shipmentControlData,
+  isShipmentControlLoading,
+  proNumber,
+  isProNumberLoading,
 }: {
   control: Control<ShipmentFormValues>;
   setValue: UseFormSetValue<ShipmentFormValues>;
+  shipmentControlData: ShipmentControl;
+  isShipmentControlLoading: boolean;
+  proNumber: string | undefined;
+  isProNumberLoading: boolean;
 }) {
   const { t } = useTranslation("shipment.addshipment");
 
@@ -48,13 +56,18 @@ export function GeneralInformation({
     isLoading: isShipmentTypesLoading,
   } = useShipmentTypes();
 
-  const { proNumber, isProNumberLoading } = useNextProNumber();
+  const { selectServiceTypes, isServiceTypeError, isServiceTypeLoading } =
+    useServiceTypes();
 
   useEffect(() => {
     if (proNumber) {
       setValue("proNumber", proNumber as string);
     }
   }, [proNumber, setValue]);
+
+  if (isShipmentControlLoading || isProNumberLoading) {
+    return <Skeleton className="h-[30vh]" />;
+  }
 
   return (
     <div className="border-border bg-card rounded-md border">
@@ -78,19 +91,15 @@ export function GeneralInformation({
           />
         </div>
         <div className="col-span-1">
-          {isProNumberLoading ? (
-            <Skeleton className="mt-6 h-9 w-60" />
-          ) : (
-            <InputField
-              name="proNumber"
-              control={control}
-              rules={{ required: true }}
-              readOnly
-              label={t("card.generalInfo.fields.proNumber.label")}
-              placeholder={t("card.generalInfo.fields.proNumber.placeholder")}
-              description={t("card.generalInfo.fields.proNumber.description")}
-            />
-          )}
+          <InputField
+            name="proNumber"
+            control={control}
+            rules={{ required: true }}
+            readOnly
+            label={t("card.generalInfo.fields.proNumber.label")}
+            placeholder={t("card.generalInfo.fields.proNumber.placeholder")}
+            description={t("card.generalInfo.fields.proNumber.description")}
+          />
         </div>
         <div className="col-span-1">
           <SelectInput
@@ -99,6 +108,7 @@ export function GeneralInformation({
             options={selectRevenueCodes}
             isLoading={isRevenueCodeLoading}
             isFetchError={isRevenueCodeError}
+            rules={{ required: shipmentControlData.enforceRevCode || false }}
             label={t("card.generalInfo.fields.revenueCode.label")}
             placeholder={t("card.generalInfo.fields.revenueCode.placeholder")}
             description={t("card.generalInfo.fields.revenueCode.description")}
@@ -128,13 +138,17 @@ export function GeneralInformation({
         <div className="col-span-1">
           <SelectInput
             name="serviceType"
-            menuPlacement="top"
             control={control}
-            options={shipmentSourceChoices}
+            options={selectServiceTypes}
+            isFetchError={isServiceTypeError}
+            isLoading={isServiceTypeLoading}
             rules={{ required: true }}
             label={t("card.generalInfo.fields.serviceType.label")}
             placeholder={t("card.generalInfo.fields.serviceType.placeholder")}
             description={t("card.generalInfo.fields.serviceType.description")}
+            popoutLink="/shipment-management/service-types/"
+            hasPopoutWindow
+            popoutLinkLabel="Service Type"
           />
         </div>
       </div>

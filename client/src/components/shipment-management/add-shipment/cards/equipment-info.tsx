@@ -17,6 +17,7 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import {
   useCommodities,
@@ -26,7 +27,7 @@ import {
 } from "@/hooks/useQueries";
 import { Commodity } from "@/types/commodities";
 import { Trailer } from "@/types/equipment";
-import { ShipmentFormProps } from "@/types/order";
+import { ShipmentControl, ShipmentFormProps } from "@/types/order";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -34,7 +35,12 @@ export function EquipmentInformation({
   control,
   setValue,
   watch,
-}: ShipmentFormProps) {
+  shipmentControlData,
+  isShipmentControlLoading,
+}: ShipmentFormProps & {
+  shipmentControlData: ShipmentControl;
+  isShipmentControlLoading: boolean;
+}) {
   const { t } = useTranslation("shipment.addshipment");
 
   const {
@@ -99,6 +105,10 @@ export function EquipmentInformation({
     trailerData,
   ]);
 
+  if (isShipmentControlLoading) {
+    return <Skeleton className="h-[40vh]" />;
+  }
+
   return (
     <div className="border-border bg-card rounded-md border">
       <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
@@ -162,7 +172,7 @@ export function EquipmentInformation({
             options={selectCommodityData}
             isLoading={isCommoditiesLoading}
             isFetchError={isCommodityError}
-            rules={{ required: true }}
+            rules={{ required: shipmentControlData.enforceCommodity || false }}
             label={t("card.equipmentInfo.fields.commodity.label")}
             placeholder={t("card.equipmentInfo.fields.commodity.placeholder")}
             description={t("card.equipmentInfo.fields.commodity.description")}
@@ -178,6 +188,7 @@ export function EquipmentInformation({
             control={control}
             options={selectHazardousMaterials}
             isLoading={isHazmatLoading}
+            isMulti
             isFetchError={isHazmatError}
             label={t("card.equipmentInfo.fields.hazardousMaterial.label")}
             placeholder={t(
