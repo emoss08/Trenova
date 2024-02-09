@@ -16,8 +16,13 @@
  */
 
 import { cn } from "@/lib/utils";
+import axios from "axios";
+import { debounce } from "lodash-es";
+import { useCallback } from "react";
 import { Controller, useController, UseControllerProps } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
+import AsyncSelect, { AsyncProps } from "react-select/async";
+
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { Label } from "./label";
 import {
@@ -390,6 +395,191 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             isFetchError={isFetchError}
             formError={fieldState.error?.message}
           />
+        ) : (
+          <SelectDescription description={description!} />
+        )}
+      </div>
+    </>
+  );
+}
+
+/**
+ * Props for the SelectInput component.
+ * @param T The type of the form object.
+ * @param K The type of the created option.
+ */
+interface AsyncSelectProps<T extends Record<string, unknown>>
+  extends UseControllerProps<T>,
+    Omit<
+      AsyncProps<SelectOption, boolean, GroupBase<SelectOption>>,
+      "defaultValue" | "name"
+    > {
+  label?: string;
+  description?: string;
+  maxOptions?: number;
+  hasPopoutWindow?: boolean; // Set to true to open the popout window
+  popoutLink?: string; // Link to the popout page
+  popoutLinkLabel?: string; // Label for the popout link
+  isReadOnly?: boolean;
+  link: string;
+}
+
+/**
+ * A wrapper around react-select's AsyncSelect component.
+ * @param props {SelectInputProps}
+ * @constructor SelectInput
+ */
+export function AsyncSelectInput<T extends Record<string, unknown>>(
+  props: AsyncSelectProps<T>,
+) {
+  const { fieldState } = useController(props);
+
+  const {
+    label,
+    description,
+    placeholder,
+    menuPlacement = "auto",
+    menuPosition = "absolute",
+    hideSelectedOptions = false,
+    hasPopoutWindow = false,
+    popoutLink,
+    popoutLinkLabel,
+    isMulti,
+    ...controllerProps
+  } = props;
+
+  // Memoize the debounced function to ensure it remains stable across renders
+  const debouncedFetchOptions = useCallback(
+    debounce(
+      async (
+        inputValue: string,
+        callback: (options: SelectOption[]) => void,
+      ) => {
+        const response = await axios.get(props.link, {
+          params: {
+            search: inputValue,
+          },
+        });
+        const data = response.data;
+        const options = data.results.map((result: any) => ({
+          value: result.id,
+          label: result.name,
+        }));
+        callback(options);
+      },
+      500, // Adjust debounce delay as needed
+    ),
+    [props.link],
+  ); // Include props.link in the dependency array if it's dynamic
+
+  // Wrapper function to handle debouncing
+  const promiseOptions = (inputValue: string) =>
+    new Promise<SelectOption[]>((resolve) => {
+      debouncedFetchOptions(inputValue, resolve);
+    });
+
+  return (
+    <>
+      {label && (
+        <Label
+          className={cn(
+            "text-sm font-medium",
+            controllerProps.rules?.required && "required",
+          )}
+          htmlFor={controllerProps.id}
+        >
+          {label}
+        </Label>
+      )}
+      <div className="relative">
+        <Controller
+          name={props.name}
+          control={props.control}
+          render={({ field }) => (
+            <AsyncSelect
+              unstyled
+              cacheOptions
+              defaultOptions
+              loadOptions={promiseOptions}
+              aria-invalid={fieldState.invalid}
+              aria-labelledby={controllerProps.id}
+              isDisabled={props.isDisabled}
+              placeholder={placeholder}
+              inputId={controllerProps.id}
+              popoutLinkLabel={popoutLinkLabel}
+              hasPopoutWindow={hasPopoutWindow}
+              popoutLink={popoutLink}
+              isClearable={props.isClearable}
+              menuPlacement={menuPlacement}
+              menuPosition={menuPosition}
+              hideSelectedOptions={hideSelectedOptions}
+              isMulti={isMulti}
+              styles={{
+                input: (base) => ({
+                  ...base,
+                  "input:focus": {
+                    boxShadow: "none",
+                  },
+                }),
+                control: (base) => ({
+                  ...base,
+                  transition: "none",
+                  minHeight: "2.25rem",
+                }),
+              }}
+              components={{
+                ClearIndicator: ClearIndicator,
+                ValueContainer: ValueContainer,
+                DropdownIndicator: DropdownIndicator,
+                IndicatorSeparator: IndicatorSeparator,
+                MenuList: MenuList,
+                Option: Option,
+                NoOptionsMessage: NoOptionsMessage,
+              }}
+              classNames={{
+                control: ({ isFocused }) =>
+                  cn(
+                    isFocused
+                      ? "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 ring-1 ring-inset ring-foreground"
+                      : "flex h-9 w-full rounded-md border border-border bg-background text-sm sm:text-sm sm:leading-6 disabled:cursor-not-allowed disabled:opacity-50",
+                    fieldState.invalid && "ring-1 ring-inset ring-red-500",
+                  ),
+                placeholder: () =>
+                  cn(
+                    "text-muted-foreground pl-1 py-0.5 truncate",
+                    fieldState.invalid && "text-red-500",
+                  ),
+                input: () => "pl-1 py-0.5",
+                valueContainer: () => "p-1 gap-1",
+                singleValue: () => "leading-7 ml-1",
+                multiValue: () =>
+                  "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+                multiValueLabel: () => "text-xs leading-4",
+                multiValueRemove: () =>
+                  "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
+                indicatorsContainer: () => "p-1 gap-1",
+                clearIndicator: () =>
+                  "text-foreground/50 p-1 hover:text-foreground",
+                dropdownIndicator: () =>
+                  "p-1 text-foreground/50 rounded-md hover:text-foreground",
+                menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
+                groupHeading: () =>
+                  "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
+                noOptionsMessage: () =>
+                  "text-muted-foreground p-2 bg-popover rounded-sm",
+              }}
+              name={field.name}
+              ref={field.ref}
+              onChange={(selected) => {
+                field.onChange(
+                  selected ? (selected as SelectOption).value : undefined,
+                );
+              }}
+            />
+          )}
+        />
+        {fieldState.invalid ? (
+          <ErrorMessage formError={fieldState.error?.message} />
         ) : (
           <SelectDescription description={description!} />
         )}
