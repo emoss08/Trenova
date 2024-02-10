@@ -90,3 +90,19 @@ export async function getServiceTypes(): Promise<ServiceType[]> {
   const response = await axios.get("/service_types/");
   return response.data.results;
 }
+
+/**
+ * Fetches and validates the BOL number from the server.
+ * @param bol_number The BOL number of the shipment.
+ * @returns A promise that resolves to a boolean and a message value.
+ * @throws An error if the BOL number is invalid.
+ */
+export async function validateBOLNumber(
+  bol_number: string,
+): Promise<{ valid: boolean; message: string }> {
+  const response = await axios.post("/shipments/check_duplicate_bol/", {
+    bol_number,
+  });
+
+  return response.data;
+}
