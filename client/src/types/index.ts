@@ -37,7 +37,7 @@ export type YesNoChoiceProps = "Y" | "N";
  * @note: Only written to give autocomplete & type checking so people don't invalidate or use
  * query keys that don't exist. THANK ME LATER!
  */
-export type QueryKeys =
+export type QueryKey =
   | "accessorialCharges"
   | "accessorial-charges-table-data"
   | "billingControl"
@@ -112,4 +112,12 @@ export type QueryKeys =
   | "qualifier-code-table-data"
   | "qualifierCodes"
   | "worker-table-data"
-  | "workers";
+  | "workers"
+  | "validateBOLNumber";
+
+export type QueryKeys = [QueryKey];
+
+export type QueryKeyWithParams<K extends QueryKey, Params extends unknown[]> = [
+  K,
+  ...Params,
+];

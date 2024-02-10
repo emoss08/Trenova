@@ -16,8 +16,9 @@
  */
 
 import axios from "@/lib/axiosConfig";
+import { TOAST_STYLE } from "@/lib/constants";
 import { useTableStore } from "@/stores/TableStore";
-import { QueryKeys } from "@/types";
+import { QueryKeyWithParams, QueryKeys } from "@/types";
 import { APIError } from "@/types/server";
 import {
   QueryClient,
@@ -33,18 +34,16 @@ import {
   UseFormReset,
 } from "react-hook-form";
 import toast from "react-hot-toast";
-import React from "react";
-import { TOAST_STYLE } from "@/lib/constants";
 
 type DataProp = Record<string, unknown> | FormData;
 type MutationOptions = {
   path: string;
   successMessage: string;
   errorMessage?: string;
-  queryKeysToInvalidate?: QueryKeys[];
+  queryKeysToInvalidate?: QueryKeys | QueryKeyWithParams<any, any>;
   closeModal?: boolean;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
-  additionalInvalidateQueries?: QueryKeys[];
+  additionalInvalidateQueries?: QueryKeys;
 };
 
 export function useCustomMutation<T extends FieldValues>(

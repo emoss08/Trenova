@@ -17,7 +17,11 @@
 
 import { CodeTypeProps, ShipmentStatusChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import {
+  Control,
+  UseFormSetValue,
+  UseFormWatch
+} from "react-hook-form";
 import { BaseModel } from "./organization";
 
 export interface ShipmentControl extends BaseModel {
