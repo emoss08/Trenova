@@ -1,25 +1,63 @@
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useUsers } from "@/hooks/useQueries";
 import { entryMethodChoices } from "@/lib/choices";
-import { ShipmentFormValues } from "@/types/order";
-import { Control } from "react-hook-form";
+import { validateBOLNumber } from "@/services/ShipmentRequestService";
+import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { debounce } from "lodash-es";
+import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export function DispatchInformation({
-  control,
+  shipmentControlData,
+  isShipmentControlLoading,
 }: {
-  control: Control<ShipmentFormValues>;
+  shipmentControlData: ShipmentControl;
+  isShipmentControlLoading: boolean;
 }) {
   const { t } = useTranslation("shipment.addshipment");
+  const { control, watch, setError } = useFormContext<ShipmentFormValues>();
 
   const {
     selectUsersData,
     isError: isUserError,
     isLoading: isUsersLoading,
   } = useUsers();
+
+  const bolValue = watch("bolNumber");
+
+  // Check for duplicate BOL number if shipmentControlData.checkForDuplicateBol is true
+  useEffect(() => {
+    const debounceValidation = debounce(async () => {
+      try {
+        const response = await validateBOLNumber(bolValue);
+        if (response.valid === false) {
+          setError("bolNumber", {
+            type: "manual",
+            message: response.message,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }, 500);
+
+    if (bolValue && shipmentControlData.checkForDuplicateBol) {
+      debounceValidation();
+    }
+
+    return () => {
+      debounceValidation.cancel();
+    };
+  }, [bolValue]);
+
+  if (isShipmentControlLoading) {
+    return <Skeleton className="h-[40vh]" />;
+  }
 
   return (
     <div className="border-border bg-card rounded-md border">

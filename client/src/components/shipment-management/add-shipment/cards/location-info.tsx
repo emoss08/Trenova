@@ -18,29 +18,126 @@
 import { TimeField } from "@/components/common/fields/input";
 import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useLocations } from "@/hooks/useQueries";
 import { Location } from "@/types/location";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/order";
 import { useEffect } from "react";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Control, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function LocationInformation({
+function LocationSection({
+  section,
   control,
-  setValue,
-  watch,
 }: {
-  setValue: UseFormSetValue<ShipmentFormValues>;
-  watch: UseFormWatch<ShipmentFormValues>;
+  section: "origin" | "destination";
   control: Control<ShipmentFormValues>;
 }) {
   const { t } = useTranslation("shipment.addshipment");
+
+  return (
+    <div className="flex-1">
+      <div className="flex flex-col">
+        <div className="border-border rounded-md border">
+          <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+            <TitleWithTooltip
+              title={t(`card.${section}.label`)}
+              tooltip={t(`card.${section}.description`)}
+            />
+          </div>
+          <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
+            <div className="col-span-3">
+              <AsyncSelectInput
+                name={`${section}Location`}
+                link="/locations/"
+                control={control}
+                label={t(`card.${section}.fields.${section}Location.label`)}
+                placeholder={t(
+                  `card.${section}.fields.${section}Location.placeholder`,
+                )}
+                description={t(
+                  `card.${section}.fields.${section}Location.description`,
+                )}
+                hasPopoutWindow
+                popoutLink="/dispatch/locations/"
+                isClearable
+                popoutLinkLabel="Location"
+              />
+            </div>
+            <div className="col-span-3">
+              <LocationAutoComplete
+                control={control}
+                name={`${section}Address`}
+                rules={{ required: true }}
+                autoCapitalize="none"
+                autoCorrect="off"
+                type="text"
+                label={t(`card.${section}.fields.${section}Address.label`)}
+                placeholder={t(
+                  `card.${section}.fields.${section}Address.placeholder`,
+                )}
+                description={t(
+                  `card.${section}.fields.${section}Address.description`,
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-x-4">
+              <div className="col-span-1">
+                <TimeField
+                  control={control}
+                  rules={{ required: true }}
+                  name={`${section}AppointmentWindowStart`}
+                  label={t(
+                    `card.${section}.fields.${section}AppointmentWindowStart.label`,
+                  )}
+                  placeholder={t(
+                    `card.${section}.fields.${section}AppointmentWindowStart.placeholder`,
+                  )}
+                  description={t(
+                    `card.${section}.fields.${section}AppointmentWindowStart.description`,
+                  )}
+                />
+              </div>
+              <div className="col-span-1">
+                <TimeField
+                  control={control}
+                  rules={{ required: true }}
+                  name={`${section}AppointmentWindowEnd`}
+                  label={t(
+                    `card.${section}.fields.${section}AppointmentWindowEnd.label`,
+                  )}
+                  placeholder={t(
+                    `card.${section}.fields.${section}AppointmentWindowEnd.placeholder`,
+                  )}
+                  description={t(
+                    `card.${section}.fields.${section}AppointmentWindowEnd.description`,
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LocationInformation({
+  shipmentControlData,
+  isShipmentControlLoading,
+}: {
+  shipmentControlData: ShipmentControl;
+  isShipmentControlLoading: boolean;
+}) {
   const { locations } = useLocations();
+  const { control, setValue, watch, setError } =
+    useFormContext<ShipmentFormValues>();
 
   const originLocationValue = watch("originLocation");
-  console.info("originLocationValue", originLocationValue);
+  const originAddressValue = watch("originAddress");
   const destinationLocationValue = watch("destinationLocation");
+  const destinationAddressValue = watch("destinationAddress");
 
   useEffect(() => {
     if (originLocationValue && locations) {
@@ -68,176 +165,44 @@ export function LocationInformation({
         );
       }
     }
-  }, [originLocationValue, destinationLocationValue, locations, setValue]);
+
+    // If the origin address and destination address are the same then throw an error
+    if (
+      shipmentControlData &&
+      shipmentControlData?.enforceOriginDestination &&
+      originAddressValue &&
+      destinationAddressValue &&
+      originAddressValue === destinationAddressValue
+    ) {
+      setError("originAddress", {
+        type: "manual",
+        message: "Origin and Destination locations cannot be the same.",
+      });
+      setError("destinationAddress", {
+        type: "manual",
+        message: "Origin and Destination locations cannot be the same.",
+      });
+    }
+  }, [
+    originLocationValue,
+    destinationLocationValue,
+    locations,
+    setValue,
+    originAddressValue,
+    destinationAddressValue,
+    setError,
+    shipmentControlData,
+    shipmentControlData?.enforceOriginDestination,
+  ]);
+
+  if (isShipmentControlLoading) {
+    return <Skeleton className="h-[40vh]" />;
+  }
 
   return (
     <div className="flex space-x-10">
-      <div className="flex-1">
-        <div className="flex flex-col">
-          <div className="border-border rounded-md border">
-            <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
-              <TitleWithTooltip
-                title={t("card.origin.label")}
-                tooltip={t("card.origin.description")}
-              />
-            </div>
-            <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
-              <div className="col-span-3">
-                <AsyncSelectInput
-                  name="originLocation"
-                  link="/locations/"
-                  control={control}
-                  label={t("card.origin.fields.originLocation.label")}
-                  placeholder={t(
-                    "card.origin.fields.originLocation.placeholder",
-                  )}
-                  description={t(
-                    "card.origin.fields.originLocation.description",
-                  )}
-                  hasPopoutWindow
-                  popoutLink="/dispatch/locations/"
-                  isClearable
-                  popoutLinkLabel="Location"
-                />
-              </div>
-              <div className="col-span-3">
-                <LocationAutoComplete
-                  control={control}
-                  name="originAddress"
-                  rules={{ required: true }}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  type="text"
-                  label={t("card.origin.fields.originAddress.label")}
-                  placeholder={t(
-                    "card.origin.fields.originAddress.placeholder",
-                  )}
-                  description={t(
-                    "card.origin.fields.originAddress.description",
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-x-4">
-                <div className="col-span-1">
-                  <TimeField
-                    control={control}
-                    rules={{ required: true }}
-                    name="originAppointmentWindowStart"
-                    label={t(
-                      "card.origin.fields.originAppointmentWindowStart.label",
-                    )}
-                    placeholder={t(
-                      "card.origin.fields.originAppointmentWindowStart.placeholder",
-                    )}
-                    description={t(
-                      "card.origin.fields.originAppointmentWindowStart.description",
-                    )}
-                  />
-                </div>
-                <div className="col-span-1">
-                  <TimeField
-                    control={control}
-                    rules={{ required: true }}
-                    name="originAppointmentWindowEnd"
-                    label={t(
-                      "card.origin.fields.originAppointmentWindowEnd.label",
-                    )}
-                    placeholder={t(
-                      "card.origin.fields.originAppointmentWindowEnd.placeholder",
-                    )}
-                    description={t(
-                      "card.origin.fields.originAppointmentWindowEnd.description",
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="flex-1">
-        <div className="flex flex-col">
-          <div className="border-border rounded-md border">
-            <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
-              <TitleWithTooltip
-                title={t("card.destination.label")}
-                tooltip={t("card.destination.description")}
-              />
-            </div>
-            <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
-              <div className="col-span-3">
-                <AsyncSelectInput
-                  name="destinationLocation"
-                  link="/locations/"
-                  control={control}
-                  label={t("card.destination.fields.destinationLocation.label")}
-                  placeholder={t(
-                    "card.destination.fields.destinationLocation.placeholder",
-                  )}
-                  description={t(
-                    "card.destination.fields.destinationLocation.description",
-                  )}
-                  hasPopoutWindow
-                  popoutLink="/dispatch/locations/"
-                  isClearable
-                  popoutLinkLabel="Location"
-                />
-              </div>
-              <div className="col-span-3">
-                <LocationAutoComplete
-                  control={control}
-                  name="destinationAddress"
-                  rules={{ required: true }}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  type="text"
-                  label={t("card.destination.fields.destinationAddress.label")}
-                  placeholder={t(
-                    "card.destination.fields.destinationAddress.placeholder",
-                  )}
-                  description={t(
-                    "card.destination.fields.destinationAddress.description",
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-x-4">
-                <div className="col-span-1">
-                  <TimeField
-                    control={control}
-                    rules={{ required: true }}
-                    name="destinationAppointmentWindowStart"
-                    label={t(
-                      "card.destination.fields.destinationAppointmentWindowStart.label",
-                    )}
-                    placeholder={t(
-                      "card.destination.fields.destinationAppointmentWindowStart.placeholder",
-                    )}
-                    description={t(
-                      "card.destination.fields.destinationAppointmentWindowStart.description",
-                    )}
-                  />
-                </div>
-                <div className="col-span-1">
-                  <TimeField
-                    control={control}
-                    rules={{ required: true }}
-                    name="destinationAppointmentWindowEnd"
-                    label={t(
-                      "card.destination.fields.destinationAppointmentWindowEnd.label",
-                    )}
-                    placeholder={t(
-                      "card.destination.fields.destinationAppointmentWindowEnd.placeholder",
-                    )}
-                    description={t(
-                      "card.destination.fields.destinationAppointmentWindowEnd.description",
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <LocationSection section="origin" control={control} />
+      <LocationSection section="destination" control={control} />
     </div>
   );
 }

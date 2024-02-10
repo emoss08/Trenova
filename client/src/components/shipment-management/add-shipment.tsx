@@ -21,7 +21,7 @@ import { useShipmentControl } from "@/hooks/useQueries";
 import { ShipmentStatusChoiceProps } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/AuthStore";
-import { ShipmentFormProps, ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues } from "@/types/order";
 import {
   faBoxTaped,
   faCommentQuote,
@@ -34,7 +34,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { debounce } from "lodash-es";
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { Skeleton } from "../ui/skeleton";
 import { CopyShipmentDialog } from "./add-shipment/dialogs/copy-dialog";
 
@@ -42,7 +42,7 @@ import * as yup from "yup";
 
 type Tab = {
   name: string;
-  component: React.ComponentType<ShipmentFormProps>;
+  component: React.ComponentType;
   icon: JSX.Element;
   description: string;
 };
@@ -109,6 +109,7 @@ export default function AddShipment() {
     return <Skeleton className="h-[100vh] w-full" />;
   }
 
+  // Shipment Form validation schema
   const shipmentSchema: yup.ObjectSchema<ShipmentFormValues> = yup
     .object()
     .shape({
@@ -212,29 +213,29 @@ export default function AddShipment() {
       copyAmount: yup.number().required("Copy amount is required."),
     });
 
-  const { control, setValue, watch, reset, handleSubmit, formState } =
-    useForm<ShipmentFormValues>({
-      resolver: yupResolver(shipmentSchema),
-      defaultValues: {
-        status: "N",
-        proNumber: "",
-        originLocation: "",
-        originAddress: "",
-        destinationLocation: "",
-        destinationAddress: "",
-        entryMethod: "MANUAL",
-        comment: "",
-        ratingUnits: 1,
-        autoRate: false,
-        copyAmount: 0,
-        enteredBy: user?.id || "",
-      },
-    });
+  // Form state and methods
+  const shipmentForm = useForm<ShipmentFormValues>({
+    resolver: yupResolver(shipmentSchema),
+    defaultValues: {
+      status: "N",
+      proNumber: "",
+      originLocation: "",
+      originAddress: "",
+      destinationLocation: "",
+      destinationAddress: "",
+      bolNumber: "",
+      entryMethod: "MANUAL",
+      comment: "",
+      ratingUnits: 1,
+      autoRate: false,
+      copyAmount: 0,
+      enteredBy: user?.id || "",
+    },
+  });
 
-  const handleTabClick = useCallback((tabName: string) => {
-    setActiveTab(tabName);
-  }, []);
+  const { control, reset, handleSubmit, formState } = shipmentForm;
 
+  // Mutation
   const mutation = useCustomMutation<ShipmentFormValues>(
     control,
     {
@@ -249,14 +250,24 @@ export default function AddShipment() {
     reset,
   );
 
+  // Submit handler
   const onSubmit = (values: ShipmentFormValues) => {
     setIsSubmitting(true);
     console.info("form values", values);
     mutation.mutate(values);
   };
 
-  const ActiveTabComponent = tabs[activeTab].component;
+  // Submit the form
+  const submitForm = () => {
+    handleSubmit(onSubmit)();
 
+    if (!formState.isValid) {
+      setIsSubmitting(false);
+      setCopyDialogOpen(false);
+    }
+  };
+
+  // Scroll event handler
   const handleScroll = useCallback(
     debounce(() => {
       setIsScrolled(window.scrollY > 80);
@@ -272,22 +283,12 @@ export default function AddShipment() {
     };
   }, [handleScroll]);
 
-  const submitForm = () => {
-    handleSubmit(onSubmit)();
+  // Handle tab clic
+  const handleTabClick = useCallback((tabName: string) => {
+    setActiveTab(tabName);
+  }, []);
 
-    if (!formState.isValid) {
-      setIsSubmitting(false);
-      setCopyDialogOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      handleScroll.cancel();
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [handleScroll]);
+  const ActiveTabComponent = tabs[activeTab].component;
 
   return (
     <>
@@ -326,30 +327,28 @@ export default function AddShipment() {
           </div>
         </aside>
         <div className="relative mb-10 lg:gap-10">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
-          >
-            <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
-              <ActiveTabComponent
-                control={control}
-                setValue={setValue}
-                watch={watch}
-              />
-            </Suspense>
-            <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
-              <Button type="button" variant="outline">
-                Save & Add Another
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setCopyDialogOpen(true)}
-                isLoading={isSubmitting}
-              >
-                Save
-              </Button>
-            </div>
-          </form>
+          <FormProvider {...shipmentForm}>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
+            >
+              <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+                <ActiveTabComponent />
+              </Suspense>
+              <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
+                <Button type="button" variant="outline">
+                  Save & Add Another
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setCopyDialogOpen(true)}
+                  isLoading={isSubmitting}
+                >
+                  Save
+                </Button>
+              </div>
+            </form>
+          </FormProvider>
         </div>
       </div>
       {copyDialogOpen && (

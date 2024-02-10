@@ -15,23 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ShipmentFormProps } from "@/types/order";
 import { ChargeInformation } from "./cards/charge-info";
 import { CustomerInformation } from "./cards/customer-info";
 import { RateCalcInformation } from "./cards/rate-calc-info";
 import { ShipmentInformation } from "./cards/shipment-info";
 
-export default function BillingInfoTab({
-  control,
-  setValue,
-  watch,
-}: ShipmentFormProps) {
+export default function BillingInfoTab() {
   return (
     <div className="grid grid-cols-1 gap-y-8">
-      <CustomerInformation control={control} />
-      <ShipmentInformation control={control} />
-      <RateCalcInformation control={control} watch={watch} />
-      <ChargeInformation control={control} />
+      <CustomerInformation />
+      <ShipmentInformation />
+      <RateCalcInformation />
+      <ChargeInformation />
     </div>
   );
 }

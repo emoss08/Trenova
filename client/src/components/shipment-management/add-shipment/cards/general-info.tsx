@@ -16,46 +16,32 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
+import {
+  AsyncSelectInput,
+  SelectInput,
+} from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import {
-  useRevenueCodes,
-  useServiceTypes,
-  useShipmentTypes,
-} from "@/hooks/useQueries";
+import { useServiceTypes } from "@/hooks/useQueries";
 import { shipmentStatusChoices } from "@/lib/choices";
 import { ShipmentControl, ShipmentFormValues } from "@/types/order";
 import { useEffect } from "react";
-import { Control, UseFormSetValue } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export function GeneralInformation({
-  control,
-  setValue,
   shipmentControlData,
   isShipmentControlLoading,
   proNumber,
   isProNumberLoading,
 }: {
-  control: Control<ShipmentFormValues>;
-  setValue: UseFormSetValue<ShipmentFormValues>;
   shipmentControlData: ShipmentControl;
   isShipmentControlLoading: boolean;
   proNumber: string | undefined;
   isProNumberLoading: boolean;
 }) {
   const { t } = useTranslation("shipment.addshipment");
-
-  const { selectRevenueCodes, isRevenueCodeLoading, isRevenueCodeError } =
-    useRevenueCodes();
-
-  const {
-    selectShipmentType,
-    isError: isShipmentTypeError,
-    isLoading: isShipmentTypesLoading,
-  } = useShipmentTypes();
-
+  const { control, setValue } = useFormContext<ShipmentFormValues>();
   const { selectServiceTypes, isServiceTypeError, isServiceTypeLoading } =
     useServiceTypes();
 
@@ -101,13 +87,14 @@ export function GeneralInformation({
             description={t("card.generalInfo.fields.proNumber.description")}
           />
         </div>
+      </div>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 px-4 pb-4 lg:grid-cols-4">
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="revenueCode"
+            valueKey="code"
+            link="revenue_codes"
             control={control}
-            options={selectRevenueCodes}
-            isLoading={isRevenueCodeLoading}
-            isFetchError={isRevenueCodeError}
             rules={{ required: shipmentControlData.enforceRevCode || false }}
             label={t("card.generalInfo.fields.revenueCode.label")}
             placeholder={t("card.generalInfo.fields.revenueCode.placeholder")}
@@ -119,12 +106,11 @@ export function GeneralInformation({
           />
         </div>
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="shipmentType"
+            link="shipment_types"
+            valueKey="code"
             control={control}
-            options={selectShipmentType}
-            isLoading={isShipmentTypesLoading}
-            isFetchError={isShipmentTypeError}
             rules={{ required: true }}
             label={t("card.generalInfo.fields.shipmentType.label")}
             placeholder={t("card.generalInfo.fields.shipmentType.placeholder")}
@@ -136,8 +122,10 @@ export function GeneralInformation({
           />
         </div>
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="serviceType"
+            link="service_types"
+            valueKey="code"
             control={control}
             options={selectServiceTypes}
             isFetchError={isServiceTypeError}

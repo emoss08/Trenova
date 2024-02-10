@@ -15,24 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { SelectInput } from "@/components/common/fields/select-input";
+import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useCustomers } from "@/hooks/useQueries";
 import { ShipmentFormValues } from "@/types/order";
-import { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function CustomerInformation({
-  control,
-}: {
-  control: Control<ShipmentFormValues>;
-}) {
+export function CustomerInformation() {
   const { t } = useTranslation("shipment.addshipment");
   const {
     selectCustomersData,
     isError: isCustomersError,
     isLoading: isCustomersLoading,
   } = useCustomers();
+  const { control } = useFormContext<ShipmentFormValues>();
 
   return (
     <div className="border-border bg-card rounded-md border">
@@ -45,8 +42,10 @@ export function CustomerInformation({
       <div className="p-4">
         <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="col-span-2">
-            <SelectInput
+            <AsyncSelectInput
+              link="/customers/"
               name="customer"
+              valueKey="code"
               control={control}
               options={selectCustomersData}
               isLoading={isCustomersLoading}

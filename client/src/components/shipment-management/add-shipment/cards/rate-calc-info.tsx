@@ -17,31 +17,20 @@
 
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
+import {
+  AsyncSelectInput,
+  SelectInput,
+} from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import { useFormulaTemplates, useRates } from "@/hooks/useQueries";
 import { ratingMethodChoies } from "@/lib/choices";
 import { ShipmentFormValues } from "@/types/order";
-import { Control, UseFormWatch } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function RateCalcInformation({
-  control,
-  watch,
-}: {
-  control: Control<ShipmentFormValues>;
-  watch: UseFormWatch<ShipmentFormValues>;
-}) {
+export function RateCalcInformation() {
+  const { control, watch } = useFormContext<ShipmentFormValues>();
   const { t } = useTranslation("shipment.addshipment");
-
-  const { selectRates, isRateError, isRatesLoading } = useRates();
-
-  const { selectFormulaTemplates, isFormulaError, isFormulaLoading } =
-    useFormulaTemplates();
-
-  // If rating method is not other than "RateUnit" needs to be readonly
-
-  const ratingMethod = watch("rateMethod");
+  const ratingMethodValue = watch("rateMethod");
 
   return (
     <div className="border-border bg-card rounded-md border">
@@ -74,7 +63,7 @@ export function RateCalcInformation({
               type="number"
               control={control}
               rules={{ required: true }}
-              readOnly={ratingMethod !== "O"}
+              readOnly={ratingMethodValue !== "O"}
               label={t("card.rateCalcInfo.fields.ratingUnits.label")}
               placeholder={t(
                 "card.rateCalcInfo.fields.ratingUnits.placeholder",
@@ -85,11 +74,10 @@ export function RateCalcInformation({
             />
           </div>
           <div className="col-span-3">
-            <SelectInput
+            <AsyncSelectInput
               name="rate"
-              options={selectRates}
-              isLoading={isRatesLoading}
-              isFetchError={isRateError}
+              link="rates"
+              valueKey="rate_number"
               control={control}
               label={t("card.rateCalcInfo.fields.rate.label")}
               placeholder={t("card.rateCalcInfo.fields.rate.placeholder")}
@@ -100,11 +88,9 @@ export function RateCalcInformation({
             />
           </div>
           <div className="col-span-3">
-            <SelectInput
+            <AsyncSelectInput
               name="formulaTemplate"
-              options={selectFormulaTemplates}
-              isLoading={isFormulaLoading}
-              isFetchError={isFormulaError}
+              link="formula_templates"
               control={control}
               label={t("card.rateCalcInfo.fields.formulaTemplate.label")}
               placeholder={t(

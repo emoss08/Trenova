@@ -63,7 +63,7 @@ export function ShipmentMapAside() {
     isLoading: isDispatchControlDataLoading,
     isError: isDispatchControlError,
   } = useQuery({
-    queryKey: ["dispatchControl"] as QueryKeys[],
+    queryKey: ["dispatchControl"] as QueryKeys,
     queryFn: async () => getDispatchControl(),
     initialData: (): DispatchControl[] | undefined =>
       queryClient.getQueryData(["dispatchControl"]),
@@ -156,7 +156,7 @@ export function ShipmentMapAside() {
   }
 
   return (
-    <aside className="w-96 rounded-md border border-border bg-card p-4">
+    <aside className="border-border bg-card w-96 rounded-md border p-4">
       {isLoading ? (
         <WorkerListSkeleton />
       ) : (
@@ -167,7 +167,7 @@ export function ShipmentMapAside() {
             control={control}
             placeholder="Search Workers..."
             icon={
-              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
             }
           />
           {/* Worker Sort Options */}

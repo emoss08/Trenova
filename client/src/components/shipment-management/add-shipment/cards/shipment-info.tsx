@@ -18,15 +18,12 @@
 import { InputField } from "@/components/common/fields/input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { ShipmentFormValues } from "@/types/order";
-import { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function ShipmentInformation({
-  control,
-}: {
-  control: Control<ShipmentFormValues>;
-}) {
+export function ShipmentInformation() {
   const { t } = useTranslation("shipment.addshipment");
+  const { control } = useFormContext<ShipmentFormValues>();
 
   return (
     <div className="border-border bg-card rounded-md border">

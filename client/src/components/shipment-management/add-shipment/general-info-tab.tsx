@@ -16,17 +16,12 @@
  */
 
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
-import { ShipmentFormProps } from "@/types/order";
 import { DispatchInformation } from "./cards/dispatch-detail";
 import { EquipmentInformation } from "./cards/equipment-info";
 import { GeneralInformation } from "./cards/general-info";
 import { LocationInformation } from "./cards/location-info";
 
-export default function GeneralInfoTab({
-  control,
-  setValue,
-  watch,
-}: ShipmentFormProps) {
+export default function GeneralInfoTab() {
   const { shipmentControlData, isLoading: isShipmentControlLoading } =
     useShipmentControl();
   const { proNumber, isProNumberLoading } = useNextProNumber();
@@ -36,24 +31,21 @@ export default function GeneralInfoTab({
       <GeneralInformation
         proNumber={proNumber as string}
         isProNumberLoading={isProNumberLoading}
-        control={control}
-        setValue={setValue}
         shipmentControlData={shipmentControlData}
         isShipmentControlLoading={isShipmentControlLoading}
       />
       <LocationInformation
-        control={control}
-        watch={watch}
-        setValue={setValue}
-      />
-      <EquipmentInformation
-        control={control}
-        setValue={setValue}
-        watch={watch}
         shipmentControlData={shipmentControlData}
         isShipmentControlLoading={isShipmentControlLoading}
       />
-      <DispatchInformation control={control} />
+      <EquipmentInformation
+        shipmentControlData={shipmentControlData}
+        isShipmentControlLoading={isShipmentControlLoading}
+      />
+      <DispatchInformation
+        shipmentControlData={shipmentControlData}
+        isShipmentControlLoading={isShipmentControlLoading}
+      />
     </div>
   );
 }

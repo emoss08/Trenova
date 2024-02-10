@@ -18,15 +18,12 @@
 import { InputField } from "@/components/common/fields/input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { ShipmentFormValues } from "@/types/order";
-import { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function ChargeInformation({
-  control,
-}: {
-  control: Control<ShipmentFormValues>;
-}) {
+export function ChargeInformation() {
   const { t } = useTranslation("shipment.addshipment");
+  const { control } = useFormContext<ShipmentFormValues>();
 
   return (
     <div className="border-border bg-card rounded-md border">
@@ -43,7 +40,6 @@ export function ChargeInformation({
               name="otherChargeAmount"
               type="number"
               control={control}
-              rules={{ required: true }}
               label={t("card.chargeInfo.fields.otherChargeAmount.label")}
               placeholder={t(
                 "card.chargeInfo.fields.otherChargeAmount.placeholder",
@@ -58,7 +54,6 @@ export function ChargeInformation({
               name="freightChargeAmount"
               type="number"
               control={control}
-              rules={{ required: true }}
               label={t("card.chargeInfo.fields.freightChargeAmount.label")}
               placeholder={t(
                 "card.chargeInfo.fields.freightChargeAmount.placeholder",

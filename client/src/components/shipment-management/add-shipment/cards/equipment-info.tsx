@@ -16,55 +16,33 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
+import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import {
   useCommodities,
-  useEquipmentTypes,
   useHazardousMaterial,
   useTrailers,
 } from "@/hooks/useQueries";
 import { Commodity } from "@/types/commodities";
 import { Trailer } from "@/types/equipment";
-import { ShipmentControl, ShipmentFormProps } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/order";
 import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 export function EquipmentInformation({
-  control,
-  setValue,
-  watch,
   shipmentControlData,
   isShipmentControlLoading,
-}: ShipmentFormProps & {
+}: {
   shipmentControlData: ShipmentControl;
   isShipmentControlLoading: boolean;
 }) {
   const { t } = useTranslation("shipment.addshipment");
-
-  const {
-    selectEquipmentType,
-    isError: isEquipmentTypeError,
-    isLoading: isEquipmentTypesLoading,
-  } = useEquipmentTypes();
-
-  const {
-    selectCommodityData,
-    data: commodities,
-    isError: isCommodityError,
-    isLoading: isCommoditiesLoading,
-  } = useCommodities();
-
-  const {
-    selectHazardousMaterials,
-    data: hazardousMaterials,
-    isError: isHazmatError,
-    isLoading: isHazmatLoading,
-  } = useHazardousMaterial();
-
-  const { selectTrailers, isTrailerError, isTrailerLoading, trailerData } =
-    useTrailers();
+  const { data: commodities } = useCommodities();
+  const { data: hazardousMaterials } = useHazardousMaterial();
+  const { selectTrailers, trailerData } = useTrailers();
+  const { control, setValue, watch } = useFormContext<ShipmentFormValues>();
 
   const commodityValue = watch("commodity");
   const trailerValue = watch("trailer");
@@ -82,6 +60,10 @@ export function EquipmentInformation({
       }
 
       if (selectedCommodity?.hazardousMaterial) {
+        console.info(
+          "Selected Commodity Hazmat",
+          selectedCommodity?.hazardousMaterial,
+        );
         setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
       }
     }
@@ -119,13 +101,12 @@ export function EquipmentInformation({
       </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-4 md:grid-cols-2">
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="trailer"
+            link="/trailers/"
+            valueKey="code"
             control={control}
-            options={selectTrailers}
             rules={{ required: true }}
-            isLoading={isTrailerLoading}
-            isFetchError={isTrailerError}
             label={t("card.equipmentInfo.fields.trailer.label")}
             placeholder={t("card.equipmentInfo.fields.trailer.placeholder")}
             description={t("card.equipmentInfo.fields.trailer.description")}
@@ -135,13 +116,12 @@ export function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="trailerType"
+            link="/equipment_types/"
+            valueKey="name"
             control={control}
-            options={selectEquipmentType}
             rules={{ required: true }}
-            isLoading={isEquipmentTypesLoading}
-            isFetchError={isEquipmentTypeError}
             label={t("card.equipmentInfo.fields.trailerType.label")}
             placeholder={t("card.equipmentInfo.fields.trailerType.placeholder")}
             description={t("card.equipmentInfo.fields.trailerType.description")}
@@ -151,12 +131,11 @@ export function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="tractorType"
+            link="/equipment_types/"
+            valueKey="name"
             control={control}
-            options={selectEquipmentType}
-            isLoading={isEquipmentTypesLoading}
-            isFetchError={isEquipmentTypeError}
             label={t("card.equipmentInfo.fields.tractorType.label")}
             placeholder={t("card.equipmentInfo.fields.tractorType.placeholder")}
             description={t("card.equipmentInfo.fields.tractorType.description")}
@@ -166,30 +145,27 @@ export function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <SelectInput
+          <AsyncSelectInput
             name="commodity"
+            link="/commodities/"
+            valueKey="name"
             control={control}
-            options={selectCommodityData}
-            isLoading={isCommoditiesLoading}
-            isFetchError={isCommodityError}
             rules={{ required: shipmentControlData.enforceCommodity || false }}
             label={t("card.equipmentInfo.fields.commodity.label")}
             placeholder={t("card.equipmentInfo.fields.commodity.placeholder")}
             description={t("card.equipmentInfo.fields.commodity.description")}
             hasPopoutWindow
             popoutLink="/shipment-management/commodity-codes/"
-            isClearable
             popoutLinkLabel="Commodity Code"
+            isClearable
           />
         </div>
         <div className="col-span-2">
-          <SelectInput
+          <AsyncSelectInput
             name="hazardousMaterial"
+            link="/hazardous_materials/"
+            valueKey="name"
             control={control}
-            options={selectHazardousMaterials}
-            isLoading={isHazmatLoading}
-            isMulti
-            isFetchError={isHazmatError}
             label={t("card.equipmentInfo.fields.hazardousMaterial.label")}
             placeholder={t(
               "card.equipmentInfo.fields.hazardousMaterial.placeholder",
@@ -199,8 +175,8 @@ export function EquipmentInformation({
             )}
             hasPopoutWindow
             popoutLink="/shipment-management/hazardous-materials/"
-            isClearable
             popoutLinkLabel="Hazardous Material"
+            isClearable
           />
         </div>
         <div className="col-span-1">
