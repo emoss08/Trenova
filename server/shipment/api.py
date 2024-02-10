@@ -22,6 +22,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
+from utils.models import StatusChoices
 from shipment import models, selectors, serializers
 
 
@@ -79,6 +80,7 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ShipmentTypeSerializer
     filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("status, code",)
 
     def get_queryset(self) -> "QuerySet[models.ShipmentType]":
         queryset = self.queryset.filter(
@@ -150,6 +152,30 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         new_pro_number = selectors.next_pro_number(organization=request.user.organization_id)  # type: ignore
 
         return Response({"pro_number": new_pro_number}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["POST"])
+    def check_duplicate_bol(self, request: Request) -> Response:
+        """Check for duplicate bol_number
+
+        Args:
+            request(Request): Request objects
+
+        Returns:
+            Response: Response Object
+        """
+        bol_number = request.data.get("bol_number")
+
+        if models.Shipment.objects.filter(
+            bol_number=bol_number,
+            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS],
+            organization_id=request.user.organization_id,  # type: ignore
+        ).exists():
+            return Response(
+                {"valid": False, "message": "BOL Number already exists"},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=["get"])
     def get_shipment_count_by_status(self, request: Request) -> Response:
@@ -360,6 +386,7 @@ class ServiceTypeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ServiceTypeSerializer
     filterset_fields = ("status", "code")
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("status, code",)
 
     def get_queryset(self) -> "QuerySet[models.ServiceType]":
         queryset = self.queryset.filter(
