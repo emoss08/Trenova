@@ -18,8 +18,8 @@
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import { debounce } from "lodash-es";
-import { useCallback } from "react";
-import { Controller, useController, UseControllerProps } from "react-hook-form";
+import { useCallback, useState } from "react";
+import { Controller, UseControllerProps, useController } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import AsyncSelect, { AsyncProps } from "react-select/async";
 
@@ -415,6 +415,8 @@ interface AsyncSelectProps<T extends Record<string, unknown>>
       AsyncProps<SelectOption, boolean, GroupBase<SelectOption>>,
       "defaultValue" | "name"
     > {
+  // Key from backend for field value
+  valueKey?: string;
   label?: string;
   description?: string;
   maxOptions?: number;
@@ -433,7 +435,8 @@ interface AsyncSelectProps<T extends Record<string, unknown>>
 export function AsyncSelectInput<T extends Record<string, unknown>>(
   props: AsyncSelectProps<T>,
 ) {
-  const { fieldState } = useController(props);
+  const { field, fieldState } = useController(props);
+  const [data, setData] = useState<SelectOption[]>([]);
 
   const {
     label,
@@ -464,14 +467,18 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
         const data = response.data;
         const options = data.results.map((result: any) => ({
           value: result.id,
-          label: result.name,
+          label: result[props.valueKey || "name"],
         }));
         callback(options);
+
+        setData(options);
       },
-      500, // Adjust debounce delay as needed
+      500,
     ),
     [props.link],
-  ); // Include props.link in the dependency array if it's dynamic
+  );
+
+  const processedValue = ValueProcessor(field.value, data, isMulti);
 
   // Wrapper function to handle debouncing
   const promiseOptions = (inputValue: string) =>
@@ -572,10 +579,18 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
               }}
               name={field.name}
               ref={field.ref}
+              value={processedValue}
               onChange={(selected) => {
-                field.onChange(
-                  selected ? (selected as SelectOption).value : undefined,
-                );
+                if (isMulti) {
+                  const values = (selected as SelectOption[]).map(
+                    (opt) => opt.value,
+                  );
+                  field.onChange(values);
+                } else {
+                  field.onChange(
+                    selected ? (selected as SelectOption).value : undefined,
+                  );
+                }
               }}
             />
           )}
