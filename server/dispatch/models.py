@@ -416,9 +416,8 @@ class CommentType(GenericModel):
         max_length=10,
         help_text=_("Comment type name"),
     )
-    description = models.CharField(
+    description = models.TextField(
         _("Description"),
-        max_length=100,
         help_text=_("Comment type description"),
     )
 
@@ -452,6 +451,26 @@ class CommentType(GenericModel):
         return textwrap.shorten(
             f"{self.name} - {self.description}", 50, placeholder="..."
         )
+
+    def clean(self) -> None:
+        """
+        Clean the CommentType instance.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        standard_codes = ["Dispatch", "Billing", "Hot"]
+
+        # Disable the ability to set the status of the standard comment types to inactive
+        if self.name in standard_codes and self.status == PrimaryStatusChoices.INACTIVE:
+            raise ValidationError(
+                {
+                    "status": _(
+                        "The status of the standard comment types cannot be set to inactive."
+                    ),
+                },
+                code="invalid",
+            )
 
     def get_absolute_url(self) -> str:
         """
