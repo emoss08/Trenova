@@ -404,6 +404,13 @@ class CommentType(GenericModel):
         help_text=_("Status of the comment type."),
         default=PrimaryStatusChoices.ACTIVE,
     )
+    severity = models.CharField(
+        _("Severity"),
+        max_length=50,
+        choices=[("H", "High"), ("M", "Medium"), ("L", "Low")],
+        default="L",
+        help_text=_("Priority or severity level of the comment type."),
+    )
     name = models.CharField(
         _("Name"),
         max_length=10,
