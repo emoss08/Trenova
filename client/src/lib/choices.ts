@@ -493,3 +493,25 @@ export const ratingMethodChoies = [
   { value: "PP", label: "Per Pound" },
   { value: "O", label: "Other" },
 ] satisfies ReadonlyArray<IChoiceProps<RatingMethodChoiceProps>>;
+
+/** Type for Shipment Stop Choices */
+export type ShipmentStopChoices = "P" | "SP" | "SD" | "D" | "DO";
+
+/** Returns shipment stop choices for a select input. */
+export const shipmentStopChoices = [
+  { value: "P", label: "Pickup" },
+  { value: "SP", label: "Stop Pickup" },
+  { value: "SD", label: "Stop Delivery" },
+  { value: "D", label: "Delivery" },
+  { value: "DO", label: "Drop Off" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentStopChoices>>;
+
+/** Type for Comment Type Severity */
+export type SeverityChoiceProps = "H" | "M" | "L";
+
+/** Returns comment type severity choices for a select input. */
+export const severityChoices = [
+  { value: "H", label: "High", color: "#dc2626" },
+  { value: "M", label: "Medium", color: "#2563eb" },
+  { value: "L", label: "Low", color: "#15803d" },
+] satisfies ReadonlyArray<IChoiceProps<SeverityChoiceProps>>;
