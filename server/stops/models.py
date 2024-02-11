@@ -372,14 +372,6 @@ class StopComment(GenericModel):
             placeholder="...",
         )
 
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the StopComment
-
-        Returns:
-            str: Absolute url for the StopComment
-        """
-        return reverse("stop:stop-comment-detail", kwargs={"pk": self.pk})
-
 
 class ServiceIncident(GenericModel):
     """
