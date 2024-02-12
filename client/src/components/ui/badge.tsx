@@ -30,12 +30,12 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/80 border-transparent",
         active:
-          "border border-lime-400/60 bg-lime-400/30 text-lime-700 group-data-[hover]:bg-lime-400/30 dark:bg-lime-800/10 dark:text-lime-300 dark:group-data-[hover]:bg-lime-400/15 forced-colors:outline",
+          "border border-green-500 bg-green-600 text-green-100 forced-colors:outline",
         inactive:
-          "border border-rose-400/60 bg-rose-400/30 text-rose-700 group-data-[hover]:bg-rose-400/25 dark:bg-rose-400/10 dark:text-rose-400 dark:group-data-[hover]:bg-rose-400/20 forced-colors:outline",
-        info: "border border-blue-400/60 bg-blue-400/30 text-blue-700 group-data-[hover]:bg-blue-400/25 dark:bg-blue-800/10 dark:text-blue-400 dark:group-data-[hover]:bg-blue-400/20 forced-colors:outline",
+          "border border-red-500 bg-red-600 text-red-100 forced-colors:outline",
+        info: "border border-blue-500 bg-blue-600 text-blue-100 forced-colors:outline",
         warning:
-          "border border-yellow-400/60 bg-yellow-400/30 text-yellow-700 group-data-[hover]:bg-yellow-400/25 dark:bg-yellow-800/10 dark:text-yellow-400 dark:group-data-[hover]:bg-yellow-400/20 forced-colors:outline",
+          "border border-yellow-500 bg-yellow-600 text-yellow-100 forced-colors:outline",
         outline: "text-foreground",
       },
     },
@@ -69,3 +69,4 @@ function Badge({ className, variant, withDot = true, ...props }: BadgeProps) {
 }
 
 export { Badge, badgeVariants };
+
