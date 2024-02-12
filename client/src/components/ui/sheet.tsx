@@ -126,7 +126,7 @@ const SheetTitle = React.forwardRef<
   <SheetPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold text-foreground underline decoration-lime-600",
+      "text-lg font-semibold text-foreground underline decoration-blue-600",
       className,
     )}
     {...props}
@@ -156,5 +156,6 @@ export {
   SheetOverlay,
   SheetPortal,
   SheetTitle,
-  SheetTrigger,
+  SheetTrigger
 };
+

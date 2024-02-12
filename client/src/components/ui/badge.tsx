@@ -19,7 +19,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const badgeVariants = cva(
-  "focus:ring-ring inline-flex items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
+  "focus:ring-ring inline-flex select-none items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -32,7 +32,7 @@ const badgeVariants = cva(
         active:
           "border border-green-500 bg-green-600/30 text-green-400 forced-colors:outline",
         inactive:
-          "border border-red-500 bg-red-600/30 text-red-100 forced-colors:outline",
+          "border border-red-500 bg-red-600/30 text-red-400 forced-colors:outline",
         info: "border border-blue-500 bg-blue-600/30 text-blue-400 forced-colors:outline",
         warning:
           "border border-yellow-500 bg-yellow-600/30 text-yellow-400 forced-colors:outline",
