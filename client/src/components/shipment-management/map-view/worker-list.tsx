@@ -45,7 +45,7 @@ export function WorkerListSkeleton({ count = 9 }: { count?: number }) {
       {[...Array(count)].map((_, index) => (
         <li
           key={index}
-          className="group relative mb-2 flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm hover:bg-foreground"
+          className="hover:bg-foreground group relative mb-2 flex items-center space-x-3 rounded-lg border px-4 py-3 shadow-sm"
         >
           <Skeleton className="size-10 rounded-full" />
           <div className="min-w-0 flex-1">
@@ -115,20 +115,20 @@ function isRegInformationExpired(worker: Worker, enforceRegCheck: boolean) {
 
   const expiredItemsDetails = [
     isDateExpired(worker.profile.hazmatExpirationDate?.toString()) &&
-    formatExpiredItem(
-      "Hazmat",
-      worker.profile.hazmatExpirationDate?.toString(),
-    ),
+      formatExpiredItem(
+        "Hazmat",
+        worker.profile.hazmatExpirationDate?.toString(),
+      ),
     isDateExpired(worker.profile.medicalCertDate?.toString()) &&
-    formatExpiredItem(
-      "Medical Certification",
-      worker.profile.medicalCertDate?.toString(),
-    ),
+      formatExpiredItem(
+        "Medical Certification",
+        worker.profile.medicalCertDate?.toString(),
+      ),
     isDateExpired(worker.profile.licenseExpirationDate?.toString()) &&
-    formatExpiredItem(
-      "License",
-      worker.profile.licenseExpirationDate?.toString(),
-    ),
+      formatExpiredItem(
+        "License",
+        worker.profile.licenseExpirationDate?.toString(),
+      ),
   ].filter(Boolean); // Remove falsy values
 
   return {
@@ -154,7 +154,7 @@ function WorkerRegBadge({
       {isExpired && (
         <Tooltip>
           <TooltipTrigger>
-            <Badge className="absolute right-0 top-0 h-5 w-[130px] rounded-none rounded-bl rounded-tr bg-destructive p-1 text-xs text-destructive-foreground hover:bg-destructive/50 hover:text-background">
+            <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/50 hover:text-background absolute right-0 top-0 h-5 w-[130px] rounded-none rounded-bl rounded-tr p-1 text-xs">
               Attention Required
             </Badge>
           </TooltipTrigger>
@@ -169,7 +169,7 @@ function WorkerRegBadge({
                 </li>
               ))}
             </ul>
-            <p className="mt-2 border-t font-semibold text-muted-foreground">
+            <p className="text-muted-foreground mt-2 border-t font-semibold">
               You are seeing this because your organization enforces regulatory
               checks.
             </p>
@@ -226,19 +226,19 @@ function WorkerCard({
             )}
             aria-hidden="true"
           />
-          <p className="text-sm font-bold text-foreground group-hover:text-background">
+          <p className="text-foreground group-hover:text-background text-sm font-bold">
             {workerFullName}
           </p>
-          <p className="truncate text-xs group-hover:text-background">
+          <p className="group-hover:text-background truncate text-xs">
             Current Status:{" "}
             {upperFirst(worker.currentHos?.currentStatus || "-")}
           </p>
           <div className="flex">
-            <p className="truncate text-xs text-muted-foreground group-hover:text-background">
+            <p className="text-muted-foreground group-hover:text-background truncate text-xs">
               On Duty Clock:{" "}
               {convertSecondsToHours(worker.currentHos?.onDutyTime) || "-"}
             </p>
-            <p className="ml-3 truncate text-xs text-muted-foreground group-hover:text-background">
+            <p className="text-muted-foreground group-hover:text-background ml-3 truncate text-xs">
               Drive Time:{" "}
               {convertSecondsToHours(worker.currentHos?.driveTime) || "-"}
             </p>
@@ -317,8 +317,8 @@ export function WorkerList({
     </>
   ) : (
     <div className="mt-52 flex flex-col items-center justify-center">
-      <p className="text-lg font-bold text-foreground">No Workers Found</p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-foreground text-lg font-bold">No Workers Found</p>
+      <p className="text-muted-foreground text-sm">
         Try adjusting your search query or filters.
       </p>
     </div>

@@ -20,7 +20,7 @@ import { DEBOUNCE_DELAY } from "@/lib/constants";
 import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
-import { MultiIdQueryKey } from "@/types";
+import { QueryKeyWithParams } from "@/types";
 import { Shipment, ShipmentSearchForm } from "@/types/order";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -113,7 +113,7 @@ export function ShipmentList({
       "shipments",
       debouncedSearchQuery,
       statusFilter,
-    ] as MultiIdQueryKey<"shipments", string, string>,
+    ] as QueryKeyWithParams<"shipments", [string, string]>,
     queryFn: async () => getShipments(debouncedSearchQuery, statusFilter),
     initialData: (): Shipment[] | undefined =>
       queryClient.getQueryData([

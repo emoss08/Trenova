@@ -15,9 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as yup from "yup";
-import { QualifierCodeFormValues } from "@/types/stop";
 import { StatusChoiceProps } from "@/types";
+import {
+  QualifierCodeFormValues,
+  StopCommentFormValues,
+  StopFormValues,
+} from "@/types/stop";
+import * as yup from "yup";
 
 export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
   yup.object().shape({
@@ -25,3 +29,50 @@ export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
     code: yup.string().required("Name is required"),
     description: yup.string().required("Description is required"),
   });
+
+const stopCommentSchema: yup.ObjectSchema<StopCommentFormValues> = yup
+  .object()
+  .shape({
+    commentType: yup.string().required("Comment type is required"),
+    qualifierCode: yup.string().required("Qualifier code is required"),
+    comment: yup.string().required("Comment is required"),
+  });
+
+/** Stop validation schema */
+export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
+  status: yup.string().required("Status is required"),
+  sequence: yup.number().notRequired(),
+  movement: yup.string().required("Movement is required"),
+  location: yup.string().test({
+    name: "location",
+    test: function (value) {
+      if (!value) {
+        return this.parent.addressLine !== "";
+      }
+      return true;
+    },
+    message: "Stop Location is required.",
+  }),
+  pieces: yup.number().required("Pieces is required"),
+  weight: yup.string().required("Weight is required"),
+  addressLine: yup.string().test({
+    name: "addressLine",
+    test: function (value) {
+      if (!value) {
+        return this.parent.location !== "";
+      }
+      return true;
+    },
+    message: "Stop Address is required.",
+  }),
+  appointmentTimeWindowStart: yup
+    .string()
+    .required("Appointment time window start is required"),
+  appointmentTimeWindowEnd: yup
+    .string()
+    .required("Appointment time window end is required"),
+  arrivalTime: yup.string().notRequired(),
+  departureTime: yup.string().notRequired(),
+  stopType: yup.string().required("Stop type is required"),
+  stopComments: yup.array().of(stopCommentSchema).notRequired(),
+});

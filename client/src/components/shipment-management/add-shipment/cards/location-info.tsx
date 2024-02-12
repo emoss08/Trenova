@@ -133,12 +133,10 @@ export function LocationInformation({
   const { locations } = useLocations();
   const { control, setValue, watch, setError } =
     useFormContext<ShipmentFormValues>();
-
   const originLocationValue = watch("originLocation");
   const originAddressValue = watch("originAddress");
   const destinationLocationValue = watch("destinationLocation");
   const destinationAddressValue = watch("destinationAddress");
-
   useEffect(() => {
     if (originLocationValue && locations) {
       const selectedOriginLocation = (locations as Location[]).find(
@@ -185,11 +183,11 @@ export function LocationInformation({
     }
   }, [
     originLocationValue,
+    originAddressValue,
     destinationLocationValue,
+    destinationAddressValue,
     locations,
     setValue,
-    originAddressValue,
-    destinationAddressValue,
     setError,
     shipmentControlData,
     shipmentControlData?.enforceOriginDestination,

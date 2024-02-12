@@ -121,18 +121,20 @@ export function ShipmentMapView() {
   const { googleAPIData, isLoading } = useGoogleAPI();
   const apiKey = (googleAPIData as GoogleAPI)?.apiKey as string;
 
-
   return isLoading ? (
     <>
       <div className="flex h-[50vh] w-screen items-center justify-center">
         <div className="flex flex-col items-center justify-center text-center">
-          <FontAwesomeIcon icon={faSpinnerThird} className="size-14 animate-spin text-foreground" />
-          <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+          <FontAwesomeIcon
+            icon={faSpinnerThird}
+            className="text-foreground size-14 animate-spin"
+          />
+          <p className="text-foreground mt-4 font-medium">Loading Map...</p>
         </div>
       </div>
     </>
   ) : (
-    <div className="mx-auto flex w-screen h-[700px] space-x-10">
+    <div className="mx-auto flex h-[700px] w-screen space-x-10">
       <ShipmentMapAside />
       <div className="relative w-full grow">
         {/* Absolute positioned map options */}
@@ -147,7 +149,7 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
             }
           />
         </div>

@@ -17,12 +17,9 @@
 
 import { CodeTypeProps, ShipmentStatusChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
-import {
-  Control,
-  UseFormSetValue,
-  UseFormWatch
-} from "react-hook-form";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { BaseModel } from "./organization";
+import { StopFormValues } from "./stop";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -129,6 +126,7 @@ export interface Shipment extends BaseModel {
   formulaTemplate?: string | null;
   entryMethod: string;
   copyAmount?: number | null;
+  stops?: StopFormValues[] | null;
 }
 
 export type ShipmentFormValues = Omit<

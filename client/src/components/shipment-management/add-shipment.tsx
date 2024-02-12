@@ -38,6 +38,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { Skeleton } from "../ui/skeleton";
 import { CopyShipmentDialog } from "./add-shipment/dialogs/copy-dialog";
 
+import { stopSchema } from "@/lib/validations/StopSchema";
 import * as yup from "yup";
 
 type Tab = {
@@ -56,6 +57,9 @@ const BillingTab = lazy(
   () =>
     import("@/components/shipment-management/add-shipment/billing-info-tab"),
 );
+const StopsTab = lazy(
+  () => import("@/components/shipment-management/add-shipment/stop-info-tab"),
+);
 
 const tabs: Record<string, Tab> = {
   general: {
@@ -66,7 +70,7 @@ const tabs: Record<string, Tab> = {
   },
   stops: {
     name: "Additional Stops",
-    component: () => <div>Stops</div>,
+    component: StopsTab,
     icon: <FontAwesomeIcon icon={faOctagon} />,
     description: "Stops for the shipment",
   },
@@ -211,6 +215,7 @@ export default function AddShipment() {
       serviceTye: yup.string().notRequired(),
       entryMethod: yup.string().required("Entry method is required."),
       copyAmount: yup.number().required("Copy amount is required."),
+      stops: yup.array().of(stopSchema).notRequired(),
     });
 
   // Form state and methods
@@ -230,6 +235,7 @@ export default function AddShipment() {
       autoRate: false,
       copyAmount: 0,
       enteredBy: user?.id || "",
+      stops: [],
     },
   });
 
@@ -253,7 +259,6 @@ export default function AddShipment() {
   // Submit handler
   const onSubmit = (values: ShipmentFormValues) => {
     setIsSubmitting(true);
-    console.info("form values", values);
     mutation.mutate(values);
   };
 
@@ -330,7 +335,7 @@ export default function AddShipment() {
           <FormProvider {...shipmentForm}>
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className="flex h-full flex-col overflow-y-auto lg:pr-[13rem]"
+              className="flex h-full flex-col overflow-y-visible"
             >
               <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
                 <ActiveTabComponent />

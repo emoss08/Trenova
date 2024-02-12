@@ -17,7 +17,7 @@
 
 import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
-import { QueryKeyWithId } from "@/types";
+import { QueryKeyWithParams } from "@/types";
 import { ShipmentSearchForm } from "@/types/order";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +36,10 @@ function FilterOptions({
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["shipmentCountByStatus", searchQuery] as QueryKeyWithId,
+    queryKey: ["shipmentCountByStatus", searchQuery] as QueryKeyWithParams<
+      "shipmentCountByStatus",
+      [string]
+    >,
     queryFn: async () => getShipmentCountByStatus(searchQuery),
     staleTime: Infinity,
   });
