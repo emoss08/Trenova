@@ -340,7 +340,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="bg-popover w-80 p-4"
+        className="bg-popover w-80 p-3"
         sideOffset={10}
         alignOffset={-40}
         align="end"
