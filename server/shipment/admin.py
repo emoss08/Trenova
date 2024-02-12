@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
+
 from shipment import models
 from utils.admin import GenericAdmin, GenericStackedInline
 

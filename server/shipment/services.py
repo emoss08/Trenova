@@ -17,11 +17,12 @@
 from collections.abc import Callable
 from decimal import Decimal
 
-from billing.models import DocumentClassification
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
-from movements.models import Movement
 from pypdf import PdfMerger
+
+from billing.models import DocumentClassification
+from movements.models import Movement
 from shipment import helpers, models, selectors, types
 
 

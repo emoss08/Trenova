@@ -15,15 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from core.permissions import CustomObjectPermissions
 from django.db.models import Count, Prefetch, Q, QuerySet
-from movements.models import Movement
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
-from utils.models import StatusChoices
+
+from core.permissions import CustomObjectPermissions
+from movements.models import Movement
 from shipment import models, selectors, serializers
+from utils.models import StatusChoices
 
 
 class ShipmentControlViewSet(viewsets.ModelViewSet):

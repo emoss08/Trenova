@@ -17,9 +17,9 @@
 import typing
 
 from rest_framework import permissions, status, views, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
 
 from core.permissions import CustomObjectPermissions
 from integration import models, serializers

@@ -19,12 +19,14 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from django.db.models.aggregates import Sum
+
 from movements.models import Movement
 from shipment import models
 from stops.models import Stop
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+
     from organization.models import Organization
     from utils.types import ModelUUID
 

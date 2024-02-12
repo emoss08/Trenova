@@ -16,17 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 import random
 import string
-from datetime import timedelta
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
-from django.utils import timezone
 
-from accounts.models import User
-from dispatch.models import FleetCode
+from location.models import Location
 from organization.models import Organization
 from utils.helpers import get_or_create_business_unit
-from location.models import Location
 
 
 class Command(BaseCommand):

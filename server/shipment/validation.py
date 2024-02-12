@@ -18,6 +18,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
+
 from equipment.models import EquipmentType
 from shipment import models
 from shipment.selectors import get_shipment_by_id
@@ -393,10 +394,10 @@ class ShipmentValidator:
 
     def validate_trailer_and_tractor_type(self) -> None:
         """Validate that when a tractor and trailer type is selected, the equipment class is correct.
-        
+
         Returns:
             None: This function does not return anything.
-            
+
         Raises:
             ValidationError: If the equipment class is not correct for the tractor or trailer type.
         """
