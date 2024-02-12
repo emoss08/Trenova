@@ -20,6 +20,7 @@ import {
   QualifierCodeFormValues,
   StopCommentFormValues,
   StopFormValues,
+  StopTypeProps,
 } from "@/types/stop";
 import * as yup from "yup";
 
@@ -73,6 +74,6 @@ export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
     .required("Appointment time window end is required"),
   arrivalTime: yup.string().notRequired(),
   departureTime: yup.string().notRequired(),
-  stopType: yup.string().required("Stop type is required"),
+  stopType: yup.string<StopTypeProps>().required("Stop type is required"),
   stopComments: yup.array().of(stopCommentSchema).notRequired(),
 });

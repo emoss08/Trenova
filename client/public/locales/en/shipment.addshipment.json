@@ -196,6 +196,11 @@
                 "addStopComment": "Add Stop Comment"
             },
             "fields": {
+                "status": {
+                    "placeholder": "Status",
+                    "label": "Status",
+                    "description": "Select the current status that best describes the stop's phase."
+                },
                 "sequence": {
                     "placeholder": "Sequence",
                     "label": "Sequence",

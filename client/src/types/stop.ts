@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ShipmentStatusChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
@@ -30,9 +31,11 @@ export type QualifierCodeFormValues = Omit<
   "id" | "organization" | "created" | "modified"
 >;
 
+export type StopTypeProps = "P" | "SP" | "SD" | "D" | "DO";
+
 export interface Stop extends BaseModel {
   id: string;
-  status: string;
+  status: ShipmentStatusChoiceProps;
   sequence?: number | null;
   movement: string;
   location?: string | null;
@@ -43,7 +46,7 @@ export interface Stop extends BaseModel {
   appointmentTimeWindowEnd: string;
   arrivalTime?: string | null;
   departureTime?: string | null;
-  stopType: string;
+  stopType: StopTypeProps;
   stopComments?: StopCommentFormValues[] | null;
 }
 
