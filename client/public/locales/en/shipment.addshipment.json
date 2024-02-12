@@ -191,6 +191,53 @@
                 }
             }
         },
+        "stopInfo": {
+            "buttons": {
+                "addStopComment": "Add Stop Comment"
+            },
+            "fields": {
+                "sequence": {
+                    "placeholder": "Sequence",
+                    "label": "Sequence",
+                    "description": "Enter the sequence number for the stop in the shipment's route."
+                },
+                "stopType": {
+                    "placeholder": "Stop Type",
+                    "label": "Stop Type",
+                    "description": "Select the type of stop (e.g., pickup, delivery, intermediate)."
+                },
+                "stopLocation": {
+                    "placeholder": "Stop Location",
+                    "label": "Stop Location",
+                    "description": "Enter the detailed location or facility name where the shipment will make a stop."
+                },
+                "stopAddress": {
+                    "placeholder": "Stop Address",
+                    "label": "Stop Address",
+                    "description": "Provide the full address including street, city, and postal code."
+                },
+                "weight": {
+                    "placeholder": "Weight",
+                    "label": "Weight",
+                    "description": "Enter the total weight of the shipment at this stop, including the units used (e.g., lbs, kg)."
+                },
+                "pieces": {
+                    "placeholder": "Pieces",
+                    "label": "Pieces",
+                    "description": "Enter the total number of pieces or packages included in the shipment at this stop."
+                },
+                "appointmentWindowStart": {
+                    "placeholder": "Appointment Window Start",
+                    "label": "Appointment Window Start",
+                    "description": "Specify the start time for the stop's appointment window."
+                },
+                "appointmentWindowEnd": {
+                    "placeholder": "Appointment Window End",
+                    "label": "Appointment Window End",
+                    "description": "Specify the end time for the stop's appointment window."
+                }
+            }
+        },
         "rateCalcInfo": {
             "label": "Rate Calculation Information",
             "description": "Specifies the method and formula used to calculate the shipment's rate, as well as the subtotal and total charges.",
