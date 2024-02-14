@@ -17,8 +17,8 @@
 
 
 from movements import models
-from utils.serializers import GenericSerializer
 from stops.serializers import StopSerializer
+from utils.serializers import GenericSerializer
 
 
 class MovementSerializer(GenericSerializer):

@@ -23,8 +23,8 @@ from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
-from stops.models import Stop
 from shipment import models, selectors, serializers
+from stops.models import Stop
 from utils.models import StatusChoices
 
 
