@@ -342,7 +342,7 @@ class LogEntryViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.LogEntrySerializer
     http_method_names = ["get"]
 
-    def get_queryset(self) -> "QuerySet[models.UserReport]":
+    def get_queryset(self) -> "QuerySet[LogEntry]":
         """Returns the queryset for the viewset.
 
         Returns:
@@ -350,15 +350,11 @@ class LogEntryViewSet(viewsets.ModelViewSet):
         """
 
         model_name = self.request.query_params.get("model_name", None)
-        app_label = self.request.query_params.get("app_label", None)
 
         if not model_name:
             raise exceptions.ValidationError("Query parameter 'model_name' is required")
-        if not app_label:
-            raise exceptions.ValidationError("Query parameter 'app_label' is required")
 
         return get_audit_logs_by_model_name(
             model_name=model_name,
-            app_label=app_label,
             organization_id=self.request.user.organization_id,  # type: ignore
         )

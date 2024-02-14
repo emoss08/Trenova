@@ -117,16 +117,4 @@ class LogEntrySerializer(serializers.ModelSerializer):
         """
 
         model = LogEntry
-        fields = (
-            "content_type",
-            "object_pk",
-            "object_id",
-            "object_repr",
-            "serialized_data",
-            "action",
-            "changes",
-            "actor",
-            "remote_addr",
-            "timestamp",
-            "additional_data",
-        )
+        fields = "__all__"
