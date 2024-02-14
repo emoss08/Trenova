@@ -100,7 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    "core.middleware.idempotency_middleware.IdempotencyMiddleware",
+    # "core.middleware.idempotency_middleware.IdempotencyMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -434,10 +434,7 @@ BILLING_CLIENT_DB = env("BILLING_CLIENT_REDIS_DB")
 # Audit Log Configurations
 AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("organization", "business_unit")
 AUDITLOG_INCLUDE_TRACKING_MODELS = (
-    "accounts.User",
-    "accounts.UserProfile",
     "accounts.JobTitle",
-    "accounts.Token",
     "accounting.GeneralLedgerAccount",
     "accounting.RevenueCode",
     "accounting.DivisionCode",
@@ -465,6 +462,7 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "shipment.AdditionalCharge",
     "shipment.ReasonCode",
     "shipment.FormulaTemplate",
+    "location.Location",
 )
 
 # Protect against clickjacking by setting X-Frame-Options header
@@ -538,6 +536,11 @@ GRAPHENE = {
 # Idempotency Configurations
 IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
 IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
+
+# System Check Configurations
+SILENCED_SYSTEM_CHECKS = [
+    "ckeditor.W001"  # TODO(wolfred): Remove this once we have a solution for the CKEditor warning
+]
 
 # Development Configurations
 if DEBUG:

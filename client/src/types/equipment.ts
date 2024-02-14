@@ -17,7 +17,6 @@
 
 import { EquipmentClassChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
-import { TableOptionProps } from "@/types/tables";
 import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 import { BaseModel } from "./organization";
 
@@ -60,30 +59,35 @@ export type EquipmentStatus = "A" | "OOS" | "AM" | "S" | "L";
 export const equipmentStatusChoices = [
   {
     value: "A",
-    label: "Active",
+    label: "Available",
     icon: CircleIcon,
+    color: "#16a34a",
   },
   {
     value: "OOS",
     label: "Out of Service",
     icon: MinusCircledIcon,
+    color: "#dc2626",
   },
   {
     value: "AM",
     label: "At Maintenance",
     icon: MinusCircledIcon,
+    color: "#9333ea",
   },
   {
     value: "S",
     label: "Sold",
     icon: MinusCircledIcon,
+    color: "#2563eb",
   },
   {
     value: "L",
     label: "Lost",
     icon: MinusCircledIcon,
+    color: "#ca8a04",
   },
-] satisfies TableOptionProps[];
+];
 
 export interface Trailer extends BaseModel {
   id: string;

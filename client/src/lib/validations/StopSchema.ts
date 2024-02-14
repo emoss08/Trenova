@@ -23,6 +23,7 @@ import {
   StopTypeProps,
 } from "@/types/stop";
 import * as yup from "yup";
+import { ShipmentStatusChoiceProps } from "../choices";
 
 export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
   yup.object().shape({
@@ -41,31 +42,41 @@ const stopCommentSchema: yup.ObjectSchema<StopCommentFormValues> = yup
 
 /** Stop validation schema */
 export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
-  status: yup.string().required("Status is required"),
+  status: yup
+    .string<ShipmentStatusChoiceProps>()
+    .required("Status is required"),
   sequence: yup.number().notRequired(),
   movement: yup.string().required("Movement is required"),
-  location: yup.string().test({
-    name: "location",
-    test: function (value) {
-      if (!value) {
-        return this.parent.addressLine !== "";
-      }
-      return true;
-    },
-    message: "Stop Location is required.",
-  }),
+  location: yup
+    .string()
+    .nullable()
+    .test({
+      name: "location-or-address",
+      exclusive: false,
+      message: "Either Stop Location or Stop Address is required.",
+      test: function (value) {
+        return (
+          (value !== null && value !== "") ||
+          (this.parent.addressLine !== null && this.parent.addressLine !== "")
+        );
+      },
+    }),
   pieces: yup.number().required("Pieces is required"),
   weight: yup.string().required("Weight is required"),
-  addressLine: yup.string().test({
-    name: "addressLine",
-    test: function (value) {
-      if (!value) {
-        return this.parent.location !== "";
-      }
-      return true;
-    },
-    message: "Stop Address is required.",
-  }),
+  addressLine: yup
+    .string()
+    .nullable()
+    .test({
+      name: "location-or-address",
+      exclusive: false,
+      message: "Either Stop Location or Stop Address is required.",
+      test: function (value) {
+        return (
+          (value !== null && value !== "") ||
+          (this.parent.location !== null && this.parent.location !== "")
+        );
+      },
+    }),
   appointmentTimeWindowStart: yup
     .string()
     .required("Appointment time window start is required"),
