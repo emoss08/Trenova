@@ -23,6 +23,7 @@ from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
+from stops.models import Stop
 from shipment import models, selectors, serializers
 from utils.models import StatusChoices
 
@@ -224,36 +225,31 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             )
             .prefetch_related(
                 Prefetch(
-                    "additional_charges",
-                    queryset=models.AdditionalCharge.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
-                ),
-                Prefetch(
                     lookup="movements",
                     queryset=Movement.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
-                    .only("id", "shipment_id", "organization_id")
+                    .prefetch_related(
+                        Prefetch(
+                            lookup="stops",
+                            queryset=Stop.objects.filter(
+                                organization_id=self.request.user.organization_id  # type: ignore
+                            ).all(),
+                        )
+                    )
                     .all(),
                 ),
                 Prefetch(
                     lookup="shipment_documentation",
                     queryset=models.ShipmentDocumentation.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
+                    ).all(),
                 ),
                 Prefetch(
                     lookup="shipment_comments",
                     queryset=models.ShipmentComment.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id", "created")
-                    .all(),
+                    ).all(),
                 ),
             )
             .order_by("pro_number")
