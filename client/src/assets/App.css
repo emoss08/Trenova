@@ -23,7 +23,7 @@
 
     * {
         @apply border-border;
-        font-family: 'Geist Variable';
+        font-family: 'Geist Variable', sans-serif;
     }
 
     body {
@@ -33,16 +33,24 @@
     input[type="time"]::-webkit-calendar-picker-indicator {
         display: none;
     }
+
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button {
         -webkit-appearance: none;
         margin: 0;
     }
-
     input[type=number] {
         -moz-appearance: textfield;
         appearance: textfield;
     }
+
+    /* Set different font for password input */
+    input[type="password"] {
+        font-family: 'Geist Variable Mono', sans-serif;
+      }
+    input[type="password"]::placeholder {
+        font-family: 'Geist Variable', sans-serif;
+      }
 
     :root {
         --background: 0 0% 100%;
