@@ -120,7 +120,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      console.log("Change Logo");
                     }}
                   >
                     {t("fields.logo.placeholder")}
@@ -315,7 +314,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
             <Button
               onClick={(e) => {
                 e.preventDefault();
-                console.log("cancel");
               }}
               type="button"
               variant="ghost"
