@@ -21,7 +21,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useLocationAutoComplete } from "@/hooks/useQueries";
-import { cn, useClickOutside } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { GoogleAutoCompleteResult } from "@/types/location";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
@@ -29,6 +29,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { debounce } from "lodash-es";
 import { AlertTriangle } from "lucide-react";
 import * as React from "react";
+import { useInteractOutside } from "react-aria";
 import {
   FieldValues,
   UseControllerProps,
@@ -139,7 +140,12 @@ export function LocationAutoComplete<T extends FieldValues>({
     setShowResults(false);
   };
 
-  useClickOutside(popoverRef, () => setShowResults(false));
+  useInteractOutside({
+    ref: popoverRef,
+    onInteractOutside: (e) => {
+      setShowResults(false);
+    },
+  });
 
   return (
     <>
