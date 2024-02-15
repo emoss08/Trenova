@@ -66,7 +66,7 @@ export function useCustomMutation<T extends FieldValues>(
 async function executeApiMethod(
   method: MutationOptions["method"],
   path: string,
-  data: Record<string, unknown> | FormData | null,
+  data: Record<string, unknown> | FormData,
 ): Promise<AxiosResponse> {
   const fileData = extractFileFromData(data);
 
@@ -91,8 +91,22 @@ async function executeApiMethod(
 }
 
 function extractFileFromData(
-  data: any,
+  data: Record<string, unknown> | FormData,
 ): { fieldName: string; file: File | Blob } | null {
+  if (!data) {
+    return null;
+  }
+
+  if (data instanceof FormData) {
+    for (const pair of data.entries()) {
+      const [key, value]: [string, any] = pair;
+      if (value instanceof File || value instanceof Blob) {
+        return { fieldName: key, file: value };
+      }
+    }
+    return null;
+  }
+
   for (const key of Object.keys(data)) {
     const item = data[key];
 
@@ -154,10 +168,14 @@ async function handleSuccess<T extends FieldValues>(
       });
 
       // Broadcast a message to other windows to invalidate the same queries
-      broadcastChannel.postMessage({
-        type: "invalidate",
-        queryKeys: queries,
-      });
+      try {
+        broadcastChannel.postMessage({
+          type: "invalidate",
+          queryKeys: queries,
+        });
+      } catch (error) {
+        console.error("[Trenova] BroadcastChannel not supported", error);
+      }
     }
   };
 
@@ -181,6 +199,12 @@ async function handleError<T extends FieldValues>(
   options: MutationOptions,
   control: Control<T>,
 ) {
+  if (!error.response) {
+    console.error("[Trenova] Network or other error", error);
+    showErrorNotification("A network or system error occurred.");
+    return;
+  }
+
   const { data } = error?.response || {};
   if (data?.type === "validationError") {
     handleValidationErrors(data.errors, control);
