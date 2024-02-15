@@ -15,21 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Control, useFieldArray } from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { TimeField } from "../common/fields/input";
 
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
-import { CustomerFormValues as FormValues } from "@/types/customer";
+import { CustomerFormValues } from "@/types/customer";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { AlertOctagonIcon, InfoIcon } from "lucide-react";
 import { SelectInput } from "../common/fields/select-input";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
 
 function DeliverySlotAlert() {
   return (
-    <Alert className="my-5">
+    <Alert className="my-2">
       <InfoIcon className="size-5" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
@@ -40,13 +41,9 @@ function DeliverySlotAlert() {
   );
 }
 
-export function DeliverySlotForm({
-  control,
-  open,
-}: {
-  control: Control<FormValues>;
-  open: boolean;
-}) {
+export function DeliverySlotForm({ open }: { open: boolean }) {
+  const { control } = useFormContext<CustomerFormValues>();
+
   const {
     selectLocationData,
     isLoading: isLocationsLoading,
@@ -69,11 +66,11 @@ export function DeliverySlotForm({
       <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
-            <div className="max-h-[500px] overflow-y-auto">
+            <ScrollArea className="h-[55vh] p-4">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="my-4 grid grid-cols-2 gap-2 border-b pb-2"
+                  className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -107,7 +104,7 @@ export function DeliverySlotForm({
                         menuPlacement="bottom"
                         menuPosition="fixed"
                         hasPopoutWindow
-                        popoutLink="/dispatch/locations/" // TODO: Change once Document Classification is added.
+                        popoutLink="/dispatch/locations/"
                         popoutLinkLabel="Location"
                       />
                     </div>
@@ -140,7 +137,7 @@ export function DeliverySlotForm({
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
-                        className="bg-background text-red-600 hover:bg-background hover:text-red-700"
+                        variant="link"
                         type="button"
                         onClick={() => remove(index)}
                       >
@@ -150,7 +147,7 @@ export function DeliverySlotForm({
                   </div>
                 </div>
               ))}
-            </div>
+            </ScrollArea>
             <Button
               type="button"
               size="sm"
@@ -163,7 +160,7 @@ export function DeliverySlotForm({
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="text-6xl mb-4">
+            <span className="mb-4 text-6xl">
               <AlertOctagonIcon />
             </span>
             <p className="mb-4">

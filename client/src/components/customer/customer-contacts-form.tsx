@@ -15,22 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Control, useFieldArray } from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { InputField } from "../common/fields/input";
 
+import { booleanStatusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { AlertOctagonIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { SelectInput } from "../common/fields/select-input";
 import { Button } from "../ui/button";
-import { booleanStatusChoices } from "@/lib/choices";
+import { ScrollArea } from "../ui/scroll-area";
 
-export function CustomerContactForm({
-  control,
-}: {
-  control: Control<FormValues>;
-}) {
+export function CustomerContactForm() {
+  const { control, watch } = useFormContext<FormValues>();
+  const [emailRequired, setEmailRequired] = useState<boolean>(false);
   const { fields, append, remove } = useFieldArray({
     control,
     name: "contacts",
@@ -48,16 +48,30 @@ export function CustomerContactForm({
     });
   };
 
+  // Set Email field required when isPayableContact is true
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name?.startsWith("contacts") && name?.endsWith("isPayableContact")) {
+        const contactIndex = Number(name.split(".")[1]);
+        const isPayable =
+          value.contacts?.[contactIndex]?.isPayableContact ?? false;
+        setEmailRequired(isPayable);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, setEmailRequired]);
+
   return (
     <>
       <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
-            <div className="max-h-[600px] overflow-y-auto">
+            <ScrollArea className="h-[65vh] p-4">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="my-4 grid grid-cols-2 gap-2 border-b pb-2"
+                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -102,6 +116,7 @@ export function CustomerContactForm({
                     <div className="min-h-[4em]">
                       <InputField
                         type="email"
+                        rules={{ required: emailRequired }}
                         control={control}
                         name={`contacts.${index}.email`}
                         label="Email"
@@ -135,7 +150,7 @@ export function CustomerContactForm({
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
-                        className="bg-background text-red-600 hover:bg-background hover:text-red-700"
+                        className="bg-background hover:bg-background text-red-600 hover:text-red-700"
                         type="button"
                         onClick={() => remove(index)}
                       >
@@ -145,7 +160,7 @@ export function CustomerContactForm({
                   </div>
                 </div>
               ))}
-            </div>
+            </ScrollArea>
             <Button
               type="button"
               size="sm"
@@ -158,7 +173,7 @@ export function CustomerContactForm({
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="text-6xl mb-4">
+            <span className="mb-4 text-6xl">
               <AlertOctagonIcon />
             </span>
             <p className="mb-4">No contacts yet. Please add a new contacts.</p>

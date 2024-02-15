@@ -67,9 +67,6 @@ function CustomerContactTable({
       <h2 className="scroll-m-20 pb-2 pl-3 text-2xl font-semibold tracking-tight">
         Customer Contacts
       </h2>
-      <div className="ml-3 border-l-4 border-red-500 pl-2 text-red-500">
-        Payable Contact
-      </div>
       <Table className="flex flex-col overflow-hidden">
         <TableHeader>
           <TableRow>
@@ -98,12 +95,12 @@ function CustomerContactTable({
                       contact.isPayableContact && "text-red-500  font-semibold",
                     )}
                   >
-                    <TooltipProvider>
+                    <TooltipProvider delayDuration={100}>
                       <Tooltip>
-                        <TooltipTrigger>
-                          {truncateText(contact.name, 20)}
+                        <TooltipTrigger asChild>
+                          <span>{truncateText(contact.name, 20)}</span>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="font-normal">
                           {contact.isPayableContact
                             ? "This is the payable contact"
                             : "This is not the payable contact"}

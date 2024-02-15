@@ -33,20 +33,14 @@ import { CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { Control, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { CustomerContactForm } from "./customer-contacts-form";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
 import { CustomerRuleProfileForm } from "./customer-rule-profile-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
 
-export function CustomerForm({
-  control,
-  open,
-}: {
-  control: Control<FormValues>;
-  open: boolean;
-}) {
+export function CustomerForm({ open }: { open: boolean }) {
   const [activeTab, setActiveTab] = useCustomerFormStore.use("activeTab");
 
   return (
@@ -65,19 +59,19 @@ export function CustomerForm({
         <TabsTrigger value="detentionPolicy">Detention Policy</TabsTrigger>
       </TabsList>
       <TabsContent value="info">
-        <CustomerInfoForm control={control} open={open} />
+        <CustomerInfoForm open={open} />
       </TabsContent>
       <TabsContent value="emailProfile">
-        <CustomerEmailProfileForm control={control} />
+        <CustomerEmailProfileForm />
       </TabsContent>
       <TabsContent value="ruleProfile">
-        <CustomerRuleProfileForm control={control} open={open} />
+        <CustomerRuleProfileForm open={open} />
       </TabsContent>
       <TabsContent value="deliverySlots">
-        <DeliverySlotForm control={control} open={open} />
+        <DeliverySlotForm open={open} />
       </TabsContent>
       <TabsContent value="contacts">
-        <CustomerContactForm control={control} />
+        <CustomerContactForm />
       </TabsContent>
       <TabsContent value="detentionPolicy">
         <p>Work in progress</p>
@@ -89,7 +83,7 @@ export function CustomerForm({
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
@@ -120,6 +114,8 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
+  const { control, handleSubmit, reset } = customerForm;
+
   const mutation = useCustomMutation<FormValues>(
     control,
     {
@@ -148,25 +144,27 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
             Use this form to add a new customer to the system.
           </SheetDescription>
         </SheetHeader>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex h-full flex-col overflow-y-auto"
-        >
-          <CustomerForm control={control} open={open} />
-          <SheetFooter className="mb-12">
-            <Button
-              type="reset"
-              variant="secondary"
-              onClick={() => onOpenChange(false)}
-              className="w-full"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
-              Save
-            </Button>
-          </SheetFooter>
-        </form>
+        <FormProvider {...customerForm}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex h-full flex-col overflow-y-auto"
+          >
+            <CustomerForm open={open} />
+            <SheetFooter className="mb-12">
+              <Button
+                type="reset"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+                className="w-full"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" isLoading={isSubmitting} className="w-full">
+                Save
+              </Button>
+            </SheetFooter>
+          </form>
+        </FormProvider>
       </SheetContent>
     </Sheet>
   );
