@@ -14,6 +14,12 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
 import * as React from "react";
@@ -257,17 +263,28 @@ export function PasswordField<T extends FieldValues>({
             {...props}
           />
           {field.value && !fieldState.invalid && (
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
-              onClick={togglePasswordVisibility}
-            >
-              {showPassword ? (
-                <EyeOffIcon className="size-4" />
-              ) : (
-                <EyeIcon className="size-4" />
-              )}
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>
+                    {showPassword ? "Hide" : "Show"} {props.label}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         {fieldState.invalid && (
