@@ -17,9 +17,10 @@
 
 import { ErrorMessage, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
-import { cn, useClickOutside } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import * as React from "react";
+import { useInteractOutside } from "react-aria";
 import { HexColorPicker } from "react-colorful";
 import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
@@ -41,8 +42,12 @@ export function ColorField<T extends FieldValues>({
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const { field, fieldState } = useController(props);
 
-  const close = React.useCallback(() => setShowPicker(false), []);
-  useClickOutside(popoverRef, close);
+  useInteractOutside({
+    ref: popoverRef,
+    onInteractOutside: (e) => {
+      setShowPicker(false);
+    },
+  });
 
   // Handler for HexColorPicker
   const handleColorPickerChange = (newColor: string) => {

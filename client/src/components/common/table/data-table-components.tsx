@@ -47,10 +47,10 @@ export function DataNotFound({
   return (
     <div className="my-10 text-center">
       <Icon className="text-foreground mx-auto size-10" />
-      <h3 className="mt-2 text-sm font-semibold text-gray-900">
+      <h3 className="text-foreground mt-2 text-sm font-semibold">
         No {upperFirst(name)}
       </h3>
-      <p className="mt-1 text-sm text-gray-500">{message}</p>
+      <p className="text-muted-foreground mt-1 text-sm">{message}</p>
       <div className="mt-3">
         <Button
           className="mt-3"
