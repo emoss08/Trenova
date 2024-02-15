@@ -74,7 +74,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-primary text-sm hover:underline hover:decoration-lime-600">
+          <button className="text-primary text-sm hover:underline hover:decoration-blue-600">
             Send Feedback
           </button>
         </div>

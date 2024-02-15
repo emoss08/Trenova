@@ -48,7 +48,7 @@ async function manageFavoriteRequest(
     queryClient.invalidateQueries({ queryKey: ["userFavorites"] });
     return response.data;
   } catch (error) {
-    console.error("Failed to manage favorite:", error);
+    console.error("[Trenova] Failed to manage favorite:", error);
     throw error;
   }
 }

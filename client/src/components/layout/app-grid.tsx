@@ -42,7 +42,7 @@ function AppGridButton({ open }: { open: boolean }) {
             role="button"
             aria-label="Open Application Grid"
             aria-expanded={open}
-            className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
           >
             <FontAwesomeIcon icon={faGrid2} className="size-5" />
           </Button>
