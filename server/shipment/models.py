@@ -162,7 +162,7 @@ class ShipmentControl(GenericModel):
         Returns:
             str: Shipment control string representation
         """
-        return textwrap.wrap(self.organization.name, 50)[0]
+        return textwrap.shorten(f"{self.organization}", 50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Shipment Control absolute url
@@ -570,18 +570,14 @@ class Shipment(GenericModel):
         blank=True,
         help_text=_("Hazardous Class"),
     )
-    temperature_min = models.DecimalField(
+    temperature_min = models.PositiveIntegerField(
         _("Minimum Temperature"),
-        max_digits=10,
-        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Minimum Temperature"),
     )
-    temperature_max = models.DecimalField(
+    temperature_max = models.PositiveIntegerField(
         _("Maximum Temperature"),
-        max_digits=10,
-        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Maximum Temperature"),

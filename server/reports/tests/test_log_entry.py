@@ -58,28 +58,6 @@ def test_log_entries_throws_validation_error_when_model_name_missing(
     assert response.data["errors"][0]["attr"] is None
 
 
-def test_log_entries_throws_validation_error_app_label_missing(
-    api_client: APIClient,
-) -> None:
-    """Test ``log entries`` endpoint throws validation error when
-    query param ``app_label`` is missing.
-
-    Args:
-        api_client (APIClient): APIClient object
-
-    Returns:
-        None: This function does not return anything.
-    """
-    response = api_client.get("/api/log_entries/?model_name=user")
-    assert response.status_code == 400
-    assert response.data["errors"][0]["code"] == "invalid"
-    assert (
-        response.data["errors"][0]["detail"]
-        == "Query parameter 'app_label' is required"
-    )
-    assert response.data["errors"][0]["attr"] is None
-
-
 def test_log_entries_doesnt_allow_post_request(
     api_client: APIClient,
 ) -> None:
@@ -162,7 +140,7 @@ def test_log_entries_selector(user: User) -> None:
         None: This function does not return anything.
     """
     data = selectors.get_audit_logs_by_model_name(
-        model_name="user", app_label="accounts", organization_id=user.organization_id
+        model_name="user", organization_id=user.organization_id
     )
     assert data
     assert data.count() > 0

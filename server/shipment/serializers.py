@@ -188,7 +188,12 @@ class ShipmentSerializer(GenericSerializer):
 
         model = models.Shipment
         fields = "__all__"
-        read_only_fields = ("organization", "business_unit")
+        read_only_fields = (
+            "organization",
+            "business_unit",
+            "temperature_min",
+            "temperature_max",
+        )
         extra_kwargs = {
             "organization": {"required": False},
             "business_unit": {"required": False},

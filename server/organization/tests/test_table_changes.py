@@ -53,6 +53,7 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
         status="A",
         name="Test",
         database_action="INSERT",
+        email_recipients="admin@trenova.app",
         table=TABLE_NAME_CHOICES[0][0],
     )
 
