@@ -44,8 +44,6 @@ export default function StopInfoTab() {
   const { control, watch, setValue } = useFormContext<ShipmentFormValues>();
   const [removeStopIndex, setRemoveStopIndex] = useState<number | null>(null);
 
-  console.info("stops", watch("stops"));
-
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "stops",

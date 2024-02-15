@@ -42,7 +42,7 @@ export function DispatchInformation({
           });
         }
       } catch (error) {
-        console.error(error);
+        console.error("[Trenova] Error validating BOL number", error);
       }
     }, 500);
 

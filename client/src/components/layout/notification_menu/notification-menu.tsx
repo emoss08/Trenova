@@ -44,7 +44,7 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
+import { faBell } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import { Howl } from "howler";
@@ -128,8 +128,8 @@ function NotificationButton({
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime-400 opacity-100"></span>
-                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1"></span>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
+                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-green-600 ring-1"></span>
               </span>
             )}
           </Button>
@@ -186,9 +186,12 @@ function NotificationContent({
       )}
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
-          <Button onClick={readAllNotifications} className="w-full">
-            <FontAwesomeIcon icon={faCheck} className="mr-2 size-4" /> Mark all
-            as read
+          <Button
+            onClick={readAllNotifications}
+            variant="link"
+            className="w-full"
+          >
+            Mark all as read
           </Button>
         </div>
       )}

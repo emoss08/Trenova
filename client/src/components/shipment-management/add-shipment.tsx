@@ -19,7 +19,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { ShipmentStatusChoiceProps } from "@/lib/choices";
-import { cn } from "@/lib/utils";
+import { cleanObject, cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentFormValues } from "@/types/order";
 import {
@@ -102,6 +102,7 @@ const tabs: Record<string, Tab> = {
 
 export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
+  const [errorTabs, setErrorTabs] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -182,9 +183,7 @@ export default function AddShipment() {
       ratingUnits: yup.number().required("Rating units is required."),
       rate: yup.string().notRequired(),
       mileage: yup.number().notRequired(),
-      otherChargeAmount: yup
-        .string()
-        .required("Other charge amount is required."),
+      otherChargeAmount: yup.string().notRequired(),
       freightChargeAmount: yup.string().notRequired(),
       rateMethod: yup.string().notRequired(),
       customer: yup.string().required("Customer is required."),
@@ -211,7 +210,7 @@ export default function AddShipment() {
       autoRate: yup.boolean().required("Auto rate is required."),
       formulaTemplate: yup.string().notRequired(),
       enteredBy: yup.string().required("Entered by is required."),
-      subTotal: yup.string().required("Sub total is required."),
+      subTotal: yup.string().notRequired(),
       serviceTye: yup.string().notRequired(),
       entryMethod: yup.string().required("Entry method is required."),
       copyAmount: yup.number().required("Copy amount is required."),
@@ -233,43 +232,42 @@ export default function AddShipment() {
       comment: "",
       ratingUnits: 1,
       autoRate: false,
+      readyToBill: false,
       copyAmount: 0,
       enteredBy: user?.id || "",
       stops: [],
     },
   });
 
-  const { control, reset, handleSubmit, formState } = shipmentForm;
+  const { control, reset, handleSubmit } = shipmentForm;
 
   // Mutation
   const mutation = useCustomMutation<ShipmentFormValues>(
     control,
     {
       method: "POST",
-      path: "/shipment/",
+      path: "/shipments/",
       successMessage: "Shipment created successfully.",
       queryKeysToInvalidate: ["shipments"],
       closeModal: true,
       errorMessage: "Failed to create new shipment.",
     },
     () => setIsSubmitting(false),
-    reset,
   );
 
   // Submit handler
   const onSubmit = (values: ShipmentFormValues) => {
+    const cleanedValues = cleanObject(values);
     setIsSubmitting(true);
-    mutation.mutate(values);
+    mutation.mutate(cleanedValues);
+    reset(values);
   };
 
   // Submit the form
   const submitForm = () => {
     handleSubmit(onSubmit)();
-
-    if (!formState.isValid) {
-      setIsSubmitting(false);
-      setCopyDialogOpen(false);
-    }
+    setCopyDialogOpen(false);
+    setIsSubmitting(false);
   };
 
   // Scroll event handler
@@ -315,6 +313,8 @@ export default function AddShipment() {
                       activeTab === tabKey
                         ? "bg-muted [&_svg]:text-foreground"
                         : "hover:bg-muted",
+                      errorTabs.includes(tabKey) &&
+                        "border text-destructive bg-destructive/20 border-destructive hover:bg-destructive/30",
                       "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
                     )}
                   >

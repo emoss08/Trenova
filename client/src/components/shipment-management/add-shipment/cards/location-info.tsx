@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TimeField } from "@/components/common/fields/input";
+import { DateTimePicker } from "@/components/common/fields/date-time-picker/date-time-picker";
 import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,15 +84,13 @@ function LocationSection({
             </div>
             <div className="grid grid-cols-2 gap-x-4">
               <div className="col-span-1">
-                <TimeField
+                <DateTimePicker
                   control={control}
                   rules={{ required: true }}
                   name={`${section}AppointmentWindowStart`}
+                  granularity="minute"
                   label={t(
                     `card.${section}.fields.${section}AppointmentWindowStart.label`,
-                  )}
-                  placeholder={t(
-                    `card.${section}.fields.${section}AppointmentWindowStart.placeholder`,
                   )}
                   description={t(
                     `card.${section}.fields.${section}AppointmentWindowStart.description`,
@@ -100,15 +98,13 @@ function LocationSection({
                 />
               </div>
               <div className="col-span-1">
-                <TimeField
+                <DateTimePicker
                   control={control}
                   rules={{ required: true }}
                   name={`${section}AppointmentWindowEnd`}
+                  granularity="minute"
                   label={t(
                     `card.${section}.fields.${section}AppointmentWindowEnd.label`,
-                  )}
-                  placeholder={t(
-                    `card.${section}.fields.${section}AppointmentWindowEnd.placeholder`,
                   )}
                   description={t(
                     `card.${section}.fields.${section}AppointmentWindowEnd.description`,

@@ -108,7 +108,7 @@ export interface Shipment extends BaseModel {
   billed: boolean;
   transferredToBilling: boolean;
   billingTransferDate?: string | null;
-  subTotal: string;
+  subTotal?: string | null;
   trailer?: string | null;
   trailerType: string;
   tractorType?: string | null;

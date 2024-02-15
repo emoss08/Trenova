@@ -24,10 +24,7 @@ import {
   useHazardousMaterial,
   useTrailers,
 } from "@/hooks/useQueries";
-import { Commodity } from "@/types/commodities";
-import { Trailer } from "@/types/equipment";
 import { ShipmentControl, ShipmentFormValues } from "@/types/order";
-import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -47,45 +44,42 @@ export function EquipmentInformation({
   const commodityValue = watch("commodity");
   const trailerValue = watch("trailer");
 
-  // Use useEffect to respond to changes in originLocation and destinationLocation
-  useEffect(() => {
-    if (commodityValue) {
-      const selectedCommodity = (commodities as Commodity[]).find(
-        (commodity) => commodity.id === commodityValue,
-      );
+  // TODO(WOLFRED): Rewrite this code to subscribe and unsubscribe.
+  // // Use useEffect to respond to changes in originLocation and destinationLocation
+  // useEffect(() => {
+  //   if (commodityValue) {
+  //     const selectedCommodity = (commodities as Commodity[]).find(
+  //       (commodity) => commodity.id === commodityValue,
+  //     );
 
-      if (selectedCommodity?.minTemp && selectedCommodity?.maxTemp) {
-        setValue("temperatureMin", selectedCommodity?.minTemp);
-        setValue("temperatureMax", selectedCommodity?.maxTemp);
-      }
+  //     if (selectedCommodity?.minTemp && selectedCommodity?.maxTemp) {
+  //       setValue("temperatureMin", selectedCommodity?.minTemp);
+  //       setValue("temperatureMax", selectedCommodity?.maxTemp);
+  //     }
 
-      if (selectedCommodity?.hazardousMaterial) {
-        console.info(
-          "Selected Commodity Hazmat",
-          selectedCommodity?.hazardousMaterial,
-        );
-        setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
-      }
-    }
+  //     if (selectedCommodity?.hazardousMaterial) {
+  //       setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
+  //     }
+  //   }
 
-    if (trailerValue) {
-      const selectedTrailer = (trailerData as Trailer[]).find(
-        (trailer: Trailer) => trailer.id === trailerValue,
-      );
+  //   if (trailerValue) {
+  //     const selectedTrailer = (trailerData as Trailer[]).find(
+  //       (trailer: Trailer) => trailer.id === trailerValue,
+  //     );
 
-      if (selectedTrailer?.equipmentType) {
-        setValue("trailerType", selectedTrailer?.equipmentType);
-      }
-    }
-  }, [
-    commodityValue,
-    hazardousMaterials,
-    commodities,
-    setValue,
-    trailerValue,
-    selectTrailers,
-    trailerData,
-  ]);
+  //     if (selectedTrailer?.equipmentType) {
+  //       setValue("trailerType", selectedTrailer?.equipmentType);
+  //     }
+  //   }
+  // }, [
+  //   commodityValue,
+  //   hazardousMaterials,
+  //   commodities,
+  //   setValue,
+  //   trailerValue,
+  //   selectTrailers,
+  //   trailerData,
+  // ]);
 
   if (isShipmentControlLoading) {
     return <Skeleton className="h-[40vh]" />;
@@ -182,6 +176,7 @@ export function EquipmentInformation({
         <div className="col-span-1">
           <InputField
             name="temperatureMin"
+            type="number"
             control={control}
             label={t("card.equipmentInfo.fields.temperatureMin.label")}
             placeholder={t(
@@ -196,6 +191,7 @@ export function EquipmentInformation({
           <InputField
             name="temperatureMax"
             control={control}
+            type="number"
             label={t("card.equipmentInfo.fields.temperatureMax.label")}
             placeholder={t(
               "card.equipmentInfo.fields.temperatureMax.placeholder",
