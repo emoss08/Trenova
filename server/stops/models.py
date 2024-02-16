@@ -322,14 +322,6 @@ class StopComment(GenericModel):
         related_name="comments",
         verbose_name=_("Stop"),
     )
-    comment_type = models.ForeignKey(
-        "dispatch.CommentType",
-        on_delete=models.PROTECT,
-        related_name="stop_comments",
-        related_query_name="stop_comment",
-        verbose_name=_("Comment Type"),
-        help_text=_("The type of comment."),
-    )
     qualifier_code = models.ForeignKey(
         QualifierCode,
         on_delete=models.PROTECT,
@@ -338,9 +330,10 @@ class StopComment(GenericModel):
         verbose_name=_("Qualifier Code"),
         help_text=_("Qualifier code for the comment."),
     )
-    comment = models.TextField(
-        _("Comment"),
-        help_text=_("Comment text."),
+    value = models.CharField(
+        _("Qualifier Code Value"),
+        max_length=100,
+        help_text=_("Value for the qualifier code."),
     )
     entered_by = models.ForeignKey(
         User,
