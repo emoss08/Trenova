@@ -112,7 +112,7 @@ export function EquipmentInformation({
         <div className="col-span-1">
           <AsyncSelectInput
             name="trailerType"
-            link="/equipment_types/"
+            link="/equipment_types/?equipment_class=TRAILER"
             valueKey="name"
             control={control}
             rules={{ required: true }}

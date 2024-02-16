@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { ShipmentStatusChoiceProps } from "@/lib/choices";
-import { cleanObject, cn } from "@/lib/utils";
+import { cleanObject } from "@/lib/utils";
 import { useUserStore } from "@/stores/AuthStore";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues, ShipmentPageTab } from "@/types/order";
 import {
   faBoxTaped,
   faCommentQuote,
@@ -32,21 +32,13 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { debounce } from "lodash-es";
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Skeleton } from "../ui/skeleton";
-import { CopyShipmentDialog } from "./add-shipment/dialogs/copy-dialog";
 
 import { stopSchema } from "@/lib/validations/StopSchema";
 import * as yup from "yup";
-
-type Tab = {
-  name: string;
-  component: React.ComponentType;
-  icon: JSX.Element;
-  description: string;
-};
+import { ShipmentAsideMenu } from "./add-shipment/nav/nav-bar";
 
 // Lazy load the tabs
 const GeneralTab = lazy(
@@ -61,7 +53,7 @@ const StopsTab = lazy(
   () => import("@/components/shipment-management/add-shipment/stop-info-tab"),
 );
 
-const tabs: Record<string, Tab> = {
+const tabs: Record<string, ShipmentPageTab> = {
   general: {
     name: "General Information",
     component: GeneralTab,
@@ -102,10 +94,7 @@ const tabs: Record<string, Tab> = {
 
 export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
-  const [errorTabs, setErrorTabs] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [copyDialogOpen, setCopyDialogOpen] = useState<boolean>(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [user] = useUserStore.use("user");
   const { shipmentControlData, isLoading: isShipmentControlLoading } =
     useShipmentControl();
@@ -128,16 +117,33 @@ export default function AddShipment() {
         shipmentControlData && shipmentControlData.enforceRevCode
           ? yup.string().required("Revenue code is required.")
           : yup.string().notRequired(),
-      originLocation: yup.string().test({
-        name: "originLocation",
-        test: function (value) {
-          if (!value) {
-            return this.parent.originAddress !== "";
-          }
-          return true;
-        },
-        message: "Origin location is required.",
-      }),
+      originLocation: yup
+        .string()
+        .test({
+          name: "originLocation",
+          test: function (value) {
+            if (!value) {
+              return this.parent.originAddress !== "";
+            }
+            return true;
+          },
+          message: "Origin location is required.",
+        })
+        .test({
+          name: "originLocation",
+          test: function (value) {
+            if (
+              shipmentControlData &&
+              shipmentControlData.enforceOriginDestination
+            ) {
+              if (value === this.parent.destinationLocation) {
+                return false;
+              }
+            }
+            return true;
+          },
+          message: "Origin and Destination locations cannot be the same.",
+        }),
       originAddress: yup.string().test({
         name: "originAddress",
         test: function (value) {
@@ -154,16 +160,33 @@ export default function AddShipment() {
       originAppointmentWindowEnd: yup
         .string()
         .required("Origin appointment window end is required."),
-      destinationLocation: yup.string().test({
-        name: "destinationLocation",
-        test: function (value) {
-          if (!value) {
-            return this.parent.destinationAddress !== "";
-          }
-          return true;
-        },
-        message: "Destination location is required.",
-      }),
+      destinationLocation: yup
+        .string()
+        .test({
+          name: "destinationLocation",
+          test: function (value) {
+            if (!value) {
+              return this.parent.destinationAddress !== "";
+            }
+            return true;
+          },
+          message: "Destination location is required.",
+        })
+        .test({
+          name: "destinationLocation",
+          test: function (value) {
+            if (
+              shipmentControlData &&
+              shipmentControlData.enforceOriginDestination
+            ) {
+              if (value === this.parent.originLocation) {
+                return false;
+              }
+            }
+            return true;
+          },
+          message: "Origin and Destination locations cannot be the same.",
+        }),
       destinationAddress: yup.string().test({
         name: "destinationAddress",
         test: function (value) {
@@ -263,108 +286,35 @@ export default function AddShipment() {
     reset(values);
   };
 
-  // Submit the form
-  const submitForm = () => {
-    handleSubmit(onSubmit)();
-    setCopyDialogOpen(false);
-    setIsSubmitting(false);
-  };
-
-  // Scroll event handler
-  const handleScroll = useCallback(
-    debounce(() => {
-      setIsScrolled(window.scrollY > 80);
-    }, 100),
-    [],
-  );
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      handleScroll.cancel();
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [handleScroll]);
-
-  // Handle tab clic
-  const handleTabClick = useCallback((tabName: string) => {
-    setActiveTab(tabName);
-  }, []);
-
   const ActiveTabComponent = tabs[activeTab].component;
 
   return (
-    <>
-      <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
-        <aside
-          className={cn(
-            "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
-            isScrolled && "pt-10",
-          )}
-        >
-          <div className="bg-card text-card-foreground rounded-lg border p-2">
-            <nav className="lg:flex-col lg:space-y-2">
-              {Object.entries(tabs).map(([tabKey, tabInfo]) => (
-                <div key={tabKey} className="space-y-2">
-                  <div
-                    onClick={() => handleTabClick(tabKey)}
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "nosize" }),
-                      activeTab === tabKey
-                        ? "bg-muted [&_svg]:text-foreground"
-                        : "hover:bg-muted",
-                      errorTabs.includes(tabKey) &&
-                        "border text-destructive bg-destructive/20 border-destructive hover:bg-destructive/30",
-                      "group flex flex-col items-start mx-2 my-1 p-2 text-wrap cursor-pointer select-none",
-                    )}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span>{tabInfo.icon}</span>
-                      <span>{tabInfo.name}</span>
-                    </div>
-                    <div className="text-muted-foreground text-xs">
-                      {tabInfo.description}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </nav>
-          </div>
-        </aside>
-        <div className="relative mb-10 lg:gap-10">
-          <FormProvider {...shipmentForm}>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex h-full flex-col overflow-y-visible"
-            >
-              <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
-                <ActiveTabComponent />
-              </Suspense>
-              <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
-                <Button type="button" variant="outline">
-                  Save & Add Another
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setCopyDialogOpen(true)}
-                  isLoading={isSubmitting}
-                >
-                  Save
-                </Button>
-              </div>
-            </form>
-          </FormProvider>
-        </div>
+    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
+      <ShipmentAsideMenu
+        tabs={tabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+      <div className="relative mb-10 lg:gap-10">
+        <FormProvider {...shipmentForm}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex h-full flex-col overflow-y-visible"
+          >
+            <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+              <ActiveTabComponent />
+            </Suspense>
+            <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
+              <Button type="button" variant="outline">
+                Save & Add Another
+              </Button>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
       </div>
-      {copyDialogOpen && (
-        <CopyShipmentDialog
-          open={copyDialogOpen}
-          onOpenChange={setCopyDialogOpen}
-          control={control}
-          submitForm={submitForm}
-          isSubmitting={isSubmitting}
-        />
-      )}
-    </>
+    </div>
   );
 }

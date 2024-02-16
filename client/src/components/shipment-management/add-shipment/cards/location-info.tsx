@@ -129,65 +129,62 @@ export function LocationInformation({
   const { locations } = useLocations();
   const { control, setValue, watch, setError } =
     useFormContext<ShipmentFormValues>();
-  const originLocationValue = watch("originLocation");
-  const originAddressValue = watch("originAddress");
-  const destinationLocationValue = watch("destinationLocation");
-  const destinationAddressValue = watch("destinationAddress");
+
   useEffect(() => {
-    if (originLocationValue && locations) {
-      const selectedOriginLocation = (locations as Location[]).find(
-        (location) => location.id === originLocationValue,
-      );
-
-      if (selectedOriginLocation) {
-        setValue(
-          "originAddress",
-          `${selectedOriginLocation.addressLine1}, ${selectedOriginLocation.city}, ${selectedOriginLocation.state} ${selectedOriginLocation.zipCode}`,
+    const subscription = watch((value, { name }) => {
+      // Set the origin address based on the selected origin location
+      if (name === "originLocation" && locations && value.originLocation) {
+        const selectedOriginLocation = (locations as Location[]).find(
+          (location) => location.id === value.originLocation,
         );
+
+        if (selectedOriginLocation) {
+          setValue(
+            "originAddress",
+            `${selectedOriginLocation.addressLine1}, ${selectedOriginLocation.city}, ${selectedOriginLocation.state} ${selectedOriginLocation.zipCode}`,
+          );
+        }
       }
-    }
 
-    if (destinationLocationValue && locations) {
-      const selectedDestinationLocation = (locations as Location[]).find(
-        (location) => location.id === destinationLocationValue,
-      );
-
-      if (selectedDestinationLocation) {
-        setValue(
-          "destinationAddress",
-          `${selectedDestinationLocation.addressLine1}, ${selectedDestinationLocation.city}, ${selectedDestinationLocation.state} ${selectedDestinationLocation.zipCode}`,
+      // Set the destination address based on the selected destination location
+      if (
+        name === "destinationLocation" &&
+        locations &&
+        value.destinationLocation
+      ) {
+        const selectedDestinationLocation = (locations as Location[]).find(
+          (location) => location.id === value.destinationLocation,
         );
-      }
-    }
 
-    // If the origin address and destination address are the same then throw an error
-    if (
-      shipmentControlData &&
-      shipmentControlData?.enforceOriginDestination &&
-      originAddressValue &&
-      destinationAddressValue &&
-      originAddressValue === destinationAddressValue
-    ) {
-      setError("originAddress", {
-        type: "manual",
-        message: "Origin and Destination locations cannot be the same.",
-      });
-      setError("destinationAddress", {
-        type: "manual",
-        message: "Origin and Destination locations cannot be the same.",
-      });
-    }
-  }, [
-    originLocationValue,
-    originAddressValue,
-    destinationLocationValue,
-    destinationAddressValue,
-    locations,
-    setValue,
-    setError,
-    shipmentControlData,
-    shipmentControlData?.enforceOriginDestination,
-  ]);
+        if (selectedDestinationLocation) {
+          setValue(
+            "destinationAddress",
+            `${selectedDestinationLocation.addressLine1}, ${selectedDestinationLocation.city}, ${selectedDestinationLocation.state} ${selectedDestinationLocation.zipCode}`,
+          );
+        }
+      }
+
+      // If the origin address and destination address are the same then throw an error
+      if (
+        shipmentControlData &&
+        shipmentControlData?.enforceOriginDestination &&
+        value.originLocation &&
+        value.destinationLocation &&
+        value.originLocation === value.destinationLocation
+      ) {
+        setError("originLocation", {
+          type: "manual",
+          message: "Origin and Destination locations cannot be the same.",
+        });
+        setError("destinationLocation", {
+          type: "manual",
+          message: "Origin and Destination locations cannot be the same.",
+        });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, locations, setValue, shipmentControlData, setError]);
 
   if (isShipmentControlLoading) {
     return <Skeleton className="h-[40vh]" />;
