@@ -179,7 +179,7 @@ export default function StopInfoTab() {
                                     <DropdownMenuTrigger>
                                       <TooltipProvider delayDuration={100}>
                                         <Tooltip>
-                                          <TooltipTrigger>
+                                          <TooltipTrigger asChild>
                                             <FontAwesomeIcon
                                               icon={faEllipsisV}
                                               className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
@@ -201,6 +201,7 @@ export default function StopInfoTab() {
                                       </DropdownMenuItem>
                                       <DropdownMenuItem
                                         onClick={() => openRemoveAlert(index)}
+                                        className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                                       >
                                         Remove
                                       </DropdownMenuItem>
