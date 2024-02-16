@@ -549,5 +549,6 @@ if DEBUG:
     INSTALLED_APPS += ["silk"]
     MIDDLEWARE += [
         "silk.middleware.SilkyMiddleware",
+        "pyinstrument.middleware.ProfilerMiddleware",
     ]
     X_FRAME_OPTIONS = "SAMEORIGIN"
