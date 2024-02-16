@@ -100,7 +100,7 @@ export default function FeatureList() {
       </Alert>
       <ul
         role="list"
-        className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+        className="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
       >
         {(featureFlagsData as FeatureFlag[]) &&
           (featureFlagsData as FeatureFlag[]).map((featureFlag) => (
