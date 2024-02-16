@@ -131,7 +131,7 @@ export const DayOfWeekChoices = [
   { value: 4, label: "Friday" },
   { value: 5, label: "Saturday" },
   { value: 6, label: "Sunday" },
-] satisfies ReadonlyArray<IChoiceProps<number>>;
+] satisfies IChoiceProps<number>[];
 
 export type ServiceIncidentControlChoiceProps =
   | "Never"
