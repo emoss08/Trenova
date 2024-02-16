@@ -35,12 +35,13 @@ export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
 const stopCommentSchema: yup.ObjectSchema<StopCommentFormValues> = yup
   .object()
   .shape({
-    commentType: yup.string().required("Comment type is required"),
     qualifierCode: yup.string().required("Qualifier code is required"),
-    comment: yup.string().required("Comment is required"),
+    value: yup
+      .string()
+      .max(100, "Value must be less than 100 characters")
+      .required("Value is required"),
   });
 
-/** Stop validation schema */
 export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
   status: yup
     .string<ShipmentStatusChoiceProps>()
