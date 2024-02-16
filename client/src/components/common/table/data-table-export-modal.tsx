@@ -38,6 +38,8 @@ import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { TExportModelFormValues } from "@/types/forms";
+import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
@@ -45,8 +47,6 @@ import { Loader2 } from "lucide-react";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -148,7 +148,7 @@ function TableExportModalBody({
   return isColumnsLoading ? (
     <>
       <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
-        <Loader2 className="size-20 animate-spin text-foreground" />
+        <Loader2 className="text-foreground size-20 animate-spin" />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
         </p>
@@ -196,7 +196,7 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="text-foreground/70 mt-1 text-xs">
           Select a format to export (CSV, Excel, or PDF).
         </p>
         <div className="mt-5 flex justify-end gap-4 border-t pt-2">
