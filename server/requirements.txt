@@ -48,6 +48,6 @@ reportlab==4.1.0
 requests==2.31.0
 rich==13.7.0
 sympy==1.12
+watchfiles==0.21.0
 weasyprint==61.0
 whitenoise==6.6.0
-watchfiles==0.21.0
