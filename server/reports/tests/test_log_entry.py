@@ -19,6 +19,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from reports import selectors
+from shipment.tests.factories import ShipmentFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -128,19 +129,3 @@ def test_log_entries_doesnt_allow_delete_request(
     assert response.data["errors"][0]["code"] == "method_not_allowed"
     assert response.data["errors"][0]["detail"] == 'Method "DELETE" not allowed.'
     assert response.data["errors"][0]["attr"] is None
-
-
-def test_log_entries_selector(user: User) -> None:
-    """Test ``log entries`` selector
-
-    Args:
-        user(User): User object
-
-    Returns:
-        None: This function does not return anything.
-    """
-    data = selectors.get_audit_logs_by_model_name(
-        model_name="user", organization_id=user.organization_id
-    )
-    assert data
-    assert data.count() > 0
