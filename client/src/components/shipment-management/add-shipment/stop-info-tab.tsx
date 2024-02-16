@@ -15,19 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { InputField, TimeField } from "@/components/common/fields/input";
+import { DateTimePicker } from "@/components/common/fields/date-time-picker/date-time-picker";
+import { InputField } from "@/components/common/fields/input";
 import {
   AsyncSelectInput,
   SelectInput,
 } from "@/components/common/fields/select-input";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLocations } from "@/hooks/useQueries";
 import { shipmentStatusChoices, shipmentStopChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { ShipmentFormValues } from "@/types/order";
-import { faGrid } from "@fortawesome/pro-duotone-svg-icons";
+import { faEllipsisV, faGrid } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
 import {
@@ -116,6 +131,7 @@ export default function StopInfoTab() {
     return () => subscription.unsubscribe();
   }, [locations, setValue, watch]);
 
+  // TODO(WOLFRED: Break this into a separate component.
   return (
     <>
       <DragDropContext onDragEnd={handleDrag}>
@@ -126,7 +142,7 @@ export default function StopInfoTab() {
                 {...provided.droppableProps}
                 ref={provided.innerRef}
                 className={cn(
-                  "mt-4 size-[100%]",
+                  "size-[100%]",
                   snapshot.isUsingPlaceholder && "overflow-hidden",
                 )}
               >
@@ -154,19 +170,42 @@ export default function StopInfoTab() {
                                     <FontAwesomeIcon
                                       icon={faGrid}
                                       className={cn(
-                                        "text-muted-foreground hover:text-foreground hover:cursor-pointer",
+                                        "text-muted-foreground hover:text-foreground hover:cursor-pointer size-5",
                                         snapshot.isDragging && "text-lime-400",
                                       )}
                                     />
                                   </span>
-                                  <Button
-                                    type="button"
-                                    size="xs"
-                                    variant="link"
-                                    onClick={() => openRemoveAlert(index)}
-                                  >
-                                    Remove
-                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger>
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger>
+                                            <FontAwesomeIcon
+                                              icon={faEllipsisV}
+                                              className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
+                                            />
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <span>Actions</span>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                      <DropdownMenuLabel>
+                                        Actions
+                                      </DropdownMenuLabel>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem disabled>
+                                        Add Comment
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => openRemoveAlert(index)}
+                                      >
+                                        Remove
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="grid grid-cols-2 gap-4">
@@ -281,31 +320,27 @@ export default function StopInfoTab() {
                                       />
                                     </div>
                                     <div className="col-span-1">
-                                      <TimeField
+                                      <DateTimePicker
                                         control={control}
                                         rules={{ required: true }}
                                         name={`stops.${index}.appointmentTimeWindowStart`}
                                         label={t(
                                           "card.stopInfo.fields.appointmentWindowStart.label",
                                         )}
-                                        placeholder={t(
-                                          "card.stopInfo.fields.appointmentWindowStart.placeholder",
-                                        )}
+                                        granularity="minute"
                                         description={t(
                                           "card.stopInfo.fields.appointmentWindowStart.description",
                                         )}
                                       />
                                     </div>
                                     <div className="col-span-1">
-                                      <TimeField
+                                      <DateTimePicker
                                         control={control}
                                         rules={{ required: true }}
                                         name={`stops.${index}.appointmentTimeWindowEnd`}
+                                        granularity="minute"
                                         label={t(
                                           "card.stopInfo.fields.appointmentWindowEnd.label",
-                                        )}
-                                        placeholder={t(
-                                          "card.stopInfo.fields.appointmentWindowEnd.placeholder",
                                         )}
                                         description={t(
                                           "card.stopInfo.fields.appointmentWindowEnd.description",
