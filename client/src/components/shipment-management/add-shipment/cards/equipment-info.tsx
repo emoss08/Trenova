@@ -19,12 +19,11 @@ import { InputField } from "@/components/common/fields/input";
 import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import {
-  useCommodities,
-  useHazardousMaterial,
-  useTrailers,
-} from "@/hooks/useQueries";
+import { useCommodities, useTrailers } from "@/hooks/useQueries";
+import { Commodity } from "@/types/commodities";
+import { Trailer } from "@/types/equipment";
 import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -37,49 +36,39 @@ export function EquipmentInformation({
 }) {
   const { t } = useTranslation("shipment.addshipment");
   const { data: commodities } = useCommodities();
-  const { data: hazardousMaterials } = useHazardousMaterial();
-  const { selectTrailers, trailerData } = useTrailers();
+  const { trailerData } = useTrailers();
   const { control, setValue, watch } = useFormContext<ShipmentFormValues>();
 
-  const commodityValue = watch("commodity");
-  const trailerValue = watch("trailer");
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "commodity" && commodities && value.commodity) {
+        const selectedCommodity = (commodities as Commodity[]).find(
+          (commodity) => commodity.id === value.commodity,
+        );
 
-  // TODO(WOLFRED): Rewrite this code to subscribe and unsubscribe.
-  // // Use useEffect to respond to changes in originLocation and destinationLocation
-  // useEffect(() => {
-  //   if (commodityValue) {
-  //     const selectedCommodity = (commodities as Commodity[]).find(
-  //       (commodity) => commodity.id === commodityValue,
-  //     );
+        if (selectedCommodity?.minTemp && selectedCommodity?.maxTemp) {
+          setValue("temperatureMin", selectedCommodity?.minTemp);
+          setValue("temperatureMax", selectedCommodity?.maxTemp);
+        }
 
-  //     if (selectedCommodity?.minTemp && selectedCommodity?.maxTemp) {
-  //       setValue("temperatureMin", selectedCommodity?.minTemp);
-  //       setValue("temperatureMax", selectedCommodity?.maxTemp);
-  //     }
+        if (selectedCommodity?.hazardousMaterial) {
+          setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
+        }
+      }
 
-  //     if (selectedCommodity?.hazardousMaterial) {
-  //       setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
-  //     }
-  //   }
+      if (name === "trailer" && trailerData && value.trailer) {
+        const selectedTrailer = (trailerData as Trailer[]).find(
+          (trailer: Trailer) => trailer.id === value.trailer,
+        );
 
-  //   if (trailerValue) {
-  //     const selectedTrailer = (trailerData as Trailer[]).find(
-  //       (trailer: Trailer) => trailer.id === trailerValue,
-  //     );
+        if (selectedTrailer?.equipmentType) {
+          setValue("trailerType", selectedTrailer?.equipmentType);
+        }
+      }
+    });
 
-  //     if (selectedTrailer?.equipmentType) {
-  //       setValue("trailerType", selectedTrailer?.equipmentType);
-  //     }
-  //   }
-  // }, [
-  //   commodityValue,
-  //   hazardousMaterials,
-  //   commodities,
-  //   setValue,
-  //   trailerValue,
-  //   selectTrailers,
-  //   trailerData,
-  // ]);
+    return () => subscription.unsubscribe();
+  }, [commodities, setValue, watch, trailerData]);
 
   if (isShipmentControlLoading) {
     return <Skeleton className="h-[40vh]" />;

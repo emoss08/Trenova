@@ -258,6 +258,12 @@ export default function AddShipment() {
       readyToBill: false,
       copyAmount: 0,
       enteredBy: user?.id || "",
+      commodity: "",
+      temperatureMin: "",
+      temperatureMax: "",
+      hazardousMaterial: "",
+      tractorType: "",
+      trailerType: "",
       stops: [],
     },
   });
