@@ -164,3 +164,10 @@ export interface FormulaTemplate extends BaseModel {
   shipmentType?: string | null;
   autoApply: boolean;
 }
+
+export type ShipmentPageTab = {
+  name: string;
+  component: React.ComponentType;
+  icon: JSX.Element;
+  description: string;
+};
