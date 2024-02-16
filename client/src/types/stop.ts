@@ -57,9 +57,8 @@ export type StopFormValues = Omit<
 
 export interface StopComment extends BaseModel {
   id: string;
-  commentType: string;
   qualifierCode: string;
-  comment: string;
+  value: string;
 }
 
 export type StopCommentFormValues = Omit<
