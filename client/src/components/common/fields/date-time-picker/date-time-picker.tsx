@@ -20,6 +20,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { faCalendarAlt } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -93,7 +99,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
 
   useInteractOutside({
     ref: contentRef,
-    onInteractOutside: (e) => {
+    onInteractOutside: () => {
       setOpen(false);
     },
   });
@@ -121,21 +127,30 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
           "flex h-9 rounded-md ring-inset ring-offset-background focus-within:ring-1 focus-within:ring-primary focus-within:ring-offset-2",
         )}
       >
-        <DateField {...field} {...fieldProps} />
+        <DateField {...fieldProps} />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
               <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-[1px]" />
-              <div className="absolute right-0 mr-2.5 mt-2.5">
-                <FontAwesomeIcon
-                  icon={faCalendarAlt}
-                  className={cn(
-                    "text-muted-foreground hover:text-foreground mb-2.5 size-4 cursor-pointer",
-                    fieldState.invalid && "text-red-500",
-                  )}
-                  onClick={() => setOpen(!open)}
-                />
-              </div>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="absolute right-0 mr-2.5 mt-2.5">
+                      <FontAwesomeIcon
+                        icon={faCalendarAlt}
+                        className={cn(
+                          "text-muted-foreground hover:text-foreground mb-2.5 size-4 cursor-pointer",
+                          fieldState.invalid && "text-red-500",
+                        )}
+                        onClick={() => setOpen(!open)}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={10}>
+                    <span>Select date and time</span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </PopoverTrigger>
           <PopoverContent ref={contentRef} className="w-full">

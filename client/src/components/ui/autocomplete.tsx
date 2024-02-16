@@ -142,7 +142,7 @@ export function LocationAutoComplete<T extends FieldValues>({
 
   useInteractOutside({
     ref: popoverRef,
-    onInteractOutside: (e) => {
+    onInteractOutside: () => {
       setShowResults(false);
     },
   });
