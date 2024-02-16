@@ -188,6 +188,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             Response: A response object containing the shipment count per status, along with the status representation.
         """
 
+        user_org = request.user.organization_id  # type: ignore
+
         if search_query := request.query_params.get("search"):
             search_conditions = (
                 Q(pro_number__icontains=search_query)
@@ -199,17 +201,13 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             filtered_queryset = self.queryset
 
         shipment_count_by_status = (
-            filtered_queryset.filter(
-                organization_id=request.user.organization_id  # type: ignore
-            )
+            filtered_queryset.filter(organization_id=user_org)
             .values("status")
             .annotate(count=Count("status"))
             .order_by("status")
         )
 
-        total_order_count = filtered_queryset.filter(
-            organization_id=request.user.organization_id  # type: ignore
-        ).count()
+        total_order_count = filtered_queryset.filter(organization_id=user_org).count()
 
         return Response(
             {
@@ -219,21 +217,19 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self) -> "QuerySet[models.Shipment]":
+        user_org = self.request.user.organization_id  # type: ignore
+
         queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
+            self.queryset.filter(organization_id=user_org)
             .prefetch_related(
                 Prefetch(
                     lookup="movements",
-                    queryset=Movement.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
+                    queryset=Movement.objects.filter(organization_id=user_org)
                     .prefetch_related(
                         Prefetch(
                             lookup="stops",
                             queryset=Stop.objects.filter(
-                                organization_id=self.request.user.organization_id  # type: ignore
+                                organization_id=user_org
                             ).all(),
                         )
                     )
@@ -242,13 +238,13 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="shipment_documentation",
                     queryset=models.ShipmentDocumentation.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
+                        organization_id=user_org
                     ).all(),
                 ),
                 Prefetch(
                     lookup="shipment_comments",
                     queryset=models.ShipmentComment.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
+                        organization_id=user_org
                     ).all(),
                 ),
             )
