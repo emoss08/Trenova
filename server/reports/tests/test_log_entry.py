@@ -17,10 +17,6 @@
 import pytest
 from rest_framework.test import APIClient
 
-from accounts.models import User
-from reports import selectors
-from shipment.tests.factories import ShipmentFactory
-
 pytestmark = pytest.mark.django_db
 
 
