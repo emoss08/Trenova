@@ -15,7 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useFieldArray, useFormContext } from "react-hook-form";
+import {
+  Control,
+  UseFieldArrayRemove,
+  useFieldArray,
+  useFormContext,
+} from "react-hook-form";
 import { TimeField } from "../common/fields/input";
 
 import { useLocations } from "@/hooks/useQueries";
@@ -38,6 +43,105 @@ function DeliverySlotAlert() {
         add multiple delivery slots for a location.
       </AlertDescription>
     </Alert>
+  );
+}
+
+function DeliverySlotItem({
+  control,
+  index,
+  field,
+  selectLocationData,
+  isLocationsLoading,
+  isLocationError,
+  remove,
+}: {
+  control: Control<CustomerFormValues>;
+  index: number;
+  field: Record<string, any>;
+  selectLocationData: { value: string; label: string }[];
+  isLocationsLoading: boolean;
+  isLocationError: boolean;
+  remove: UseFieldArrayRemove;
+}) {
+  return (
+    <div
+      key={field.id}
+      className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+    >
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <SelectInput
+            name={`deliverySlots.${index}.dayOfWeek`}
+            rules={{ required: true }}
+            control={control}
+            label="Day of Week"
+            options={DayOfWeekChoices}
+            placeholder="Select Day of week"
+            description="Specify the operational day of the week for customer transactions."
+            isClearable={false}
+            menuPlacement="bottom"
+            menuPosition="fixed"
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <SelectInput
+            name={`deliverySlots.${index}.location`}
+            rules={{ required: true }}
+            control={control}
+            label="Location"
+            options={selectLocationData}
+            isFetchError={isLocationError}
+            isLoading={isLocationsLoading}
+            placeholder="Select Location"
+            description="Select the delivery location from the predefined list."
+            isClearable={false}
+            menuPlacement="bottom"
+            menuPosition="fixed"
+            hasPopoutWindow
+            popoutLink="/dispatch/locations/"
+            popoutLinkLabel="Location"
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <TimeField
+            rules={{ required: true }}
+            control={control}
+            name={`deliverySlots.${index}.startTime`}
+            label="Start Time"
+            placeholder="Start Time"
+            description="Enter the commencement time for the delivery window."
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <TimeField
+            rules={{ required: true }}
+            control={control}
+            name={`deliverySlots.${index}.endTime`}
+            label="End Time"
+            placeholder="End Time"
+            description="Enter the concluding time for the delivery window."
+          />
+        </div>
+      </div>
+      <div className="flex max-w-sm flex-col justify-between gap-1">
+        <div className="min-h-[2em]">
+          <Button
+            size="sm"
+            variant="link"
+            type="button"
+            onClick={() => remove(index)}
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -68,84 +172,16 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           <>
             <ScrollArea className="h-[55vh] p-4">
               {fields.map((field, index) => (
-                <div
+                <DeliverySlotItem
                   key={field.id}
-                  className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border p-2"
-                >
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`deliverySlots.${index}.dayOfWeek`}
-                        rules={{ required: true }}
-                        control={control}
-                        label="Day of Week"
-                        options={DayOfWeekChoices}
-                        placeholder="Select Day of week"
-                        description="Specify the operational day of the week for customer transactions."
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`deliverySlots.${index}.location`}
-                        rules={{ required: true }}
-                        control={control}
-                        label="Location"
-                        options={selectLocationData}
-                        isFetchError={isLocationError}
-                        isLoading={isLocationsLoading}
-                        placeholder="Select Location"
-                        description="Select the delivery location from the predefined list."
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
-                        hasPopoutWindow
-                        popoutLink="/dispatch/locations/"
-                        popoutLinkLabel="Location"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
-                        control={control}
-                        name={`deliverySlots.${index}.startTime`}
-                        label="Start Time"
-                        placeholder="Start Time"
-                        description="Enter the commencement time for the delivery window."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
-                        control={control}
-                        name={`deliverySlots.${index}.endTime`}
-                        label="End Time"
-                        placeholder="End Time"
-                        description="Enter the concluding time for the delivery window."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex max-w-sm flex-col justify-between gap-1">
-                    <div className="min-h-[4em]">
-                      <Button
-                        size="sm"
-                        variant="link"
-                        type="button"
-                        onClick={() => remove(index)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                  control={control}
+                  index={index}
+                  field={field}
+                  selectLocationData={selectLocationData}
+                  isLocationsLoading={isLocationsLoading}
+                  isLocationError={isLocationError}
+                  remove={remove}
+                />
               ))}
             </ScrollArea>
             <Button
