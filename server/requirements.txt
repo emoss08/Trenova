@@ -50,3 +50,4 @@ rich==13.7.0
 sympy==1.12
 weasyprint==61.0
 whitenoise==6.6.0
+watchfiles==0.21.0
