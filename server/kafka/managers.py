@@ -18,16 +18,17 @@
 from __future__ import annotations
 
 import logging
+import os
 import socket
 from pathlib import Path
-import os
+
 from confluent_kafka import KafkaException, admin
 from dotenv import load_dotenv
 
-from kafka.types import ConsumerGroupMetadata
 from kafka.constants import KAFKA_EXCLUDE_TOPIC_PREFIXES
+from kafka.types import ConsumerGroupMetadata
 
-logging.basicConfig(filename='kafka_manager.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename="kafka_manager.log", encoding="utf-8", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Environment Variables
@@ -120,7 +121,9 @@ class KafkaManager:
             admin.AdminClient: An instance of the Kafka AdminClient.
         """
 
-        return admin.AdminClient({"bootstrap.servers": os.environ.get("KAFKA_BOOTSTRAP_SERVERS")})
+        return admin.AdminClient(
+            {"bootstrap.servers": os.environ.get("KAFKA_BOOTSTRAP_SERVERS")}
+        )
 
     def get_available_topics(self) -> list[tuple[str, str]]:
         """Fetches the list of available topics from the Kafka server.

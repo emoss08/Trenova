@@ -21,17 +21,17 @@ import concurrent
 import concurrent.futures
 import json
 import logging
+import os
 import signal
 import time
 import types
-from typing import Any
-import os
 from pathlib import Path
-from kafka import queries, constants, log
-from dotenv import load_dotenv
-from kafka.managers import KafkaManager
+from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
+from dotenv import load_dotenv
+
+from kafka import constants, log, queries
 
 # Environment Variables
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
@@ -96,7 +96,7 @@ class KafkaListener:
             for alert in active_alerts
             if alert["topic"]
         ]
-        
+
         return alerts
 
     @staticmethod
@@ -179,7 +179,7 @@ class KafkaListener:
         if not op_type:
             return
         translated_op_type = op_type_mapping.get(op_type)
-        
+
         if (
             not translated_op_type
             or translated_op_type not in associated_table_change["database_action"]
@@ -197,7 +197,7 @@ class KafkaListener:
             associated_table_change["custom_subject"]
             or f"Table Change Alert: {data_message.topic()}"
         )
-        
+
         formatted_message = self._format_message(field_value_dict=field_value_dict)
 
         debug(
@@ -219,7 +219,7 @@ class KafkaListener:
             return
 
         data_consumer, alert_update_consumer = consumers
-        
+
         self._subscribe_consumers_to_topics(
             data_consumer=data_consumer, alert_update_consumer=alert_update_consumer
         )
@@ -243,7 +243,7 @@ class KafkaListener:
         if not table_changes:
             debug(NO_ALERTS_MSG)
             return
-        
+
         alert_update_consumer.subscribe(['trenova_app_.public.table_change_alert'])
         debug(f"Subscribed to alert update topic: {os.environ.get("KAFKA_ALERT_UPDATE_TOPIC")}")
         data_consumer.subscribe(list(table_changes))
@@ -326,8 +326,8 @@ class KafkaListener:
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
         active_alerts = queries.get_active_kafka_table_change_alerts() or []
-        
-        
+
+
         if (
             data_message is not None
             and not data_message.error()
@@ -339,7 +339,7 @@ class KafkaListener:
 
             if associated_table_change := next(
                 (
-                    alert 
+                    alert
                     for alert  in active_alerts if alert["topic"] == data_message.topic()
                 ),
                 None,

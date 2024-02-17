@@ -17,7 +17,6 @@
 
 from enum import Enum
 
-
 KAFKA_EXCLUDE_TOPIC_PREFIXES = [
     "trenova_app_.public.silk_",
     "trenova_app_.public.auditlog_",

@@ -16,14 +16,14 @@
 # --------------------------------------------------------------------------------------------------
 
 
-from typing import Any, Sequence
-import psycopg
-from datetime import datetime
 import os
+from datetime import datetime
 from pathlib import Path
+from typing import Any
+from collections.abc import Sequence
 
+import psycopg
 from dotenv import load_dotenv
-
 
 # Environment Variables
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
@@ -54,7 +54,7 @@ def get_active_kafka_table_change_alerts():
 
         query = """
         SELECT * FROM table_change_alert
-        WHERE 
+        WHERE
             status = 'A' AND
             source = 'KAFKA' AND
             (

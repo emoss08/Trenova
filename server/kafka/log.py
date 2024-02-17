@@ -22,7 +22,9 @@ def get_default_logger():
     logger = logging.getLogger(__name__)
     console_handle = logging.StreamHandler()
     console_handle.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     console_handle.setFormatter(formatter)
     logger.addHandler(console_handle)
 
