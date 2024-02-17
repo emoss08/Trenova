@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import psycopg
 import typing
+
+import psycopg
 
 
 class DictRowFactory:
