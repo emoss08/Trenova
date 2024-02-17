@@ -51,3 +51,4 @@ sympy==1.12
 watchfiles==0.21.0
 weasyprint==61.0
 whitenoise==6.6.0
+python-dotenv==1.0.1
