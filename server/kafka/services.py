@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import concurrent
@@ -24,17 +25,19 @@ import signal
 import time
 import types
 from typing import Any
+import os
+from pathlib import Path
+from kafka import queries, constants, log
+from dotenv import load_dotenv
+from kafka.managers import KafkaManager
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
-from django.conf import settings
-from django.core.mail import send_mail
-from django.db import connections
 
-from organization import models, selectors
+# Environment Variables
+dotenv_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path)
 
-# Logging Configuration
-logger = logging.getLogger("kafka")
-
+logger = log.get_default_logger()
 debug, error = logger.debug, logger.error
 
 
@@ -55,23 +58,18 @@ class KafkaListener:
     def __init__(self, thread_pool_size=10) -> None:
         self.thread_pool_size = thread_pool_size
 
-    @staticmethod
-    def close_old_connections() -> None:
-        for conn in connections.all(initialized_only=True):
-            conn.close_if_unusable_or_obsolete()
-
     def _signal_handler(self, _signal: int, frame: types.FrameType | None) -> None:
         debug("Received termination signal. Stopping listener...")
         self.running = False
 
     def _connect(self) -> tuple[Consumer, Consumer] | None:
         config = {
-            "bootstrap.servers": settings.KAFKA_BOOTSTRAP_SERVERS,
-            "group.id": settings.KAFKA_GROUP_ID,
-            "auto.offset.reset": settings.KAFKA_AUTO_OFFSET_RESET,
-            "enable.auto.commit": settings.KAFKA_AUTO_COMMIT,
-            "fetch.min.bytes": settings.KAFKA_AUTO_COMMIT_INTERVAL_MS,
-            "auto.commit.interval.ms": settings.KAFKA_AUTO_COMMIT_INTERVAL_MS,
+            "bootstrap.servers": os.environ.get("KAFKA_BOOTSTRAP_SERVERS"),
+            "group.id": os.environ.get("KAFKA_GROUP_ID"),
+            "auto.offset.reset": os.environ.get("KAFKA_OFFSET_RESET"),
+            "enable.auto.commit": os.environ.get("KAFKA_AUTO_COMMIT"),
+            "fetch.min.bytes": os.environ.get("KAFKA_AUTO_COMMIT_INTERVAL_MS"),
+            "auto.commit.interval.ms": os.environ.get("KAFKA_AUTO_COMMIT_INTERVAL_MS"),
         }
 
         while self.running:
@@ -92,12 +90,14 @@ class KafkaListener:
         """
         Fetch the list of topics to subscribe to. Ensure no empty strings are included.
         """
-        active_alerts = selectors.get_active_kafka_table_change_alerts() or []
-        return [
-            alert.get_topic_display()
+        active_alerts = queries.get_active_kafka_table_change_alerts() or []
+        alerts = [
+            alert["topic"]
             for alert in active_alerts
-            if alert.get_topic_display().strip()
+            if alert["topic"]
         ]
+        
+        return alerts
 
     @staticmethod
     def _get_messages(
@@ -160,7 +160,7 @@ class KafkaListener:
         )
 
     def _process_message(
-        self, data_message: Message, associated_table_change: models.TableChangeAlert
+        self, data_message: Message, associated_table_change # Change this to the correct type
     ) -> None:
         if not data_message.value():
             return
@@ -173,39 +173,42 @@ class KafkaListener:
         op_type = data.get("op")
 
         op_type_mapping = {
-            "c": models.TableChangeAlert.DatabaseActionChoices.INSERT,
-            "u": models.TableChangeAlert.DatabaseActionChoices.UPDATE,
+            "c": constants.ActionChoices.INSERT.value,
+            "u": constants.ActionChoices.UPDATE.value,
         }
         if not op_type:
             return
         translated_op_type = op_type_mapping.get(op_type)
-
+        
         if (
             not translated_op_type
-            or translated_op_type not in associated_table_change.database_action
+            or translated_op_type not in associated_table_change["database_action"]
         ):
             return
 
         field_value_dict = data.get("after") or {}
 
         recipient_list = (
-            associated_table_change.email_recipients.split(",")
-            if associated_table_change.email_recipients
+            associated_table_change["email_recipients"].split(",")
+            if associated_table_change["email_recipients"]
             else []
         )
         subject = (
-            associated_table_change.custom_subject
+            associated_table_change["custom_subject"]
             or f"Table Change Alert: {data_message.topic()}"
         )
+        
+        formatted_message = self._format_message(field_value_dict=field_value_dict)
+
         debug(
-            f"Sending email to {recipient_list} with subject {subject} for message {data_message}"
+            f"Sending email to {recipient_list} with subject {subject} for message {formatted_message}"
         )
-        send_mail(
-            subject=subject,
-            message=self._format_message(field_value_dict=field_value_dict),
-            from_email="table_change@trenova.app",
-            recipient_list=recipient_list,
-        )
+        # send_mail(
+        #     subject=subject,
+        #     message=self._format_message(field_value_dict=field_value_dict),
+        #     from_email="table_change@trenova.app",
+        #     recipient_list=recipient_list,
+        # )
 
     def listen(self) -> None:
         self.register_signals()
@@ -216,6 +219,7 @@ class KafkaListener:
             return
 
         data_consumer, alert_update_consumer = consumers
+        
         self._subscribe_consumers_to_topics(
             data_consumer=data_consumer, alert_update_consumer=alert_update_consumer
         )
@@ -239,9 +243,9 @@ class KafkaListener:
         if not table_changes:
             debug(NO_ALERTS_MSG)
             return
-
-        alert_update_consumer.subscribe([settings.KAFKA_ALERT_UPDATE_TOPIC])
-        debug(f"Subscribed to alert update topic: {settings.KAFKA_ALERT_UPDATE_TOPIC}")
+        
+        alert_update_consumer.subscribe(['trenova_app_.public.table_change_alert'])
+        debug(f"Subscribed to alert update topic: {os.environ.get("KAFKA_ALERT_UPDATE_TOPIC")}")
         data_consumer.subscribe(list(table_changes))
         debug(f"Subscribed to topics: {list(table_changes)}")
 
@@ -250,12 +254,12 @@ class KafkaListener:
     ) -> None:
         futures = set()
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=settings.KAFKA_THREAD_POOL_SIZE,
+            max_workers=int(os.environ.get("KAFKA_THREAD_POOL_SIZE")),
             thread_name_prefix="kafka_listener",
         ) as executor:
             try:
                 while self.running:
-                    if len(futures) < settings.KAFKA_MAX_CONCURRENT_JOBS:
+                    if len(futures) < 100:
                         self._handle_messages(
                             data_consumer=data_consumer,
                             alert_update_consumer=alert_update_consumer,
@@ -321,6 +325,9 @@ class KafkaListener:
         futures: set[concurrent.futures.Future],
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
+        active_alerts = queries.get_active_kafka_table_change_alerts() or []
+        
+        
         if (
             data_message is not None
             and not data_message.error()
@@ -332,9 +339,8 @@ class KafkaListener:
 
             if associated_table_change := next(
                 (
-                    table_change
-                    for table_change in self._get_topic_list()
-                    if table_change == data_message.topic()
+                    alert 
+                    for alert  in active_alerts if alert["topic"] == data_message.topic()
                 ),
                 None,
             ):
@@ -350,7 +356,7 @@ class KafkaListener:
     def _wait_for_futures_to_complete(
         *, futures: set[concurrent.futures.Future]
     ) -> None:
-        if len(futures) >= settings.KAFKA_MAX_CONCURRENT_JOBS:
+        if len(futures) >= 100:
             done, futures = concurrent.futures.wait(
                 futures, return_when=concurrent.futures.FIRST_COMPLETED
             )

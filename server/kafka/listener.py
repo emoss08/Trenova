@@ -15,25 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from multiprocessing import Process
-from typing import Any
-
-from django.core.management import BaseCommand
-
 from kafka import services
 
 
-class Command(BaseCommand):
-    help = "Starts the KafkaListener"
+def handle() -> None:
+    """
+    Start the Kafka listener.
+    """
+    listener = services.KafkaListener()
+    listener.listen()
 
-    def handle(self, *args: Any, **options: Any) -> None:
-        # Close the existing database connections
-        listener = services.KafkaListener()
-        listener.close_old_connections()
-        listener.listen()
-        p = Process(target=listener.listen)
-        p.start()
 
-        # Save the PID to a file
-        with open("kafka_listener_pid.txt", "w") as f:
-            f.write(str(p.pid))
+if __name__ == "__main__":
+    handle()

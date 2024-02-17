@@ -100,7 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    "core.middleware.idempotency_middleware.IdempotencyMiddleware",
+    # "core.middleware.idempotency_middleware.IdempotencyMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -479,51 +479,6 @@ KAFKA_ALERT_UPDATE_TOPIC = env("KAFKA_ALERT_UPDATE_TOPIC")
 KAFKA_AUTO_COMMIT = env("KAFKA_AUTO_COMMIT")
 KAFKA_AUTO_COMMIT_INTERVAL_MS = env("KAFKA_AUTO_COMMIT_INTERVAL_MS")
 KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
-KAFKA_EXCLUDE_TOPIC_PREFIXES = [
-    "trenova_app_.public.silk_",
-    "trenova_app_.public.auditlog_",
-    "trenova_app_.public.admin_",
-    "trenova_app_.public.django_",
-    "trenova_app_.public.auth_",
-    "trenova_app_.public.states",
-    "trenova_app_.public.flag",
-    "trenova_app_.public.user",
-    "trenova_app_.public.a_group",
-    "trenova_app_.public.audit_",
-    "trenova_app_.public.user",
-    "trenova_app_.public.organization",
-    "trenova_app_.public.business_unit",
-    "trenova_app_.public.plugin",
-    "trenova_app_.public.waffle_",
-    "trenova_app_.public.edi",
-    "trenova_app_.public.states",
-    "trenova_app_.public.document",
-    "trenova_app_.public.accounting_control",
-    "trenova_app_.public.billing_control",
-    "trenova_app_.public.doc_template_customization",
-    "trenova_app_.public.scheduled_report",
-    "trenova_app_.public.weekday",
-    "trenova_app_.public.notification_setting",
-    "trenova_app_.public.notification_type",
-    "trenova_app_.public.route_control",
-    "trenova_app_.public.feasibility_tool_control",
-    "trenova_app_.public.google_api",
-    "trenova_app_.public.integration",
-    "trenova_app_.public.shipment_control",
-    "trenova_app_.public.formula_template",
-    "trenova_app_.public.dispatch_control",
-    "trenova_app_.public.email_control",
-    "trenova_app_.public.invoice_control",
-    "trenova_app_.public.table_change_alert",
-    "trenova_app_.public.tax_rate",
-    "trenova_app_.public.template",
-    "trenova_app_.public.custom_report",
-    "trenova_app_.public.feature_flag",
-    "my_connect_offsets",
-    "my_connect_configs",
-    "my_connect_statuses",
-    "__",
-]
 
 # GraphQL Configurations
 GRAPHENE = {

@@ -18,21 +18,21 @@
 from __future__ import annotations
 
 import logging
-import os
 import socket
 from pathlib import Path
-
+import os
 from confluent_kafka import KafkaException, admin
-from django.conf import settings
-from environ import environ
+from dotenv import load_dotenv
 
 from kafka.types import ConsumerGroupMetadata
+from kafka.constants import KAFKA_EXCLUDE_TOPIC_PREFIXES
 
+logging.basicConfig(filename='kafka_manager.log', encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-env = environ.Env()
-ENV_DIR = Path(__file__).parent.parent
-environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
+# Environment Variables
+dotenv_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path)
 
 
 class KafkaManager:
@@ -49,7 +49,6 @@ class KafkaManager:
 
     _instance: KafkaManager | None = None
     __initialized: bool
-    # TODO(Wolfred): Replace this with AIOKAFKA.
 
     def __new__(cls) -> KafkaManager:
         """Creates a new instance of KafkaManager if it doesn't exist already.
@@ -74,8 +73,8 @@ class KafkaManager:
         if self.__initialized:
             return
         self.__initialized = True
-        self.kafka_host = env("KAFKA_HOST")
-        self.kafka_port = env("KAFKA_PORT")
+        self.kafka_host = os.environ.get("KAFKA_HOST", "")
+        self.kafka_port = os.environ.get("KAFKA_PORT", "")
 
     def __str__(self) -> str:
         """Returns the string representation of the KafkaManager instance.
@@ -84,7 +83,7 @@ class KafkaManager:
             str: The string representation of the KafkaManager instance.
         """
 
-        return f"KafkaManager(bootstrap_servers={env('KAFKA_BOOTSTRAP_SERVERS')})"
+        return f"KafkaManager(bootstrap_servers={os.environ.get('KAFKA_BOOTSTRAP_SERVERS')})"
 
     def is_kafka_available(self, *, timeout: int = 5) -> bool:
         """Checks if the Kafka server is available.
@@ -121,7 +120,7 @@ class KafkaManager:
             admin.AdminClient: An instance of the Kafka AdminClient.
         """
 
-        return admin.AdminClient({"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")})
+        return admin.AdminClient({"bootstrap.servers": os.environ.get("KAFKA_BOOTSTRAP_SERVERS")})
 
     def get_available_topics(self) -> list[tuple[str, str]]:
         """Fetches the list of available topics from the Kafka server.
@@ -135,7 +134,7 @@ class KafkaManager:
             list[tuple[str, str]]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
 
-        excluded_prefixes = settings.KAFKA_EXCLUDE_TOPIC_PREFIXES
+        excluded_prefixes = KAFKA_EXCLUDE_TOPIC_PREFIXES
 
         if self.admin_client() is None:
             return []
@@ -165,7 +164,7 @@ class KafkaManager:
             list[tuple[str, str]]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
 
-        excluded_prefixes = settings.KAFKA_EXCLUDE_TOPIC_PREFIXES
+        excluded_prefixes = KAFKA_EXCLUDE_TOPIC_PREFIXES
 
         if self.admin_client() is None:
             return []
@@ -226,14 +225,14 @@ class KafkaManager:
         new_partitions = admin.NewPartitions(topic, new_partitions)
         self.admin_client().create_partitions([new_partitions])
 
-    def list_consumer_groups(self) -> list[str]:
+    def list_consumer_groups(self) -> list[admin._metadata.GroupMetadata]:
         """Lists all consumer group IDs.
 
         Returns:
             list[str]: A list of all consumer group IDs.
         """
 
-        return list(self.admin_client().list_groups().groups.keys())
+        return list(self.admin_client().list_groups())
 
     def describe_topic(self, *, topic_name: str) -> dict[str, str]:
         """Describe a specific topic's configuration.
@@ -251,6 +250,18 @@ class KafkaManager:
             config_entry[0]: config_entry[1].value
             for config_entry in config[topic_name].items()
         }
+
+    def check_topic_exists(self, *, topic_name: str) -> bool:
+        """Check if a topic exists.
+
+        Args:
+            topic_name (str): The name of the topic.
+
+        Returns:
+            bool: True if the topic exists, False otherwise.
+        """
+
+        return topic_name in self.get_available_topics()
 
     def alter_topic_config(
         self, *, topic_name: str, config_dict: dict[str, str]
