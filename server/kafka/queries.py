@@ -17,10 +17,10 @@
 
 
 import os
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from collections.abc import Sequence
 
 import psycopg
 from dotenv import load_dotenv

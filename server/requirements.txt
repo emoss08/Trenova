@@ -42,6 +42,7 @@ psycopg[binary]==3.1.18
 pyftpdlib==1.5.9
 pypdf==4.0.1
 python-dateutil==2.8.2
+python-dotenv==1.0.1
 pytz==2024.1
 redis==5.0.1
 reportlab==4.1.0
@@ -51,4 +52,3 @@ sympy==1.12
 watchfiles==0.21.0
 weasyprint==61.0
 whitenoise==6.6.0
-python-dotenv==1.0.1
