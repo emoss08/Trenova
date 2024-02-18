@@ -43,6 +43,7 @@ debug, error = logger.debug, logger.error
 
 POLL_TIMEOUT = 1.0
 NO_ALERTS_MSG = "No active table change alerts."
+UPDATE_TOPIC = os.environ.get("KAFKA_ALERT_UPDATE_TOPIC")
 
 
 class KafkaListener:
@@ -91,11 +92,7 @@ class KafkaListener:
         Fetch the list of topics to subscribe to. Ensure no empty strings are included.
         """
         active_alerts = queries.get_active_kafka_table_change_alerts() or []
-        alerts = [
-            alert["topic"]
-            for alert in active_alerts
-            if alert["topic"]
-        ]
+        alerts = [alert["topic"] for alert in active_alerts if alert["topic"]]
 
         return alerts
 
@@ -160,7 +157,9 @@ class KafkaListener:
         )
 
     def _process_message(
-        self, data_message: Message, associated_table_change # Change this to the correct type
+        self,
+        data_message: Message,
+        associated_table_change,  # Change this to the correct type
     ) -> None:
         if not data_message.value():
             return
@@ -244,8 +243,8 @@ class KafkaListener:
             debug(NO_ALERTS_MSG)
             return
 
-        alert_update_consumer.subscribe(['trenova_app_.public.table_change_alert'])
-        debug(f"Subscribed to alert update topic: {os.environ.get("KAFKA_ALERT_UPDATE_TOPIC")}")
+        alert_update_consumer.subscribe(["trenova_app_.public.table_change_alert"])
+        debug(f"Subscribed to alert update topic: {UPDATE_TOPIC}")
         data_consumer.subscribe(list(table_changes))
         debug(f"Subscribed to topics: {list(table_changes)}")
 
@@ -327,7 +326,6 @@ class KafkaListener:
     ) -> None:
         active_alerts = queries.get_active_kafka_table_change_alerts() or []
 
-
         if (
             data_message is not None
             and not data_message.error()
@@ -340,7 +338,8 @@ class KafkaListener:
             if associated_table_change := next(
                 (
                     alert
-                    for alert  in active_alerts if alert["topic"] == data_message.topic()
+                    for alert in active_alerts
+                    if alert["topic"] == data_message.topic()
                 ),
                 None,
             ):
