@@ -303,31 +303,33 @@ def get_customer_on_time_performance_diff(
         "this_month_on_time_percentage": this_month_data["on_time_percentage"],
         "last_month_on_time_percentage": last_month_data["on_time_percentage"],
         "on_time_diff": (
-            this_month_data["on_time_percentage"]
-            - last_month_data["on_time_percentage"]
-        )
-        / last_month_data["on_time_percentage"]
-        * 100
-        if last_month_data["on_time_percentage"]
-        else 0.0,
+            (
+                this_month_data["on_time_percentage"]
+                - last_month_data["on_time_percentage"]
+            )
+            / last_month_data["on_time_percentage"]
+            * 100
+            if last_month_data["on_time_percentage"]
+            else 0.0
+        ),
         "this_month_early_percentage": this_month_data["early_percentage"],
         "last_month_early_percentage": last_month_data["early_percentage"],
         "early_diff": (
-            this_month_data["early_percentage"] - last_month_data["early_percentage"]
-        )
-        / last_month_data["early_percentage"]
-        * 100
-        if last_month_data["early_percentage"]
-        else 0.0,
+            (this_month_data["early_percentage"] - last_month_data["early_percentage"])
+            / last_month_data["early_percentage"]
+            * 100
+            if last_month_data["early_percentage"]
+            else 0.0
+        ),
         "this_month_late_percentage": this_month_data["late_percentage"],
         "last_month_late_percentage": last_month_data["late_percentage"],
         "late_diff": (
-            this_month_data["late_percentage"] - last_month_data["late_percentage"]
-        )
-        / last_month_data["late_percentage"]
-        * 100
-        if last_month_data["late_percentage"]
-        else 0.0,
+            (this_month_data["late_percentage"] - last_month_data["late_percentage"])
+            / last_month_data["late_percentage"]
+            * 100
+            if last_month_data["late_percentage"]
+            else 0.0
+        ),
     }
 
 

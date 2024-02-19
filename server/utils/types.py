@@ -120,7 +120,9 @@ class Condition(TypedDict):
 
 class ConditionalLogic(TypedDict):
     name: str  # Name of conditional logic
-    description: str  # Description of Table Change Alert, conditional Logic is associated with
+    description: (
+        str  # Description of Table Change Alert, conditional Logic is associated with
+    )
     model_name: str  # Table of Table Change Alert, conditional Logic is associated with
     app_label: str  # App Name the Table Change Table belongs to.
     conditions: list[Condition]  # List of conditions
