@@ -186,6 +186,7 @@ export function TableChangeAlertForm({
         <FormControl>
           <InputField
             name="emailRecipients"
+            rules={{ required: true }}
             control={control}
             label={t("fields.emailRecipients.label")}
             placeholder={t("fields.emailRecipients.placeholder")}
