@@ -15,8 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from enum import Enum
-
 KAFKA_EXCLUDE_TOPIC_PREFIXES = [
     "trenova_app_.public.silk_",
     "trenova_app_.public.auditlog_",
@@ -61,11 +59,3 @@ KAFKA_EXCLUDE_TOPIC_PREFIXES = [
     "my_connect_statuses",
     "__",
 ]
-
-
-class ActionChoices(str, Enum):
-    INSERT = "INSERT"
-    UPDATE = "UPDATE"
-    DELETE = "DELETE"
-    BOTH = "BOTH"  # INSERT and UPDATE
-    ALL = "ALL"
