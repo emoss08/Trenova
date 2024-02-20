@@ -32,30 +32,31 @@ class Command(BaseCommand):
         parser.add_argument(
             "--count",
             type=int,
-            help="Number of Workers to generate (Default is 10)",
+            help="Number of Locations to generate (Default is 10)",
             default=10,
         )
         parser.add_argument(
             "--organization",
             type=str,
-            help="Name of the organization to use for the workers (Default is Trenova Transportation)",
+            help="Name of the organization to use for the Location (Default is Trenova Transportation)",
             default="Trenova Transportation",
         )
 
     @staticmethod
     def create_system_organization(organization_name: str) -> Organization:
         organization: Organization
-        created: bool
         business_unit = get_or_create_business_unit(bs_name=organization_name)
 
         defaults = {"scac_code": organization_name[:4], "business_unit": business_unit}
-        organization, created = Organization.objects.get_or_create(
+        organization, _ = Organization.objects.get_or_create(
             name=organization_name,
             defaults=defaults,
         )
         return organization
 
-    def create_locations(self, organization: Organization) -> list[Location]:
+    def create_locations(
+        self, organization: Organization, count: int = 10
+    ) -> list[Location]:
         print("Creating locations")
         locations = [
             Location(
@@ -68,11 +69,12 @@ class Command(BaseCommand):
                 state="CA",
                 zip_code="12345",
             )
-            for _ in range(50)
+            for _ in range(count)
         ]
         Location.objects.bulk_create(locations)
 
     def handle(self, *args: Any, **options: Any) -> None:
         organization_name = options["organization"]
+        count = options["count"]
         organization = self.create_system_organization(organization_name)
-        self.create_locations(organization)
+        self.create_locations(organization, count)

@@ -330,11 +330,10 @@ class Command(BaseCommand):
         """
         defaults = {
             "description": "Test Service Type",
-            "code": "EXP",
             "business_unit": organization.business_unit,
         }
         service_type, _ = ServiceType.objects.get_or_create(
-            organization=organization, defaults=defaults
+            organization=organization, code="EXP", defaults=defaults
         )
         return service_type
 
