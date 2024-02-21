@@ -84,7 +84,7 @@ export function TextareaField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
     </>

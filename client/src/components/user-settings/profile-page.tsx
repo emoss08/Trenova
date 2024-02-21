@@ -95,13 +95,13 @@ function PersonalInformation({ user }: { user: User }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-foreground">
             Manage Your User Profile
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Update your personal information here. Rest assured, your privacy is
             our priority. For more details, read our{" "}
-            <a href="#" className="hover:text-foreground underline">
+            <a href="#" className="underline hover:text-foreground">
               Privacy Policy
             </a>
             .
@@ -111,10 +111,10 @@ function PersonalInformation({ user }: { user: User }) {
       </div>
       <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3">
         <div>
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             Personal Information
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Provide accurate personal details to ensure seamless communication
             and service delivery.
           </p>
@@ -126,11 +126,11 @@ function PersonalInformation({ user }: { user: User }) {
               <img
                 src={avatarSrc}
                 alt="User Avatar"
-                className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
+                className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
               />
               <div>
                 <Button size="sm">Change Avatar</Button>
-                <p className="text-muted-foreground mt-2 text-xs leading-5">
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   JPG, GIF or PNG. 1MB max.
                 </p>
               </div>
@@ -225,10 +225,10 @@ function ChangePasswordForm() {
   return (
     <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
       <div>
-        <h2 className="text-foreground text-base font-semibold leading-7">
+        <h2 className="text-base font-semibold leading-7 text-foreground">
           Change password
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-6">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           Update your password associated with your account.
         </p>
       </div>

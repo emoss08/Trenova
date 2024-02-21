@@ -70,7 +70,7 @@ function DeliverySlotItem({
   return (
     <div
       key={field.id}
-      className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+      className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
     >
       <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
         <div className="min-h-[4em]">
@@ -200,7 +200,7 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="mb-4 text-6xl">
+            <span className="text-6xl mb-4">
               <FontAwesomeIcon icon={faTriangleExclamation} />
             </span>
             <p className="mb-4">

@@ -131,6 +131,5 @@ export {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 };
-

@@ -97,7 +97,7 @@ export function LocationContactForm({
                   <div className="min-h-[4em]">
                     <Button
                       size="sm"
-                      className="bg-background hover:bg-background text-red-600 hover:text-red-700"
+                      className="bg-background text-red-600 hover:bg-background hover:text-red-700"
                       type="button"
                       onClick={() => remove(index)}
                     >
@@ -119,7 +119,7 @@ export function LocationContactForm({
         </>
       ) : (
         <div className="mt-48 flex grow flex-col items-center justify-center">
-          <span className="mb-4 text-6xl">
+          <span className="text-6xl mb-4">
             <FontAwesomeIcon icon={faOctagonExclamation} />
           </span>
           <p className="mb-4">No contacts yet. Please add a new contact.</p>

@@ -152,7 +152,7 @@ function TableExportModalBody({
       <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
         <FontAwesomeIcon
           icon={faLoader}
-          className="text-foreground size-20 animate-spin"
+          className="size-20 animate-spin text-foreground"
         />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
@@ -201,7 +201,7 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="text-foreground/70 mt-1 text-xs">
+        <p className="mt-1 text-xs text-foreground/70">
           Select a format to export (CSV, Excel, or PDF).
         </p>
         <div className="mt-5 flex justify-end gap-4 border-t pt-2">

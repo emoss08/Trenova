@@ -48,11 +48,11 @@ export function DataNotFound({
 }) {
   return (
     <div className="my-10 text-center">
-      <Icon className="text-foreground mx-auto size-10" />
-      <h3 className="text-foreground mt-2 text-sm font-semibold">
+      <Icon className="mx-auto size-10 text-foreground" />
+      <h3 className="mt-2 text-sm font-semibold text-foreground">
         No {upperFirst(name)}
       </h3>
-      <p className="text-muted-foreground mt-1 text-sm">{message}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{message}</p>
       <div className="mt-3">
         <Button
           className="mt-3"
@@ -120,12 +120,12 @@ export function ErrorLoadingData({ message }: { message?: string }) {
     <div className="text-center">
       <FontAwesomeIcon
         icon={faTriangleExclamation}
-        className="text-accent-foreground mx-auto size-10"
+        className="mx-auto size-10 text-accent-foreground"
       />
-      <p className="text-accent-foreground mt-2 font-semibold">
+      <p className="mt-2 font-semibold text-accent-foreground">
         Well, this is embarrassing...
       </p>
-      <p className="text-muted-foreground mt-2">
+      <p className="mt-2 text-muted-foreground">
         {message || "There was an error loading the data."}
       </p>
     </div>

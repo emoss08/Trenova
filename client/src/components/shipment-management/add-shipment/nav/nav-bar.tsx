@@ -65,7 +65,7 @@ export function ShipmentAsideMenu({
         isScrolled && "pt-10",
       )}
     >
-      <div className="bg-card text-card-foreground rounded-lg border p-2">
+      <div className="rounded-lg border bg-card p-2 text-card-foreground">
         <nav className="lg:flex-col lg:space-y-2">
           {Object.entries(tabs).map(([tabKey, tabInfo]) => (
             <div key={tabKey} className="space-y-2">
@@ -85,7 +85,7 @@ export function ShipmentAsideMenu({
                   <span>{tabInfo.icon}</span>
                   <span>{tabInfo.name}</span>
                 </div>
-                <div className="text-muted-foreground text-xs">
+                <div className="text-xs text-muted-foreground">
                   {tabInfo.description}
                 </div>
               </div>

@@ -116,7 +116,7 @@ function CalendarGrid({ state, ...props }: CalendarGridProps) {
         <tr className="flex">
           {weekDays.map((day, index) => (
             <th
-              className="text-muted-foreground w-9 rounded-md text-[0.8rem] font-normal"
+              className="w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground"
               key={index}
             >
               {day}

@@ -106,7 +106,7 @@ export function StopCard({
                         <span>
                           <FontAwesomeIcon
                             icon={faEllipsisV}
-                            className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
+                            className="size-5 text-muted-foreground hover:cursor-pointer hover:text-foreground"
                           />
                         </span>
                       </TooltipTrigger>
@@ -122,7 +122,7 @@ export function StopCard({
                   <DropdownMenuItem disabled>Add Comment</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openRemoveAlert(index)}
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive font-semibold"
+                    className="font-semibold text-destructive focus:bg-destructive/10 focus:text-destructive"
                   >
                     Remove
                   </DropdownMenuItem>

@@ -84,7 +84,7 @@ export function CheckboxInput<T extends FieldValues>({
           </span>
         )}
         {description && (
-          <p className="text-muted-foreground select-none text-wrap text-sm">
+          <p className="select-none text-wrap text-sm text-muted-foreground">
             {description}
           </p>
         )}

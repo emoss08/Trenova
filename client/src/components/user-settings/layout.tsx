@@ -36,7 +36,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faUser}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -46,7 +46,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faStarHalf}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -56,7 +56,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBellRing}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -66,7 +66,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faRightLeft}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -76,7 +76,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faSatelliteDish}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -86,7 +86,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faShieldHalved}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },
@@ -96,7 +96,7 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGear}
-        className="text-muted-foreground group-hover:text-foreground size-4"
+        className="size-4 text-muted-foreground group-hover:text-foreground"
       />
     ),
   },

@@ -59,7 +59,7 @@ function LocationColor({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: color }}

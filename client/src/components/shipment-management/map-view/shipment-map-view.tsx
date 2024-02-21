@@ -127,9 +127,9 @@ export function ShipmentMapView() {
         <div className="flex flex-col items-center justify-center text-center">
           <FontAwesomeIcon
             icon={faSpinnerThird}
-            className="text-foreground size-14 animate-spin"
+            className="size-14 animate-spin text-foreground"
           />
-          <p className="text-foreground mt-4 font-medium">Loading Map...</p>
+          <p className="mt-4 font-medium text-foreground">Loading Map...</p>
         </div>
       </div>
     </>
@@ -149,7 +149,7 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
+              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
             }
           />
         </div>

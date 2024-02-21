@@ -72,7 +72,7 @@ export function CustomerContactForm() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+                  className="my-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -151,7 +151,7 @@ export function CustomerContactForm() {
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
-                        className="bg-background hover:bg-background text-red-600 hover:text-red-700"
+                        className="bg-background text-red-600 hover:bg-background hover:text-red-700"
                         type="button"
                         onClick={() => remove(index)}
                       >
@@ -174,7 +174,7 @@ export function CustomerContactForm() {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="mb-4 text-6xl">
+            <span className="text-6xl mb-4">
               <FontAwesomeIcon icon={faTriangleExclamation} />
             </span>
             <p className="mb-4">No contacts yet. Please add a new contacts.</p>

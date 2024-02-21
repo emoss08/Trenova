@@ -131,7 +131,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
-              <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-[1px]" />
+              <div className="absolute inset-y-0 right-8 mt-1.5 h-6 w-[1px] bg-border" />
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -167,7 +167,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         </Popover>
       </div>
       {props.description && !fieldState.invalid && (
-        <p className="text-foreground/70 text-xs">{props.description}</p>
+        <p className="text-xs text-foreground/70">{props.description}</p>
       )}
       {fieldState.invalid && (
         <ErrorMessage formError={fieldState.error?.message} />

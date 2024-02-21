@@ -138,7 +138,7 @@ function ResetPasswordPage() {
               Remember your password?&nbsp;
               <InternalLink
                 to="/login"
-                className="text-primary font-medium underline underline-offset-4 hover:decoration-blue-500"
+                className="font-medium text-primary underline underline-offset-4 hover:decoration-blue-500"
               >
                 Login instead
               </InternalLink>

@@ -58,7 +58,7 @@ export type SelectOption = {
 export function Option({ ...props }: OptionProps) {
   return (
     <components.Option {...props}>
-      <div className="hover:bg-accent relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm">
+      <div className="relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
         {props.label}
         {props.isSelected && (
           <CheckIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />
@@ -148,7 +148,7 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
  * @constructor SelectDescription
  */
 export function SelectDescription({ description }: { description: string }) {
-  return <p className="text-foreground/70 text-xs">{description}</p>;
+  return <p className="text-xs text-foreground/70">{description}</p>;
 }
 
 /**
@@ -208,7 +208,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
     <components.LoadingMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-accent-foreground text-xs">
+        <p className="text-xs text-accent-foreground">
           {children || "Loading..."}
         </p>
       </div>
@@ -239,7 +239,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-accent-foreground text-xs">
+        <p className="text-xs text-accent-foreground">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -402,7 +402,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal"
+      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

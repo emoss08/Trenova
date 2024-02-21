@@ -25,7 +25,7 @@ export function LoadingPage() {
         icon={faSpinner}
         spin
         size="2x"
-        className="text-primary mb-2"
+        className="mb-2 text-primary"
       />
       <div className="text-xl font-semibold">
         Crafting your experience... Please hold on.

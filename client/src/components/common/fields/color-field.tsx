@@ -84,7 +84,7 @@ export function ColorField<T extends FieldValues>({
         />
         {field.value && (
           <>
-            <div className="bg-border absolute inset-y-0 right-10 my-2 h-6 w-[1px]" />
+            <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-border" />
             <div
               className="absolute right-0 top-0 mx-2 mt-2 size-5 rounded-xl"
               style={{ backgroundColor: field.value }}
@@ -95,11 +95,11 @@ export function ColorField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="z-100 absolute mt-2 w-auto">
+        <div ref={popoverRef} className="absolute z-100 mt-2 w-auto">
           <HexColorPicker
             color={field.value}
             onChange={handleColorPickerChange}
