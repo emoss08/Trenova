@@ -15,12 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ChevronDown } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -29,10 +23,17 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { CheckIcon } from "@radix-ui/react-icons";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { faChevronDown } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { CheckIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
 
 type FilterOption = {
   value: string | boolean | number;
@@ -54,9 +55,9 @@ function Filter({ title, options, loading }: FilterOptions) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
+        <div className="flex items-center space-x-0.5 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
           <span className="truncate">{title}</span>
-          <ChevronDown className="size-4" />
+          <FontAwesomeIcon icon={faChevronDown} className="size-4" />
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">

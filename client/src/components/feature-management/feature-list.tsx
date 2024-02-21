@@ -17,8 +17,9 @@
 
 import { useFeatureFlags } from "@/hooks/useQueries";
 import { FeatureFlag } from "@/types/organization";
+import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DOMPurify from "dompurify";
-import { InfoIcon } from "lucide-react";
 import { Label } from "../common/fields/label";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
@@ -74,7 +75,7 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
           </Label>
         </div>
         <div>
-          <button className="text-sm text-primary hover:underline hover:decoration-lime-600">
+          <button className="text-sm text-primary hover:underline hover:decoration-blue-600">
             Send Feedback
           </button>
         </div>
@@ -85,14 +86,15 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
 
 export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
+
   return (
     <>
       <Alert className="mb-5">
-        <InfoIcon className="size-5" />
+        <FontAwesomeIcon icon={faCircleInfo} className="size-4" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
           All features marked{" "}
-          <u className="font-bold underline decoration-lime-600">Paid Only</u>{" "}
+          <u className="font-bold underline decoration-blue-600">Paid Only</u>{" "}
           are only available to non-paid users during the beta phase. Once the
           beta phase is over, these features will be available to paid users
           only.
@@ -100,7 +102,7 @@ export default function FeatureList() {
       </Alert>
       <ul
         role="list"
-        className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+        className="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
       >
         {(featureFlagsData as FeatureFlag[]) &&
           (featureFlagsData as FeatureFlag[]).map((featureFlag) => (

@@ -23,7 +23,7 @@
 
     * {
         @apply border-border;
-        font-family: 'Geist Variable';
+        font-family: 'Geist Variable', sans-serif;
     }
 
     body {
@@ -34,13 +34,29 @@
         display: none;
     }
 
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    /* Set different font for password input */
+    input[type="password"] {
+        font-family: 'Geist Variable Mono', sans-serif;
+      }
+    input[type="password"]::placeholder {
+        font-family: 'Geist Variable', sans-serif;
+      }
+
     :root {
         --background: 0 0% 100%;
         --foreground: 240 10% 3.9%;
         --card: 0 0% 100%;
         --card-foreground: 240 10% 3.9%;
-        --alert: 240 4.8% 98%;
-        --alert-foreground: 240 5.9% 10%;
         --popover: 0 0% 100%;
         --popover-foreground: 240 10% 3.9%;
         --primary: 240 5.9% 10%;
@@ -53,35 +69,52 @@
         --accent-foreground: 240 5.9% 10%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --success: 142 70.6% 45.3%;
         --border: 240 5.9% 90%;
         --input: 240 5.9% 90%;
         --ring: 240 5.9% 10%;
         --radius: 0.5rem;
     }
 
-
-    .dark {
-        --background: 0 0% 11%;
+    .dark-plus {
+        --background: 240 10% 3.9%;
         --foreground: 0 0% 98%;
-        --card: 0 0% 14%;
+        --card: 240 10% 3.9%;
         --card-foreground: 0 0% 98%;
-        --alert: 25 95% 53%;
-        --alert-foreground: 25 95% 53%;
-        --popover: 0 0% 14%;
+        --popover: 240 10% 3.9%;
         --popover-foreground: 0 0% 98%;
         --primary: 0 0% 98%;
         --primary-foreground: 240 5.9% 10%;
-        --secondary: 0 0% 14%;
+        --secondary: 240 3.7% 15.9%;
         --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 23%;
+        --muted: 240 3.7% 15.9%;
         --muted-foreground: 240 5% 64.9%;
-        --accent: 0 0% 23%;
+        --accent: 240 3.7% 15.9%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 240 4.9% 83.9%;
+    }
+
+    .dark {
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 0 0% 98%;
+        --primary-foreground: 240 5.9% 10%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --accent: 240 3.7% 15.9%;
         --accent-foreground: 0 0% 98%;
         --destructive: 0 62.8% 50.6%;
         --destructive-foreground: 0 0% 98%;
-        --success: 142 70.6% 45.3%;
-        --border: 0 0% 25%;
+        --border: 240 3.7% 15.9%;
         --input: 240 3.7% 15.9%;
         --ring: 240 4.9% 83.9%;
     }

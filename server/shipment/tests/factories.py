@@ -110,12 +110,11 @@ class ShipmentFactory(factory.django.DjangoModelFactory):
     destination_appointment_window_start = timezone.now() + timedelta(days=1)
     destination_appointment_window_end = timezone.now() + timedelta(days=1)
     customer = factory.SubFactory("customer.factories.CustomerFactory")
-    equipment_type = factory.SubFactory(
-        "equipment.tests.factories.EquipmentTypeFactory"
-    )
+    trailer_type = factory.SubFactory("equipment.tests.factories.EquipmentTypeFactory")
     bol_number = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
     pieces = 1
+    weight = 2
 
 
 class ShipmentCommentFactory(factory.django.DjangoModelFactory):

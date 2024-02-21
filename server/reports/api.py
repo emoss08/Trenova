@@ -264,8 +264,13 @@ def generate_report_api(request: Request) -> Response:
             },
             status=status.HTTP_202_ACCEPTED,
         )
-    except exceptions.ValidationError as exc:
-        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+    except exceptions.ValidationError:
+        return Response(
+            {
+                "error": "Invalid request data. Please try again.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     except OperationalError as op_exc:
         logger.error(f"Exception in generate_report_api: {op_exc}")
         return Response(
@@ -342,7 +347,7 @@ class LogEntryViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.LogEntrySerializer
     http_method_names = ["get"]
 
-    def get_queryset(self) -> "QuerySet[models.UserReport]":
+    def get_queryset(self) -> "QuerySet[LogEntry]":
         """Returns the queryset for the viewset.
 
         Returns:
@@ -350,15 +355,11 @@ class LogEntryViewSet(viewsets.ModelViewSet):
         """
 
         model_name = self.request.query_params.get("model_name", None)
-        app_label = self.request.query_params.get("app_label", None)
 
         if not model_name:
             raise exceptions.ValidationError("Query parameter 'model_name' is required")
-        if not app_label:
-            raise exceptions.ValidationError("Query parameter 'app_label' is required")
 
         return get_audit_logs_by_model_name(
             model_name=model_name,
-            app_label=app_label,
             organization_id=self.request.user.organization_id,  # type: ignore
         )

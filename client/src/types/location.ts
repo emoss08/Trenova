@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { MinimalUser } from "@/types/accounts";
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
-import { MinimalUser } from "@/types/accounts";
 
 export interface LocationCategory extends BaseModel {
   id: string;
@@ -118,4 +118,15 @@ export type USStates = {
   abbreviation: string;
   country_name: string;
   county_iso3: string;
+};
+
+export type GoogleAutoCompleteResult = {
+  address: string;
+  name: string;
+  placeId: string;
+};
+
+export type MonthlyPickupData = {
+  name: string;
+  total: number;
 };

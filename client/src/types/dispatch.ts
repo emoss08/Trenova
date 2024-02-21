@@ -15,13 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TRateMethodChoices } from "@/lib/constants";
-import { BaseModel } from "./organization";
-import { StatusChoiceProps } from "@/types/index";
 import {
   FeasibilityOperatorChoiceProps,
   ServiceIncidentControlChoiceProps,
+  SeverityChoiceProps,
 } from "@/lib/choices";
+import { TRateMethodChoices } from "@/lib/constants";
+import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "./organization";
 
 export type DispatchControl = {
   id: string;
@@ -79,6 +80,7 @@ export interface CommentType extends BaseModel {
   name: string;
   status: StatusChoiceProps;
   description: string;
+  severity: SeverityChoiceProps;
   created: string;
   modified: string;
 }

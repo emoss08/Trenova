@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as yup from "yup";
+import { CodeTypeProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 import {
   ReasonCodeFormValues,
   ServiceTypeFormValues,
   ShipmentTypeFormValues,
 } from "@/types/order";
-import { StatusChoiceProps } from "@/types";
-import { CodeTypeProps } from "@/lib/choices";
+import * as yup from "yup";
 
 export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
   .object()

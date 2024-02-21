@@ -124,9 +124,12 @@ def test_generate_report_task_failure(generate_report: Mock, user: User) -> None
     # Mock generate_report to throw an OperationalError
     generate_report.side_effect = ServiceException()
 
-    with patch(
-        "reports.tasks.generate_report_task.retry", side_effect=Retry()
-    ) as generate_report_retry, pytest.raises(Retry):
+    with (
+        patch(
+            "reports.tasks.generate_report_task.retry", side_effect=Retry()
+        ) as generate_report_retry,
+        pytest.raises(Retry),
+    ):
         tasks.generate_report_task(
             model_name="InvalidModel",
             columns=[

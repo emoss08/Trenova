@@ -14,15 +14,18 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from django.db.models import Count, Prefetch, Q, QuerySet
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
-from shipment import models, serializers
+from shipment import models, selectors, serializers
+from stops.models import Stop
+from utils.models import StatusChoices
 
 
 class ShipmentControlViewSet(viewsets.ModelViewSet):
@@ -79,6 +82,7 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ShipmentTypeSerializer
     filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("status, code",)
 
     def get_queryset(self) -> "QuerySet[models.ShipmentType]":
         queryset = self.queryset.filter(
@@ -138,6 +142,44 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     search_fields = ("pro_number", "customer__name", "bol_number")
 
     @action(detail=False, methods=["get"])
+    def get_new_pro_number(self, request: Request) -> Response:
+        """Get the latest pro number
+
+        Args:
+            request(Request): Request objects
+
+        Returns:
+            Response: Response Object
+        """
+        new_pro_number = selectors.next_pro_number(organization=request.user.organization_id)  # type: ignore
+
+        return Response({"pro_number": new_pro_number}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["POST"])
+    def check_duplicate_bol(self, request: Request) -> Response:
+        """Check for duplicate bol_number
+
+        Args:
+            request(Request): Request objects
+
+        Returns:
+            Response: Response Object
+        """
+        bol_number = request.data.get("bol_number")
+
+        if models.Shipment.objects.filter(
+            bol_number=bol_number,
+            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS],
+            organization_id=request.user.organization_id,  # type: ignore
+        ).exists():
+            return Response(
+                {"valid": False, "message": "BOL Number already exists"},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"])
     def get_shipment_count_by_status(self, request: Request) -> Response:
         """
         Get the total shipment count per status for the organization, with optional search filtering.
@@ -145,6 +187,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         Returns:
             Response: A response object containing the shipment count per status, along with the status representation.
         """
+
+        user_org = request.user.organization_id  # type: ignore
 
         if search_query := request.query_params.get("search"):
             search_conditions = (
@@ -157,17 +201,13 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             filtered_queryset = self.queryset
 
         shipment_count_by_status = (
-            filtered_queryset.filter(
-                organization_id=request.user.organization_id  # type: ignore
-            )
+            filtered_queryset.filter(organization_id=user_org)
             .values("status")
             .annotate(count=Count("status"))
             .order_by("status")
         )
 
-        total_order_count = filtered_queryset.filter(
-            organization_id=request.user.organization_id  # type: ignore
-        ).count()
+        total_order_count = filtered_queryset.filter(organization_id=user_org).count()
 
         return Response(
             {
@@ -177,42 +217,35 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self) -> "QuerySet[models.Shipment]":
+        user_org = self.request.user.organization_id  # type: ignore
+
         queryset = (
-            self.queryset.filter(
-                organization_id=self.request.user.organization_id  # type: ignore
-            )
+            self.queryset.filter(organization_id=user_org)
             .prefetch_related(
                 Prefetch(
-                    "additional_charges",
-                    queryset=models.AdditionalCharge.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
-                ),
-                Prefetch(
                     lookup="movements",
-                    queryset=Movement.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
+                    queryset=Movement.objects.filter(organization_id=user_org)
+                    .prefetch_related(
+                        Prefetch(
+                            lookup="stops",
+                            queryset=Stop.objects.filter(
+                                organization_id=user_org
+                            ).all(),
+                        )
                     )
-                    .only("id", "shipment_id", "organization_id")
                     .all(),
                 ),
                 Prefetch(
                     lookup="shipment_documentation",
                     queryset=models.ShipmentDocumentation.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id")
-                    .all(),
+                        organization_id=user_org
+                    ).all(),
                 ),
                 Prefetch(
                     lookup="shipment_comments",
                     queryset=models.ShipmentComment.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    )
-                    .only("id", "shipment_id", "organization_id", "created")
-                    .all(),
+                        organization_id=user_org
+                    ).all(),
                 ),
             )
             .order_by("pro_number")
@@ -346,9 +379,38 @@ class ServiceTypeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ServiceTypeSerializer
     filterset_fields = ("status", "code")
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("status, code",)
 
     def get_queryset(self) -> "QuerySet[models.ServiceType]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         )
         return queryset
+
+
+class FormulaTemplateViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Formula Templates in the system.
+
+    The viewset provides default operations for creating, updating and deleting Formula Templates,
+    as well as listing and retrieving Formula Templates. It uses the ``FormulaTemplateSerializer``
+    class to convert the Formula Template instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by formula template by name, and status.
+
+    Attributes:
+        queryset (QuerySet): A queryset of FormulaTemplate objects that will be used to
+        retrieve and update FormulaTemplate objects.
+
+        serializer_class (FormulaTemplateSerializer): A serializer class that will be used to
+        convert FormulaTemplate objects to and from JSON-formatted data.
+    """
+
+    queryset = models.FormulaTemplate.objects.all()
+    serializer_class = serializers.FormulaTemplateSerializer
+    filterset_fields = (
+        "name",
+        "shipment_type",
+        "customer",
+        "template_type",
+    )

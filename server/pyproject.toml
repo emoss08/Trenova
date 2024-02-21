@@ -37,7 +37,6 @@ exclude = '''
 '''
 
 [tool.ruff]
-ignore = ["E501"]
 exclude = [
     ".bzr",
     ".direnv",

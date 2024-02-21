@@ -125,7 +125,6 @@ export function FleetCodeForm({
             control={control}
             label="Manager"
             options={selectUsersData}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Manager"

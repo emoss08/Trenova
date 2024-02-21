@@ -15,9 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CodeTypeProps } from "@/lib/choices";
+import { CodeTypeProps, ShipmentStatusChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { BaseModel } from "./organization";
+import { StopFormValues } from "./stop";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -81,49 +83,91 @@ export interface Shipment extends BaseModel {
   proNumber: string;
   shipmentType: string;
   serviceType?: string | null;
-  status: string;
+  status: ShipmentStatusChoiceProps;
   revenueCode?: string | null;
   originLocation?: string | null;
-  originAddress?: string;
+  originAddress?: string | null;
   originAppointmentWindowStart: string;
   originAppointmentWindowEnd: string;
   destinationLocation?: string | null;
-  destinationAddress?: string;
+  destinationAddress?: string | null;
   destinationAppointmentWindowStart: string;
   destinationAppointmentWindowEnd: string;
   ratingUnits: number;
   rate?: string | null;
   mileage?: number | null;
-  otherChargeAmount: string;
+  otherChargeAmount?: string | null;
   freightChargeAmount?: string | null;
-  rateMethod?: string;
+  rateMethod?: string | null;
   customer: string;
-  pieces: number;
-  weight: string;
+  pieces?: number | null;
+  weight?: string | null;
   readyToBill: boolean;
   billDate?: string | null;
   shipDate?: string | null;
   billed: boolean;
   transferredToBilling: boolean;
-  billingTransferDate?: Date | null;
-  subTotal: string;
-  equipmentType: string;
+  billingTransferDate?: string | null;
+  subTotal?: string | null;
+  trailer?: string | null;
+  trailerType: string;
+  tractorType?: string | null;
   commodity?: string | null;
   enteredBy: string;
   hazardousMaterial?: string | null;
   temperatureMin?: string | null;
   temperatureMax?: string | null;
   bolNumber: string;
-  consigneeRefNumber?: string;
-  comment?: string;
-  voidedComm?: string;
+  consigneeRefNumber?: string | null;
+  comment?: string | null;
+  voidedComm?: string | null;
   autoRate: boolean;
-  currentSuffix?: string;
+  currentSuffix?: string | null;
   formulaTemplate?: string | null;
   entryMethod: string;
+  copyAmount?: number | null;
+  stops?: StopFormValues[] | null;
 }
+
+export type ShipmentFormValues = Omit<
+  Shipment,
+  | "id"
+  | "organization"
+  | "billDate"
+  | "shipDate"
+  | "billed"
+  | "transferredToBilling"
+  | "billingTransferDate"
+  | "currentSuffix"
+  | "created"
+  | "modified"
+>;
+
+export type ShipmentFormProps = {
+  control: Control<ShipmentFormValues>;
+  setValue: UseFormSetValue<ShipmentFormValues>;
+  watch: UseFormWatch<ShipmentFormValues>;
+};
 
 export type ShipmentSearchForm = {
   searchQuery: string;
   statusFilter: string;
+};
+
+export interface FormulaTemplate extends BaseModel {
+  id: string;
+  name: string;
+  formulaText: string;
+  description?: string;
+  templateType: string;
+  customer?: string | null;
+  shipmentType?: string | null;
+  autoApply: boolean;
+}
+
+export type ShipmentPageTab = {
+  name: string;
+  component: React.ComponentType;
+  icon: JSX.Element;
+  description: string;
 };

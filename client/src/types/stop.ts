@@ -15,8 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BaseModel } from "@/types/organization";
+import { ShipmentStatusChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 
 export interface QualifierCode extends BaseModel {
   id: string;
@@ -29,3 +30,47 @@ export type QualifierCodeFormValues = Omit<
   QualifierCode,
   "id" | "organization" | "created" | "modified"
 >;
+
+export type StopTypeProps = "P" | "SP" | "SD" | "D" | "DO";
+
+export interface Stop extends BaseModel {
+  id: string;
+  status: ShipmentStatusChoiceProps;
+  sequence?: number | null;
+  movement: string;
+  location?: string | null;
+  pieces?: number | null;
+  weight?: string | null;
+  addressLine?: string | null;
+  appointmentTimeWindowStart: string;
+  appointmentTimeWindowEnd: string;
+  arrivalTime?: string | null;
+  departureTime?: string | null;
+  stopType: StopTypeProps;
+  stopComments?: StopCommentFormValues[] | null;
+}
+
+export type StopFormValues = Omit<
+  Stop,
+  "id" | "organization" | "created" | "modified" | "movement"
+>;
+
+export interface StopComment extends BaseModel {
+  id: string;
+  qualifierCode: string;
+  value: string;
+}
+
+export type StopCommentFormValues = Omit<
+  StopComment,
+  "id" | "organization" | "created" | "modified"
+>;
+
+export interface ServiceIncident extends BaseModel {
+  id: string;
+  movement: string;
+  stop: string;
+  delayCode?: string | null;
+  delayReason?: string;
+  delayTime?: any | null;
+}

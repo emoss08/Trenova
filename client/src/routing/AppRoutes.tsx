@@ -33,8 +33,9 @@ const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const UserPreferencesPage = lazy(
   () => import("../pages/users/UserPreferences"),
 );
+const AddShipmentPage = lazy(() => import("@/pages/shipment/AddShipment"));
 
-// Admin Page
+/* Admin Pages */
 const FeatureManagementPage = lazy(
   () => import("../pages/admin/FeatureManagement"),
 );
@@ -317,6 +318,14 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Management",
     element: <ShipmentManagementPage />,
     permission: "view_shipment",
+  },
+  {
+    title: "Add New Shipment",
+    group: "Shipment Management",
+    path: "/shipment-management/new-shipment",
+    description: "Add New Shipment",
+    element: <AddShipmentPage />,
+    permission: "add_shipment",
   },
   {
     title: "Commodity Codes",

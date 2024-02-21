@@ -24,8 +24,9 @@ import axios from "@/lib/axiosConfig";
 import { TOAST_STYLE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { resetPasswordSchema } from "@/lib/validations/AccountsSchema";
+import { faLoader } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -35,7 +36,6 @@ type FormValues = {
 };
 
 export function ResetPasswordForm() {
-  // const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const { control, handleSubmit } = useForm({
@@ -110,7 +110,10 @@ export function ResetPasswordForm() {
         <Button disabled={isLoading} className="my-2 w-full">
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <FontAwesomeIcon
+                icon={faLoader}
+                className="mr-2 size-4 animate-spin"
+              />
               Sending Email
             </>
           ) : (
@@ -135,7 +138,7 @@ function ResetPasswordPage() {
               Remember your password?&nbsp;
               <InternalLink
                 to="/login"
-                className="font-medium text-primary underline underline-offset-4 hover:decoration-lime-500"
+                className="font-medium text-primary underline underline-offset-4 hover:decoration-blue-500"
               >
                 Login instead
               </InternalLink>

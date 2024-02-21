@@ -34,7 +34,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MapLayer, MapType, useShipmentMapStore } from "@/stores/ShipmentStore";
-import { ComponentIcon } from "lucide-react";
+import { faCommand } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function MapOptionsButton() {
   return (
@@ -42,7 +43,7 @@ function MapOptionsButton() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button size="icon">
-            <ComponentIcon size={24} />
+            <FontAwesomeIcon icon={faCommand} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">

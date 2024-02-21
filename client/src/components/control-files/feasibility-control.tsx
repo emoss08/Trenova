@@ -66,7 +66,7 @@ function FeasibilityControlForm({
 
   return (
     <form
-      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
+      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -86,6 +86,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpwCriteria"
               control={control}
+              type="number"
               label="Miles Per Week Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Week Criteria"
@@ -107,6 +108,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpdCriteria"
               control={control}
+              type="number"
               label="Miles Per Day Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Day Criteria"
@@ -128,6 +130,7 @@ function FeasibilityControlForm({
             <InputField
               name="mpgCriteria"
               control={control}
+              type="number"
               label="Miles Per Gallon Criteria"
               rules={{ required: true }}
               placeholder="Miles Per Gallon Criteria"
@@ -149,6 +152,7 @@ function FeasibilityControlForm({
             <InputField
               name="otpCriteria"
               control={control}
+              type="number"
               label="On-Time Percentage Criteria"
               rules={{ required: true }}
               placeholder="On-Time Percentage Criteria"

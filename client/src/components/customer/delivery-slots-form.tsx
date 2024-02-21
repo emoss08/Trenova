@@ -15,22 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Control, useFieldArray } from "react-hook-form";
+import {
+  Control,
+  UseFieldArrayRemove,
+  useFieldArray,
+  useFormContext,
+} from "react-hook-form";
 import { TimeField } from "../common/fields/input";
 
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
-import { CustomerFormValues as FormValues } from "@/types/customer";
+import { CustomerFormValues } from "@/types/customer";
+import {
+  faInfo,
+  faTriangleExclamation,
+} from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { AlertOctagonIcon, InfoIcon } from "lucide-react";
 import { SelectInput } from "../common/fields/select-input";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
 
 function DeliverySlotAlert() {
   return (
-    <Alert className="my-5">
-      <InfoIcon className="size-5" />
+    <Alert className="my-2">
+      <FontAwesomeIcon icon={faInfo} className="size-5" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -40,18 +50,113 @@ function DeliverySlotAlert() {
   );
 }
 
-export function DeliverySlotForm({
+function DeliverySlotItem({
   control,
-  open,
+  index,
+  field,
+  selectLocationData,
+  isLocationsLoading,
+  isLocationError,
+  remove,
 }: {
-  control: Control<FormValues>;
-  open: boolean;
+  control: Control<CustomerFormValues>;
+  index: number;
+  field: Record<string, any>;
+  selectLocationData: { value: string; label: string }[];
+  isLocationsLoading: boolean;
+  isLocationError: boolean;
+  remove: UseFieldArrayRemove;
 }) {
+  return (
+    <div
+      key={field.id}
+      className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
+    >
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <SelectInput
+            name={`deliverySlots.${index}.dayOfWeek`}
+            rules={{ required: true }}
+            control={control}
+            label="Day of Week"
+            options={DayOfWeekChoices}
+            placeholder="Select Day of week"
+            description="Specify the operational day of the week for customer transactions."
+            isClearable={false}
+            menuPlacement="bottom"
+            menuPosition="fixed"
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <SelectInput
+            name={`deliverySlots.${index}.location`}
+            rules={{ required: true }}
+            control={control}
+            label="Location"
+            options={selectLocationData}
+            isFetchError={isLocationError}
+            isLoading={isLocationsLoading}
+            placeholder="Select Location"
+            description="Select the delivery location from the predefined list."
+            isClearable={false}
+            menuPlacement="bottom"
+            menuPosition="fixed"
+            hasPopoutWindow
+            popoutLink="/dispatch/locations/"
+            popoutLinkLabel="Location"
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <TimeField
+            rules={{ required: true }}
+            control={control}
+            name={`deliverySlots.${index}.startTime`}
+            label="Start Time"
+            placeholder="Start Time"
+            description="Enter the commencement time for the delivery window."
+          />
+        </div>
+      </div>
+      <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
+        <div className="min-h-[4em]">
+          <TimeField
+            rules={{ required: true }}
+            control={control}
+            name={`deliverySlots.${index}.endTime`}
+            label="End Time"
+            placeholder="End Time"
+            description="Enter the concluding time for the delivery window."
+          />
+        </div>
+      </div>
+      <div className="flex max-w-sm flex-col justify-between gap-1">
+        <div className="min-h-[2em]">
+          <Button
+            size="sm"
+            variant="link"
+            type="button"
+            onClick={() => remove(index)}
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DeliverySlotForm({ open }: { open: boolean }) {
+  const { control } = useFormContext<CustomerFormValues>();
+
   const {
     selectLocationData,
     isLoading: isLocationsLoading,
     isError: isLocationError,
-  } = useLocations(open);
+  } = useLocations("A", open);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -69,88 +174,20 @@ export function DeliverySlotForm({
       <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
-            <div className="max-h-[500px] overflow-y-auto">
+            <ScrollArea className="h-[55vh] p-4">
               {fields.map((field, index) => (
-                <div
+                <DeliverySlotItem
                   key={field.id}
-                  className="my-4 grid grid-cols-2 gap-2 border-b pb-2"
-                >
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`deliverySlots.${index}.dayOfWeek`}
-                        rules={{ required: true }}
-                        control={control}
-                        label="Day of Week"
-                        options={DayOfWeekChoices}
-                        placeholder="Select Day of week"
-                        description="Specify the operational day of the week for customer transactions."
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`deliverySlots.${index}.location`}
-                        rules={{ required: true }}
-                        control={control}
-                        label="Location"
-                        options={selectLocationData}
-                        isFetchError={isLocationError}
-                        isLoading={isLocationsLoading}
-                        placeholder="Select Location"
-                        description="Select the delivery location from the predefined list."
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
-                        hasPopoutWindow
-                        popoutLink="/dispatch/locations/" // TODO: Change once Document Classification is added.
-                        popoutLinkLabel="Location"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
-                        control={control}
-                        name={`deliverySlots.${index}.startTime`}
-                        label="Start Time"
-                        placeholder="Start Time"
-                        description="Enter the commencement time for the delivery window."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <TimeField
-                        rules={{ required: true }}
-                        control={control}
-                        name={`deliverySlots.${index}.endTime`}
-                        label="End Time"
-                        placeholder="End Time"
-                        description="Enter the concluding time for the delivery window."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex max-w-sm flex-col justify-between gap-1">
-                    <div className="min-h-[4em]">
-                      <Button
-                        size="sm"
-                        className="bg-background text-red-600 hover:bg-background hover:text-red-700"
-                        type="button"
-                        onClick={() => remove(index)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                  control={control}
+                  index={index}
+                  field={field}
+                  selectLocationData={selectLocationData}
+                  isLocationsLoading={isLocationsLoading}
+                  isLocationError={isLocationError}
+                  remove={remove}
+                />
               ))}
-            </div>
+            </ScrollArea>
             <Button
               type="button"
               size="sm"
@@ -164,7 +201,7 @@ export function DeliverySlotForm({
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <span className="text-6xl mb-4">
-              <AlertOctagonIcon />
+              <FontAwesomeIcon icon={faTriangleExclamation} />
             </span>
             <p className="mb-4">
               No delivery slots yet. Please add a new devliery slot.

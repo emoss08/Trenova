@@ -34,7 +34,7 @@ export type DataTableProps<K> = {
   columns: ColumnDef<K>[];
   name: string;
   link: API_ENDPOINTS;
-  queryKey: QueryKeys;
+  queryKey: QueryKeys | string;
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;
   TableSheet?: React.ComponentType<TableSheetProps>;

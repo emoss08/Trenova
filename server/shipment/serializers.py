@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 from rest_framework import serializers
 
-from movements.models import Movement
+from movements.serializers import MovementSerializer
 from shipment import models
 from utils.serializers import GenericSerializer
 
@@ -169,42 +169,15 @@ class ReasonCodeSerializer(GenericSerializer):
 
 
 class ShipmentSerializer(GenericSerializer):
-    """A serializer for the `Order` model.
+    """A serializer for the `Shipment` model.
 
-    A serializer class for the shipment Model. This serializer is used
+    A serializer class for the Shipment Model. This serializer is used
     to convert the shipment model instances into a Python dictionary
     format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
     """
 
-    additional_charges = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=models.AdditionalCharge.objects.all(),
-        help_text="Additional charges for the shipment",
-        required=False,
-        allow_null=True,
-    )
-    movements = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Movement.objects.all(),
-        help_text="Movements for the shipment",
-        required=False,
-        allow_null=True,
-    )
-    shipment_documentation = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=models.ShipmentDocumentation.objects.all(),
-        help_text="Documentation for the shipment",
-        required=False,
-        allow_null=True,
-    )
-    shipment_comments = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=models.ShipmentComment.objects.all(),
-        help_text="Comments for the shipment",
-        required=False,
-        allow_null=True,
-    )
+    movements = MovementSerializer(many=True, required=False)
 
     class Meta:
         """Metaclass for ShipmentSerializer
@@ -215,7 +188,12 @@ class ShipmentSerializer(GenericSerializer):
 
         model = models.Shipment
         fields = "__all__"
-        read_only_fields = ("organization", "business_unit")
+        read_only_fields = (
+            "organization",
+            "business_unit",
+            "temperature_min",
+            "temperature_max",
+        )
         extra_kwargs = {
             "organization": {"required": False},
             "business_unit": {"required": False},
@@ -315,6 +293,31 @@ class ServiceTypeSerializer(GenericSerializer):
         """
 
         model = models.ServiceType
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
+
+
+class FormulaTemplateSerializer(GenericSerializer):
+    """A serializer for the `FormulaTemplate` model.
+
+    A serializer class for the FormulaTemplate Model. This serializer is used
+    to convert the FormulaTemplate model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+    """
+
+    class Meta:
+        """Metaclass for Formula Template Serializer
+
+        Attributes:
+            model (models.FormulaTemplate): The model that the serializer is for.
+        """
+
+        model = models.FormulaTemplate
         fields = "__all__"
         read_only_fields = ("organization", "business_unit")
         extra_kwargs = {

@@ -73,6 +73,11 @@ class OrganizationConfig(AppConfig):
             sender="organization.Depot",
             dispatch_uid="create_depot_detail",
         )
+        post_save.connect(
+            signals.create_google_api,
+            sender="organization.Organization",
+            dispatch_uid="create_google_api",
+        )
 
         # Table Change Alerts
         post_save.connect(

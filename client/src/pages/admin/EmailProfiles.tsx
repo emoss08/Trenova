@@ -22,7 +22,6 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmailProfile } from "@/types/organization";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -81,21 +80,17 @@ const columns: ColumnDef<EmailProfile>[] = [
 export default function EmailProfiles() {
   return (
     <AdminLayout>
-      <Card>
-        <CardContent>
-          <DataTable
-            queryKey="email-profile-table-data"
-            columns={columns}
-            link="/email_profiles/"
-            name="Email Profile"
-            exportModelName="EmailProfile"
-            filterColumn="name"
-            TableSheet={EmailProfileDialog}
-            TableEditSheet={EmailProfileTableEditDialog}
-            addPermissionName="add_emailprofile"
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        queryKey="email-profile-table-data"
+        columns={columns}
+        link="/email_profiles/"
+        name="Email Profile"
+        exportModelName="EmailProfile"
+        filterColumn="name"
+        TableSheet={EmailProfileDialog}
+        TableEditSheet={EmailProfileTableEditDialog}
+        addPermissionName="add_emailprofile"
+      />
     </AdminLayout>
   );
 }

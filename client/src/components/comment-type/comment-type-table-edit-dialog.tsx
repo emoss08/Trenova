@@ -47,6 +47,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
       status: commentType.status,
       name: commentType.name,
       description: commentType.description,
+      severity: commentType.severity,
     },
   });
 

@@ -15,11 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ErrorMessage, Input } from "@/components/common/fields/input";
+import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
-import { cn, useClickOutside } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import * as React from "react";
+import { useInteractOutside } from "react-aria";
 import { HexColorPicker } from "react-colorful";
 import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
@@ -27,6 +27,7 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 
 export type ColorFieldProps<T extends FieldValues> = {
   label?: string;
@@ -41,8 +42,12 @@ export function ColorField<T extends FieldValues>({
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const { field, fieldState } = useController(props);
 
-  const close = React.useCallback(() => setShowPicker(false), []);
-  useClickOutside(popoverRef, close);
+  useInteractOutside({
+    ref: popoverRef,
+    onInteractOutside: () => {
+      setShowPicker(false);
+    },
+  });
 
   // Handler for HexColorPicker
   const handleColorPickerChange = (newColor: string) => {
@@ -81,18 +86,13 @@ export function ColorField<T extends FieldValues>({
           <>
             <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-border" />
             <div
-              className="absolute right-0 top-0 mx-2 my-2.5 size-5 rounded-xl"
+              className="absolute right-0 top-0 mx-2 mt-2 size-5 rounded-xl"
               style={{ backgroundColor: field.value }}
             />
           </>
         )}
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>

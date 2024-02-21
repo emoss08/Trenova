@@ -95,7 +95,6 @@ export function DCForm({
             control={control}
             label="Cash Account"
             options={glAccounts}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Cash Account"
@@ -112,7 +111,6 @@ export function DCForm({
             control={control}
             label="AP Account"
             options={glAccounts}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select AP Account"
@@ -129,7 +127,6 @@ export function DCForm({
             control={control}
             label="Expense Account"
             options={glAccounts}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Expense Account"

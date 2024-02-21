@@ -28,19 +28,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { statusChoices } from "@/lib/choices";
+import { severityChoices, statusChoices } from "@/lib/choices";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { CommentTypeFormValues as FormValues } from "@/types/dispatch";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "../ui/form";
 
 export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -51,8 +52,20 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
             description="Status of the Comment Type"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
+          <SelectInput
+            name="severity"
+            rules={{ required: true }}
+            control={control}
+            label="Severity"
+            options={severityChoices}
+            placeholder="Select Severity Level"
+            description="Severity level of the Comment Type"
+            isClearable={false}
+          />
+        </FormControl>
+        <FormControl className="col-span-full">
           <InputField
             control={control}
             rules={{ required: true }}
@@ -66,9 +79,9 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
             autoComplete="name"
             description="Unique name for the Comment Type"
           />
-        </div>
-      </div>
-      <div className="my-2">
+        </FormControl>
+      </FormGroup>
+      <FormControl className="col-span-full">
         <TextareaField
           name="description"
           rules={{ required: true }}
@@ -77,8 +90,8 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
           placeholder="Description"
           description="Description of the Comment Type"
         />
-      </div>
-    </div>
+      </FormControl>
+    </Form>
   );
 }
 
@@ -90,6 +103,7 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       status: "A",
       name: "",
+      severity: "L",
       description: "",
     },
   });

@@ -1,21 +1,3 @@
-"""
-COPYRIGHT 2022 Trenova
-
-This file is part of Trenova.
-
-Trenova is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Trenova is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Trenova.  If not, see <https://www.gnu.org/licenses/>.
-"""
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2024 Trenova                                                                       -
 #                                                                                                  -
@@ -33,35 +15,47 @@ along with Trenova.  If not, see <https://www.gnu.org/licenses/>.
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-#
-# import pytest
-#
-# from integration.models import Integration
-# from integration.utils import IntegrationBase
-#
-#
-# class TestIntegrationBase:
-#     """
-#     Test the IntegrationBase utility class.
-#     """
-#
-#     def test_check_method(self):
-#         """
-#         Test the _check method.
-#         """
-#         integration_base = IntegrationBase()
-#         integration_base.headers = {"test": "test"}
-#         integration_base.model = Integration
-#         integration_base._check()
-#         assert integration_base.headers == {"test": "test"}
-#         assert integration_base.model == Integration
-#
-#     def test_check_with_invalid_data(self):
-#         """
-#         Test the _check method with invalid data.
-#         """
-#         integration_base = IntegrationBase()
-#         integration_base.headers = "test"
-#         integration_base.model = "test"
-#         with pytest.raises(TypeError):
-#             integration_base._check()
+KAFKA_EXCLUDE_TOPIC_PREFIXES = [
+    "trenova_app_.public.silk_",
+    "trenova_app_.public.auditlog_",
+    "trenova_app_.public.admin_",
+    "trenova_app_.public.django_",
+    "trenova_app_.public.auth_",
+    "trenova_app_.public.states",
+    "trenova_app_.public.flag",
+    "trenova_app_.public.user",
+    "trenova_app_.public.a_group",
+    "trenova_app_.public.audit_",
+    "trenova_app_.public.user",
+    "trenova_app_.public.organization",
+    "trenova_app_.public.business_unit",
+    "trenova_app_.public.plugin",
+    "trenova_app_.public.waffle_",
+    "trenova_app_.public.edi",
+    "trenova_app_.public.states",
+    "trenova_app_.public.document",
+    "trenova_app_.public.accounting_control",
+    "trenova_app_.public.billing_control",
+    "trenova_app_.public.doc_template_customization",
+    "trenova_app_.public.scheduled_report",
+    "trenova_app_.public.weekday",
+    "trenova_app_.public.notification_setting",
+    "trenova_app_.public.notification_type",
+    "trenova_app_.public.route_control",
+    "trenova_app_.public.feasibility_tool_control",
+    "trenova_app_.public.google_api",
+    "trenova_app_.public.integration",
+    "trenova_app_.public.shipment_control",
+    "trenova_app_.public.formula_template",
+    "trenova_app_.public.dispatch_control",
+    "trenova_app_.public.email_control",
+    "trenova_app_.public.invoice_control",
+    "trenova_app_.public.tax_rate",
+    "trenova_app_.public.template",
+    "trenova_app_.public.custom_report",
+    "trenova_app_.public.feature_flag",
+    "my_connect_offsets",
+    "my_connect_configs",
+    "my_connect_statuses",
+    "__",
+]

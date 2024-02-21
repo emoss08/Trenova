@@ -17,7 +17,7 @@
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TimezoneChoices, timezoneChoices } from "@/lib/constants";
-import { QueryKeys } from "@/types";
+import { QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -75,7 +75,10 @@ function PersonalInformation({ user }: { user: User }) {
       method: "PATCH",
       path: `/users/${user.id}/`,
       successMessage: "User profile updated successfully.",
-      queryKeysToInvalidate: ["users", user.id] as QueryKeys[],
+      queryKeysToInvalidate: ["users", user.id] as QueryKeyWithParams<
+        "users",
+        [string]
+      >,
       closeModal: true,
       errorMessage: "Failed to update user profile.",
     },
@@ -84,7 +87,6 @@ function PersonalInformation({ user }: { user: User }) {
 
   const onSubmit = (values: UserSettingFormValues) => {
     setIsSubmitting(true);
-    console.info(values);
     reset(values);
     mutation.mutate(values);
   };

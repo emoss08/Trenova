@@ -3,7 +3,6 @@
 *.iml
 .idea
 client/client.iml
-.vscode
 test.http
 typings
 frontend
@@ -12,3 +11,7 @@ backend/bin/air
 .coverage
 server/core/management/commands/get_memory_usage.py
 Trenova.session.sql
+client/stats.html
+server/rate-confirmation.pdf
+server/test.py
+client/.npmrc

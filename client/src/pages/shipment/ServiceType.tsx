@@ -20,7 +20,6 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-dialog";
 import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { ServiceType } from "@/types/order";
@@ -85,21 +84,17 @@ const filters: FilterConfig<ServiceType>[] = [
 
 export default function ServiceTypes() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="service-type-table-data"
-          columns={columns}
-          link="/service_types/"
-          name="Service Types"
-          exportModelName="ServiceType"
-          filterColumn="code"
-          tableFacetedFilters={filters}
-          TableSheet={ServiceTypeDialog}
-          TableEditSheet={ServiceTypeEditDialog}
-          addPermissionName="add_servicetype"
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="service-type-table-data"
+      columns={columns}
+      link="/service_types/"
+      name="Service Types"
+      exportModelName="ServiceType"
+      filterColumn="code"
+      tableFacetedFilters={filters}
+      TableSheet={ServiceTypeDialog}
+      TableEditSheet={ServiceTypeEditDialog}
+      addPermissionName="add_servicetype"
+    />
   );
 }

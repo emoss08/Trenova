@@ -63,7 +63,7 @@ export function ShipmentMapAside() {
     isLoading: isDispatchControlDataLoading,
     isError: isDispatchControlError,
   } = useQuery({
-    queryKey: ["dispatchControl"] as QueryKeys[],
+    queryKey: ["dispatchControl"] as QueryKeys,
     queryFn: async () => getDispatchControl(),
     initialData: (): DispatchControl[] | undefined =>
       queryClient.getQueryData(["dispatchControl"]),

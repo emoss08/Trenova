@@ -20,6 +20,7 @@ import { ACTableEditDialog } from "@/components/accessorial-charges/ac-table-edi
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/constants";
 import { truncateText, USDollarFormatString } from "@/lib/utils";
@@ -30,11 +31,10 @@ import {
   FuelMethodChoicesProps,
 } from "@/utils/apps/billing";
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/common/table/data-table-components";
 
 function DetentionBadge({ isDetention }: { isDetention: boolean }) {
   return (
-    <Badge variant={isDetention ? "default" : "destructive"}>
+    <Badge variant={isDetention ? "default" : "inactive"}>
       {isDetention ? "Yes" : "No"}
     </Badge>
   );

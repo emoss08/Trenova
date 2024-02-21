@@ -112,7 +112,7 @@ export default function SettingsLayout({
       <SidebarNav links={links} />
       <main className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <Suspense fallback={<Skeleton className="h-[1000px] w-full" />}>
+          <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
             {children}
           </Suspense>
         </div>

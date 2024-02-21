@@ -16,27 +16,34 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { Location, LocationCategory, USStates } from "@/types/location";
+import {
+  GoogleAutoCompleteResult,
+  Location,
+  LocationCategory,
+  MonthlyPickupData,
+  USStates,
+} from "@/types/location";
 
 /**
  * Fetches locations from the server.
  * @returns A promise that resolves to an array of locations.
  */
-export async function getLocations(): Promise<Location[]> {
+export async function getLocations(
+  locationStatus: string,
+): Promise<Location[]> {
   const response = await axios.get("/locations/", {
     params: {
-      status: "A",
-      limit: "all",
+      status: locationStatus,
     },
   });
   return response.data.results;
 }
 
-type MonthlyPickupData = {
-  name: string;
-  total: number;
-};
-
+/**
+ * Fetches location pickup data from the server.
+ * @param locationId The location id to fetch pickup data for.
+ * @returns A promise that resolves to an array of monthly pickup data.
+ */
 export async function getLocationPickupData(
   locationId: string,
 ): Promise<MonthlyPickupData[]> {
@@ -46,6 +53,10 @@ export async function getLocationPickupData(
   return response.data;
 }
 
+/**
+ * Fetches location categories from the server.
+ * @returns A promise that resolves to an array of location categories.
+ */
 export async function getLocationCategories(): Promise<LocationCategory[]> {
   const response = await axios.get("/location_categories/", {
     params: {
@@ -55,6 +66,11 @@ export async function getLocationCategories(): Promise<LocationCategory[]> {
   return response.data.results;
 }
 
+/**
+ * Fetches US states from the server.
+ * @param limit The number of states to fetch.
+ * @returns A promise that resolves to an array of US states.
+ */
 export async function getUSStates(limit: number = 100): Promise<USStates[]> {
   const response = await axios.get("/states/", {
     params: {
@@ -62,4 +78,21 @@ export async function getUSStates(limit: number = 100): Promise<USStates[]> {
     },
   });
   return response.data.results;
+}
+
+/**
+ * Fetches auto completed location results from the server.
+ * @param searchQuery The search query to use for the auto complete.
+ * @returns A promise that resolves to an array of auto complete results.
+ */
+export async function searchLocation(
+  searchQuery: string,
+): Promise<GoogleAutoCompleteResult> {
+  const response = await axios.get("/location/auto_complete/", {
+    params: {
+      search: searchQuery,
+    },
+  });
+
+  return response.data;
 }

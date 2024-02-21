@@ -30,7 +30,6 @@ from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories, models
-from equipment.tests.factories import EquipmentTypeFactory
 from organization.models import BusinessUnit, Organization
 from shipment.tests.factories import ShipmentTypeFactory
 
@@ -41,7 +40,6 @@ def test_rate_create(organization: Organization, business_unit: BusinessUnit) ->
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
 
     rate = models.Rate.objects.create(
         business_unit=business_unit,
@@ -51,7 +49,6 @@ def test_rate_create(organization: Organization, business_unit: BusinessUnit) ->
         expiration_date=timezone.now().date(),
         commodity=commodity,
         shipment_type=shipment_type,
-        equipment_type=equipment_type,
         comments="Test Rate",
     )
 
@@ -61,7 +58,6 @@ def test_rate_create(organization: Organization, business_unit: BusinessUnit) ->
     assert rate.customer == customer
     assert rate.commodity == commodity
     assert rate.shipment_type == shipment_type
-    assert rate.equipment_type == equipment_type
     assert rate.comments == "Test Rate"
 
 
@@ -72,12 +68,10 @@ def test_rate_update(rate: models.Rate) -> None:
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
 
     rate.customer = customer
     rate.commodity = commodity
     rate.shipment_type = shipment_type
-    rate.equipment_type = equipment_type
     rate.comments = "Test Rate Update"
 
     rate.save()
@@ -86,7 +80,6 @@ def test_rate_update(rate: models.Rate) -> None:
     assert rate.customer == customer
     assert rate.commodity == commodity
     assert rate.shipment_type == shipment_type
-    assert rate.equipment_type == equipment_type
     assert rate.comments == "Test Rate Update"
 
 
@@ -106,7 +99,6 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
 
     data = {
         "organization": organization.id,
@@ -115,7 +107,6 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
         "expiration_date": timezone.now().date(),
         "commodity": commodity.id,
         "shipment_type": shipment_type.id,
-        "equipment_type": equipment_type.id,
         "comments": "Test Rate",
     }
 
@@ -135,7 +126,6 @@ def test_rate_api_create_with_tables(
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
 
     response = api_client.post(
@@ -147,7 +137,6 @@ def test_rate_api_create_with_tables(
             "expiration_date": timezone.now().date(),
             "commodity": commodity.id,
             "shipment_type": shipment_type.id,
-            "equipment_type": equipment_type.id,
             "comments": "Test Rate 01",
             "rate_billing_tables": [
                 {
@@ -190,14 +179,12 @@ def test_rate_api_update(api_client: APIClient, rate: models.Rate) -> None:
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
 
     data = {
         "customer": customer.id,
         "commodity": commodity.id,
         "shipment_type": shipment_type.id,
-        "equipment_type": equipment_type.id,
         "comments": "Test Rate Update",
         "rate_billing_tables": [
             {

@@ -16,9 +16,9 @@
  */
 
 import axios from "@/lib/axiosConfig";
+import { createWebsocketManager } from "@/lib/websockets";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useNavigate } from "react-router-dom";
-import { createWebsocketManager } from "@/lib/websockets";
 
 const webSocketManager = createWebsocketManager();
 
@@ -43,7 +43,7 @@ export function useLogout() {
 
       webSocketManager.disconnectFromAll();
     } catch (exception) {
-      console.error(exception);
+      console.error("[Trenova] Logout", exception);
     }
   };
 }

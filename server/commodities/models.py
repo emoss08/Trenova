@@ -339,7 +339,7 @@ class Commodity(GenericModel):
             raise ValidationError(
                 {
                     "is_hazmat": _(
-                        "Commodity is marked as hazardous, but no hazardous material is selected."
+                        "Commodity is marked as hazardous, but no hazardous material is selected. Please try again."
                     )
                 }
             )
@@ -349,7 +349,7 @@ class Commodity(GenericModel):
             raise ValidationError(
                 {
                     "min_temp": _(
-                        "Minimum temperature cannot be greater than maximum temperature."
+                        "Minimum temperature cannot be greater than maximum temperature. Please try again."
                     )
                 }
             )

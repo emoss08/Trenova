@@ -17,8 +17,8 @@
 
 import { ShipmentAsideMenus } from "@/components/shipment-management/map-view/shipment-aside-menu";
 import { ShipmentList } from "@/components/shipment-management/shipment-list";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { ShipmentSearchForm } from "@/types/order";
+import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
 export function ShipmentListView({
   finalStatuses,
@@ -34,7 +34,7 @@ export function ShipmentListView({
   watch: UseFormWatch<ShipmentSearchForm>;
 }) {
   return (
-    <div className="flex">
+    <div className="flex w-full space-x-10">
       <div className="w-1/4">
         <ShipmentAsideMenus
           control={control}

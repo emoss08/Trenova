@@ -171,7 +171,7 @@ export default function LoginPage() {
               Do not have an account yet?&nbsp;
               <a
                 href="#"
-                className="text-sm font-semibold text-primary underline underline-offset-4 hover:decoration-lime-500"
+                className="text-primary text-sm font-semibold underline underline-offset-4 hover:decoration-blue-500"
               >
                 Create an Account
               </a>
@@ -179,17 +179,17 @@ export default function LoginPage() {
             <UserAuthForm />
           </CardContent>
         </Card>
-        <p className="w-[350px] px-8 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground w-[350px] px-8 text-center text-sm">
           By clicking continue, you agree to our&nbsp;
           <a
-            className="underline underline-offset-4 hover:text-primary"
+            className="hover:text-primary underline underline-offset-4"
             href="/terms"
           >
             Terms of Service
           </a>
           &nbsp; and&nbsp;
           <a
-            className="underline underline-offset-4 hover:text-primary"
+            className="hover:text-primary underline underline-offset-4"
             href="/privacy"
           >
             Privacy Policy

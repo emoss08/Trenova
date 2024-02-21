@@ -22,25 +22,24 @@ import { upperFirst } from "@/lib/utils";
 import { getLocationPickupData } from "@/services/LocationRequestService";
 import { MinimalUser } from "@/types/accounts";
 import { Location, LocationComment } from "@/types/location";
+import { faLoader } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Row } from "@tanstack/react-table";
-import { Loader2 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ErrorLoadingData } from "../common/table/data-table-components";
+import { Suspense, lazy } from "react";
+import { ErrorLoadingData } from "../../common/table/data-table-components";
+
+const TableBarChart = lazy(() => import("../chart/bar-chart"));
+
+function classNames(...classes: (string | boolean)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 function SkeletonLoader() {
   return (
     <div className="mt-20 flex flex-col items-center justify-center">
-      <Loader2 className="mr-2 size-4 animate-spin" />
+      <FontAwesomeIcon icon={faLoader} spin className="mr-2 size-4" />
       <p className="mt-2 font-semibold text-accent-foreground">
         Loading Chart...
       </p>
@@ -49,10 +48,6 @@ function SkeletonLoader() {
       </p>
     </div>
   );
-}
-
-function classNames(...classes: (string | boolean)[]) {
-  return classes.filter(Boolean).join(" ");
 }
 
 function UserAvatar({ user }: { user: MinimalUser }) {
@@ -134,10 +129,10 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
   );
 }
 
-export function LocationChart({ row }: { row: Row<Location> }) {
+export default function LocationChart({ row }: { row: Row<Location> }) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ["locationPickupData", row.original.id],
     queryFn: async () => getLocationPickupData(row.original.id),
     enabled: row.original.id !== undefined,
@@ -160,36 +155,10 @@ export function LocationChart({ row }: { row: Row<Location> }) {
 
   return (
     <div className="mt-7 flex border-b">
-      <div className="col-xs-push-3 flex-1">
-        <h2 className="scroll-m-20 pb-2 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
-          Monthly Pickups
-        </h2>
-        {isLoading ? (
-          <SkeletonLoader />
-        ) : (
-          <ResponsiveContainer width="100%" height={350} className="mt-5">
-            <BarChart data={data}>
-              <XAxis
-                dataKey="name"
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="total" fill="#84cc16" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
+      {/* Container for Bar Chart */}
+      <Suspense fallback={<SkeletonLoader />}>
+        {data && <TableBarChart data={data} />}
+      </Suspense>
       {/* Container for Recent Comments */}
       <div className="flex-1">
         <h2 className="scroll-m-20 pl-5 text-2xl font-semibold tracking-tight first:mt-0">

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
-import NotificationSound from "@/assets/audio/notification.webm";
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
 import { InternalLink } from "@/components/ui/link";
@@ -44,19 +42,11 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
+import { faBell } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
-import { Howl } from "howler";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-const sound = new Howl({
-  src: [NotificationSound, NotificationSoundMp3],
-  volume: 0.2,
-  format: ["webm", "mp3"],
-  mute: false,
-});
 
 const webSocketManager = createWebsocketManager();
 
@@ -128,8 +118,8 @@ function NotificationButton({
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime-400 opacity-100"></span>
-                <span className="relative inline-flex size-2.5 rounded-full bg-lime-600 ring-1 ring-background"></span>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
+                <span className="relative inline-flex size-2.5 rounded-full bg-green-600 ring-1 ring-background"></span>
               </span>
             )}
           </Button>
@@ -186,9 +176,12 @@ function NotificationContent({
       )}
       {userHasNotifications && (
         <div className="flex items-center justify-center border-t pt-2 text-center">
-          <Button onClick={readAllNotifications} className="w-full">
-            <FontAwesomeIcon icon={faCheck} className="mr-2 size-4" /> Mark all
-            as read
+          <Button
+            onClick={readAllNotifications}
+            variant="link"
+            className="w-full"
+          >
+            Mark all as read
           </Button>
         </div>
       )}
@@ -270,8 +263,6 @@ export function NotificationMenu() {
                   },
                 );
               });
-
-            sound.play();
           },
 
           onClose: (event: CloseEvent) => {
@@ -340,7 +331,7 @@ export function NotificationMenu() {
         />
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 bg-background p-4"
+        className="w-80 bg-popover p-3"
         sideOffset={10}
         alignOffset={-40}
         align="end"

@@ -20,16 +20,12 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { useUsers, useUSStates } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 
-export function CustomerInfoForm({
-  control,
-  open,
-}: {
-  control: Control<FormValues>;
-  open: boolean;
-}) {
+export function CustomerInfoForm({ open }: { open: boolean }) {
+  const { control } = useFormContext<FormValues>();
+
   const {
     selectUsersData,
     isError: isUserError,

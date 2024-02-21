@@ -162,7 +162,7 @@ class ShipmentControl(GenericModel):
         Returns:
             str: Shipment control string representation
         """
-        return textwrap.wrap(self.organization.name, 50)[0]
+        return textwrap.shorten(f"{self.organization}", 50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Shipment Control absolute url
@@ -441,6 +441,8 @@ class Shipment(GenericModel):
         decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
+        null=True,
+        blank=True,
     )
     freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
@@ -469,14 +471,16 @@ class Shipment(GenericModel):
     pieces = models.PositiveIntegerField(
         _("Pieces"),
         help_text=_("Total Piece Count of the Shipment"),
-        default=0,
+        null=True,
+        blank=True,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
         help_text=_("Total Weight of the Shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     ready_to_bill = models.BooleanField(
         _("Ready to Bill"),
@@ -520,13 +524,23 @@ class Shipment(GenericModel):
     )
 
     # Dispatch Information
-    equipment_type = models.ForeignKey(
+    trailer_type = models.ForeignKey(
         "equipment.EquipmentType",
         on_delete=models.PROTECT,
         related_name="shipments",
         related_query_name="shipment",
-        verbose_name=_("Equipment Type"),
-        help_text=_("Equipment Type"),
+        verbose_name=_("Trailer Type"),
+        help_text=_("Type of trailer for the shipment."),
+    )
+    tractor_type = models.ForeignKey(
+        "equipment.EquipmentType",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="tractor_type_shipments",
+        related_query_name="tractor_type_shipment",
+        verbose_name=_("Tractor Type"),
+        help_text=_("Type of tractor for the shipment."),
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -556,18 +570,14 @@ class Shipment(GenericModel):
         blank=True,
         help_text=_("Hazardous Class"),
     )
-    temperature_min = models.DecimalField(
+    temperature_min = models.PositiveIntegerField(
         _("Minimum Temperature"),
-        max_digits=10,
-        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Minimum Temperature"),
     )
-    temperature_max = models.DecimalField(
+    temperature_max = models.PositiveIntegerField(
         _("Maximum Temperature"),
-        max_digits=10,
-        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Maximum Temperature"),
@@ -643,8 +653,15 @@ class Shipment(GenericModel):
         ]
         indexes = [
             models.Index(fields=["status"], name="shipment_status_idx"),
-            models.Index(fields=["bill_date"], name="bill_date_idx"),
-            models.Index(fields=["ship_date"], name="ship_date_idx"),
+            models.Index(
+                fields=["bill_date", "organization"], name="bill_date_org_idx"
+            ),
+            models.Index(
+                fields=["ship_date", "organization"], name="ship_date_org_idx"
+            ),
+            models.Index(
+                fields=["bol_number", "organization"], name="bol_number_org_idx"
+            ),
         ]
 
     def __str__(self) -> str:

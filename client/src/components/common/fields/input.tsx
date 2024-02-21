@@ -14,24 +14,24 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import * as React from "react";
-
-import { cn } from "@/lib/utils";
-import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { faEye, faEyeSlash } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import * as React from "react";
+import {
+  Controller,
   FieldValues,
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 import { Label } from "./label";
-
-export function ErrorMessage({ formError }: { formError?: string }) {
-  return (
-    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
-      {formError ? formError : "An Error has occurred. Please try again."}
-    </div>
-  );
-}
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -66,7 +66,7 @@ export function InputField<T extends FieldValues>({
   icon,
   ...props
 }: ExtendedInputProps & UseControllerProps<T>) {
-  const { field, fieldState } = useController(props);
+  const { fieldState } = useController(props);
 
   return (
     <>
@@ -87,23 +87,24 @@ export function InputField<T extends FieldValues>({
             {icon}
           </div>
         )}
-        <Input
-          {...field}
-          className={cn(
-            icon && "pl-10",
-            fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
+        <Controller
+          name={props.name}
+          control={props.control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              className={cn(
+                icon && "pl-10",
+                fieldState.invalid &&
+                  "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+                props.className,
+              )}
+              {...props}
+            />
           )}
-          {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
@@ -148,12 +149,7 @@ export function FileField<T extends FieldValues>({
           {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
@@ -193,12 +189,7 @@ export function TimeField<T extends FieldValues>({
           {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
@@ -251,26 +242,32 @@ export function PasswordField<T extends FieldValues>({
             {...props}
           />
           {field.value && !fieldState.invalid && (
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
-              onClick={togglePasswordVisibility}
-            >
-              {showPassword ? (
-                <EyeOffIcon className="size-4" />
-              ) : (
-                <EyeIcon className="size-4" />
-              )}
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
+                    ) : (
+                      <FontAwesomeIcon icon={faEye} className="size-4" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>
+                    {showPassword ? "Hide" : "Show"} {props.label}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>

@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { shipmentStatusToReadable } from "@/lib/utils";
+import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
-import { QueryKeys } from "@/types";
+import { QueryKeyWithParams } from "@/types";
 import { ShipmentSearchForm } from "@/types/order";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +36,10 @@ function FilterOptions({
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["shipmentCountByStatus", searchQuery] as QueryKeys[],
+    queryKey: ["shipmentCountByStatus", searchQuery] as QueryKeyWithParams<
+      "shipmentCountByStatus",
+      [string]
+    >,
     queryFn: async () => getShipmentCountByStatus(searchQuery),
     staleTime: Infinity,
   });
@@ -72,9 +75,10 @@ function FilterOptions({
     <div className="flex flex-col space-y-4">
       <Button
         variant="outline"
-        className={`flex w-full select-none flex-row items-center justify-between hover:bg-foreground hover:text-background ${
-          selectedStatus === null ? "bg-foreground text-background" : ""
-        }`}
+        className={cn(
+          "hover:bg-foreground hover:text-background flex w-full select-none flex-row items-center justify-between",
+          selectedStatus === null ? "bg-foreground text-background" : "",
+        )}
         onClick={() => {
           setValue("statusFilter", "");
           setSelectedStatus(null);
@@ -88,9 +92,10 @@ function FilterOptions({
           <Button
             key={status}
             variant="outline"
-            className={`flex w-full flex-row justify-between hover:bg-foreground hover:text-background ${
-              selectedStatus === status && "bg-foreground text-background"
-            }`}
+            className={cn(
+              "hover:bg-foreground hover:text-background flex w-full flex-row justify-between",
+              selectedStatus === status && "bg-foreground text-background",
+            )}
             onClick={() => {
               setValue("statusFilter", status);
               setSelectedStatus(status);

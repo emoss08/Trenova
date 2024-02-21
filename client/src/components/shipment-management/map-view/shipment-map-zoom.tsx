@@ -16,20 +16,20 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { faPlus } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleMap } from "@google";
 
-// Components that control the zoom in and out for the map.
 export function ShipmentMapZoom({ map }: { map: GoogleMap }) {
-  if (!map) return null; // This will handle the case when map is not yet loaded
+  if (!map) return null;
 
   return (
     <div className="flex flex-col space-y-2">
       <Button size="icon" onClick={() => map.setZoom(map.getZoom() + 1)}>
-        <PlusIcon size={24} />
+        <FontAwesomeIcon icon={faPlus} />
       </Button>
       <Button size="icon" onClick={() => map.setZoom(map.getZoom() - 1)}>
-        <MinusIcon size={24} />
+        <FontAwesomeIcon icon={faPlus} />
       </Button>
     </div>
   );

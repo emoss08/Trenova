@@ -19,8 +19,9 @@ import { useUserFavorites } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
+import { faCircleExclamation } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { UserFavorite } from "../../types/accounts";
@@ -63,7 +64,7 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="group hidden h-8 w-[250px] items-center justify-between rounded-md border border-border bg-secondary px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
+            className="group hidden h-8 w-[250px] items-center justify-between rounded-md border border-muted-foreground/20 bg-secondary px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent md:flex"
           >
             <div className="flex items-center">
               <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
@@ -180,7 +181,10 @@ export function SiteSearch() {
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
-              <AlertCircle className="mx-auto size-6 text-accent-foreground" />
+              <FontAwesomeIcon
+                icon={faCircleExclamation}
+                className="mx-auto size-6 text-accent-foreground"
+              />
               <p className="mt-4 font-semibold text-accent-foreground">
                 No results found
               </p>

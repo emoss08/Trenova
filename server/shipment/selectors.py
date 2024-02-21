@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from django.db.models.aggregates import Sum
@@ -26,6 +27,7 @@ from stops.models import Stop
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
+    from organization.models import Organization
     from utils.types import ModelUUID
 
 
@@ -85,3 +87,22 @@ def sum_shipment_additional_charges(*, shipment: models.Shipment) -> float:
 
     # If there are no additional charges associated with the order, return 0
     return additional_charges_total or 0
+
+
+def next_pro_number(*, organization: "Organization") -> str:
+    """Get the next pro number for a shipment.
+
+    Args:
+        organization (Organization): The organization.
+
+    Returns:
+        int: The next pro number.
+    """
+    today = datetime.now().strftime("%y%m%d")
+    last_pro_number = (
+        models.Shipment.objects.filter(
+            organization=organization, pro_number__startswith=today
+        ).count()
+        + 1
+    )
+    return f"{today}-{last_pro_number:04}"

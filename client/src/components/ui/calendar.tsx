@@ -1,9 +1,13 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { DayPicker } from "react-day-picker";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -53,10 +57,14 @@ function Calendar({
       }}
       components={{
         IconLeft: ({ ...props }) => (
-          <ChevronLeft className="size-4" {...props} />
+          <FontAwesomeIcon icon={faChevronLeft} className="size-4" {...props} />
         ),
         IconRight: ({ ...props }) => (
-          <ChevronRight className="size-4" {...props} />
+          <FontAwesomeIcon
+            icon={faChevronRight}
+            className="size-4"
+            {...props}
+          />
         ),
       }}
       {...props}
@@ -66,3 +74,4 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
+

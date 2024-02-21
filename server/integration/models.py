@@ -44,10 +44,10 @@ class IntegrationAuthTypes(models.TextChoices):
     Integration Auth Types
     """
 
-    NO_AUTH = "no_auth", _("No Auth")
-    API_KEY = "api_key", _("API Key")
-    BEARER_TOKEN = "bearer_token", _("Bearer Token")
-    BASIC_AUTH = "basic_auth", _("Basic Auth")
+    NO_AUTH = "NA", _("No Auth")
+    API_KEY = "AK", _("API Key")
+    BEARER_TOKEN = "BT", _("Bearer Token")
+    BASIC_AUTH = "BA", _("Basic Auth")
 
 
 class IntegrationVendor(GenericModel):

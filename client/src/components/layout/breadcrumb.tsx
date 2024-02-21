@@ -48,7 +48,7 @@ async function manageFavoriteRequest(
     queryClient.invalidateQueries({ queryKey: ["userFavorites"] });
     return response.data;
   } catch (error) {
-    console.error("Failed to manage favorite:", error);
+    console.error("[Trenova] Failed to manage favorite:", error);
     throw error;
   }
 }
@@ -139,7 +139,7 @@ function FavoriteIcon({
           <FontAwesomeIcon
             icon={isFavorite ? faStarFilled : faStar}
             title="Favorite"
-            className="mx-1 size-5 cursor-pointer text-yellow-400 transition-colors hover:text-yellow-300"
+            className="mx-1.5 mb-0.5 size-4 cursor-pointer text-center text-orange-400 transition-colors hover:text-orange-300"
             onClick={onFavoriteToggle.bind(null, !isFavorite)}
           />
         </TooltipTrigger>
@@ -150,6 +150,7 @@ function FavoriteIcon({
     </TooltipProvider>
   );
 }
+
 export function Breadcrumb() {
   const queryClient = useQueryClient();
   const [currentRoute, setCurrentRoute] =

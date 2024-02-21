@@ -77,7 +77,7 @@ function BillingControlForm({
 
   return (
     <form
-      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
+      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">

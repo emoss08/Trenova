@@ -82,7 +82,6 @@ export function RCForm({
             control={control}
             label="Expense Account"
             options={glAccounts}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Expense Account"

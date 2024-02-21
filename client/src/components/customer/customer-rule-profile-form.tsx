@@ -17,17 +17,13 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { useDocumentClass } from "@/hooks/useQueries";
-import { CustomerFormValues as FormValues } from "@/types/customer";
-import { Control } from "react-hook-form";
+import { CustomerFormValues } from "@/types/customer";
+import { useFormContext } from "react-hook-form";
 import { SelectInput } from "../common/fields/select-input";
 
-export function CustomerRuleProfileForm({
-  control,
-  open,
-}: {
-  control: Control<FormValues>;
-  open: boolean;
-}) {
+export function CustomerRuleProfileForm({ open }: { open: boolean }) {
+  const { control } = useFormContext<CustomerFormValues>();
+
   const {
     selectDocumentClassData,
     isError: isDocumentClassError,

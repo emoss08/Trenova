@@ -19,7 +19,8 @@ import { LocationFormValues as FormValues } from "@/types/location";
 import { Control, useFieldArray } from "react-hook-form";
 
 import { useCommentTypes } from "@/hooks/useQueries";
-import { AlertOctagonIcon } from "lucide-react";
+import { faOctagonExclamation } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SelectInput } from "../common/fields/select-input";
 import { TextareaField } from "../common/fields/textarea";
 import { Button } from "../ui/button";
@@ -112,7 +113,7 @@ export function LocationCommentForm({
       ) : (
         <div className="mt-48 flex grow flex-col items-center justify-center">
           <span className="text-6xl mb-4">
-            <AlertOctagonIcon />
+            <FontAwesomeIcon icon={faOctagonExclamation} />
           </span>
           <p className="mb-4">No comments yet. Please add a new comment.</p>
           <Button type="button" size="sm" onClick={handleAddContact}>

@@ -50,14 +50,5 @@ class MovementViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.Movement]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "shipment_id",
-            "ref_num",
-            "status",
-            "secondary_worker_id",
-            "primary_worker_id",
-            "tractor_id",
-            "organization_id",
-        )
+        ).all()
         return queryset

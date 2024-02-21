@@ -148,24 +148,13 @@ DATABASES = {
             "connect_timeout": 10,  # Timeout for establishing a new connection
             "client_encoding": "UTF8",  # Ensure UTF8 encoding for compatibility
             "sslmode": env(
-                "DB_SSL_MODE", cast=str
-            ),  # Force SSL connection for security
+                "DB_SSL_MODE", cast=str  # Force SSL connection for security
+            ),
         },
         "CONN_MAX_AGE": 0,  # Needs to be set to 0 for Celery Beat to work
         "DISABLE_SERVER_SIDE_CURSORS": False,  # Enables server-side cursors for large result sets
     },
-    # "replica1": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": env("DB_REPLICA_NAME"),
-    #     "USER": env("DB_REPLICA_USER"),
-    #     "PASSWORD": env("DB_REPLICA_PASSWORD"),
-    #     "HOST": env("DB_REPLICA_HOST"),
-    #     "PORT": env("DB_REPLICA_PORT"),
-    #     "ATOMIC_REQUESTS": True,
-    #     "CONN_HEALTH_CHECK": True,
-    # },
 }
-# DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
@@ -304,6 +293,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:4173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (
@@ -322,6 +312,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:4173",
 ]
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
@@ -443,10 +434,7 @@ BILLING_CLIENT_DB = env("BILLING_CLIENT_REDIS_DB")
 # Audit Log Configurations
 AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("organization", "business_unit")
 AUDITLOG_INCLUDE_TRACKING_MODELS = (
-    "accounts.User",
-    "accounts.UserProfile",
     "accounts.JobTitle",
-    "accounts.Token",
     "accounting.GeneralLedgerAccount",
     "accounting.RevenueCode",
     "accounting.DivisionCode",
@@ -474,6 +462,7 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "shipment.AdditionalCharge",
     "shipment.ReasonCode",
     "shipment.FormulaTemplate",
+    "location.Location",
 )
 
 # Protect against clickjacking by setting X-Frame-Options header
@@ -490,51 +479,6 @@ KAFKA_ALERT_UPDATE_TOPIC = env("KAFKA_ALERT_UPDATE_TOPIC")
 KAFKA_AUTO_COMMIT = env("KAFKA_AUTO_COMMIT")
 KAFKA_AUTO_COMMIT_INTERVAL_MS = env("KAFKA_AUTO_COMMIT_INTERVAL_MS")
 KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
-KAFKA_EXCLUDE_TOPIC_PREFIXES = [
-    "trenova_app_.public.silk_",
-    "trenova_app_.public.auditlog_",
-    "trenova_app_.public.admin_",
-    "trenova_app_.public.django_",
-    "trenova_app_.public.auth_",
-    "trenova_app_.public.states",
-    "trenova_app_.public.flag",
-    "trenova_app_.public.user",
-    "trenova_app_.public.a_group",
-    "trenova_app_.public.audit_",
-    "trenova_app_.public.user",
-    "trenova_app_.public.organization",
-    "trenova_app_.public.business_unit",
-    "trenova_app_.public.plugin",
-    "trenova_app_.public.waffle_",
-    "trenova_app_.public.edi",
-    "trenova_app_.public.states",
-    "trenova_app_.public.document",
-    "trenova_app_.public.accounting_control",
-    "trenova_app_.public.billing_control",
-    "trenova_app_.public.doc_template_customization",
-    "trenova_app_.public.scheduled_report",
-    "trenova_app_.public.weekday",
-    "trenova_app_.public.notification_setting",
-    "trenova_app_.public.notification_type",
-    "trenova_app_.public.route_control",
-    "trenova_app_.public.feasibility_tool_control",
-    "trenova_app_.public.google_api",
-    "trenova_app_.public.integration",
-    "trenova_app_.public.shipment_control",
-    "trenova_app_.public.formula_template",
-    "trenova_app_.public.dispatch_control",
-    "trenova_app_.public.email_control",
-    "trenova_app_.public.invoice_control",
-    "trenova_app_.public.table_change_alert",
-    "trenova_app_.public.tax_rate",
-    "trenova_app_.public.template",
-    "trenova_app_.public.custom_report",
-    "trenova_app_.public.feature_flag",
-    "my_connect_offsets",
-    "my_connect_configs",
-    "my_connect_statuses",
-    "__",
-]
 
 # GraphQL Configurations
 GRAPHENE = {
@@ -547,7 +491,11 @@ GRAPHENE = {
 # Idempotency Configurations
 IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
 IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
-IDEMPOTENCY_KEY_TTL = env("IDEMPOTENCY_KEY_TTL")
+
+# System Check Configurations
+SILENCED_SYSTEM_CHECKS = [
+    "ckeditor.W001"  # TODO(wolfred): Remove this once we have a solution for the CKEditor warning
+]
 
 # Development Configurations
 if DEBUG:
@@ -556,6 +504,6 @@ if DEBUG:
     INSTALLED_APPS += ["silk"]
     MIDDLEWARE += [
         "silk.middleware.SilkyMiddleware",
+        "pyinstrument.middleware.ProfilerMiddleware",
     ]
     X_FRAME_OPTIONS = "SAMEORIGIN"
-    SILK_PYTHON_PROFILER = True

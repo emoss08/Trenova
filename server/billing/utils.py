@@ -322,7 +322,7 @@ def transfer_shipments_details(
     Raises:
         shipment.DoesNotExist: If the corresponding order does not exist.
     """
-
+    # TODO(WOLFRED): This function can be changed to just for key and value in kwargs and setattr(obj, key, value)
     shipment = Shipment.objects.select_related(
         "shipment_type", "revenue_code", "commodity", "customer"
     ).get(pk=obj.shipment.pk)

@@ -19,7 +19,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex select-none items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -27,15 +27,13 @@ const badgeVariants = cva(
           "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         active:
-          "border border-lime-400/60 bg-lime-400/30 text-lime-700 group-data-[hover]:bg-lime-400/30 dark:bg-lime-800/10 dark:text-lime-300 dark:group-data-[hover]:bg-lime-400/15 forced-colors:outline",
+          "border border-green-600 bg-green-100 text-green-600 dark:border-green-500 dark:bg-green-600/30 dark:text-green-400 forced-colors:outline",
         inactive:
-          "border border-rose-400/60 bg-rose-400/30 text-rose-700 group-data-[hover]:bg-rose-400/25 dark:bg-rose-400/10 dark:text-rose-400 dark:group-data-[hover]:bg-rose-400/20 forced-colors:outline",
-        info: "border border-blue-400/60 bg-blue-400/30 text-blue-700 group-data-[hover]:bg-blue-400/25 dark:bg-blue-800/10 dark:text-blue-400 dark:group-data-[hover]:bg-blue-400/20 forced-colors:outline",
+          "border border-red-600 bg-red-100 text-red-600 dark:border-red-500 dark:bg-red-600/30 dark:text-red-400 forced-colors:outline",
+        info: "border border-blue-600 bg-blue-100 text-blue-600 dark:border-blue-500 dark:bg-blue-600/30 dark:text-blue-400 forced-colors:outline",
         warning:
-          "border border-yellow-400/60 bg-yellow-400/30 text-yellow-700 group-data-[hover]:bg-yellow-400/25 dark:bg-yellow-800/10 dark:text-yellow-400 dark:group-data-[hover]:bg-yellow-400/20 forced-colors:outline",
+          "border border-yellow-600 bg-yellow-100 text-yellow-600 dark:border-yellow-500 dark:bg-yellow-600/30 dark:text-yellow-400 forced-colors:outline",
         outline: "text-foreground",
       },
     },

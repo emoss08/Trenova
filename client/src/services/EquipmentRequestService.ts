@@ -16,7 +16,11 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
+import {
+  EquipmentManufacturer,
+  EquipmentType,
+  Trailer,
+} from "@/types/equipment";
 
 /**
  * Get equipment types from the server.
@@ -43,6 +47,20 @@ export async function getEquipmentManufacturers(
   const response = await axios.get("equipment_manufacturers/", {
     params: {
       limit: limit,
+    },
+  });
+  return response.data.results;
+}
+
+/**
+ * Get trailers from the server
+ * @returns a list of trailers
+ */
+export async function getTrailers(limit?: number): Promise<Trailer[]> {
+  const response = await axios.get("trailers", {
+    params: {
+      limit: limit,
+      status: "A",
     },
   });
   return response.data.results;

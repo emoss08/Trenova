@@ -16,8 +16,8 @@
  */
 
 import { cn } from "@/lib/utils";
-import { debounce } from "lodash";
-import React from "react";
+import { debounce } from "lodash-es";
+import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
@@ -36,26 +36,28 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = React.useState(false);
-  const scrollThreshold = 80;
 
-  const handleScroll = React.useMemo(
-    () =>
-      debounce(() => {
-        setIsScrolled(window.scrollY > scrollThreshold);
-      }, 30),
-    [scrollThreshold],
-  );
+  const debouncedHandleScroll = debounce(() => {
+    if (window.scrollY > 80) {
+      setIsScrolled(true);
+    } else {
+      setIsScrolled(false);
+    }
+  }, 100);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const handleScroll = () => debouncedHandleScroll();
     window.addEventListener("scroll", handleScroll);
+
     return () => {
-      handleScroll.cancel(); // Ensure debounce is cancelled on unmount
       window.removeEventListener("scroll", handleScroll);
+      debouncedHandleScroll.cancel && debouncedHandleScroll.cancel();
     };
-  }, [handleScroll]);
+  }, []);
 
   const groupedLinks = React.useMemo(() => {
     type GroupedLinks = Record<string, SidebarLink[]>;
+
     return links.reduce((acc: GroupedLinks, link) => {
       const groupName = link.group || "ungrouped";
       acc[groupName] = acc[groupName] || [];
@@ -66,9 +68,10 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
 
   return (
     <aside
-      className={`fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 transition-spacing duration-500 md:sticky md:block ${
-        isScrolled ? "pt-10" : ""
-      }`}
+      className={cn(
+        "transition-spacing fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-10rem)] w-full shrink-0 duration-500 md:sticky md:block",
+        isScrolled ? "pt-10" : "",
+      )}
     >
       <ScrollArea className="size-full rounded-lg border bg-card p-3 text-card-foreground">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>

@@ -33,7 +33,12 @@
   },
   "rules": {
     "react/jsx-no-useless-fragment": "off",
-    "prettier/prettier": "error",
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
+      }
+    ],
     "arrow-body-style": "off",
     "prefer-arrow-callback": "off",
     "import/prefer-default-export": "off",

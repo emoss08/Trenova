@@ -15,18 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
+import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
+import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
+import { truncateText } from "@/lib/utils";
+import { DelayCode } from "@/types/dispatch";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { DelayCode } from "@/types/dispatch";
-import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
-import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
-import { StatusBadge } from "@/components/common/table/data-table-components";
 
 function CarrierOrDriverBadge({
   carrierOrDriver,
@@ -34,7 +34,7 @@ function CarrierOrDriverBadge({
   carrierOrDriver: boolean;
 }) {
   return (
-    <Badge variant={carrierOrDriver ? "default" : "destructive"}>
+    <Badge variant={carrierOrDriver ? "default" : "inactive"}>
       {carrierOrDriver ? "Yes" : "No"}
     </Badge>
   );

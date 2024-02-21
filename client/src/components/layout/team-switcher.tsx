@@ -31,8 +31,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { faCheck } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { CheckIcon } from "lucide-react";
 import React from "react";
 import { Input } from "../common/fields/input";
 import {
@@ -144,7 +145,8 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                         <AvatarFallback>SC</AvatarFallback>
                       </Avatar>
                       <span className="truncate">{team.label}</span>
-                      <CheckIcon
+                      <FontAwesomeIcon
+                        icon={faCheck}
                         className={cn(
                           "ml-auto h-4 w-4",
                           selectedTeam.value === team.value
