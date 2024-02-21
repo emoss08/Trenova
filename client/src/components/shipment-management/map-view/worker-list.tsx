@@ -102,14 +102,16 @@ const convertSecondsToHours = (seconds?: number) => {
 
 function isRegInformationExpired(worker: Worker, enforceRegCheck: boolean) {
   if (!enforceRegCheck) return { isExpired: false, expiredItemsDetails: [] };
+  if (!worker.profile) return { isExpired: false, expiredItemsDetails: [] };
 
+  // TODO: Format this as the date the organization has set.
   const currentDate = new Date().toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-  const isDateExpired = (dateString: string | undefined) => {
+  const isDateExpired = (dateString?: string) => {
     return dateString && dateString < currentDate;
   };
 
-  const formatExpiredItem = (item: string, date: string | undefined) =>
+  const formatExpiredItem = (item: string, date?: string) =>
     date && `${item}: ${date}`;
 
   const expiredItemsDetails = [
@@ -149,7 +151,7 @@ function WorkerRegBadge({
   );
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={100}>
       {isExpired && (
         <Tooltip>
           <TooltipTrigger>
@@ -157,7 +159,7 @@ function WorkerRegBadge({
               Attention Required
             </Badge>
           </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={40} align="center">
+          <TooltipContent side="top" sideOffset={50} align="center">
             <p className="font-semibold">
               The following regulatory information for this worker has expired:
             </p>

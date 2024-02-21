@@ -131,7 +131,7 @@ export const DayOfWeekChoices = [
   { value: 4, label: "Friday" },
   { value: 5, label: "Saturday" },
   { value: 6, label: "Sunday" },
-] satisfies ReadonlyArray<IChoiceProps<number>>;
+] satisfies IChoiceProps<number>[];
 
 export type ServiceIncidentControlChoiceProps =
   | "Never"
@@ -401,9 +401,42 @@ type TStatusChoiceProps = "A" | "I";
  * @returns An array of status choices.
  */
 export const statusChoices = [
-  { value: "A", label: "Active" },
-  { value: "I", label: "Inactive" },
+  { value: "A", label: "Active", color: "#15803d" },
+  { value: "I", label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<IChoiceProps<TStatusChoiceProps>>;
+
+/** Entry methods for shipments */
+export type EntryMethodChoiceProps = "MANUAL" | "EDI" | "API";
+
+export const entryMethodChoices = [
+  { value: "MANUAL", label: "Manual" },
+  { value: "EDI", label: "EDI" },
+  { value: "API", label: "API" },
+] satisfies ReadonlyArray<IChoiceProps<EntryMethodChoiceProps>>;
+
+/** Returns status choices for a select input. */
+export type ShipmentStatusChoiceProps = "N" | "P" | "C" | "H" | "B" | "V";
+
+/**
+ * Returns shipment status choices for a select input.
+ * @returns An array of shipment status choices.
+ */
+export const shipmentStatusChoices = [
+  { value: "N", label: "New", color: "#16a34a" },
+  { value: "P", label: "In Progress", color: "#ca8a04" },
+  { value: "C", label: "Completed", color: "#9333ea" },
+  { value: "H", label: "On Hold", color: "#2563eb" },
+  { value: "B", label: "Billed", color: "#0891b2" },
+  { value: "V", label: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentStatusChoiceProps>>;
+
+type ShipmentSourceChoiceProps = "MANUAL" | "EDI" | "API";
+
+export const shipmentSourceChoices = [
+  { value: "MANUAL", label: "Manual" },
+  { value: "EDI", label: "EDI" },
+  { value: "API", label: "API" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentSourceChoiceProps>>;
 
 /**
  * Returns code type choices for a select input.
@@ -449,3 +482,36 @@ export const sourceChoices = [
   { value: "KAFKA", label: "Kafka" },
   { value: "POSTGRES", label: "Postgres" },
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
+
+/** Type for RatingMethod for Shipment */
+export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
+
+export const ratingMethodChoies = [
+  { value: "F", label: "Flat" },
+  { value: "PM", label: "Per Mile" },
+  { value: "PS", label: "Per Stop" },
+  { value: "PP", label: "Per Pound" },
+  { value: "O", label: "Other" },
+] satisfies ReadonlyArray<IChoiceProps<RatingMethodChoiceProps>>;
+
+/** Type for Shipment Stop Choices */
+export type ShipmentStopChoices = "P" | "SP" | "SD" | "D" | "DO";
+
+/** Returns shipment stop choices for a select input. */
+export const shipmentStopChoices = [
+  { value: "P", label: "Pickup" },
+  { value: "SP", label: "Stop Pickup" },
+  { value: "SD", label: "Stop Delivery" },
+  { value: "D", label: "Delivery" },
+  { value: "DO", label: "Drop Off" },
+] satisfies ReadonlyArray<IChoiceProps<ShipmentStopChoices>>;
+
+/** Type for Comment Type Severity */
+export type SeverityChoiceProps = "H" | "M" | "L";
+
+/** Returns comment type severity choices for a select input. */
+export const severityChoices = [
+  { value: "H", label: "High", color: "#dc2626" },
+  { value: "M", label: "Medium", color: "#2563eb" },
+  { value: "L", label: "Low", color: "#15803d" },
+] satisfies ReadonlyArray<IChoiceProps<SeverityChoiceProps>>;

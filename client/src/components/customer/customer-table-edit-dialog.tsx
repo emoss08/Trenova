@@ -33,7 +33,7 @@ import { Customer, CustomerFormValues as FormValues } from "@/types/customer";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { CustomerForm } from "./customer-table-dialog";
 
 export function CustomerEditForm({
@@ -49,7 +49,7 @@ export function CustomerEditForm({
 
   if (!customer) return null;
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: customer.status,
@@ -80,6 +80,8 @@ export function CustomerEditForm({
     },
   });
 
+  const { control, handleSubmit, reset } = customerForm;
+
   const mutation = useCustomMutation<FormValues>(
     control,
     {
@@ -101,25 +103,27 @@ export function CustomerEditForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex h-full flex-col overflow-y-auto"
-    >
-      <CustomerForm control={control} open={open} />
-      <SheetFooter className="mb-12">
-        <Button
-          type="reset"
-          variant="secondary"
-          onClick={() => onOpenChange(false)}
-          className="w-full"
-        >
-          Cancel
-        </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
-          Save
-        </Button>
-      </SheetFooter>
-    </form>
+    <FormProvider {...customerForm}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex h-full flex-col overflow-y-auto"
+      >
+        <CustomerForm open={open} />
+        <SheetFooter className="mb-12">
+          <Button
+            type="reset"
+            variant="secondary"
+            onClick={() => onOpenChange(false)}
+            className="w-full"
+          >
+            Cancel
+          </Button>
+          <Button type="submit" isLoading={isSubmitting} className="w-full">
+            Save
+          </Button>
+        </SheetFooter>
+      </form>
+    </FormProvider>
   );
 }
 

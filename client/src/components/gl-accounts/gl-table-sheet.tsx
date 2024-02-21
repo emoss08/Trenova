@@ -104,7 +104,7 @@ export function GLForm({
 
       return newOption;
     } catch (err) {
-      console.log(err);
+      console.error("[Trenova] GL Table Sheet", err);
     } finally {
       await queryClient.invalidateQueries({
         queryKey: ["tags"],

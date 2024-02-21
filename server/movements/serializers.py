@@ -17,6 +17,7 @@
 
 
 from movements import models
+from stops.serializers import StopSerializer
 from utils.serializers import GenericSerializer
 
 
@@ -29,6 +30,11 @@ class MovementSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
+    stops = StopSerializer(
+        many=True,
+        required=False,
+    )
+
     class Meta:
         """Metaclass for Movement Serializer.
 
@@ -39,7 +45,6 @@ class MovementSerializer(GenericSerializer):
         model = models.Movement
         fields = "__all__"
         read_only_fields = (
-            "customer",
             "id",
             "ref_num",
             "organization",

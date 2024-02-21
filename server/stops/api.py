@@ -76,14 +76,7 @@ class StopCommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.StopComment]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "stop_id",
-            "comment_type_id",
-            "qualifier_code_id",
-            "comment",
-            "entered_by_id",
-        )
+        ).all()
         return queryset
 
 

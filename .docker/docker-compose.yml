@@ -5,7 +5,7 @@ services:
     container_name: kafka
     ports:
       - '9094:9094'
-      - '29092:29092'  # Expose internal port for Kafka Connect
+      - '29092:29092' # Expose internal port for Kafka Connect
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -85,11 +85,6 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     restart: always
-
-  redisinsight:
-    image: redislabs/redisinsight:latest
-    ports:
-      - '8001:8001'
 
   trenova_rabbitmq:
     image: rabbitmq:3-management

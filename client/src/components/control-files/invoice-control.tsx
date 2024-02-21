@@ -82,7 +82,7 @@ function InvoiceControlForm({
 
   return (
     <form
-      className="m-4 border bg-background sm:rounded-xl md:col-span-2"
+      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -111,6 +111,7 @@ function InvoiceControlForm({
             <InputField
               name="invoiceDueAfterDays"
               control={control}
+              type="number"
               rules={{ required: true }}
               label={t("fields.invoiceDueAfterDays.label")}
               placeholder={t("fields.invoiceDueAfterDays.placeholder")}
@@ -141,6 +142,7 @@ function InvoiceControlForm({
             <InputField
               name="invoiceLogoWidth"
               control={control}
+              type="number"
               rules={{ required: true }}
               label={t("fields.invoiceLogoWidth.label")}
               placeholder={t("fields.invoiceLogoWidth.placeholder")}

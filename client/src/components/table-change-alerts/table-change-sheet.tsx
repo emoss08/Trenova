@@ -177,6 +177,10 @@ export function TableChangeAlertForm({
             label={t("fields.emailProfile.label")}
             placeholder={t("fields.emailProfile.placeholder")}
             description={t("fields.emailProfile.description")}
+            hasPopoutWindow
+            popoutLink="/admin/email-profiles/"
+            isClearable
+            popoutLinkLabel="Email Profile"
           />
         </FormControl>
         <FormControl>
@@ -208,6 +212,9 @@ export function TableChangeAlertForm({
           />
         </FormControl>
       </FormGroup>
+      <Button type="button" size="sm">
+        Add Conditional Logic
+      </Button>
     </Form>
   );
 }

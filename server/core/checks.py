@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import locale
 import shutil
 import socket
 from timeit import default_timer as timer
@@ -33,7 +32,6 @@ from kafka.managers import KafkaManager
 from utils.types import DiskUsage, HealthStatus, HealthStatusAndTime
 
 host = socket.gethostname()
-locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 
 def check_database() -> dict:

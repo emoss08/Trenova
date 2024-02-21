@@ -119,7 +119,7 @@ export function TrailerForm({
             isClearable={false}
             popoutLink="/equipment/equipment-types/"
             hasPopoutWindow
-            popoutLinkLabel="Equipment Types"
+            popoutLinkLabel="Equipment Type"
           />
         </FormControl>
         <FormControl>

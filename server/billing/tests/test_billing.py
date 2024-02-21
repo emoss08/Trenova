@@ -511,6 +511,7 @@ def test_generate_invoice_number_before_save(
         shipment=shipment,
         customer=shipment.customer,
         business_unit=business_unit,
+        weight=shipment.weight,
     )
 
     assert (

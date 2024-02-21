@@ -17,13 +17,14 @@
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { DEBOUNCE_DELAY } from "@/lib/constants";
-import { shipmentStatusToReadable } from "@/lib/utils";
+import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
-import { QueryKeys } from "@/types";
+import { QueryKeyWithParams } from "@/types";
 import { Shipment, ShipmentSearchForm } from "@/types/order";
+import { faArrowDown, faArrowUp } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import { UseFormWatch } from "react-hook-form";
 import { ErrorLoadingData } from "../common/table/data-table-components";
@@ -55,11 +56,12 @@ const ShipmentProgressIndicator = ({
       {progressStatuses.map((status, index) => (
         <React.Fragment key={status}>
           <div
-            className={`h-1 flex-1 ${
+            className={cn(
+              "h-1 flex-1",
               index <= currentStatusIndex
                 ? "bg-foreground"
-                : "animate-pulse bg-muted-foreground/40"
-            }`}
+                : "animate-pulse bg-muted-foreground/40",
+            )}
           />
           {/* Render a spacer after each line except the last one */}
           {index < progressStatuses.length - 1 && <div className="w-1" />}
@@ -108,7 +110,11 @@ export function ShipmentList({
     isLoading: isShipmentsLoading,
     isError: isShipmentError,
   } = useQuery({
-    queryKey: ["shipments", debouncedSearchQuery, statusFilter] as QueryKeys[],
+    queryKey: [
+      "shipments",
+      debouncedSearchQuery,
+      statusFilter,
+    ] as QueryKeyWithParams<"shipments", [string, string]>,
     queryFn: async () => getShipments(debouncedSearchQuery, statusFilter),
     initialData: (): Shipment[] | undefined =>
       queryClient.getQueryData([
@@ -180,7 +186,10 @@ export function ShipmentList({
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
                   <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-foreground">
-                    <ArrowUp className="inline-block size-3 text-background" />
+                    <FontAwesomeIcon
+                      icon={faArrowUp}
+                      className="inline-block size-3 text-background"
+                    />
                   </div>
                   <span className="font-semibold text-foreground">
                     {shipment.originAddress}
@@ -195,7 +204,10 @@ export function ShipmentList({
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
                   <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-blue-700">
-                    <ArrowDown className="inline-block size-3 text-white" />
+                    <FontAwesomeIcon
+                      icon={faArrowDown}
+                      className="inline-block size-3 text-white"
+                    />
                   </div>
                   <span>
                     <span className="font-semibold text-foreground">

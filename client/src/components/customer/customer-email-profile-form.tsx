@@ -17,14 +17,12 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
 
-export function CustomerEmailProfileForm({
-  control,
-}: {
-  control: Control<FormValues>;
-}) {
+export function CustomerEmailProfileForm() {
+  const { control } = useFormContext<FormValues>();
+
   return (
     <>
       <div className="my-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

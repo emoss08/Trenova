@@ -14,13 +14,15 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { upperFirst } from "@/lib/utils";
 import { EquipmentStatus } from "@/types/equipment";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { IconProps } from "@radix-ui/react-icons/dist/types";
-import { AlertTriangle } from "lucide-react";
 import React from "react";
 
 /**
@@ -47,10 +49,10 @@ export function DataNotFound({
   return (
     <div className="my-10 text-center">
       <Icon className="mx-auto size-10 text-foreground" />
-      <h3 className="mt-2 text-sm font-semibold text-gray-900">
+      <h3 className="mt-2 text-sm font-semibold text-foreground">
         No {upperFirst(name)}
       </h3>
-      <p className="mt-1 text-sm text-gray-500">{message}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{message}</p>
       <div className="mt-3">
         <Button
           className="mt-3"
@@ -107,7 +109,7 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   };
 
   return (
-    <Badge variant={status === "A" ? "default" : "destructive"}>
+    <Badge variant={status === "A" ? "active" : "inactive"}>
       {mapToStatus[status]}
     </Badge>
   );
@@ -116,7 +118,10 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
 export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <div className="text-center">
-      <AlertTriangle className="mx-auto size-10 text-accent-foreground" />
+      <FontAwesomeIcon
+        icon={faTriangleExclamation}
+        className="mx-auto size-10 text-accent-foreground"
+      />
       <p className="mt-2 font-semibold text-accent-foreground">
         Well, this is embarrassing...
       </p>

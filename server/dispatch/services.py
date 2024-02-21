@@ -41,7 +41,6 @@ def get_rate(*, shipment: Shipment) -> models.Rate | None:
         customer=shipment.customer,
         commodity=shipment.commodity,
         shipment_type=shipment.shipment_type,
-        equipment_type=shipment.equipment_type,
         origin_location=shipment.origin_location,
         destination_location=shipment.destination_location,
         effective_date__lte=today,

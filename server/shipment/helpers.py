@@ -28,7 +28,6 @@ FORMULA_ALLOWED_VARIABLES = [
     "weight",
     "stops",
     "rating_units",
-    "equipment_cost_per_mile",
     "hazmat_additional_cost",
     "temperature_differential",
 ]

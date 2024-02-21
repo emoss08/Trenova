@@ -34,6 +34,7 @@ import { validateDecimal } from "@/lib/utils";
 import {
   FeasibilityOperatorChoiceProps,
   ServiceIncidentControlChoiceProps,
+  SeverityChoiceProps,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
 import {
@@ -172,6 +173,9 @@ export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =
     description: Yup.string()
       .max(100, "Description cannot be more than 100 characters")
       .required("Description is required"),
+    severity: Yup.string<SeverityChoiceProps>().required(
+      "Severity is required",
+    ),
   });
 
 export const rateBillingTableSchema: ObjectSchema<RateBillingTableFormValues> =

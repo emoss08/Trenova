@@ -49,7 +49,7 @@ def transfer_shipments_details_to_billing_history(
     Returns:
         None: This function does not return anything
     """
-    utils.transfer_shipments_details(obj=instance)
+    utils.transfer_shipments_details(instance)
 
 
 def generate_invoice_number_on_billing_queue(
@@ -77,4 +77,4 @@ def transfer_shipments_details_to_billing_queue(
     Returns:
         None: This function does not return anything
     """
-    utils.transfer_shipments_details(obj=instance)
+    utils.transfer_shipments_details(instance)

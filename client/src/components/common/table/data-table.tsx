@@ -21,6 +21,7 @@ import { useUserPermissions } from "@/context/user-permissions";
 import axios from "@/lib/axiosConfig";
 import { API_URL } from "@/lib/constants";
 import { useTableStore as store } from "@/stores/TableStore";
+import { QueryKeys } from "@/types";
 import { ApiResponse } from "@/types/server";
 import { DataTableProps } from "@/types/tables";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,11 @@ import {
   ColumnFilter,
   ColumnFiltersState,
   ColumnSort,
+  OnChangeFn,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
+  VisibilityState,
   getCoreRowModel,
   getExpandedRowModel,
   getFacetedRowModel,
@@ -36,12 +42,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  OnChangeFn,
-  PaginationState,
-  RowSelectionState,
-  SortingState,
   useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import React, { SetStateAction } from "react";
 import { DataTableBody } from "./data-table-body";
@@ -105,7 +106,7 @@ function useDataTableState<
 
 // Custom hook for data fetching
 function useDataTableQuery<K>(
-  queryKey: string,
+  queryKey: QueryKeys | string,
   link: string,
   pageIndex: number,
   pageSize: number,
@@ -276,7 +277,6 @@ export function DataTable<TData extends Record<string, any>>({
           <DataTablePagination table={table} pagination={pagination} />
         </div>
       </div>
-
       <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableSheet && (
         <TableSheet open={drawerOpen} onOpenChange={setDrawerOpen} />

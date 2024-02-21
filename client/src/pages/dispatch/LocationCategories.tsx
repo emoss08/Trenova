@@ -23,7 +23,6 @@ import { LCTableSheet } from "@/components/location-categories/lc-table-sheet";
 import { truncateText } from "@/lib/utils";
 import { LocationCategory } from "@/types/location";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent } from "@/components/ui/card";
 
 const columns: ColumnDef<LocationCategory>[] = [
   {
@@ -77,20 +76,16 @@ const columns: ColumnDef<LocationCategory>[] = [
 
 export default function LocationCategories() {
   return (
-    <Card>
-      <CardContent>
-        <DataTable
-          queryKey="location-categories-table-data"
-          columns={columns}
-          link="/location_categories/"
-          name="Location Category"
-          exportModelName="LocationCategory"
-          filterColumn="name"
-          TableSheet={LCTableSheet}
-          TableEditSheet={LCTableEditDialog}
-          addPermissionName="add_locationcategory"
-        />
-      </CardContent>
-    </Card>
+    <DataTable
+      queryKey="location-categories-table-data"
+      columns={columns}
+      link="/location_categories/"
+      name="Location Category"
+      exportModelName="LocationCategory"
+      filterColumn="name"
+      TableSheet={LCTableSheet}
+      TableEditSheet={LCTableEditDialog}
+      addPermissionName="add_locationcategory"
+    />
   );
 }

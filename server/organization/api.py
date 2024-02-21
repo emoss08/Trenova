@@ -447,8 +447,11 @@ def active_triggers(request: Request) -> Response:
             for result in results
         ]
         return Response(triggers, status=status.HTTP_200_OK)
-    except NotImplementedError as e:
-        return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+    except NotImplementedError:
+        return Response(
+            "This feature is only available for PostgreSQL databases.",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["GET"])
@@ -587,9 +590,9 @@ class CacheManagerView(views.APIView):
                 {"detail": f"Cache for {model_path} cleared."},
                 status=status.HTTP_200_OK,
             )
-        except exceptions.CacheOperationError as cache_exc:
+        except exceptions.CacheOperationError:
             return Response(
-                {"error": str(cache_exc)}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Cache operation failed."}, status=status.HTTP_400_BAD_REQUEST
             )
 
 

@@ -41,6 +41,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
     queryset = models.EquipmentType.objects.all()
     serializer_class = serializers.EquipmentTypeSerializer
     permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("equipment_class",)
 
     def create(
         self, request: "Request", *args: typing.Any, **kwargs: typing.Any

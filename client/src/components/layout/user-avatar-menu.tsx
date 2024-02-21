@@ -36,7 +36,6 @@ import { TOAST_STYLE } from "@/lib/constants";
 import { ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -59,7 +58,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
 
     return (
       <div
-        className="group flex select-none items-center hover:cursor-pointer"
+        className="flex select-none items-center hover:cursor-pointer"
         ref={ref}
         {...props}
       >
@@ -71,12 +70,6 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
           />
           <AvatarFallback delayMs={600}>{initials}</AvatarFallback>
         </Avatar>
-        <div className="mb-1 ml-2 flex items-center">
-          <ChevronDownIcon
-            className="size-4 transition duration-200 group-data-[state=open]:rotate-180"
-            aria-hidden="true"
-          />
-        </div>
       </div>
     );
   },

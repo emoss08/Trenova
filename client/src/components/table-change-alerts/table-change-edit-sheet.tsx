@@ -74,11 +74,10 @@ function TableChangeEditForm({
     {
       method: "PUT",
       path: `/table_change_alerts/${tableChangeAlert.id}/`,
-      successMessage: "General Ledger Account updated successfully.",
-      queryKeysToInvalidate: ["gl-account-table-data"],
-      additionalInvalidateQueries: ["glAccounts"],
+      successMessage: "Table Change Alert updated successfully.",
+      queryKeysToInvalidate: ["table-change-alert-data"],
       closeModal: true,
-      errorMessage: "Failed to update general ledger account.",
+      errorMessage: "Failed to update table change alert.",
     },
     () => setIsSubmitting(false),
     reset,
@@ -88,6 +87,7 @@ function TableChangeEditForm({
     setIsSubmitting(true);
     mutation.mutate(values);
   };
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}

@@ -79,6 +79,7 @@ class LocationViewSet(viewsets.ModelViewSet):
         "is_geocoded",
         "status",
     )
+    search_fields = ("name", "code")
     permission_classes = [CustomObjectPermissions]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 

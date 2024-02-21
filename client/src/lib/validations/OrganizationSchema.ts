@@ -22,6 +22,7 @@ import {
   RouteModelChoiceProps,
   SourceChoicesProps,
 } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 import {
   EmailControlFormValues,
   EmailProfileFormValues,
@@ -31,7 +32,6 @@ import {
 } from "@/types/organization";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { StatusChoiceProps } from "@/types";
 
 export const organizationSchema: ObjectSchema<OrganizationFormValues> =
   Yup.object().shape({
@@ -70,7 +70,25 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
     conditionalLogic: Yup.object().notRequired(),
     customSubject: Yup.string().notRequired(),
     effectiveDate: Yup.string().notRequired(),
-    expirationDate: Yup.string().notRequired(),
+    expirationDate: Yup.string()
+      .notRequired()
+      .when("effectiveDate", {
+        is: (val: string) => val,
+        then: (schema) =>
+          schema.test(
+            "is-after-effective-date",
+            "Expiration Date must be after Effective Date. Please try again.",
+            function (value) {
+              const { effectiveDate } = this.parent;
+              if (value && effectiveDate) {
+                const effectiveDateObj = new Date(effectiveDate);
+                const expirationDateObj = new Date(value);
+                return expirationDateObj > effectiveDateObj;
+              }
+              return true;
+            },
+          ),
+      }),
   });
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =

@@ -18,7 +18,7 @@
 from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
-from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
 
 from reports import models
 
@@ -42,7 +42,9 @@ def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport
 
 
 def get_audit_logs_by_model_name(
-    *, model_name: str, organization_id: "ModelUUID", app_label: str
+    *,
+    model_name: str,
+    organization_id: "ModelUUID",
 ) -> "QuerySet[LogEntry]":
     """Retrieves the audit logs for a specific model in an organization.
 
@@ -61,10 +63,11 @@ def get_audit_logs_by_model_name(
 
     Examples:
         >>> import uuid
-        >>> logs = get_audit_logs_by_model_name(model_name='User', organization_id=uuid.uuid4(), app_label='auth')
+        >>> logs = get_audit_logs_by_model_name(model_name='User', organization_id=uuid.uuid4(), app_label='accounts')
     """
+    content_type_id = ContentType.objects.get(model=model_name.lower()).id
+
     return LogEntry.objects.filter(
-        Q(content_type__model=model_name.lower())
-        | Q(content_type__app_label=app_label.lower())
-        | Q(actor__organization_id=organization_id)
+        content_type_id=content_type_id,
+        actor__organization_id=organization_id,
     )

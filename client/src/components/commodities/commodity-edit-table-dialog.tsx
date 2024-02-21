@@ -31,7 +31,7 @@ import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
 import { Commodity, CommodityFormValues } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 function CommodityEditForm({
@@ -41,7 +41,7 @@ function CommodityEditForm({
   commodity: Commodity;
   open: boolean;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { control, reset, handleSubmit, watch, setValue } =
     useForm<CommodityFormValues>({
@@ -78,15 +78,17 @@ function CommodityEditForm({
     mutation.mutate(values);
   };
 
-  React.useEffect(() => {
-    const hazardousMaterial = watch("hazardousMaterial");
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "hazardousMaterial" && value.hazardousMaterial) {
+        setValue("isHazmat", "Y");
+      } else if (name === "hazardousMaterial" && !value.hazardousMaterial) {
+        setValue("isHazmat", "N");
+      }
+    });
 
-    if (hazardousMaterial) {
-      setValue("isHazmat", "Y");
-    } else {
-      setValue("isHazmat", "N");
-    }
-  }, [watch("hazardousMaterial"), setValue]);
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

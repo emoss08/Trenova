@@ -14,9 +14,11 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { InputField } from "@/components/common/fields/input";
 import { SendMessageDialog } from "@/components/common/send-message-dialog";
 import { HourGridDialog } from "@/components/common/view-hos-logs";
+import { MAP_STYLES } from "@/components/shipment-management/map-view/map-styles";
 import { ShipmentMapAside } from "@/components/shipment-management/map-view/shipment-map-aside";
 import { ShipmentMapOptions } from "@/components/shipment-management/map-view/shipment-map-options";
 import { ShipmentMapZoom } from "@/components/shipment-management/map-view/shipment-map-zoom";
@@ -28,11 +30,12 @@ import {
 import { useGoogleAPI } from "@/hooks/useQueries";
 import { useShipmentMapStore, useShipmentStore } from "@/stores/ShipmentStore";
 import { GoogleAPI } from "@/types/organization";
+import { faSpinnerThird } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import GoogleMapReact from "google-map-react";
-import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -120,15 +123,20 @@ export function ShipmentMapView() {
 
   return isLoading ? (
     <>
-      <div className="flex flex-col items-center justify-center">
-        <Loader2 className="size-20 animate-spin text-foreground" />
-        <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+      <div className="flex h-[50vh] w-screen items-center justify-center">
+        <div className="flex flex-col items-center justify-center text-center">
+          <FontAwesomeIcon
+            icon={faSpinnerThird}
+            className="size-14 animate-spin text-foreground"
+          />
+          <p className="mt-4 font-medium text-foreground">Loading Map...</p>
+        </div>
       </div>
     </>
   ) : (
-    <div className="mx-auto flex w-screen space-x-10">
+    <div className="mx-auto flex h-[700px] w-screen space-x-10">
       <ShipmentMapAside />
-      <div className="relative grow">
+      <div className="relative w-full grow">
         {/* Absolute positioned map options */}
         <div className="absolute right-0 top-0 z-10 p-2">
           <ShipmentMapOptions />
@@ -154,13 +162,13 @@ export function ShipmentMapView() {
           bootstrapURLKeys={{ key: apiKey }}
           defaultCenter={defaultProps.center}
           defaultZoom={defaultProps.zoom}
-          style={{ width: "100%", height: "100%" }}
           layerTypes={mapLayers}
           yesIWantToUseGoogleMapApiInternals
           onGoogleApiLoaded={handleApiLoaded}
           options={{
             mapTypeId: mapType,
             disableDefaultUI: true,
+            styles: MAP_STYLES,
           }}
         >
           {markers.map((marker) => (

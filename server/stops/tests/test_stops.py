@@ -418,7 +418,7 @@ def test_service_incident_created(
         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
-        equipment_type=equipment_type,
+        trailer_type=equipment_type,
         entered_by=user,
         bol_number="1234567890",
     )
@@ -488,7 +488,7 @@ def test_first_stop_sets_ship_date(
         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
-        equipment_type=equipment_type,
+        trailer_type=equipment_type,
         entered_by=user,
         bol_number="1234567890",
     )

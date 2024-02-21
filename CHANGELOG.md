@@ -20,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N+1 queries in Notifications API (https://github.com/emoss08/Trenova/issues/196).
 
+## [0.0.6] - 2024-01-28
+
+### Added
+- Add Sheet to `Table Change Alert` page (https://github.com/emoss08/Trenova/pull/224)
+
+## [0.0.5] - 2024-01-27
+
+### Added
+- Add `Applicaiton Favorites` which allows users to favorite pages (https://github.com/emoss08/Trenova/pull/222)
+- Add idempotency middleware to DRF API (https://github.com/emoss08/Trenova/pull/220)
+
+## [0.0.4] - 2024-01-25
+
+### Added
+- Add `conditionals` to `Table Change Alerts` (https://github.com/emoss08/Trenova/pull/218)
+
 ## [0.0.3] - 2024-01-19
 
 ### Added

@@ -34,7 +34,7 @@ import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { CommodityFormValues as FormValues } from "@/types/commodities";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
+import React, { useEffect } from "react";
 import { Control, useForm } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "../ui/form";
 
@@ -117,12 +117,14 @@ export function CommodityForm({
             control={control}
             label="Hazardous Material"
             options={selectHazardousMaterials}
-            maxOptions={10}
             isLoading={isLoading}
             isFetchError={isError}
             placeholder="Select Hazardous Material"
             description="The Hazardous Material associated with the Commodity"
             isClearable
+            hasPopoutWindow
+            popoutLink="/shipment-management/hazardous-materials/"
+            popoutLinkLabel="Hazardous Material"
           />
         </FormControl>
         <FormControl>
@@ -172,15 +174,17 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
     },
   );
 
-  React.useEffect(() => {
-    const hazardousMaterial = watch("hazardousMaterial");
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "hazardousMaterial" && value.hazardousMaterial) {
+        setValue("isHazmat", "Y");
+      } else if (name === "hazardousMaterial" && !value.hazardousMaterial) {
+        setValue("isHazmat", "N");
+      }
+    });
 
-    if (hazardousMaterial) {
-      setValue("isHazmat", "Y");
-    } else {
-      setValue("isHazmat", "N");
-    }
-  }, [watch("hazardousMaterial"), setValue]);
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   const mutation = useCustomMutation<FormValues>(
     control,

@@ -30,7 +30,7 @@ const TabsList = React.forwardRef<
     <TabsPrimitive.List
       ref={ref}
       className={cn(
-        "flex h-10 mt-5 mb-1.5 items-center justify-between bg-background border-y overflow-hidden",
+        "flex h-10 mt-5 mb-1.5 items-center justify-between bg-transparent border-b border-border overflow-hidden",
         className,
       )}
       {...props}
@@ -53,8 +53,8 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "relative inline-flex flex-1 items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm text-foreground font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      "data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:-mb-1.5 data-[state=active]:z-10",
-      "data-[state=inactive]:border-b-2 data-[state=inactive]:border-transparent data-[state=inactive]:-mb-1.5 data-[state=active]:z-10",
+      "data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:-mb-1.5 data-[state=active]:z-10",
+      "data-[state=inactive]:border-b-2 data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:-mb-1.5 data-[state=active]:z-10",
       isError ? "data-[state=inactive]:border-red-500" : "border-transparent",
       className,
     )}

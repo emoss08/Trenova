@@ -33,6 +33,7 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name")
+    equipment_class = "TRAILER"
 
 
 class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):

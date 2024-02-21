@@ -46,17 +46,7 @@ class HazardousMaterialViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.HazardousMaterial]:
         queryset: QuerySet[models.HazardousMaterial] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "packing_group",
-            "hazard_class",
-            "organization_id",
-            "name",
-            "description",
-            "status",
-            "erg_number",
-            "proper_shipping_name",
-        )
+        ).all()
         return queryset
 
 

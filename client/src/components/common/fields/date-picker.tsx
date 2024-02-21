@@ -15,20 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ErrorMessage, Input } from "@/components/common/fields/input";
+import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
-import { parseLocalDate } from "@/lib/date";
 import { cn, useClickOutside } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
-import { addDays, format } from "date-fns";
-import { AlertTriangle } from "lucide-react";
+import { addDays, format, parseISO } from "date-fns";
 import React, { useState } from "react";
 import {
+  Controller,
   FieldValues,
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 import {
   Select,
   SelectContent,
@@ -58,26 +58,27 @@ export function DatepickerField<TFieldValues extends FieldValues>({
   ...props
 }: DatepickerFieldProps & UseControllerProps<TFieldValues>) {
   const { field, fieldState } = useController(props);
-  const [date, setDate] = useState<Date | undefined>(props.initialDate);
+  const [date] = useState<Date | undefined>(props.initialDate);
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [stringDate, setStringDate] = React.useState(
     props.initialDate ? format(props.initialDate, "yyyy-MM-dd") : "",
   );
 
-  const close = React.useCallback(() => setIsOpen(false), []);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      const formattedDate = format(date, "yyyy-MM-dd");
+      field.onChange(formattedDate);
+    } else {
+      field.onChange(""); // Clear the value if the date is removed
+    }
+    setIsOpen(false);
+  };
+
+  const close = () => setIsOpen(false);
   useClickOutside(popoverRef, close);
 
-  const handleDateChange = React.useCallback(
-    (selectedDate: Date | undefined) => {
-      if (selectedDate) {
-        setDate(selectedDate);
-        setStringDate(format(selectedDate, "PPP"));
-        field.onChange(format(selectedDate, "yyyy-MM-dd"));
-      }
-    },
-    [field],
-  );
+  const formattedDate = field.value ? format(parseISO(field.value), "PPP") : "";
 
   return (
     <>
@@ -93,22 +94,28 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         </Label>
       )}
       <div className="relative w-full">
-        <Input
-          onClick={() => setIsOpen(true)}
-          {...field}
-          aria-invalid={fieldState.invalid}
-          value={field.value || stringDate}
-          className={cn(
-            "flex h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
-            fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
+        <Controller
+          name={props.name}
+          control={props.control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              onClick={() => setIsOpen(true)}
+              aria-invalid={fieldState.invalid}
+              value={formattedDate}
+              className={cn(
+                "flex h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus:ring-1 focus:ring-inset focus:ring-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm sm:leading-6",
+                fieldState.invalid &&
+                  "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+                props.className,
+              )}
+              onFocus={() => {
+                if (date) setStringDate(format(date, "PPP"));
+              }}
+              onChange={(e) => setStringDate(e.target.value)}
+              {...props}
+            />
           )}
-          onFocus={() => {
-            if (date) setStringDate(format(date, "PPP"));
-          }}
-          onChange={(e) => setStringDate(e.target.value)}
-          {...props}
         />
         <div
           className={cn(
@@ -125,12 +132,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         </div>
 
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-3 mt-3">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-xs text-foreground/70">{props.description}</p>
@@ -159,9 +161,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
               </Select>
               <Calendar
                 mode="single"
-                selected={
-                  field.value ? parseLocalDate(field.value) : new Date()
-                }
+                selected={field.value ? parseISO(field.value) : undefined}
                 onSelect={handleDateChange}
               />
             </div>
@@ -171,3 +171,21 @@ export function DatepickerField<TFieldValues extends FieldValues>({
     </>
   );
 }
+
+// interface DateTimePickerFieldProps
+//   extends React.InputHTMLAttributes<HTMLInputElement> {
+//   label: string;
+//   description?: string;
+//   placeholder?: string;
+//   initialDate?: Date;
+//   initialTime?: string;
+// }
+
+// const TIME_PRESET_VALUES = [
+//   { value: "00:00", label: "Midnight" },
+//   { value: "06:00", label: "Morning" },
+//   { value: "12:00", label: "Noon" },
+//   { value: "18:00", label: "Evening" },
+//   { value: "23:59", label: "Midnight" },
+//   { value: "now", label: "Now" },
+// ];

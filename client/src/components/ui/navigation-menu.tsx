@@ -17,10 +17,11 @@
 
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { cva } from "class-variance-authority";
-import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface ExtendedNavigationMenuProps
   extends React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root> {
@@ -83,8 +84,9 @@ const NavigationMenuTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronDown
-      className="relative top-[1px] ml-1 size-4 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
+    <FontAwesomeIcon
+      icon={faChevronDown}
+      className="relative top-[1px] ml-1 size-2 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>

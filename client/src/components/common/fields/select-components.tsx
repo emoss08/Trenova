@@ -17,13 +17,14 @@
 
 import { Button } from "@/components/ui/button";
 import { cn, PopoutWindow } from "@/lib/utils";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   CaretSortIcon,
   CheckIcon,
   Cross2Icon,
   PlusIcon,
 } from "@radix-ui/react-icons";
-import { AlertTriangle } from "lucide-react";
 import React from "react";
 import { Path, PathValue } from "react-hook-form";
 import {
@@ -32,10 +33,12 @@ import {
   DropdownIndicatorProps,
   GroupBase,
   IndicatorSeparatorProps,
+  InputProps,
   MenuListProps,
   NoticeProps,
   OptionProps,
   OptionsOrGroups,
+  SingleValueProps,
   ValueContainerProps,
 } from "react-select";
 
@@ -74,7 +77,10 @@ export function DropdownIndicator(props: DropdownIndicatorProps) {
   return (
     <components.DropdownIndicator {...props}>
       {props.selectProps["aria-invalid"] ? (
-        <AlertTriangle size={15} className="text-red-500" />
+        <FontAwesomeIcon
+          icon={faTriangleExclamation}
+          className="text-red-500"
+        />
       ) : (
         <CaretSortIcon className="size-4 shrink-0" />
       )}
@@ -192,6 +198,30 @@ export function MenuList({
   );
 }
 
+/**
+ * LoadingMessage component for the SelectInput component.
+ * @param children {React.ReactNode}
+ * @param props {NoticeProps}
+ * @constructor LoadingMessage
+ */
+export function LoadingMessage({ children, ...props }: NoticeProps) {
+  return (
+    <components.LoadingMessage {...props}>
+      <div className="my-1 flex flex-col items-center justify-center">
+        <p className="text-xs text-accent-foreground">
+          {children || "Loading..."}
+        </p>
+      </div>
+    </components.LoadingMessage>
+  );
+}
+
+/**
+ * NoOptionsMessage component for the SelectInput component.
+ * @param children {React.ReactNode}
+ * @param props {NoticeProps}
+ * @constructor NoOptionsMessage
+ */
 export function NoOptionsMessage({
   children,
   ...props
@@ -209,7 +239,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="my-1 text-sm text-accent-foreground">
+        <p className="text-xs text-accent-foreground">
           {children || "No options available..."}
         </p>
         {popoutLink && hasPopoutWindow && (
@@ -265,6 +295,56 @@ export function ValueProcessor<T extends Record<string, unknown>>(
 }
 
 /**
+ * Input component for the SelectInput component.
+ * @param props {InputProps & { selectProps: { isReadOnly?: boolean } }}
+ * @constructor InputComponent
+ */
+export function InputComponent(
+  props: InputProps & { selectProps: { isReadOnly?: boolean } },
+) {
+  return (
+    <components.Input {...props} readOnly={props.selectProps.isReadOnly} />
+  );
+}
+
+/**
+ * SingleValue component for the SelectInput component.
+ * @param props {SingleValueProps<any>}
+ * @constructor SingleValueComponent
+ */
+export function SingleValueComponent(props: SingleValueProps<any>) {
+  const { selectProps, data, children } = props;
+
+  // Find the option that matches the selected value
+  const selectedOption = selectProps.options.find(
+    (option) => option.value === data.value,
+  );
+
+  // Extract color from the selected option
+  const color = selectedOption ? selectedOption.color : null;
+
+  return (
+    <components.SingleValue {...props}>
+      <div className="flex items-center">
+        {/* Display colored dot if color is available */}
+        {color && (
+          <span
+            style={{
+              backgroundColor: color,
+              height: "10px",
+              width: "10px",
+              borderRadius: "50%",
+              display: "inline-block",
+              marginRight: "8px",
+            }}
+          ></span>
+        )}
+        <span>{children}</span>
+      </div>
+    </components.SingleValue>
+  );
+}
+/**
  * Error message component for the SelectInput component.
  * @param isFetchError {boolean}
  * @param formError {string}
@@ -281,7 +361,7 @@ export function ErrorMessage({
     <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
       {isFetchError
         ? "An error has occurred! Please try again later."
-        : formError}
+        : formError || "An error has occurred! Please try again later."}
     </div>
   );
 }
@@ -303,6 +383,12 @@ function openPopoutWindow(
   });
 }
 
+/**
+ * Add new button component for the SelectInput component.
+ * @param label {string}
+ * @param popoutLink {string}
+ * @constructor AddNewButton
+ */
 function AddNewButton({
   label,
   popoutLink,
@@ -316,7 +402,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-background py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
+      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground hover:bg-accent hover:text-foreground/90"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

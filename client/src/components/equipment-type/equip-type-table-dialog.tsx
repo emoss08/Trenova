@@ -107,7 +107,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="variableCost"
             label="Variable Cost"
-            type="text"
             placeholder="Variable Cost"
             description="Variable Cost of the Equipment Type"
           />
@@ -117,7 +116,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="height"
             label="Height"
-            type="text"
             placeholder="Height"
             description="Height of the Equipment Type"
           />
@@ -127,7 +125,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="length"
             label="Length"
-            type="text"
             placeholder="Length"
             description="Length of the Equipment Type"
           />
@@ -137,7 +134,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="width"
             label="Width"
-            type="text"
             placeholder="Width"
             description="Width of the Equipment Type"
           />
@@ -147,7 +143,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="weight"
             label="Weight"
-            type="text"
             placeholder="Weight"
             description="Weight of the Equipment Type"
           />
@@ -157,7 +152,6 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             control={control}
             name="idlingFuelUsage"
             label="Idling Fuel Usage"
-            type="text"
             placeholder="Idling Fuel Usage"
             description="Idling Fuel Usage of the Equipment Type"
           />

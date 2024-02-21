@@ -19,6 +19,7 @@ import { getUserFavorites } from "@/services/AccountRequestService";
 import {
   getAccountingControl,
   getGLAccounts,
+  getRevenueCodes,
   getTags,
 } from "@/services/AccountingRequestService";
 import {
@@ -34,15 +35,18 @@ import {
   getCommentTypes,
   getFeasibilityControl,
   getFleetCodes,
+  getRates,
 } from "@/services/DispatchRequestService";
 import {
   getEquipmentManufacturers,
   getEquipmentTypes,
+  getTrailers,
 } from "@/services/EquipmentRequestService";
 import {
   getLocationCategories,
   getLocations,
   getUSStates,
+  searchLocation,
 } from "@/services/LocationRequestService";
 import { getShipmentTypes } from "@/services/OrderRequestService";
 import {
@@ -61,15 +65,21 @@ import {
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import {
+  getFormulaTemplates,
+  getNextProNumber,
+  validateBOLNumber,
+} from "@/services/ShipmentRequestService";
+import {
   getUserDetails,
   getUserNotifications,
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import { QueryKeys } from "@/types";
+import { QueryKeyWithParams, QueryKeys } from "@/types";
 import {
   AccountingControl,
   GeneralLedgerAccount,
+  RevenueCode,
   Tag,
 } from "@/types/accounting";
 import { User } from "@/types/accounts";
@@ -85,11 +95,17 @@ import {
   DispatchControl,
   FeasibilityToolControl,
   FleetCode,
+  Rate,
 } from "@/types/dispatch";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
-import { ShipmentControl, ShipmentType } from "@/types/order";
+import {
+  FormulaTemplate,
+  ServiceType,
+  ShipmentControl,
+  ShipmentType,
+} from "@/types/order";
 import {
   Depot,
   EmailControl,
@@ -116,15 +132,12 @@ export function useTags(show: boolean) {
     isFetched,
     isPending,
   } = useQuery({
-    queryKey: ["tags"] as QueryKeys[],
+    queryKey: ["tags"] as QueryKeys,
     queryFn: async () => getTags(),
     enabled: show,
     initialData: () => {
-      return queryClient.getQueryData(["tags"] as QueryKeys[]);
+      return queryClient.getQueryData(["tags"] as QueryKeys);
     },
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
   });
 
   const selectTags =
@@ -149,13 +162,10 @@ export function useGLAccounts(show?: boolean) {
     isError,
     isFetched,
   } = useQuery({
-    queryKey: ["glAccounts"] as QueryKeys[],
+    queryKey: ["glAccounts"] as QueryKeys,
     queryFn: async () => getGLAccounts(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["glAccounts"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+    initialData: () => queryClient.getQueryData(["glAccounts"] as QueryKeys),
   });
 
   const selectGLAccounts =
@@ -177,14 +187,11 @@ export function useAccessorialCharges(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["accessorialCharges"] as QueryKeys[],
+    queryKey: ["accessorialCharges"] as QueryKeys,
     queryFn: async () => getAccessorialCharges(),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["accessorialCharges"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["accessorialCharges"] as QueryKeys),
   });
 
   const selectAccessorialChargeData =
@@ -203,12 +210,10 @@ export function useAccountingControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["accountingControl"] as QueryKeys[],
+    queryKey: ["accountingControl"] as QueryKeys,
     queryFn: async () => getAccountingControl(),
     initialData: () =>
-      queryClient.getQueryData(["accountingControl"] as QueryKeys[]),
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["accountingControl"] as QueryKeys),
   });
 
   const accountingControlData = (data as AccountingControl[])?.[0];
@@ -222,11 +227,10 @@ export function useAccountingControl() {
 export function useBillingControl() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["billingControl"] as QueryKeys[],
+    queryKey: ["billingControl"] as QueryKeys,
     queryFn: () => getBillingControl(),
     initialData: () =>
-      queryClient.getQueryData(["billingControl"] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData(["billingControl"] as QueryKeys),
   });
 
   // Store first element of BillingControlData in variable
@@ -242,11 +246,10 @@ export function useInvoiceControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["invoiceControl"] as QueryKeys[],
+    queryKey: ["invoiceControl"] as QueryKeys,
     queryFn: () => getInvoiceControl(),
     initialData: () =>
-      queryClient.getQueryData(["invoiceControl"] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData(["invoiceControl"] as QueryKeys),
   });
 
   // Store first element of invoiceControlData in variable
@@ -262,10 +265,10 @@ export function useDispatchControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["dispatchControl"] as QueryKeys[],
+    queryKey: ["dispatchControl"] as QueryKeys,
     queryFn: () => getDispatchControl(),
     initialData: () =>
-      queryClient.getQueryData(["dispatchControl"] as QueryKeys[]),
+      queryClient.getQueryData(["dispatchControl"] as QueryKeys),
     staleTime: Infinity,
   });
 
@@ -282,11 +285,10 @@ export function useShipmentControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["shipmentControl"] as QueryKeys[],
+    queryKey: ["shipmentControl"] as QueryKeys,
     queryFn: () => getShipmentControl(),
     initialData: () =>
-      queryClient.getQueryData(["shipmentControl"] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData(["shipmentControl"] as QueryKeys),
   });
 
   // Store first element of shipmentControlData in variable
@@ -302,11 +304,9 @@ export function useRouteControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["routeControl"] as QueryKeys[],
+    queryKey: ["routeControl"] as QueryKeys,
     queryFn: () => getRouteControl(),
-    initialData: () =>
-      queryClient.getQueryData(["routeControl"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["routeControl"] as QueryKeys),
   });
 
   // Store first element of dispatchControlData in variable
@@ -319,17 +319,14 @@ export function useRouteControl() {
  * Get Commodities for select options
  * @param show - show or hide the query
  */
-export function useCommodities(show: boolean) {
+export function useCommodities(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["commodities"] as QueryKeys[],
+    queryKey: ["commodities"] as QueryKeys,
     queryFn: async () => getCommodities(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["commodities"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+    initialData: () => queryClient.getQueryData(["commodities"] as QueryKeys),
   });
 
   const selectCommodityData =
@@ -338,24 +335,21 @@ export function useCommodities(show: boolean) {
       label: item.name,
     })) || [];
 
-  return { selectCommodityData, isLoading, isError, isFetched };
+  return { selectCommodityData, isLoading, isError, isFetched, data };
 }
 
 /**
  * Get Customers for select options
  * @param show - show or hide the query
  */
-export function useCustomers(show: boolean) {
+export function useCustomers(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["customers"] as QueryKeys[],
+    queryKey: ["customers"] as QueryKeys,
     queryFn: async () => getCustomers(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["customers"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+    initialData: () => queryClient.getQueryData(["customers"] as QueryKeys),
   });
 
   const selectCustomersData =
@@ -375,14 +369,11 @@ export function useDocumentClass(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["documentClassifications"] as QueryKeys[],
+    queryKey: ["documentClassifications"] as QueryKeys,
     queryFn: async () => getDocumentClassifications(),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["documentClassifications"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["documentClassifications"] as QueryKeys),
   });
 
   const selectDocumentClassData =
@@ -403,14 +394,14 @@ export function useEquipmentTypes(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipmentTypes", limit] as QueryKeys[],
+    queryKey: ["equipmentTypes", limit] as QueryKeyWithParams<
+      "equipmentTypes",
+      [number]
+    >,
     queryFn: async () => getEquipmentTypes(limit),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["equipmentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["equipmentTypes"] as QueryKeys),
   });
 
   const selectEquipmentType =
@@ -428,13 +419,10 @@ export function useEquipmentTypes(show?: boolean, limit: number = 100) {
 export function useFeasibilityControl() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
-    queryKey: ["feasibilityControl"] as QueryKeys[],
+    queryKey: ["feasibilityControl"] as QueryKeys,
     queryFn: async () => getFeasibilityControl(),
     initialData: () =>
-      queryClient.getQueryData(["feasibilityControl"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["feasibilityControl"] as QueryKeys),
   });
 
   const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
@@ -450,14 +438,11 @@ export function useHazardousMaterial(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["hazardousMaterials"] as QueryKeys[],
+    queryKey: ["hazardousMaterials"] as QueryKeys,
     queryFn: async () => getHazardousMaterials(),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["hazardousMaterials"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+      queryClient.getQueryData(["hazardousMaterials"] as QueryKeys),
   });
 
   const selectHazardousMaterials =
@@ -466,31 +451,41 @@ export function useHazardousMaterial(show?: boolean) {
       label: item.name,
     })) || [];
 
-  return { selectHazardousMaterials, isLoading, isError, isFetched };
+  return { selectHazardousMaterials, isLoading, isError, isFetched, data };
 }
 
 /**
  * Get Locations for select options
  * @param show - show or hide the query
  */
-export function useLocations(show?: boolean) {
+export function useLocations(locationStatus: string = "A", show?: boolean) {
   const queryClient = useQueryClient();
 
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["locations"] as QueryKeys[],
-    queryFn: async () => getLocations(),
+  const {
+    data: locations,
+    isError,
+    isLoading,
+  } = useQuery({
+    queryKey: ["locations", locationStatus] as QueryKeyWithParams<
+      "locations",
+      [string]
+    >,
+    queryFn: async () => getLocations(locationStatus),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["locations"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () =>
+      queryClient.getQueryData([
+        "locations",
+        locationStatus,
+      ] as QueryKeyWithParams<"locations", [string]>),
   });
 
   const selectLocationData =
-    (data as Location[])?.map((location: Location) => ({
+    (locations as Location[])?.map((location: Location) => ({
       value: location.id,
       label: location.code,
     })) || [];
 
-  return { selectLocationData, isError, isLoading };
+  return { selectLocationData, isError, isLoading, locations };
 }
 
 /**
@@ -498,18 +493,14 @@ export function useLocations(show?: boolean) {
  * @param show - show or hide the query
  * @returns
  */
-export function useShipmentTypes(show: boolean) {
+export function useShipmentTypes(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["shipmentTypes"] as QueryKeys[],
+    queryKey: ["shipmentTypes"] as QueryKeys,
     queryFn: async () => getShipmentTypes(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["shipmentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
+    initialData: () => queryClient.getQueryData(["shipmentTypes"] as QueryKeys),
   });
 
   const selectShipmentType =
@@ -530,11 +521,10 @@ export function useUsers(show?: boolean) {
 
   /** Get users for the select input */
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["users"] as QueryKeys[],
+    queryKey: ["users"] as QueryKeys,
     queryFn: async () => getUsers(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["users"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["users"] as QueryKeys),
   });
 
   const selectUsersData =
@@ -554,11 +544,13 @@ export function useUser(userId: string) {
   const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: ["users", userId] as QueryKeys[],
+    queryKey: ["users", userId] as QueryKeyWithParams<"users", [string]>,
     queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
     initialData: (): User | undefined =>
-      queryClient.getQueryData(["users", userId] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData(["users", userId] as QueryKeyWithParams<
+        "users",
+        [string]
+      >),
   });
 }
 
@@ -570,12 +562,11 @@ export function useLocationCategories(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["locationCategories"] as QueryKeys[],
+    queryKey: ["locationCategories"] as QueryKeys,
     queryFn: async () => getLocationCategories(),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["locationCategories"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
+      queryClient.getQueryData(["locationCategories"] as QueryKeys),
   });
 
   const selectLocationCategories =
@@ -596,11 +587,10 @@ export function useUSStates(show?: boolean, limit?: number) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["usStates", limit] as QueryKeys[],
+    queryKey: ["usStates", limit] as QueryKeyWithParams<"usStates", [number]>,
     queryFn: async () => getUSStates(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys),
   });
 
   // Create an array of objects with value and label for each state
@@ -621,12 +611,10 @@ export function useCommentTypes(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["commentTypes"] as QueryKeys[],
+    queryKey: ["commentTypes"] as QueryKeys,
     queryFn: async () => getCommentTypes(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["commentTypes"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["commentTypes"] as QueryKeys),
   });
 
   const selectCommentTypes =
@@ -646,11 +634,10 @@ export function useDepots(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["depots"] as QueryKeys[],
+    queryKey: ["depots"] as QueryKeys,
     queryFn: async () => getDepots(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["depots"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["depots"] as QueryKeys),
   });
 
   const selectDepots =
@@ -671,11 +658,13 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["fleetCodes", limit] as QueryKeys[],
+    queryKey: ["fleetCodes", limit] as QueryKeyWithParams<
+      "fleetCodes",
+      [number]
+    >,
     queryFn: async () => getFleetCodes(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys),
   });
 
   const selectFleetCodes =
@@ -696,12 +685,14 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["equipmentManufacturers", limit] as QueryKeys[],
+    queryKey: ["equipmentManufacturers", limit] as QueryKeyWithParams<
+      "equipmentManufacturers",
+      [number]
+    >,
     queryFn: async () => getEquipmentManufacturers(limit),
     enabled: show,
     initialData: () =>
-      queryClient.getQueryData(["equipmentManufacturers"] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData(["equipmentManufacturers"] as QueryKeys),
   });
 
   const selectEquipManufacturers =
@@ -724,11 +715,10 @@ export function useWorkers(show?: boolean, limit: number = 100) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["workers", limit] as QueryKeys[],
+    queryKey: ["workers", limit] as QueryKeyWithParams<"workers", [number]>,
     queryFn: async () => getWorkers(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["workers"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["workers"] as QueryKeys),
   });
 
   const selectWorkers =
@@ -744,12 +734,10 @@ export function useEmailProfiles(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["emailProfiles"] as QueryKeys[],
+    queryKey: ["emailProfiles"] as QueryKeys,
     queryFn: () => getEmailProfiles(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["emailProfiles"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["emailProfiles"] as QueryKeys),
   });
 
   const selectEmailProfile =
@@ -765,11 +753,9 @@ export function useEmailControl() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isFetched, isError, isFetching } = useQuery({
-    queryKey: ["emailControl"] as QueryKeys[],
+    queryKey: ["emailControl"] as QueryKeys,
     queryFn: () => getEmailControl(),
-    initialData: () =>
-      queryClient.getQueryData(["emailControl"] as QueryKeys[]),
-    staleTime: Infinity,
+    initialData: () => queryClient.getQueryData(["emailControl"] as QueryKeys),
   });
 
   const emailControlData = (data as EmailControl[])?.[0];
@@ -791,7 +777,6 @@ export function useNotifications(userId: string) {
       initialData: () => {
         return queryClient.getQueryData(["userNotifications", userId]);
       },
-      staleTime: Infinity,
     },
   );
 
@@ -810,7 +795,6 @@ export function useFeatureFlags() {
     initialData: () => {
       return queryClient.getQueryData(["featureFlags"]);
     },
-    staleTime: Infinity,
   });
 
   return { featureFlagsData, featureFlagsLoading };
@@ -826,11 +810,10 @@ export function useUserOrganization() {
     isLoading: userOrganizationLoading,
     isError: userOrganizationError,
   } = useQuery({
-    queryKey: ["userOrganization"] as QueryKeys[],
+    queryKey: ["userOrganization"] as QueryKeys,
     queryFn: async () => getUserOrganizationDetails(),
     initialData: (): Organization | undefined =>
       queryClient.getQueryData(["userOrganization"]),
-    staleTime: Infinity,
   });
 
   return {
@@ -851,12 +834,11 @@ export function useGoogleAPI() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["googleAPI"] as QueryKeys[],
+    queryKey: ["googleAPI"] as QueryKeys,
     queryFn: async () => getGoogleApiInformation(),
     initialData: () => {
-      return queryClient.getQueryData(["googleAPI"] as QueryKeys[]);
+      return queryClient.getQueryData(["googleAPI"] as QueryKeys);
     },
-    staleTime: Infinity,
   });
 
   return { googleAPIData, isLoading, isError };
@@ -870,11 +852,10 @@ export function useTableNames(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["tableNames"] as QueryKeys[],
+    queryKey: ["tableNames"] as QueryKeys,
     queryFn: async () => getTableNames(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["tableNames"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
+    initialData: () => queryClient.getQueryData(["tableNames"] as QueryKeys),
   });
 
   const selectTableNames =
@@ -894,11 +875,10 @@ export function useTopics(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["topicNames"] as QueryKeys[],
+    queryKey: ["topicNames"] as QueryKeys,
     queryFn: async () => getTopicNames(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["topicNames"] as QueryKeys[]),
-    refetchOnWindowFocus: true,
+    initialData: () => queryClient.getQueryData(["topicNames"] as QueryKeys),
   });
 
   const selectTopics =
@@ -910,16 +890,219 @@ export function useTopics(show?: boolean) {
   return { selectTopics, isError, isLoading };
 }
 
+/**
+ * Get the User's Favorites
+ * @param show - show or hide the query
+ */
 export function useUserFavorites(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["userFavorites"] as QueryKeys[],
+    queryKey: ["userFavorites"] as QueryKeys,
     queryFn: async () => getUserFavorites(),
     enabled: show,
+    initialData: () => queryClient.getQueryData(["userFavorites"] as QueryKeys),
+  });
+
+  return { data, isError, isLoading };
+}
+
+/**
+ * Get the Accounting Control for select options
+ * @param show - show or hide the query
+ */
+export function useRevenueCodes(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: revenueCodesData,
+    isError: isRevenueCodeError,
+    isLoading: isRevenueCodeLoading,
+  } = useQuery({
+    queryKey: ["revenueCodes"] as QueryKeys,
+    queryFn: async () => getRevenueCodes(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["revenueCodes"] as QueryKeys),
+  });
+
+  const selectRevenueCodes =
+    (revenueCodesData as RevenueCode[])?.map((revenueCode: RevenueCode) => ({
+      value: revenueCode.id,
+      label: revenueCode.code,
+    })) || [];
+
+  return { selectRevenueCodes, isRevenueCodeError, isRevenueCodeLoading };
+}
+
+/**
+ * Get the Trailers for select options
+ * @param show - show or hide the query
+ * @returns selectTrailers, isTrailerError, isTrailerLoading, trailerData
+ */
+export function useTrailers(show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: trailerData,
+    isError: isTrailerError,
+    isLoading: isTrailerLoading,
+  } = useQuery({
+    queryKey: ["trailers"] as QueryKeys,
+    queryFn: async () => getTrailers(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["trailers"] as QueryKeys),
+  });
+
+  const selectTrailers =
+    (trailerData as RevenueCode[])?.map((trailer: RevenueCode) => ({
+      value: trailer.id,
+      label: trailer.code,
+    })) || [];
+
+  return { selectTrailers, isTrailerError, isTrailerLoading, trailerData };
+}
+
+/**
+ * Get the next shipment pro number for the organization
+ */
+export function useNextProNumber() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: proNumber,
+    isError: isProNumberError,
+    isLoading: isProNumberLoading,
+  } = useQuery({
+    queryKey: ["proNumber"],
+    queryFn: async () => getNextProNumber(),
+    initialData: () => queryClient.getQueryData(["proNumber"]),
+  });
+
+  return { proNumber, isProNumberError, isProNumberLoading };
+}
+
+export function useLocationAutoComplete(searchQuery: string) {
+  const queryClient = useQueryClient();
+  const isQueryEnabled = searchQuery.trim().length > 0;
+
+  const {
+    data: searchResults = [],
+    isError: searchResultError,
+    isLoading: isSearchLoading,
+  } = useQuery({
+    queryKey: ["locationAutoComplete", searchQuery] as QueryKeyWithParams<
+      "locationAutoComplete",
+      [string]
+    >,
+    queryFn: async () => searchLocation(searchQuery),
+    enabled: isQueryEnabled,
     initialData: () =>
-      queryClient.getQueryData(["userFavorites"] as QueryKeys[]),
-    staleTime: Infinity,
+      queryClient.getQueryData([
+        "locationAutoComplete",
+        searchQuery,
+      ] as QueryKeyWithParams<"locationAutoComplete", [string]>),
+  });
+
+  return { searchResults, searchResultError, isSearchLoading };
+}
+
+/**
+ * Get the Rates for select options
+ * @param limit - limit the number of results
+ * @param show - show or hide the query
+ * @returns selectRates, isRateError, isRatesLoading, ratesData
+ */
+export function useRates(limit?: number, show?: boolean) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: ratesData,
+    isError: isRateError,
+    isLoading: isRatesLoading,
+  } = useQuery({
+    queryKey: ["rates", limit] as QueryKeyWithParams<"rates", [number]>,
+    queryFn: async () => getRates(limit),
+    enabled: show,
+    initialData: () => queryClient.getQueryData(["rates"] as QueryKeys),
+  });
+
+  const selectRates =
+    (ratesData as Rate[])?.map((rate: Rate) => ({
+      value: rate.id,
+      label: rate.rateNumber,
+    })) || [];
+
+  return { selectRates, isRateError, isRatesLoading, ratesData };
+}
+
+/**
+ * Get the Formula Templates for select options
+ * @returns selectFormulaTemplates, isFormulaError, isFormulaLoading
+ */
+export function useFormulaTemplates() {
+  const queryClient = useQueryClient();
+
+  const {
+    data: formulaTemplates,
+    isError: isFormulaError,
+    isLoading: isFormulaLoading,
+  } = useQuery({
+    queryKey: ["formulaTemplates"],
+    queryFn: async () => getFormulaTemplates(),
+    initialData: () => queryClient.getQueryData(["formulaTemplates"]),
+  });
+
+  const selectFormulaTemplates =
+    (formulaTemplates as FormulaTemplate[])?.map(
+      (template: FormulaTemplate) => ({
+        value: template.id,
+        label: template.name,
+      }),
+    ) || [];
+
+  return { selectFormulaTemplates, isFormulaError, isFormulaLoading };
+}
+
+/**
+ * Get the Service Types for select options
+ * @returns selectServiceTypes, isServiceTypeError, isServiceTypeLoading
+ */
+export function useServiceTypes() {
+  const queryCLient = useQueryClient();
+
+  const {
+    data: serviceTypes,
+    isError: isServiceTypeError,
+    isLoading: isServiceTypeLoading,
+  } = useQuery({
+    queryKey: ["serviceTypes"],
+    queryFn: async () => getShipmentTypes(),
+    initialData: () => queryCLient.getQueryData(["serviceTypes"] as QueryKeys),
+  });
+
+  const selectServiceTypes =
+    (serviceTypes as ServiceType[])?.map((serviceType: ServiceType) => ({
+      value: serviceType.id,
+      label: serviceType.code,
+    })) || [];
+
+  return { selectServiceTypes, isServiceTypeError, isServiceTypeLoading };
+}
+
+export function useValidateBOLNumber(bol_number: string) {
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["validateBOLNumber", bol_number] as QueryKeyWithParams<
+      "validateBOLNumber",
+      [string]
+    >,
+    queryFn: async () => validateBOLNumber(bol_number),
+    initialData: () =>
+      queryClient.getQueryData([
+        "validateBOLNumber",
+        bol_number,
+      ] as QueryKeyWithParams<"validateBOLNumber", [string]>),
   });
 
   return { data, isError, isLoading };

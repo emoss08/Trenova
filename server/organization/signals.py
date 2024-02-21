@@ -489,7 +489,7 @@ def create_google_api(
     if created:
         GoogleAPI.objects.get_or_create(
             business_unit=instance.business_unit,
-            organization=instance.organization,
+            organization=instance,
             api_key="API_KEY_HERE",
         )
 

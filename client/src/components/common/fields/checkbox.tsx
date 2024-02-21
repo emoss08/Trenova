@@ -17,7 +17,6 @@
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as React from "react";
 
-import { ErrorMessage } from "@/components/common/fields/input";
 import { cn } from "@/lib/utils";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -26,6 +25,7 @@ import {
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { ErrorMessage } from "./error-message";
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
@@ -89,9 +89,7 @@ export function CheckboxInput<T extends FieldValues>({
           </p>
         )}
         {fieldState.invalid && (
-          <>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <ErrorMessage formError={fieldState.error?.message} />
         )}
       </div>
     </label>

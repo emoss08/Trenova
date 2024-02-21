@@ -197,7 +197,7 @@ def shipment_api(
             "destination_appointment_window_end": f"{timezone.now() + timedelta(days=2)}",
             "freight_charge_amount": 100.00,
             "customer": f"{customer.id}",
-            "equipment_type": f"{equipment_type.id}",
+            "trailer_type": f"{equipment_type.id}",
             "entered_by": f"{user.id}",
             "bol_number": "newbol",
         },

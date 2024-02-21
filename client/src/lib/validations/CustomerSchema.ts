@@ -34,7 +34,7 @@ export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
     fromAddress: Yup.string().notRequired(),
     blindCopy: Yup.string().notRequired(),
     readReceipt: Yup.boolean().required(),
-    readReceiptTo: Yup.string().when("read_receipt", {
+    readReceiptTo: Yup.string().when("readReceipt", {
       is: true,
       then: (schema) => schema.required("Read Receipt To is required"),
       otherwise: (schema) => schema.notRequired(),
@@ -116,7 +116,11 @@ const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
   Yup.object().shape({
     isActive: Yup.boolean().required(),
     name: Yup.string().required("Name is required"),
-    email: Yup.string().notRequired(),
+    email: Yup.string().when("isPayableContact", {
+      is: true,
+      then: (schema) => schema.required("Email is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
     title: Yup.string().notRequired(),
     phone: Yup.string().notRequired(),
     isPayableContact: Yup.boolean().required(),

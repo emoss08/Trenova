@@ -1,0 +1,145 @@
+[
+{
+  "model": "stops.qualifiercode",
+  "pk": "0f896779-e596-44d4-a60d-ee2c67d67897",
+  "fields": {
+    "created": "2024-02-16T04:56:37.226Z",
+    "modified": "2024-02-16T04:56:37.226Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "PU",
+    "description": "Pickup Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "2f8ef789-9d09-4b9a-9229-1c378a92f6e0",
+  "fields": {
+    "created": "2024-02-16T05:00:34.386Z",
+    "modified": "2024-02-16T05:00:34.386Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "SID",
+    "description": "Shipper's Identifier for Shipment"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "3358f76e-d6eb-4023-b322-a0cf686d56ac",
+  "fields": {
+    "created": "2024-02-16T04:55:46.032Z",
+    "modified": "2024-02-16T04:55:46.032Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "PO",
+    "description": "Purchase Order Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "35a45017-462e-4b8b-a22b-b4b8a2af5215",
+  "fields": {
+    "created": "2024-02-16T04:59:38.731Z",
+    "modified": "2024-02-16T04:59:38.731Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "OR",
+    "description": "Order/Paragraph Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "4a0c29e8-1f09-4265-877f-571fe5e36edf",
+  "fields": {
+    "created": "2024-02-16T05:01:12.189Z",
+    "modified": "2024-02-16T05:01:12.189Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "RE",
+    "description": "Reference Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "51f47858-0795-4624-a5a4-79c73ac8e2b5",
+  "fields": {
+    "created": "2024-02-16T05:00:03.278Z",
+    "modified": "2024-02-16T05:00:03.278Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "MB",
+    "description": "Master Bill Of Lading"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "66a62b9c-eddb-42e2-a751-4618097d5a91",
+  "fields": {
+    "created": "2024-02-16T04:59:51.833Z",
+    "modified": "2024-02-16T04:59:51.833Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "CG",
+    "description": "Consignee's Order Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "a3e0ff93-4989-4a70-82fb-23fd14d69acb",
+  "fields": {
+    "created": "2024-02-16T05:01:03.189Z",
+    "modified": "2024-02-16T05:01:03.189Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "MF",
+    "description": "Manifest Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "aa9e1bf4-40b6-4f1d-99e9-237a44a75e3b",
+  "fields": {
+    "created": "2024-02-16T05:01:40.114Z",
+    "modified": "2024-02-16T05:01:40.114Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "SN",
+    "description": "Stop Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "e4d9ec10-b107-434b-acad-b4a7951174ec",
+  "fields": {
+    "created": "2024-02-16T05:00:16.099Z",
+    "modified": "2024-02-16T05:00:16.099Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "OI",
+    "description": "Original Invoice Number"
+  }
+},
+{
+  "model": "stops.qualifiercode",
+  "pk": "eac0da50-a60e-45aa-abe8-deb4baba442f",
+  "fields": {
+    "created": "2024-02-16T05:00:49.335Z",
+    "modified": "2024-02-16T05:00:49.335Z",
+    "organization": "875c0f00-2261-4bc1-b211-bc65894a5e48",
+    "business_unit": "d76c5e16-28aa-427c-be27-302929b12d3a",
+    "status": "A",
+    "code": "DN",
+    "description": "Delivery Number"
+  }
+}
+]

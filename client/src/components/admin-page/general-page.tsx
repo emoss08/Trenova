@@ -102,7 +102,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
         </div>
 
         <form
-          className="m-4 border border-border bg-background sm:rounded-xl md:col-span-2"
+          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -120,7 +120,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      console.log("Change Logo");
                     }}
                   >
                     {t("fields.logo.placeholder")}
@@ -315,7 +314,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
             <Button
               onClick={(e) => {
                 e.preventDefault();
-                console.log("cancel");
               }}
               type="button"
               variant="ghost"

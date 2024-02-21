@@ -281,6 +281,11 @@ router.register(
     shipment_api.ServiceTypeViewSet,
     basename="service-types",
 )
+router.register(
+    r"formula_templates",
+    shipment_api.FormulaTemplateViewSet,
+    basename="formula-templates",
+)
 
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")
@@ -398,6 +403,11 @@ urlpatterns = [
         "api/user/notifications/",
         reports_api.get_user_notifications,
         name="user-notifications",
+    ),
+    path(
+        "api/location/auto_complete/",
+        integration_api.autocomplete_location,
+        name="autocomplete-location",
     ),
     path(
         "api/billing/shipments_ready/",

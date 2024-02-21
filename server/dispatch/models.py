@@ -405,22 +405,28 @@ class CommentType(GenericModel):
         help_text=_("Status of the comment type."),
         default=PrimaryStatusChoices.ACTIVE,
     )
+    severity = models.CharField(
+        _("Severity"),
+        max_length=50,
+        choices=[("H", "High"), ("M", "Medium"), ("L", "Low")],
+        default="L",
+        help_text=_("Priority or severity level of the comment type."),
+    )
     name = models.CharField(
         _("Name"),
         max_length=10,
         help_text=_("Comment type name"),
     )
-    description = models.CharField(
+    description = models.TextField(
         _("Description"),
-        max_length=100,
         help_text=_("Comment type description"),
     )
 
     class Meta:
         """
-        Metaclass for the Rate model.
+        Metaclass for the Comment Type model.
 
-        The Meta class defines some options for the Rate model.
+        The Meta class defines some options for the Comment Type model.
         """
 
         verbose_name = _("Comment Type")
@@ -446,6 +452,26 @@ class CommentType(GenericModel):
         return textwrap.shorten(
             f"{self.name} - {self.description}", 50, placeholder="..."
         )
+
+    def clean(self) -> None:
+        """
+        Clean the CommentType instance.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        standard_codes = ["Dispatch", "Billing", "Hot"]
+
+        # Disable the ability to set the status of the standard comment types to inactive
+        if self.name in standard_codes and self.status == PrimaryStatusChoices.INACTIVE:
+            raise ValidationError(
+                {
+                    "status": _(
+                        "The status of the standard comment types cannot be set to inactive."
+                    ),
+                },
+                code="invalid",
+            )
 
     def get_absolute_url(self) -> str:
         """
@@ -544,14 +570,6 @@ class Rate(GenericModel):
         "shipment.ShipmentType",
         on_delete=models.SET_NULL,
         verbose_name=_("shipment type"),
-        related_name="rates",
-        null=True,
-        blank=True,
-    )
-    equipment_type = models.ForeignKey(
-        "equipment.EquipmentType",
-        on_delete=models.SET_NULL,
-        verbose_name=_("Equipment Type"),
         related_name="rates",
         null=True,
         blank=True,

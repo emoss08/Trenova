@@ -113,7 +113,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 
   return (
     <form
-      className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2"
+      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -155,7 +155,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
             <CheckboxInput
               name="addCustomerLocation"
               control={control}
-              label={t("fields.addLocation.label")}
+              label={t("fields.addCustomerLocation.label")}
               description={t("fields.addCustomerLocation.description")}
             />
           </div>

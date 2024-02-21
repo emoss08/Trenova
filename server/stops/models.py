@@ -150,14 +150,16 @@ class Stop(GenericModel):
     pieces = models.PositiveIntegerField(
         _("Pieces"),
         help_text=_("Total Piece Count of the shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
         help_text=_("Total Weight of the shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     address_line = models.CharField(
         _("Stop Address"),
@@ -322,14 +324,6 @@ class StopComment(GenericModel):
         related_name="comments",
         verbose_name=_("Stop"),
     )
-    comment_type = models.ForeignKey(
-        "dispatch.CommentType",
-        on_delete=models.PROTECT,
-        related_name="stop_comments",
-        related_query_name="stop_comment",
-        verbose_name=_("Comment Type"),
-        help_text=_("The type of comment."),
-    )
     qualifier_code = models.ForeignKey(
         QualifierCode,
         on_delete=models.PROTECT,
@@ -338,9 +332,10 @@ class StopComment(GenericModel):
         verbose_name=_("Qualifier Code"),
         help_text=_("Qualifier code for the comment."),
     )
-    comment = models.TextField(
-        _("Comment"),
-        help_text=_("Comment text."),
+    value = models.CharField(
+        _("Qualifier Code Value"),
+        max_length=100,
+        help_text=_("Value for the qualifier code."),
     )
     entered_by = models.ForeignKey(
         User,
@@ -371,14 +366,6 @@ class StopComment(GenericModel):
             width=50,
             placeholder="...",
         )
-
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the StopComment
-
-        Returns:
-            str: Absolute url for the StopComment
-        """
-        return reverse("stop:stop-comment-detail", kwargs={"pk": self.pk})
 
 
 class ServiceIncident(GenericModel):

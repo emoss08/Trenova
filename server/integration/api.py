@@ -17,12 +17,14 @@
 import typing
 
 from rest_framework import permissions, status, views, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from integration import models, serializers
 from integration.selectors import get_organization_google_api
+from integration.services import autocomplete_location_service
 
 
 class IntegrationVendorViewSet(viewsets.ModelViewSet):
@@ -114,3 +116,30 @@ class GoogleAPIDetailViewSet(views.APIView):
 
         serializer.save()
         return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def autocomplete_location(request: Request) -> Response:
+    """
+    Autocomplete the location based on the search query.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        Response: A response object containing the location results.
+    """
+    search_query = request.query_params.get("search")
+    if not search_query:
+        return Response(
+            {"error": "Search query is required."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    organization = request.user.organization
+
+    location_results = autocomplete_location_service(
+        search_query=search_query, organization=organization
+    )
+
+    return Response(location_results, status=status.HTTP_200_OK)

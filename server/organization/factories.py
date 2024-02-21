@@ -126,10 +126,10 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
         "random_element",
         elements=("INSERT", "UPDATE", "BOTH"),
     )
+    email_recipients = "admin@trenova.app"
     table = factory.Faker(
         "random_element",
         elements=(
-            "organization",
             "depot",
             "email_profile",
         ),

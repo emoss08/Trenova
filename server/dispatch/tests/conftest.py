@@ -28,7 +28,6 @@ from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories
 from dispatch.models import Rate
-from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from organization.models import Organization
 from shipment.tests.factories import ShipmentTypeFactory
@@ -63,7 +62,6 @@ def rate_api(
     customer = CustomerFactory()
     commodity = CommodityFactory()
     shipment_type = ShipmentTypeFactory()
-    equipment_type = EquipmentTypeFactory()
 
     data = {
         "organization": organization.id,
@@ -72,7 +70,6 @@ def rate_api(
         "expiration_date": timezone.now().date(),
         "commodity": commodity.id,
         "shipment_type": shipment_type.id,
-        "equipment_type": equipment_type.id,
         "comments": "Test Rate",
     }
 

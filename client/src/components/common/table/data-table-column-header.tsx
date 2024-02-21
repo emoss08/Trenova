@@ -14,6 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Column } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,15 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import {
   ArrowDownIcon,
@@ -82,6 +91,37 @@ export function DataTableColumnHeader<TData, TValue>({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    </div>
+  );
+}
+
+interface DataTableColumnHeaderWithTooltipProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  tooltip: string;
+}
+
+export function DataTableTooltipColumnHeader({
+  title,
+  tooltip,
+  className,
+}: DataTableColumnHeaderWithTooltipProps) {
+  return (
+    <div className={cn("flex items-center space-x-1.5", className)}>
+      <span>{title}</span>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <FontAwesomeIcon
+              icon={faCircleInfo}
+              className="mb-0.5 size-3.5 text-muted-foreground"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <span>{tooltip}</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

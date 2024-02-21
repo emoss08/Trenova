@@ -31,11 +31,15 @@ import {
   equipmentNavLinks,
   shipmentNavLinks,
 } from "@/lib/nav-links";
+import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
-import { faGrid2, faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  faChevronDown,
+  faGrid2,
+  faUserCrown,
+} from "@fortawesome/pro-duotone-svg-icons";
 import { faBars } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChevronDownIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -170,10 +174,12 @@ const LinksComponent = ({
                 <div className="pr-2">{linkItem.icon}</div>
                 {linkItem.label}
               </div>
-              <ChevronDownIcon
-                className={`size-4 ${
-                  openSubMenu === linkItem.key ? "rotate-180" : ""
-                }`}
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={cn(
+                  "size-2",
+                  openSubMenu === linkItem.key ? "rotate-180" : "",
+                )}
               />
             </div>
             {linkItem.subLinks && openSubMenu === linkItem.key && (
@@ -206,7 +212,7 @@ function AsideMenu({
   onLinkClick: () => void;
 }) {
   return (
-    <div className="mt-5 overflow-hidden bg-background sm:rounded-md">
+    <div className="mt-5 overflow-hidden bg-card sm:rounded-md">
       <ul>
         {menuItems.map((item) => (
           <MenuItem key={item.menuKey} item={item} onLinkClick={onLinkClick} />

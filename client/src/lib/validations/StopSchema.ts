@@ -15,9 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as yup from "yup";
-import { QualifierCodeFormValues } from "@/types/stop";
 import { StatusChoiceProps } from "@/types";
+import {
+  QualifierCodeFormValues,
+  StopCommentFormValues,
+  StopFormValues,
+  StopTypeProps,
+} from "@/types/stop";
+import * as yup from "yup";
+import { ShipmentStatusChoiceProps } from "../choices";
 
 export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
   yup.object().shape({
@@ -25,3 +31,61 @@ export const qualifierCodeSchema: yup.ObjectSchema<QualifierCodeFormValues> =
     code: yup.string().required("Name is required"),
     description: yup.string().required("Description is required"),
   });
+
+const stopCommentSchema: yup.ObjectSchema<StopCommentFormValues> = yup
+  .object()
+  .shape({
+    qualifierCode: yup.string().required("Qualifier code is required"),
+    value: yup
+      .string()
+      .max(100, "Value must be less than 100 characters")
+      .required("Value is required"),
+  });
+
+export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
+  status: yup
+    .string<ShipmentStatusChoiceProps>()
+    .required("Status is required"),
+  sequence: yup.number().notRequired(),
+  movement: yup.string().required("Movement is required"),
+  location: yup
+    .string()
+    .nullable()
+    .test({
+      name: "location-or-address",
+      exclusive: false,
+      message: "Either Stop Location or Stop Address is required.",
+      test: function (value) {
+        return (
+          (value !== null && value !== "") ||
+          (this.parent.addressLine !== null && this.parent.addressLine !== "")
+        );
+      },
+    }),
+  pieces: yup.number().notRequired(),
+  weight: yup.string().required("Weight is required"),
+  addressLine: yup
+    .string()
+    .nullable()
+    .test({
+      name: "location-or-address",
+      exclusive: false,
+      message: "Either Stop Location or Stop Address is required.",
+      test: function (value) {
+        return (
+          (value !== null && value !== "") ||
+          (this.parent.location !== null && this.parent.location !== "")
+        );
+      },
+    }),
+  appointmentTimeWindowStart: yup
+    .string()
+    .required("Appointment time window start is required"),
+  appointmentTimeWindowEnd: yup
+    .string()
+    .required("Appointment time window end is required"),
+  arrivalTime: yup.string().notRequired(),
+  departureTime: yup.string().notRequired(),
+  stopType: yup.string<StopTypeProps>().required("Stop type is required"),
+  stopComments: yup.array().of(stopCommentSchema).notRequired(),
+});
