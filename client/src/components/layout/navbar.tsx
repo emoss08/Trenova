@@ -40,7 +40,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
-import { isChrome } from "react-device-detect";
 import { Link, useLocation } from "react-router-dom";
 import { FooterContainer } from "../common/footer";
 import { LinksComponent } from "./nav-links";
@@ -98,13 +97,7 @@ const NavigationMenuItemWithPermission = React.memo(
               >
                 {data.label}
               </NavigationMenuTrigger>
-              <NavigationMenuContent
-                className={cn(
-                  "bg-background",
-                  !isChrome &&
-                    "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                )}
-              >
+              <NavigationMenuContent className="bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur">
                 {data.content}
                 {data.footerContent && (
                   <FooterContainer className="p-3">

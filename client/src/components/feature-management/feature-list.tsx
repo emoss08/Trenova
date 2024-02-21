@@ -17,8 +17,9 @@
 
 import { useFeatureFlags } from "@/hooks/useQueries";
 import { FeatureFlag } from "@/types/organization";
+import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DOMPurify from "dompurify";
-import { InfoIcon } from "lucide-react";
 import { Label } from "../common/fields/label";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
@@ -85,10 +86,11 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
 
 export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
+
   return (
     <>
       <Alert className="mb-5">
-        <InfoIcon className="size-5" />
+        <FontAwesomeIcon icon={faCircleInfo} className="size-4" />
         <AlertTitle>Information!</AlertTitle>
         <AlertDescription>
           All features marked{" "}

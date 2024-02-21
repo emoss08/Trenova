@@ -458,7 +458,7 @@ export function useHazardousMaterial(show?: boolean) {
  * Get Locations for select options
  * @param show - show or hide the query
  */
-export function useLocations(show?: boolean) {
+export function useLocations(locationStatus: string = "A", show?: boolean) {
   const queryClient = useQueryClient();
 
   const {
@@ -466,10 +466,17 @@ export function useLocations(show?: boolean) {
     isError,
     isLoading,
   } = useQuery({
-    queryKey: ["locations"] as QueryKeys,
-    queryFn: async () => getLocations(),
+    queryKey: ["locations", locationStatus] as QueryKeyWithParams<
+      "locations",
+      [string]
+    >,
+    queryFn: async () => getLocations(locationStatus),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["locations"] as QueryKeys),
+    initialData: () =>
+      queryClient.getQueryData([
+        "locations",
+        locationStatus,
+      ] as QueryKeyWithParams<"locations", [string]>),
   });
 
   const selectLocationData =

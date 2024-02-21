@@ -20,10 +20,9 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { faPlus, faX } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Table as TableType, flexRender } from "@tanstack/react-table";
-import { X } from "lucide-react";
 import React, { ChangeEvent } from "react";
 import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
@@ -164,7 +163,7 @@ export function DataTableTopBar<K>({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X className="ml-2 size-4" />
+            <FontAwesomeIcon icon={faX} className="ml-2 size-4" />
           </Button>
         )}
       </div>

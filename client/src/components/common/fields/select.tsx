@@ -15,8 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 import { cn } from "@/lib/utils";
+import { faCheck, faChevronDown } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown } from "lucide-react";
 import * as React from "react";
 
 const Select = SelectPrimitive.Root;
@@ -39,7 +40,7 @@ const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="size-4 opacity-50" />
+      <FontAwesomeIcon icon={faChevronDown} className="size-2 opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -101,7 +102,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="size-4" />
+        <FontAwesomeIcon icon={faCheck} className="size-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
 
@@ -130,5 +131,6 @@ export {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 };
+

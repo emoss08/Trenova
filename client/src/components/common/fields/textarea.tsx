@@ -15,14 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import {
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
-import { ErrorMessage } from "./input";
+import { FieldErrorMessage } from "./error-message";
 import { Label } from "./label";
 
 export interface TextareaProps
@@ -82,12 +81,7 @@ export function TextareaField<T extends FieldValues>({
           {...field}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>

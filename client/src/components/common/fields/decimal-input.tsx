@@ -14,20 +14,16 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import {
-  ErrorMessage,
-  ExtendedInputProps,
-  Input,
-} from "@/components/common/fields/input";
+import { ExtendedInputProps, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { cn } from "@/lib/utils";
-import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import {
   FieldValues,
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 
 const controlKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
 
@@ -97,12 +93,7 @@ export function DecimalField<T extends FieldValues>({
           aria-label={props.label}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>

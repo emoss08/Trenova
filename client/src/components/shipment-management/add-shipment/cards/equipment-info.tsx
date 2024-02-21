@@ -27,7 +27,7 @@ import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function EquipmentInformation({
+export default function EquipmentInformation({
   shipmentControlData,
   isShipmentControlLoading,
 }: {
@@ -116,7 +116,7 @@ export function EquipmentInformation({
         <div className="col-span-1">
           <AsyncSelectInput
             name="tractorType"
-            link="/equipment_types/"
+            link="/equipment_types/?equipment_class=TRACTOR"
             valueKey="name"
             control={control}
             label={t("card.equipmentInfo.fields.tractorType.label")}

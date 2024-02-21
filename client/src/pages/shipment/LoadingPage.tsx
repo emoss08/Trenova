@@ -15,23 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense, lazy } from "react";
+import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const CustomerInformation = lazy(() => import("./cards/customer-info"));
-const ShipmentInformation = lazy(() => import("./cards/shipment-info"));
-const RateCalcInformation = lazy(() => import("./cards/rate-calc-info"));
-const ChargeInformation = lazy(() => import("./cards/charge-info"));
-
-export default function BillingInfoTab() {
+export function LoadingPage() {
   return (
-    <div className="grid grid-cols-1 gap-y-8">
-      <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
-        <CustomerInformation />
-        <ShipmentInformation />
-        <RateCalcInformation />
-        <ChargeInformation />
-      </Suspense>
+    <div className="flex flex-col items-center justify-center p-2">
+      <FontAwesomeIcon
+        icon={faSpinner}
+        spin
+        size="2x"
+        className="text-primary mb-2"
+      />
+      <div className="text-xl font-semibold">
+        Crafting your experience... Please hold on.
+      </div>
     </div>
   );
 }

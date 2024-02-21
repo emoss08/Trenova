@@ -15,11 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
-import { DispatchInformation } from "./cards/dispatch-detail";
-import { EquipmentInformation } from "./cards/equipment-info";
-import { GeneralInformation } from "./cards/general-info";
-import { LocationInformation } from "./cards/location-info";
+import { Suspense, lazy } from "react";
+
+const GeneralInfoCard = lazy(() => import("./cards/general-info"));
+const LocationInformation = lazy(() => import("./cards/location-info"));
+const EquipmentInformation = lazy(() => import("./cards/equipment-info"));
+const DispatchInformation = lazy(() => import("./cards/dispatch-detail"));
 
 export default function GeneralInfoTab() {
   const { shipmentControlData, isLoading: isShipmentControlLoading } =
@@ -28,24 +31,26 @@ export default function GeneralInfoTab() {
 
   return (
     <div className="grid grid-cols-1 gap-y-8">
-      <GeneralInformation
-        proNumber={proNumber as string}
-        isProNumberLoading={isProNumberLoading}
-        shipmentControlData={shipmentControlData}
-        isShipmentControlLoading={isShipmentControlLoading}
-      />
-      <LocationInformation
-        shipmentControlData={shipmentControlData}
-        isShipmentControlLoading={isShipmentControlLoading}
-      />
-      <EquipmentInformation
-        shipmentControlData={shipmentControlData}
-        isShipmentControlLoading={isShipmentControlLoading}
-      />
-      <DispatchInformation
-        shipmentControlData={shipmentControlData}
-        isShipmentControlLoading={isShipmentControlLoading}
-      />
+      <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+        <GeneralInfoCard
+          proNumber={proNumber as string}
+          isProNumberLoading={isProNumberLoading}
+          shipmentControlData={shipmentControlData}
+          isShipmentControlLoading={isShipmentControlLoading}
+        />
+        <LocationInformation
+          shipmentControlData={shipmentControlData}
+          isShipmentControlLoading={isShipmentControlLoading}
+        />
+        <EquipmentInformation
+          shipmentControlData={shipmentControlData}
+          isShipmentControlLoading={isShipmentControlLoading}
+        />
+        <DispatchInformation
+          shipmentControlData={shipmentControlData}
+          isShipmentControlLoading={isShipmentControlLoading}
+        />
+      </Suspense>
     </div>
   );
 }

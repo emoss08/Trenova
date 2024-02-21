@@ -150,6 +150,7 @@ function FavoriteIcon({
     </TooltipProvider>
   );
 }
+
 export function Breadcrumb() {
   const queryClient = useQueryClient();
   const [currentRoute, setCurrentRoute] =

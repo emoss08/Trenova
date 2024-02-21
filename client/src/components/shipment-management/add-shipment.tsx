@@ -109,7 +109,7 @@ export default function AddShipment() {
     .shape({
       proNumber: yup.string().required("Pro number is required."),
       shipmentType: yup.string().required("Shipment type is required."),
-      serviceType: yup.string().notRequired(),
+      serviceType: yup.string().required("Service type is required."),
       status: yup
         .string<ShipmentStatusChoiceProps>()
         .required("Status is required."),
@@ -210,8 +210,8 @@ export default function AddShipment() {
       freightChargeAmount: yup.string().notRequired(),
       rateMethod: yup.string().notRequired(),
       customer: yup.string().required("Customer is required."),
-      pieces: yup.number().required("Pieces is required."),
-      weight: yup.string().required("Weight is required."),
+      pieces: yup.number().notRequired(),
+      weight: yup.string().notRequired(),
       readyToBill: yup.boolean().required("Ready to bill is required."),
       trailer: yup.string().notRequired(),
       trailerType: yup.string().required("Trailer type is required."),
@@ -282,14 +282,16 @@ export default function AddShipment() {
       errorMessage: "Failed to create new shipment.",
     },
     () => setIsSubmitting(false),
+    reset,
   );
 
-  // Submit handler
   const onSubmit = (values: ShipmentFormValues) => {
     const cleanedValues = cleanObject(values);
     setIsSubmitting(true);
+    console.info("Form values", cleanedValues);
     mutation.mutate(cleanedValues);
-    reset(values);
+    console.info("Resetting form");
+    reset();
   };
 
   const ActiveTabComponent = tabs[activeTab].component;

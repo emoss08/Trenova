@@ -62,7 +62,7 @@ export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
         );
       },
     }),
-  pieces: yup.number().required("Pieces is required"),
+  pieces: yup.number().notRequired(),
   weight: yup.string().required("Weight is required"),
   addressLine: yup
     .string()

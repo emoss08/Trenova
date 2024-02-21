@@ -15,13 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ErrorMessage, Input } from "@/components/common/fields/input";
+import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
 import { cn, useClickOutside } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { addDays, format, parseISO } from "date-fns";
-import { AlertTriangle } from "lucide-react";
 import React, { useState } from "react";
 import {
   Controller,
@@ -29,6 +28,7 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 import {
   Select,
   SelectContent,
@@ -132,12 +132,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         </div>
 
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>

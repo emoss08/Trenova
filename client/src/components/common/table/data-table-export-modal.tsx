@@ -38,12 +38,14 @@ import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { TExportModelFormValues } from "@/types/forms";
-import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  faEllipsisVertical,
+  faLoader,
+} from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -148,7 +150,10 @@ function TableExportModalBody({
   return isColumnsLoading ? (
     <>
       <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
-        <Loader2 className="text-foreground size-20 animate-spin" />
+        <FontAwesomeIcon
+          icon={faLoader}
+          className="text-foreground size-20 animate-spin"
+        />
         <p className="text-center">
           Fetching columns for {name.toLowerCase()}s...
         </p>

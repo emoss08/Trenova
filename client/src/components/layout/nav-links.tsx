@@ -18,7 +18,8 @@
 import { useUserPermissions } from "@/context/user-permissions";
 import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
-import { ChevronsLeftIcon } from "lucide-react";
+import { faChevronsLeft } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import { ListItem } from "./links-group";
 
@@ -145,7 +146,7 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
             onClick={handleBackClick}
             className="absolute right-2 top-2 z-10 rounded-md text-sm transition duration-200"
           >
-            <ChevronsLeftIcon className="size-5" />
+            <FontAwesomeIcon icon={faChevronsLeft} className="size-5" />
           </button>
           {activeSubLinks.map((subLink) => {
             if (subLink.permission && !userHasPermission(subLink.permission)) {

@@ -27,7 +27,7 @@ import { ShipmentFormValues } from "@/types/order";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function RateCalcInformation() {
+export default function RateCalcInformation() {
   const { control, watch } = useFormContext<ShipmentFormValues>();
   const { t } = useTranslation("shipment.addshipment");
   const ratingMethodValue = watch("rateMethod");

@@ -49,15 +49,11 @@ export function ShipmentAsideMenu({
   }, 100);
 
   useEffect(() => {
-    // Define the function inside the effect if it needs access to component state or props
     const handleScroll = () => debouncedHandleScroll();
-
     window.addEventListener("scroll", handleScroll);
 
-    // Cleanup function to remove the event listener
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      // If your debounce implementation supports cancellation, cancel it on cleanup
       debouncedHandleScroll.cancel && debouncedHandleScroll.cancel();
     };
   }, []);

@@ -15,23 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense, lazy } from "react";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const CustomerInformation = lazy(() => import("./cards/customer-info"));
-const ShipmentInformation = lazy(() => import("./cards/shipment-info"));
-const RateCalcInformation = lazy(() => import("./cards/rate-calc-info"));
-const ChargeInformation = lazy(() => import("./cards/charge-info"));
-
-export default function BillingInfoTab() {
+export function ErrorMessage({ formError }: { formError?: string }) {
   return (
-    <div className="grid grid-cols-1 gap-y-8">
-      <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
-        <CustomerInformation />
-        <ShipmentInformation />
-        <RateCalcInformation />
-        <ChargeInformation />
-      </Suspense>
+    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
+      {formError ? formError : "An Error has occurred. Please try again."}
     </div>
+  );
+}
+
+export function FieldErrorMessage({ formError }: { formError?: string }) {
+  return (
+    <>
+      <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-1.5">
+        <FontAwesomeIcon
+          icon={faTriangleExclamation}
+          className="text-red-500"
+        />
+      </div>
+      <ErrorMessage formError={formError} />
+    </>
   );
 }

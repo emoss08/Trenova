@@ -21,7 +21,7 @@ import { ShipmentFormValues } from "@/types/order";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function ChargeInformation() {
+export default function ChargeInformation() {
   const { t } = useTranslation("shipment.addshipment");
   const { control } = useFormContext<ShipmentFormValues>();
 

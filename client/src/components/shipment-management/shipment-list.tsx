@@ -22,8 +22,9 @@ import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { QueryKeyWithParams } from "@/types";
 import { Shipment, ShipmentSearchForm } from "@/types/order";
+import { faArrowDown, faArrowUp } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 import { UseFormWatch } from "react-hook-form";
 import { ErrorLoadingData } from "../common/table/data-table-components";
@@ -185,7 +186,10 @@ export function ShipmentList({
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
                   <div className="bg-foreground mr-2 flex size-4 items-center justify-center rounded-full">
-                    <ArrowUp className="text-background inline-block size-3" />
+                    <FontAwesomeIcon
+                      icon={faArrowUp}
+                      className="text-background inline-block size-3"
+                    />
                   </div>
                   <span className="text-foreground font-semibold">
                     {shipment.originAddress}
@@ -200,7 +204,10 @@ export function ShipmentList({
               <div className="text-sm">
                 <div className="mb-2 flex items-center">
                   <div className="mr-2 flex size-4 items-center justify-center rounded-full bg-blue-700">
-                    <ArrowDown className="inline-block size-3 text-white" />
+                    <FontAwesomeIcon
+                      icon={faArrowDown}
+                      className="inline-block size-3 text-white"
+                    />
                   </div>
                   <span>
                     <span className="text-foreground font-semibold">

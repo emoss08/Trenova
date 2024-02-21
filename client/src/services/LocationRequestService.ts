@@ -28,10 +28,12 @@ import {
  * Fetches locations from the server.
  * @returns A promise that resolves to an array of locations.
  */
-export async function getLocations(): Promise<Location[]> {
+export async function getLocations(
+  locationStatus: string,
+): Promise<Location[]> {
   const response = await axios.get("/locations/", {
     params: {
-      status: "A",
+      status: locationStatus,
     },
   });
   return response.data.results;

@@ -21,7 +21,6 @@ import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
 import { LocationTableEditSheet } from "@/components/location/location-table-edit-dialog";
-import { LocationChart } from "@/components/location/table-chart";
 import {
   Tooltip,
   TooltipContent,
@@ -33,9 +32,18 @@ import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
+import { Suspense, lazy } from "react";
+
+const LocationChart = lazy(
+  () => import("../../components/location/chart/table-chart"),
+);
 
 const renderSubComponent = ({ row }: { row: Row<Location> }) => {
-  return <LocationChart row={row} />;
+  return (
+    <Suspense fallback={null}>
+      <LocationChart row={row} />
+    </Suspense>
+  );
 };
 
 function LocationColor({

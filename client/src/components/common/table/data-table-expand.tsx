@@ -15,8 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  faChevronDown,
+  faChevronRight,
+} from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Row } from "@tanstack/react-table";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
   return row.getCanExpand() ? (
@@ -27,9 +31,9 @@ export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
       }}
     >
       {row.getIsExpanded() ? (
-        <ChevronDownIcon className="size-4" /> // Apply rotation
+        <FontAwesomeIcon icon={faChevronDown} className="size-4" /> // Apply rotation
       ) : (
-        <ChevronRightIcon className="size-4" />
+        <FontAwesomeIcon icon={faChevronRight} className="size-4" /> // Apply rotation
       )}
     </button>
   ) : (

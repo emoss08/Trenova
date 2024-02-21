@@ -18,7 +18,8 @@
 import { Button } from "@/components/ui/button";
 import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
-import { MoreVerticalIcon } from "lucide-react";
+import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -62,7 +63,10 @@ function OptionsDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="h-9 font-semibold lg:flex">
-          <MoreVerticalIcon className="mr-1 mt-0.5 size-4" />
+          <FontAwesomeIcon
+            icon={faEllipsisVertical}
+            className="mr-1 mt-0.5 size-4"
+          />
           Options
         </Button>
       </DropdownMenuTrigger>

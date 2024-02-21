@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
-import NotificationSound from "@/assets/audio/notification.webm";
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
 import { InternalLink } from "@/components/ui/link";
@@ -47,16 +45,8 @@ import { UserNotification } from "@/types/accounts";
 import { faBell } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
-import { Howl } from "howler";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-const sound = new Howl({
-  src: [NotificationSound, NotificationSoundMp3],
-  volume: 0.2,
-  format: ["webm", "mp3"],
-  mute: false,
-});
 
 const webSocketManager = createWebsocketManager();
 
@@ -273,8 +263,6 @@ export function NotificationMenu() {
                   },
                 );
               });
-
-            sound.play();
           },
 
           onClose: (event: CloseEvent) => {

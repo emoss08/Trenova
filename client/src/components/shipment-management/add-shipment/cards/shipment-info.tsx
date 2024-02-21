@@ -21,7 +21,7 @@ import { ShipmentFormValues } from "@/types/order";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function ShipmentInformation() {
+export default function ShipmentInformation() {
   const { t } = useTranslation("shipment.addshipment");
   const { control } = useFormContext<ShipmentFormValues>();
 
@@ -52,7 +52,6 @@ export function ShipmentInformation() {
               name="pieces"
               type="number"
               control={control}
-              rules={{ required: true }}
               label={t("card.shipmentInfo.fields.pieces.label")}
               placeholder={t("card.shipmentInfo.fields.pieces.placeholder")}
               description={t("card.shipmentInfo.fields.pieces.description")}
@@ -63,7 +62,6 @@ export function ShipmentInformation() {
               name="weight"
               type="number"
               control={control}
-              rules={{ required: true }}
               label={t("card.shipmentInfo.fields.weight.label")}
               placeholder={t("card.shipmentInfo.fields.weight.placeholder")}
               description={t("card.shipmentInfo.fields.weight.description")}

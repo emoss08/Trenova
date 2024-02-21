@@ -21,7 +21,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, EyeIcon, EyeOffIcon } from "lucide-react";
+import { faEye, faEyeSlash } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import {
   Controller,
@@ -29,15 +30,8 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldErrorMessage } from "./error-message";
 import { Label } from "./label";
-
-export function ErrorMessage({ formError }: { formError?: string }) {
-  return (
-    <div className="mt-2 inline-block rounded bg-red-50 px-2 py-1 text-xs leading-tight text-red-500 dark:bg-red-300 dark:text-red-800 ">
-      {formError ? formError : "An Error has occurred. Please try again."}
-    </div>
-  );
-}
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -110,12 +104,7 @@ export function InputField<T extends FieldValues>({
           )}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>
@@ -160,12 +149,7 @@ export function FileField<T extends FieldValues>({
           {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>
@@ -205,12 +189,7 @@ export function TimeField<T extends FieldValues>({
           {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>
@@ -272,9 +251,9 @@ export function PasswordField<T extends FieldValues>({
                     onClick={togglePasswordVisibility}
                   >
                     {showPassword ? (
-                      <EyeOffIcon className="size-4" />
+                      <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
                     ) : (
-                      <EyeIcon className="size-4" />
+                      <FontAwesomeIcon icon={faEye} className="size-4" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -288,12 +267,7 @@ export function PasswordField<T extends FieldValues>({
           )}
         </div>
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>

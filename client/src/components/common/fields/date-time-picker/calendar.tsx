@@ -18,13 +18,17 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
   CalendarDate,
   isToday as _isToday,
   createCalendar,
   getLocalTimeZone,
   getWeeksInMonth,
 } from "@internationalized/date";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React, { useMemo } from "react";
 import {
   CalendarProps,
@@ -73,7 +77,7 @@ function Calendar(props: CalendarProps<DateValue>) {
             "absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
           )}
         >
-          <ChevronLeftIcon className="size-4" />
+          <FontAwesomeIcon icon={faChevronLeft} className="size-4" />
         </Button>
         <div className="text-sm font-medium">{title}</div>
         <Button
@@ -84,7 +88,7 @@ function Calendar(props: CalendarProps<DateValue>) {
             "absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
           )}
         >
-          <ChevronRightIcon className="size-4" />
+          <FontAwesomeIcon icon={faChevronRight} className="size-4" />
         </Button>
       </div>
       <CalendarGrid state={state} />

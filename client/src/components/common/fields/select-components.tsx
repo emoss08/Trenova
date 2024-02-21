@@ -17,13 +17,14 @@
 
 import { Button } from "@/components/ui/button";
 import { cn, PopoutWindow } from "@/lib/utils";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   CaretSortIcon,
   CheckIcon,
   Cross2Icon,
   PlusIcon,
 } from "@radix-ui/react-icons";
-import { AlertTriangle } from "lucide-react";
 import React from "react";
 import { Path, PathValue } from "react-hook-form";
 import {
@@ -76,7 +77,10 @@ export function DropdownIndicator(props: DropdownIndicatorProps) {
   return (
     <components.DropdownIndicator {...props}>
       {props.selectProps["aria-invalid"] ? (
-        <AlertTriangle size={15} className="text-red-500" />
+        <FontAwesomeIcon
+          icon={faTriangleExclamation}
+          className="text-red-500"
+        />
       ) : (
         <CaretSortIcon className="size-4 shrink-0" />
       )}

@@ -29,7 +29,7 @@ import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function GeneralInformation({
+export default function GeneralInformation({
   shipmentControlData,
   isShipmentControlLoading,
   proNumber,

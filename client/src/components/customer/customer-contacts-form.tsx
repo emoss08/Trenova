@@ -20,8 +20,9 @@ import { InputField } from "../common/fields/input";
 
 import { booleanStatusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { AlertOctagonIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CheckboxInput } from "../common/fields/checkbox";
 import { SelectInput } from "../common/fields/select-input";
@@ -174,7 +175,7 @@ export function CustomerContactForm() {
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <span className="mb-4 text-6xl">
-              <AlertOctagonIcon />
+              <FontAwesomeIcon icon={faTriangleExclamation} />
             </span>
             <p className="mb-4">No contacts yet. Please add a new contacts.</p>
             <Button type="button" size="sm" onClick={handleAddContact}>

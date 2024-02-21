@@ -150,14 +150,16 @@ class Stop(GenericModel):
     pieces = models.PositiveIntegerField(
         _("Pieces"),
         help_text=_("Total Piece Count of the shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
         help_text=_("Total Weight of the shipment"),
-        default=0,
+        blank=True,
+        null=True,
     )
     address_line = models.CharField(
         _("Stop Address"),

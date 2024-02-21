@@ -37,7 +37,7 @@ import {
   useController,
 } from "react-hook-form";
 import { DatePickerStateOptions, useDatePickerState } from "react-stately";
-import { ErrorMessage } from "../input";
+import { ErrorMessage } from "../error-message";
 import { Label } from "../label";
 import { Calendar } from "./calendar";
 import { DateField } from "./date-field";

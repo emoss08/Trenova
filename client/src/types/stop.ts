@@ -39,8 +39,8 @@ export interface Stop extends BaseModel {
   sequence?: number | null;
   movement: string;
   location?: string | null;
-  pieces: number;
-  weight: string;
+  pieces?: number | null;
+  weight?: string | null;
   addressLine?: string | null;
   appointmentTimeWindowStart: string;
   appointmentTimeWindowEnd: string;

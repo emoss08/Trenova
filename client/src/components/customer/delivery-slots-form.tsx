@@ -26,8 +26,12 @@ import { TimeField } from "../common/fields/input";
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
 import { CustomerFormValues } from "@/types/customer";
+import {
+  faInfo,
+  faTriangleExclamation,
+} from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { AlertOctagonIcon, InfoIcon } from "lucide-react";
 import { SelectInput } from "../common/fields/select-input";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
@@ -36,7 +40,7 @@ import { ScrollArea } from "../ui/scroll-area";
 function DeliverySlotAlert() {
   return (
     <Alert className="my-2">
-      <InfoIcon className="size-5" />
+      <FontAwesomeIcon icon={faInfo} className="size-5" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -152,7 +156,7 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
     selectLocationData,
     isLoading: isLocationsLoading,
     isError: isLocationError,
-  } = useLocations(open);
+  } = useLocations("A", open);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -197,7 +201,7 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <span className="mb-4 text-6xl">
-              <AlertOctagonIcon />
+              <FontAwesomeIcon icon={faTriangleExclamation} />
             </span>
             <p className="mb-4">
               No delivery slots yet. Please add a new devliery slot.

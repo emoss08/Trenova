@@ -119,7 +119,7 @@ function LocationSection({
   );
 }
 
-export function LocationInformation({
+export default function LocationInformation({
   shipmentControlData,
   isShipmentControlLoading,
 }: {
@@ -154,6 +154,11 @@ export function LocationInformation({
       ) {
         const selectedDestinationLocation = (locations as Location[]).find(
           (location) => location.id === value.destinationLocation,
+        );
+
+        console.info(
+          "selectedDestinationLocation",
+          selectedDestinationLocation,
         );
 
         if (selectedDestinationLocation) {

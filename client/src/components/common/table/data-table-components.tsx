@@ -14,13 +14,15 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { upperFirst } from "@/lib/utils";
 import { EquipmentStatus } from "@/types/equipment";
+import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { IconProps } from "@radix-ui/react-icons/dist/types";
-import { AlertTriangle } from "lucide-react";
 import React from "react";
 
 /**
@@ -116,7 +118,10 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
 export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <div className="text-center">
-      <AlertTriangle className="text-accent-foreground mx-auto size-10" />
+      <FontAwesomeIcon
+        icon={faTriangleExclamation}
+        className="text-accent-foreground mx-auto size-10"
+      />
       <p className="text-accent-foreground mt-2 font-semibold">
         Well, this is embarrassing...
       </p>

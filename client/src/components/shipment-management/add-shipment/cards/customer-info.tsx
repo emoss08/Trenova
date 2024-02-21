@@ -22,7 +22,7 @@ import { ShipmentFormValues } from "@/types/order";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export function CustomerInformation() {
+export default function CustomerInformation() {
   const { t } = useTranslation("shipment.addshipment");
   const {
     selectCustomersData,

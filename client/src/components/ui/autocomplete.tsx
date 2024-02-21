@@ -23,11 +23,9 @@ import {
 import { useLocationAutoComplete } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
 import { GoogleAutoCompleteResult } from "@/types/location";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { debounce } from "lodash-es";
-import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import { useInteractOutside } from "react-aria";
 import {
@@ -35,7 +33,8 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
-import { ErrorMessage, Input, InputProps } from "../common/fields/input";
+import { FieldErrorMessage } from "../common/fields/error-message";
+import { Input, InputProps } from "../common/fields/input";
 import { Label } from "../common/fields/label";
 
 type AutocompleteResultsProps = {
@@ -85,8 +84,14 @@ const AutocompleteResults = React.forwardRef<
           <p className="text-muted-foreground text-xs">
             {searchResults.length} results
           </p>
-          <p className="text-muted-foreground text-xs">
-            Powered by <FontAwesomeIcon icon={faGoogle} />
+          <p className="text-muted-foreground fill-muted-foreground size-4 text-xs">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 488 512"
+              className="text-muted-foreground fill-muted-foreground size-4 text-xs"
+            >
+              <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+            </svg>
           </p>
         </div>
       </Command>
@@ -176,12 +181,7 @@ export function LocationAutoComplete<T extends FieldValues>({
           {...props}
         />
         {fieldState.invalid && (
-          <>
-            <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-2.5">
-              <AlertTriangle size={15} className="text-red-500" />
-            </div>
-            <ErrorMessage formError={fieldState.error?.message} />
-          </>
+          <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
           <p className="text-foreground/70 text-xs">{props.description}</p>

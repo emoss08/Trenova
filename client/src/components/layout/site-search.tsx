@@ -19,8 +19,9 @@ import { useUserFavorites } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
+import { faCircleExclamation } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { AlertCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { UserFavorite } from "../../types/accounts";
@@ -180,7 +181,10 @@ export function SiteSearch() {
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
-              <AlertCircle className="text-accent-foreground mx-auto size-6" />
+              <FontAwesomeIcon
+                icon={faCircleExclamation}
+                className="text-accent-foreground mx-auto size-6"
+              />
               <p className="text-accent-foreground mt-4 font-semibold">
                 No results found
               </p>
