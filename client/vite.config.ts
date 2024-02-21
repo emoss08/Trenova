@@ -40,7 +40,15 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            const packages = ["lodash", "date-fns"];
+            const packages = [
+              "lodash",
+              "date-fns",
+              "react-hook-form",
+              "@radix-ui",
+              "react-aria",
+              "react-dom",
+              "@fortawesome",
+            ];
             const chunk = packages.find((pkg) =>
               id.includes(`/node_modules/${pkg}`),
             );
