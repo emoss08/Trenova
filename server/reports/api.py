@@ -264,8 +264,13 @@ def generate_report_api(request: Request) -> Response:
             },
             status=status.HTTP_202_ACCEPTED,
         )
-    except exceptions.ValidationError as exc:
-        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+    except exceptions.ValidationError:
+        return Response(
+            {
+                "error": "Invalid request data. Please try again.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     except OperationalError as op_exc:
         logger.error(f"Exception in generate_report_api: {op_exc}")
         return Response(
