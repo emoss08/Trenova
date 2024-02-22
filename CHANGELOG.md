@@ -30,13 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Add new shipment` page (https://github.com/emoss08/Trenova/pull/227)
 - Pyinstrument middleware for development (https://github.com/emoss08/Trenova/pull/227)
 - Beam Integration (https://github.com/emoss08/TrenovaPrivate/pull/10)
-- Anamoly Detection (https://github.com/emoss08/TrenovaPrivate/pull/13)
+- Anomaly Detection (https://github.com/emoss08/TrenovaPrivate/pull/13)
 - API for next shipment `pro_number` (https://github.com/emoss08/Trenova/pull/227)
 - `Severity` level to comment type (https://github.com/emoss08/Trenova/pull/227)
 
 ### Removed
 - Python `Kafka` listener implementation (https://github.com/emoss08/Trenova/pull/227)
-- CommentType field from `StopComment` model (https://github.com/emoss08/Trenova/pull/227)
+- `CommentType` field from `StopComment` model (https://github.com/emoss08/Trenova/pull/227)
 
 ### Changed
 - Changed `Kafka` listener implementation from Python to Java (https://github.com/emoss08/Trenova/pull/227)
@@ -53,7 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spacing on Filter Options (https://github.com/emoss08/Trenova/pull/227)
 - Badge styling on `light mode` (https://github.com/emoss08/Trenova/pull/227)
 - Password bubble being to big (https://github.com/emoss08/Trenova/pull/227)
-- `useCustomMutation` hook to better handle
+- `useCustomMutation` hook to better handle file uploads (https://github.com/emoss08/Trenova/pull/227)
+- `AuditLog` api returning incorrect results based on `content_type_id` (https://github.com/emoss08/Trenova/pull/227)
+- `ColorFIeld` styles to be consistent with other fields (https://github.com/emoss08/Trenova/pull/227/commits/396638e1879fb85a1097f3b0254318b933751f6d)
 
 ### Security
 - Fix security vulnerabilities where exceptions are returned in the response (https://github.com/emoss08/Trenova/pull/227)
