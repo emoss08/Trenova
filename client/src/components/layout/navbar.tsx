@@ -37,7 +37,7 @@ import {
   hasPermission,
   userHasAccessToContent,
 } from "@/lib/navmenu";
-import { cn } from "@/lib/utils";
+import { cn, isBrowser } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -50,6 +50,7 @@ const NavigationMenuItemWithPermission = React.memo(
     ({ data, setMenuOpen, setMenuPosition, menuItemRefs }, ref) => {
       const { userHasPermission, isAdmin } = useUserPermissions();
       const location = useLocation();
+      const isChrome = isBrowser("chrome");
 
       // Handle mouse enter event
       const handleMouseEnter = () => {
@@ -97,7 +98,13 @@ const NavigationMenuItemWithPermission = React.memo(
               >
                 {data.label}
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <NavigationMenuContent
+                className={cn(
+                  isChrome
+                    ? "bg-background"
+                    : "bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur",
+                )}
+              >
                 {data.content}
                 {data.footerContent && (
                   <FooterContainer className="p-3">
