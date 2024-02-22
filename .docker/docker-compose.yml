@@ -63,7 +63,6 @@ services:
       CONNECT_TASKS_MAX: 1
     depends_on:
       - kafka
-    restart: on-failure
 
   pgadmin:
     image: dpage/pgadmin4
