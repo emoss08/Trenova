@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spacing on Filter Options (https://github.com/emoss08/Trenova/pull/227)
 - Badge styling on `light mode` (https://github.com/emoss08/Trenova/pull/227)
 - Password bubble being to big (https://github.com/emoss08/Trenova/pull/227)
-- `useCustomMutation` hook to better handle 
+- `useCustomMutation` hook to better handle
 
 ### Security
 - Fix security vulnerabilities where exceptions are returned in the response (https://github.com/emoss08/Trenova/pull/227)

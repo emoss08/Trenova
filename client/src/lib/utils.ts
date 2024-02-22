@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 import { v4 as uuidv4 } from "uuid";
@@ -250,5 +250,27 @@ export function shipmentStatusToReadable(status: string) {
       return "Voided";
     default:
       return "Unknown";
+  }
+}
+
+type Browser = "chrome" | "firefox" | "safari" | "edge" | "opera" | "ie";
+
+export function isBrowser(browser: Browser): boolean {
+  const userAgent = navigator.userAgent.toLowerCase();
+  switch (browser) {
+    case "chrome":
+      return userAgent.includes("chrome") && !userAgent.includes("edge");
+    case "firefox":
+      return userAgent.includes("firefox");
+    case "safari":
+      return userAgent.includes("safari") && !userAgent.includes("chrome");
+    case "edge":
+      return userAgent.includes("edge");
+    case "opera":
+      return userAgent.includes("opr");
+    case "ie":
+      return userAgent.includes("msie") || userAgent.includes("trident");
+    default:
+      return false;
   }
 }
