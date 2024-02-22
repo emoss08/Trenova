@@ -27,7 +27,7 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Suspense } from "react";
-import { Skeleton } from "../ui/skeleton";
+import { ComponentLoader } from "../ui/component-loader";
 import { SidebarNav } from "./sidebar-nav";
 
 const links: SidebarLink[] = [
@@ -120,9 +120,7 @@ export default function SettingsLayout({
       <SidebarNav links={links} />
       <main className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
-            {children}
-          </Suspense>
+          <Suspense fallback={<ComponentLoader />}>{children}</Suspense>
         </div>
       </main>
     </div>
