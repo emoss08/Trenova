@@ -313,7 +313,7 @@ export default function AddShipment() {
               <ActiveTabComponent />
             </Suspense>
             <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">
-              <Button type="button" variant="outline">
+              <Button disabled type="button" variant="outline">
                 Save & Add Another
               </Button>
               <Button type="submit" isLoading={isSubmitting}>
