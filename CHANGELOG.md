@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Password bubble being to big (https://github.com/emoss08/Trenova/pull/227)
 - `useCustomMutation` hook to better handle file uploads (https://github.com/emoss08/Trenova/pull/227)
 - `AuditLog` api returning incorrect results based on `content_type_id` (https://github.com/emoss08/Trenova/pull/227)
-- `ColorFIeld` styles to be consistent with other fields (https://github.com/emoss08/Trenova/pull/227/commits/396638e1879fb85a1097f3b0254318b933751f6d)
+- `ColorFIeld` styles to be consistent with other fields (https://github.com/emoss08/Trenova/pull/227)
 
 ### Security
 - Fix security vulnerabilities where exceptions are returned in the response (https://github.com/emoss08/Trenova/pull/227)
