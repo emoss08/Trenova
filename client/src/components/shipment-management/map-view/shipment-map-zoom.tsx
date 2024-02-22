@@ -16,7 +16,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { faPlus } from "@fortawesome/pro-duotone-svg-icons";
+import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleMap } from "@google";
 
