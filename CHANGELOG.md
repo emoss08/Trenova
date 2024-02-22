@@ -20,6 +20,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N+1 queries in Notifications API (https://github.com/emoss08/Trenova/issues/196).
 
+## [0.1.0] - 2024-02-21
+
+### Added
+- `equipment_class` field filter for `Tractor` and `Trailer` api (https://github.com/emoss08/Trenova/pull/227)
+- Tooltip for `PasswordField` (https://github.com/emoss08/Trenova/pull/227)
+- Date time picker field (https://github.com/emoss08/Trenova/pull/227)
+- Async Select Input field (https://github.com/emoss08/Trenova/pull/227)
+- `Add new shipment` page (https://github.com/emoss08/Trenova/pull/227)
+- Pyinstrument middleware for development (https://github.com/emoss08/Trenova/pull/227)
+- Beam Integration (https://github.com/emoss08/TrenovaPrivate/pull/10)
+- Anamoly Detection (https://github.com/emoss08/TrenovaPrivate/pull/13)
+- API for next shipment `pro_number` (https://github.com/emoss08/Trenova/pull/227)
+- `Severity` level to comment type (https://github.com/emoss08/Trenova/pull/227)
+
+### Removed
+- Python `Kafka` listener implementation (https://github.com/emoss08/Trenova/pull/227)
+- CommentType field from `StopComment` model (https://github.com/emoss08/Trenova/pull/227)
+
+### Changed
+- Changed `Kafka` listener implementation from Python to Java (https://github.com/emoss08/Trenova/pull/227)
+- `Lucide React Icons` to `FontAwesomeIcons` (https://github.com/emoss08/Trenova/pull/227)
+- `Stop Comment` api queryset to include all fields (https://github.com/emoss08/Trenova/pull/227)
+- `Comment` field to `Value` on `StopComment` model (https://github.com/emoss08/Trenova/pull/227)
+- `Watch` from `React-hook-form` to subscriptions (https://github.com/emoss08/Trenova/pull/227)
+- `Intregation Auth Types` to be more concise (https://github.com/emoss08/Trenova/pull/227)
+- `useClickOutside` hook to react-aria `useInteractOutside` (https://github.com/emoss08/Trenova/pull/227)
+- Styling of the `DeliverySlot` component (https://github.com/emoss08/Trenova/pull/227)
+
+### Fixed
+- Reduced bundle size by 50% (https://github.com/emoss08/Trenova/pull/227)
+- Spacing on Filter Options (https://github.com/emoss08/Trenova/pull/227)
+- Badge styling on `light mode` (https://github.com/emoss08/Trenova/pull/227)
+- Password bubble being to big (https://github.com/emoss08/Trenova/pull/227)
+- `useCustomMutation` hook to better handle 
+
+### Security
+- Fix security vulnerabilities where exceptions are returned in the response (https://github.com/emoss08/Trenova/pull/227)
+- Fix permissive regular expression when validating vin numbers (https://github.com/emoss08/Trenova/pull/227)
+
+
 ## [0.0.6] - 2024-01-28
 
 ### Added
