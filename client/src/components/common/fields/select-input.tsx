@@ -506,6 +506,8 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
           render={({ field }) => (
             <AsyncSelect
               unstyled
+              cacheOptions
+              defaultOptions
               loadOptions={promiseOptions}
               aria-invalid={fieldState.invalid}
               aria-labelledby={controllerProps.id}
@@ -577,6 +579,7 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
               }}
               name={field.name}
               ref={field.ref}
+              value={processedValue}
               onChange={(selected) => {
                 if (isMulti) {
                   const values = (selected as SelectOption[]).map(
