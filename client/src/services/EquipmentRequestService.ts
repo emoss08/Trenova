@@ -27,11 +27,13 @@ import {
  * @returns a list of equipment types
  */
 export async function getEquipmentTypes(
+  equipmentClass?: string,
   limit?: number,
 ): Promise<ReadonlyArray<EquipmentType>> {
   const response = await axios.get("equipment_types/", {
     params: {
       limit: limit,
+      equipment_class: equipmentClass,
     },
   });
   return response.data.results;

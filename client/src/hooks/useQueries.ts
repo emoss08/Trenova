@@ -390,15 +390,19 @@ export function useDocumentClass(show?: boolean) {
  * @param show - show or hide the query
  * @param limit - limit the number of results
  */
-export function useEquipmentTypes(show?: boolean, limit: number = 100) {
+export function useEquipmentTypes(
+  equipmentClass: string,
+  limit: number = 100,
+  show?: boolean,
+) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipmentTypes", limit] as QueryKeyWithParams<
+    queryKey: ["equipmentTypes", equipmentClass, limit] as QueryKeyWithParams<
       "equipmentTypes",
-      [number]
+      [string, number]
     >,
-    queryFn: async () => getEquipmentTypes(limit),
+    queryFn: async () => getEquipmentTypes(equipmentClass, limit),
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["equipmentTypes"] as QueryKeys),
@@ -482,7 +486,7 @@ export function useLocations(locationStatus: string = "A", show?: boolean) {
   const selectLocationData =
     (locations as Location[])?.map((location: Location) => ({
       value: location.id,
-      label: location.code,
+      label: location.name,
     })) || [];
 
   return { selectLocationData, isError, isLoading, locations };
