@@ -270,6 +270,8 @@ export default function AddShipment() {
 
   const { control, reset, handleSubmit } = shipmentForm;
 
+  // TODO(WOLFRED): use react-hook-form-persist to persist form data in session storage until form is submitted
+
   // Mutation
   const mutation = useCustomMutation<ShipmentFormValues>(
     control,

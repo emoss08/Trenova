@@ -16,13 +16,14 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import {
-  AsyncSelectInput,
-  SelectInput,
-} from "@/components/common/fields/select-input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import { useServiceTypes } from "@/hooks/useQueries";
+import {
+  useRevenueCodes,
+  useServiceTypes,
+  useShipmentTypes,
+} from "@/hooks/useQueries";
 import { shipmentStatusChoices } from "@/lib/choices";
 import { ShipmentControl, ShipmentFormValues } from "@/types/order";
 import { useEffect } from "react";
@@ -44,6 +45,13 @@ export default function GeneralInformation({
   const { control, setValue } = useFormContext<ShipmentFormValues>();
   const { selectServiceTypes, isServiceTypeError, isServiceTypeLoading } =
     useServiceTypes();
+  const { selectRevenueCodes, isRevenueCodeError, isRevenueCodeLoading } =
+    useRevenueCodes();
+  const {
+    selectShipmentType,
+    isLoading: isShipmentTypesLoading,
+    isError: isShipmentTypeError,
+  } = useShipmentTypes();
 
   useEffect(() => {
     if (proNumber) {
@@ -56,8 +64,8 @@ export default function GeneralInformation({
   }
 
   return (
-    <div className="rounded-md border border-border bg-card">
-      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+    <div className="border-border bg-card rounded-md border">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.generalInfo.label")}
           tooltip={t("card.generalInfo.description")}
@@ -90,10 +98,11 @@ export default function GeneralInformation({
       </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 px-4 pb-4 lg:grid-cols-4">
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
             name="revenueCode"
-            valueKey="code"
-            link="revenue_codes"
+            options={selectRevenueCodes}
+            isFetchError={isRevenueCodeError}
+            isLoading={isRevenueCodeLoading}
             control={control}
             rules={{ required: shipmentControlData.enforceRevCode || false }}
             label={t("card.generalInfo.fields.revenueCode.label")}
@@ -106,10 +115,11 @@ export default function GeneralInformation({
           />
         </div>
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
             name="shipmentType"
-            link="shipment_types"
-            valueKey="code"
+            options={selectShipmentType}
+            isFetchError={isShipmentTypeError}
+            isLoading={isShipmentTypesLoading}
             control={control}
             rules={{ required: true }}
             label={t("card.generalInfo.fields.shipmentType.label")}
@@ -122,10 +132,8 @@ export default function GeneralInformation({
           />
         </div>
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
             name="serviceType"
-            link="service_types"
-            valueKey="code"
             control={control}
             options={selectServiceTypes}
             isFetchError={isServiceTypeError}

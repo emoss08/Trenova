@@ -28,7 +28,7 @@ import { StopCard } from "./cards/stop-card";
 export default function StopInfoTab() {
   const { control, watch, setValue } = useFormContext<ShipmentFormValues>();
 
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, remove, move, insert } = useFieldArray({
     control,
     name: "stops",
     keyName: "id",
@@ -37,7 +37,7 @@ export default function StopInfoTab() {
   const { locations } = useLocations();
 
   const addNewStop = () => {
-    append({
+    insert(fields.length - 1, {
       status: "N",
       stopType: "P",
       location: undefined,
@@ -46,7 +46,7 @@ export default function StopInfoTab() {
       weight: "",
       appointmentTimeWindowStart: "",
       appointmentTimeWindowEnd: "",
-      sequence: fields.length + 1,
+      sequence: fields.length - 1,
     });
   };
 
@@ -84,7 +84,6 @@ export default function StopInfoTab() {
     return () => subscription.unsubscribe();
   }, [locations, setValue, watch]);
 
-  // TODO(WOLFRED: Break this into a separate component.
   return (
     <>
       <DragDropContext onDragEnd={handleDrag}>
@@ -108,6 +107,7 @@ export default function StopInfoTab() {
                           index={index}
                           field={field}
                           remove={remove}
+                          totalStops={fields.length}
                         />
                       );
                     })}
