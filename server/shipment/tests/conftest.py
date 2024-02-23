@@ -52,6 +52,7 @@ from shipment.tests.factories import (
     ShipmentFactory,
     ShipmentTypeFactory,
 )
+from movements.tests.factories import MovementFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -326,3 +327,11 @@ def delivery_slot() -> Generator[Any, Any, None]:
     Pytest Fixture for Delivery
     """
     yield DeliverySlotFactory()
+
+
+@pytest.fixture
+def movement() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Movement
+    """
+    yield MovementFactory()
