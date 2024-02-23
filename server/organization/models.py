@@ -1331,7 +1331,11 @@ class TableChangeAlert(TimeStampedModel):
                     {"conditional_logic": error}, code="invalid"
                 ) from error
 
-        if self.effective_date and self.effective_date > self.expiration_date:
+        if (
+            self.effective_date
+            and self.expiration_date
+            and self.effective_date > self.expiration_date
+        ):
             print(self.effective_date, self.expiration_date)
             raise ValidationError(
                 {
