@@ -18,6 +18,10 @@
 import tokenize
 import typing
 from io import BytesIO
+from organization.models import BusinessUnit, Organization
+from shipment import models, selectors
+from django.db import transaction
+from stops.models import Stop
 
 from sympy import SympifyError, sympify
 
@@ -106,3 +110,48 @@ def evaluate_formula(*, formula: str, **kwargs: typing.Any) -> float:
         raise ValueError("Invalid formula")
 
     return float(expression.subs(kwargs))
+
+
+@transaction.atomic
+def create_additional_stops(
+    *,
+    shipment: models.Shipment,
+    stop_data: dict[str, typing.Any],
+    organization: Organization,
+    business_unit: BusinessUnit,
+) -> list[Stop] | None:
+    first_movement = selectors.get_shipment_first_movement(shipment=shipment)
+    shipment_stops = selectors.get_shipment_stops(shipment=shipment).order_by(
+        "sequence"
+    )
+
+    print("Stops that already exist in the shipment", shipment_stops)
+
+    # Assuming the last stop is always the consignee
+    if shipment_stops:
+        consignee_stop = shipment_stops.last()
+        new_sequence_start = consignee_stop.sequence
+    else:
+        # If there are no stops, set the starting sequence for the new stops
+        new_sequence_start = 1
+
+    created_stops = []
+    if stop_data:
+        for additional_stop in stop_data:
+            additional_stop["business_unit"] = business_unit
+            additional_stop["organization"] = organization
+            additional_stop["movement"] = first_movement
+
+            # Create or update the stop
+            stop, _ = Stop.objects.update_or_create(
+                id=additional_stop.get("id", None),
+                defaults=additional_stop,
+            )
+            created_stops.append(stop)
+
+        # Adjust the consignee stop's sequence to be the last
+        if created_stops:
+            consignee_stop.sequence = created_stops[-1].sequence + 1
+            consignee_stop.save()
+
+    return created_stops
