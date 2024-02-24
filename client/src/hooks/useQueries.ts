@@ -97,7 +97,11 @@ import {
   FleetCode,
   Rate,
 } from "@/types/dispatch";
-import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
+import {
+  EquipmentClass,
+  EquipmentManufacturer,
+  EquipmentType,
+} from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import {
@@ -387,11 +391,12 @@ export function useDocumentClass(show?: boolean) {
 
 /**
  * Get Equipment Types for select options
+ * @param equipmentClass - Equipment Class
  * @param show - show or hide the query
  * @param limit - limit the number of results
  */
 export function useEquipmentTypes(
-  equipmentClass: string,
+  equipmentClass: EquipmentClass,
   limit: number = 100,
   show?: boolean,
 ) {
@@ -460,6 +465,7 @@ export function useHazardousMaterial(show?: boolean) {
 
 /**
  * Get Locations for select options
+ * @param locationStatus
  * @param show - show or hide the query
  */
 export function useLocations(locationStatus: string = "A", show?: boolean) {
