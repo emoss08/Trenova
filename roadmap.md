@@ -9,18 +9,18 @@ updated as features are added or removed.
 
 Our release schedule is as follows:
 
-- 0.1.0 - 2023-05-01
-- 0.2.0 - 2023-08-01
-- 0.3.0 - 2023-11-01
-- 0.4.0 - 2024-02-01
-- 0.5.0 - 2024-05-01
-- 0.6.0 - 2024-08-01
+- 0.1.0 - 2024-05-01
+- 0.2.0 - 2024-08-01
+- 0.3.0 - 2024-11-01
+- 0.4.0 - 2025-02-01
+- 0.5.0 - 2025-05-01
+- 0.6.0 - 2025-08-01
 
 ## Roadmap
 
 We are thrilled to present our roadmap for upcoming releases:
 
-### 0.1.0 - Initial Release (May 1st, 2023)
+### 0.1.0 - Initial Release (May 1st, 2024)
 
 Our first release is packed with essential features to help you streamline your logistics operations. The following
 features will be included:
@@ -45,7 +45,7 @@ features will be included:
 - Feasibility Analysis
 - Automated Task Management
 
-### 0.2.0 (September 1st, 2023)
+### 0.2.0 (September 1st, 2024)
 
 Our second release will include the following features:
 
@@ -53,7 +53,7 @@ Our second release will include the following features:
 - Credit Memo Generation
 - Export reports to Excel, CSV, PDF
 
-### 0.3.0 (November 1st, 2023)
+### 0.3.0 (November 1st, 2024)
 
 Our third release will include the following features:
 
@@ -63,7 +63,7 @@ Our third release will include the following features:
 - Exchange Rates
 - Rate Formula Templates
 
-### 0.4.0 (February 1st, 2024)
+### 0.4.0 (February 1st, 2025)
 
 Our fourth release will include the following features:
 
@@ -73,7 +73,7 @@ Our fourth release will include the following features:
 - Trailer Integration
 - Customer Portal
 
-### 0.5.0 (May 1st, 2024)
+### 0.5.0 (May 1st, 2025)
 
 Our fifth release will include the following features:
 
@@ -82,7 +82,7 @@ Our fifth release will include the following features:
 - Workflow Module
 - Beam (Artificial Intelligence Chatbot)
 
-### 0.6.0 (August 1st, 2024)
+### 0.6.0 (August 1st, 2025)
 
 Our final release will include the following features:
 
