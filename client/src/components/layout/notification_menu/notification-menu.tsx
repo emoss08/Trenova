@@ -200,7 +200,7 @@ export function NotificationMenu() {
   const queryClient = useQueryClient();
 
   const markedAndInvalidate = async () => {
-    await axios.get("/user/notifications/?max=10&mark_as_read=true");
+    await axios.get("/user/notifications/?mark_as_read=true");
     await queryClient.invalidateQueries({
       queryKey: ["userNotifications", userId],
     });

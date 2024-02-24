@@ -38,10 +38,7 @@ import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { TExportModelFormValues } from "@/types/forms";
-import {
-  faEllipsisVertical,
-  faLoader,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -49,6 +46,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { ComponentLoader } from "@/components/ui/component-loader";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -57,12 +55,10 @@ interface Props {
 }
 
 function TableExportModalBody({
-  name,
   modelName,
   showExportModal,
   setShowExportModal,
 }: {
-  name: string;
   modelName: string;
   showExportModal: boolean;
   setShowExportModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -148,17 +144,7 @@ function TableExportModalBody({
   };
 
   return isColumnsLoading ? (
-    <>
-      <div className="flex h-40 w-full flex-col items-center justify-center space-y-2">
-        <FontAwesomeIcon
-          icon={faLoader}
-          className="size-20 animate-spin text-foreground"
-        />
-        <p className="text-center">
-          Fetching columns for {name.toLowerCase()}s...
-        </p>
-      </div>
-    </>
+    <ComponentLoader className="h-[20vh]" />
   ) : (
     <form onSubmit={handleSubmit(submitForm)}>
       <div className="mb-5">
@@ -238,7 +224,6 @@ export function TableExportModal({ store, modelName, name }: Props) {
         </DialogHeader>
         <TableExportModalBody
           showExportModal={showExportModal}
-          name={name}
           modelName={modelName}
           setShowExportModal={setShowExportModal}
         />

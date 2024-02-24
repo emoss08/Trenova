@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Color Accessibility Options to User Settings.
 - Font Size Switcher to User Settings.
 
+## [0.1.1] - 2024-02-23
 ### Fixed
 
 - N+1 queries in Notifications API (https://github.com/emoss08/Trenova/issues/196).

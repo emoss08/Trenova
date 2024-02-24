@@ -18,6 +18,7 @@
 import os
 
 from auditlog.models import LogEntry
+from notifications.models import Notification
 from rest_framework import serializers
 
 from reports import models
@@ -118,3 +119,15 @@ class LogEntrySerializer(serializers.ModelSerializer):
 
         model = LogEntry
         fields = "__all__"
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        """Metaclass for UserNotificationSerializer
+
+        Attributes:
+            model (models.UserNotification): The model that the serializer.
+        """
+
+        model = Notification
+        fields = ["id", "timestamp", "verb", "description"]
