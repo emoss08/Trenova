@@ -15,3 +15,4 @@ client/stats.html
 server/rate-confirmation.pdf
 server/test.py
 client/.npmrc
+.fleet
