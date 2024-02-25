@@ -21,28 +21,6 @@ from movements import models, services
 from utils.models import StatusChoices
 
 
-# def generate_initial_stops(
-#     created: bool, instance: models.Movement, **kwargs: Any
-# ) -> None:
-#     """Generate initial movements stops.
-
-#     This hook should only be fired if the first movement is being added to the shipment.
-#     Its purpose is to create the initial stops for the movement, by taking the origin
-#     and destination from the shipment. This is done by calling the StopService. This
-#     service will then create the stops and sequence them.
-
-#     Returns:
-#         None
-#     """
-
-#     if (
-#         instance.shipment.status == StatusChoices.NEW
-#         and instance.shipment.movements.count() == 1
-#         and created
-#     ):
-#         services.create_initial_stops(movement=instance, shipment=instance.shipment)
-
-
 def update_shipment_status(instance: models.Movement, **kwargs: Any) -> None:
     # If the movement is VOIDED, skip the logic below
     if instance.status == models.StatusChoices.VOIDED:

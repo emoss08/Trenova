@@ -42,11 +42,6 @@ def create_initial_stops(
         IntegrityError: If the stop cannot be created.
     """
 
-    print("Creating initial stops")
-
-    print("shipment origin address", shipment.origin_address)
-    print("shipment location", shipment.origin_location)
-
     try:
         origin_stop = Stop.objects.create(
             organization=movement.organization,
@@ -71,8 +66,6 @@ def create_initial_stops(
             appointment_time_window_start=shipment.destination_appointment_window_start,
             appointment_time_window_end=shipment.destination_appointment_window_end,
         )
-
-        print("Stops created successfully!")
     except IntegrityError as stop_creation_error:
         raise stop_creation_error
 
