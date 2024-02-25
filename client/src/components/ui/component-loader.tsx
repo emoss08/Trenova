@@ -15,21 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { cn } from "@/lib/utils";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export function LoadingPage() {
+export function ComponentLoader({ className }: { className?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center p-2">
+    <div
+      className={cn("flex flex-col items-center justify-center p-2", className)}
+    >
       <FontAwesomeIcon
         icon={faSpinner}
         spin
-        size="2x"
-        className="mb-2 text-primary"
+        size="1x"
+        className="text-primary"
       />
-      <div className="text-xl font-semibold">
-        Crafting your experience... Please hold on.
-      </div>
     </div>
   );
 }

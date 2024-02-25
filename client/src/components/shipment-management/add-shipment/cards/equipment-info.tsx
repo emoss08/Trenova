@@ -16,10 +16,15 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { AsyncSelectInput } from "@/components/common/fields/select-input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import { useCommodities, useTrailers } from "@/hooks/useQueries";
+import {
+  useCommodities,
+  useEquipmentTypes,
+  useHazardousMaterial,
+  useTrailers,
+} from "@/hooks/useQueries";
 import { Commodity } from "@/types/commodities";
 import { Trailer } from "@/types/equipment";
 import { ShipmentControl, ShipmentFormValues } from "@/types/order";
@@ -36,8 +41,33 @@ export default function EquipmentInformation({
 }) {
   const { t } = useTranslation("shipment.addshipment");
   const { data: commodities } = useCommodities();
-  const { trailerData } = useTrailers();
+  const { trailerData, isTrailerError, isTrailerLoading, selectTrailers } =
+    useTrailers();
   const { control, setValue, watch } = useFormContext<ShipmentFormValues>();
+
+  const {
+    selectEquipmentType: selectTrailerTypes,
+    isError: isTrailerTypeError,
+    isLoading: isTrailerTypesLoading,
+  } = useEquipmentTypes("TRAILER");
+
+  const {
+    selectEquipmentType: selectTractorTypes,
+    isError: isTractorTypeError,
+    isLoading: isTractorTypesLoading,
+  } = useEquipmentTypes("TRACTOR");
+
+  const {
+    selectCommodityData,
+    isLoading: isCommoditiesLoading,
+    isError: isCommodityError,
+  } = useCommodities();
+
+  const {
+    selectHazardousMaterials,
+    isLoading: isHazmatLoading,
+    isError: isHazmatError,
+  } = useHazardousMaterial();
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
@@ -75,8 +105,8 @@ export default function EquipmentInformation({
   }
 
   return (
-    <div className="rounded-md border border-border bg-card">
-      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+    <div className="border-border bg-card rounded-md border">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.equipmentInfo.label")}
           tooltip={t("card.equipmentInfo.description")}
@@ -84,10 +114,11 @@ export default function EquipmentInformation({
       </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-4 md:grid-cols-2">
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
             name="trailer"
-            link="/trailers/"
-            valueKey="code"
+            options={selectTrailers}
+            isLoading={isTrailerLoading}
+            isFetchError={isTrailerError}
             control={control}
             rules={{ required: true }}
             label={t("card.equipmentInfo.fields.trailer.label")}
@@ -99,10 +130,11 @@ export default function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
+            options={selectTrailerTypes}
+            isFetchError={isTrailerTypeError}
+            isLoading={isTrailerTypesLoading}
             name="trailerType"
-            link="/equipment_types/?equipment_class=TRAILER"
-            valueKey="name"
             control={control}
             rules={{ required: true }}
             label={t("card.equipmentInfo.fields.trailerType.label")}
@@ -114,10 +146,11 @@ export default function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
+            options={selectTractorTypes}
+            isFetchError={isTractorTypeError}
+            isLoading={isTractorTypesLoading}
             name="tractorType"
-            link="/equipment_types/?equipment_class=TRACTOR"
-            valueKey="name"
             control={control}
             label={t("card.equipmentInfo.fields.tractorType.label")}
             placeholder={t("card.equipmentInfo.fields.tractorType.placeholder")}
@@ -128,10 +161,11 @@ export default function EquipmentInformation({
           />
         </div>
         <div className="col-span-1">
-          <AsyncSelectInput
+          <SelectInput
             name="commodity"
-            link="/commodities/"
-            valueKey="name"
+            options={selectCommodityData}
+            isLoading={isCommoditiesLoading}
+            isFetchError={isCommodityError}
             control={control}
             rules={{ required: shipmentControlData.enforceCommodity || false }}
             label={t("card.equipmentInfo.fields.commodity.label")}
@@ -144,10 +178,11 @@ export default function EquipmentInformation({
           />
         </div>
         <div className="col-span-2">
-          <AsyncSelectInput
+          <SelectInput
+            options={selectHazardousMaterials}
+            isLoading={isHazmatLoading}
+            isFetchError={isHazmatError}
             name="hazardousMaterial"
-            link="/hazardous_materials/"
-            valueKey="name"
             control={control}
             label={t("card.equipmentInfo.fields.hazardousMaterial.label")}
             placeholder={t(

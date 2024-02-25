@@ -124,6 +124,7 @@ class StopSerializer(GenericSerializer):
         extra_kwargs = {
             "organization": {"required": False},
             "business_unit": {"required": False},
+            "movement": {"required": False},
         }
 
 

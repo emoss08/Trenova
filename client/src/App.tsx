@@ -71,7 +71,7 @@ const AppImpl = memo(() => {
           <ProtectedRoutes />
         </Suspense>
       </BrowserRouter>
-      {ENVIRONMENT === "development" && (
+      {ENVIRONMENT === "local" && (
         <ReactQueryDevtools
           buttonPosition="bottom-left"
           initialIsOpen={false}

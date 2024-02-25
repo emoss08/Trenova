@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { faChevronDown } from "@fortawesome/pro-duotone-svg-icons";
+import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
@@ -55,9 +55,9 @@ function Filter({ title, options, loading }: FilterOptions) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="flex items-center space-x-0.5 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
+        <div className="text-muted-foreground hover:text-foreground flex items-center space-x-0.5 text-sm hover:cursor-pointer">
           <span className="truncate">{title}</span>
-          <FontAwesomeIcon icon={faChevronDown} className="size-4" />
+          <FontAwesomeIcon icon={faChevronDown} className="size-2" />
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">

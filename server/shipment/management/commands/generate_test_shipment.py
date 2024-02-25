@@ -29,8 +29,10 @@ from accounts.models import JobTitle, User
 from customer.models import Customer
 from equipment.models import EquipmentType
 from location.models import Location
+from movements import services
 from organization.models import Organization
 from shipment.models import ServiceType, Shipment, ShipmentType
+from shipment.selectors import get_shipment_first_movement
 from utils.helpers import get_or_create_business_unit
 
 DESCRIPTION = "GENERATED FROM CREATE TEST SHIPMENTS COMMAND"
@@ -380,8 +382,9 @@ class Command(BaseCommand):
                 "[cyan]Creating shipments...", total=shipment_count
             )
 
+            # TODO(Wolfred): This should be a bulk_create
             for _ in range(shipment_count):
-                Shipment.objects.create(
+                shipment = Shipment.objects.create(
                     organization=organization,
                     business_unit=organization.business_unit,
                     shipment_type=shipment_type,
@@ -400,6 +403,16 @@ class Command(BaseCommand):
                     entered_by=user,
                     bol_number="123456789",
                     comment=DESCRIPTION,
+                )
+
+                first_movement = get_shipment_first_movement(shipment=shipment)
+                if first_movement:
+                    services.create_initial_stops(
+                        movement=first_movement, shipment=shipment
+                    )
+
+                self.style.ERROR(
+                    f"Unable to find initial movement for {shipment.pro_number}"
                 )
                 progress.update(shipment_creation_task, advance=1)
 

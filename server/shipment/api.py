@@ -83,6 +83,7 @@ class ShipmentTypeViewSet(viewsets.ModelViewSet):
     filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
     search_fields = ("status, code",)
+    http_method_names = ["get", "put", "post", "patch", "head", "options"]
 
     def get_queryset(self) -> "QuerySet[models.ShipmentType]":
         queryset = self.queryset.filter(
@@ -112,6 +113,7 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ReasonCodeSerializer
     filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
+    http_method_names = ["get", "put", "post", "patch", "head", "options"]
 
     def get_queryset(self) -> "QuerySet[models.ReasonCode]":
         queryset = self.queryset.filter(
@@ -140,6 +142,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         "status",
     )
     search_fields = ("pro_number", "customer__name", "bol_number")
+    http_method_names = ["get", "put", "post", "patch", "head", "options"]
 
     @action(detail=False, methods=["get"])
     def get_new_pro_number(self, request: Request) -> Response:
@@ -380,6 +383,7 @@ class ServiceTypeViewSet(viewsets.ModelViewSet):
     filterset_fields = ("status", "code")
     permission_classes = [CustomObjectPermissions]
     search_fields = ("status, code",)
+    http_method_names = ["get", "put", "post", "patch", "head", "options"]
 
     def get_queryset(self) -> "QuerySet[models.ServiceType]":
         queryset = self.queryset.filter(

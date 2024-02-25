@@ -16,6 +16,7 @@
  */
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDateToHumanReadable } from "@/lib/date";
 import { upperFirst } from "@/lib/utils";
@@ -40,10 +41,10 @@ function SkeletonLoader() {
   return (
     <div className="mt-20 flex flex-col items-center justify-center">
       <FontAwesomeIcon icon={faLoader} spin className="mr-2 size-4" />
-      <p className="mt-2 font-semibold text-accent-foreground">
+      <p className="text-accent-foreground mt-2 font-semibold">
         Loading Chart...
       </p>
-      <p className="mt-2 text-muted-foreground">
+      <p className="text-muted-foreground mt-2">
         If this takes longer than 10 seconds, please refresh the page.
       </p>
     </div>
@@ -88,14 +89,14 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
               "absolute left-0 top-0 flex w-6 justify-center",
             )}
           >
-            <div className="w-px bg-border" />
+            <div className="bg-border w-px" />
           </div>
           <>
             <UserAvatar user={comment.enteredBy} />
-            <div className="flex-auto rounded-md border border-border p-3">
+            <div className="border-border flex-auto rounded-md border p-3">
               <div className="flex justify-between gap-x-4">
-                <div className="py-0.5 text-xs leading-5 text-foreground">
-                  <span className="font-medium text-accent-foreground">
+                <div className="text-foreground py-0.5 text-xs leading-5">
+                  <span className="text-accent-foreground font-medium">
                     {upperFirst(userFullName(comment))}
                   </span>
                   {" posted a "}
@@ -105,12 +106,12 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
                 </div>
                 <time
                   dateTime={comment.created}
-                  className="flex-none py-0.5 text-xs leading-5 text-muted-foreground"
+                  className="text-muted-foreground flex-none py-0.5 text-xs leading-5"
                 >
                   {formatDateToHumanReadable(comment.created)}
                 </time>
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">
+              <p className="text-muted-foreground text-sm leading-6">
                 {comment.comment}
               </p>
             </div>
@@ -121,7 +122,7 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
   ) : (
     <div className="my-4 flex flex-col items-center justify-center overflow-hidden rounded-lg">
       <div className="px-6 py-4">
-        <h4 className="mt-20 text-xl font-semibold text-foreground">
+        <h4 className="text-foreground mt-20 text-xl font-semibold">
           No Location Comments Available
         </h4>
       </div>
@@ -155,11 +156,9 @@ export default function LocationChart({ row }: { row: Row<Location> }) {
 
   return (
     <div className="mt-7 flex border-b">
-      {/* Container for Bar Chart */}
-      <Suspense fallback={<SkeletonLoader />}>
+      <Suspense fallback={<ComponentLoader />}>
         {data && <TableBarChart data={data} />}
       </Suspense>
-      {/* Container for Recent Comments */}
       <div className="flex-1">
         <h2 className="scroll-m-20 pl-5 text-2xl font-semibold tracking-tight first:mt-0">
           Recent Comments
