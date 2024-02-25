@@ -27,11 +27,11 @@ class MovementsConfig(AppConfig):
         from movements import signals
 
         # Movement
-        post_save.connect(
-            signals.generate_initial_stops,
-            sender="movements.Movement",
-            dispatch_uid="generate_initial_stops",
-        )
+        # post_save.connect(
+        #     signals.generate_initial_stops,
+        #     sender="movements.Movement",
+        #     dispatch_uid="generate_initial_stops",
+        # )
         post_save.connect(
             signals.update_shipment_status,
             sender="movements.Movement",

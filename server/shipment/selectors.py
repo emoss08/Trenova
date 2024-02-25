@@ -46,6 +46,21 @@ def get_shipment_by_id(*, shipment_id: "ModelUUID") -> models.Shipment | None:
         return None
 
 
+def get_shipment_first_movement(*, shipment: models.Shipment) -> Movement | None:
+    """Get the first movement of an shipment.
+
+    Args:
+        shipment (models.Shipment): The shipment.
+
+    Returns:
+        Movement: The first movement of the shipment.
+    """
+    try:
+        return Movement.objects.filter(shipment=shipment).order_by("created").first()
+    except Movement.DoesNotExist:
+        return None
+
+
 def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement]":
     """Get the movements of an shipment.
 

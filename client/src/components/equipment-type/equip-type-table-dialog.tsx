@@ -38,12 +38,13 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { CheckboxInput } from "../common/fields/checkbox";
+import { Form, FormControl, FormGroup } from "../ui/form";
 
 export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="my-4 grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup>
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -54,8 +55,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             description="Status of the Equipment Type"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -67,10 +68,10 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Name"
             description="Name for the Equipment Type"
           />
-        </div>
-      </div>
-      <div className="my-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+      </FormGroup>
+      <FormGroup>
+        <FormControl>
           <SelectInput
             name="equipmentClass"
             rules={{ required: true }}
@@ -81,8 +82,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             description="Class of Equipment Type"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="costPerMile"
@@ -91,8 +92,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Cost Per Mile"
             description="Cost Per Mile for the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="fixedCost"
@@ -101,8 +102,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Fixed Cost"
             description="Fixed Cost of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="variableCost"
@@ -110,8 +111,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Variable Cost"
             description="Variable Cost of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="height"
@@ -119,8 +120,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Height"
             description="Height of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="length"
@@ -128,8 +129,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Length"
             description="Length of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="width"
@@ -137,8 +138,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Width"
             description="Width of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="weight"
@@ -146,8 +147,8 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Weight"
             description="Weight of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <DecimalField
             control={control}
             name="idlingFuelUsage"
@@ -155,16 +156,16 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             placeholder="Idling Fuel Usage"
             description="Idling Fuel Usage of the Equipment Type"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <CheckboxInput
             control={control}
             label="Exempt From Tolls"
             name="exemptFromTolls"
             description="Indicates if the equipment type is exempt from tolls"
           />
-        </div>
-      </div>
+        </FormControl>
+      </FormGroup>
       <div className="my-2">
         <TextareaField
           name="description"
@@ -174,7 +175,7 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
           description="Description of the Equipment Type"
         />
       </div>
-    </div>
+    </Form>
   );
 }
 

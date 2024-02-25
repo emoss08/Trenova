@@ -27,14 +27,11 @@ from organization.models import Organization
 pytestmark = pytest.mark.django_db
 
 
-def test_create_equipment_type_post(
-    api_client: APIClient, organization: Organization
-) -> None:
+def test_create_equipment_type_post(api_client: APIClient) -> None:
     """Test create equipment type
 
     Args:
         api_client (APIClient): Api Client
-        organization (Organization): Organization object
 
     Returns:
         None: This function does return anything.
@@ -51,14 +48,11 @@ def test_create_equipment_type_post(
     assert response.data["description"] == "Test Equipment Type Description"
 
 
-def test_create_equip_type_with_detail(
-    api_client: APIClient, organization: Organization
-) -> None:
+def test_create_equip_type_with_detail(api_client: APIClient) -> None:
     """Test create equipment type with equipment type details
 
     Args:
         api_client (APIClient): Api Client
-        organization (Organization): Organization object.
 
     Returns:
         None: This function does return anything.
@@ -161,14 +155,13 @@ def test_update_equipment_details(
 
 
 def test_delete_equipment_type(
-    api_client: APIClient, equipment_type_api: Response, organization: Organization
+    api_client: APIClient, equipment_type_api: Response
 ) -> None:
     """Test delete equipment type
 
     Args:
         api_client (APIClient): Api Client
         equipment_type_api (Response): Equipment Type API Response
-        organization (Organization): Organization Object
 
     Returns:
         None: This function does return anything.
@@ -196,3 +189,34 @@ def test_unique_name_constraint(organization: Organization) -> None:
         excinfo.value.message_dict["__all__"][0]
         == "Constraint “unique_equipment_type_name_organization” is violated."
     )
+
+
+ERROR_MSG = "Default equipment types cannot be set to inactive. Please contact your system administrator."
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    [
+        ("USA_TRAILER", ERROR_MSG),
+        ("USA_TRACTOR", ERROR_MSG),
+    ],
+)
+def test_validation_error_for_default_types(
+    equipment_type: models.EquipmentType, name: str, expected: str
+) -> None:
+    """Test validation error is thrown when default equipment types status is set to `I`
+
+    Args:
+        equipment_type (models.EquipmentType): EquipmentType object.
+        name (str): Name of equipment type
+        expected (str): Expected Error message.
+
+    Return:
+        None: This function does not return anything.
+    """
+    with pytest.raises(ValidationError) as excinfo:
+        equipment_type.name = name
+        equipment_type.status = "I"
+        equipment_type.clean()
+
+    assert excinfo.value.message_dict["name"] == [expected]

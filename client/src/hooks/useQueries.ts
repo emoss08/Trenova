@@ -97,7 +97,11 @@ import {
   FleetCode,
   Rate,
 } from "@/types/dispatch";
-import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
+import {
+  EquipmentClass,
+  EquipmentManufacturer,
+  EquipmentType,
+} from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
 import {
@@ -387,18 +391,23 @@ export function useDocumentClass(show?: boolean) {
 
 /**
  * Get Equipment Types for select options
+ * @param equipmentClass - Equipment Class
  * @param show - show or hide the query
  * @param limit - limit the number of results
  */
-export function useEquipmentTypes(show?: boolean, limit: number = 100) {
+export function useEquipmentTypes(
+  equipmentClass: EquipmentClass,
+  limit: number = 100,
+  show?: boolean,
+) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipmentTypes", limit] as QueryKeyWithParams<
+    queryKey: ["equipmentTypes", equipmentClass, limit] as QueryKeyWithParams<
       "equipmentTypes",
-      [number]
+      [string, number]
     >,
-    queryFn: async () => getEquipmentTypes(limit),
+    queryFn: async () => getEquipmentTypes(equipmentClass, limit),
     enabled: show,
     initialData: () =>
       queryClient.getQueryData(["equipmentTypes"] as QueryKeys),
@@ -456,6 +465,7 @@ export function useHazardousMaterial(show?: boolean) {
 
 /**
  * Get Locations for select options
+ * @param locationStatus
  * @param show - show or hide the query
  */
 export function useLocations(locationStatus: string = "A", show?: boolean) {
@@ -482,7 +492,7 @@ export function useLocations(locationStatus: string = "A", show?: boolean) {
   const selectLocationData =
     (locations as Location[])?.map((location: Location) => ({
       value: location.id,
-      label: location.code,
+      label: location.name,
     })) || [];
 
   return { selectLocationData, isError, isLoading, locations };

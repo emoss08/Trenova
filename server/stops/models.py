@@ -202,6 +202,12 @@ class Stop(GenericModel):
         ordering = ["movement", "sequence"]
         db_table = "stop"
         db_table_comment = "Stores movement information related to a movement."
+        constraints = [
+            models.UniqueConstraint(
+                fields=["movement", "sequence"],
+                name="unique_movement_sequence",
+            )
+        ]
 
     def __str__(self) -> str:
         """String representation of the Stop

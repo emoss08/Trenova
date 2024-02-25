@@ -18,15 +18,36 @@
 import React from "react";
 
 import { Button } from "@/components/ui/button";
+import { Image } from "@unpic/react";
+
+import notFoundImage from "../assets/images/404.webp";
+import { useNavigate } from "react-router-dom";
 
 function ErrorPage() {
+  const navigate = useNavigate();
+
   return (
-    <div className="space-y-3 p-10 text-center">
-      <h1 className="text-2xl font-bold">Well, this is awkward....</h1>
-      <p>You either don't have access to this page or it doesn't exist.</p>
-      <p>We recommend contacting your administrator for more information.</p>
-      <Button>Go back to the dashboard</Button>
+    <div className="flex h-[70vh] flex-row items-center justify-center text-center">
+      <div className="flex w-[900px] flex-col rounded-md border border-border bg-card sm:flex-row sm:items-center sm:justify-center">
+        <Image
+          src={notFoundImage}
+          layout="constrained"
+          className="items-center justify-center object-contain"
+          width={300}
+          height={300}
+          alt="not-found"
+        />
+        <div className="space-y-4 p-8">
+          <h1 className="text-2xl font-bold">Well, this is awkward....</h1>
+          <p>You either don't have access to this page or it doesn't exist.</p>
+          <p>
+            We recommend contacting your administrator for more information.
+          </p>
+          <Button onClick={() => navigate("/")}>Navigate to dashboard</Button>
+        </div>
+      </div>
     </div>
   );
 }
+
 export default ErrorPage;

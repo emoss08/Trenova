@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60 * 60 * 24,
-    # queue="medium_priority",
 )
 def send_expired_rates_notification(self: "Task") -> None:
     """Send expired rates notification
@@ -57,7 +56,7 @@ def send_expired_rates_notification(self: "Task") -> None:
 
         for setting in notification_settings:
             recipients = setting.get_email_recipients()
-            if not recipients:
+            if not recipients or setting.send_notification is False:
                 continue
 
             for rate in expired_rates:
