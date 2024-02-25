@@ -86,8 +86,7 @@ def automate_mass_shipments_billing(self: "Task") -> str:
 def transfer_to_billing_task(
     self: "Task", *, user_id: str, shipment_pros: list[str]
 ) -> None:
-    """
-    Starts a Celery task to transfer the specified Shipment(s) to billing for the logged-in user.
+    """Starts a Celery task to transfer the specified Shipment(s) to billing for the logged-in user.
 
     Args:
         self: The Celery task instance.
@@ -95,22 +94,10 @@ def transfer_to_billing_task(
         shipment_pros: A list of strings representing the order IDs to transfer.
 
     Returns:
-        None.
+        None: this function does not return anything.
 
     Raises:
         self.retry: If an ObjectDoesNotExist exception is raised while processing the task.
-
-    This Celery task function calls the `transfer_to_billing_queue_service` function to create BillingQueue objects
-    for each order in the provided list of order IDs, and updates the transfer status and transfer date of each shipment.
-
-    If an ObjectDoesNotExist exception is raised while processing the task, the Celery task will automatically retry
-    the task until it succeeds, with an exponential backoff strategy.
-
-    The `transfer_to_billing_queue_service` function is called to perform the actual transfer of the specified Shipment(s).
-    If this operation raises an ObjectDoesNotExist exception, the function will retry the task with an exponential
-    backoff strategy until it succeeds.
-
-    Finally, the function returns None.
     """
 
     try:
@@ -119,23 +106,6 @@ def transfer_to_billing_task(
         )
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
-
-
-# @shared_task(
-#     name="transfer_to_billing_task",
-#     bind=True,
-#     base=Singleton,
-#     # queue="high_priority"
-# )
-# def transfer_to_billing_task(
-#     self: "Task", *, user_id: str, shipment_pros: list[str] | None
-# ) -> None:
-#     try:
-#         services.transfer_to_billing_queue_service(
-#             user_id=user_id, shipment_pros=shipment_pros, task_id=str(self.request.id)
-#         )
-#     except ServiceException as exc:
-#         raise self.retry(exc=exc) from exc
 
 
 @shared_task(
