@@ -43,28 +43,29 @@ def create_initial_stops(
     """
 
     try:
-        origin_stop: Stop = Stop.objects.create(
+        origin_stop = Stop.objects.create(
             organization=movement.organization,
             business_unit=movement.organization.business_unit,
             movement=movement,
             sequence=1,
             stop_type=StopChoices.PICKUP,
-            location=shipment.origin_location,
+            location=shipment.origin_location if shipment.origin_location else None,
             address_line=shipment.origin_address,
             appointment_time_window_start=shipment.origin_appointment_window_start,
             appointment_time_window_end=shipment.origin_appointment_window_end,
         )
-        destination_stop: Stop = Stop.objects.create(
+        destination_stop = Stop.objects.create(
             organization=movement.organization,
             business_unit=movement.organization.business_unit,
             movement=movement,
             sequence=2,
             stop_type=StopChoices.DELIVERY,
-            location=shipment.destination_location,
+            location=(
+                shipment.destination_location if shipment.destination_location else None
+            ),
             appointment_time_window_start=shipment.destination_appointment_window_start,
             appointment_time_window_end=shipment.destination_appointment_window_end,
         )
-
     except IntegrityError as stop_creation_error:
         raise stop_creation_error
 

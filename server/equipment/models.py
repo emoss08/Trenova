@@ -188,6 +188,21 @@ class EquipmentType(GenericModel):
             )
         ]
 
+    def clean(self) -> None:
+        if (
+            self.status == "I"
+            and self.name == "USA_TRACTOR"
+            or self.name == "USA_TRAILER"
+        ):
+            raise ValidationError(
+                {
+                    "name": _(
+                        "Default equipment types cannot be set to inactive. Please contact your system "
+                        "administrator."
+                    )
+                }
+            )
+
     def __str__(self) -> str:
         """Equipment Type string representation
 

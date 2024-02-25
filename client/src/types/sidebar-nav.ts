@@ -15,22 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button } from "@/components/ui/button";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { GoogleMap } from "@google";
-
-export function ShipmentMapZoom({ map }: { map: GoogleMap }) {
-  if (!map) return null;
-
-  return (
-    <div className="flex flex-col space-y-2">
-      <Button size="icon" onClick={() => map.setZoom(map.getZoom() + 1)}>
-        <FontAwesomeIcon icon={faPlus} />
-      </Button>
-      <Button size="icon" onClick={() => map.setZoom(map.getZoom() - 1)}>
-        <FontAwesomeIcon icon={faPlus} />
-      </Button>
-    </div>
-  );
-}
+export type SidebarLink = {
+  href: string;
+  title: string;
+  icon?: React.ReactNode;
+  group?: string;
+  disabled?: boolean;
+};

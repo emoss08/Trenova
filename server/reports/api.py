@@ -22,7 +22,7 @@ from auditlog.models import LogEntry
 from django.apps import apps
 from django.core.cache import cache
 from kombu.exceptions import OperationalError
-from notifications.helpers import get_notification_list
+from notifications.models import Notification
 from rest_framework import exceptions, generics, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
@@ -213,7 +213,7 @@ def generate_report_api(request: Request) -> Response:
     """
 
     model_name = request.data.get("model_name", None)
-    columns = request.data.get("columns", None)
+    columns = request.data.get("columns", [])
     file_format = request.data.get("file_format", None)
 
     if not model_name:
@@ -332,11 +332,26 @@ def get_user_notifications(request: Request) -> Response:
         all unread notifications for the user. The HTTP status code is 200 (OK).
     """
 
-    all_list = get_notification_list(request, "unread")
+    mark_as_read = request.query_params.get("mark_as_read", False)
+
+    if mark_as_read:
+        Notification.objects.filter(
+            recipient=request.user,
+            unread=True,
+        ).update(unread=False)
+
+    # Get all unread notifications for the user
+    all_list = Notification.objects.filter(
+        recipient=request.user,
+        unread=True,
+    ).all()
+
+    # Notifications are serialized to JSON
+    notification_data = serializers.NotificationSerializer(all_list, many=True).data
 
     data = {
         "unread_count": request.user.notifications.unread().count(),  # type: ignore
-        "unread_list": all_list,
+        "unread_list": notification_data,
     }
 
     return Response(data, status=status.HTTP_200_OK)

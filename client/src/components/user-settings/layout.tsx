@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { SidebarLink } from "@/types/sidebar-nav";
 import {
   faBellRing,
   faGear,
@@ -26,19 +27,20 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Suspense } from "react";
-import { Skeleton } from "../ui/skeleton";
+import { ComponentLoader } from "../ui/component-loader";
 import { SidebarNav } from "./sidebar-nav";
 
-const links = [
+const links: SidebarLink[] = [
   {
     href: "/account/settings/",
     title: "User Settings",
     icon: (
       <FontAwesomeIcon
         icon={faUser}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: false,
   },
   {
     href: "/account/settings/preferences/",
@@ -46,9 +48,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faStarHalf}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: false,
   },
   {
     href: "#",
@@ -56,9 +59,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faBellRing}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: true,
   },
   {
     href: "#",
@@ -66,9 +70,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faRightLeft}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: true,
   },
   {
     href: "#",
@@ -76,9 +81,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faSatelliteDish}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: true,
   },
   {
     href: "#",
@@ -86,9 +92,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faShieldHalved}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: true,
   },
   {
     href: "#",
@@ -96,9 +103,10 @@ const links = [
     icon: (
       <FontAwesomeIcon
         icon={faGear}
-        className="size-4 text-muted-foreground group-hover:text-foreground"
+        className="text-muted-foreground group-hover:text-foreground size-4"
       />
     ),
+    disabled: true,
   },
 ];
 
@@ -112,7 +120,7 @@ export default function SettingsLayout({
       <SidebarNav links={links} />
       <main className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
+          <Suspense fallback={<ComponentLoader className="h-[60vh]" />}>
             {children}
           </Suspense>
         </div>

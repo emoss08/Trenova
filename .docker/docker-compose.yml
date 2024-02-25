@@ -21,6 +21,8 @@ services:
       KAFKA_CFG_PROCESS_ROLES: controller,broker
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
     restart: on-failure
+    volumes:
+      - kafka_data:/bitnami/kafka
 
   db:
     image: postgres:latest
@@ -85,6 +87,8 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     restart: always
+    volumes:
+      - redis_data:/data
 
   trenova_rabbitmq:
     image: rabbitmq:3-management
@@ -99,3 +103,9 @@ services:
       - RABBITMQ_DEFAULT_USER=trenova # This is just for local development
       - RABBITMQ_DEFAULT_PASS=trenova # This is just for local development
     restart: always
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+volumes:
+  rabbitmq_data: {}
+  redis_data: {}
+  kafka_data: {}

@@ -100,7 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    "core.middleware.idempotency_middleware.IdempotencyMiddleware",
+    # "core.middleware.idempotency_middleware.IdempotencyMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -407,8 +407,6 @@ CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
 CACHEOPS_DEFAULTS = {
     "timeout": 60 * 60,
 }
-
-# Cache Ops settings
 CACHEOPS = {
     "shipment.shipmentcontrol": {"ops": "all"},
     "invoicing.invoicecontrol": {"ops": "all"},
@@ -421,6 +419,10 @@ CACHEOPS = {
     "organization.OrganizationFeatureFlag": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
     "location.states": {"ops": "all"},
+    "location.location": {"ops": "all"},
+    "dispatch.commenttype": {"ops": "all"},
+    "location.locationcontact": {"ops": "all"},
+    "location.locationcomment": {"ops": "all"},
     "accounts.userfavorite": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
 import { Suspense, lazy } from "react";
 
@@ -31,7 +31,7 @@ export default function GeneralInfoTab() {
 
   return (
     <div className="grid grid-cols-1 gap-y-8">
-      <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+      <Suspense fallback={<ComponentLoader />}>
         <GeneralInfoCard
           proNumber={proNumber as string}
           isProNumberLoading={isProNumberLoading}

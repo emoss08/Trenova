@@ -17,11 +17,11 @@
 
 import { Layout, UnprotectedLayout } from "@/components/layout/layout";
 import { useUserPermissions } from "@/context/user-permissions";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 
-export function ProtectedRoutes(): React.ReactElement {
+export function ProtectedRoutes() {
   const { isAuthenticated, userHasPermission } = useUserPermissions();
   const location = useLocation();
 

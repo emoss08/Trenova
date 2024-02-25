@@ -472,7 +472,12 @@ def create_notification_settings(
     created: bool,
     **kwargs: Any,
 ) -> None:
-    if created:
+    if (
+        created
+        and not models.NotificationSetting.objects.filter(
+            notification_type=instance.id
+        ).exists()
+    ):
         models.NotificationSetting.objects.get_or_create(
             business_unit=instance.business_unit,
             organization=instance.organization,

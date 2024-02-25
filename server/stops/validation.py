@@ -59,7 +59,7 @@ class StopValidation:
         self.validate_movement_driver_tractor()
         self.validate_reserve_status_change()
         self.validate_compare_app_time()
-        self.ensure_location()
+        # self.ensure_location()
 
     def validate_arrival_departure_movement(self) -> None:
         """Validate arrival and departure times for movement
@@ -191,7 +191,7 @@ class StopValidation:
         Returns:
             None: This function does not return anything
         """
-        if not self.instance.location and not self.instance.address_line:
+        if not self.instance.location or not self.instance.address_line:
             self.errors["location"] = _(
                 "Must enter a location or address line. Please try again."
             )

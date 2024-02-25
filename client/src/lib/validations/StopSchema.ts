@@ -47,7 +47,7 @@ export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
     .string<ShipmentStatusChoiceProps>()
     .required("Status is required"),
   sequence: yup.number().notRequired(),
-  movement: yup.string().required("Movement is required"),
+  movement: yup.string().notRequired(),
   location: yup
     .string()
     .nullable()

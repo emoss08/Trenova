@@ -147,3 +147,5 @@ export type TractorFormValues = Omit<
   Tractor,
   "id" | "organization" | "businessUnit" | "created" | "modified"
 >;
+
+export type EquipmentClass = "TRACTOR" | "TRAILER";

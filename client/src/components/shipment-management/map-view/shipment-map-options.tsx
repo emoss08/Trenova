@@ -34,7 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MapLayer, MapType, useShipmentMapStore } from "@/stores/ShipmentStore";
-import { faCommand } from "@fortawesome/pro-duotone-svg-icons";
+import { faSliders } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function MapOptionsButton() {
@@ -43,7 +43,7 @@ function MapOptionsButton() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button size="icon">
-            <FontAwesomeIcon icon={faCommand} />
+            <FontAwesomeIcon className="size-5" icon={faSliders} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">

@@ -18,9 +18,8 @@
 import { useUserPermissions } from "@/context/user-permissions";
 import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
-import { faChevronsLeft } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
+import { Button } from "../ui/button";
 import { ListItem } from "./links-group";
 
 /**
@@ -134,7 +133,7 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
     <ul
       className={cn(
         "relative grid w-[400px] gap-3 p-4",
-        activeSubLinks ? "pt-8" : "",
+        activeSubLinks ? "pt-10" : "",
         "md:w-[500px] md:grid-cols-2 lg:w-[700px]",
       )}
     >
@@ -142,12 +141,14 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
         permittedLinks
       ) : (
         <>
-          <button
+          <Button
             onClick={handleBackClick}
-            className="absolute right-2 top-2 z-10 rounded-md text-sm transition duration-200"
+            className="absolute right-2 top-2 z-10"
+            size="xs"
+            variant="outline"
           >
-            <FontAwesomeIcon icon={faChevronsLeft} className="size-5" />
-          </button>
+            Back
+          </Button>
           {activeSubLinks.map((subLink) => {
             if (subLink.permission && !userHasPermission(subLink.permission)) {
               return null; // Don't render the list item if permission is not granted
