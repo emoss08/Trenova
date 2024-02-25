@@ -189,10 +189,8 @@ class EquipmentType(GenericModel):
         ]
 
     def clean(self) -> None:
-        if (
-            self.status == "I"
-            and self.name == "USA_TRACTOR"
-            or self.name == "USA_TRAILER"
+        if self.status == "I" and (
+            self.name == "USA_TRACTOR" or self.name == "USA_TRAILER"
         ):
             raise ValidationError(
                 {
