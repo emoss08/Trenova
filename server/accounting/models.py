@@ -633,7 +633,7 @@ class RevenueCode(GenericModel):
         self.full_clean()
 
         if self.code:
-            self.code = self.code.upper()
+            self.code = f"{self.code}".upper()
 
         super().save(*args, **kwargs)
 
