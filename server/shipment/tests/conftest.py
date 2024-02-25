@@ -42,6 +42,7 @@ from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
+from movements.tests.factories import MovementFactory
 from organization.models import Organization
 from shipment.models import Shipment, ShipmentType
 from shipment.tests.factories import (
@@ -52,7 +53,6 @@ from shipment.tests.factories import (
     ShipmentFactory,
     ShipmentTypeFactory,
 )
-from movements.tests.factories import MovementFactory
 
 pytestmark = pytest.mark.django_db
 

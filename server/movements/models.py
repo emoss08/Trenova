@@ -47,9 +47,7 @@ class Movement(GenericModel):
         help_text=_("Movement Reference Number"),
     )
     is_loaded = models.BooleanField(
-        _("Is Loaded"),
-        default=True,
-        help_text=_("Is the movement loaded or unloaded?")
+        _("Is Loaded"), default=True, help_text=_("Is the movement loaded or unloaded?")
     )
     status = ChoiceField(
         _("Status"),

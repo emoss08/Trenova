@@ -407,11 +407,14 @@ class Command(BaseCommand):
 
                 first_movement = get_shipment_first_movement(shipment=shipment)
                 if first_movement:
-                    services.create_initial_stops(movement=first_movement, shipment=shipment)
+                    services.create_initial_stops(
+                        movement=first_movement, shipment=shipment
+                    )
 
-                self.style.ERROR(f"Unable to find initial movement for {shipment.pro_number}")
+                self.style.ERROR(
+                    f"Unable to find initial movement for {shipment.pro_number}"
+                )
                 progress.update(shipment_creation_task, advance=1)
-
 
         self.stdout.write(
             self.style.SUCCESS(

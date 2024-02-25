@@ -17,7 +17,7 @@
 
 from typing import Any
 
-from movements import models, services
+from movements import models
 from utils.models import StatusChoices
 
 

@@ -18,12 +18,13 @@
 import tokenize
 import typing
 from io import BytesIO
+
+from django.db import transaction
+from sympy import SympifyError, sympify
+
 from organization.models import BusinessUnit, Organization
 from shipment import models, selectors
-from django.db import transaction
 from stops.models import Stop
-
-from sympy import SympifyError, sympify
 
 FORMULA_ALLOWED_VARIABLES = [
     "freight_charge",
@@ -130,10 +131,10 @@ def create_additional_stops(
     # Assuming the last stop is always the consignee
     if shipment_stops:
         consignee_stop = shipment_stops.last()
-        new_sequence_start = consignee_stop.sequence
+        consignee_stop.sequence
     else:
         # If there are no stops, set the starting sequence for the new stops
-        new_sequence_start = 1
+        pass
 
     created_stops = []
     if stop_data:
