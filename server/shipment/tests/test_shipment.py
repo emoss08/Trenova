@@ -26,6 +26,7 @@ from rest_framework.test import APIClient
 
 from accounting.models import RevenueCode
 from accounts.models import User
+from accounts.tests.factories import UserFactory
 from customer.models import Customer
 from dispatch.factories import FleetCodeFactory
 from equipment.models import EquipmentType
@@ -34,7 +35,6 @@ from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from organization.models import BusinessUnit, Organization
-from accounts.tests.factories import UserFactory
 from shipment import models, selectors
 from shipment.selectors import get_shipment_stops
 from shipment.tests.factories import ShipmentFactory

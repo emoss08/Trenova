@@ -15,11 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from typing import Any
+
 from rest_framework import serializers
 
 from movements.serializers import MovementSerializer
+from shipment import helpers, models
 from stops.serializers import StopSerializer
-from shipment import models, helpers
 from utils.serializers import GenericSerializer
 
 
