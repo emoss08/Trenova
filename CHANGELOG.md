@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Worker Scorecards.
 - Color Accessibility Options to User Settings.
 
+## [0.1.1] - 2024-02-25
+
+### Changed
+
+- Improved the design of the error page.
+
+
+
 ## [0.1.1] - 2024-02-23
 
 ### Fixed
