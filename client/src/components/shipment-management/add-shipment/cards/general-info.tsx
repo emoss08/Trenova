@@ -138,7 +138,6 @@ export default function GeneralInformation({
             options={selectServiceTypes}
             isFetchError={isServiceTypeError}
             isLoading={isServiceTypeLoading}
-            rules={{ required: true }}
             label={t("card.generalInfo.fields.serviceType.label")}
             placeholder={t("card.generalInfo.fields.serviceType.placeholder")}
             description={t("card.generalInfo.fields.serviceType.description")}

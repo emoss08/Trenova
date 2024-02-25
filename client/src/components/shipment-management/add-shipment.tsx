@@ -34,10 +34,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Suspense, lazy, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Skeleton } from "../ui/skeleton";
 
 import { stopSchema } from "@/lib/validations/StopSchema";
 import * as yup from "yup";
+import { ComponentLoader } from "../ui/component-loader";
 import { ShipmentAsideMenu } from "./add-shipment/nav/nav-bar";
 
 // Lazy load the tabs
@@ -100,7 +100,7 @@ export default function AddShipment() {
     useShipmentControl();
 
   if (isShipmentControlLoading && !shipmentControlData && !user) {
-    return <Skeleton className="h-[100vh] w-full" />;
+    return <ComponentLoader className="h-[60vh]" />;
   }
 
   // Shipment Form validation schema
@@ -288,12 +288,10 @@ export default function AddShipment() {
   );
 
   const onSubmit = (values: ShipmentFormValues) => {
-    const cleanedValues = cleanObject(values);
     setIsSubmitting(true);
-    console.info("Form values", cleanedValues);
+
+    const cleanedValues = cleanObject(values);
     mutation.mutate(cleanedValues);
-    console.info("Resetting form");
-    reset();
   };
 
   const ActiveTabComponent = tabs[activeTab].component;
@@ -311,7 +309,7 @@ export default function AddShipment() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex h-full flex-col overflow-y-visible"
           >
-            <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+            <Suspense fallback={<ComponentLoader />}>
               <ActiveTabComponent />
             </Suspense>
             <div className="mt-4 flex flex-col-reverse pt-4 sm:flex-row sm:justify-end sm:space-x-2">

@@ -34,6 +34,7 @@ from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from organization.models import BusinessUnit, Organization
+from accounts.tests.factories import UserFactory
 from shipment import models, selectors
 from shipment.selectors import get_shipment_stops
 from shipment.tests.factories import ShipmentFactory
@@ -935,3 +936,56 @@ def test_invalid_tractor_type(shipment: models.Shipment) -> None:
     assert excinfo.value.message_dict["tractor_type"] == [
         "Cannot select a non-tractor type for the tractor type. Please try again."
     ]
+
+
+def test_create_api(
+    api_client: APIClient,
+    shipment_type: models.ShipmentType,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    movement: Movement,
+) -> None:
+    now = timezone.now()
+
+    user = UserFactory()
+
+    response = api_client.post(
+        "/api/shipments/",
+        {
+            "originAddress": "123 Main St, Anytown, USA",
+            "originAppointmentWindowStart": now,
+            "originAppointmentWindowEnd": now,
+            "destinationAddress": "456 Elm St, Anytown, USA",
+            "destinationAppointmentWindowStart": now + datetime.timedelta(days=2),
+            "destinationAppointmentWindowEnd": now + datetime.timedelta(days=2),
+            "bolNumber": "1234567890",
+            "customer": customer.id,
+            "trailerType": equipment_type.id,
+            "shipmentType": shipment_type.id,
+            "enteredBy": user.id,
+            "freightChargeAmount": 100.00,
+            "stops": [
+                {
+                    "addressLine": "TEST LOCATION 1",
+                    "appointmentTimeWindowStart": now,
+                    "appointmentTimeWindowEnd": now,
+                    "stopType": "P",
+                }
+            ],
+        },
+        format="json",
+    )
+
+    import json
+
+    print("response", json.dumps(response.json(), indent=4))
+
+    assert response.status_code == 201
+    assert response.data["origin_address"] == "123 Main St, Anytown, USA"
+    assert response.data["destination_address"] == "456 Elm St, Anytown, USA"
+    assert response.data["bol_number"] == "1234567890"
+    assert response.data["customer"] == customer.id
+    assert response.data["trailer_type"] == equipment_type.id
+    assert response.data["shipment_type"] == shipment_type.id
+    assert response.data["entered_by"] == user.id
+    assert decimal.Decimal(response.data["freight_charge_amount"]) == 100.0000

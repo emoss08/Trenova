@@ -17,9 +17,7 @@
 
 import { DecimalField } from "@/components/common/fields/decimal-input";
 import { InputField } from "@/components/common/fields/input";
-import {
-  SelectInput
-} from "@/components/common/fields/select-input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import {
   DropdownMenu,
