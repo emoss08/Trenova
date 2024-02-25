@@ -35,16 +35,14 @@ def control_choice_matches_stop(
     stop_type = obj.stop_type
     si_choices = DispatchControl.ServiceIncidentControlChoices
 
-    if control_choice == si_choices.PICKUP:
-        return stop_type == models.StopChoices.PICKUP
-    elif control_choice == si_choices.DELIVERY:
-        return stop_type == models.StopChoices.DELIVERY
-    elif control_choice == si_choices.PICKUP_DELIVERY:
-        return True
-    elif control_choice == si_choices.ALL_EX_SHIPPER:
-        return stop_type != models.StopChoices.PICKUP
-    else:
-        return False
+    control_mapping = {
+        si_choices.PICKUP: models.StopChoices.PICKUP,
+        si_choices.DELIVERY: models.StopChoices.DELIVERY,
+        si_choices.PICKUP_DELIVERY: None,
+        si_choices.ALL_EX_SHIPPER: models.StopChoices.PICKUP,
+    }
+
+    return stop_type == control_mapping.get(control_choice, None)
 
 
 def should_create_service_incident(*, obj: models.Stop) -> bool:

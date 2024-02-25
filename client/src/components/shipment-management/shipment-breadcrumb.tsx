@@ -31,6 +31,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { useUserPermissions } from "@/context/user-permissions";
 
 function OptionsDropdown() {
   const [currentView, setCurrentView] = useShipmentStore.use("currentView");
@@ -89,6 +90,7 @@ function OptionsDropdown() {
 
 export function ShipmentBreadcrumb() {
   const navigate = useNavigate();
+  const { userHasPermission } = useUserPermissions();
 
   return (
     <div className="flex justify-between pb-4 pt-5 md:py-4">
@@ -104,13 +106,15 @@ export function ShipmentBreadcrumb() {
       </div>
       <div className="mt-3 flex">
         <OptionsDropdown />
-        <Button
-          size="sm"
-          className="ml-3 h-9 font-semibold"
-          onClick={() => navigate("/shipment-management/new-shipment/")}
-        >
-          Add New Shipment
-        </Button>
+        {userHasPermission("add_shipment") ? (
+          <Button
+            size="sm"
+            className="ml-3 h-9 font-semibold"
+            onClick={() => navigate("/shipment-management/new-shipment/")}
+          >
+            Add New Shipment
+          </Button>
+        ) : null}
       </div>
     </div>
   );

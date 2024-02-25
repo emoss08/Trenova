@@ -14,10 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Any
+
 from rest_framework import serializers
 
 from movements.serializers import MovementSerializer
-from shipment import models
+from shipment import helpers, models
+from stops.serializers import StopSerializer
 from utils.serializers import GenericSerializer
 
 
@@ -178,6 +181,7 @@ class ShipmentSerializer(GenericSerializer):
     """
 
     movements = MovementSerializer(many=True, required=False)
+    stops = StopSerializer(many=True, required=False)
 
     class Meta:
         """Metaclass for ShipmentSerializer
@@ -198,6 +202,32 @@ class ShipmentSerializer(GenericSerializer):
             "organization": {"required": False},
             "business_unit": {"required": False},
         }
+
+    def create(self, validated_data: Any) -> models.Shipment:
+        # Get the organization and business unit
+        organization = super().get_organization
+        business_unit = super().get_business_unit
+
+        # Get the user from the request
+        user = self.context["request"].user
+
+        # Poppped data (Stops) from the validated data
+        stop_data = validated_data.pop("stops", [])
+
+        # Create the shipment
+        validated_data["organization"] = organization
+        validated_data["business_unit"] = business_unit
+        validated_data["entered_by"] = user
+        shipment = models.Shipment.objects.create(**validated_data)
+
+        helpers.create_additional_stops(
+            shipment=shipment,
+            stop_data=stop_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        return shipment
 
 
 class ShipmentDocumentationSerializer(GenericSerializer):

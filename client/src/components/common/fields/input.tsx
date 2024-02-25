@@ -107,7 +107,7 @@ export function InputField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>
@@ -152,7 +152,7 @@ export function FileField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>
@@ -192,7 +192,7 @@ export function TimeField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>
@@ -270,7 +270,7 @@ export function PasswordField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>

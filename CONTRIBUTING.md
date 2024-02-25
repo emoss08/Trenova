@@ -6,7 +6,7 @@
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [How to Contribute](#how-to-contribute)
-- [Styleguides](#styleguides)
+- [Styleguide](#styleguide)
 - [Additional Notes](#additional-notes)
 
 ## Introduction
@@ -37,6 +37,11 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
    - The React frontend is at `localhost:5173`.
    - The Django backend at `localhost:8000`.
 
+4. **Conduktor Setup**:
+   - Optionally install Conduktor to manage Kafka topics and messages.
+   - Run `curl -L https://releases.conduktor.io/console -o docker-compose.yml && docker compose up` in the `.docker` directory to start Conduktor.
+   - Access Conduktor at `localhost:8080`.
+
 ### Understanding the Project
 - Explore the tech stack, including Django, Django REST Framework, and React.
 - Review the project structure and documentation for insights into our architecture and patterns.
@@ -53,7 +58,7 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 - Use GitHub issues for bug reports or feature suggestions.
 - Provide detailed descriptions and reproduction steps for bugs.
 
-## Styleguides
+## Styleguide
 
 ### Python Code Style
 - We follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html). Adhere to these guidelines for any Python code contributions.

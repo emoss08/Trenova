@@ -9,12 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- GraphQL API.
 - Conditionals in Table Change Alerts (https://github.com/emoss08/Trenova/issues/203).
 - Worker on-boarding Client.
 - Worker Scorecards.
 - Color Accessibility Options to User Settings.
-- Font Size Switcher to User Settings.
+
+## [0.1.2] - 2024-02-25
+
+### Added
+- `is_loaded` field to `Movement` model (https://github.com/emoss08/Trenova/pull/229)
+
+### Changed
+
+- Improved the design of the error page (https://github.com/emoss08/Trenova/pull/229)
+- `Equipment Type` Form to new Form component to improve usability (https://github.com/emoss08/Trenova/pull/229)
+
+### Fixed
+- `Add New Shipment` button and page to respect RBAC (https://github.com/emoss08/Trenova/pull/229)
+
+## [0.1.1] - 2024-02-23
 
 ### Fixed
 

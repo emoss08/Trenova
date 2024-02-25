@@ -16,18 +16,12 @@
  */
 
 import { cn } from "@/lib/utils";
+import { SidebarLink } from "@/types/sidebar-nav";
 import { debounce } from "lodash-es";
 import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { buttonVariants } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
-
-type SidebarLink = {
-  href: string;
-  title: string;
-  icon?: React.ReactNode;
-  group?: string;
-};
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   links: SidebarLink[];
@@ -73,7 +67,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
         isScrolled ? "pt-10" : "",
       )}
     >
-      <ScrollArea className="size-full rounded-lg border bg-card p-3 text-card-foreground">
+      <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (
             <div key={group} className="space-y-2">
@@ -90,6 +84,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
                       location.pathname === link.href
                         ? "bg-muted [&_svg]:text-foreground"
                         : "hover:bg-muted",
+                      link.disabled && "cursor-not-allowed opacity-50",
                       "group justify-start flex items-center mx-2",
                     )}
                   >

@@ -19,14 +19,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const badgeVariants = cva(
-  "inline-flex select-none items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "focus:ring-ring inline-flex select-none items-center gap-x-1.5 rounded-sm border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "bg-primary text-primary-foreground hover:bg-primary/80 border-transparent",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-transparent",
         active:
           "border border-green-600 bg-green-100 text-green-600 dark:border-green-500 dark:bg-green-600/30 dark:text-green-400 forced-colors:outline",
         inactive:

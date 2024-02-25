@@ -117,3 +117,10 @@ def get_organization_by_id(
         QuerySet[models.Organization]: A queryset of organization.
     """
     return models.Organization.objects.get(id__exact=organization_id)
+
+
+def get_notification_settings_by_type(*, type_id: str) -> bool | None:
+    try:
+        return models.NotificationSetting.objects.get(notification_type=type_id)
+    except models.NotificationSetting.DoesNotExist:
+        return None

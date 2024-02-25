@@ -55,7 +55,8 @@ export function TractorForm({
   control: Control<FormValues>;
   open: boolean;
 }) {
-  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(open);
+  const { selectEquipmentType, isLoading, isError } =
+    useEquipmentTypes("TRACTOR");
 
   const {
     selectEquipManufacturers,
