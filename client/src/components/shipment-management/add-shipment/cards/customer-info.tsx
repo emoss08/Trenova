@@ -18,7 +18,7 @@
 import { AsyncSelectInput } from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useCustomers } from "@/hooks/useQueries";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues } from "@/types/shipment";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 

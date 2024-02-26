@@ -25,7 +25,7 @@ import {
   useShipmentTypes,
 } from "@/hooks/useQueries";
 import { shipmentStatusChoices } from "@/lib/choices";
-import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/shipment";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -64,8 +64,8 @@ export default function GeneralInformation({
   }
 
   return (
-    <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
         <TitleWithTooltip
           title={t("card.generalInfo.label")}
           tooltip={t("card.generalInfo.description")}

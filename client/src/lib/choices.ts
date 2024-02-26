@@ -430,13 +430,13 @@ export const shipmentStatusChoices = [
   { value: "V", label: "Voided", color: "#dc2626" },
 ] satisfies ReadonlyArray<IChoiceProps<ShipmentStatusChoiceProps>>;
 
-type ShipmentSourceChoiceProps = "MANUAL" | "EDI" | "API";
+export type ShipmentEntryMethodChoices = "MANUAL" | "EDI" | "API";
 
 export const shipmentSourceChoices = [
   { value: "MANUAL", label: "Manual" },
   { value: "EDI", label: "EDI" },
   { value: "API", label: "API" },
-] satisfies ReadonlyArray<IChoiceProps<ShipmentSourceChoiceProps>>;
+] satisfies ReadonlyArray<IChoiceProps<ShipmentEntryMethodChoices>>;
 
 /**
  * Returns code type choices for a select input.
@@ -486,7 +486,7 @@ export const sourceChoices = [
 /** Type for RatingMethod for Shipment */
 export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
 
-export const ratingMethodChoies = [
+export const ratingMethodChoices = [
   { value: "F", label: "Flat" },
   { value: "PM", label: "Per Mile" },
   { value: "PS", label: "Per Stop" },

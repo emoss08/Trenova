@@ -17,7 +17,7 @@
 
 import { ShipmentAsideMenus } from "@/components/shipment-management/map-view/shipment-aside-menu";
 import { ShipmentList } from "@/components/shipment-management/shipment-list";
-import { ShipmentSearchForm } from "@/types/order";
+import { ShipmentSearchForm } from "@/types/shipment";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 
 export function ShipmentListView({

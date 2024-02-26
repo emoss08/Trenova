@@ -30,7 +30,7 @@ import {
 import { useLocations } from "@/hooks/useQueries";
 import { shipmentStatusChoices, shipmentStopChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues } from "@/types/shipment";
 import { faEllipsisV, faGrid } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
@@ -219,7 +219,7 @@ export function StopCard({
                   <span>
                     <FontAwesomeIcon
                       icon={faEllipsisV}
-                      className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
+                      className="size-5 text-muted-foreground hover:cursor-pointer hover:text-foreground"
                     />
                   </span>
                 </DropdownMenuTrigger>
@@ -229,7 +229,7 @@ export function StopCard({
                   <DropdownMenuItem disabled>Add Comment</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openRemoveAlert(index)}
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive font-semibold"
+                    className="font-semibold text-destructive focus:bg-destructive/10 focus:text-destructive"
                     disabled={isDragDisabled}
                   >
                     Remove

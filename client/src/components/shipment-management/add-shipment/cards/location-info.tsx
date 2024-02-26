@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useLocations } from "@/hooks/useQueries";
 import { Location } from "@/types/location";
-import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/shipment";
 import { StopFormValues } from "@/types/stop";
 import { useEffect } from "react";
 import { Control, useFieldArray, useFormContext } from "react-hook-form";
@@ -46,14 +46,14 @@ function LocationSection({
   return (
     <div className="flex-1">
       <div className="flex flex-col">
-        <div className="border-border rounded-md border">
-          <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+        <div className="rounded-md border border-border">
+          <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
             <TitleWithTooltip
               title={t(`card.${section}.label`)}
               tooltip={t(`card.${section}.description`)}
             />
           </div>
-          <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
+          <div className="grid grid-cols-1 gap-y-4 bg-card p-4">
             <div className="col-span-3">
               <SelectInput
                 name={`${section}Location`}

@@ -23,7 +23,7 @@ import { ShipmentTypeDialog } from "@/components/shipment-types/ship-type-table-
 import { ShipmentTypeEditDialog } from "@/components/shipment-types/ship-type-table-edit-dialog";
 import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
-import { ShipmentType } from "@/types/order";
+import { ShipmentType } from "@/types/shipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
