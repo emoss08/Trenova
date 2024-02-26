@@ -22,6 +22,7 @@ import { MAP_STYLES } from "@/components/shipment-management/map-view/map-styles
 import { ShipmentMapAside } from "@/components/shipment-management/map-view/shipment-map-aside";
 import { ShipmentMapOptions } from "@/components/shipment-management/map-view/shipment-map-options";
 import { ShipmentMapZoom } from "@/components/shipment-management/map-view/shipment-map-zoom";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import {
   Tooltip,
   TooltipContent,
@@ -30,8 +31,6 @@ import {
 import { useGoogleAPI } from "@/hooks/useQueries";
 import { useShipmentMapStore, useShipmentStore } from "@/stores/ShipmentStore";
 import { GoogleAPI } from "@/types/organization";
-import { faSpinnerThird } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GoogleMap } from "@google";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -122,26 +121,18 @@ export function ShipmentMapView() {
   const apiKey = (googleAPIData as GoogleAPI)?.apiKey as string;
 
   return isLoading ? (
-    <>
-      <div className="flex h-[50vh] w-screen items-center justify-center">
-        <div className="flex flex-col items-center justify-center text-center">
-          <FontAwesomeIcon
-            icon={faSpinnerThird}
-            className="size-14 animate-spin text-foreground"
-          />
-          <p className="mt-4 font-medium text-foreground">Loading Map...</p>
-        </div>
+    <div className="flex h-[50vh] w-screen items-center justify-center">
+      <div className="flex flex-col items-center justify-center text-center">
+        <ComponentLoader />
       </div>
-    </>
+    </div>
   ) : (
     <div className="mx-auto flex h-[700px] w-screen space-x-10">
       <ShipmentMapAside />
       <div className="relative w-full grow">
-        {/* Absolute positioned map options */}
         <div className="absolute right-0 top-0 z-10 p-2">
           <ShipmentMapOptions />
         </div>
-        {/* Absolute positioned search field */}
         <div className="absolute left-0 top-0 z-10 p-2">
           <InputField
             name="searchMapQuery"
@@ -149,15 +140,13 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
             }
           />
         </div>
-        {/* Absolute positioned zoom controls */}
         <div className="absolute bottom-0 right-0 z-10 mb-4 p-2">
           <ShipmentMapZoom map={map} />
         </div>
-        {/* Google Map */}
         <GoogleMapReact
           bootstrapURLKeys={{ key: apiKey }}
           defaultCenter={defaultProps.center}

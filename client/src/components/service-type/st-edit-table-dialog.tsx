@@ -30,9 +30,9 @@ import { formatDate } from "@/lib/date";
 import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ServiceTypeFormValues as FormValues,
   ServiceType,
-} from "@/types/order";
+  ServiceTypeFormValues as FormValues,
+} from "@/types/shipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

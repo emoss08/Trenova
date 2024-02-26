@@ -22,6 +22,7 @@ import {
 } from "@/components/common/fields/radio-group";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -43,10 +44,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { ComponentLoader } from "@/components/ui/component-loader";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -64,6 +64,8 @@ function TableExportModalBody({
   setShowExportModal: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [selectedColumns, setSelectedColumns] = React.useState<string[]>([]);
+  const [showEmailField, setShowEmailField] = React.useState<boolean>(false);
 
   const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
     queryKey: [`${modelName}-Columns`],
@@ -77,11 +79,26 @@ function TableExportModalBody({
       resolver: yupResolver(ExportModelSchema),
       defaultValues: {
         columns: [],
+        deliveryMethod: "email",
         fileFormat: "csv",
       },
     });
 
-  const watchedColumns = watch("columns");
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      // Set selected columns
+      if (name === "columns" && value.columns) {
+        setSelectedColumns(value.columns as string[]);
+      }
+
+      // Show email field if delivery method is email
+      if (name === "deliveryMethod" && value.deliveryMethod === "email") {
+        setShowEmailField(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setSelectedColumns, watch]);
 
   const selectColumnData = columnsData?.map((column: any) => ({
     label: column.label,
@@ -160,6 +177,34 @@ function TableExportModalBody({
           description="A group of columns/fields that will be exported into your specified format."
         />
       </div>
+      <div className="mb-5">
+        <SelectInput
+          isMulti
+          hideSelectedOptions={true}
+          control={control}
+          rules={{ required: true }}
+          name="deliveryMethod"
+          options={selectColumnData}
+          label="Delivery Method"
+          placeholder="Select delivery method"
+          description="Select a delivery method for the export. You can either download the file or receive it via email."
+        />
+      </div>
+      {showEmailField && (
+        <div className="mb-5">
+          <SelectInput
+            isMulti
+            hideSelectedOptions={true}
+            control={control}
+            rules={{ required: true }}
+            name="deliveryMethod"
+            options={selectColumnData}
+            label="Delivery Method"
+            placeholder="Select delivery method"
+            description="Select a delivery method for the export. You can either download the file or receive it via email."
+          />
+        </div>
+      )}
       <div>
         <Label className="required">Export Format</Label>
         <Controller
@@ -201,7 +246,7 @@ function TableExportModalBody({
           <Button
             type="submit"
             isLoading={loading}
-            disabled={watchedColumns?.length === 0}
+            disabled={selectedColumns?.length === 0}
           >
             Export
           </Button>

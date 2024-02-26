@@ -19,7 +19,7 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
-import { ServiceType } from "@/types/order";
+import { ServiceType } from "@/types/shipment";
 import { QualifierCodeDialog } from "@/components/qualifier-code/qc-table-dialog";
 import { FilterConfig } from "@/types/tables";
 import { tableStatusChoices } from "@/lib/constants";

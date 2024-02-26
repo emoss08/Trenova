@@ -23,9 +23,9 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { shipmentControlSchema } from "@/lib/validations/OrderSchema";
 import {
-  ShipmentControlFormValues,
   ShipmentControl as ShipmentControlType,
-} from "@/types/order";
+  ShipmentControlFormValues,
+} from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

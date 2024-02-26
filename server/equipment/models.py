@@ -255,7 +255,8 @@ class EquipmentManufacturer(GenericModel):
         verbose_name = _("Equipment Manufacturer")
         verbose_name_plural = _("Equipment Manufacturers")
         db_table = "equipment_manufacturer"
-        db_table_comment = "Stores the equipment manufacturer information that can later be used to create equipment objects."
+        db_table_comment = ("Stores the equipment manufacturer information that can later be used to create equipment "
+                            "objects.")
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),

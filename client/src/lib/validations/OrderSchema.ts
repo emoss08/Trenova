@@ -17,7 +17,7 @@
 
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { ShipmentControlFormValues } from "@/types/order";
+import { ShipmentControlFormValues } from "@/types/shipment";
 
 export const shipmentControlSchema: ObjectSchema<ShipmentControlFormValues> =
   Yup.object().shape({

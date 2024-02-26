@@ -16,9 +16,13 @@
  */
 
 /** Types for Export Model */
-export type ExportModelType = "csv" | "xlsx" | "pdf";
+export type ExportModelChoices = "csv" | "xlsx" | "pdf";
+
+export type DeliveryMethodChoices = "email" | "download";
 
 export type TExportModelFormValues = {
-  fileFormat: string;
+  fileFormat: ExportModelChoices;
+  deliveryMethod: DeliveryMethodChoices;
+  emailRecipients?: string;
   columns: string[];
 };

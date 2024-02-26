@@ -19,9 +19,9 @@ import { Button } from "@/components/ui/button";
 import { useLocations } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
 import { Location } from "@/types/location";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues } from "@/types/shipment";
 import { useEffect } from "react";
-import { DragDropContext, DropResult, Droppable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { StopCard } from "./cards/stop-card";
 
@@ -53,7 +53,7 @@ export default function StopInfoTab() {
   const handleDrag = ({ source, destination }: DropResult) => {
     if (destination) {
       move(source.index, destination.index);
-      // after moving update the sequence number for each stop to where it was moved in the grid.
+      // After moving update the sequence number for each stop to where it was moved in the grid.
       fields.forEach((_, index) => {
         setValue(`stops.${index}.sequence`, index + 1, {
           shouldDirty: true,
@@ -67,6 +67,7 @@ export default function StopInfoTab() {
       if (name?.startsWith("stops") && name.endsWith("location")) {
         const stopIndex = Number(name.split(".")[1]); // Explicitly specify the type of stopIndex as a number
         const selectedLocationId = value.stops?.[stopIndex]?.location;
+
         if (selectedLocationId) {
           const location = (locations as Location[]).find(
             (loc) => loc.id === selectedLocationId,

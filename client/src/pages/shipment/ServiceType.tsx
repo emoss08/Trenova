@@ -22,7 +22,7 @@ import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-d
 import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
 import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
-import { ServiceType } from "@/types/order";
+import { ServiceType } from "@/types/shipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 

@@ -6,7 +6,7 @@ import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useUsers } from "@/hooks/useQueries";
 import { entryMethodChoices } from "@/lib/choices";
 import { validateBOLNumber } from "@/services/ShipmentRequestService";
-import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/shipment";
 import { debounce } from "lodash-es";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";

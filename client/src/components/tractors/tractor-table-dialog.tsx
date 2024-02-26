@@ -34,16 +34,17 @@ import {
   useUSStates,
   useWorkers,
 } from "@/hooks/useQueries";
-import { cleanObject, cn } from "@/lib/utils";
+import { cleanObject } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  TractorFormValues as FormValues,
   equipmentStatusChoices,
+  TractorFormValues as FormValues,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
+
 import { DatepickerField } from "../common/fields/date-picker";
 import { Form, FormControl, FormGroup } from "../ui/form";
 import { Separator } from "../ui/separator";
@@ -339,7 +340,7 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={cn("w-full xl:w-1/2")}>
+      <SheetContent className="w-full xl:w-1/2">
         <SheetHeader>
           <SheetTitle>Add New Tractor</SheetTitle>
           <SheetDescription>

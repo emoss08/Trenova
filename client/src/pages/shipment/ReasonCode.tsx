@@ -21,7 +21,7 @@ import { tableStatusChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
-import { ReasonCode } from "@/types/order";
+import { ReasonCode } from "@/types/shipment";
 import { ReasonCodeDialog } from "@/components/reason-codes/reason-code-table-dialog";
 import { ReasonCodeEditDialog } from "@/components/reason-codes/reason-code-edit-dialog";
 import { StatusBadge } from "@/components/common/table/data-table-components";

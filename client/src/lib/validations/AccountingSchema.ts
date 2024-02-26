@@ -39,8 +39,8 @@ export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
       .max(4, "Code cannot be longer than 4 characters.")
       .required("Code is required"),
     description: Yup.string().required("Description is required"),
-    expenseAccount: Yup.string().notRequired(),
-    revenueAccount: Yup.string().notRequired(),
+    expenseAccount: Yup.string().notRequired().nonNullable(),
+    revenueAccount: Yup.string().notRequired().nonNullable(),
   });
 
 export const glAccountSchema: ObjectSchema<GLAccountFormValues> =

@@ -95,10 +95,10 @@ export interface RevenueCode extends BaseModel {
   id: string;
   code: string;
   description: string;
-  expenseAccount?: string | null;
-  revenueAccount?: string | null;
-  revAccountNum?: string | null;
-  expAccountNum?: string | null;
+  expenseAccount?: string;
+  revenueAccount?: string;
+  revAccountNum?: string;
+  expAccountNum?: string;
 }
 
 export type RevenueCodeFormValues = Omit<
