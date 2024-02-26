@@ -27,7 +27,7 @@ import {
 } from "@/hooks/useQueries";
 import { Commodity } from "@/types/commodities";
 import { Trailer } from "@/types/equipment";
-import { ShipmentControl, ShipmentFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentFormValues } from "@/types/shipment";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -105,8 +105,8 @@ export default function EquipmentInformation({
   }
 
   return (
-    <div className="border-border bg-card rounded-md border">
-      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
         <TitleWithTooltip
           title={t("card.equipmentInfo.label")}
           tooltip={t("card.equipmentInfo.description")}

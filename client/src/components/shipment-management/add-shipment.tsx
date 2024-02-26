@@ -21,7 +21,7 @@ import { useShipmentControl } from "@/hooks/useQueries";
 import { ShipmentStatusChoiceProps } from "@/lib/choices";
 import { cleanObject } from "@/lib/utils";
 import { useUserStore } from "@/stores/AuthStore";
-import { ShipmentFormValues, ShipmentPageTab } from "@/types/order";
+import { ShipmentFormValues, ShipmentPageTab } from "@/types/shipment";
 import {
   faBoxTaped,
   faCommentQuote,
@@ -32,7 +32,7 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Suspense, lazy, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { stopSchema } from "@/lib/validations/StopSchema";

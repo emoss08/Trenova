@@ -15,9 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CodeTypeProps, ShipmentStatusChoiceProps } from "@/lib/choices";
+import {
+  CodeTypeProps,
+  ShipmentEntryMethodChoices,
+  ShipmentStatusChoiceProps,
+} from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { BaseModel } from "./organization";
 import { StopFormValues } from "./stop";
 
@@ -124,7 +127,7 @@ export interface Shipment extends BaseModel {
   autoRate: boolean;
   currentSuffix?: string | null;
   formulaTemplate?: string | null;
-  entryMethod: string;
+  entryMethod: ShipmentEntryMethodChoices;
   copyAmount?: number | null;
   stops?: StopFormValues[] | null;
 }
@@ -142,12 +145,6 @@ export type ShipmentFormValues = Omit<
   | "created"
   | "modified"
 >;
-
-export type ShipmentFormProps = {
-  control: Control<ShipmentFormValues>;
-  setValue: UseFormSetValue<ShipmentFormValues>;
-  watch: UseFormWatch<ShipmentFormValues>;
-};
 
 export type ShipmentSearchForm = {
   searchQuery: string;

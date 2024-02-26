@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { FormulaTemplate, ServiceType, Shipment } from "@/types/order";
+import { FormulaTemplate, ServiceType, Shipment } from "@/types/shipment";
 
 /**
  * Fetches the shipments from the server.

@@ -22,8 +22,8 @@ import {
   SelectInput,
 } from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import { ratingMethodChoies } from "@/lib/choices";
-import { ShipmentFormValues } from "@/types/order";
+import { ratingMethodChoices } from "@/lib/choices";
+import { ShipmentFormValues } from "@/types/shipment";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -45,7 +45,7 @@ export default function RateCalcInformation() {
           <div className="col-span-3">
             <SelectInput
               name="rateMethod"
-              options={ratingMethodChoies}
+              options={ratingMethodChoices}
               control={control}
               rules={{ required: true }}
               label={t("card.rateCalcInfo.fields.ratingMethod.label")}
