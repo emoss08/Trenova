@@ -30,7 +30,7 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { codeTypeChoices, statusChoices } from "@/lib/choices";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
-import { ReasonCodeFormValues as FormValues } from "@/types/order";
+import { ReasonCodeFormValues as FormValues } from "@/types/shipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

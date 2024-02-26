@@ -75,7 +75,7 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import { QueryKeyWithParams, QueryKeys } from "@/types";
+import { QueryKeys, QueryKeyWithParams } from "@/types";
 import {
   AccountingControl,
   GeneralLedgerAccount,
@@ -109,7 +109,7 @@ import {
   ServiceType,
   ShipmentControl,
   ShipmentType,
-} from "@/types/order";
+} from "@/types/shipment";
 import {
   Depot,
   EmailControl,

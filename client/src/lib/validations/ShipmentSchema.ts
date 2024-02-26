@@ -21,7 +21,7 @@ import {
   ReasonCodeFormValues,
   ServiceTypeFormValues,
   ShipmentTypeFormValues,
-} from "@/types/order";
+} from "@/types/shipment";
 import * as yup from "yup";
 
 export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup

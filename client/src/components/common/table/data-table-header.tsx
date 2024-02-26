@@ -87,6 +87,7 @@ const ButtonConfig: React.FC<{
     selectedRowCount > 0
       ? `Inactivate ${selectedRowCount} records`
       : `Add New ${name}`;
+
   const buttonVariant = selectedRowCount > 0 ? "destructive" : "default";
 
   return (

@@ -16,7 +16,7 @@
  */
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
-import { Shipment } from "@/types/order";
+import { Shipment } from "@/types/shipment";
 import { Worker } from "@/types/worker";
 import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";

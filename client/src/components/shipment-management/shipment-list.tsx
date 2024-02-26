@@ -21,7 +21,7 @@ import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { QueryKeyWithParams } from "@/types";
-import { Shipment, ShipmentSearchForm } from "@/types/order";
+import { Shipment, ShipmentSearchForm } from "@/types/shipment";
 import { faArrowDown, faArrowUp } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

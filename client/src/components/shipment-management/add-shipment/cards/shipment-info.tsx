@@ -17,7 +17,7 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import { ShipmentFormValues } from "@/types/order";
+import { ShipmentFormValues } from "@/types/shipment";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 

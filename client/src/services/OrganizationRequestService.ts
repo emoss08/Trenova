@@ -20,7 +20,7 @@ import { JobTitle } from "@/types/accounts";
 import { BillingControl } from "@/types/billing";
 import { DispatchControl } from "@/types/dispatch";
 import { InvoiceControl } from "@/types/invoicing";
-import { ShipmentControl } from "@/types/order";
+import { ShipmentControl } from "@/types/shipment";
 import {
   Department,
   Depot,

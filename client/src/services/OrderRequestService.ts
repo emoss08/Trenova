@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 import axios from "@/lib/axiosConfig";
-import { ShipmentType } from "@/types/order";
+import { ShipmentType } from "@/types/shipment";
 
 /**
  * Fetches order types from the server.

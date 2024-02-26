@@ -15,20 +15,28 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TExportModelFormValues } from "@/types/forms";
+import {
+  DeliveryMethodChoices,
+  ExportModelChoices,
+  TExportModelFormValues,
+} from "@/types/forms";
 import * as yup from "yup";
 
 /**
  * A yup object schema for validating data related to exporting a model.
- * @property file_format - A required string.
- * @property columns - A required array of strings.
  */
 export const ExportModelSchema: yup.ObjectSchema<TExportModelFormValues> = yup
   .object()
   .shape({
-    fileFormat: yup.string().required("File format is required"),
+    fileFormat: yup
+      .string<ExportModelChoices>()
+      .required("File format is required"),
+    emailRecipients: yup.string().notRequired().nonNullable(),
     columns: yup
       .array()
       .of(yup.string().required("Columns are required"))
       .required("Columns are required"),
+    deliveryMethod: yup
+      .string<DeliveryMethodChoices>()
+      .required("Delivery method is required"),
   });
