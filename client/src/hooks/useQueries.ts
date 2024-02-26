@@ -48,7 +48,6 @@ import {
   getUSStates,
   searchLocation,
 } from "@/services/LocationRequestService";
-import { getShipmentTypes } from "@/services/OrderRequestService";
 import {
   getBillingControl,
   getDepots,
@@ -67,6 +66,7 @@ import {
 import {
   getFormulaTemplates,
   getNextProNumber,
+  getShipmentTypes,
   validateBOLNumber,
 } from "@/services/ShipmentRequestService";
 import {

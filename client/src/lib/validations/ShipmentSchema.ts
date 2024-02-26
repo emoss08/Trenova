@@ -15,45 +15,31 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CodeTypeProps } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types";
-import {
-  ReasonCodeFormValues,
-  ServiceTypeFormValues,
-  ShipmentTypeFormValues,
-} from "@/types/shipment";
-import * as yup from "yup";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
+import { ShipmentControlFormValues } from "@/types/shipment";
 
-export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
-  .object()
-  .shape({
-    status: yup.string<StatusChoiceProps>().required("Status is required"),
-    code: yup
-      .string()
-      .max(10, "Code must be at most 10 characters")
-      .required("Code is required"),
-    description: yup.string().notRequired(),
-  });
-
-export const reasonCodeSchema: yup.ObjectSchema<ReasonCodeFormValues> = yup
-  .object()
-  .shape({
-    status: yup.string<StatusChoiceProps>().required("Status is required"),
-    code: yup
-      .string()
-      .max(10, "Code must be at most 10 characters")
-      .required("Code is required"),
-    codeType: yup.string<CodeTypeProps>().required("Code type is required"),
-    description: yup.string().required("Description is required"),
-  });
-
-export const shipmentTypeSchema: yup.ObjectSchema<ShipmentTypeFormValues> = yup
-  .object()
-  .shape({
-    status: yup.string<StatusChoiceProps>().required("Status is required"),
-    code: yup
-      .string()
-      .max(10, "Name must be at most 100 characters")
-      .required("Code is required"),
-    description: yup.string().notRequired(),
+export const shipmentControlSchema: ObjectSchema<ShipmentControlFormValues> =
+  Yup.object().shape({
+    autoRateShipment: Yup.boolean().required("Auto Rate Shipments is required"),
+    calculateDistance: Yup.boolean().required("Calculate Distance is required"),
+    enforceRevCode: Yup.boolean().required("Enforce Rev Code is required"),
+    enforceVoidedComm: Yup.boolean().required(
+      "Enforce Voided Comm is required",
+    ),
+    generateRoutes: Yup.boolean().required("Generate Routes is required"),
+    enforceCommodity: Yup.boolean().required("Enforce Commodity is required"),
+    autoSequenceStops: Yup.boolean().required(
+      "Auto Sequence Stops is required",
+    ),
+    autoShipmentTotal: Yup.boolean().required(
+      "Auto Shipment Total is required",
+    ),
+    enforceOriginDestination: Yup.boolean().required(
+      "Enforce Origin Destination is required",
+    ),
+    checkForDuplicateBol: Yup.boolean().required(
+      "Check for Duplicate BOL is required",
+    ),
+    removeShipment: Yup.boolean().required("Remove Shipment is required"),
   });
