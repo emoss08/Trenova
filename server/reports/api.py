@@ -30,12 +30,10 @@ from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from reports import models, serializers, tasks
-from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
 from reports.selectors import get_audit_logs_by_model_name
 
 logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -187,69 +185,49 @@ def get_model_columns_api(request: Request) -> Response:
 
 @api_view(["POST"])
 def generate_report_api(request: Request) -> Response:
-    """API endpoint that allows users to generate a report based on a provided model, selected columns, and file format.
-
-    This function takes a POST request with 'model_name', 'columns', and 'file_format' in the request body.
-    If any of the required data is not provided, it responds with a 400 Bad Request error.
-
-    The function checks the model_name against an allowed list of models and validates the column names
-    for the given model. If either of these checks fail, it responds with a 400 Bad Request error.
-
-    If all validations pass, it creates a new report generation task and responds with a 202 Accepted status
-    along with a success message.
+    """API endpoint that allows users to generate reports for a given model.
 
     Args:
-        request (Request): The POST request sent to the endpoint. It should include 'model_name', 'columns',
-        and 'file_format' in the request body.
+        request (Request): Request object containing the report request data.
 
     Returns:
         Response: Django Rest Framework Response object. If the request was processed successfully, the response
-        includes a success message and HTTP status 202 (Accepted). In case of error(s), it includes an error message
-        and the corresponding HTTP error status.
-
-    Raises:
-        DisallowedModelException: If the provided 'model_name' is not in the allowed list of models.
-        exceptions.ValidationError: If any other validation on the request data fails.
+        includes a message indicating that the report generation job was created and a 202 Accepted status. In case
+        of error(s), it includes an error message and the corresponding HTTP error status.
     """
+    serializer = serializers.ReportRequestSerializer(data=request.data)
 
-    model_name = request.data.get("model_name", None)
-    columns = request.data.get("columns", [])
-    file_format = request.data.get("file_format", None)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if not model_name:
-        return Response(
-            {"error": "Model name not provided."}, status=status.HTTP_400_BAD_REQUEST
-        )
-    if not columns:
-        return Response(
-            {"error": "Columns not provided."}, status=status.HTTP_400_BAD_REQUEST
-        )
-    if not file_format:
-        return Response(
-            {"error": "File format not provided."}, status=status.HTTP_400_BAD_REQUEST
-        )
+    validated_data = serializer.validated_data
+
+    model_name = validated_data.get("model_name", None)
+    columns = validated_data.get("columns", [])
+    file_format = validated_data.get("file_format", "csv")
+    delivery_method = validated_data.get("delivery_method", "download")
+    email_recipients = validated_data.get("email_recipients", None)
 
     try:
         allowed_model = ALLOWED_MODELS[model_name]
-    except DisallowedModelException:
+    except KeyError:
+        logger.error(f"Disallowed model access attempt: {model_name}")
         return Response(
-            {"error": f"Not allowed to generate reports for model: {model_name}"},
+            {"error": "Not allowed to generate reports for this model"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    allowed_fields = [field["value"] for field in allowed_model["allowed_fields"]]
+
+    if any(column not in allowed_fields for column in columns):
+        return Response(
+            {"error": "One or more columns are not allowed"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Extract 'value' from each dictionary in the 'allowed_fields' list
-    allowed_fields = [field["value"] for field in allowed_model["allowed_fields"]]  # type: ignore
-
-    # Check if columns are valid for the model
-    for column in columns:
-        if column not in allowed_fields:
-            return Response(
-                {
-                    "title": "Invalid column Usage",
-                    "error": f"Column `{column}` is not allowed for model `{model_name}`",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    parsed_email_recipients = (
+        [email.strip() for email in email_recipients] if email_recipients else []
+    )
 
     try:
         tasks.generate_report_task.delay(
@@ -257,29 +235,24 @@ def generate_report_api(request: Request) -> Response:
             columns=columns,
             file_format=file_format,
             user_id=request.user.id,
+            delivery_method=delivery_method,
+            email_recipients=(
+                parsed_email_recipients if delivery_method == "email" else None
+            ),
         )
+    except (exceptions.ValidationError, OperationalError) as e:
+        logger.error(f"Exception in task initiation: {str(e)}")
         return Response(
-            {
-                "results": "Report Generation Job Created. We will notify you when the report is ready."
-            },
-            status=status.HTTP_202_ACCEPTED,
-        )
-    except exceptions.ValidationError:
-        return Response(
-            {
-                "error": "Invalid request data. Please try again.",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    except OperationalError as op_exc:
-        logger.error(f"Exception in generate_report_api: {op_exc}")
-        return Response(
-            {
-                "title": "Unable to generate report",
-                "error": "Report Service is not currently available. Please try again later.",
-            },
+            {"error": "Failed to initiate report generation task"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+    return Response(
+        {
+            "results": "Report Generation Job Created. We will notify you when the report is ready."
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 class UserReportViewSet(viewsets.ModelViewSet):
@@ -288,7 +261,8 @@ class UserReportViewSet(viewsets.ModelViewSet):
     Attributes:
         queryset (QuerySet): The queryset used for retrieving UserReport objects.
         serializer_class (serializers.UserReportSerializer): The serializer class used for UserReport objects.
-        filterset_fields (tuple): A tuple containing the names of the fields that can be used to filter UserReport objects.
+        filterset_fields (tuple): A tuple containing the names of the fields that can be used to filter UserReport
+        objects.
     """
 
     queryset = models.UserReport.objects.all()

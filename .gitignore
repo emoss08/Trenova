@@ -16,3 +16,4 @@ server/rate-confirmation.pdf
 server/test.py
 client/.npmrc
 .fleet
+server/test.edi

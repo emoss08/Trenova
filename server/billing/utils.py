@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import logging
 from typing import LiteralString
 
 from django.core.mail import send_mail
@@ -26,22 +27,13 @@ from movements.models import Movement
 from organization.models import Organization
 from shipment.models import Shipment
 
+type MissingDocuments = tuple[bool, list[dict[LiteralString, str | list[str]]]]
 
-def delete_invoice(invoice: models.BillingQueue) -> None:
-    """Delete a BillingQueue instance.
-
-    Args:
-        invoice (models.BillingQueue): An instance of the BillingQueue model.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    invoice.delete()
+logger = logging.getLogger(__name__)
 
 
 def set_shipments_billed(*, shipment: Shipment) -> None:
-    """Set the billed status of an shipment to True and set the bill date.
+    """Set the billed status of a shipment to True and set the bill date.
 
     This function sets the billed status of the passed Order instance to True and sets the bill date to the current
     date and time. It then saves the Order instance.
@@ -75,7 +67,7 @@ def check_organization_enforces_customer_billing(*, organization: Organization) 
 
 
 def shipment_billing_actions(*, invoice: models.BillingQueue, user: User) -> None:
-    """Perform billing actions for an shipment.
+    """Perform billing actions for a shipment.
 
     This function performs the necessary billing actions for the passed Order instance. First, it sets the billed status
     of the order to True and sets the bill date. Next, it creates a new BillingHistory instance for the order using
@@ -93,7 +85,8 @@ def shipment_billing_actions(*, invoice: models.BillingQueue, user: User) -> Non
 
     set_shipments_billed(shipment=invoice.shipment)
     create_billing_history(invoice=invoice, user=user)
-    delete_invoice(invoice=invoice)
+
+    invoice.delete()
     send_billing_email(shipment=invoice.shipment, user=user)
 
 
@@ -146,13 +139,13 @@ def create_billing_exception(
 
 
 def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
-    """Create a new BillingHistory instance for an shipment.
+    """Create a new BillingHistory instance for a shipment.
 
-    This function creates a new BillingHistory instance for the passed Order instance. First, it retrieves the corresponding
-    Movement instance for the passed order and gets the primary worker if it exists. Next, it creates a new BillingHistory
-    instance with the necessary fields using the BillingHistory model. If there is an error creating the BillingHistory
-    instance, the function creates a billing exception with the error message and the order information using the
-    create_billing_exception function.
+    This function creates a new BillingHistory instance for the passed Order instance. First, it retrieves the
+    corresponding Movement instance for the passed order and gets the primary worker if it exists. Next,
+    it creates a new BillingHistory instance with the necessary fields using the BillingHistory model. If
+    there is an error creating the BillingHistory instance, the function creates a billing exception
+    with the error message and the order information using the create_billing_exception function.
 
     Args:
         invoice (models.BillingQueue): An instance of the Order model.
@@ -180,22 +173,26 @@ def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
             user=user,
         )
     except exceptions.BillingException as e:
+        logger.error(
+            f"Error creating billing history for invoice: {invoice.invoice_number}. Error: {e}"
+        )
         create_billing_exception(
             user=user,
             exception_type="OTHER",
             invoice=invoice,
-            exception_message=f"Error creating billing history: {e}",
+            exception_message="There was an error creating the billing history object. Please Contact Support.",
         )
 
 
 def send_billing_email(*, shipment: Shipment, user: User) -> None:
     """Email the customer with a new invoice attached.
 
-    This function sends an email to the payable contact of the customer with the new invoice attached. First, the function
-    retrieves the payable customer contact for the corresponding customer and organization by filtering the CustomerContact
-    model. Next, it retrieves the billing email profile from the organization's EmailControl model to use as the sender email
-    address, or if it is not set, it uses the email address of the user who is sending the email. The function then sends an
-    email to the customer with the attached invoice using the send_mail function.
+    This function sends an email to the payable contact of the customer with the new invoice attached. First, the
+    function retrieves the payable customer contact for the corresponding customer and organization by filtering
+    the CustomerContact model. Next, it retrieves the billing email profile from the organization's EmailControl
+    model to use as the sender email address, or if it is not set, it uses the email address of the user who
+    is sending the email. The function then sends an email to the customer with the attached invoice using
+    the send_mail function.
 
     Args:
         shipment: An instance of the Order model.
@@ -213,6 +210,7 @@ def send_billing_email(*, shipment: Shipment, user: User) -> None:
 
     billing_profile = user.organization.email_control.billing_email_profile
 
+    # TODO(WOLFRED): Attach the file to the email
     send_mail(
         f"New invoice from {user.organization.name}",
         f"Please see attached invoice for invoice: {shipment.pro_number}",
@@ -252,8 +250,8 @@ def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
 
 
 def check_billing_requirements(
-    *, invoice: models.BillingQueue | Shipment, user: User
-) -> bool | tuple[bool, list[dict[LiteralString, str | list[str]]]]:
+    *, obj: models.BillingQueue | Shipment, user: User
+) -> bool | MissingDocuments:
     """Check if a BillingQueue instance satisfies the billing requirements of its customer.
 
     This function checks if the passed BillingQueue instance meets the billing requirements of its corresponding
@@ -264,7 +262,7 @@ def check_billing_requirements(
     and returns False. If the document ids match the billing requirements, the function returns True.
 
     Args:
-        invoice (models.BillingQueue): A BillingQueue instance.
+        obj (models.BillingQueue): A BillingQueue instance.
         user (User): A User instance.
 
     Returns:
@@ -272,17 +270,17 @@ def check_billing_requirements(
     """
 
     missing_documents = []
-    customer_billing_requirements = set_billing_requirements(customer=invoice.customer)
+    customer_billing_requirements = set_billing_requirements(customer=obj.customer)
     if customer_billing_requirements is False:
         create_billing_exception(
             user=user,
             exception_type="OTHER",
-            invoice=invoice,
-            exception_message=f"Customer: {invoice.customer.name} does not have a billing profile",
+            invoice=obj,
+            exception_message=f"Customer: {obj.customer.name} does not have a billing profile",
         )
         return False, missing_documents
 
-    shipment_document_ids = set_shipments_documents(invoice=invoice)
+    shipment_document_ids = set_shipments_documents(invoice=obj)
 
     is_match = set(customer_billing_requirements).issubset(  # type: ignore
         set(shipment_document_ids)
@@ -293,7 +291,7 @@ def check_billing_requirements(
         # )
         missing_documents.append(
             {
-                "invoice_number": invoice.invoice_number,
+                "invoice_number": obj.invoice_number,
                 "missing_documents": list(
                     set(customer_billing_requirements) - set(shipment_document_ids)  # type: ignore
                 ),
@@ -302,7 +300,7 @@ def check_billing_requirements(
         create_billing_exception(
             user=user,
             exception_type="PAPERWORK",
-            invoice=invoice,
+            invoice=obj,
             exception_message=f"Missing customer required documents: {missing_documents}",
         )
     return is_match, missing_documents
@@ -322,7 +320,6 @@ def transfer_shipments_details(
     Raises:
         shipment.DoesNotExist: If the corresponding order does not exist.
     """
-    # TODO(WOLFRED): This function can be changed to just for key and value in kwargs and setattr(obj, key, value)
     shipment = Shipment.objects.select_related(
         "shipment_type", "revenue_code", "commodity", "customer"
     ).get(pk=obj.shipment.pk)

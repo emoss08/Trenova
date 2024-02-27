@@ -38,3 +38,15 @@ class DisallowedFieldException(CustomReportException):
 
 class InvalidModelException(CustomReportException):
     """Invalid model exception class."""
+
+
+class LocalDeliveryException(Exception):
+    """Local delivery exception class."""
+
+
+class EmailDeliveryException(Exception):
+    """Email delivery exception class."""
+
+
+class InvalidDeliveryMethodException(Exception):
+    """Invalid delivery method exception class."""

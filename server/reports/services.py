@@ -19,13 +19,16 @@ import io
 import json
 
 from django.apps import apps
+from django.core.files import File
+from django.core.mail import EmailMessage
 from django.db.models import Model
 from django.utils import timezone
 from django_celery_beat.models import PeriodicTask
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from reports import exceptions, models, utils
+from reports import exceptions, helpers, models, selectors
+from utils.types import ModelUUID
 
 
 def get_model_by_table_name(table_name: str) -> type[Model] | None:
@@ -65,7 +68,7 @@ def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
     if not model:
         raise exceptions.InvalidTableException("Invalid table name.")
 
-    columns = report.columns.all().order_by("column_shipment")
+    columns = report.columns.all().order_by("column_order")
 
     wb = Workbook()
     ws = wb.active
@@ -99,7 +102,7 @@ def create_scheduled_task(*, instance: models.ScheduledReport) -> None:
     based on the schedule type and scheduled report instance. Then, it creates or updates
     a PeriodicTask object with the necessary parameters.
     """
-    schedule, task_type = utils.get_crontab_schedule(
+    schedule, task_type = selectors.get_crontab_schedule(
         schedule_type=instance.schedule_type, instance=instance
     )
 
@@ -118,3 +121,130 @@ def create_scheduled_task(*, instance: models.ScheduledReport) -> None:
         setattr(task, task_type, schedule)
         task.kwargs = json.dumps({"report_id": str(instance.pk)})
         task.save()
+
+
+# TODO(Wolfred): At some point we may want to batch reports to avoid sending too many emails at once.
+def generate_report(
+    *,
+    model_name: str,
+    columns: list[str],
+    user_id: ModelUUID,
+    file_format: str,
+    delivery_method: str,
+    email_recipients: list[str] | None,
+) -> None:
+    """Generate and deliver a report based on the specified parameters.
+
+    This function validates the model, retrieves the user and model, prepares the data frame,
+    generates the report file, and then delivers the report to the user based on the specified
+    delivery method.
+
+    Args:
+        model_name (str): The name of the model to generate the report for.
+        columns (list[str]): A list of column names to include in the report.
+        user_id (ModelUUID): The unique identifier of the user for whom the report is generated.
+        file_format (str): The format of the report file (e.g., 'csv', 'xlsx', 'pdf').
+        delivery_method (str): The method of delivery for the report ('email' or 'download').
+        email_recipients (list[str] | None): A list of email recipients if the delivery method is email.
+
+    Returns:
+        None: this function does not return anything.
+
+    Raises:
+        InvalidModelException: If the specified model is not allowed or does not exist.
+        InvalidDeliveryMethodException: If the specified delivery method is not supported.
+
+    Note:
+        The function interacts with several helper functions and external models to accomplish its tasks,
+        including validating the model, fetching user and model information, preparing the data frame,
+        generating the report file, and handling the report delivery.
+    """
+
+    # Validate the delivery method.
+    if delivery_method not in ["email", "local"]:
+        raise exceptions.InvalidDeliveryMethodException("Invalid delivery method.")
+
+    # Validate the model and get the user and model instances.
+    helpers.validate_model(model_name=model_name)
+    user, model = helpers.get_user_and_model(user_id=user_id, model_name=model_name)
+
+    # Prepare the dataframe and generate the report file.
+    df = helpers.prepare_dataframe(
+        model=model, columns=columns, user=user, model_name=model_name
+    )
+    report_buffer, file_name = helpers.generate_report_file(
+        df=df, model_name=model_name, file_format=file_format, user=user
+    )
+
+    # Save the report file and deliver it to the user.
+    report_buffer.seek(0)
+    django_file = File(report_buffer, name=file_name)
+
+    new_report = models.UserReport.objects.create(
+        organization=user.organization,
+        user=user,
+        report=django_file,
+        business_unit=user.business_unit,
+    )
+    delivery_functions = {
+        "email": lambda: helpers.delivery_email_report(
+            buffer=report_buffer,
+            user=user,
+            email_recipients=email_recipients,
+            file_name=file_name,
+            model_name=model_name,
+        ),
+        "local": lambda: helpers.deliver_local_report(
+            model_name=model_name, user=user, report_obj=new_report
+        ),
+    }
+
+    delivery_func = delivery_functions.get(delivery_method)
+
+    # If the delivery method is invalid, raise an exception.
+    if not delivery_func:
+        raise exceptions.InvalidDeliveryMethodException("Invalid delivery method.")
+
+    delivery_func()
+
+
+# TODO(Wolfred): Batch reports to avoid sending too many emails at once.
+def generate_scheduled_report(*, report_id: str) -> None:
+    """Generate a scheduled report and deliver it to the user who created it.
+
+    The function retrieves the scheduled report instance, generates the report file,
+    and delivers the report to the user who created it.
+
+    Args:
+        report_id (str): The unique identifier of the scheduled report.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    scheduled_report = selectors.get_scheduled_report_by_id(report_id=report_id)
+
+    if not scheduled_report.is_active:
+        return
+
+    report = scheduled_report.custom_report
+    user = scheduled_report.user
+
+    excel_file = generate_excel_report_as_file(report)
+
+    email = EmailMessage(
+        subject=f"Your scheduled report: {report.name}",
+        body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
+        from_email="noreply@trenova.app",
+        to=[user.email],
+    )
+
+    # TODO(Wolfred): Add support for multiple recipients and multiple file formats.
+    email.attach(
+        f"{report.name}.xlsx",
+        excel_file.getvalue(),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+    email.send()
+    excel_file.close()

@@ -41,6 +41,7 @@ import {
   SingleValueProps,
   ValueContainerProps,
 } from "react-select";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 /**
  * Option type for the SelectInput component.
@@ -48,6 +49,9 @@ import {
 export type SelectOption = {
   readonly label: string;
   readonly value: string | boolean | number;
+  readonly color?: string;
+  readonly description?: string;
+  readonly icon?: IconProp;
 };
 
 /**
@@ -56,10 +60,28 @@ export type SelectOption = {
  * @constructor Option
  */
 export function Option({ ...props }: OptionProps) {
+  const data = props.data as SelectOption;
+
   return (
     <components.Option {...props}>
-      <div className="relative my-1 flex cursor-default select-none rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
-        {props.label}
+      <div className="group relative my-1 flex cursor-default select-none gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
+        {data.icon && (
+          <div className="flex items-center">
+            <FontAwesomeIcon
+              icon={data.icon as IconProp}
+              className={cn(
+                "size-4 text-muted-foreground group-hover:text-foreground",
+                props.isSelected && "text-foreground",
+              )}
+            />
+          </div>
+        )}
+        <div className="flex flex-col justify-center">
+          <span>{props.label}</span>
+          {data.description && (
+            <div className="text-xs text-foreground/70">{data.description}</div>
+          )}
+        </div>
         {props.isSelected && (
           <CheckIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />
         )}
@@ -303,7 +325,11 @@ export function InputComponent(
   props: InputProps & { selectProps: { isReadOnly?: boolean } },
 ) {
   return (
-    <components.Input {...props} readOnly={props.selectProps.isReadOnly} />
+    <components.Input
+      {...props}
+      autoComplete="nope"
+      readOnly={props.selectProps.isReadOnly}
+    />
   );
 }
 
