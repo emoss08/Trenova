@@ -21,7 +21,7 @@ from auditlog.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django_celery_beat.models import CrontabSchedule
 
-from reports import models
+from reports import models, exceptions
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
