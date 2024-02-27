@@ -70,7 +70,7 @@ export function Notifications({
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            {truncateText(notification.description, 40)}
+            {notification.description}
           </p>
         </div>
       );
