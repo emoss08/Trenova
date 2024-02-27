@@ -61,21 +61,16 @@ export const tableStatusChoices = [
  * Returns boolean yes & no choices for a select input.
  * @returns An array of yes & no choices.
  */
-export const yesAndNoChoicesBoolean: IChoiceProps<boolean>[] = [
+export const yesAndNoChoicesBoolean = [
   { value: true, label: "Yes" },
   { value: false, label: "No" },
 ];
 
 /**
  * Returns yes & no choices for a select input.
- */
-type TYesNoChoiceProps = "Y" | "N";
-
-/**
- * Returns yes & no choices for a select input.
  * @returns An array of yes & no choices.
  */
-export const yesAndNoChoices: IChoiceProps<TYesNoChoiceProps>[] = [
+export const yesAndNoChoices = [
   { value: "Y", label: "Yes" },
   { value: "N", label: "No" },
 ];
