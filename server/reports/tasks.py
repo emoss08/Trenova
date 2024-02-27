@@ -83,7 +83,6 @@ def generate_report_task(
     Returns:
         None: This function does not return anything.
     """
-
     try:
         services.generate_report(
             model_name=model_name,

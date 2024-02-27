@@ -32,6 +32,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 INTERNAL_IPS = ["127.0.0.1", "trenova.local", "localhost"]
 ALLOWED_HOSTS = ["trenova.local", "127.0.0.1", "localhost"]
+BASE_URL = env("BASE_URL")
 
 # Application definition
 INSTALLED_APPS = [
