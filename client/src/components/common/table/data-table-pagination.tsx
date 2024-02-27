@@ -23,13 +23,15 @@ import {
 } from "@/components/common/fields/select";
 import { Button } from "@/components/ui/button";
 import {
-  faChevronLeft,
-  faChevronRight,
   faChevronsLeft,
   faChevronsRight,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PaginationState, Table } from "@tanstack/react-table";
+import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/pro-solid-svg-icons";
 
 type DataTablePaginationProps<TData> = {
   table: Table<TData>;
