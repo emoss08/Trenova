@@ -41,9 +41,9 @@ class RocketStyleLoggingHandler(RichHandler):
             size = record.args.get("size", "UNKNOWN")
         else:
             # Default values if record.args is not a dictionary
-            method = path = status_code = handler_name = duration = remote_addr = (
-                size
-            ) = "UNKNOWN"
+            method = (
+                path
+            ) = status_code = handler_name = duration = remote_addr = size = "UNKNOWN"
 
         outcome = (
             "Success"
