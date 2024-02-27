@@ -15,6 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
+
 export type TChoiceProps = {
   value: string;
   label: string;
@@ -26,6 +28,8 @@ export interface IChoiceProps<T extends string | boolean | number> {
   value: T;
   label: string;
   color?: string;
+  description?: string;
+  icon?: IconProp;
 }
 
 export type StatusChoiceProps = "A" | "I";
