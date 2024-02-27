@@ -54,7 +54,11 @@ export function TrailerForm({
   control: Control<FormValues>;
   open: boolean;
 }) {
-  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(open);
+  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(
+    "TRAILER",
+    100,
+    open,
+  );
 
   const {
     selectEquipManufacturers,

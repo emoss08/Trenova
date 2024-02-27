@@ -18,7 +18,10 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
-import { ShipmentStatusChoiceProps } from "@/lib/choices";
+import {
+  ShipmentEntryMethodChoices,
+  ShipmentStatusChoiceProps,
+} from "@/lib/choices";
 import { cleanObject } from "@/lib/utils";
 import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentFormValues, ShipmentPageTab } from "@/types/shipment";
@@ -235,7 +238,9 @@ export default function AddShipment() {
       enteredBy: yup.string().required("Entered by is required."),
       subTotal: yup.string().notRequired(),
       serviceTye: yup.string().notRequired(),
-      entryMethod: yup.string().required("Entry method is required."),
+      entryMethod: yup
+        .string<ShipmentEntryMethodChoices>()
+        .required("Entry method is required."),
       copyAmount: yup.number().required("Copy amount is required."),
       stops: yup.array().of(stopSchema).notRequired(),
     });

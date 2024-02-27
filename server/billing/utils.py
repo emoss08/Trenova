@@ -41,7 +41,7 @@ def delete_invoice(invoice: models.BillingQueue) -> None:
 
 
 def set_shipments_billed(*, shipment: Shipment) -> None:
-    """Set the billed status of an shipment to True and set the bill date.
+    """Set the billed status of a shipment to True and set the bill date.
 
     This function sets the billed status of the passed Order instance to True and sets the bill date to the current
     date and time. It then saves the Order instance.
@@ -191,11 +191,12 @@ def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
 def send_billing_email(*, shipment: Shipment, user: User) -> None:
     """Email the customer with a new invoice attached.
 
-    This function sends an email to the payable contact of the customer with the new invoice attached. First, the function
-    retrieves the payable customer contact for the corresponding customer and organization by filtering the CustomerContact
-    model. Next, it retrieves the billing email profile from the organization's EmailControl model to use as the sender email
-    address, or if it is not set, it uses the email address of the user who is sending the email. The function then sends an
-    email to the customer with the attached invoice using the send_mail function.
+    This function sends an email to the payable contact of the customer with the new invoice attached. First, the
+    function retrieves the payable customer contact for the corresponding customer and organization by filtering
+    the CustomerContact model. Next, it retrieves the billing email profile from the organization's EmailControl
+    model to use as the sender email address, or if it is not set, it uses the email address of the user who
+    is sending the email. The function then sends an email to the customer with the attached invoice using
+    the send_mail function.
 
     Args:
         shipment: An instance of the Order model.
@@ -213,6 +214,7 @@ def send_billing_email(*, shipment: Shipment, user: User) -> None:
 
     billing_profile = user.organization.email_control.billing_email_profile
 
+    # TODO(WOLFRED): Attach the file to the email
     send_mail(
         f"New invoice from {user.organization.name}",
         f"Please see attached invoice for invoice: {shipment.pro_number}",
