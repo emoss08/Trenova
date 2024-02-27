@@ -16,7 +16,12 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { FormulaTemplate, ServiceType, Shipment } from "@/types/shipment";
+import {
+  FormulaTemplate,
+  ServiceType,
+  Shipment,
+  ShipmentType,
+} from "@/types/shipment";
 
 /**
  * Fetches the shipments from the server.
@@ -105,4 +110,13 @@ export async function validateBOLNumber(
   });
 
   return response.data;
+}
+
+/**
+ * Fetches order types from the server.
+ * @returns A promise that resolves to an array of order types.
+ */
+export async function getShipmentTypes(): Promise<ReadonlyArray<ShipmentType>> {
+  const response = await axios.get("/shipment_types/");
+  return response.data.results;
 }

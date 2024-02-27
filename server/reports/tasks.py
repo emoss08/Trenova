@@ -18,10 +18,9 @@
 from typing import TYPE_CHECKING
 
 from celery import shared_task
-from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
-from reports import selectors, services, utils
+from reports import services
 from utils.types import ModelUUID
 
 if TYPE_CHECKING:
@@ -33,7 +32,6 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    # queue="low_priority",
 )
 def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     """A Celery task that sends a scheduled report to the user who created it.
@@ -48,29 +46,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
         None: This function does not return anything.
     """
     try:
-        scheduled_report = selectors.get_scheduled_report_by_id(report_id=report_id)
-
-        if not scheduled_report.is_active:
-            return
-
-        report = scheduled_report.custom_report
-        user = scheduled_report.user
-
-        excel_file = services.generate_excel_report_as_file(report)
-
-        email = EmailMessage(
-            subject=f"Your scheduled report: {report.name}",
-            body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
-            from_email="reports@trenova.app",
-            to=[user.email],  # TODO(Wolfred): Add support for multiple recipients
-        )
-
-        email.attach(
-            f"{report.name}.xlsx",
-            excel_file.getvalue(),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        email.send()
+        services.generate_scheduled_report(report_id=report_id)
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
@@ -80,7 +56,6 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    # queue="low_priority",
 )
 def generate_report_task(
     self: "Task",
@@ -89,6 +64,8 @@ def generate_report_task(
     columns: list[str],
     user_id: ModelUUID,
     file_format: str,
+    delivery_method: str,
+    email_recipients: list[str] | None,
 ) -> str:
     """A Celery task that generates a report.
 
@@ -100,18 +77,22 @@ def generate_report_task(
         columns (list[str]): The columns to include in the report.
         user_id (ModelUUID): The ID of the user who requested the report.
         file_format (str): The file format to generate the report in.
+        delivery_method (str): The delivery method to use for the report.
+        email_recipients (list[str] | None): The email recipients to send the report to.
 
     Returns:
         None: This function does not return anything.
     """
 
     try:
-        utils.generate_report(
+        services.generate_report(
             model_name=model_name,
             columns=columns,
             user_id=user_id,
             file_format=file_format,
+            delivery_method=delivery_method,
+            email_recipients=email_recipients,
         )
-        return "Report generated successfully."
+        return f"Report for {model_name} has been generated successfully for user {user_id}."
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
-import { shipmentControlSchema } from "@/lib/validations/OrderSchema";
+import { shipmentControlSchema } from "@/lib/validations/ShipmentSchema";
 import {
   ShipmentControl as ShipmentControlType,
   ShipmentControlFormValues,

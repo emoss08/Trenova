@@ -15,14 +15,41 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CodeTypeProps } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types";
+import * as yup from "yup";
 import {
+  ShipmentControlFormValues,
   ReasonCodeFormValues,
   ServiceTypeFormValues,
   ShipmentTypeFormValues,
 } from "@/types/shipment";
-import * as yup from "yup";
+
+export const shipmentControlSchema: yup.ObjectSchema<ShipmentControlFormValues> =
+  yup.object().shape({
+    autoRateShipment: yup.boolean().required("Auto Rate Shipments is required"),
+    calculateDistance: yup.boolean().required("Calculate Distance is required"),
+    enforceRevCode: yup.boolean().required("Enforce Rev Code is required"),
+    enforceVoidedComm: yup
+      .boolean()
+      .required("Enforce Voided Comm is required"),
+    generateRoutes: yup.boolean().required("Generate Routes is required"),
+    enforceCommodity: yup.boolean().required("Enforce Commodity is required"),
+    autoSequenceStops: yup
+      .boolean()
+      .required("Auto Sequence Stops is required"),
+    autoShipmentTotal: yup
+      .boolean()
+      .required("Auto Shipment Total is required"),
+    enforceOriginDestination: yup
+      .boolean()
+      .required("Enforce Origin Destination is required"),
+    checkForDuplicateBol: yup
+      .boolean()
+      .required("Check for Duplicate BOL is required"),
+    removeShipment: yup.boolean().required("Remove Shipment is required"),
+  });
+
+import { CodeTypeProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 
 export const serviceTypeSchema: yup.ObjectSchema<ServiceTypeFormValues> = yup
   .object()

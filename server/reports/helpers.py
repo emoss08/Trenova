@@ -14,6 +14,33 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import io
+import logging
+from io import BytesIO
+
+import pandas as pd
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.apps import apps
+from django.core.mail import EmailMessage
+from django.db.models import Model
+from django.shortcuts import get_object_or_404
+from notifications.signals import notify
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Image, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus.para import Paragraph
+
+from accounts.models import User
+from organization.models import Organization
+from reports import exceptions, models
+from utils.types import ModelUUID
+
+channel_layer = get_channel_layer()
+
+logger = logging.getLogger(__name__)
+
 
 # Allowed models for reports
 ALLOWED_MODELS = {
@@ -427,4 +454,329 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "QualifierCode": {
+        "app_label": "stops",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Status"},
+            {"value": "code", "label": "Code"},
+            {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }
+
+
+def deliver_local_report(
+    *, user: User, model_name: str, report_obj: models.UserReport
+) -> None:
+    """
+    This function will deliver the local report to the user.
+    """
+    try:
+        notify.send(
+            user,
+            recipient=user,
+            verb="New Report is available",
+            description=f"New {model_name} report is available for download.",
+            public=False,
+            action_object=report_obj,
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            user.username,
+            {
+                "type": "send_notification",
+                "recipient": user.username,
+                "attr": "report",
+                "event": "New Report is available",
+                "description": f"New {model_name} report is available for download.",
+            },
+        )
+    except exceptions.LocalDeliveryException as l_exception:
+        logger.error(f"Local report delivery did not succeed: {l_exception}")
+
+
+def delivery_email_report(
+    *,
+    user: User,
+    model_name: str,
+    email_recipients: list[str] | None,
+    file_name: str,
+    buffer: io.BytesIO,
+) -> None:
+    """
+    This function will deliver the report via email to the user.
+    """
+
+    if not email_recipients:
+        logger.error("Email delivery found: No email recipients found.")
+        return
+
+    try:
+        email = EmailMessage(
+            subject=f"New {model_name} report is available for download.",
+            body=f"New {model_name} report is available for download.",
+            from_email="noreply@trenova.app",
+            to=email_recipients,
+            attachments=[(file_name, buffer.getvalue(), "application/octet-stream")],
+        )
+        email.send()
+        async_to_sync(get_channel_layer().group_send)(
+            user.username,
+            {
+                "type": "send_notification",
+                "recipient": user.username,
+                "attr": "report",
+                "event": "New Report is available",
+                "description": f"New {model_name} report is has been sent to your email.",
+            },
+        )
+    except exceptions.EmailDeliveryException as e_exception:
+        logger.error(
+            f"Failed to deliver email report to {', '.join(email_recipients)}: {e_exception}"
+        )
+
+
+def generate_pdf(
+    *, df: pd.DataFrame, buffer: BytesIO, organization_id: ModelUUID
+) -> None:
+    """Generates a PDF file from a pandas DataFrame and writes it to the provided buffer.
+
+    The DataFrame is converted into a ReportLab Table which is then included in a PDF
+    document. The resulting PDF also contains the logo and name of the specified
+    organization at the top. The size of the PDF is designed to be wide to accommodate
+    the full width of the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to be converted to PDF.
+        buffer (BytesIO): The buffer to which the PDF is written.
+        organization_id (str): The organization ID of the user who is generating the PDF.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    # Define style elements
+    styles = getSampleStyleSheet()
+    normal_style = styles["BodyText"]
+    normal_style.fontName = "Helvetica"
+    normal_style.fontSize = 10
+
+    # Transform dataframe to a list of lists (records) which ReportLab can work with
+    data = [df.columns.to_list()] + df.values.tolist()
+
+    # Set custom page size
+    page_width = 2000  # you can adjust this as needed
+    page_height = 1190  # keep the height same as A3 height
+    pdf = SimpleDocTemplate(buffer, pagesize=(page_width, page_height))
+
+    elements = []
+
+    # Add organization logo to top left corner of the PDF, if it exists. Otherwise, add organization name same place,
+    # in black text.
+    organization = get_object_or_404(Organization, id=organization_id)
+
+    if organization.logo:
+        logo = BytesIO(organization.logo.read())
+        logo.seek(0)
+        elements.append(Image(logo, width=50, height=50))
+    elements.extend((Paragraph(organization.name, normal_style), Spacer(1, 0.2 * inch)))
+
+    # Create a table where the first row is the header
+    num_columns = len(data[0])
+    column_width = (
+        page_width - 2 * inch
+    ) / num_columns  # Assume half-inch margins on the left and right
+    table = Table(data, repeatRows=1, colWidths=[column_width] * num_columns)
+
+    # Define table style
+    table_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
+
+    # Apply the table styles
+    table.setStyle(table_style)
+
+    elements.append(table)
+
+    # Build the PDF
+    pdf.build(elements)
+
+
+def validate_model(model_name: str) -> None:
+    """Validate if the provided model name is allowed.
+
+    Args:
+        model_name (str): The name of the model to validate.
+
+    Returns:
+        None: this function does not return anything.
+
+    Raises:
+        InvalidModelException: If the model name is not in the allowed models list.
+    """
+    if model_name not in ALLOWED_MODELS:
+        raise exceptions.InvalidModelException(f"Model {model_name} is not allowed.")
+
+
+def get_user_and_model(user_id: ModelUUID, model_name: str) -> tuple[User, type[Model]]:
+    """Retrieve the user object and model class based on user ID and model name.
+
+    Args:
+        user_id (ModelUUID): The unique identifier of the user.
+        model_name (str): The name of the model to retrieve.
+
+    Returns:
+        tuple: A tuple containing the user object and the model class.
+
+    Raises:
+        InvalidModelException: If the model name is invalid.
+    """
+    user = User.objects.get(pk__exact=user_id)
+    model = apps.get_model(ALLOWED_MODELS[model_name]["app_label"], model_name)
+    if not model:
+        raise exceptions.InvalidModelException("Invalid model name")
+    return user, model
+
+
+def prepare_dataframe(
+    model: type[Model], columns: list[str], user: User, model_name: str
+) -> pd.DataFrame:
+    """Prepare a pandas DataFrame based on the model, columns, and user information.
+
+    Args:
+        model (type[Model]): The model class from which to generate the DataFrame.
+        columns (list[str]): A list of column names to include in the DataFrame.
+        user (User): The user object to filter the data based on the organization.
+        model_name (str): The name of the model, used for column renaming.
+
+    Returns:
+        pd.DataFrame: The prepared DataFrame.
+    """
+    queryset = (
+        model.objects.filter(organization_id=user.organization_id)
+        .select_related(*get_related_fields(columns))
+        .values(*columns)
+    )
+    df = pd.DataFrame.from_records(queryset)
+    convert_datetime_columns(df)
+    rename_columns(df, model_name)
+    return df
+
+
+def get_related_fields(columns: list[str]) -> list[str]:
+    """Extract related field names from a list of columns.
+
+    Args:
+        columns (list[str]): A list of column names, possibly including related field references.
+
+    Returns:
+        list[str]: A list of the base names of related fields.
+    """
+    return [field.split("__")[0] for field in columns if "__" in field]
+
+
+def convert_datetime_columns(df: pd.DataFrame) -> None:
+    """Convert timezone-aware datetime columns in a DataFrame to naive datetimes.
+
+    Args:
+        df (pd.DataFrame): The DataFrame whose datetime columns are to be converted.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    for column in df.columns:
+        if isinstance(df[column].dtype, pd.DatetimeTZDtype):
+            df[column] = df[column].dt.tz_convert(None)
+
+
+def rename_columns(df: pd.DataFrame, model_name: str) -> None:
+    """Rename columns in a DataFrame based on allowed fields for a model.
+
+    Args:
+        df (pd.DataFrame): The DataFrame whose columns are to be renamed.
+        model_name (str): The model name used to determine the new column names.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    allowed_fields_dict = {
+        field["value"]: field["label"]
+        for field in ALLOWED_MODELS[model_name]["allowed_fields"]
+    }
+    df.rename(columns=allowed_fields_dict, inplace=True)
+
+
+def generate_csv(*, df: pd.DataFrame, report_buffer: BytesIO) -> None:
+    """Generate a CSV file from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to convert to CSV.
+        report_buffer (BytesIO): The buffer to write the CSV file to.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    df.to_csv(report_buffer, index=False)
+
+
+def generate_excel(*, df: pd.DataFrame, report_buffer: BytesIO) -> None:
+    """Generate an Excel file from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to convert to Excel.
+        report_buffer (BytesIO): The buffer to write the Excel file to.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    # TODO(Wolfred): Add support for multiple sheets.
+    df.to_excel(report_buffer, index=False)
+
+
+def generate_report_file(
+    df: pd.DataFrame, model_name: str, file_format: str, user: User
+) -> tuple[BytesIO, str]:
+    """Generate a report file in the specified format from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to generate the report from.
+        model_name (str): The name of the model, used for naming the report file.
+        file_format (str): The format of the report file (csv, xlsx, pdf).
+        user (User): The user object, required for some report formats.
+
+    Returns:
+        tuple: A tuple containing the BytesIO buffer of the report and the report file name.
+
+    Raises:
+        ValueError: If the specified file format is not supported.
+    """
+    report_buffer = BytesIO()
+    file_name = f"{model_name}-report.{file_format}"
+
+    format_functions = {
+        "csv": lambda: generate_csv(df=df, report_buffer=report_buffer),
+        "xlsx": lambda: generate_excel(df=df, report_buffer=report_buffer),
+        "pdf": lambda: generate_pdf(
+            df=df, buffer=report_buffer, organization_id=user.organization_id
+        ),
+    }
+
+    generate_func = format_functions.get(file_format.lower())
+    if not generate_func:
+        raise ValueError("Invalid file format")
+
+    generate_func()
+
+    return report_buffer, file_name

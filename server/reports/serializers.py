@@ -18,6 +18,8 @@
 import os
 
 from auditlog.models import LogEntry
+from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from notifications.models import Notification
 from rest_framework import serializers
 
@@ -131,3 +133,39 @@ class NotificationSerializer(serializers.ModelSerializer):
 
         model = Notification
         fields = ["id", "timestamp", "verb", "description"]
+
+
+class ReportRequestSerializer(serializers.Serializer):
+    model_name = serializers.CharField(required=True)
+    columns = serializers.ListField(child=serializers.CharField(), required=True)
+    file_format = serializers.CharField(required=True)
+    delivery_method = serializers.CharField(required=True)
+    email_recipients = serializers.CharField(required=False, allow_null=True)
+
+    def validate_email_recipients(self, value: str) -> list[str]:
+        """Validates the email recipients.
+
+        Args:
+            value (str): The email recipients.
+
+        Returns:
+            list[str]: The email recipients as a list of strings.
+        """
+        invalidate_emails = []
+
+        if value:
+            parsed_emails = value.split(",")
+            validator = EmailValidator()
+            for email in parsed_emails:
+                try:
+                    validator(email)
+                except ValidationError:
+                    invalidate_emails.append(email)
+
+            if invalidate_emails:
+                raise serializers.ValidationError(
+                    {"message": f"Invalid email(s): {', '.join(invalidate_emails)}"}
+                )
+
+            return parsed_emails
+        return []

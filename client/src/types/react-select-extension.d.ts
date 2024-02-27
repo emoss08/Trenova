@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { GroupBase, Options } from "react-select"; // eslint-disable-line import/no-unassigned-import
-
 import type {} from "react-select/base";
+
+import { IconProp } from "@fortawesome/fontawesome-svg-core"; // eslint-disable-line import/no-unassigned-import
 
 declare module "react-select/base" {
   export interface Props<
@@ -38,7 +38,6 @@ declare module "react-select/base" {
     placeholder?: string;
     Group?: Group;
   }
-
   export interface CreatableProps<
     Option,
     IsMulti extends boolean,
@@ -51,11 +50,6 @@ declare module "react-select/base" {
     popoutLink?: string; // Link to the popout page
     popoutLinkLabel?: string; // Label for the popout link
     Group?: Group;
-  }
-  export interface AsyncSelectInput {
-    hasPopoutWindow?: boolean; // Flag when to show the add new option
-    popoutLink?: string; // Link to the popout page
-    popoutLinkLabel?: string; // Label for the popout link
   }
 }
 
@@ -84,5 +78,17 @@ declare module "react-select/dist/declarations/src/types" {
   export interface GroupBase<Option> {
     options: Options<Option>;
     value: string;
+  }
+}
+
+declare module "react-select/dist/declarations/src/components/Option" {
+  export interface OptionProps {
+    data: {
+      value: string;
+      label: string;
+      icon?: IconProp;
+      color?: string;
+      description?: string;
+    };
   }
 }
