@@ -23,7 +23,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from core.exceptions import ServiceException
-from reports import models, tasks, services, exceptions
+from reports import exceptions, models, services, tasks
 
 pytestmark = pytest.mark.django_db
 

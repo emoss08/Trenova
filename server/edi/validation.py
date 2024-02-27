@@ -84,9 +84,9 @@ class EDICommProfileValidation:
             try:
                 validator(self.comm_profile.server_url)
             except exceptions.ValidationError:
-                self.errors["server_url"] = (
-                    f"Invalid URL for protocol {self.comm_profile.protocol}: {self.comm_profile.server_url}"
-                )
+                self.errors[
+                    "server_url"
+                ] = f"Invalid URL for protocol {self.comm_profile.protocol}: {self.comm_profile.server_url}"
 
     def validate_protocol_mapping(self) -> None:
         """Validates the protocol mapping for port and security expectations based on the EDI communication profile.
@@ -120,14 +120,14 @@ class EDICommProfileValidation:
             self.comm_profile.protocol in secure_protocols
             and not self.comm_profile.is_secure
         ):
-            self.errors["is_secure"] = (
-                f"Protocol {self.comm_profile.protocol} is expected to be secure."
-            )
+            self.errors[
+                "is_secure"
+            ] = f"Protocol {self.comm_profile.protocol} is expected to be secure."
 
         if (
             self.comm_profile.protocol in insecure_protocols
             and self.comm_profile.is_secure
         ):
-            self.errors["is_secure"] = (
-                f"Protocol {self.comm_profile.protocol} cannot be secure."
-            )
+            self.errors[
+                "is_secure"
+            ] = f"Protocol {self.comm_profile.protocol} cannot be secure."
