@@ -24,16 +24,12 @@ from channels.layers import get_channel_layer
 from django.apps import apps
 from django.core.mail import EmailMessage
 from django.db.models import Model
-from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+from django.utils import timezone
 from notifications.signals import notify
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
-from reportlab.platypus import Image, SimpleDocTemplate, Spacer, Table, TableStyle
-from reportlab.platypus.para import Paragraph
+from weasyprint import HTML, CSS
 
 from accounts.models import User
-from organization.models import Organization
 from reports import exceptions, models
 from utils.types import ModelUUID
 
@@ -539,79 +535,23 @@ def delivery_email_report(
         )
 
 
-def generate_pdf(
-    *, df: pd.DataFrame, buffer: BytesIO, organization_id: ModelUUID
-) -> None:
-    """Generates a PDF file from a pandas DataFrame and writes it to the provided buffer.
+def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO, user: User) -> None:
+    # Prepare the data for context matching.
+    context = {
+        "data": df.to_dict(orient="records"),
+        "organization": user.organization,
+        "user": user,
+        "report_generation_date": timezone.now(),
+    }
 
-    The DataFrame is converted into a ReportLab Table which is then included in a PDF
-    document. The resulting PDF also contains the logo and name of the specified
-    organization at the top. The size of the PDF is designed to be wide to accommodate
-    the full width of the DataFrame.
+    # Render the HTML template with the context.
+    html_string = render_to_string("reports/pdf_template.html", context)
 
-    Args:
-        df (pd.DataFrame): The DataFrame to be converted to PDF.
-        buffer (BytesIO): The buffer to which the PDF is written.
-        organization_id (str): The organization ID of the user who is generating the PDF.
+    # Define CSS for landscape orientation
+    landscape_css = CSS(string="@page { size: landscape; }")
 
-    Returns:
-        None: This function does not return anything.
-    """
-
-    # Define style elements
-    styles = getSampleStyleSheet()
-    normal_style = styles["BodyText"]
-    normal_style.fontName = "Helvetica"
-    normal_style.fontSize = 10
-
-    # Transform dataframe to a list of lists (records) which ReportLab can work with
-    data = [df.columns.to_list()] + df.values.tolist()
-
-    # Set custom page size
-    page_width = 2000  # you can adjust this as needed
-    page_height = 1190  # keep the height same as A3 height
-    pdf = SimpleDocTemplate(buffer, pagesize=(page_width, page_height))
-
-    elements = []
-
-    # Add organization logo to top left corner of the PDF, if it exists. Otherwise, add organization name same place,
-    # in black text.
-    organization = get_object_or_404(Organization, id=organization_id)
-
-    if organization.logo:
-        logo = BytesIO(organization.logo.read())
-        logo.seek(0)
-        elements.append(Image(logo, width=50, height=50))
-    elements.extend((Paragraph(organization.name, normal_style), Spacer(1, 0.2 * inch)))
-
-    # Create a table where the first row is the header
-    num_columns = len(data[0])
-    column_width = (
-        page_width - 2 * inch
-    ) / num_columns  # Assume half-inch margins on the left and right
-    table = Table(data, repeatRows=1, colWidths=[column_width] * num_columns)
-
-    # Define table style
-    table_style = TableStyle(
-        [
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, 0), 10),
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ]
-    )
-
-    # Apply the table styles
-    table.setStyle(table_style)
-
-    elements.append(table)
-
-    # Build the PDF
-    pdf.build(elements)
+    # Convert the html string to a PDF in landscape format and save it to the buffer.
+    HTML(string=html_string).write_pdf(target=buffer, stylesheets=[landscape_css])
 
 
 def validate_model(model_name: str) -> None:
@@ -768,9 +708,7 @@ def generate_report_file(
     format_functions = {
         "csv": lambda: generate_csv(df=df, report_buffer=report_buffer),
         "xlsx": lambda: generate_excel(df=df, report_buffer=report_buffer),
-        "pdf": lambda: generate_pdf(
-            df=df, buffer=report_buffer, organization_id=user.organization_id
-        ),
+        "pdf": lambda: generate_pdf(df=df, buffer=report_buffer, user=user),
     }
 
     generate_func = format_functions.get(file_format.lower())
