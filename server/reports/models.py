@@ -15,6 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from __future__ import annotations
+
 import textwrap
 import uuid
 from typing import final
@@ -345,6 +347,19 @@ class ScheduledReport(GenericModel):
         return reverse("scheduled-report-detail", kwargs={"pk": self.pk})
 
 
+def report_upload_to(instance: UserReport, filename: str) -> str:
+    """Generate the upload path for a user report.
+
+    Args:
+        instance (UserReport): The user report instance.
+        filename (str): The filename of the report.
+
+    Returns:
+        str: The upload path for the user report.
+    """
+    return f"reports/{instance.user.id}/{filename}"
+
+
 class UserReport(GenericModel):
     """
     Stores the user reports information for related :model:`accounts.User`.
@@ -365,7 +380,7 @@ class UserReport(GenericModel):
     )
     report = models.FileField(
         _("Report"),
-        upload_to="reports/user/",
+        upload_to=report_upload_to,
         help_text=_("The report file"),
     )
 
