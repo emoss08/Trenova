@@ -38,7 +38,7 @@ import { StoreType } from "@/lib/useGlobalStore";
 import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
-import { TExportModelFormValues } from "@/types/forms";
+import { DeliveryMethodChoices, TExportModelFormValues } from "@/types/forms";
 import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -47,12 +47,33 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { IChoiceProps } from "@/types";
+import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
+import { InputField } from "@/components/common/fields/input";
+import { TextareaField } from "@/components/common/fields/textarea";
 
 interface Props {
   store: StoreType<TableStoreProps>;
   modelName: string;
   name: string;
 }
+
+const deliveryMethodChoices = [
+  {
+    label: "Local",
+    value: "local",
+    color: "#15803d",
+    description: "Save to your local instance",
+    icon: faDownload,
+  },
+  {
+    label: "Email",
+    value: "email",
+    color: "#2563eb",
+    description: "Send via email",
+    icon: faEnvelope,
+  },
+] satisfies ReadonlyArray<IChoiceProps<DeliveryMethodChoices>>;
 
 function TableExportModalBody({
   modelName,
@@ -79,8 +100,9 @@ function TableExportModalBody({
       resolver: yupResolver(ExportModelSchema),
       defaultValues: {
         columns: [],
-        deliveryMethod: "email",
+        deliveryMethod: "local",
         fileFormat: "csv",
+        emailRecipients: undefined,
       },
     });
 
@@ -94,6 +116,11 @@ function TableExportModalBody({
       // Show email field if delivery method is email
       if (name === "deliveryMethod" && value.deliveryMethod === "email") {
         setShowEmailField(true);
+      } else if (
+        name === "deliveryMethod" &&
+        value.deliveryMethod === "local"
+      ) {
+        setShowEmailField(false);
       }
     });
 
@@ -113,9 +140,11 @@ function TableExportModalBody({
         modelName: modelName as string,
         fileFormat: values.fileFormat,
         columns: values.columns,
+        deliveryMethod: values.deliveryMethod,
+        emailRecipients: values.emailRecipients,
       });
 
-      if (response.status === 202) {
+      if (response.status === 200) {
         setShowExportModal(false);
         toast.success(
           () => (
@@ -135,16 +164,39 @@ function TableExportModalBody({
         reset();
       }
     } catch (error: any) {
-      setError("columns", {
-        type: "manual",
-        message: error.response.data.error,
-      });
-
+      if (error.response && error.response.data) {
+        const { data } = error.response;
+        Object.entries(data).forEach(([key, value]) => {
+          // Check if the value is an object and has a property 'message'
+          if (
+            typeof value === "object" &&
+            value !== null &&
+            "message" in value
+          ) {
+            // If so, use the 'message' for setting the error
+            setError(key as any, {
+              type: "manual",
+              message: value.message as string,
+            });
+          } else {
+            // If it's not an object or doesn't have a 'message', set the value directly
+            setError(key as any, {
+              type: "manual",
+              message: value as string,
+            });
+          }
+        });
+      }
       toast.error(
         () => (
           <div className="flex flex-col space-y-1">
-            <span className="font-semibold">{error.response.data.title}</span>
-            <span className="text-xs">{error.response.data.error}</span>
+            <span className="font-semibold">
+              {error.response.data.error || "Error"}
+            </span>
+            <span className="text-xs">
+              {error.response.data.detail ||
+                "An error occurred, check the form and try again."}
+            </span>
           </div>
         ),
         {
@@ -179,33 +231,17 @@ function TableExportModalBody({
       </div>
       <div className="mb-5">
         <SelectInput
-          isMulti
-          hideSelectedOptions={true}
           control={control}
           rules={{ required: true }}
           name="deliveryMethod"
-          options={selectColumnData}
+          options={deliveryMethodChoices}
           label="Delivery Method"
           placeholder="Select delivery method"
           description="Select a delivery method for the export. You can either download the file or receive it via email."
         />
       </div>
-      {showEmailField && (
-        <div className="mb-5">
-          <SelectInput
-            isMulti
-            hideSelectedOptions={true}
-            control={control}
-            rules={{ required: true }}
-            name="deliveryMethod"
-            options={selectColumnData}
-            label="Delivery Method"
-            placeholder="Select delivery method"
-            description="Select a delivery method for the export. You can either download the file or receive it via email."
-          />
-        </div>
-      )}
-      <div>
+
+      <div className="mb-5">
         <Label className="required">Export Format</Label>
         <Controller
           name="fileFormat"
@@ -235,22 +271,34 @@ function TableExportModalBody({
         <p className="mt-1 text-xs text-foreground/70">
           Select a format to export (CSV, Excel, or PDF).
         </p>
-        <div className="mt-5 flex justify-end gap-4 border-t pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowExportModal(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            isLoading={loading}
-            disabled={selectedColumns?.length === 0}
-          >
-            Export
-          </Button>
+      </div>
+      {showEmailField && (
+        <div className="mb-5">
+          <TextareaField
+            control={control}
+            rules={{ required: true }}
+            name="emailRecipients"
+            label="Email Recipients"
+            placeholder="Enter Email Recipients"
+            description="Enter the email addresses of the recipients. You can enter multiple email addresses separated by a comma."
+          />
         </div>
+      )}
+      <div className="mt-5 flex justify-end gap-4 border-t pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowExportModal(false)}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          isLoading={loading}
+          disabled={selectedColumns?.length === 0}
+        >
+          Export
+        </Button>
       </div>
     </form>
   );

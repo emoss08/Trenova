@@ -23,7 +23,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from core.exceptions import ServiceException
-from reports import models, tasks, utils
+from reports import models, tasks, services, exceptions
 
 pytestmark = pytest.mark.django_db
 
@@ -62,15 +62,20 @@ def test_generate_report(file_format, user: User) -> None:
         "organization__name",
     ]
 
-    utils.generate_report(
-        model_name="User", columns=columns, user_id=user.id, file_format=file_format
+    services.generate_report(
+        model_name="User",
+        columns=columns,
+        user_id=user.id,
+        file_format=file_format,
+        delivery_method="local",
+        email_recipients=None,
     )
     reports = models.UserReport.objects.all()
 
     assert reports.count() == 1
 
 
-@patch("reports.tasks.utils.generate_report")
+@patch("reports.tasks.services.generate_report")
 def test_generate_report_task(mock_generate_report: Mock, user: User) -> None:
     """Test that the generate_report_task calls the generate_report function with the correct arguments.
 
@@ -98,6 +103,8 @@ def test_generate_report_task(mock_generate_report: Mock, user: User) -> None:
         columns=columns,
         user_id=user_id,
         file_format=file_format,
+        delivery_method="local",
+        email_recipients=None,
     )
 
     mock_generate_report.assert_called_with(
@@ -105,11 +112,13 @@ def test_generate_report_task(mock_generate_report: Mock, user: User) -> None:
         columns=columns,
         user_id=user_id,
         file_format=file_format,
+        delivery_method="local",
+        email_recipients=None,
     )
     mock_generate_report.assert_called_once()
 
 
-@patch("reports.tasks.utils.generate_report")
+@patch("reports.tasks.services.generate_report")
 def test_generate_report_task_failure(generate_report: Mock, user: User) -> None:
     """Test that a Retry exception is raised when the generate_report_task encounters an OperationalError.
 
@@ -140,6 +149,8 @@ def test_generate_report_task_failure(generate_report: Mock, user: User) -> None
             ],
             user_id=user.id,
             file_format="csv",
+            delivery_method="local",
+            email_recipients=None,
         )
 
     # Ensure that the retry method was called
@@ -182,3 +193,27 @@ def test_user_report_post(api_client: APIClient, user: User) -> None:
     )
     assert response.status_code == 201
     assert response.data["user"] == user.id
+
+
+def test_invalid_delivery_method() -> None:
+    """Test that an InvalidDeliveryMethodException is raised when an invalid delivery method is specified.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    with pytest.raises(exceptions.InvalidDeliveryMethodException) as excinfo:
+        services.generate_report(
+            model_name="User",
+            columns=[
+                "username",
+                "email",
+                "date_joined",
+                "is_staff",
+            ],
+            user_id="user_id",
+            file_format="csv",
+            delivery_method="invalid",
+            email_recipients=None,
+        )
+
+    assert str(excinfo.value) == "Invalid delivery method."
