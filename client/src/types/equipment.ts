@@ -60,31 +60,26 @@ export const equipmentStatusChoices = [
   {
     value: "A",
     label: "Available",
-    icon: CircleIcon,
     color: "#16a34a",
   },
   {
     value: "OOS",
     label: "Out of Service",
-    icon: MinusCircledIcon,
     color: "#dc2626",
   },
   {
     value: "AM",
     label: "At Maintenance",
-    icon: MinusCircledIcon,
     color: "#9333ea",
   },
   {
     value: "S",
     label: "Sold",
-    icon: MinusCircledIcon,
     color: "#2563eb",
   },
   {
     value: "L",
     label: "Lost",
-    icon: MinusCircledIcon,
     color: "#ca8a04",
   },
 ];
