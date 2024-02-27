@@ -27,7 +27,7 @@ from django.db.models import Model
 from django.template.loader import render_to_string
 from django.utils import timezone
 from notifications.signals import notify
-from weasyprint import HTML, CSS
+from weasyprint import CSS, HTML
 
 from accounts.models import User
 from reports import exceptions, models
