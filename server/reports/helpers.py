@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import io
 import logging
+import typing
 from io import BytesIO
 
 import pandas as pd
@@ -30,438 +31,14 @@ from notifications.signals import notify
 from weasyprint import CSS, HTML
 
 from accounts.models import User
-from reports import exceptions, models
-from utils.types import ModelUUID
+from reports import constants, exceptions, models
+
+if typing.TYPE_CHECKING:
+    from utils.types import ModelUUID
 
 channel_layer = get_channel_layer()
 
 logger = logging.getLogger(__name__)
-
-
-# Allowed models for reports
-ALLOWED_MODELS = {
-    "User": {
-        "app_label": "accounts",
-        "allowed_fields": [
-            {"value": "username", "label": "Username"},
-            {"value": "email", "label": "Email"},
-            {"value": "date_joined", "label": "Date Joined"},
-            {"value": "is_staff", "label": "Is Staff"},
-            {"value": "profiles__first_name", "label": "First Name"},
-            {"value": "profiles__last_name", "label": "Last Name"},
-            {"value": "profiles__address_line_1", "label": "Address Line 1"},
-            {"value": "profiles__address_line_2", "label": "Address Line 2"},
-            {"value": "profiles__city", "label": "City"},
-            {"value": "profiles__state", "label": "State"},
-            {"value": "profiles__zip_code", "label": "Zip Code"},
-            {"value": "profiles__phone_number", "label": "Phone Number"},
-            {
-                "value": "profiles__is_phone_verified",
-                "label": "Is Phone Verified",
-            },
-            {"value": "profiles__job_title__name", "label": "Job Title Name"},
-            {
-                "value": "profiles__job_title__description",
-                "label": "Job Title Description",
-            },
-            {"value": "department__name", "label": "Department Name"},
-            {
-                "value": "department__description",
-                "label": "Department Description",
-            },
-            {"value": "organization__name", "label": "Organization Name"},
-        ],
-    },
-    "UserProfile": {
-        "app_label": "accounts",
-        "allowed_fields": [
-            {"value": "user__username", "label": "Username"},
-            {"value": "user__email", "label": "Email"},
-            {"value": "user__date_joined", "label": "Date Joined"},
-            {"value": "user__is_staff", "label": "Is Staff"},
-            {"value": "first_name", "label": "First Name"},
-            {"value": "last_name", "label": "Last Name"},
-            {"value": "address_line_1", "label": "Address Line 1"},
-            {"value": "address_line_2", "label": "Address Line 2"},
-            {"value": "city", "label": "City"},
-            {"value": "state", "label": "State"},
-            {"value": "zip_code", "label": "Zip Code"},
-            {"value": "phone_number", "label": "Phone Number"},
-            {
-                "value": "is_phone_verified",
-                "label": "Is Phone Verified",
-            },
-        ],
-    },
-    "JobTitle": {
-        "app_label": "accounts",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "job_function", "label": "Job Function"},
-        ],
-    },
-    "Organization": {
-        "app_label": "organization",
-        "allowed_fields": [
-            {"value": "name", "label": "Name"},
-            {"value": "scac_code", "label": "SCAC Code"},
-            {"value": "dot_number", "label": "DOT Number"},
-            {"value": "address_line_1", "label": "Address Line 1"},
-            {"value": "address_line_2", "label": "Address Line 2"},
-            {"value": "city", "label": "City"},
-            {"value": "state", "label": "State"},
-            {"value": "zip_code", "label": "Zip Code"},
-            {"value": "phone_number", "label": "Phone Number"},
-            {"value": "website", "label": "Website"},
-            {"value": "org_type", "label": "Organization Type"},
-            {"value": "timezone", "label": "Timezone"},
-            {"value": "language", "label": "Language"},
-            {"value": "currency", "label": "Currency"},
-            {"value": "date_format", "label": "Date Format"},
-            {"value": "time_format", "label": "Time Format"},
-            {"value": "token_expiration_days", "label": "Token Expiration Days"},
-        ],
-    },
-    "Department": {
-        "app_label": "organization",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-        ],
-    },
-    "DivisionCode": {
-        "app_label": "accounting",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "cash_account__account_number", "label": "Cash Account"},
-            {"value": "ap_account__account_number", "label": "AP Account"},
-            {"value": "expense_account__account_number", "label": "Expense Account"},
-        ],
-    },
-    "RevenueCode": {
-        "app_label": "accounting",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "expense_account__account_number", "label": "Expense Account"},
-            {"value": "revenue_account__account_number", "label": "Revenue Account"},
-        ],
-    },
-    "GeneralLedgerAccount": {
-        "app_label": "accounting",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "account_number", "label": "Account Number"},
-            {"value": "account_type", "label": "Account Type"},
-            {"value": "cash_flow_type", "label": "Cash Flow Type"},
-            {"value": "account_sub_type", "label": "Account Sub Type"},
-            {"value": "account_classification", "label": "Account Classification"},
-            {"value": "balance", "label": "Balance"},
-            {"value": "opening_balance", "label": "Opening Balance"},
-            {"value": "closing_balance", "label": "Closing Balance"},
-            {
-                "value": "parent_account__account_number",
-                "label": "Parent Account Number",
-            },
-            {"value": "is_reconciled", "label": "Is Reconciled"},
-            {"value": "date_opened", "label": "Date Opened"},
-            {"value": "date_closed", "label": "Date Closed"},
-            {"value": "notes", "label": "Notes"},
-            {"value": "owner__username", "label": "Owner"},
-            {"value": "is_tax_relevant", "label": "Is Tax Relevant"},
-            {"value": "interest_rate", "label": "Interest Rate"},
-        ],
-    },
-    "ChargeType": {
-        "app_label": "billing",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-        ],
-    },
-    "AccessorialCharge": {
-        "app_label": "billing",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "is_detention", "label": "Is Detention"},
-            {"value": "charge_amount", "label": "Charge Amount"},
-            {"value": "method", "label": "Method"},
-        ],
-    },
-    "HazardousMaterial": {
-        "app_label": "commodities",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "hazard_class", "label": "Hazard Class"},
-            {"value": "packing_group", "label": "Packing Group"},
-            {"value": "erg_number", "label": "ERG Number"},
-            {"value": "proper_shipping_name", "label": "Proper Shipping Name"},
-        ],
-    },
-    "Commodity": {
-        "app_label": "commodities",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "min_temp", "label": "Minimum Temperature"},
-            {"value": "max_temp", "label": "Maximum Temperature"},
-            {"value": "set_point_temp", "label": "Set Point Temperature"},
-            {"value": "unit_of_measure", "label": "Unit of Measure"},
-            {
-                "value": "hazardous_material__status",
-                "label": "Hazardous Material Status",
-            },
-            {"value": "hazardous_material__name", "label": "Hazardous Material Name"},
-            {
-                "value": "hazardous_material__description",
-                "label": "Hazardous Material Description",
-            },
-            {
-                "value": "hazardous_material__hazard_class",
-                "label": "Hazardous Material Hazard Class",
-            },
-            {
-                "value": "hazardous_material__packing_group",
-                "label": "Hazardous Material Packing Group",
-            },
-            {
-                "value": "hazardous_material__erg_number",
-                "label": "Hazardous Material ERG Number",
-            },
-            {
-                "value": "hazardous_material__proper_shipping_name",
-                "label": "Hazardous Material Proper Shipping Name",
-            },
-            {"value": "is_hazmat", "label": "Is Hazardous Material"},
-        ],
-    },
-    "Customer": {
-        "app_label": "customer",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "name", "label": "Name"},
-            {"value": "address_line_1", "label": "Address Line 1"},
-            {"value": "address_line_2", "label": "Address Line 2"},
-            {"value": "city", "label": "City"},
-            {"value": "zip_code", "label": "Zip Code"},
-            {"value": "has_customer_portal", "label": "Has Customer Portal"},
-            {"value": "auto_mark_ready_to_bill", "label": "Auto Mark Ready To Bill"},
-        ],
-    },
-    "DelayCode": {
-        "app_label": "dispatch",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "f_carrier_or_driver", "label": "F Carrier Or Driver"},
-        ],
-    },
-    "FleetCode": {
-        "app_label": "dispatch",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "revenue_goal", "label": "Revenue Goal"},
-            {"value": "deadhead_goal", "label": "Deadhead Goal"},
-            {"value": "mileage_goal", "label": "Mileage Goal"},
-            {"value": "manager__username", "label": "Manager Username"},
-        ],
-    },
-    "CommentType": {
-        "app_label": "dispatch",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created At"},
-            {"value": "modified", "label": "Modified At"},
-        ],
-    },
-    "Rate": {
-        "app_label": "dispatch",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "rate_number", "label": "Rate Number"},
-            {"value": "customer__name", "label": "Customer Name"},
-            {"value": "customer__code", "label": "Customer Code"},
-            {"value": "effective_date", "label": "Effective Date"},
-            {"value": "expiration_date", "label": "Expiration Date"},
-            {"value": "commodity__name", "label": "Commodity Name"},
-            {"value": "commodity__description", "label": "Commodity Description"},
-            {"value": "shipment_type__name", "label": "shipment type Name"},
-            {"value": "equipment_type__name", "label": "Equipment Type Name"},
-            {"value": "origin_location__code", "label": "Origin Location Code"},
-            {
-                "value": "destination_location__code",
-                "label": "Destination Location Code",
-            },
-            {"value": "rate_method", "label": "Rate Method"},
-            {"value": "rate_amount", "label": "Rate Amount"},
-            {"value": "distance_override", "label": "Distance Override"},
-            {"value": "comments", "label": "Comments"},
-        ],
-    },
-    "EquipmentType": {
-        "app_label": "equipment",
-        "allowed_fields": [
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "cost_per_mile", "label": "Cost Per Mile"},
-        ],
-    },
-    "EquipmentManufacturer": {
-        "app_label": "equipment",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "LocationCategory": {
-        "app_label": "location",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "Location": {
-        "app_label": "location",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "name", "label": "Name"},
-            {"value": "location_category__name", "label": "Location Category Name"},
-            {"value": "depot__name", "label": "Depot Name"},
-            {"value": "address_line_1", "label": "Address Line 1"},
-            {"value": "address_line_2", "label": "Address Line 2"},
-            {"value": "city", "label": "City"},
-            {"value": "state", "label": "State"},
-            {"value": "zip_code", "label": "Zip Code"},
-            {"value": "longitude", "label": "Longitude"},
-            {"value": "latitude", "label": "Latitude"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "Trailer": {
-        "app_label": "equipment",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "equipment_type__name", "label": "Equipment Type Name"},
-            {"value": "make", "label": "Make"},
-            {"value": "model", "label": "Model"},
-            {"value": "year", "label": "Year"},
-            {"value": "vin_number", "label": "Vin Number"},
-            {"value": "state", "label": "State"},
-            {"value": "owner", "label": "Owner"},
-            {"value": "license_plate_number", "label": "License Plate #"},
-            {"value": "license_plate_state", "label": "License Plate State"},
-            {"value": "last_inspection", "label": "Last Inspection"},
-            {"value": "is_leased", "label": "Is Leased?"},
-            {"value": "leased_date", "label": "Leased Date"},
-            {"value": "registration_number", "label": "Registration Number"},
-            {"value": "registration_state", "label": "Registration State"},
-            {"value": "registration_expiration", "label": "Registration Expiration"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "Tractor": {
-        "app_label": "equipment",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "equipment_type__name", "label": "Equipment Type Name"},
-            {"value": "model", "label": "Model"},
-            {"value": "year", "label": "Year"},
-            {"value": "state", "label": "State"},
-            {"value": "license_plate_number", "label": "License Plate #"},
-            {"value": "vin_number", "label": "Vin Number"},
-            {"value": "primary_worker__code", "label": "Primary Worker Code"},
-            {"value": "secondary_worker__code", "label": "Secondary Worker Code"},
-            {"value": "owner_operated", "label": "Owner Operated?"},
-            {"value": "fleet_code__code", "label": "Fleet Code"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "DocumentClassification": {
-        "app_label": "billing",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "EmailProfile": {
-        "app_label": "organization",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "name", "label": "Name"},
-            {"value": "email", "label": "Email Address"},
-            {"value": "protocol", "label": "Protocol"},
-            {"value": "host", "label": "Host"},
-            {"value": "port", "label": "Port"},
-            {"value": "username", "label": "Username"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "ServiceType": {
-        "app_label": "shipment",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Name"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-    "QualifierCode": {
-        "app_label": "stops",
-        "allowed_fields": [
-            {"value": "organization__name", "label": "Organization Name"},
-            {"value": "status", "label": "Status"},
-            {"value": "code", "label": "Code"},
-            {"value": "description", "label": "Description"},
-            {"value": "created", "label": "Created"},
-            {"value": "modified", "label": "Modified"},
-        ],
-    },
-}
 
 
 def deliver_local_report(
@@ -536,6 +113,18 @@ def delivery_email_report(
 
 
 def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO, user: User) -> None:
+    """Generate a PDF file from a DataFrame.
+
+    This function will generate a PDF file from a DataFrame and save it to the provided buffer.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to generate the PDF from.
+        buffer (BytesIO): The buffer to save the PDF file to.
+        user (User): The user object, required for context matching.
+
+    Returns:
+        None: This function does not return anything.
+    """
     # Prepare the data for context matching.
     context = {
         "data": df.to_dict(orient="records"),
@@ -548,7 +137,9 @@ def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO, user: User) -> None:
     html_string = render_to_string("reports/pdf_template.html", context)
 
     # Define CSS for landscape orientation
-    landscape_css = CSS(string="@page { size: landscape; }")
+    landscape_css = CSS(
+        string="@page { size: landscape; } @media print { body { -webkit-print-color-adjust: exact; } }"
+    )
 
     # Convert the html string to a PDF in landscape format and save it to the buffer.
     HTML(string=html_string).write_pdf(target=buffer, stylesheets=[landscape_css])
@@ -566,11 +157,13 @@ def validate_model(model_name: str) -> None:
     Raises:
         InvalidModelException: If the model name is not in the allowed models list.
     """
-    if model_name not in ALLOWED_MODELS:
+    if model_name not in constants.ALLOWED_MODELS:
         raise exceptions.InvalidModelException(f"Model {model_name} is not allowed.")
 
 
-def get_user_and_model(user_id: ModelUUID, model_name: str) -> tuple[User, type[Model]]:
+def get_user_and_model(
+    user_id: "ModelUUID", model_name: str
+) -> tuple[User, type[Model]]:
     """Retrieve the user object and model class based on user ID and model name.
 
     Args:
@@ -584,7 +177,9 @@ def get_user_and_model(user_id: ModelUUID, model_name: str) -> tuple[User, type[
         InvalidModelException: If the model name is invalid.
     """
     user = User.objects.get(pk__exact=user_id)
-    model = apps.get_model(ALLOWED_MODELS[model_name]["app_label"], model_name)
+    model = apps.get_model(
+        constants.ALLOWED_MODELS[model_name]["app_label"], model_name
+    )
     if not model:
         raise exceptions.InvalidModelException("Invalid model name")
     return user, model
@@ -653,7 +248,7 @@ def rename_columns(df: pd.DataFrame, model_name: str) -> None:
     """
     allowed_fields_dict = {
         field["value"]: field["label"]
-        for field in ALLOWED_MODELS[model_name]["allowed_fields"]
+        for field in constants.ALLOWED_MODELS[model_name]["allowed_fields"]
     }
     df.rename(columns=allowed_fields_dict, inplace=True)
 

@@ -30,7 +30,7 @@ from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from reports import models, serializers, tasks
-from reports.helpers import ALLOWED_MODELS
+from reports.constants import ALLOWED_MODELS
 from reports.selectors import get_audit_logs_by_model_name
 
 logger = logging.getLogger(__name__)
