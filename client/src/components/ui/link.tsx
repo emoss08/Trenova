@@ -18,28 +18,77 @@
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+export function ExternalLinkDialog({
+  open,
+  onClose,
+  link,
+}: {
+  open: boolean;
+  onClose: () => void;
+  link: string;
+}) {
+  const onClick = (link: string) => {
+    // Navigate the user to the external link
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>External Link</AlertDialogTitle>
+          <AlertDialogDescription>
+            You are about to leave Trenova and visit an external website. Are
+            you sure you want to continue?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => onClick(link)}>
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export function ExternalLink({
   href,
   children,
-  openNewTab = true,
   ...props
 }: {
   href: string;
   children: React.ReactNode;
-  openNewTab?: boolean;
-} & React.HTMLAttributes<HTMLAnchorElement>) {
+} & React.HTMLAttributes<HTMLDivElement>) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <a
-      href={href}
-      target={openNewTab ? "_blank" : undefined}
-      rel={openNewTab ? "noopener noreferrer" : undefined}
-      className="text-foreground-600 inline-flex items-center gap-x-0.5 font-semibold underline decoration-blue-600"
-      {...props}
-    >
-      {children}
-      <ExternalLinkIcon />
-    </a>
+    <>
+      <div
+        onClick={() => setOpen(true)}
+        className="text-foreground-600 inline-flex cursor-pointer items-center gap-x-0.5 font-semibold underline decoration-blue-600"
+        {...props}
+      >
+        {children}
+        <ExternalLinkIcon />
+      </div>
+      <ExternalLinkDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        link={href}
+      />
+    </>
   );
 }
 
