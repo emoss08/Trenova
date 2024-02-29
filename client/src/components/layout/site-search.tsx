@@ -65,7 +65,7 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 bg-secondary hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm md:flex"
+            className="border-muted-foreground/20 bg-secondary hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm lg:flex"
           >
             <div className="flex items-center">
               <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />

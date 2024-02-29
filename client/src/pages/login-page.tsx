@@ -26,9 +26,13 @@ import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/AccountsSchema";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { Image } from "@unpic/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+
+import trenovaLogo from "../assets/images/logo.webp";
+
 type LoginFormValues = {
   username: string;
   password: string;
@@ -42,7 +46,7 @@ function UserAuthForm() {
     ],
   );
   const [, setUserDetails] = useUserStore.use("user");
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit, setError } = useForm<LoginFormValues>({
     resolver: yupResolver(userAuthSchema),
@@ -68,7 +72,7 @@ function UserAuthForm() {
   };
 
   const login = async (values: LoginFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const response = await axios.post("/login/", {
         username: values.username,
@@ -90,7 +94,7 @@ function UserAuthForm() {
         });
       }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -123,7 +127,7 @@ function UserAuthForm() {
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-1">
               <Checkbox id="remember-me" />
               <Label htmlFor="remember-me">Remember Me</Label>
             </div>
@@ -134,7 +138,11 @@ function UserAuthForm() {
             </Link>
           </div>
         </div>
-        <Button className="my-2 w-full" isLoading={isLoading}>
+        <Button
+          className="my-2 w-full"
+          isLoading={isSubmitting}
+          loadingText="Logging In..."
+        >
           Continue
         </Button>
       </div>
@@ -160,8 +168,16 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="relative min-h-screen pt-28">
+    <div className="relative min-h-screen pt-20">
       <div className="flex flex-col items-center justify-start space-y-4">
+        <Image
+          src={trenovaLogo}
+          layout="constrained"
+          className="mb-5 w-[200px]"
+          alt="trenova-logo"
+          width={75}
+          height={75}
+        />
         <Card className={cn("w-[420px] shadow-sm")}>
           <CardContent className="pt-0">
             <h2 className="pb-2 text-center text-xl font-semibold tracking-tight transition-colors first:mt-5">
@@ -171,7 +187,7 @@ export default function LoginPage() {
               Do not have an account yet?&nbsp;
               <a
                 href="#"
-                className="text-primary text-sm font-semibold underline underline-offset-4 hover:decoration-blue-500"
+                className="text-sm font-semibold text-primary underline underline-offset-4 hover:decoration-blue-500"
               >
                 Create an Account
               </a>
@@ -179,17 +195,17 @@ export default function LoginPage() {
             <UserAuthForm />
           </CardContent>
         </Card>
-        <p className="text-muted-foreground w-[350px] px-8 text-center text-sm">
+        <p className="w-[350px] px-8 text-center text-sm text-muted-foreground">
           By clicking continue, you agree to our&nbsp;
           <a
-            className="hover:text-primary underline underline-offset-4"
+            className="underline underline-offset-4 hover:text-primary"
             href="/terms"
           >
             Terms of Service
           </a>
           &nbsp; and&nbsp;
           <a
-            className="hover:text-primary underline underline-offset-4"
+            className="underline underline-offset-4 hover:text-primary"
             href="/privacy"
           >
             Privacy Policy

@@ -24,10 +24,10 @@ function Preferences() {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-foreground text-2xl font-semibold">
             Personalize Your Experience
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Customize your settings for an optimal, accessible, and enjoyable
             user experience. We are committed to creating an environment that is
             inclusive and easy to navigate for everyone.
@@ -37,10 +37,10 @@ function Preferences() {
       </div>
       <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12">
         <div className="md:col-span-4">
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             Interface Theme
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             Adjust the visual aspects of your interface to meet your individual
             needs, enhancing readability and overall accessibility.
           </p>
@@ -58,16 +58,34 @@ function ColorBlindPreferences() {
   return (
     <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12">
       <div className="md:col-span-4">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           Color Accessibility Options
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           Optimize your visual experience with our color accessibility settings,
           tailored to accommodate different forms of color vision deficiency.
         </p>
       </div>
       <div className="md:col-span-8">
-        {/* TODO: Add feature flag condition */}
+        <ColorBlindSwitcher />
+      </div>
+    </div>
+  );
+}
+
+function NavigationMenuPreferences() {
+  return (
+    <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-12">
+      <div className="md:col-span-4">
+        <h2 className="text-foreground text-base font-semibold leading-7">
+          Navigation Menu Options
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
+          Customize your navigation menu to suit your preferences, making it
+          easier to find and access the information you need.
+        </p>
+      </div>
+      <div className="md:col-span-8">
         <ColorBlindSwitcher />
       </div>
     </div>
@@ -76,9 +94,10 @@ function ColorBlindPreferences() {
 
 export default function UserPreferences() {
   return (
-    <>
+    <div className="mb-5">
       <Preferences />
       <ColorBlindPreferences />
-    </>
+      <NavigationMenuPreferences />
+    </div>
   );
 }

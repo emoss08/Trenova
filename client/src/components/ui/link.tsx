@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export function ExternalLinkDialog({
+function ExternalLinkDialog({
   open,
   onClose,
   link,

@@ -22,13 +22,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useUSStates } from "@/hooks/useQueries";
-import { timezoneChoices } from "@/lib/constants";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
 import { Organization, OrganizationFormValues } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { timezoneChoices } from "@/lib/choices";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -316,7 +316,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 e.preventDefault();
               }}
               type="button"
-              variant="ghost"
+              variant="outline"
               disabled={isSubmitting}
             >
               {t("buttons.cancel", { ns: "common" })}

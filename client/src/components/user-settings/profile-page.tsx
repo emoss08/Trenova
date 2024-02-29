@@ -16,9 +16,9 @@
  */
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { TimezoneChoices, timezoneChoices } from "@/lib/constants";
 import { QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
+import { faPaperPlane } from "@fortawesome/pro-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,7 @@ import { InputField } from "../common/fields/input";
 import { SelectInput } from "../common/fields/select-input";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
 
 function PersonalInformation({ user }: { user: User }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -129,7 +130,9 @@ function PersonalInformation({ user }: { user: User }) {
                 className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
               />
               <div>
-                <Button size="sm">Change Avatar</Button>
+                <Button size="sm" type="button">
+                  Change Avatar
+                </Button>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   JPG, GIF or PNG. 1MB max.
                 </p>
@@ -182,7 +185,13 @@ function PersonalInformation({ user }: { user: User }) {
             </div>
           </div>
           <div className="mt-8 flex">
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button
+              type="submit"
+              variant="expandIcon"
+              icon={faPaperPlane}
+              isLoading={isSubmitting}
+              iconPlacement="right"
+            >
               Save Changes
             </Button>
           </div>

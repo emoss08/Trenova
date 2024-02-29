@@ -17,7 +17,15 @@
 
 import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { faPaintBrush } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { useInteractOutside } from "react-aria";
 import { HexColorPicker } from "react-colorful";
@@ -84,7 +92,7 @@ export function ColorField<T extends FieldValues>({
         />
         {field.value && (
           <>
-            <div className="absolute inset-y-0 right-10 my-2 h-6 w-[1px] bg-border" />
+            <div className="bg-border absolute inset-y-0 right-10 my-2 h-6 w-[1px]" />
             <div
               className="absolute right-0 top-0 mx-2 mt-2 size-5 rounded-xl"
               style={{ backgroundColor: field.value }}
@@ -95,11 +103,11 @@ export function ColorField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
       {showPicker && (
-        <div ref={popoverRef} className="absolute z-100 mt-2 w-auto">
+        <div ref={popoverRef} className="z-100 absolute mt-2 w-auto">
           <HexColorPicker
             color={field.value}
             onChange={handleColorPickerChange}
@@ -107,5 +115,74 @@ export function ColorField<T extends FieldValues>({
         </div>
       )}
     </div>
+  );
+}
+
+export function GradientPicker({
+  background,
+  setBackground,
+  className,
+}: {
+  background: string;
+  setBackground: (background: string) => void;
+  className?: string;
+}) {
+  // TODO(WOLFRED): Add more colors
+  const solids = [
+    "#E2E2E2",
+    "#ff75c3",
+    "#ffa647",
+    "#ffe83f",
+    "#9fff5b",
+    "#70e2ff",
+    "#cd93ff",
+    "#09203f",
+  ];
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "w-full justify-start text-left font-normal truncate",
+            !background && "text-muted-foreground",
+            className,
+          )}
+        >
+          <div className="flex w-full items-center gap-2">
+            {background ? (
+              <div
+                className="size-4 rounded !bg-cover !bg-center transition-all"
+                style={{ background }}
+              ></div>
+            ) : (
+              <FontAwesomeIcon icon={faPaintBrush} className="size-4" />
+            )}
+            <div className="flex-1 truncate">
+              {background ? background : "Pick a color"}
+            </div>
+          </div>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64">
+        <div className="mt-0 flex flex-wrap gap-1">
+          {solids.map((s) => (
+            <div
+              key={s}
+              style={{ background: s }}
+              className="size-6 cursor-pointer rounded-md active:scale-105"
+              onClick={() => setBackground(s)}
+            />
+          ))}
+        </div>
+        <Input
+          id="custom"
+          value={background}
+          className="col-span-2 mt-4 h-8"
+          onChange={(e) => setBackground(e.currentTarget.value)}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

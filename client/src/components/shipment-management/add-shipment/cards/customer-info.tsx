@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { AsyncSelectInput } from "@/components/common/fields/select-input";
+import { SelectInput } from "@/components/common/fields/select-input";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
 import { useCustomers } from "@/hooks/useQueries";
 import { ShipmentFormValues } from "@/types/shipment";
@@ -42,10 +42,8 @@ export default function CustomerInformation() {
       <div className="p-4">
         <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="col-span-2">
-            <AsyncSelectInput
-              link="/customers/"
+            <SelectInput
               name="customer"
-              valueKey="code"
               control={control}
               options={selectCustomersData}
               isLoading={isCustomersLoading}

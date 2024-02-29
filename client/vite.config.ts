@@ -17,12 +17,14 @@
 
 import react from "@vitejs/plugin-react-swc";
 import { visualizer } from "rollup-plugin-visualizer";
+import million from "million/compiler";
 
 import path from "path";
 import { defineConfig, type PluginOption } from "vite";
 
 export default defineConfig({
   plugins: [
+    million.vite({ auto: true }),
     react(),
     visualizer({
       open: true,

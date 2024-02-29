@@ -44,6 +44,15 @@ export type DataTableProps<K> = {
   renderSubComponent?: (props: { row: Row<K> }) => React.ReactElement;
   extraSearchParams?: Record<string, any>;
   addPermissionName: string;
+
+  /**
+   * The content to render in the floating bar on row selection, at the bottom of the table. When null, the floating bar is not rendered.
+   * The datTable instance is passed as a prop to the floating bar content.
+   * @default null
+   * @type React.ReactNode | null
+   * @example floatingBarContent={TasksTableFloatingBarContent(dataTable)}
+   */
+  floatingBarContent?: React.ReactNode | null;
 };
 
 export type TableSheetProps = {

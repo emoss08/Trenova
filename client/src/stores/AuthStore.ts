@@ -40,7 +40,6 @@ const createStore = (set: SetState<AuthState>) => ({
   reset: () => set({ isAuthenticated: false }),
 });
 
-// TODO(WOLFRED): Switch this to createGlobalStore once we have a way to persist global stores
 export const useAuthStore = create<AuthState>(
   persist(createStore, {
     name: "Trenova-auth-storage",

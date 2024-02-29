@@ -18,14 +18,11 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
 import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
 import { Badge } from "@/components/ui/badge";
-import { tableStatusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { DelayCode } from "@/types/dispatch";
-import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
 function CarrierOrDriverBadge({

@@ -30,11 +30,6 @@ import {
   ColumnFilter,
   ColumnFiltersState,
   ColumnSort,
-  OnChangeFn,
-  PaginationState,
-  RowSelectionState,
-  SortingState,
-  VisibilityState,
   getCoreRowModel,
   getExpandedRowModel,
   getFacetedRowModel,
@@ -42,7 +37,12 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  OnChangeFn,
+  PaginationState,
+  RowSelectionState,
+  SortingState,
   useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
 import React, { SetStateAction } from "react";
 import { DataTableBody } from "./data-table-body";
@@ -155,6 +155,7 @@ export function DataTable<TData extends Record<string, any>>({
   renderSubComponent,
   getRowCanExpand,
   addPermissionName,
+  floatingBarContent,
 }: DataTableProps<TData>) {
   const {
     pagination,
