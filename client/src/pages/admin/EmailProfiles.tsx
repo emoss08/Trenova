@@ -20,10 +20,10 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
-import { EmailProfileDialog } from "@/components/email-profile/email-profile-table-dialog";
-import { EmailProfileTableEditDialog } from "@/components/email-profile/email-profile-table-edit-dialog";
 import { EmailProfile } from "@/types/organization";
 import { ColumnDef } from "@tanstack/react-table";
+import { EmailProfileDialog } from "@/components/email-profile-table-dialog";
+import { EmailProfileTableEditDialog } from "@/components/email-profile-table-edit-dialog";
 
 const columns: ColumnDef<EmailProfile>[] = [
   {

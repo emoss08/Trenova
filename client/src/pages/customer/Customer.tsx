@@ -18,12 +18,12 @@
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
-import { CustomerTableSheet } from "@/components/customer/customer-table-dialog";
-import { CustomerTableEditSheet } from "@/components/customer/customer-table-edit-dialog";
 import { Customer } from "@/types/customer";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { CustomerTableSub } from "@/components/customer/customer-table-sub";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { CustomerTableSheet } from "@/components/customer-table-dialog";
+import { CustomerTableEditSheet } from "@/components/customer-table-edit-dialog";
+import { CustomerTableSub } from "@/components/customer-table-sub";
 
 const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
   return <CustomerTableSub row={row} />;

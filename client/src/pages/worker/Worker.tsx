@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CommodityDialog } from "@/components/commodities/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 import { Worker } from "@/types/worker";
 import { ColumnDef } from "@tanstack/react-table";
+import { CommodityDialog } from "@/components/commodity-dialog";
+import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 
 const columns: ColumnDef<Worker>[] = [
   {

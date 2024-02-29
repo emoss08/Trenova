@@ -18,12 +18,15 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { DelayCodeEditDialog } from "@/components/delay-codes/delay-code-edit-table-dialog";
-import { DelayCodeDialog } from "@/components/delay-codes/delay-code-table-dialog";
 import { Badge } from "@/components/ui/badge";
 import { truncateText } from "@/lib/utils";
 import { DelayCode } from "@/types/dispatch";
 import { ColumnDef } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { FilterConfig } from "@/types/tables";
+import { tableStatusChoices } from "@/lib/choices";
+import { DelayCodeDialog } from "@/components/delay-code-table-dialog";
+import { DelayCodeEditDialog } from "@/components/delay-code-edit-table-dialog";
 
 function CarrierOrDriverBadge({
   carrierOrDriver,
@@ -102,11 +105,6 @@ const filters: FilterConfig<DelayCode>[] = [
     columnName: "status",
     title: "Status",
     options: tableStatusChoices,
-  },
-  {
-    columnName: "fCarrierOrDriver",
-    title: "Fault of Carrier Or Driver",
-    options: yesAndNoChoicesBoolean,
   },
 ];
 

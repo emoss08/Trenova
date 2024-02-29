@@ -19,12 +19,12 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { DCDialog } from "@/components/division-codes/dc-table-dialog";
-import { DCTableEditDialog } from "@/components/division-codes/dc-table-edit-dialog";
-import { tableStatusChoices } from "@/lib/constants";
+import { DivisionCodeDialog } from "@/components/division-code-table-dialog";
 import { DivisionCode } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
+import { DivisionCodeTableEditDialog } from "@/components/division-code-table-edit-dialog";
+import { tableStatusChoices } from "@/lib/choices";
 
 const columns: ColumnDef<DivisionCode>[] = [
   {
@@ -92,8 +92,8 @@ export default function DivisionCodes() {
       exportModelName="DivisionCode"
       filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={DCDialog}
-      TableEditSheet={DCTableEditDialog}
+      TableSheet={DivisionCodeDialog}
+      TableEditSheet={DivisionCodeTableEditDialog}
     />
   );
 }

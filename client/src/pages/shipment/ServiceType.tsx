@@ -18,13 +18,13 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ServiceTypeEditDialog } from "@/components/service-type/st-edit-table-dialog";
-import { ServiceTypeDialog } from "@/components/service-type/st-table-dialog";
-import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { ServiceType } from "@/types/shipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { tableStatusChoices } from "@/lib/choices";
+import { ServiceTypeDialog } from "@/components/service-type-table-dialog";
+import { ServiceTypeEditDialog } from "@/components/service-type-edit-table-dialog";
 
 const columns: ColumnDef<ServiceType>[] = [
   {

@@ -19,13 +19,13 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ShipmentTypeDialog } from "@/components/shipment-types/ship-type-table-dialog";
-import { ShipmentTypeEditDialog } from "@/components/shipment-types/ship-type-table-edit-dialog";
-import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { ShipmentType } from "@/types/shipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { tableStatusChoices } from "@/lib/choices";
+import { ShipmentTypeDialog } from "@/components/ship-type-table-dialog";
+import { ShipmentTypeEditDialog } from "@/components/ship-type-table-edit-dialog";
 
 const columns: ColumnDef<ShipmentType>[] = [
   {

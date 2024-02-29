@@ -23,13 +23,16 @@ import {
   DataTableTooltipColumnHeader,
 } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { TableChangeAlertEditSheet } from "@/components/table-change-alerts/table-change-edit-sheet";
-import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
-import { databaseActionChoices, sourceChoices } from "@/lib/choices";
-import { tableStatusChoices } from "@/lib/constants";
+import {
+  databaseActionChoices,
+  sourceChoices,
+  tableStatusChoices,
+} from "@/lib/choices";
 import { TableChangeAlert } from "@/types/organization";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { TableChangeAlertSheet } from "@/components/table-change-sheet";
+import { TableChangeAlertEditSheet } from "@/components/table-change-edit-sheet";
 
 const columns: ColumnDef<TableChangeAlert>[] = [
   {

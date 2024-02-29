@@ -142,7 +142,7 @@ export function DCForm({
   );
 }
 
-export function DCDialog({ onOpenChange, open }: TableSheetProps) {
+export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),

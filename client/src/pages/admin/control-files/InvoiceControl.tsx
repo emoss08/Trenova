@@ -18,9 +18,7 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const InvoiceControl = lazy(
-  () => import("@/components/control-files/invoice-control"),
-);
+const InvoiceControl = lazy(() => import("@/components/invoice-control"));
 
 export default function InvoiceControlPage() {
   return (

@@ -114,7 +114,7 @@ export function RCForm({
   );
 }
 
-export function RCDialog({ onOpenChange, open }: TableSheetProps) {
+export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, reset, handleSubmit } = useForm<FormValues>({

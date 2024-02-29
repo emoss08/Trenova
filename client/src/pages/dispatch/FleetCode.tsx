@@ -21,9 +21,9 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
-import { FleetCodeDialog } from "@/components/fleet-codes/fleet-code-table-dialog";
-import { FleetCodeEditDialog } from "@/components/fleet-codes/fleet-code-table-edit-dialog";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { FleetCodeDialog } from "@/components/fleet-code-table-dialog";
+import { FleetCodeEditDialog } from "@/components/fleet-code-table-edit-dialog";
 
 const columns: ColumnDef<FleetCode>[] = [
   {
