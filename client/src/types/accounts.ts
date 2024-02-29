@@ -15,8 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobFunctionChoiceProps } from "@/lib/choices";
-import { TimezoneChoices } from "@/lib/constants";
+import { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 
 export type UserProfile = {

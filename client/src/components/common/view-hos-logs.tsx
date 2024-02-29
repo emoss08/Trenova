@@ -23,6 +23,7 @@ import {
   DialogDescription,
   DialogHeader,
 } from "../ui/dialog";
+import { TableSheetProps } from "@/types/tables";
 
 const hours = [
   "Midnight",

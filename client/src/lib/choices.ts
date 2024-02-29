@@ -484,7 +484,7 @@ export const sourceChoices = [
   { value: "POSTGRES", label: "Postgres" },
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
 
-/** Type for RatingMethod for Shipment */
+/** Type for RatingMethodW for Shipment */
 export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
 
 export const ratingMethodChoices = [
