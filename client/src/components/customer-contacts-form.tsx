@@ -19,7 +19,6 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { booleanStatusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
-import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
@@ -28,6 +27,7 @@ import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { faPerson } from "@fortawesome/pro-duotone-svg-icons";
 
 export function CustomerContactForm() {
   const { control, watch } = useFormContext<FormValues>();
@@ -151,7 +151,7 @@ export function CustomerContactForm() {
                     <div className="min-h-[4em]">
                       <Button
                         size="sm"
-                        className="bg-background text-red-600 hover:bg-background hover:text-red-700"
+                        variant="linkHover2"
                         type="button"
                         onClick={() => remove(index)}
                       >
@@ -174,10 +174,14 @@ export function CustomerContactForm() {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="text-6xl mb-4">
-              <FontAwesomeIcon icon={faTriangleExclamation} />
-            </span>
-            <p className="mb-4">No contacts yet. Please add a new contacts.</p>
+            <FontAwesomeIcon
+              icon={faPerson}
+              className="size-10 fill-foreground"
+            />
+            <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
+              You have not added any contacts. Add one below.
+            </p>
             <Button type="button" size="sm" onClick={handleAddContact}>
               Add Contact
             </Button>

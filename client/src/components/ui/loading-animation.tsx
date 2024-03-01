@@ -15,21 +15,42 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/lib/useGlobalStore";
-import { RouteObjectWithPermission } from "@/routing/AppRoutes";
+import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
-interface BreadcrumbStoreType {
-  currentRoute: RouteObjectWithPermission | null;
-  loading: boolean;
-}
-
-export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
-  currentRoute: {
-    title: "",
-    group: "",
-    subMenu: "",
-    path: "",
-    isPublic: false,
+const AnimationVariants = cva(
+  "direction-alternate bg-primary-foreground size-1 animate-pulse rounded-full duration-700",
+  {
+    variants: {
+      size: {
+        default: "size-1",
+        md: "size-2",
+        lg: "size-3",
+        xl: "size-4",
+        xxl: "size-5",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
   },
-  loading: false,
-});
+);
+
+type LoadingAnimationProps = {
+  className?: string;
+  size?: "md" | "lg" | "xl" | "xxl";
+};
+
+export function LoadingAnimation({ className, size }: LoadingAnimationProps) {
+  return (
+    <div className={cn("flex items-center justify-center gap-1", className)}>
+      <div className={AnimationVariants({ size })} />
+      <div
+        className={cn(AnimationVariants({ size }), "delay-150 duration-700")}
+      />
+      <div
+        className={cn(AnimationVariants({ size }), "delay-300 duration-700")}
+      />
+    </div>
+  );
+}

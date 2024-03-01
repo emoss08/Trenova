@@ -17,18 +17,16 @@
 
 import {
   Control,
-  UseFieldArrayRemove,
   useFieldArray,
+  UseFieldArrayRemove,
   useFormContext,
 } from "react-hook-form";
 
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
 import { CustomerFormValues } from "@/types/customer";
-import {
-  faInfo,
-  faTriangleExclamation,
-} from "@fortawesome/pro-regular-svg-icons";
+import { faRoadCircleXmark } from "@fortawesome/pro-duotone-svg-icons";
+import { faInfo } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { TimeField } from "./common/fields/input";
@@ -40,7 +38,7 @@ import { ScrollArea } from "./ui/scroll-area";
 function DeliverySlotAlert() {
   return (
     <Alert className="my-2">
-      <FontAwesomeIcon icon={faInfo} className="size-5" />
+      <FontAwesomeIcon icon={faInfo} className="size-4" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -137,7 +135,7 @@ function DeliverySlotItem({
         <div className="min-h-[2em]">
           <Button
             size="sm"
-            variant="link"
+            variant="linkHover2"
             type="button"
             onClick={() => remove(index)}
           >
@@ -200,11 +198,15 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <span className="mb-4 text-6xl">
-              <FontAwesomeIcon icon={faTriangleExclamation} />
-            </span>
-            <p className="mb-4">
-              No delivery slots yet. Please add a new devliery slot.
+            <FontAwesomeIcon
+              icon={faRoadCircleXmark}
+              className="fill-foreground size-10"
+            />
+            <h3 className="mt-4 text-lg font-semibold">
+              No Delivery Slot added
+            </h3>
+            <p className="text-muted-foreground mb-4 mt-2 text-sm">
+              You have not added any delivery slots. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddSlot}>
               Add Delivery Slot

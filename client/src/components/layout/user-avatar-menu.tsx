@@ -39,7 +39,6 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { KBD } from "../ui/kbd";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -225,7 +225,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
 
   return (
     <>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="truncate text-sm font-medium leading-none">
@@ -241,30 +241,24 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
             Account Settings
             <DropdownMenuShortcut>
-              <KBD>
-                <span className="tracking-tight">Ctrl</span>
-              </KBD>
-              <KBD>
-                <span>B</span>
-              </KBD>
+              <ShortcutsProvider os="mac">
+                <KeyCombo keyNames={[Keys.Control, "B"]} />
+              </ShortcutsProvider>
             </DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
             Inbox
             <DropdownMenuShortcut>
-              <KBD>
-                <span className="tracking-tight">Ctrl</span>
-              </KBD>
-              <KBD>
-                <span>H</span>
-              </KBD>
+              <ShortcutsProvider os="mac">
+                <KeyCombo keyNames={[Keys.Control, "H"]} />
+              </ShortcutsProvider>
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
           <DropdownMenuPortal>
-            <DropdownMenuSubContent>
+            <DropdownMenuSubContent sideOffset={10}>
               <DropdownMenuItem onClick={() => switchTheme("light")}>
                 Light
               </DropdownMenuItem>
@@ -285,12 +279,9 @@ function UserAvatarMenuContent({ user }: { user: User }) {
         <DropdownMenuItem onClick={() => setSignOutDialogOpen(true)}>
           Log out
           <DropdownMenuShortcut>
-            <KBD>
-              <span className="tracking-tight">Ctrl</span>
-            </KBD>
-            <KBD>
-              <span>Q</span>
-            </KBD>
+            <ShortcutsProvider os="mac">
+              <KeyCombo keyNames={[Keys.Control, "Q"]} />
+            </ShortcutsProvider>
           </DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>

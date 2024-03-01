@@ -27,107 +27,24 @@ import { cn } from "@/lib/utils";
 import { faPaintBrush } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
-import { useInteractOutside } from "react-aria";
-import { HexColorPicker } from "react-colorful";
-import { ColorInputBaseProps } from "react-colorful/dist/types";
 import {
   FieldValues,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 import { FieldErrorMessage } from "./error-message";
 
-export type ColorFieldProps<T extends FieldValues> = {
+export function GradientPicker<TFieldValues extends FieldValues>({
+  className,
+  ...props
+}: {
+  className?: string;
   label?: string;
   description?: string;
-} & UseControllerProps<T> &
-  Omit<ColorInputBaseProps, "onChange">;
-
-export function ColorField<T extends FieldValues>({
-  ...props
-}: ColorFieldProps<T>) {
-  const [showPicker, setShowPicker] = React.useState<boolean>(false);
-  const popoverRef = React.useRef<HTMLDivElement>(null);
+} & UseControllerProps<TFieldValues>) {
   const { field, fieldState } = useController(props);
 
-  useInteractOutside({
-    ref: popoverRef,
-    onInteractOutside: () => {
-      setShowPicker(false);
-    },
-  });
-
-  // Handler for HexColorPicker
-  const handleColorPickerChange = (newColor: string) => {
-    field.onChange(newColor);
-  };
-
-  // Handler for Input
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    field.onChange(event.target.value);
-  };
-
-  return (
-    <div className="relative">
-      {props.label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-        >
-          {props.label}
-        </Label>
-      )}
-      <div className="relative w-full" onClick={() => setShowPicker(true)}>
-        <Input
-          {...field}
-          className={cn(
-            fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-            props.className,
-          )}
-          onChange={handleInputChange}
-          {...props}
-        />
-        {field.value && (
-          <>
-            <div className="bg-border absolute inset-y-0 right-10 my-2 h-6 w-[1px]" />
-            <div
-              className="absolute right-0 top-0 mx-2 mt-2 size-5 rounded-xl"
-              style={{ backgroundColor: field.value }}
-            />
-          </>
-        )}
-        {fieldState.invalid && (
-          <FieldErrorMessage formError={fieldState.error?.message} />
-        )}
-        {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
-        )}
-      </div>
-      {showPicker && (
-        <div ref={popoverRef} className="z-100 absolute mt-2 w-auto">
-          <HexColorPicker
-            color={field.value}
-            onChange={handleColorPickerChange}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function GradientPicker({
-  background,
-  setBackground,
-  className,
-}: {
-  background: string;
-  setBackground: (background: string) => void;
-  className?: string;
-}) {
-  // TODO(WOLFRED): Add more colors
+  // Define the solid colors array
   const solids = [
     "#E2E2E2",
     "#ff75c3",
@@ -139,48 +56,72 @@ export function GradientPicker({
     "#09203f",
   ];
 
+  // Handler to update the field value
+  const handleChange = (newColor: string) => {
+    field.onChange(newColor);
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal truncate",
-            !background && "text-muted-foreground",
-            className,
+        <div className="relative">
+          {props.label && (
+            <Label
+              className={cn(
+                "text-sm font-medium",
+                props.rules?.required && "required",
+              )}
+            >
+              {props.label}
+            </Label>
           )}
-        >
-          <div className="flex w-full items-center gap-2">
-            {background ? (
-              <div
-                className="size-4 rounded !bg-cover !bg-center transition-all"
-                style={{ background }}
-              ></div>
-            ) : (
-              <FontAwesomeIcon icon={faPaintBrush} className="size-4" />
+          <Button
+            variant={"outline"}
+            type="button"
+            className={cn(
+              "w-full justify-start text-left font-normal truncate",
+              !field.value && "text-muted-foreground",
+              className,
             )}
-            <div className="flex-1 truncate">
-              {background ? background : "Pick a color"}
+          >
+            <div className="flex w-full items-center gap-2">
+              {field.value ? (
+                <div
+                  className="size-4 rounded !bg-cover !bg-center transition-all"
+                  style={{ background: field.value }}
+                ></div>
+              ) : (
+                <FontAwesomeIcon icon={faPaintBrush} className="size-4" />
+              )}
+              <div className="flex-1 truncate">
+                {field.value ? field.value : "Pick a color"}
+              </div>
             </div>
-          </div>
-        </Button>
+            {fieldState.invalid && (
+              <FieldErrorMessage formError={fieldState.error?.message} />
+            )}
+            {props.description && !fieldState.invalid && (
+              <p className="text-xs text-foreground/70">{props.description}</p>
+            )}
+          </Button>
+        </div>
       </PopoverTrigger>
       <PopoverContent className="w-64">
         <div className="mt-0 flex flex-wrap gap-1">
-          {solids.map((s) => (
+          {solids.map((color) => (
             <div
-              key={s}
-              style={{ background: s }}
+              key={color}
+              style={{ background: color }}
               className="size-6 cursor-pointer rounded-md active:scale-105"
-              onClick={() => setBackground(s)}
+              onClick={() => handleChange(color)}
             />
           ))}
         </div>
         <Input
           id="custom"
-          value={background}
+          value={field.value || ""}
           className="col-span-2 mt-4 h-8"
-          onChange={(e) => setBackground(e.currentTarget.value)}
+          onChange={(e) => field.onChange(e.target.value)}
         />
       </PopoverContent>
     </Popover>

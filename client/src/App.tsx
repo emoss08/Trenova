@@ -43,11 +43,7 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const { isVerifying, isInitializationComplete } = useVerifyToken();
-
-  const initialLoading = useAuthStore(
-    (state: { initialLoading: boolean }) => state.initialLoading,
-  );
-
+  const initialLoading = useAuthStore((state) => state.initialLoading);
   const isLoading = isVerifying || initialLoading || !isInitializationComplete;
 
   if (isLoading) {
@@ -63,20 +59,18 @@ export default function App() {
   );
 }
 
-const AppImpl = memo(() => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter future={{ v7_startTransition: true }}>
-        <Suspense fallback={<LoadingSkeleton />}>
-          <ProtectedRoutes />
-        </Suspense>
-      </BrowserRouter>
+const AppImpl = memo(() => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <Suspense fallback={<LoadingSkeleton />}>
+        <ProtectedRoutes />
+      </Suspense>
       {ENVIRONMENT === "local" && (
         <ReactQueryDevtools
           buttonPosition="bottom-left"
           initialIsOpen={false}
         />
       )}
-    </QueryClientProvider>
-  );
-});
+    </BrowserRouter>
+  </QueryClientProvider>
+));

@@ -107,6 +107,7 @@ const DocumentClassPage = lazy(
 const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 
 export type RouteObjectWithPermission = RouteObject & {
+  key?: string;
   title: string;
   group: string;
   subMenu?: string;
@@ -114,6 +115,11 @@ export type RouteObjectWithPermission = RouteObject & {
   description?: string;
   excludeFromMenu?: boolean;
   permission?: string;
+
+  /**
+   * If true, the route is accessible without authentication
+   */
+  isPublic: boolean;
 };
 
 export const routes: RouteObjectWithPermission[] = [
@@ -123,6 +129,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/",
     description: "Get to the main page",
     element: <HomePage />,
+    isPublic: false,
   },
   // Authentication Pages
   {
@@ -131,6 +138,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/login",
     element: <LoginPage />,
     excludeFromMenu: true,
+    isPublic: true,
   },
   {
     title: "Reset Password",
@@ -138,6 +146,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/reset-password",
     element: <ResetPasswordPage />,
     excludeFromMenu: true,
+    isPublic: true,
   },
   // User Pages
   {
@@ -146,6 +155,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/account/settings/",
     element: <UserSettingsPage />,
     excludeFromMenu: true,
+    isPublic: false,
   },
   {
     title: "User Preferences",
@@ -153,6 +163,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/account/settings/preferences",
     element: <UserPreferencesPage />,
     excludeFromMenu: true,
+    isPublic: false,
   },
   // Accounting Pages
   {
@@ -163,6 +174,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage division codes",
     element: <DivisionCodesPage />,
     permission: "view_divisioncode",
+    isPublic: false,
   },
   {
     title: "Revenue Codes",
@@ -172,6 +184,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage revenue codes",
     element: <RevenueCodesPage />,
     permission: "view_revenuecode",
+    isPublic: false,
   },
   {
     title: "General Ledger Accounts",
@@ -181,6 +194,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage general ledger accounts",
     element: <GLAccountsPage />,
     permission: "view_generalledgeraccount",
+    isPublic: false,
   },
   // Billing Pages
   {
@@ -191,6 +205,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage charge types",
     element: <ChargeTypePage />,
     permission: "view_chargetype",
+    isPublic: false,
   },
   {
     title: "Document Classifications",
@@ -200,6 +215,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage document classifications",
     element: <DocumentClassPage />,
     permission: "view_documentclassification",
+    isPublic: false,
   },
   {
     title: "Accessorial Charges",
@@ -209,6 +225,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage accessorial charges",
     element: <AccessorialChargePage />,
     permission: "view_accessorialcharge",
+    isPublic: false,
   },
   // Customer Page
   {
@@ -219,6 +236,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage customers",
     element: <CustomerPage />,
     permission: "customer.view_customer",
+    isPublic: false,
   },
   // Dispatch pages
   {
@@ -229,6 +247,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Delay Codes",
     element: <DelayCodePage />,
     permission: "view_delaycode",
+    isPublic: false,
   },
   {
     title: "Fleet Codes",
@@ -238,6 +257,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Fleet Codes",
     element: <FleetCodePage />,
     permission: "view_fleetcode",
+    isPublic: false,
   },
   {
     title: "Workers",
@@ -247,6 +267,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Workers",
     element: <WorkerPage />,
     permission: "view_worker",
+    isPublic: false,
   },
   {
     title: "Comment Types",
@@ -256,6 +277,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Comment Types",
     element: <CommentTypePage />,
     permission: "view_commenttype",
+    isPublic: false,
   },
   {
     title: "Location Categories",
@@ -264,6 +286,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Location Categories",
     element: <LocationCategoryPage />,
     permission: "view_locationcategory",
+    isPublic: false,
   },
   {
     title: "Equipment Types",
@@ -273,6 +296,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Equipment Types",
     element: <EquipmentTypePage />,
     permission: "view_equipmenttype",
+    isPublic: false,
   },
   {
     title: "Equipment Manufacturers",
@@ -282,6 +306,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Equipment Manufacturer",
     element: <EquipmentManufacturerPage />,
     permission: "view_equipmentmanufacturer",
+    isPublic: false,
   },
   {
     title: "Trailers",
@@ -291,6 +316,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Trailer",
     element: <TrailerPage />,
     permission: "view_trailer",
+    isPublic: false,
   },
   {
     title: "Tractors",
@@ -300,6 +326,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Tractor",
     element: <TractorPage />,
     permission: "view_tractor",
+    isPublic: false,
   },
   {
     title: "Locations",
@@ -309,6 +336,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Locations",
     element: <LocationPage />,
     permission: "view_location",
+    isPublic: false,
   },
   // Shipment Pages
   {
@@ -318,6 +346,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Management",
     element: <ShipmentManagementPage />,
     permission: "view_shipment",
+    isPublic: false,
   },
   {
     title: "Add New Shipment",
@@ -326,6 +355,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Add New Shipment",
     element: <AddShipmentPage />,
     permission: "add_shipment",
+    isPublic: false,
   },
   {
     title: "Commodity Codes",
@@ -335,6 +365,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage Commodity Codes",
     element: <CommodityPage />,
     permission: "view_commodity",
+    isPublic: false,
   },
   {
     title: "Hazaroudous Material",
@@ -344,6 +375,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage Hazardous Material",
     element: <HazardousMaterialPage />,
     permission: "view_hazardousmaterial",
+    isPublic: false,
   },
   {
     title: "Service Types",
@@ -353,6 +385,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Service Types",
     element: <ServiceTypePage />,
     permission: "view_servicetype",
+    isPublic: false,
   },
   {
     title: "Shipment Type",
@@ -362,6 +395,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Types",
     element: <ShipmentTypePage />,
     permission: "view_shipmenttype",
+    isPublic: false,
   },
   {
     title: "Reason Code",
@@ -371,6 +405,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Reason Codes",
     element: <ReasonCodePage />,
     permission: "view_reasoncode",
+    isPublic: false,
   },
   // Stop Pages
   {
@@ -381,6 +416,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Qualifier Codes",
     element: <QualifierCodePage />,
     permission: "view_qualifiercode",
+    isPublic: false,
   },
   // Admin Pages
   {
@@ -390,6 +426,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Admin Dashboard",
     element: <AdminPage />,
     permission: "view_admin_dashboard",
+    isPublic: false,
   },
   {
     title: "Feature Management",
@@ -398,6 +435,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Feature Flag Management",
     element: <FeatureManagementPage />,
     permission: "view_organizationfeatureflag",
+    isPublic: false,
   },
   {
     title: "Accounting Control",
@@ -406,6 +444,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Accounting Controls",
     element: <AccountingControlPage />,
     permission: "view_accountingcontrol",
+    isPublic: false,
   },
   {
     title: "Billing Control",
@@ -414,6 +453,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Billing Controls",
     element: <BillingControlPage />,
     permission: "view_billingcontrol",
+    isPublic: false,
   },
   {
     title: "Invoice Control",
@@ -422,6 +462,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Invoice Controls",
     element: <InvoiceControlPage />,
     permission: "view_invoicecontrol",
+    isPublic: false,
   },
   {
     title: "Dispatch Control",
@@ -430,6 +471,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Dispatch Controls",
     element: <DispatchControlPage />,
     permission: "view_dispatchcontrol",
+    isPublic: false,
   },
   {
     title: "Shipment Control",
@@ -438,6 +480,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Controls",
     element: <ShipmentControlPage />,
     permission: "view_shipmentcontrol",
+    isPublic: false,
   },
   {
     title: "Route Control",
@@ -446,6 +489,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Route Controls",
     element: <RouteControlPage />,
     permission: "view_routecontrol",
+    isPublic: false,
   },
   {
     title: "Feasibility Control",
@@ -454,6 +498,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Feasibility Controls",
     element: <FeasibilityControlPage />,
     permission: "view_feasibilitytoolcontrol",
+    isPublic: false,
   },
   {
     title: "Email Control",
@@ -462,6 +507,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Controls",
     element: <EmailControlPage />,
     permission: "view_emailcontrol",
+    isPublic: false,
   },
   {
     title: "Email Profiles",
@@ -470,6 +516,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Profiles",
     element: <EmailProfilePage />,
     permission: "view_emailprofile",
+    isPublic: false,
   },
   {
     title: "Google API",
@@ -478,6 +525,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Google API",
     element: <GoogleAPIPage />,
     permission: "view_googleapi",
+    isPublic: false,
   },
   {
     title: "Table Change Alerts",
@@ -486,6 +534,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Table Change Alerts",
     element: <TableChangeAlertPage />,
     permission: "view_tablechangealert",
+    isPublic: false,
   },
   {
     title: "Data Retention",
@@ -494,6 +543,7 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Data Retention",
     element: <DataRetentionPage />,
     permission: "view_dataretention",
+    isPublic: false,
   },
   // Error Page
   {
@@ -502,5 +552,6 @@ export const routes: RouteObjectWithPermission[] = [
     path: "*",
     element: <ErrorPage />,
     excludeFromMenu: true,
+    isPublic: false,
   },
 ];

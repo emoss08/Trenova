@@ -15,15 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import MillionCompiler from "@million/lint";
 import react from "@vitejs/plugin-react-swc";
-import { visualizer } from "rollup-plugin-visualizer";
 import million from "million/compiler";
-
 import path from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
 
 export default defineConfig({
   plugins: [
+    MillionCompiler.vite(),
     million.vite({ auto: true }),
     react(),
     visualizer({

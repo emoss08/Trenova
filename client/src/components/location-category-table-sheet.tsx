@@ -75,8 +75,10 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
             description="Color Code of the Location Category"
           /> */}
           <GradientPicker
-            background={background}
-            setBackground={setBackground}
+            name="color"
+            label="Color"
+            description="Color Code of the Location Category"
+            control={control}
           />
         </div>
       </div>

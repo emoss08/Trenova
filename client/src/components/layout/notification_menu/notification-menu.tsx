@@ -109,8 +109,6 @@ function NotificationButton({
           <Button
             size="icon"
             variant="outline"
-            role="button"
-            aria-label="Open Application Grid"
             aria-expanded={open}
             className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
           >
@@ -324,11 +322,13 @@ export function NotificationMenu() {
       open={notificationsMenuOpen}
       onOpenChange={setNotificationMenuOpen}
     >
-      <PopoverTrigger>
-        <NotificationButton
-          userHasNotifications={userHasNotifications}
-          open={notificationsMenuOpen}
-        />
+      <PopoverTrigger asChild>
+        <span>
+          <NotificationButton
+            userHasNotifications={userHasNotifications}
+            open={notificationsMenuOpen}
+          />
+        </span>
       </PopoverTrigger>
       <PopoverContent
         className="w-80 bg-popover p-3"

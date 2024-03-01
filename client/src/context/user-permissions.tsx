@@ -14,8 +14,11 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
+//
+//const isAdmin = useUserStore.get("user").isStaff;
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 
 export type UserPermissionsContextType = {
   isAuthenticated: boolean;
@@ -31,16 +34,27 @@ export const UserPermissionsProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = useUserStore.get("user").isStaff;
-  const permissions = useUserStore.get("user").userPermissions || [];
+  const user = useUserStore.get("user");
+  const isAdmin = user?.isStaff ?? false;
+  const permissions = user?.userPermissions || [];
 
-  const userHasPermission = (permission: string) =>
-    isAdmin || permissions.includes(permission);
+  const userHasPermission = useMemo(
+    () => (permission: string) => isAdmin || permissions.includes(permission),
+    [isAdmin, permissions],
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      isAuthenticated,
+      isAdmin,
+      permissions,
+      userHasPermission,
+    }),
+    [isAuthenticated, isAdmin, permissions, userHasPermission],
+  );
 
   return (
-    <UserPermissionsContext.Provider
-      value={{ isAuthenticated, isAdmin, permissions, userHasPermission }}
-    >
+    <UserPermissionsContext.Provider value={contextValue}>
       {children}
     </UserPermissionsContext.Provider>
   );

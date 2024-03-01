@@ -88,12 +88,12 @@ export interface Shipment extends BaseModel {
   serviceType?: string | null;
   status: ShipmentStatusChoiceProps;
   revenueCode?: string | null;
-  originLocation?: string | null;
-  originAddress?: string | null;
+  originAddress?: string;
+  originLocation?: string;
   originAppointmentWindowStart: string;
   originAppointmentWindowEnd: string;
-  destinationLocation?: string | null;
-  destinationAddress?: string | null;
+  destinationLocation?: string;
+  destinationAddress?: string;
   destinationAppointmentWindowStart: string;
   destinationAppointmentWindowEnd: string;
   ratingUnits: number;

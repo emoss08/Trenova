@@ -46,46 +46,40 @@ export const stopSchema: yup.ObjectSchema<StopFormValues> = yup.object().shape({
   status: yup
     .string<ShipmentStatusChoiceProps>()
     .required("Status is required"),
-  sequence: yup.number().notRequired(),
-  movement: yup.string().notRequired(),
-  location: yup
-    .string()
-    .nullable()
-    .test({
-      name: "location-or-address",
-      exclusive: false,
-      message: "Either Stop Location or Stop Address is required.",
-      test: function (value) {
-        return (
-          (value !== null && value !== "") ||
-          (this.parent.addressLine !== null && this.parent.addressLine !== "")
-        );
-      },
-    }),
-  pieces: yup.number().notRequired(),
+  sequence: yup.number(),
+  movement: yup.string(),
+  location: yup.string().test({
+    name: "location-or-address",
+    exclusive: false,
+    message: "Either Stop Location or Stop Address is required.",
+    test: function (value) {
+      return (
+        (value !== null && value !== "") ||
+        (this.parent.addressLine !== null && this.parent.addressLine !== "")
+      );
+    },
+  }),
+  pieces: yup.number(),
   weight: yup.string().required("Weight is required"),
-  addressLine: yup
-    .string()
-    .nullable()
-    .test({
-      name: "location-or-address",
-      exclusive: false,
-      message: "Either Stop Location or Stop Address is required.",
-      test: function (value) {
-        return (
-          (value !== null && value !== "") ||
-          (this.parent.location !== null && this.parent.location !== "")
-        );
-      },
-    }),
+  addressLine: yup.string().test({
+    name: "location-or-address",
+    exclusive: false,
+    message: "Either Stop Location or Stop Address is required.",
+    test: function (value) {
+      return (
+        (value !== null && value !== "") ||
+        (this.parent.location !== null && this.parent.location !== "")
+      );
+    },
+  }),
   appointmentTimeWindowStart: yup
     .string()
     .required("Appointment time window start is required"),
   appointmentTimeWindowEnd: yup
     .string()
     .required("Appointment time window end is required"),
-  arrivalTime: yup.string().notRequired(),
-  departureTime: yup.string().notRequired(),
+  arrivalTime: yup.string(),
+  departureTime: yup.string(),
   stopType: yup.string<StopTypeProps>().required("Stop type is required"),
-  stopComments: yup.array().of(stopCommentSchema).notRequired(),
+  stopComments: yup.array().of(stopCommentSchema),
 });

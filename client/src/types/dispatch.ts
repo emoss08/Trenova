@@ -64,10 +64,10 @@ export interface FleetCode extends BaseModel {
   status: StatusChoiceProps;
   code: string;
   description: string;
-  revenueGoal?: string | null;
-  deadheadGoal?: string | null;
-  mileageGoal?: string | null;
-  manager?: string | null;
+  revenueGoal?: string;
+  deadheadGoal?: string;
+  mileageGoal?: string;
+  manager?: string;
 }
 
 export type FleetCodeFormValues = Omit<
@@ -133,7 +133,7 @@ export type RateBillingTable = {
   id: string;
   rate: string;
   accessorialCharge: string;
-  description?: string | null;
+  description?: string;
   unit: number;
   chargeAmount: number;
   subTotal: number;

@@ -35,7 +35,7 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { lazy, Suspense, useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { stopSchema } from "@/lib/validations/StopSchema";
