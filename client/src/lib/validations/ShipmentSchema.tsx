@@ -131,15 +131,11 @@ export function useShipmentForm({ user }: { user: User }) {
         .test({
           name: "originLocation",
           test: function (value) {
-            if (
+            return !(
               shipmentControlData &&
-              shipmentControlData.enforceOriginDestination
-            ) {
-              if (value === this.parent.destinationLocation) {
-                return false;
-              }
-            }
-            return true;
+              shipmentControlData.enforceOriginDestination &&
+              value === this.parent.destinationLocation
+            );
           },
           message: "Origin and Destination locations cannot be the same.",
         }),
@@ -174,15 +170,11 @@ export function useShipmentForm({ user }: { user: User }) {
         .test({
           name: "destinationLocation",
           test: function (value) {
-            if (
+            return !(
               shipmentControlData &&
-              shipmentControlData.enforceOriginDestination
-            ) {
-              if (value === this.parent.originLocation) {
-                return false;
-              }
-            }
-            return true;
+              shipmentControlData.enforceOriginDestination &&
+              value === this.parent.originLocation
+            );
           },
           message: "Origin and Destination locations cannot be the same.",
         }),

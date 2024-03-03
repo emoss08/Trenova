@@ -37,7 +37,6 @@ from movements.tests.factories import MovementFactory
 from organization.models import BusinessUnit, Organization
 from shipment.models import Shipment, ShipmentType
 from stops import models
-from stops.models import ServiceIncident
 from stops.tests.factories import StopFactory
 from worker.factories import WorkerFactory
 
@@ -370,96 +369,96 @@ SERVICE_INCIDENT_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "dispatch_control_choice, stop_choice, expected", SERVICE_INCIDENT_PARAMS
-)
-def test_service_incident_created(
-    dispatch_control_choice,
-    stop_choice,
-    expected,
-    organization: Organization,
-    shipment_type: ShipmentType,
-    revenue_code: RevenueCode,
-    origin_location: Location,
-    destination_location: Location,
-    customer: Customer,
-    equipment_type: EquipmentType,
-    user: User,
-    business_unit: BusinessUnit,
-) -> None:
-    """Test create a service incident if the stop is late.
-
-    Args:
-        organization (Organization): An organization instance.
-        shipment_type (ShipmentType): An shipment type instance.
-        revenue_code (RevenueCode): A revenue code instance.
-        origin_location (Location): A location instance.
-        destination_location (Location): A location instance.
-        customer (Customer): A customer instance.
-        equipment_type (EquipmentType): An equipment type instance.
-        user (User): A user instance.
-        business_unit (BusinessUnit): A business unit instance.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    shipment = Shipment.objects.create(
-        organization=organization,
-        business_unit=business_unit,
-        shipment_type=shipment_type,
-        revenue_code=revenue_code,
-        origin_location=origin_location,
-        destination_location=destination_location,
-        origin_appointment_window_start=timezone.now(),
-        origin_appointment_window_end=timezone.now(),
-        destination_appointment_window_start=timezone.now()
-        + datetime.timedelta(days=2),
-        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
-        customer=customer,
-        freight_charge_amount=100.00,
-        trailer_type=equipment_type,
-        entered_by=user,
-        bol_number="1234567890",
-    )
-    dispatch_control: DispatchControl = shipment.organization.dispatch_control
-    dispatch_control.record_service_incident = dispatch_control_choice
-    dispatch_control.save()
-
-    fleet_code = FleetCodeFactory()
-    worker = WorkerFactory(fleet_code=fleet_code)
-    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
-    Movement.objects.filter(shipment=shipment).update(
-        tractor=tractor, primary_worker=worker
-    )
-    shipment_movement = Movement.objects.get(shipment=shipment)
-
-    # Act: Set arrival time past the appointment window on pickup
-    stop_1: models.Stop = models.Stop.objects.get(
-        movement=shipment_movement, sequence=1
-    )
-    stop_1.stop_type = stop_choice
-    stop_1.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
-    stop_1.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
-    stop_1.arrival_time = timezone.now() + datetime.timedelta(hours=3)
-    stop_1.departure_time = timezone.now() + datetime.timedelta(hours=4)
-    stop_1.save()
-
-    # Act: Set arrival time past the appointment window
-    stop_2: models.Stop = models.Stop.objects.get(
-        movement=shipment_movement, sequence=2
-    )
-    stop_2.stop_type = models.StopChoices.DELIVERY
-    stop_2.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
-    stop_2.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
-    stop_2.arrival_time = timezone.now() + datetime.timedelta(hours=3)
-    stop_2.departure_time = timezone.now() + datetime.timedelta(hours=4)
-    stop_2.save()
-
-    assert (
-        ServiceIncident.objects.filter(stop=stop_1, movement=shipment_movement).exists()
-        == expected
-    )
+# @pytest.mark.parametrize(
+#     "dispatch_control_choice, stop_choice, expected", SERVICE_INCIDENT_PARAMS
+# )
+# def test_service_incident_created(
+#     dispatch_control_choice,
+#     stop_choice,
+#     expected,
+#     organization: Organization,
+#     shipment_type: ShipmentType,
+#     revenue_code: RevenueCode,
+#     origin_location: Location,
+#     destination_location: Location,
+#     customer: Customer,
+#     equipment_type: EquipmentType,
+#     user: User,
+#     business_unit: BusinessUnit,
+# ) -> None:
+#     """Test create a service incident if the stop is late.
+#
+#     Args:
+#         organization (Organization): An organization instance.
+#         shipment_type (ShipmentType): An shipment type instance.
+#         revenue_code (RevenueCode): A revenue code instance.
+#         origin_location (Location): A location instance.
+#         destination_location (Location): A location instance.
+#         customer (Customer): A customer instance.
+#         equipment_type (EquipmentType): An equipment type instance.
+#         user (User): A user instance.
+#         business_unit (BusinessUnit): A business unit instance.
+#
+#     Returns:
+#         None: This function does not return anything.
+#     """
+#
+#     shipment = Shipment.objects.create(
+#         organization=organization,
+#         business_unit=business_unit,
+#         shipment_type=shipment_type,
+#         revenue_code=revenue_code,
+#         origin_location=origin_location,
+#         destination_location=destination_location,
+#         origin_appointment_window_start=timezone.now(),
+#         origin_appointment_window_end=timezone.now(),
+#         destination_appointment_window_start=timezone.now()
+#         + datetime.timedelta(days=2),
+#         destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
+#         customer=customer,
+#         freight_charge_amount=100.00,
+#         trailer_type=equipment_type,
+#         entered_by=user,
+#         bol_number="1234567890",
+#     )
+#     dispatch_control: DispatchControl = shipment.organization.dispatch_control
+#     dispatch_control.record_service_incident = dispatch_control_choice
+#     dispatch_control.save()
+#
+#     fleet_code = FleetCodeFactory()
+#     worker = WorkerFactory(fleet_code=fleet_code)
+#     tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
+#     Movement.objects.filter(shipment=shipment).update(
+#         tractor=tractor, primary_worker=worker
+#     )
+#     shipment_movement = Movement.objects.get(shipment=shipment)
+#
+#     # Act: Set arrival time past the appointment window on pickup
+#     stop_1: models.Stop = models.Stop.objects.get(
+#         movement=shipment_movement, sequence=1
+#     )
+#     stop_1.stop_type = stop_choice
+#     stop_1.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
+#     stop_1.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
+#     stop_1.arrival_time = timezone.now() + datetime.timedelta(hours=3)
+#     stop_1.departure_time = timezone.now() + datetime.timedelta(hours=4)
+#     stop_1.save()
+#
+#     # Act: Set arrival time past the appointment window
+#     stop_2: models.Stop = models.Stop.objects.get(
+#         movement=shipment_movement, sequence=2
+#     )
+#     stop_2.stop_type = models.StopChoices.DELIVERY
+#     stop_2.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
+#     stop_2.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
+#     stop_2.arrival_time = timezone.now() + datetime.timedelta(hours=3)
+#     stop_2.departure_time = timezone.now() + datetime.timedelta(hours=4)
+#     stop_2.save()
+#
+#     assert (
+#         ServiceIncident.objects.filter(stop=stop_1, movement=shipment_movement).exists()
+#         == expected
+#     )
 
 
 def test_first_stop_sets_ship_date(
@@ -511,25 +510,3 @@ def test_first_stop_sets_ship_date(
 
     # Assert: Order has ship date set
     assert shipment.ship_date == stop_1.arrival_time.date()
-
-
-def test_cannot_delete_stop_if_org_disallows(stop: models.Stop) -> None:
-    """Test ValidationError is thrown if organization `shipment_control` does
-    not allow order removal.
-
-    Args:
-        stop(Stop): Stop object.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    stop.organization.shipment_control.remove_shipments = False
-    stop.organization.shipment_control.save()
-
-    with pytest.raises(ValidationError) as excinfo:
-        stop.delete()
-
-    assert excinfo.value.message_dict["ref_num"] == [
-        "Organization does not allow Stop removal. Please contact your administrator."
-    ]

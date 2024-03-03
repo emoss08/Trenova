@@ -119,7 +119,7 @@ export const useAutosizeTextArea = ({
         setInit(false);
       }
       textAreaRef.style.height = `${minHeight + offsetBorder}px`;
-      const scrollHeight = textAreaRef.scrollHeight;
+      const { scrollHeight } = textAreaRef;
       // We then set the height directly, outside of the render loop
       // Trying to set this with state or a ref will product an incorrect value.
       if (scrollHeight > maxHeight) {

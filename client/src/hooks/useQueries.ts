@@ -76,45 +76,45 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import { QueryKeys, QueryKeyWithParams } from "@/types";
-import {
+import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import type {
   AccountingControl,
   GeneralLedgerAccount,
   RevenueCode,
   Tag,
 } from "@/types/accounting";
-import { User } from "@/types/accounts";
-import {
+import type { User } from "@/types/accounts";
+import type {
   AccessorialCharge,
   BillingControl,
   DocumentClassification,
 } from "@/types/billing";
-import { Commodity, HazardousMaterial } from "@/types/commodities";
-import { Customer } from "@/types/customer";
-import {
+import type { Commodity, HazardousMaterial } from "@/types/commodities";
+import type { Customer } from "@/types/customer";
+import type {
   CommentType,
   DispatchControl,
   FeasibilityToolControl,
   FleetCode,
   Rate,
 } from "@/types/dispatch";
-import {
+import type {
   EquipmentClass,
   EquipmentManufacturer,
   EquipmentType,
   Trailer,
 } from "@/types/equipment";
-import { InvoiceControl } from "@/types/invoicing";
-import { Location, LocationCategory, USStates } from "@/types/location";
-import {
+import type { InvoiceControl } from "@/types/invoicing";
+import type { Location, LocationCategory, USStates } from "@/types/location";
+import type {
   Depot,
   EmailControl,
   EmailProfile,
   TableName,
   Topic,
 } from "@/types/organization";
-import { RouteControl } from "@/types/route";
-import {
+import type { RouteControl } from "@/types/route";
+import type {
   FormulaTemplate,
   ServiceType,
   ShipmentControl,

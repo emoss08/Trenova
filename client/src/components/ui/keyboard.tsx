@@ -221,7 +221,7 @@ export const KeySymbol = ({
   ...otherProps
 }: KeySymbolProps) => {
   const context = useShortcutsContext();
-  const keyMappings = context.keyMappings;
+  const { keyMappings } = context;
   const os = context.os || "default";
   const keyData = keyMappings[keyName];
   const symbol = keyData?.symbols?.[os] ?? keyData?.symbols?.default ?? keyName;

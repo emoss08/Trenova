@@ -141,7 +141,7 @@ export function NavMenu() {
       const sublinks = (
         item.content.props.linkData as { links: LinkData[] }[]
       ).flatMap((group) =>
-        group.links.flatMap((link) => (link.subLinks ? link.subLinks : link)),
+        group.links.flatMap((link) => link.subLinks || link),
       );
       return sublinks.some(
         (sublink) =>
