@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils";
 import { defaultsDeep } from "lodash-es";
 import { createContext, HTMLProps, ReactNode, useContext } from "react";
 
-/* 
+/*
   Example Usage:
-  
+
   <ShortcutsProvider os="mac">
     <h3 className="font-semibold">Keyboard Shortcuts</h3>
     <div className="flex justify-between">
@@ -25,7 +25,7 @@ import { createContext, HTMLProps, ReactNode, useContext } from "react";
       <p>Clear Selection</p>
       <KeySymbol keyName={Keys.Escape} />
     </div>
-  </ShortcutsProvider>; 
+  </ShortcutsProvider>;
   */
 
 interface KeyData {

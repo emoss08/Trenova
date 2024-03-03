@@ -20,7 +20,7 @@ from typing import Any
 from django.db import transaction
 
 from movements.models import Movement
-from shipment import models, services, selectors
+from shipment import models, selectors, services
 from stops.models import Stop
 
 
