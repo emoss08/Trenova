@@ -215,11 +215,6 @@ export function useShipmentForm({ user }: { user: User }) {
       trailer: yup.string(),
       trailerType: yup.string().required("Trailer type is required."),
       tractorType: yup.string(),
-      commodity:
-        shipmentControlData && shipmentControlData.enforceCommodity
-          ? yup.string().required("Commodity is required.")
-          : yup.string(),
-      hazardousMaterial: yup.string(),
       temperatureMin: yup.string(),
       temperatureMax: yup.string(),
       bolNumber: yup.string().required("BOL number is required."),
@@ -258,10 +253,8 @@ export function useShipmentForm({ user }: { user: User }) {
       readyToBill: false,
       copyAmount: 0,
       enteredBy: user?.id || "",
-      commodity: "",
       temperatureMin: "",
       temperatureMax: "",
-      hazardousMaterial: "",
       tractorType: "",
       trailerType: "",
       stops: [],

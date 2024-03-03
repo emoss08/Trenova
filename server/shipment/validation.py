@@ -21,7 +21,6 @@ from django.utils.translation import gettext_lazy as _
 
 from equipment.models import EquipmentType
 from shipment import models
-from shipment.models import HazardousMaterialSegregation
 from shipment.selectors import get_shipment_by_id
 from utils.models import RatingMethodChoices, StatusChoices
 
@@ -415,39 +414,47 @@ class ShipmentValidator:
             )
 
     def check_hazardous_material_compatibility(self) -> None:
+        """Validate that the hazardous materials in the shipment are compatible with each other.
+
+        This function checks if the hazardous materials in the shipment are compatible with each other
+        based on the organization's hazardous material segregation rules. If the hazardous materials are
+        not compatible, a validation error is raised.
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            ValidationError: If the hazardous materials in the shipment are not compatible with each other.
+        """
         shipment_control = self.shipment.organization.shipment_control
-        print("I'm being ran")
 
         # If the organization does not enforce hazmat segregation rules, skip this check.
         if shipment_control.enforce_hazmat_seg_rules is False:
             return
 
-        shipment_commodities = self.shipment.shipment_commodities.all()
-        print("shipment_commodities", shipment_commodities)
+        hazardous_material_classes = {
+            shipment_commodity.hazardous_material.hazard_class
+            for shipment_commodity in self.shipment.shipment_commodities.all()
+            if shipment_commodity.hazardous_material
+        }
 
-        hazardous_material_classes = set()
-        for shipment_commodity in shipment_commodities:
-            if shipment_commodity.hazardous_material:
-                hazardous_material_classes.add(
-                    shipment_commodity.hazardous_material.hazard_class
-                )
+        segregation_rules = models.HazardousMaterialSegregation.objects.filter(
+            organization=self.shipment.organization,
+            class_a__in=hazardous_material_classes,
+            class_b__in=hazardous_material_classes,
+            segregation_type=models.HazardousMaterialSegregation.SegregationTypeChoices.NOT_ALLOWED,
+        )
 
-        print("hazardous_material_classes", hazardous_material_classes)
+        # Create a set if incompatible pairs for quick lookup
+        incompatible_pairs = {
+            (rule.class_a, rule.class_b) for rule in segregation_rules
+        }
 
-        # Check each pair of hazardous material classes for segregation rules.
         for class_a in hazardous_material_classes:
             for class_b in hazardous_material_classes:
-                if class_a != class_b:
-                    # Check if there's a segregation rule between class_a and class_b
-                    segregation_rule = HazardousMaterialSegregation.objects.filter(
-                        organization=self.shipment.organization,
-                        class_a=class_a,
-                        class_b=class_b,
-                    ).first()
-
-                    # If there's a rule, and it indicates 'Not Allowed', return False
-                    if segregation_rule and segregation_rule.segregation_type == "X":
-                        self.errors["__all__"] = _(
-                            "The hazardous materials in this shipment are not compatible and cannot be shipped "
-                            "together. Please try again."
-                        )
+                if class_a != class_b and (class_a, class_b) in incompatible_pairs:
+                    self.errors["__all__"] = _(
+                        "The hazardous material in this shipment not compatible and cannot be shipped together. "
+                        "Please try again."
+                    )
+                    return

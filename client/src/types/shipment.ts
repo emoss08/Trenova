@@ -117,9 +117,7 @@ export interface Shipment extends BaseModel {
   trailer?: string;
   trailerType: string;
   tractorType?: string;
-  commodity?: string;
   enteredBy: string;
-  hazardousMaterial?: string;
   temperatureMin?: string;
   temperatureMax?: string;
   bolNumber: string;

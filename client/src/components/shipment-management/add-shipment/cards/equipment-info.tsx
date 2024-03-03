@@ -17,30 +17,16 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TitleWithTooltip } from "@/components/ui/title-with-tooltip";
-import {
-  useCommodities,
-  useEquipmentTypes,
-  useHazardousMaterial,
-  useTrailers,
-} from "@/hooks/useQueries";
-import { Commodity } from "@/types/commodities";
+import { useEquipmentTypes, useTrailers } from "@/hooks/useQueries";
 import { Trailer } from "@/types/equipment";
-import { ShipmentControl, ShipmentFormValues } from "@/types/shipment";
+import { ShipmentFormValues } from "@/types/shipment";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export default function EquipmentInformation({
-  shipmentControlData,
-  isShipmentControlLoading,
-}: {
-  shipmentControlData: ShipmentControl;
-  isShipmentControlLoading: boolean;
-}) {
+export default function EquipmentInformation() {
   const { t } = useTranslation("shipment.addshipment");
-  const { data: commodities } = useCommodities();
   const { trailerData, isTrailerError, isTrailerLoading, selectTrailers } =
     useTrailers();
   const { control, setValue, watch } = useFormContext<ShipmentFormValues>();
@@ -57,35 +43,8 @@ export default function EquipmentInformation({
     isLoading: isTractorTypesLoading,
   } = useEquipmentTypes("TRACTOR");
 
-  const {
-    selectCommodityData,
-    isLoading: isCommoditiesLoading,
-    isError: isCommodityError,
-  } = useCommodities();
-
-  const {
-    selectHazardousMaterials,
-    isLoading: isHazmatLoading,
-    isError: isHazmatError,
-  } = useHazardousMaterial();
-
   useEffect(() => {
     const subscription = watch((value, { name }) => {
-      if (name === "commodity" && commodities && value.commodity) {
-        const selectedCommodity = (commodities as Commodity[]).find(
-          (commodity) => commodity.id === value.commodity,
-        );
-
-        if (selectedCommodity?.minTemp && selectedCommodity?.maxTemp) {
-          setValue("temperatureMin", selectedCommodity?.minTemp);
-          setValue("temperatureMax", selectedCommodity?.maxTemp);
-        }
-
-        if (selectedCommodity?.hazardousMaterial) {
-          setValue("hazardousMaterial", selectedCommodity?.hazardousMaterial);
-        }
-      }
-
       if (name === "trailer" && trailerData && value.trailer) {
         const selectedTrailer = (trailerData as Trailer[]).find(
           (trailer: Trailer) => trailer.id === value.trailer,
@@ -98,11 +57,7 @@ export default function EquipmentInformation({
     });
 
     return () => subscription.unsubscribe();
-  }, [commodities, setValue, watch, trailerData]);
-
-  if (isShipmentControlLoading) {
-    return <Skeleton className="h-[40vh]" />;
-  }
+  }, [setValue, watch, trailerData]);
 
   return (
     <div className="rounded-md border border-border bg-card">
@@ -158,43 +113,6 @@ export default function EquipmentInformation({
             hasPopoutWindow
             popoutLink="/equipment/equipment-types/"
             popoutLinkLabel="Equipment Type"
-          />
-        </div>
-        <div className="col-span-1">
-          <SelectInput
-            name="commodity"
-            options={selectCommodityData}
-            isLoading={isCommoditiesLoading}
-            isFetchError={isCommodityError}
-            control={control}
-            rules={{ required: shipmentControlData.enforceCommodity || false }}
-            label={t("card.equipmentInfo.fields.commodity.label")}
-            placeholder={t("card.equipmentInfo.fields.commodity.placeholder")}
-            description={t("card.equipmentInfo.fields.commodity.description")}
-            hasPopoutWindow
-            popoutLink="/shipment-management/commodity-codes/"
-            popoutLinkLabel="Commodity Code"
-            isClearable
-          />
-        </div>
-        <div className="col-span-2">
-          <SelectInput
-            options={selectHazardousMaterials}
-            isLoading={isHazmatLoading}
-            isFetchError={isHazmatError}
-            name="hazardousMaterial"
-            control={control}
-            label={t("card.equipmentInfo.fields.hazardousMaterial.label")}
-            placeholder={t(
-              "card.equipmentInfo.fields.hazardousMaterial.placeholder",
-            )}
-            description={t(
-              "card.equipmentInfo.fields.hazardousMaterial.description",
-            )}
-            hasPopoutWindow
-            popoutLink="/shipment-management/hazardous-materials/"
-            popoutLinkLabel="Hazardous Material"
-            isClearable
           />
         </div>
         <div className="col-span-1">

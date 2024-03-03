@@ -140,13 +140,6 @@ class ShipmentControl(GenericModel):
         default=False,
         help_text=_("Check for duplicate BOL numbers when entering an shipment."),
     )
-    remove_shipment = models.BooleanField(
-        _("Ability to Remove Shipments"),
-        default=False,
-        help_text=_(
-            "Ability to remove shipment from system. This will disallow the removal of shipments, Movements and Stops"
-        ),
-    )
     send_placard_info = models.BooleanField(
         _("Send Placard Info"),
         default=False,
@@ -626,6 +619,11 @@ class Shipment(GenericModel):
         related_query_name="shipment",
         verbose_name=_("User"),
         help_text=_("Shipment entered by User"),
+    )
+    is_hazmat = models.BooleanField(
+        _("Is Hazmat Shipment"),
+        default=False,
+        help_text=_("Shipment contains hazardous materials."),
     )
 
     class Meta:
@@ -1355,9 +1353,12 @@ class ShipmentCommodity(GenericModel):
         Returns:
             None: This function does not return anything.
         """
+
         # If the commodity is hazardous, set the hazardous_material field to the commodity's hazardous_material field.
+        # Also, set the shipment's is_hazmat field to True.
         if self.commodity and self.commodity.hazardous_material:
             self.hazardous_material = self.commodity.hazardous_material
+            self.shipment.is_hazmat = True
 
         if self.hazardous_material:
             self.placard_needed = True
@@ -1378,6 +1379,15 @@ class HazardousMaterialSegregation(GenericModel):
     Stores hazardous material segregation information for a related :model:`organization.Organization`.
     """
 
+    @final
+    class SegregationTypeChoices(models.TextChoices):
+        """
+        Segregation Type choices for Hazardous Material Segregation model
+        """
+
+        NOT_ALLOWED = "X", _("Not Allowed")
+        ALLOWED_WITH_CONDITIONS = "O", _("Allowed with Conditions")
+
     class_a = ChoiceField(
         verbose_name=_("Class/Division A"),
         help_text=_("First hazardous material class or division."),
@@ -1390,7 +1400,7 @@ class HazardousMaterialSegregation(GenericModel):
     )
     segregation_type = models.CharField(
         max_length=1,
-        choices=[("X", "Not Allowed"), ("O", "Allowed with Conditions")],
+        choices=SegregationTypeChoices.choices,
         verbose_name=_("Segregation Type"),
         help_text=_(
             "Indicates if the materials are allowed to be transported together."
@@ -1410,6 +1420,7 @@ class HazardousMaterialSegregation(GenericModel):
                 name="unique_hazmat_segregation",
             )
         ]
+        db_table = "hazardous_material_segregation"
 
     def __str__(self):
         return textwrap.shorten(

@@ -20,7 +20,7 @@ from typing import Any
 from django.db import transaction
 
 from movements.models import Movement
-from shipment import models, services
+from shipment import models, services, selectors
 from stops.models import Stop
 
 
@@ -64,57 +64,64 @@ def update_stops_on_shipment_change(
     Returns:
         None: This function does not return anything.
     """
-    # if not instance.pk or not models.Shipment.objects.filter(pk=instance.pk).exists():
-    #     # If it's a new instance or doesn't exist in the database, there's nothing to do
-    #     return
-    #
-    # old_instance = models.Shipment.objects.get(pk=instance.pk)
-    #
-    # origin_changed = any(
-    #     [
-    #         old_instance.origin_location != instance.origin_location,
-    #         old_instance.origin_address != instance.origin_address,
-    #         old_instance.origin_appointment_window_start
-    #         != instance.origin_appointment_window_start,
-    #         old_instance.origin_appointment_window_end
-    #         != instance.origin_appointment_window_end,
-    #     ]
-    # )
-    #
-    # destination_changed = any(
-    #     [
-    #         old_instance.destination_location != instance.destination_location,
-    #         old_instance.destination_address != instance.destination_address,
-    #         old_instance.destination_appointment_window_start
-    #         != instance.destination_appointment_window_start,
-    #         old_instance.destination_appointment_window_end
-    #         != instance.destination_appointment_window_end,
-    #     ]
-    # )
-    #
-    # if origin_changed or destination_changed:
-    #     with transaction.atomic():
-    #         for movement in instance.movements.all():
-    #             if origin_changed:
-    #                 # Update the first stop (pickup) for this movement
-    #                 Stop.objects.filter(movement=movement, sequence=1).update(
-    #                     location=instance.origin_location,
-    #                     address_line=instance.origin_address,
-    #                     appointment_time_window_start=instance.origin_appointment_window_start,
-    #                     appointment_time_window_end=instance.origin_appointment_window_end,
-    #                 )
-    #
-    #             if destination_changed:
-    #                 # Update the last stop (delivery) for this movement
-    #                 last_sequence = (
-    #                     movement.stops.order_by("-sequence").first().sequence
-    #                 )
-    #                 print("last_sequence", last_sequence)
-    #                 Stop.objects.filter(
-    #                     movement=movement, sequence=last_sequence
-    #                 ).update(
-    #                     location=instance.destination_location,
-    #                     address_line=instance.destination_address,
-    #                     appointment_time_window_start=instance.destination_appointment_window_start,
-    #                     appointment_time_window_end=instance.destination_appointment_window_end,
-    #                 )
+    if not instance.pk or not models.Shipment.objects.filter(pk=instance.pk).exists():
+        # If it's a new instance or doesn't exist in the database, there's nothing to do
+        return
+
+    movements = selectors.get_shipment_movements(shipment=instance)
+
+    print("movements", movements)
+
+    if not movements:
+        return
+
+    old_instance = models.Shipment.objects.get(pk=instance.pk)
+
+    origin_changed = any(
+        [
+            old_instance.origin_location != instance.origin_location,
+            old_instance.origin_address != instance.origin_address,
+            old_instance.origin_appointment_window_start
+            != instance.origin_appointment_window_start,
+            old_instance.origin_appointment_window_end
+            != instance.origin_appointment_window_end,
+        ]
+    )
+
+    destination_changed = any(
+        [
+            old_instance.destination_location != instance.destination_location,
+            old_instance.destination_address != instance.destination_address,
+            old_instance.destination_appointment_window_start
+            != instance.destination_appointment_window_start,
+            old_instance.destination_appointment_window_end
+            != instance.destination_appointment_window_end,
+        ]
+    )
+
+    if origin_changed or destination_changed:
+        with transaction.atomic():
+            for movement in movements:
+                if origin_changed:
+                    # Update the first stop (pickup) for this movement
+                    Stop.objects.filter(movement=movement, sequence=1).update(
+                        location=instance.origin_location,
+                        address_line=instance.origin_address,
+                        appointment_time_window_start=instance.origin_appointment_window_start,
+                        appointment_time_window_end=instance.origin_appointment_window_end,
+                    )
+
+                if destination_changed:
+                    # Update the last stop (delivery) for this movement
+                    last_sequence = (
+                        movement.stops.order_by("-sequence").first().sequence
+                    )
+                    print("last_sequence", last_sequence)
+                    Stop.objects.filter(
+                        movement=movement, sequence=last_sequence
+                    ).update(
+                        location=instance.destination_location,
+                        address_line=instance.destination_address,
+                        appointment_time_window_start=instance.destination_appointment_window_start,
+                        appointment_time_window_end=instance.destination_appointment_window_end,
+                    )

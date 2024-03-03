@@ -66,6 +66,7 @@ import {
 import {
   getFormulaTemplates,
   getNextProNumber,
+  getServiceTypes,
   getShipmentTypes,
   validateBOLNumber,
 } from "@/services/ShipmentRequestService";
@@ -932,7 +933,7 @@ export function useServiceTypes() {
     isLoading: isServiceTypeLoading,
   } = useQuery({
     queryKey: ["serviceTypes"],
-    queryFn: async () => getShipmentTypes(),
+    queryFn: async () => getServiceTypes(),
   });
 
   const selectServiceTypes =

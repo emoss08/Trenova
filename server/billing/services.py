@@ -289,7 +289,7 @@ def bill_shipments(
         if organization_enforces_billing:
             # If the organization enforces customer billing requirements, check the requirements
             _, missing_documents = utils.check_billing_requirements(
-                user=user, invoice=invoice
+                user=user, obj=invoice
             )
             # Append missing_documents only when it is not empty
             if missing_documents:
@@ -376,15 +376,11 @@ def ready_to_bill_service(shipments: QuerySet[Shipment]) -> None:
         organization = shipment.organization
 
         if organization.billing_control.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(
-                user=shipment.created_by, invoice=shipment
-            ):
+            if utils.check_billing_requirements(user=shipment.created_by, obj=shipment):
                 shipment.ready_to_bill = True
                 shipment.save()
         elif shipment.customer.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(
-                user=shipment.created_by, invoice=shipment
-            ):
+            if utils.check_billing_requirements(user=shipment.created_by, obj=shipment):
                 shipment.ready_to_bill = True
                 shipment.save()
 
