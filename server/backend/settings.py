@@ -101,7 +101,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    # "core.middleware.idempotency_middleware.IdempotencyMiddleware",
+    "core.middleware.idempotency_middleware.IdempotencyMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"

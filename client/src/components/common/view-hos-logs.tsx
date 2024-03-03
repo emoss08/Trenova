@@ -16,7 +16,6 @@
  */
 
 import { useShipmentStore } from "@/stores/ShipmentStore";
-import { TableSheetProps } from "@/types/tables";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import {
   Dialog,
@@ -24,6 +23,7 @@ import {
   DialogDescription,
   DialogHeader,
 } from "../ui/dialog";
+import { TableSheetProps } from "@/types/tables";
 
 const hours = [
   "Midnight",

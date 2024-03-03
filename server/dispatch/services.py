@@ -27,6 +27,8 @@ if TYPE_CHECKING:
     from datetime import datetime
 
 
+# TODO(WOLFRED): This should always return one rate, we need to add validation to ensure the same rate is not entered
+#  twice.
 def get_rate(*, shipment: Shipment) -> models.Rate | None:
     """Get the rate for the shipment.
 
@@ -36,17 +38,19 @@ def get_rate(*, shipment: Shipment) -> models.Rate | None:
     Returns:
         models.Rate | None: The rate for the order or None if no rate is found.
     """
-    today = timezone.now().date()
-    rates = models.Rate.objects.filter(
-        customer=shipment.customer,
-        commodity=shipment.commodity,
-        shipment_type=shipment.shipment_type,
-        origin_location=shipment.origin_location,
-        destination_location=shipment.destination_location,
-        effective_date__lte=today,
-        expiration_date__gte=today,
-    )
-    return rates.first() if rates.exists() else None
+    try:
+        today = timezone.now().date()
+        rate = models.Rate.objects.get(
+            customer=shipment.customer,
+            shipment_type=shipment.shipment_type,
+            origin_location=shipment.origin_location,
+            destination_location=shipment.destination_location,
+            effective_date__lte=today,
+            expiration_date__gte=today,
+        )
+        return rate
+    except models.Rate.DoesNotExist:
+        return None
 
 
 def transfer_rate_details(shipment: Shipment) -> None:

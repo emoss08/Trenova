@@ -43,7 +43,7 @@ export function TitleWithTooltip({
           <TooltipTrigger asChild>
             <FontAwesomeIcon
               icon={faCircleInfo}
-              className="mb-0.5 size-3.5 text-muted-foreground"
+              className="text-foreground mb-0.5 size-3.5"
             />
           </TooltipTrigger>
           <TooltipContent>

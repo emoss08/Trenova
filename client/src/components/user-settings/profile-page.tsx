@@ -16,9 +16,10 @@
  */
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { TimezoneChoices, timezoneChoices } from "@/lib/constants";
+import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
 import { QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
+import { faPaperPlane } from "@fortawesome/pro-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -95,13 +96,13 @@ function PersonalInformation({ user }: { user: User }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-foreground text-2xl font-semibold">
             Manage Your User Profile
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Update your personal information here. Rest assured, your privacy is
             our priority. For more details, read our{" "}
-            <a href="#" className="underline hover:text-foreground">
+            <a href="#" className="hover:text-foreground underline">
               Privacy Policy
             </a>
             .
@@ -111,10 +112,10 @@ function PersonalInformation({ user }: { user: User }) {
       </div>
       <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3">
         <div>
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             Personal Information
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             Provide accurate personal details to ensure seamless communication
             and service delivery.
           </p>
@@ -126,11 +127,13 @@ function PersonalInformation({ user }: { user: User }) {
               <img
                 src={avatarSrc}
                 alt="User Avatar"
-                className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
+                className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
               />
               <div>
-                <Button size="sm">Change Avatar</Button>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                <Button size="sm" type="button">
+                  Change Avatar
+                </Button>
+                <p className="text-muted-foreground mt-2 text-xs leading-5">
                   JPG, GIF or PNG. 1MB max.
                 </p>
               </div>
@@ -182,7 +185,13 @@ function PersonalInformation({ user }: { user: User }) {
             </div>
           </div>
           <div className="mt-8 flex">
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button
+              type="submit"
+              variant="expandIcon"
+              icon={faPaperPlane}
+              isLoading={isSubmitting}
+              iconPlacement="right"
+            >
               Save Changes
             </Button>
           </div>
@@ -225,10 +234,10 @@ function ChangePasswordForm() {
   return (
     <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
       <div>
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           Change password
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           Update your password associated with your account.
         </p>
       </div>

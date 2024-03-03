@@ -29,5 +29,4 @@ class FormulaVariables(typing.TypedDict):
     weight: decimal.Decimal | int
     stops: int
     rating_units: int
-    hazmat_additional_cost: decimal.Decimal | int
     temperature_differential: int

@@ -31,10 +31,10 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import {
-  MenuData,
-  NavigationMenuItemProps,
   calculatePosition,
   hasPermission,
+  MenuData,
+  NavigationMenuItemProps,
   userHasAccessToContent,
 } from "@/lib/navmenu";
 import { cn, isBrowser } from "@/lib/utils";
@@ -42,7 +42,7 @@ import { useHeaderStore } from "@/stores/HeaderStore";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FooterContainer } from "../common/footer";
-import { LinksComponent } from "./nav-links";
+import { LinkData, LinksComponent } from "./nav-links";
 
 // NavigationMenuItemWithPermission Component
 const NavigationMenuItemWithPermission = React.memo(
@@ -125,6 +125,32 @@ export function NavMenu() {
   const [menuPosition, setMenuPosition] = React.useState({ left: 0, width: 0 });
   const menuItemRefs = React.useRef<Record<string, HTMLLIElement>>({});
   const navMenuRef = React.useRef<HTMLDivElement>(null);
+  const { userHasPermission } = useUserPermissions();
+
+  // Check if the user has permission to access the item or any of its sublinks
+  const userHasAccess = (item: MenuData) => {
+    // Check for direct permission first
+    if (item.permission && !userHasPermission(item.permission)) {
+      return false;
+    }
+
+    if (
+      React.isValidElement(item.content) &&
+      "linkData" in item.content.props
+    ) {
+      const sublinks = (
+        item.content.props.linkData as { links: LinkData[] }[]
+      ).flatMap((group) =>
+        group.links.flatMap((link) => link.subLinks || link),
+      );
+      return sublinks.some(
+        (sublink) =>
+          !sublink.permission || userHasPermission(sublink.permission),
+      );
+    }
+
+    return !item.content;
+  };
 
   // Attach menu item ref
   const attachRef = React.useCallback(
@@ -198,6 +224,9 @@ export function NavMenu() {
     },
   ];
 
+  // Filter out menu items that the user does not have access to
+  const accessibleMenuItems = menuItems.filter(userHasAccess);
+
   return (
     <div ref={navMenuRef}>
       {/* Hamburger Menu (visible on small screens) */}
@@ -216,7 +245,7 @@ export function NavMenu() {
         )}
       >
         <NavigationMenuList>
-          {menuItems.map((item) => (
+          {accessibleMenuItems.map((item) => (
             <NavigationMenuItemWithPermission
               key={item.menuKey}
               data={item}

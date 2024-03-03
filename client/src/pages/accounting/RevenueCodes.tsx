@@ -20,9 +20,9 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { truncateText } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { RCDialog } from "@/components/revenue-codes/rc-table-dialog";
 import { RevenueCode } from "@/types/accounting";
-import { RCTableEditDialog } from "@/components/revenue-codes/rc-table-edit-dialog";
+import {RevenueCodeDialog} from "@/components/revenue-code-table-dialog";
+import {RevenueCodeTableEditDialog} from "@/components/revenue-code-table-edit-dialog";
 
 const columns: ColumnDef<RevenueCode>[] = [
   {
@@ -79,8 +79,8 @@ export default function RevenueCodes() {
       name="Revenue Code"
       exportModelName="RevenueCode"
       filterColumn="code"
-      TableSheet={RCDialog}
-      TableEditSheet={RCTableEditDialog}
+      TableSheet={RevenueCodeDialog}
+      TableEditSheet={RevenueCodeTableEditDialog}
     />
   );
 }

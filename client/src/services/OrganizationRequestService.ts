@@ -16,13 +16,11 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { JobTitle } from "@/types/accounts";
 import { BillingControl } from "@/types/billing";
 import { DispatchControl } from "@/types/dispatch";
 import { InvoiceControl } from "@/types/invoicing";
 import { ShipmentControl } from "@/types/shipment";
 import {
-  Department,
   Depot,
   EmailControl,
   EmailProfile,
@@ -34,70 +32,11 @@ import {
 import { RouteControl } from "@/types/route";
 
 /**
- * Fetches organizations from the server.
- * @returns A promise that resolves to an array of organizations.
- */
-export async function getOrganizations(): Promise<Organization[]> {
-  const response = await axios.get("/organizations/");
-  return response.data.results;
-}
-
-/**
- * Fetches the details of the organization with the specified ID.
- * @param id - The ID of the organization to fetch details for.
- * @returns A promise that resolves to the organization's details.
- */
-export async function getOrganizationDetails(
-  id: string,
-): Promise<Organization> {
-  const response = await axios.get(`/organizations/${id}/`);
-  return response.data;
-}
-
-/**
  * Featches the details of the user currently assigned organization.
  * @returns A promise that resolves to the organization's details.
  */
 export async function getUserOrganizationDetails(): Promise<Organization> {
   const response = await axios.get("/me/organization/");
-  return response.data;
-}
-
-/**
- * Fetches departments from the server.
- * @returns A promise that resolves to an array of departments.
- */
-export async function getDepartments(): Promise<Department[]> {
-  const response = await axios.get("/departments/");
-  return response.data.results;
-}
-
-/**
- * Fetches the details of the department with the specified ID.
- * @param id - The ID of the department to fetch details for.
- * @returns A promise that resolves to the department's details.
- */
-export async function getDepartmentDetails(id: string): Promise<Department> {
-  const response = await axios.get(`/departments/${id}/`);
-  return response.data;
-}
-
-/**
- * Fetches job titles from the server.
- * @returns A promise that resolves to an array of job titles.
- */
-export async function getJobTitles(): Promise<JobTitle[]> {
-  const response = await axios.get("/job_titles/");
-  return response.data.results;
-}
-
-/**
- * Fetches the details of the job title with the specified ID.
- * @param id - The ID of the job title to fetch details for.
- * @returns A promise that resolves to the job title's details.
- */
-export async function getJobTitleDetails(id: string): Promise<JobTitle> {
-  const response = await axios.get(`/job_titles/${id}/`);
   return response.data;
 }
 

@@ -22,8 +22,9 @@ from io import BytesIO
 from django.db import transaction
 from sympy import SympifyError, sympify
 
+from movements.models import Movement
 from organization.models import BusinessUnit, Organization
-from shipment import models, selectors
+from shipment import models
 from stops.models import Stop
 
 FORMULA_ALLOWED_VARIABLES = [
@@ -113,46 +114,48 @@ def evaluate_formula(*, formula: str, **kwargs: typing.Any) -> float:
     return float(expression.subs(kwargs))
 
 
+def generate_movement(
+    shipment: models.Shipment, shipment_data: dict[str, typing.Any]
+) -> Movement:
+    """Generate a Movement instance for the given Shipment instance.
+
+    This function takes a Shipment instance and a dictionary of movement data. It then creates a new Movement
+    instance using the provided data and the given Shipment instance. The Movement instance is then returned.
+
+    Args:
+        shipment (models.Shipment): The Shipment instance for which the Movement instance is to be created.
+        shipment_data (dict[str, typing.Any]): A dictionary of shipment data to be used to create the Movement instance.
+
+    Returns:
+        models.Movement: The newly created Movement instance.
+    """
+    movement = Movement.objects.create(
+        shipment=shipment,
+        trailer=shipment_data.get("trailer"),
+        business_unit=shipment.business_unit,
+        organization=shipment.organization,
+    )
+    return movement
+
+
 @transaction.atomic
 def create_additional_stops(
     *,
     shipment: models.Shipment,
     stop_data: dict[str, typing.Any],
+    shipment_data: dict[str, typing.Any],
     organization: Organization,
     business_unit: BusinessUnit,
-) -> list[Stop] | None:
-    first_movement = selectors.get_shipment_first_movement(shipment=shipment)
-    shipment_stops = selectors.get_shipment_stops(shipment=shipment).order_by(
-        "sequence"
-    )
-
-    print("Stops that already exist in the shipment", shipment_stops)
-
-    # Assuming the last stop is always the consignee
-    if shipment_stops:
-        consignee_stop = shipment_stops.last()
-        consignee_stop.sequence
-    else:
-        # If there are no stops, set the starting sequence for the new stops
-        pass
-
+) -> list[Stop]:
     created_stops = []
+    movement = generate_movement(shipment, shipment_data)
+
     if stop_data:
-        for additional_stop in stop_data:
-            additional_stop["business_unit"] = business_unit
-            additional_stop["organization"] = organization
-            additional_stop["movement"] = first_movement
-
-            # Create or update the stop
-            stop, _ = Stop.objects.update_or_create(
-                id=additional_stop.get("id", None),
-                defaults=additional_stop,
-            )
-            created_stops.append(stop)
-
-        # Adjust the consignee stop's sequence to be the last
-        if created_stops:
-            consignee_stop.sequence = created_stops[-1].sequence + 1
-            consignee_stop.save()
+        for stop in stop_data:
+            stop["movement"] = movement
+            stop["organization"] = organization
+            stop["business_unit"] = business_unit
+            new_stop = Stop.objects.create(**stop)
+            created_stops.append(new_stop)
 
     return created_stops

@@ -17,6 +17,7 @@
 
 import { IChoiceProps } from "@/types";
 import { TableOptionProps } from "@/types/tables";
+import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 /** Type for Account Type Choices */
 export type AccountTypeChoiceProps =
@@ -483,7 +484,7 @@ export const sourceChoices = [
   { value: "POSTGRES", label: "Postgres" },
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
 
-/** Type for RatingMethod for Shipment */
+/** Type for RatingMethodW for Shipment */
 export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
 
 export const ratingMethodChoices = [
@@ -515,3 +516,49 @@ export const severityChoices = [
   { value: "M", label: "Medium", color: "#2563eb" },
   { value: "L", label: "Low", color: "#15803d" },
 ] satisfies ReadonlyArray<IChoiceProps<SeverityChoiceProps>>;
+
+/**
+ * Type for timezone choices
+ */
+export type TimezoneChoices =
+  | "America/Los_Angeles"
+  | "America/Denver"
+  | "America/Chicago"
+  | "America/New_York";
+
+/**
+ * Returns timezone choices for a select input
+ * @returns An array of timezone choices.
+ */
+export const timezoneChoices: ReadonlyArray<IChoiceProps<TimezoneChoices>> = [
+  { value: "America/Los_Angeles", label: "America/Los_Angeles" },
+  { value: "America/Denver", label: "America/Denver" },
+  { value: "America/Chicago", label: "America/Chicago" },
+  { value: "America/New_York", label: "America/New_York" },
+];
+
+/**
+ * Returns status choices when using TableFacetedFilters.
+ * @returns An array of table faceted filter choices.
+ */
+export const tableStatusChoices = [
+  {
+    value: "A",
+    label: "Active",
+    icon: CircleIcon,
+  },
+  {
+    value: "I",
+    label: "Inactive",
+    icon: MinusCircledIcon,
+  },
+] satisfies TableOptionProps[];
+
+/**
+ * Returns yes & no choices for a select input.
+ * @returns An array of yes & no choices.
+ */
+export const yesAndNoChoices = [
+  { value: "Y", label: "Yes" },
+  { value: "N", label: "No" },
+];

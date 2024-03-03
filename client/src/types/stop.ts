@@ -36,18 +36,18 @@ export type StopTypeProps = "P" | "SP" | "SD" | "D" | "DO";
 export interface Stop extends BaseModel {
   id: string;
   status: ShipmentStatusChoiceProps;
-  sequence?: number | null;
+  sequence?: number | undefined;
   movement: string;
-  location?: string | null;
-  pieces?: number | null;
-  weight?: string | null;
-  addressLine?: string | null;
+  location?: string;
+  pieces?: number;
+  weight?: string;
+  addressLine?: string;
   appointmentTimeWindowStart: string;
   appointmentTimeWindowEnd: string;
-  arrivalTime?: string | null;
-  departureTime?: string | null;
+  arrivalTime?: string;
+  departureTime?: string;
   stopType: StopTypeProps;
-  stopComments?: StopCommentFormValues[] | null;
+  stopComments?: StopCommentFormValues[];
 }
 
 export type StopFormValues = Omit<
@@ -70,7 +70,7 @@ export interface ServiceIncident extends BaseModel {
   id: string;
   movement: string;
   stop: string;
-  delayCode?: string | null;
+  delayCode?: string;
   delayReason?: string;
-  delayTime?: any | null;
+  delayTime?: any;
 }

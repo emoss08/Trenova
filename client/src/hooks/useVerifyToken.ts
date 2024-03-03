@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useEffect, useState } from "react";
-import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import axios from "@/lib/axiosConfig";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
+import { useEffect, useState } from "react";
 
 /**
  * Custom hook to verify the user's token.
@@ -26,41 +26,39 @@ import axios from "@/lib/axiosConfig";
  * verify the token. Depending on the result of the request, it updates the authentication status and
  * clears the session storage if necessary. It also manages loading states during the verification process.
  */
+
 export const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
-  const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
   const [, setUser] = useUserStore.use("user");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isInitializationComplete, setInitializationComplete] = useState(false);
 
   useEffect(() => {
-    const verifyToken = async (): Promise<void> => {
-      setIsVerifying(true); // Start the verification process
-      setInitialLoading(true);
+    const verifyToken = async () => {
+      setIsVerifying(true);
+      setLoading(true);
 
       try {
-        setLoading(true);
-        const response = await axios.get("/me/", {
-          withCredentials: true,
-        });
-
+        const response = await axios.get("/me/", { withCredentials: true });
         if (response.status === 200) {
           setUser(response.data.results);
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
       } catch (error) {
+        console.error("Error verifying token:", error);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
-        setIsVerifying(false); // End the verification process
-        setInitialLoading(false);
-        setInitializationComplete(true);
+        setIsVerifying(false);
+        setInitializationComplete(true); // Mark initialization as complete
       }
     };
 
     verifyToken();
-  }, [setIsAuthenticated, setLoading, setInitialLoading, setUser]);
+  }, [setIsAuthenticated, setLoading, setUser]);
 
   return { isVerifying, isInitializationComplete };
 };

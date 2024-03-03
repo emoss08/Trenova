@@ -64,6 +64,7 @@ class ShipmentValidator:
         self.validate_voided_shipment()
         self.validate_shipment_weight_limit()
         self.validate_trailer_and_tractor_type()
+        self.check_hazardous_material_compatibility()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -136,13 +137,6 @@ class ShipmentValidator:
             self.errors["revenue_code"] = _(
                 "Revenue code is required. Please try again."
             )
-
-        # Validate commodity is entered if Shipment Control requires it for the organization.
-        if (
-            self.shipment.organization.shipment_control.enforce_commodity
-            and not self.shipment.commodity
-        ):
-            self.errors["commodity"] = _("Commodity is required. Please try again.")
 
         # Validate voided comment is entered if Shipment Control requires it for the organization.
         if (
@@ -418,3 +412,49 @@ class ShipmentValidator:
             self.errors["tractor_type"] = _(
                 "Cannot select a non-tractor type for the tractor type. Please try again."
             )
+
+    def check_hazardous_material_compatibility(self) -> None:
+        """Validate that the hazardous materials in the shipment are compatible with each other.
+
+        This function checks if the hazardous materials in the shipment are compatible with each other
+        based on the organization's hazardous material segregation rules. If the hazardous materials are
+        not compatible, a validation error is raised.
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            ValidationError: If the hazardous materials in the shipment are not compatible with each other.
+        """
+        shipment_control = self.shipment.organization.shipment_control
+
+        # If the organization does not enforce hazmat segregation rules, skip this check.
+        if shipment_control.enforce_hazmat_seg_rules is False:
+            return
+
+        hazardous_material_classes = {
+            shipment_commodity.hazardous_material.hazard_class
+            for shipment_commodity in self.shipment.shipment_commodities.all()
+            if shipment_commodity.hazardous_material
+        }
+
+        segregation_rules = models.HazardousMaterialSegregation.objects.filter(
+            organization=self.shipment.organization,
+            class_a__in=hazardous_material_classes,
+            class_b__in=hazardous_material_classes,
+            segregation_type=models.HazardousMaterialSegregation.SegregationTypeChoices.NOT_ALLOWED,
+        )
+
+        # Create a set if incompatible pairs for quick lookup
+        incompatible_pairs = {
+            (rule.class_a, rule.class_b) for rule in segregation_rules
+        }
+
+        for class_a in hazardous_material_classes:
+            for class_b in hazardous_material_classes:
+                if class_a != class_b and (class_a, class_b) in incompatible_pairs:
+                    self.errors["__all__"] = _(
+                        "The hazardous material in this shipment not compatible and cannot be shipped together. "
+                        "Please try again."
+                    )
+                    return

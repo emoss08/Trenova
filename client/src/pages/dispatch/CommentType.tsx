@@ -15,16 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CommentTypeDialog } from "@/components/comment-type/comment-type-table-dialog";
-import { CommentTypeEditSheet } from "@/components/comment-type/comment-type-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { tableStatusChoices } from "@/lib/constants";
 import { CommentType } from "@/types/dispatch";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { CommentTypeDialog } from "@/components/comment-type-table-dialog";
+import { CommentTypeEditSheet } from "@/components/comment-type-table-edit-dialog";
+import { tableStatusChoices } from "@/lib/choices";
 
 const columns: ColumnDef<CommentType>[] = [
   {

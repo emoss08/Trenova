@@ -645,15 +645,6 @@ class BillingQueue(GenericModel):
         blank=True,
         null=True,
     )
-    commodity = models.ForeignKey(
-        "commodities.Commodity",
-        on_delete=models.RESTRICT,
-        related_name="billing_queue",
-        help_text=_("Assigned commodity to the billing queue"),
-        verbose_name=_("Commodity"),
-        blank=True,
-        null=True,
-    )
     commodity_descr = models.CharField(
         _("Commodity Description"),
         max_length=255,

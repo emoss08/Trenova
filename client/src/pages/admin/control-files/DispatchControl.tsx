@@ -18,9 +18,7 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const DispatchControl = lazy(
-  () => import("@/components/control-files/dispatch-control"),
-);
+const DispatchControl = lazy(() => import("@/components/dispatch-control"));
 
 export default function DispatchControlPage() {
   return (

@@ -17,13 +17,15 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { upperFirst } from "@/lib/utils";
+import { cn, upperFirst } from "@/lib/utils";
 import { EquipmentStatus } from "@/types/equipment";
-import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  faPlus,
+  faTriangleExclamation,
+} from "@fortawesome/pro-solid-svg-icons";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PlusIcon } from "@radix-ui/react-icons";
-import { IconProps } from "@radix-ui/react-icons/dist/types";
-import React from "react";
 
 /**
  * Component that displays a message when no data is found.
@@ -36,34 +38,39 @@ import React from "react";
 export function DataNotFound({
   message,
   name,
-  Icon,
+  icon,
   onButtonClick,
+  className,
 }: {
   message: string;
   name: string;
-  Icon: React.ForwardRefExoticComponent<
-    IconProps & React.RefAttributes<SVGSVGElement>
-  >;
+  icon: IconProp;
   onButtonClick?: () => void;
+  className?: string;
 }) {
   return (
-    <div className="my-10 text-center">
-      <Icon className="mx-auto size-10 text-foreground" />
-      <h3 className="mt-2 text-sm font-semibold text-foreground">
-        No {upperFirst(name)}
+    <div
+      className={cn(
+        "my-10 text-center flex grow flex-col items-center justify-center",
+        className,
+      )}
+    >
+      <FontAwesomeIcon icon={icon} className="text-foreground size-10" />
+      <h3 className="mt-4 text-lg font-semibold">
+        No {upperFirst(name)} added
       </h3>
-      <p className="mt-1 text-sm text-muted-foreground">{message}</p>
-      <div className="mt-3">
-        <Button
-          className="mt-3"
-          type="button"
-          size="sm"
-          onClick={onButtonClick}
-        >
-          <PlusIcon className="-ml-0.5 mr-1.5 size-5" aria-hidden="true" />
-          Add {upperFirst(name)}
-        </Button>
-      </div>
+      <p className="text-muted-foreground mt-2 text-sm">{message}</p>
+      <Button
+        className="mt-3"
+        type="button"
+        size="sm"
+        variant="expandIcon"
+        iconPlacement="left"
+        icon={faPlus}
+        onClick={onButtonClick}
+      >
+        Add {upperFirst(name)}
+      </Button>
     </div>
   );
 }
@@ -120,12 +127,12 @@ export function ErrorLoadingData({ message }: { message?: string }) {
     <div className="text-center">
       <FontAwesomeIcon
         icon={faTriangleExclamation}
-        className="mx-auto size-10 text-accent-foreground"
+        className="text-accent-foreground mx-auto size-10"
       />
-      <p className="mt-2 font-semibold text-accent-foreground">
+      <p className="text-accent-foreground mt-2 font-semibold">
         Well, this is embarrassing...
       </p>
-      <p className="mt-2 text-muted-foreground">
+      <p className="text-muted-foreground mt-2">
         {message || "There was an error loading the data."}
       </p>
     </div>

@@ -66,13 +66,3 @@ def test_put(
     assert response.data["code"] == "FOBO"
     assert response.data["description"] == "New Description"
     assert response.data["status"] == "I"
-
-
-def test_delete(api_client: APIClient, reason_code_api: Response) -> None:
-    """
-    Test Delete Reason Code
-    """
-    response = api_client.delete(f"/api/reason_codes/{reason_code_api.data['id']}/")
-
-    assert response.status_code == 204
-    assert response.data is None

@@ -18,7 +18,6 @@ import uuid
 
 from django.db.models import Case, F, FloatField, Max, Q, When
 from django.db.models.aggregates import Sum
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from billing.models import BillingHistory
@@ -463,11 +462,9 @@ def get_customer_email_profile_by_id(
         Do not have any exception raises
     """
     try:
-        customer = get_object_or_404(models.CustomerEmailProfile, id=customer_id)
+        return models.CustomerEmailProfile.objects.get(id=customer_id)
     except models.Customer.DoesNotExist:
         return None
-
-    return customer
 
 
 def get_customer_credit_balance(*, customer_id: uuid.UUID) -> float:

@@ -18,9 +18,7 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const FeatureList = lazy(
-  () => import("@/components/feature-management/feature-list"),
-);
+const FeatureList = lazy(() => import("@/components/feature-list"));
 
 export default function FeatureManagementPage() {
   return (

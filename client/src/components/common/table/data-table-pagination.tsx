@@ -50,7 +50,7 @@ export function DataTablePagination<TData>({
   const totalCount = table.getPageCount() * pagination.pageSize;
 
   return table.getPageCount() > 0 ? (
-    <div className="flex items-center justify-between px-2">
+    <div className="flex items-center justify-between py-4">
       <div className="hidden sm:block">
         <p className="text-sm text-muted-foreground">
           Showing <span className="font-medium">{fromValue}</span> to&nbsp;
@@ -59,7 +59,7 @@ export function DataTablePagination<TData>({
         </p>
       </div>
       <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
             value={`${pagination.pageSize}`}
@@ -83,7 +83,7 @@ export function DataTablePagination<TData>({
           Page {table.getState().pagination.pageIndex + 1} of{" "}
           {table.getPageCount()}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <Button
             variant="outline"
             className="hidden size-8 p-0 lg:flex"

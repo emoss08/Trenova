@@ -18,13 +18,13 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { EquipManuDialog } from "@/components/equipment-manufacturer/eqiup-manu-table-dialog";
-import { EquipMenuEditDialog } from "@/components/equipment-manufacturer/equip-manu-edit-table-dialog";
-import { tableStatusChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { EquipmentManufacturer } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { tableStatusChoices } from "@/lib/choices";
+import { EquipManuDialog } from "@/components/eqiup-manu-table-dialog";
+import { EquipMenuEditDialog } from "@/components/equip-manu-edit-table-dialog";
 
 const columns: ColumnDef<EquipmentManufacturer>[] = [
   {

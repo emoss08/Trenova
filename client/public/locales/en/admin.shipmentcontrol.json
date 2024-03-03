@@ -47,6 +47,14 @@
     "removeShipment": {
       "label": "Remove Shipment",
       "description": "Grant the ability to remove shipments from the system, with restrictions on active movements and stops."
+    },
+    "sendPlacardInfo": {
+      "label": "Send Placard Info",
+      "description": "Automatically send placard information to drivers for hazardous shipments."
+    },
+    "enforceHazmatSegRules": {
+      "label": "Enforce Hazmat Seg. Rules",
+      "description": "Enforce compliance with hazardous materials shipping regulations."
     }
   }
 }

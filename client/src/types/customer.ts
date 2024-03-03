@@ -88,14 +88,14 @@ export type CustomerEmailProfile = {
   id: string;
   organization: string;
   businessUnit: string;
-  subject?: string | null;
-  comment?: string | null;
+  subject?: string;
+  comment?: string;
   customer: string;
-  fromAddress?: string | null;
-  blindCopy?: string | null;
+  fromAddress?: string;
+  blindCopy?: string;
   readReceipt: boolean;
-  readReceiptTo?: string | null;
-  attachmentName?: string | null;
+  readReceiptTo?: string;
+  attachmentName?: string;
 };
 
 export type CustomerEmailProfileFormValues = Omit<
@@ -133,11 +133,11 @@ type CustomerContact = {
   organization: string;
   businessUnit: string;
   customer: string;
-  isActive: boolean;
+  status: StatusChoiceProps;
   name: string;
-  email?: string | null;
-  title?: string | null;
-  phone?: string | null;
+  email?: string;
+  title?: string;
+  phone?: string;
   isPayableContact: boolean;
   created: string;
   modified: string;

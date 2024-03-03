@@ -15,17 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import decimal
-import typing
 
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 
+from shipment.models import Shipment, ShipmentCommodity
 from stops.models import Stop
 
-if typing.TYPE_CHECKING:
-    from shipment.models import Shipment
 
-
-def get_total_piece_count_by_shipment(*, shipment: "Shipment") -> int:
+def get_total_piece_count_by_shipment(*, shipment: Shipment) -> int:
     """Return the total piece count for an order
 
     Args:
@@ -40,7 +37,7 @@ def get_total_piece_count_by_shipment(*, shipment: "Shipment") -> int:
     return value or 0
 
 
-def get_total_weight_by_shipment(*, shipment: "Shipment") -> decimal.Decimal | int:
+def get_total_weight_by_shipment(*, shipment: Shipment) -> decimal.Decimal | int:
     """Return the total weight for an order
 
     Args:
@@ -53,3 +50,21 @@ def get_total_weight_by_shipment(*, shipment: "Shipment") -> decimal.Decimal | i
         movement__shipment__exact=shipment
     ).aggregate(Sum("weight"))["weight__sum"]
     return value or 0
+
+
+def get_all_shipment_commodities(
+    *, shipment: Shipment
+) -> QuerySet[ShipmentCommodity] | None:
+    """Return back all the commodities for a shipment
+
+    Args:
+        shipment (Shipment): Shipment instance
+
+    Returns:
+        QuerySet[ShipmentCommodity] | None: All commodities for a shipment
+
+    """
+    try:
+        return shipment.shipment_commodities.all()
+    except ShipmentCommodity.DoesNotExist:
+        return None

@@ -19,7 +19,7 @@ import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
 const FeasibilityControl = lazy(
-  () => import("@/components/control-files/feasibility-control"),
+  () => import("@/components/feasibility-control"),
 );
 
 export default function FeasibilityControlPage() {

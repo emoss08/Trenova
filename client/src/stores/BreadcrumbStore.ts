@@ -29,6 +29,7 @@ export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
     group: "",
     subMenu: "",
     path: "",
+    isPublic: false,
   },
   loading: false,
 });

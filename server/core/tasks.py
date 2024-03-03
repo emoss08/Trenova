@@ -52,6 +52,8 @@ def delete_audit_log_records(self: "Task") -> str:
     """
 
     # TODO(WOLFRED): Expand this out as we will most likely need to implement system retention policies.
+    # TODO(WOLFRED): We will need to rewrite the audit log framework to store an organization id along with the data.
+    # This way we can delete all audit logs based on the organization id.
 
     cutoff_date = timezone.now() - datetime.timedelta(days=30)
     formatted_date = cutoff_date.strftime("%Y-%m-%d")
@@ -62,6 +64,22 @@ def delete_audit_log_records(self: "Task") -> str:
         raise self.retry(exc=exc) from exc
 
     return f"Successfully deleted audit log records. older than {formatted_date}."
+
+
+@app.task(
+    name="clear_expired_reports", bind=True, max_retries=1, default_retry_delay=60
+)
+def clear_expired_reports(self: "Task") -> str:
+    """Delete expired reports for all organizations in Trenova.
+
+    This task uses the Django management command `clear_reports` to delete expired reports
+    for all organizations in Trenova. The command will delete reports that are older than 30 days.
+    """
+
+    try:
+        call_command("clear_reports")
+    except CommandCallException as exc:
+        raise self.retry(exc=exc) from exc
 
 
 @shared_task(ignore_result=False)
