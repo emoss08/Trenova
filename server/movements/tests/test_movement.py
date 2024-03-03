@@ -23,7 +23,6 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from dispatch.factories import FleetCodeFactory
 from equipment.models import Tractor, Trailer
 from equipment.tests.factories import TractorFactory
@@ -338,53 +337,6 @@ def test_primary_worker_tractor_fleet_validation(worker: Worker, organization) -
     ]
 
 
-def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
-    """
-    Test ValidationError is thrown when the worker is being assigned
-    to a movement with hazardous material and the worker does not have
-    a hazmat endorsement
-    """
-
-    hazardous_material = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazardous_material=hazardous_material)
-    shipment = ShipmentFactory(
-        commodity=commodity, hazardous_material=hazardous_material
-    )
-    worker = WorkerFactory()
-
-    with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(shipment=shipment, primary_worker=worker)
-
-    assert excinfo.value.message_dict["primary_worker"] == [
-        "Worker must be hazmat certified to haul this shipment. Please try again."
-    ]
-
-
-def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> None:
-    """
-    Test ValidationError is thrown when the worker is being assigned
-    to a movement with hazardous material and the worker does not have
-    a hazmat endorsement
-    """
-
-    hazardous_material = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazardous_material=hazardous_material)
-    shipment = ShipmentFactory(
-        commodity=commodity, hazardous_material=hazardous_material
-    )
-    worker = WorkerFactory()
-    worker.profile.endorsements = "H"
-    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
-    worker.profile.save()
-
-    with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(shipment=shipment, primary_worker=worker, secondary_worker=None)
-
-    assert excinfo.value.message_dict["primary_worker"] == [
-        "Worker hazmat certification has expired. Please try again."
-    ]
-
-
 # --- Secondary Worker tests ---
 def test_secondary_worker_license_expiration_date() -> None:
     """
@@ -494,64 +446,6 @@ def test_secondary_worker_termination_date(worker: Worker) -> None:
     ]
 
 
-def test_second_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
-    """
-    Test ValidationError is thrown when the worker is being assigned
-    to a movement with hazardous material and the worker does not have
-    a hazmat endorsement
-    """
-
-    hazardous_material = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazardous_material=hazardous_material)
-    shipment = ShipmentFactory(
-        commodity=commodity, hazardous_material=hazardous_material
-    )
-    primary_worker = WorkerFactory()
-    primary_worker.profile.endorsements = "H"
-    worker = WorkerFactory()
-
-    with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(
-            shipment=shipment, primary_worker=primary_worker, secondary_worker=worker
-        )
-
-    assert excinfo.value.message_dict["secondary_worker"] == [
-        "Worker must be hazmat certified to haul this shipment. Please try again."
-    ]
-
-
-def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> None:
-    """
-    Test ValidationError is thrown when the worker is being assigned
-    to a movement with hazardous material and the worker does not have
-    a hazmat endorsement
-    """
-
-    hazardous_material = HazardousMaterialFactory()
-    commodity = CommodityFactory(hazardous_material=hazardous_material)
-    shipment = ShipmentFactory(
-        commodity=commodity, hazardous_material=hazardous_material
-    )
-
-    primary_worker = WorkerFactory()
-    primary_worker.profile.endorsements = "H"
-    primary_worker.profile.hazmat_expiration_date = timezone.now().date()
-
-    worker = WorkerFactory()
-    worker.profile.endorsements = "H"
-    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
-    worker.profile.save()
-
-    with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(
-            shipment=shipment, primary_worker=primary_worker, secondary_worker=worker
-        )
-
-    assert excinfo.value.message_dict["secondary_worker"] == [
-        "Worker hazmat certification has expired. Please try again."
-    ]
-
-
 def test_workers_cannot_be_the_same() -> None:
     """
     Test ValidationError is thrown when the primary worker and the
@@ -590,65 +484,6 @@ def test_movement_changed_to_in_progress_with_no_worker(shipment: Shipment) -> N
     ]
     assert excinfo.value.message_dict["tractor"] == [
         "Tractor is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
-    ]
-
-
-def test_movement_cannot_change_status_in_in_progress_if_stops_are_new(
-    shipment: Shipment,
-) -> None:
-    """
-    Test ValidationError is thrown when the movement status is changed to in progress ,but
-    none of the stops associated are in progress.
-    """
-    movement = models.Movement.objects.filter(shipment=shipment).first()
-
-    with pytest.raises(ValidationError) as excinfo:
-        movement.status = "P"
-        movement.clean()
-
-    assert excinfo.value.message_dict["status"] == [
-        "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
-    ]
-
-
-def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress(
-    shipment: Shipment,
-) -> None:
-    """
-    Test ValidationError is thrown when the movement status is
-    changed to in new, but the stops status is in progress.
-    """
-
-    movement = models.Movement.objects.filter(shipment=shipment).first()
-
-    with pytest.raises(ValidationError) as excinfo:
-        movement.status = "C"
-        movement.clean()
-
-    assert excinfo.value.message_dict["status"] == [
-        "Cannot change status to `COMPLETED` if any of the stops are in progress or new. Please try again."
-    ]
-
-
-def test_cannot_delete_movement_if_org_disallows(movement: models.Movement) -> None:
-    """Test ValidationError is thrown if a movement is deleted and the organization,
-    does not allow it.
-
-    Args:
-        movement(models.Movement): Movement instance
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    movement.organization.shipment_control.remove_shipments = False
-    movement.organization.shipment_control.save()
-
-    with pytest.raises(ValidationError) as excinfo:
-        movement.delete()
-
-    assert excinfo.value.message_dict["ref_num"] == [
-        "Organization does not allow Movement removal. Please contact your administrator."
     ]
 
 

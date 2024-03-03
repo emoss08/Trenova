@@ -18,9 +18,7 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const AccountingControl = lazy(
-  () => import("@/components/control-files/accounting-control"),
-);
+const AccountingControl = lazy(() => import("@/components/accounting-control"));
 
 export default function AccountingControlPage() {
   return (

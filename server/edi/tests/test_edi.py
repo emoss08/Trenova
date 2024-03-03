@@ -242,7 +242,7 @@ def test_generate_edi_content_value_returns_empty_string(
         organization=organization,
     )
 
-    fields.update(model_field="shipment.commodity")
+    fields.update(model_field="shipment.temperature_min")
 
     content = helpers.generate_edi_content(
         billing_item=billing_item, edi_billing_profile=edi_billing_profile

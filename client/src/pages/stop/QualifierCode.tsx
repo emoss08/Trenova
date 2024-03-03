@@ -14,19 +14,20 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
-import { ServiceType } from "@/types/shipment";
-import { QualifierCodeDialog } from "@/components/qualifier-code/qc-table-dialog";
-import { FilterConfig } from "@/types/tables";
-import { tableStatusChoices } from "@/lib/constants";
-import { QualifierCodeEditDialog } from "@/components/qualifier-code/qc-edit-table-dialog";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { tableStatusChoices } from "@/lib/choices";
+import { QualifierCode } from "@/types/stop";
+import { FilterConfig } from "@/types/tables";
+import { QualifierCodeDialog } from "@/components/qualifier-code-table-dialog";
+import { QualifierCodeEditDialog } from "@/components/qualifier-code-edit-table-dialog";
 
-const columns: ColumnDef<ServiceType>[] = [
+const columns: ColumnDef<QualifierCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -75,7 +76,7 @@ const columns: ColumnDef<ServiceType>[] = [
   },
 ];
 
-const filters: FilterConfig<ServiceType>[] = [
+const filters: FilterConfig<QualifierCode>[] = [
   {
     columnName: "status",
     title: "Status",

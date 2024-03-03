@@ -23,11 +23,10 @@ import { UserPermissionsProvider } from "@/context/user-permissions";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { ENVIRONMENT, THEME_KEY } from "@/lib/constants";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
-import { useAuthStore } from "@/stores/AuthStore";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "non.geist";
-import { Suspense, memo } from "react";
+import { memo, Suspense } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { BrowserRouter } from "react-router-dom";
 
@@ -43,12 +42,7 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const { isVerifying, isInitializationComplete } = useVerifyToken();
-
-  const initialLoading = useAuthStore(
-    (state: { initialLoading: boolean }) => state.initialLoading,
-  );
-
-  const isLoading = isVerifying || initialLoading || !isInitializationComplete;
+  const isLoading = isVerifying || !isInitializationComplete;
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -63,20 +57,15 @@ export default function App() {
   );
 }
 
-const AppImpl = memo(() => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter future={{ v7_startTransition: true }}>
-        <Suspense fallback={<LoadingSkeleton />}>
-          <ProtectedRoutes />
-        </Suspense>
-      </BrowserRouter>
-      {ENVIRONMENT === "local" && (
-        <ReactQueryDevtools
-          buttonPosition="bottom-left"
-          initialIsOpen={false}
-        />
-      )}
-    </QueryClientProvider>
-  );
-});
+const AppImpl = memo(() => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <Suspense fallback={<LoadingSkeleton />}>
+        <ProtectedRoutes />
+      </Suspense>
+    </BrowserRouter>
+    {ENVIRONMENT === "local" && (
+      <ReactQueryDevtools buttonPosition="bottom-left" initialIsOpen={false} />
+    )}
+  </QueryClientProvider>
+));

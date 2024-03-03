@@ -173,7 +173,6 @@ def test_invoice_number_generation(
         revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=shipment.commodity,
         bol_number=shipment.bol_number,
         user=user,
     )
@@ -221,7 +220,6 @@ def test_invoice_number_increments(
         revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=shipment.commodity,
         bol_number=shipment.bol_number,
         user=user,
     )
@@ -236,7 +234,6 @@ def test_invoice_number_increments(
         revenue_code=shipment_2.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=shipment_2.commodity,
         bol_number=shipment_2.bol_number,
         user=user,
     )
@@ -544,7 +541,6 @@ def test_save_shipment_details_to_billing_history_before_save(
     assert billing_history.weight == shipment.weight
     assert billing_history.mileage == shipment.mileage
     assert billing_history.revenue_code == shipment.revenue_code
-    assert billing_history.commodity == shipment.commodity
     assert billing_history.bol_number == shipment.bol_number
     assert billing_history.customer == shipment.customer
     assert billing_history.other_charge_total == shipment.other_charge_amount
@@ -597,7 +593,6 @@ def test_transfer_shipment_to_billing_queue(
     assert billing_queue.weight == shipment.weight
     assert billing_queue.pieces == shipment.pieces
     assert billing_queue.revenue_code == shipment.revenue_code
-    assert billing_queue.commodity == shipment.commodity
     assert billing_queue.bol_number == shipment.bol_number
     assert billing_queue.customer == shipment.customer
     assert billing_queue.bill_type == "INVOICE"
@@ -659,7 +654,6 @@ def test_bill_shipments(
     assert billing_history.shipment_type == shipment.shipment_type
     assert billing_history.revenue_code == shipment.revenue_code
     assert billing_history.customer == shipment.customer
-    assert billing_history.commodity == shipment.commodity
     assert billing_history.bol_number == shipment.bol_number
     assert (
         billing_history.invoice_number
@@ -729,7 +723,6 @@ def test_single_shipment_billing_service(
     assert billing_history.shipment_type == shipment.shipment_type
     assert billing_history.revenue_code == shipment.revenue_code
     assert billing_history.customer == shipment.customer
-    assert billing_history.commodity == shipment.commodity
     assert (
         billing_history.invoice_number
         == f"{user.organization.invoice_control.invoice_number_prefix}{shipment.pro_number}".replace(
@@ -850,7 +843,6 @@ def test_validate_invoice_number_does_not_start_with_invoice_prefix(
             revenue_code=shipment.revenue_code,
             customer=customer,
             worker=worker,
-            commodity=shipment.commodity,
             bol_number=shipment.bol_number,
             user=user,
             invoice_number="RANDOMINVOICE",
@@ -897,7 +889,6 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
         revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=shipment.commodity,
         bol_number=shipment.bol_number,
         user=user,
         invoice_number="INV-000001",

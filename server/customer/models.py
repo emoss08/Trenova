@@ -429,12 +429,13 @@ class CustomerContact(GenericModel):
         verbose_name=_("Customer"),
         help_text=_("Customer"),
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        default=PrimaryStatusChoices.ACTIVE,
         help_text=_(
             "Designates whether this customer contact should be treated as active. "
-            "Unselect this instead of deleting customer contacts."
+            "Mark `Inactive` this instead of deleting customer contacts."
         ),
     )
     name = models.CharField(

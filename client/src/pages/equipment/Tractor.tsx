@@ -18,12 +18,12 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { TractorDialog } from "@/components/tractors/tractor-table-dialog";
-import { TractorTableEditSheet } from "@/components/tractors/tractor-table-edit-dialog";
 import { equipmentStatusChoices, Tractor } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
+import { TractorDialog } from "@/components/tractor-table-dialog";
+import { TractorTableEditSheet } from "@/components/tractor-table-edit-dialog";
 
 const columns: ColumnDef<Tractor>[] = [
   {

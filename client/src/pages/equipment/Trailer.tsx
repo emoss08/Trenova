@@ -19,12 +19,12 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
-import { TrailerDialog } from "@/components/trailers/trailer-table-dialog";
-import { TrailerEditDialog } from "@/components/trailers/trailer-table-edit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { equipmentStatusChoices, Trailer } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { TrailerDialog } from "@/components/trailer-table-dialog";
+import { TrailerEditDialog } from "@/components/trailer-table-edit-dialog";
 
 function LastInspectionDate({ lastInspection }: { lastInspection?: string }) {
   return (

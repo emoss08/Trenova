@@ -28,35 +28,46 @@ export function ProtectedRoutes() {
   useEffect(() => {
     if (
       !isAuthenticated &&
-      location.pathname !== "/login" &&
-      location.pathname !== "/reset-password"
+      !["/login", "/reset-password"].includes(location.pathname)
     ) {
       const returnUrl = location.pathname + location.search;
       sessionStorage.setItem("returnUrl", returnUrl);
     }
   }, [isAuthenticated, location.pathname, location.search]);
 
+  const getElement = (route: RouteObjectWithPermission): React.ReactNode => {
+    if (!route.isPublic && !isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+    if (route.permission && !userHasPermission(route.permission)) {
+      return <Navigate to="/error" replace />;
+    }
+    return route.element ?? null;
+  };
+
+  const getLayout = (
+    route: RouteObjectWithPermission,
+    element: React.ReactNode,
+  ): JSX.Element => {
+    return route.isPublic ? (
+      <UnprotectedLayout>{element}</UnprotectedLayout>
+    ) : (
+      <Layout>{element}</Layout>
+    );
+  };
+
   return (
     <Routes>
-      {routes.map((route: RouteObjectWithPermission, i: number) => {
-        const isPublicRoute =
-          route.path === "/login" ||
-          // route.path === "/logout" ||
-          route.path === "/reset-password";
-
-        let element = route.element;
-        if (!isPublicRoute && !isAuthenticated) {
-          element = <Navigate to="/login" replace />;
-        } else if (route.permission && !userHasPermission(route.permission)) {
-          element = <Navigate to="/error" replace />;
-        }
-        const wrappedElement = isPublicRoute ? (
-          <UnprotectedLayout>{element}</UnprotectedLayout>
-        ) : (
-          <Layout>{element}</Layout>
+      {routes.map((route: RouteObjectWithPermission) => {
+        const element = getElement(route);
+        const wrappedElement = getLayout(route, element);
+        return (
+          <Route
+            key={route.key || route.path}
+            path={route.path}
+            element={wrappedElement}
+          />
         );
-
-        return <Route key={i} path={route.path} element={wrappedElement} />;
       })}
     </Routes>
   );

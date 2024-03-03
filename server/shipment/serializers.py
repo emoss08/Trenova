@@ -223,6 +223,7 @@ class ShipmentSerializer(GenericSerializer):
         helpers.create_additional_stops(
             shipment=shipment,
             stop_data=stop_data,
+            shipment_data=validated_data,
             organization=organization,
             business_unit=business_unit,
         )

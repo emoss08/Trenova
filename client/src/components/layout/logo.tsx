@@ -33,9 +33,9 @@ export function Logo() {
   }
 
   return (
-    <span className=" max-w-[200px] truncate">
+    <span className="max-w-[200px] truncate">
       <Link
-        className="text-xl font-semibold text-accent-foreground"
+        className="text-accent-foreground text-xl font-semibold"
         to="/"
         title={userOrganizationData?.name}
       >
@@ -54,9 +54,9 @@ export function OrganizationNameLogo() {
   }
 
   return (
-    <span className=" max-w-[200px] truncate">
+    <span className="max-w-[200px] truncate">
       <Link
-        className="text-xl font-bold text-accent-foreground"
+        className="text-accent-foreground text-xl font-bold"
         to="/"
         title={userOrganizationData?.name}
       >

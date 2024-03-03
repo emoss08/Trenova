@@ -17,14 +17,14 @@
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { Checkbox } from "@/components/common/fields/checkbox";
-import { tableStatusChoices } from "@/lib/constants";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 import { truncateText } from "@/lib/utils";
 import { ReasonCode } from "@/types/shipment";
-import { ReasonCodeDialog } from "@/components/reason-codes/reason-code-table-dialog";
-import { ReasonCodeEditDialog } from "@/components/reason-codes/reason-code-edit-dialog";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { ReasonCodeDialog } from "@/components/reason-code-table-dialog";
+import { ReasonCodeEditDialog } from "@/components/reason-code-edit-dialog";
+import { tableStatusChoices } from "@/lib/choices";
 
 const columns: ColumnDef<ReasonCode>[] = [
   {

@@ -31,9 +31,9 @@ export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
       }}
     >
       {row.getIsExpanded() ? (
-        <FontAwesomeIcon icon={faChevronDown} className="size-4" /> // Apply rotation
+        <FontAwesomeIcon icon={faChevronDown} className="size-3" /> // Apply rotation
       ) : (
-        <FontAwesomeIcon icon={faChevronRight} className="size-4" /> // Apply rotation
+        <FontAwesomeIcon icon={faChevronRight} className="size-3" /> // Apply rotation
       )}
     </button>
   ) : (

@@ -27,12 +27,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { tableStatusChoices } from "@/lib/constants";
 import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Suspense, lazy } from "react";
+import { lazy, Suspense } from "react";
+import { tableStatusChoices } from "@/lib/choices";
 
 const LocationChart = lazy(
   () => import("../../components/location/chart/table-chart"),

@@ -259,7 +259,7 @@ class MovementValidation:
             ValidationError: If the worker is not allowed to move the commodity.
         """
 
-        if not self.movement.shipment.hazardous_material:
+        if not self.movement.shipment.is_hazmat:
             return
 
         # Validation for the primary_worker

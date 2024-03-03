@@ -25,8 +25,6 @@ type AuthState = {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
-  initialLoading: boolean;
-  setInitialLoading: (initialLoading: boolean) => void;
   reset: () => void;
 };
 
@@ -35,12 +33,9 @@ const createStore = (set: SetState<AuthState>) => ({
   setIsAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
-  initialLoading: true,
-  setInitialLoading: (initialLoading: boolean) => set({ initialLoading }),
   reset: () => set({ isAuthenticated: false }),
 });
 
-// TODO(WOLFRED): Switch this to createGlobalStore once we have a way to persist global stores
 export const useAuthStore = create<AuthState>(
   persist(createStore, {
     name: "Trenova-auth-storage",
@@ -50,6 +45,37 @@ export const useAuthStore = create<AuthState>(
 type UserStoreState = {
   user: User;
 };
+
+type CookieState = {
+  isCookieConsentGiven: boolean;
+  setIsCookieConsentGiven: (isCookieConsentGiven: boolean) => void;
+  essentialCookies: boolean;
+  setEssentialCookies: (essentialCookies: boolean) => void;
+  functionalCookies: boolean;
+  setFunctionalCookies: (functionalCookies: boolean) => void;
+  performanceCookies: boolean;
+  setPerformanceCookies: (performanceCookies: boolean) => void;
+};
+
+export const createCookieStore = (set: SetState<CookieState>) => ({
+  isCookieConsentGiven: false,
+  setIsCookieConsentGiven: (isCookieConsentGiven: boolean) =>
+    set({ isCookieConsentGiven }),
+  essentialCookies: false,
+  setEssentialCookies: (essentialCookies: boolean) => set({ essentialCookies }),
+  functionalCookies: false,
+  setFunctionalCookies: (functionalCookies: boolean) =>
+    set({ functionalCookies }),
+  performanceCookies: false,
+  setPerformanceCookies: (performanceCookies: boolean) =>
+    set({ performanceCookies }),
+});
+
+export const useCookieStore = create<CookieState>(
+  persist(createCookieStore, {
+    name: "Trenova-cookie-storage",
+  }) as StateCreator<CookieState>,
+);
 
 export const useUserStore = createGlobalStore<UserStoreState>({
   user: {

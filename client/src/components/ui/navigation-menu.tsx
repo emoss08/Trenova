@@ -86,7 +86,7 @@ const NavigationMenuTrigger = React.forwardRef<
     {children}
     <FontAwesomeIcon
       icon={faChevronDown}
-      className="relative top-[1px] ml-1 size-2 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
+      className="relative top-[1px] ml-2 size-2 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>

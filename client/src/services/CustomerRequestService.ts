@@ -16,82 +16,9 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import {
-  Customer,
-  CustomerEmailProfile,
-  CustomerRuleProfile,
-} from "@/types/customer";
+import { Customer } from "@/types/customer";
 
 export async function getCustomers(): Promise<ReadonlyArray<Customer>> {
   const response = await axios.get("customers/");
   return response.data.results;
-}
-
-/**
- * Fetches the details of the customer with the specified ID.
- * @param id The ID of the customer to fetch details for.
- * @returns A promise that resolves to a customer details.
- */
-export async function getCustomerDetails(id: string): Promise<Customer> {
-  const response = await axios.get(`customers/${id}/`);
-  return response.data;
-}
-
-/**
- * Fetaches the details of the customer including metrics with the specified ID.
- * @param id The ID of the customer to fetch details for.
- * @returns A promise that resolves to a customer details.
- */
-export async function getCustomerDetailsWithMetrics(
-  id: string,
-): Promise<Customer> {
-  const response = await axios.get(`customers/${id}/`, {
-    params: {
-      expand_metrics: "True",
-    },
-  });
-  return response.data;
-}
-
-/**
- * Fetches the customer rule profiles from the server.
- * @returns A promise that resolves to a list of customer rule profiles.
- */
-export async function getCustomerRuleProfiles(): Promise<
-  CustomerRuleProfile[]
-> {
-  const response = await axios.get("customer_rule_profiles/");
-  return response.data.results;
-}
-
-/**
- * Fetches the customer email profiles from the server.
- * @returns A promise that resolves to a list of customer email profiles.
- */
-export async function getCustomerEmailProfile(
-  id: string,
-): Promise<CustomerEmailProfile> {
-  const response = await axios.get(
-    "customer_email_profiles/get_by_customer_id/",
-    {
-      params: {
-        customer_id: id,
-      },
-    },
-  );
-  return response.data;
-}
-
-export async function getCustomerRuleProfile(
-  id: string,
-): Promise<CustomerRuleProfile> {
-  const response = await axios.get(
-    "customer_rule_profiles/get_by_customer_id/",
-    {
-      params: {
-        customer_id: id,
-      },
-    },
-  );
-  return response.data;
 }

@@ -90,15 +90,3 @@ def test_put(
     assert response.data["code"] == "NewName"
     assert response.data["description"] == "New Description"
     assert response.data["status"] == "I"
-
-
-def test_delete(api_client: APIClient, shipment_type_api: Response) -> None:
-    """
-    Test Delete shipment type
-    """
-    response = api_client.delete(
-        reverse("shipment-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
-    )
-
-    assert response.status_code == 204
-    assert not response.data

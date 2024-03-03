@@ -29,17 +29,13 @@ import { ObjectSchema } from "yup";
 /** Customer Email Profile Schema */
 export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
   Yup.object().shape({
-    subject: Yup.string().notRequired().max(100),
-    comment: Yup.string().notRequired().max(100),
-    fromAddress: Yup.string().notRequired(),
-    blindCopy: Yup.string().notRequired(),
+    subject: Yup.string().max(100),
+    comment: Yup.string().max(100),
+    fromAddress: Yup.string(),
+    blindCopy: Yup.string(),
     readReceipt: Yup.boolean().required(),
-    readReceiptTo: Yup.string().when("readReceipt", {
-      is: true,
-      then: (schema) => schema.required("Read Receipt To is required"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-    attachmentName: Yup.string().notRequired(),
+    readReceiptTo: Yup.string(),
+    attachmentName: Yup.string(),
   });
 
 export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
@@ -114,15 +110,15 @@ const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
   });
 const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
   Yup.object().shape({
-    isActive: Yup.boolean().required(),
+    status: Yup.string<StatusChoiceProps>().required(),
     name: Yup.string().required("Name is required"),
     email: Yup.string().when("isPayableContact", {
       is: true,
       then: (schema) => schema.required("Email is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
-    title: Yup.string().notRequired(),
-    phone: Yup.string().notRequired(),
+    title: Yup.string(),
+    phone: Yup.string(),
     isPayableContact: Yup.boolean().required(),
   });
 

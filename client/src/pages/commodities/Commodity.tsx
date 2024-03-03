@@ -15,18 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CommodityDialog } from "@/components/commodities/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodities/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { StatusBadge } from "@/components/common/table/data-table-components";
 import { Badge } from "@/components/ui/badge";
-import { tableStatusChoices, yesAndNoChoices } from "@/lib/constants";
 import { truncateText } from "@/lib/utils";
 import { Commodity } from "@/types/commodities";
-import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
+import { tableStatusChoices, yesAndNoChoices } from "@/lib/choices";
+import { FilterConfig } from "@/types/tables";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { CommodityDialog } from "@/components/commodity-dialog";
+import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 
 function HazmatBadge({ isHazmat }: { isHazmat: string }) {
   return (

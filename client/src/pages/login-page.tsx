@@ -20,19 +20,40 @@ import { InputField, PasswordField } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
-import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/AccountsSchema";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { Image } from "@unpic/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+
+import { InternalLink } from "@/components/ui/link";
+import trenovaLogo from "../assets/images/logo.webp";
+
 type LoginFormValues = {
   username: string;
   password: string;
 };
+
+function AuthFooter() {
+  return (
+    <footer className="text-muted-foreground absolute bottom-10 w-full text-center">
+      <div className="flex items-center justify-center gap-2">
+        <p className="text-xs">&copy; 2024 Trenova. All rights reserved.</p>
+        <span className="text-xs">|</span>
+        <InternalLink to="/terms" className="text-xs hover:underline">
+          Terms of Service
+        </InternalLink>
+        <span className="text-xs">|</span>
+        <InternalLink to="/privacy" className="text-xs hover:underline">
+          Privacy Policy
+        </InternalLink>
+      </div>
+    </footer>
+  );
+}
 
 function UserAuthForm() {
   const [, setIsAuthenticated] = useAuthStore(
@@ -42,7 +63,7 @@ function UserAuthForm() {
     ],
   );
   const [, setUserDetails] = useUserStore.use("user");
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit, setError } = useForm<LoginFormValues>({
     resolver: yupResolver(userAuthSchema),
@@ -68,7 +89,7 @@ function UserAuthForm() {
   };
 
   const login = async (values: LoginFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const response = await axios.post("/login/", {
         username: values.username,
@@ -90,7 +111,7 @@ function UserAuthForm() {
         });
       }
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -123,7 +144,7 @@ function UserAuthForm() {
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-1">
               <Checkbox id="remember-me" />
               <Label htmlFor="remember-me">Remember Me</Label>
             </div>
@@ -134,7 +155,11 @@ function UserAuthForm() {
             </Link>
           </div>
         </div>
-        <Button className="my-2 w-full" isLoading={isLoading}>
+        <Button
+          className="my-2 w-full"
+          isLoading={isSubmitting}
+          loadingText="Logging In..."
+        >
           Continue
         </Button>
       </div>
@@ -160,12 +185,20 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="relative min-h-screen pt-28">
+    <div className="relative min-h-screen pt-20">
       <div className="flex flex-col items-center justify-start space-y-4">
-        <Card className={cn("w-[420px] shadow-sm")}>
+        <Image
+          src={trenovaLogo}
+          layout="constrained"
+          className="mb-5 w-[200px]"
+          alt="trenova-logo"
+          width={75}
+          height={75}
+        />
+        <Card className="w-[420px]">
           <CardContent className="pt-0">
             <h2 className="pb-2 text-center text-xl font-semibold tracking-tight transition-colors first:mt-5">
-              Welcome Back
+              Sign in to Trenova
             </h2>
             <span className="flex justify-center space-y-5 text-sm">
               Do not have an account yet?&nbsp;
@@ -179,27 +212,8 @@ export default function LoginPage() {
             <UserAuthForm />
           </CardContent>
         </Card>
-        <p className="text-muted-foreground w-[350px] px-8 text-center text-sm">
-          By clicking continue, you agree to our&nbsp;
-          <a
-            className="hover:text-primary underline underline-offset-4"
-            href="/terms"
-          >
-            Terms of Service
-          </a>
-          &nbsp; and&nbsp;
-          <a
-            className="hover:text-primary underline underline-offset-4"
-            href="/privacy"
-          >
-            Privacy Policy
-          </a>
-          .
-        </p>
       </div>
-      <div className="absolute bottom-10 right-10">
-        <ModeToggle />
-      </div>
+      <AuthFooter />
     </div>
   );
 }

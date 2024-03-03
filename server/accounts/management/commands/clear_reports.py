@@ -16,9 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 import logging
 import os
+import typing
+from datetime import timedelta
 
 from django.core.management import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from reports import models
 
@@ -28,8 +31,10 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Django Command to clear out old reports."
 
-    def handle(self, *args, **options):
-        user_reports = models.UserReport.objects.all().iterator()
+    def handle(self, *args: typing.Any, **options: typing.Any) -> None:
+        user_reports = models.UserReport.objects.filter(
+            created=timezone.now() - timedelta(days=30)
+        ).iterator()
 
         for user_report in user_reports:
             with transaction.atomic():

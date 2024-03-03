@@ -39,11 +39,50 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { KBD } from "../ui/kbd";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
 };
+
+export function SignOutDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const logout = useLogout();
+
+  return (
+    <AlertDialog open={open} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Sign out of Trenova</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to sign out?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => logout()}>
+            Sign Out
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
   ({ user, ...props }, ref) => {
@@ -76,11 +115,11 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
 );
 
 function UserAvatarMenuContent({ user }: { user: User }) {
-  const logout = useLogout();
   const { theme, setTheme, isRainbowAnimationActive, toggleRainbowAnimation } =
     useTheme();
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const fullName = `${user.profile?.firstName} ${user.profile?.lastName}`;
@@ -89,7 +128,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
     const down = (e: KeyboardEvent) => {
       if (e.key === "q" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        logout();
+        setSignOutDialogOpen(true);
       }
 
       if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
@@ -99,7 +138,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [logout]);
+  }, [setSignOutDialogOpen, navigate]);
 
   const switchTheme = (selectedTheme: ThemeOptions) => {
     // If the selected theme is the same as the current one, just return
@@ -185,75 +224,74 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   };
 
   return (
-    <DropdownMenuContent className="w-56" align="end" forceMount>
-      <DropdownMenuLabel className="font-normal">
-        <div className="flex flex-col space-y-1">
-          <p className="truncate text-sm font-medium leading-none">
-            {fullName}
-          </p>
-          <p className="text-xs leading-none text-muted-foreground">
-            {user.email}
-          </p>
-        </div>
-      </DropdownMenuLabel>
-      <DropdownMenuSeparator />
-      <DropdownMenuGroup>
-        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
-          Account Settings
+    <>
+      <DropdownMenuContent className="w-56" align="end">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="truncate text-sm font-medium leading-none">
+              {fullName}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+            Account Settings
+            <DropdownMenuShortcut>
+              <ShortcutsProvider os="mac">
+                <KeyCombo keyNames={[Keys.Control, "B"]} />
+              </ShortcutsProvider>
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+            Inbox
+            <DropdownMenuShortcut>
+              <ShortcutsProvider os="mac">
+                <KeyCombo keyNames={[Keys.Control, "H"]} />
+              </ShortcutsProvider>
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent sideOffset={10}>
+              <DropdownMenuItem onClick={() => switchTheme("light")}>
+                Light
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => switchTheme("dark")}>
+                Dark
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => switchTheme("system")}>
+                System
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+        <DropdownMenuItem onClick={toggleRainbowAnimation}>
+          {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setSignOutDialogOpen(true)}>
+          Log out
           <DropdownMenuShortcut>
-            <KBD>
-              <span className="tracking-tight">Ctrl</span>
-            </KBD>
-            <KBD>
-              <span>B</span>
-            </KBD>
+            <ShortcutsProvider os="mac">
+              <KeyCombo keyNames={[Keys.Control, "Q"]} />
+            </ShortcutsProvider>
           </DropdownMenuShortcut>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
-          Inbox
-          <DropdownMenuShortcut>
-            <KBD>
-              <span className="tracking-tight">Ctrl</span>
-            </KBD>
-            <KBD>
-              <span>H</span>
-            </KBD>
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuGroup>
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => switchTheme("light")}>
-              Light
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => switchTheme("dark")}>
-              Dark
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => switchTheme("system")}>
-              System
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuPortal>
-      </DropdownMenuSub>
-      <DropdownMenuItem onClick={toggleRainbowAnimation}>
-        {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => logout()}>
-        Log out
-        <DropdownMenuShortcut>
-          <KBD>
-            <span className="tracking-tight">Ctrl</span>
-          </KBD>
-          <KBD>
-            <span>Q</span>
-          </KBD>
-        </DropdownMenuShortcut>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
+      </DropdownMenuContent>
+      {signOutDialogOpen && (
+        <SignOutDialog
+          open={signOutDialogOpen}
+          onClose={() => setSignOutDialogOpen(false)}
+        />
+      )}
+    </>
   );
 }
 

@@ -37,6 +37,8 @@ export interface ShipmentControl extends BaseModel {
   enforceOriginDestination: boolean;
   checkForDuplicateBol: boolean;
   removeShipment: boolean;
+  sendPlacardInfo: boolean;
+  enforceHazmatSegRules: boolean;
 }
 
 export type ShipmentControlFormValues = Omit<
@@ -85,51 +87,49 @@ export interface Shipment extends BaseModel {
   id: string;
   proNumber: string;
   shipmentType: string;
-  serviceType?: string | null;
+  serviceType?: string;
   status: ShipmentStatusChoiceProps;
-  revenueCode?: string | null;
-  originLocation?: string | null;
-  originAddress?: string | null;
+  revenueCode?: string;
+  originAddress?: string;
+  originLocation?: string;
   originAppointmentWindowStart: string;
   originAppointmentWindowEnd: string;
-  destinationLocation?: string | null;
-  destinationAddress?: string | null;
+  destinationLocation?: string;
+  destinationAddress?: string;
   destinationAppointmentWindowStart: string;
   destinationAppointmentWindowEnd: string;
   ratingUnits: number;
-  rate?: string | null;
-  mileage?: number | null;
-  otherChargeAmount?: string | null;
-  freightChargeAmount?: string | null;
-  rateMethod?: string | null;
+  rate?: string;
+  mileage?: number;
+  otherChargeAmount?: string;
+  freightChargeAmount?: string;
+  rateMethod?: string;
   customer: string;
-  pieces?: number | null;
-  weight?: string | null;
+  pieces?: number;
+  weight?: string;
   readyToBill: boolean;
-  billDate?: string | null;
-  shipDate?: string | null;
+  billDate?: string;
+  shipDate?: string;
   billed: boolean;
   transferredToBilling: boolean;
-  billingTransferDate?: string | null;
-  subTotal?: string | null;
-  trailer?: string | null;
+  billingTransferDate?: string;
+  subTotal?: string;
+  trailer?: string;
   trailerType: string;
-  tractorType?: string | null;
-  commodity?: string | null;
+  tractorType?: string;
   enteredBy: string;
-  hazardousMaterial?: string | null;
-  temperatureMin?: string | null;
-  temperatureMax?: string | null;
+  temperatureMin?: string;
+  temperatureMax?: string;
   bolNumber: string;
-  consigneeRefNumber?: string | null;
-  comment?: string | null;
-  voidedComm?: string | null;
+  consigneeRefNumber?: string;
+  comment?: string;
+  voidedComm?: string;
   autoRate: boolean;
-  currentSuffix?: string | null;
-  formulaTemplate?: string | null;
+  currentSuffix?: string;
+  formulaTemplate?: string;
   entryMethod: ShipmentEntryMethodChoices;
-  copyAmount?: number | null;
-  stops?: StopFormValues[] | null;
+  copyAmount?: number;
+  stops?: StopFormValues[];
 }
 
 export type ShipmentFormValues = Omit<

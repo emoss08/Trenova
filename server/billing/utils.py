@@ -321,7 +321,7 @@ def transfer_shipments_details(
         shipment.DoesNotExist: If the corresponding order does not exist.
     """
     shipment = Shipment.objects.select_related(
-        "shipment_type", "revenue_code", "commodity", "customer"
+        "shipment_type", "revenue_code", "customer"
     ).get(pk=obj.shipment.pk)
 
     obj.pieces = obj.pieces or shipment.pieces
@@ -329,14 +329,10 @@ def transfer_shipments_details(
     obj.weight = obj.weight or shipment.weight
     obj.mileage = obj.mileage or shipment.mileage
     obj.revenue_code = obj.revenue_code or shipment.revenue_code
-    obj.commodity = obj.commodity or shipment.commodity
     obj.bol_number = obj.bol_number or shipment.bol_number
     obj.bill_type = obj.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
     obj.bill_date = obj.bill_date or timezone.now().date()
     obj.consignee_ref_number = obj.consignee_ref_number or shipment.consignee_ref_number
-    if obj.commodity and not obj.commodity_descr:
-        obj.commodity_descr = obj.commodity.description
-
     obj.customer = shipment.customer
     obj.other_charge_total = shipment.other_charge_amount
     obj.freight_charge_amount = shipment.freight_charge_amount

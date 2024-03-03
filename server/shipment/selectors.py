@@ -61,7 +61,7 @@ def get_shipment_first_movement(*, shipment: models.Shipment) -> Movement | None
         return None
 
 
-def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement]":
+def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement] | None":
     """Get the movements of an shipment.
 
     Args:
@@ -70,7 +70,11 @@ def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement]"
     Returns:
         QuerySet[Movement]: QuerySet of the movements of the shipment.
     """
-    return Movement.objects.filter(shipment=shipment)
+
+    try:
+        return Movement.objects.filter(shipment=shipment)
+    except Movement.DoesNotExist:
+        return None
 
 
 def get_shipment_stops(*, shipment: models.Shipment) -> "QuerySet[Stop]":

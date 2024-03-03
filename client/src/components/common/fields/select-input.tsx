@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { debounce } from "lodash-es";
 import { useCallback, useState } from "react";
-import { Controller, UseControllerProps, useController } from "react-hook-form";
+import { Controller, useController, UseControllerProps } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import AsyncSelect, { AsyncProps } from "react-select/async";
 
@@ -137,6 +137,7 @@ export function SelectInput<T extends Record<string, unknown>>(
               placeholder={placeholder}
               isFetchError={isFetchError}
               formError={fieldState.error?.message}
+              noOptionsMessage={() => "No options available..."}
               maxMenuHeight={200}
               menuPlacement={menuPlacement}
               menuPosition={menuPosition}
@@ -198,8 +199,7 @@ export function SelectInput<T extends Record<string, unknown>>(
                 menu: () => "mt-2 p-1 border rounded-md bg-popover shadow-lg",
                 groupHeading: () =>
                   "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
-                noOptionsMessage: () =>
-                  "text-muted-foreground p-2 bg-popover rounded-sm",
+                noOptionsMessage: () => "text-muted-foreground",
               }}
               {...field}
               value={processedValue}

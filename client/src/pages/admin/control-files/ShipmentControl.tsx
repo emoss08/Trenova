@@ -18,9 +18,7 @@
 import { lazy } from "react";
 import AdminLayout from "@/components/admin-page/layout";
 
-const ShipmentControl = lazy(
-  () => import("@/components/control-files/shipment-control"),
-);
+const ShipmentControl = lazy(() => import("@/components/shipment-control"));
 
 export default function ShipmentControlPage() {
   return (

@@ -26,10 +26,10 @@ import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { Toaster } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
-import { AppGridMenu } from "./app-grid";
 import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { Logo } from "./logo";
+import { CookieConsent } from "@/components/layout/cookie-consent";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -58,7 +58,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
-              <AppGridMenu />
               <NotificationMenu />
               <div className="h-7 border-l border-muted-foreground/40" />
               {user && <UserAvatarMenu user={user} />}
@@ -86,6 +85,7 @@ export function UnprotectedLayout({ children }: { children: React.ReactNode }) {
         <RainbowTopBar />
       </header>
       <div className="h-screen">{children}</div>
+      <CookieConsent />
     </div>
   );
 }

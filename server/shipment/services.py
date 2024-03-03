@@ -96,11 +96,6 @@ def gather_formula_variables(*, shipment: models.Shipment) -> types.FormulaVaria
         "weight": shipment.weight,
         "stops": selectors.get_shipment_stops(shipment=shipment).count(),
         "rating_units": shipment.rating_units,
-        "hazmat_additional_cost": (
-            shipment.hazardous_material.additional_cost
-            if shipment.hazardous_material
-            else 0
-        ),
         "temperature_differential": shipment.temperature_differential,
     }
 
@@ -175,6 +170,7 @@ def calculate_other_method(
     return freight_charge
 
 
+# TODO(WOLFRED): Write a test for this.
 def handle_voided_shipment(shipment: models.Shipment) -> None:
     """Handles a shipment that was voided.
 

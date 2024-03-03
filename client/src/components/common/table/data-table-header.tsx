@@ -22,7 +22,7 @@ import { TableStoreProps } from "@/stores/TableStore";
 import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
 import { faPlus, faX } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Table as TableType, flexRender } from "@tanstack/react-table";
+import { flexRender, Table as TableType } from "@tanstack/react-table";
 import React, { ChangeEvent } from "react";
 import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
@@ -97,7 +97,7 @@ const ButtonConfig: React.FC<{
       className="h-8"
       disabled={isDisabled}
     >
-      <FontAwesomeIcon icon={faPlus} className="mr-1 size-4" /> {buttonLabel}
+      {buttonLabel}
     </Button>
   );
 });

@@ -20,7 +20,7 @@ from typing import Any
 from django.db import transaction
 
 from movements.models import Movement
-from shipment import models, services
+from shipment import models, selectors, services
 from stops.models import Stop
 
 
@@ -68,6 +68,13 @@ def update_stops_on_shipment_change(
         # If it's a new instance or doesn't exist in the database, there's nothing to do
         return
 
+    movements = selectors.get_shipment_movements(shipment=instance)
+
+    print("movements", movements)
+
+    if not movements:
+        return
+
     old_instance = models.Shipment.objects.get(pk=instance.pk)
 
     origin_changed = any(
@@ -94,7 +101,7 @@ def update_stops_on_shipment_change(
 
     if origin_changed or destination_changed:
         with transaction.atomic():
-            for movement in instance.movements.all():
+            for movement in movements:
                 if origin_changed:
                     # Update the first stop (pickup) for this movement
                     Stop.objects.filter(movement=movement, sequence=1).update(
