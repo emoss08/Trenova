@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 function ExternalLinkDialog({
   open,
@@ -99,7 +100,10 @@ export const InternalLink = React.forwardRef<
 >((props, ref) => (
   <Link
     ref={ref}
-    className="inline-flex items-center font-semibold text-blue-600 hover:underline"
+    className={cn(
+      "inline-flex items-center font-semibold text-blue-600 hover:underline",
+      props.className,
+    )}
     {...props}
   >
     {props.children}

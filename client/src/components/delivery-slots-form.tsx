@@ -200,7 +200,7 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <FontAwesomeIcon
               icon={faRoadCircleXmark}
-              className="fill-foreground size-10"
+              className="text-foreground size-10"
             />
             <h3 className="mt-4 text-lg font-semibold">
               No Delivery Slot added

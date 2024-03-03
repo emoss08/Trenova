@@ -104,7 +104,7 @@ function EmailControlForm({
           </div>
         </div>
       </div>
-      <div className="4 flex items-center justify-end border-t border-muted p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();

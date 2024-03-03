@@ -21,8 +21,27 @@ import { QueryKeys } from "./index";
 import { API_ENDPOINTS } from "./server";
 
 export interface DataTableFacetedFilterProps<TData, TValue> {
+  /**
+   * The column to filter by.
+   * @type Column<TData, TValue>
+   * @example column={columns.find((column) => column.id === "name")}
+   */
   column?: Column<TData, TValue>;
+
+  /**
+   * The title of the filter.
+   * @type string
+   * @example title="Name"
+   * @default ""
+   */
   title?: string;
+
+  /**
+   * The options to filter by.
+   * @type TableOptionProps[]
+   * @example options={[{ label: "All", value: "" }, { label: "Active", value: true }, { label: "Inactive", value: false }]}
+   * @default []
+   */
   options: {
     label: string;
     value: string | boolean;
@@ -31,10 +50,35 @@ export interface DataTableFacetedFilterProps<TData, TValue> {
 }
 
 export type DataTableProps<K> = {
+  /**
+   * The columns to display in the table.
+   * @type ColumnDef<K>[]
+   * @example columns={[{ id: "name", Header: "Name", accessor: "name" }, { id: "status", Header: "Status", accessor: "status" }]}
+   * @default []
+   */
   columns: ColumnDef<K>[];
+
+  /**
+   * The name of the table.
+   * @type string
+   * @example name="commodities"
+   */
   name: string;
+
+  /**
+   * The endpoint to fetch data from.
+   * @type API_ENDPOINTS
+   * @example link="/commodities/"
+   */
   link: API_ENDPOINTS;
+
+  /**
+   * The key to use for the query.
+   * @type QueryKeys | string
+   * @example queryKey="commodities"
+   */
   queryKey: QueryKeys | string;
+
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;
   TableSheet?: React.ComponentType<TableSheetProps>;

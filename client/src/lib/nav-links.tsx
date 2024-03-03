@@ -279,14 +279,6 @@ export const shipmentNavLinks = [
               "Define and manage various service types offered in the shipping process. Facilitates customized service offerings and helps in aligning services with customer needs.",
           },
           {
-            key: "movements",
-            label: "Movements",
-            link: "/shipment-management/movements/",
-            permission: "view_movement",
-            description:
-              "Organize and classify different types of shipment movements. Key for planning and optimizing logistical routes and schedules.",
-          },
-          {
             key: "qualifierCodes",
             label: "Qualifier Codes",
             link: "/shipment-management/qualifier-codes/",

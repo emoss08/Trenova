@@ -36,7 +36,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="Subject"
-              description="Specify the official name of the customer."
+              description="Enter the subject line for the email."
               maxLength={10}
             />
           </div>
@@ -51,7 +51,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="Comment"
-              description="Provide the primary street address or location detail."
+              description="Provide any additional comments regarding the email or the recipient."
             />
           </div>
         </div>
@@ -65,7 +65,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="From Address"
-              description="Include any additional address information, such as suite or building number."
+              description="Specify the sender's email address."
             />
           </div>
         </div>
@@ -79,7 +79,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="Blind Copy"
-              description="Enter the city where the customer is situated."
+              description="Enter an email address to receive a blind copy (Bcc) of the email."
             />
           </div>
         </div>
@@ -93,7 +93,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="Read Receipt To"
-              description="Input the postal code associated with the customer's address."
+              description="Designate an email address to receive a notification when the email is opened by the recipient."
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export function CustomerEmailProfileForm() {
               autoCorrect="off"
               type="text"
               placeholder="Attachment Name"
-              description="Input the postal code associated with the customer's address."
+              description="Define the name for any attachment included with the email."
             />
           </div>
         </div>
@@ -118,7 +118,7 @@ export function CustomerEmailProfileForm() {
               label="Read Receipt?"
               disabled
               name="emailProfile.readReceipt"
-              description="Indicate whether the customer has access to the online portal for managing their account and services."
+              description="Toggle this option to request a read receipt."
             />
           </div>
         </div>

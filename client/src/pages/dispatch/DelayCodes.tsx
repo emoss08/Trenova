@@ -34,7 +34,7 @@ function CarrierOrDriverBadge({
   carrierOrDriver: boolean;
 }) {
   return (
-    <Badge variant={carrierOrDriver ? "default" : "inactive"}>
+    <Badge variant={carrierOrDriver ? "active" : "inactive"}>
       {carrierOrDriver ? "Yes" : "No"}
     </Badge>
   );

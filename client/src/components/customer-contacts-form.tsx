@@ -17,17 +17,17 @@
 
 import { useFieldArray, useFormContext } from "react-hook-form";
 
-import { booleanStatusChoices } from "@/lib/choices";
+import { InputField } from "@/components/common/fields/input";
+import { SelectInput } from "@/components/common/fields/select-input";
+import { statusChoices } from "@/lib/choices";
 import { CustomerFormValues as FormValues } from "@/types/customer";
+import { faPerson } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { CheckboxInput } from "./common/fields/checkbox";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { faPerson } from "@fortawesome/pro-duotone-svg-icons";
 
 export function CustomerContactForm() {
   const { control, watch } = useFormContext<FormValues>();
@@ -40,7 +40,7 @@ export function CustomerContactForm() {
 
   const handleAddContact = () => {
     append({
-      isActive: true,
+      status: "A",
       name: "",
       email: "",
       title: "",
@@ -77,11 +77,11 @@ export function CustomerContactForm() {
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
                       <SelectInput
-                        name={`contacts.${index}.isActive`}
+                        name={`contacts.${index}.status`}
                         rules={{ required: true }}
                         control={control}
                         label="Status"
-                        options={booleanStatusChoices}
+                        options={statusChoices}
                         description="Select the current status of the customer contact's activity."
                         placeholder="Select Status"
                         isClearable={false}
@@ -176,7 +176,7 @@ export function CustomerContactForm() {
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <FontAwesomeIcon
               icon={faPerson}
-              className="size-10 fill-foreground"
+              className="size-10 text-foreground"
             />
             <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">

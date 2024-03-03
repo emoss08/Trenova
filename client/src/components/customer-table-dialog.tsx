@@ -74,7 +74,7 @@ export function CustomerForm({ open }: { open: boolean }) {
         <CustomerContactForm />
       </TabsContent>
       <TabsContent value="detentionPolicy">
-        <p>Work in progress</p>
+        <p>Coming Soon...</p>
       </TabsContent>
     </Tabs>
   );

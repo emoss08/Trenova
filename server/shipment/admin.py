@@ -25,7 +25,7 @@ class ShipmentDocumentationInline(
     GenericStackedInline[models.ShipmentDocumentation, models.Shipment]
 ):
     """
-    shipment documentation inline
+    Shipment documentation inline
     """
 
     model: type[models.ShipmentDocumentation] = models.ShipmentDocumentation
@@ -35,17 +35,27 @@ class ShipmentCommentInline(
     GenericStackedInline[models.ShipmentComment, models.Shipment]
 ):
     """
-    shipment comment inline
+    Shipment comment inline
     """
 
     model: type[models.ShipmentComment] = models.ShipmentComment
+
+
+class ShipmentCommodityInline(
+    GenericStackedInline[models.ShipmentCommodity, models.Shipment]
+):
+    """
+    Shipment commodity inline
+    """
+
+    model: type[models.ShipmentCommodity] = models.ShipmentCommodity
 
 
 class AdditionalChargeInline(
     GenericStackedInline[models.AdditionalCharge, models.Shipment]
 ):
     """
-    shipment Additional Charge inline
+    Shipment Additional Charge inline
     """
 
     model: type[models.AdditionalCharge] = models.AdditionalCharge
@@ -163,8 +173,6 @@ class OrderAdmin(GenericAdmin[models.Shipment]):
                 "fields": (
                     "trailer_type",
                     "tractor_type",
-                    "commodity",
-                    "hazardous_material",
                     "temperature_min",
                     "temperature_max",
                     "bol_number",
@@ -179,6 +187,7 @@ class OrderAdmin(GenericAdmin[models.Shipment]):
         ShipmentDocumentationInline,
         ShipmentCommentInline,
         AdditionalChargeInline,
+        ShipmentCommodityInline,
     )
 
 
@@ -206,3 +215,19 @@ class ServiceTypeAdmin(GenericAdmin[models.ServiceType]):
         "description",
     )
     search_fields = ("code", "description")
+
+
+@admin.register(models.HazardousMaterialSegregation)
+class HazardousMaterialSegregationAdmin(
+    admin.ModelAdmin[models.HazardousMaterialSegregation]
+):
+    """
+    Hazardous Material Segregation Admin
+    """
+
+    list_display = (
+        "segregation_type",
+        "class_a",
+        "class_b",
+    )
+    search_fields = ("segregation_type", "class_a", "class_b")

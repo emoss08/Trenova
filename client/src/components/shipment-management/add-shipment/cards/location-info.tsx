@@ -287,7 +287,7 @@ export default function LocationInformation({
   }
 
   return (
-    <div className="flex space-x-10">
+    <div className="flex gap-x-10">
       <LocationSection
         selectLocationData={selectLocationData}
         isLocationError={isLocationError}

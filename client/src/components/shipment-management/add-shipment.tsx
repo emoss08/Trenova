@@ -17,13 +17,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useShipmentControl } from "@/hooks/useQueries";
-import {
-  ShipmentEntryMethodChoices,
-  ShipmentStatusChoiceProps,
-} from "@/lib/choices";
 import { cleanObject } from "@/lib/utils";
-import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentFormValues, ShipmentPageTab } from "@/types/shipment";
 import {
   faBoxTaped,
@@ -34,12 +28,11 @@ import {
   faWebhook,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { yupResolver } from "@hookform/resolvers/yup";
 import { Suspense, lazy, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider } from "react-hook-form";
 
-import { stopSchema } from "@/lib/validations/StopSchema";
-import * as yup from "yup";
+import { useShipmentForm } from "@/lib/validations/ShipmentSchema";
+import { useUserStore } from "@/stores/AuthStore";
 import { ComponentLoader } from "../ui/component-loader";
 import { ShipmentAsideMenu } from "./add-shipment/nav/nav-bar";
 
@@ -99,179 +92,13 @@ export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [user] = useUserStore.use("user");
-  const { shipmentControlData, isLoading: isShipmentControlLoading } =
-    useShipmentControl();
+
+  const { shipmentForm, isShipmentControlLoading, shipmentControlData } =
+    useShipmentForm({ user });
 
   if (isShipmentControlLoading && !shipmentControlData && !user) {
     return <ComponentLoader className="h-[60vh]" />;
   }
-
-  // Shipment Form validation schema
-  const shipmentSchema: yup.ObjectSchema<ShipmentFormValues> = yup
-    .object()
-    .shape({
-      proNumber: yup.string().required("Pro number is required."),
-      shipmentType: yup.string().required("Shipment type is required."),
-      serviceType: yup.string().required("Service type is required."),
-      status: yup
-        .string<ShipmentStatusChoiceProps>()
-        .required("Status is required."),
-      revenueCode:
-        shipmentControlData && shipmentControlData.enforceRevCode
-          ? yup.string().required("Revenue code is required.")
-          : yup.string().notRequired(),
-      originLocation: yup
-        .string()
-        .test({
-          name: "originLocation",
-          test: function (value) {
-            if (!value) {
-              return this.parent.originAddress !== "";
-            }
-            return true;
-          },
-          message: "Origin location is required.",
-        })
-        .test({
-          name: "originLocation",
-          test: function (value) {
-            if (
-              shipmentControlData &&
-              shipmentControlData.enforceOriginDestination
-            ) {
-              if (value === this.parent.destinationLocation) {
-                return false;
-              }
-            }
-            return true;
-          },
-          message: "Origin and Destination locations cannot be the same.",
-        }),
-      originAddress: yup.string().test({
-        name: "originAddress",
-        test: function (value) {
-          if (!value) {
-            return false;
-          }
-          return true;
-        },
-        message: "Origin address is required.",
-      }),
-      originAppointmentWindowStart: yup
-        .string()
-        .required("Origin appointment window start is required."),
-      originAppointmentWindowEnd: yup
-        .string()
-        .required("Origin appointment window end is required."),
-      destinationLocation: yup
-        .string()
-        .test({
-          name: "destinationLocation",
-          test: function (value) {
-            if (!value) {
-              return this.parent.destinationAddress !== "";
-            }
-            return true;
-          },
-          message: "Destination location is required.",
-        })
-        .test({
-          name: "destinationLocation",
-          test: function (value) {
-            if (
-              shipmentControlData &&
-              shipmentControlData.enforceOriginDestination
-            ) {
-              if (value === this.parent.originLocation) {
-                return false;
-              }
-            }
-            return true;
-          },
-          message: "Origin and Destination locations cannot be the same.",
-        }),
-      destinationAddress: yup.string().test({
-        name: "destinationAddress",
-        test: function (value) {
-          if (!value) {
-            return this.parent.destinationLocation !== "";
-          }
-          return true;
-        },
-        message: "Destination address is required.",
-      }),
-      destinationAppointmentWindowStart: yup
-        .string()
-        .required("Destination appointment window start is required."),
-      destinationAppointmentWindowEnd: yup
-        .string()
-        .required("Destination appointment window end is required."),
-      ratingUnits: yup.number().required("Rating units is required."),
-      rate: yup.string().notRequired(),
-      mileage: yup.number().notRequired(),
-      otherChargeAmount: yup.string().notRequired(),
-      freightChargeAmount: yup.string().notRequired(),
-      rateMethod: yup.string().notRequired(),
-      customer: yup.string().required("Customer is required."),
-      pieces: yup.number().notRequired(),
-      weight: yup.string().notRequired(),
-      readyToBill: yup.boolean().required("Ready to bill is required."),
-      trailer: yup.string().notRequired(),
-      trailerType: yup.string().required("Trailer type is required."),
-      tractorType: yup.string().notRequired(),
-      commodity:
-        shipmentControlData && shipmentControlData.enforceCommodity
-          ? yup.string().required("Commodity is required.")
-          : yup.string().notRequired(),
-      hazardousMaterial: yup.string().notRequired(),
-      temperatureMin: yup.string().notRequired(),
-      temperatureMax: yup.string().notRequired(),
-      bolNumber: yup.string().required("BOL number is required."),
-      consigneeRefNumber: yup.string().notRequired(),
-      comment: yup
-        .string()
-        .max(100, "Comment must be less than 100 characters.")
-        .notRequired(),
-      voidedComm: yup.string().notRequired(),
-      autoRate: yup.boolean().required("Auto rate is required."),
-      formulaTemplate: yup.string().notRequired(),
-      enteredBy: yup.string().required("Entered by is required."),
-      subTotal: yup.string().notRequired(),
-      serviceTye: yup.string().notRequired(),
-      entryMethod: yup
-        .string<ShipmentEntryMethodChoices>()
-        .required("Entry method is required."),
-      copyAmount: yup.number().required("Copy amount is required."),
-      stops: yup.array().of(stopSchema).notRequired(),
-    });
-
-  // Form state and methods
-  const shipmentForm = useForm<ShipmentFormValues>({
-    resolver: yupResolver(shipmentSchema),
-    defaultValues: {
-      status: "N",
-      proNumber: "",
-      originLocation: "",
-      originAddress: "",
-      destinationLocation: "",
-      destinationAddress: "",
-      bolNumber: "",
-      entryMethod: "MANUAL",
-      comment: "",
-      ratingUnits: 1,
-      autoRate: false,
-      readyToBill: false,
-      copyAmount: 0,
-      enteredBy: user?.id || "",
-      commodity: "",
-      temperatureMin: "",
-      temperatureMax: "",
-      hazardousMaterial: "",
-      tractorType: "",
-      trailerType: "",
-      stops: [],
-    },
-  });
 
   const { control, reset, handleSubmit } = shipmentForm;
 

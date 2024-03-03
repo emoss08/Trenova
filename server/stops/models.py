@@ -54,8 +54,8 @@ class QualifierCode(GenericModel):
     status = ChoiceField(
         _("Status"),
         choices=PrimaryStatusChoices.choices,
-        help_text=_("Status of the service type."),
         default=PrimaryStatusChoices.ACTIVE,
+        help_text=_("Status of the service type."),
     )
     code = models.CharField(
         _("Code"),

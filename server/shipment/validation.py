@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _
 
 from equipment.models import EquipmentType
 from shipment import models
+from shipment.models import HazardousMaterialSegregation
 from shipment.selectors import get_shipment_by_id
 from utils.models import RatingMethodChoices, StatusChoices
 
@@ -64,6 +65,7 @@ class ShipmentValidator:
         self.validate_voided_shipment()
         self.validate_shipment_weight_limit()
         self.validate_trailer_and_tractor_type()
+        self.check_hazardous_material_compatibility()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -136,13 +138,6 @@ class ShipmentValidator:
             self.errors["revenue_code"] = _(
                 "Revenue code is required. Please try again."
             )
-
-        # Validate commodity is entered if Shipment Control requires it for the organization.
-        if (
-            self.shipment.organization.shipment_control.enforce_commodity
-            and not self.shipment.commodity
-        ):
-            self.errors["commodity"] = _("Commodity is required. Please try again.")
 
         # Validate voided comment is entered if Shipment Control requires it for the organization.
         if (
@@ -418,3 +413,41 @@ class ShipmentValidator:
             self.errors["tractor_type"] = _(
                 "Cannot select a non-tractor type for the tractor type. Please try again."
             )
+
+    def check_hazardous_material_compatibility(self) -> None:
+        shipment_control = self.shipment.organization.shipment_control
+        print("I'm being ran")
+
+        # If the organization does not enforce hazmat segregation rules, skip this check.
+        if shipment_control.enforce_hazmat_seg_rules is False:
+            return
+
+        shipment_commodities = self.shipment.shipment_commodities.all()
+        print("shipment_commodities", shipment_commodities)
+
+        hazardous_material_classes = set()
+        for shipment_commodity in shipment_commodities:
+            if shipment_commodity.hazardous_material:
+                hazardous_material_classes.add(
+                    shipment_commodity.hazardous_material.hazard_class
+                )
+
+        print("hazardous_material_classes", hazardous_material_classes)
+
+        # Check each pair of hazardous material classes for segregation rules.
+        for class_a in hazardous_material_classes:
+            for class_b in hazardous_material_classes:
+                if class_a != class_b:
+                    # Check if there's a segregation rule between class_a and class_b
+                    segregation_rule = HazardousMaterialSegregation.objects.filter(
+                        organization=self.shipment.organization,
+                        class_a=class_a,
+                        class_b=class_b,
+                    ).first()
+
+                    # If there's a rule, and it indicates 'Not Allowed', return False
+                    if segregation_rule and segregation_rule.segregation_type == "X":
+                        self.errors["__all__"] = _(
+                            "The hazardous materials in this shipment are not compatible and cannot be shipped "
+                            "together. Please try again."
+                        )

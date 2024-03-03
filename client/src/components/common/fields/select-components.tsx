@@ -19,12 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn, PopoutWindow } from "@/lib/utils";
 import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  CaretSortIcon,
-  CheckIcon,
-  Cross2Icon,
-  PlusIcon,
-} from "@radix-ui/react-icons";
+import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import React from "react";
 import { Path, PathValue } from "react-hook-form";
 import {
@@ -42,15 +37,47 @@ import {
   ValueContainerProps,
 } from "react-select";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 
 /**
  * Option type for the SelectInput component.
+ * @type {SelectOption}
  */
 export type SelectOption = {
+  /**
+   * Label to be displayed in the option.
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Value to be displayed in the option.
+   * @type {string | boolean | number}
+   */
   readonly value: string | boolean | number;
+
+  /**
+   * Color to be displayed in the option.
+   * @type {string}
+   * @default undefined
+   * @example "#FF0000"
+   */
   readonly color?: string;
+
+  /**
+   * Description to be displayed in the option.
+   * @type {string}
+   * @default undefined
+   * @example "This is a description"
+   */
   readonly description?: string;
+
+  /**
+   * Icon to be displayed in the option.
+   * @type {IconProp}
+   * @default undefined
+   * @example <FontAwesomeIcon icon={faPlus} />
+   */
   readonly icon?: IconProp;
 };
 
@@ -59,30 +86,40 @@ export type SelectOption = {
  * @param props {OptionProps}
  * @constructor Option
  */
-export function Option({ ...props }: OptionProps) {
-  const data = props.data as SelectOption;
+export function Option({ ...props }: OptionProps<SelectOption, false>) {
+  const { data, isSelected, label } = props;
 
   return (
     <components.Option {...props}>
-      <div className="group relative my-1 flex cursor-default select-none gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-none hover:cursor-pointer hover:rounded-sm hover:bg-accent">
-        {data.icon && (
-          <div className="flex items-center">
-            <FontAwesomeIcon
-              icon={data.icon as IconProp}
-              className={cn(
-                "size-4 text-muted-foreground group-hover:text-foreground",
-                props.isSelected && "text-foreground",
-              )}
-            />
-          </div>
-        )}
-        <div className="flex flex-col justify-center">
-          <span>{props.label}</span>
+      <div
+        className={`group relative my-1 flex cursor-default select-none items-center gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-none ${
+          isSelected ? "bg-accent" : "hover:bg-accent"
+        }`}
+      >
+        {data.icon ? (
+          <FontAwesomeIcon
+            icon={data.icon}
+            className={`size-4 ${
+              isSelected
+                ? "text-foreground"
+                : "text-muted-foreground group-hover:text-foreground"
+            }`}
+          />
+        ) : data.color ? (
+          <span
+            className="block size-2 rounded-full"
+            style={{ backgroundColor: data.color }}
+          />
+        ) : null}
+        <div className="flex flex-1 flex-col justify-center overflow-hidden">
+          <span className="truncate">{label}</span>
           {data.description && (
-            <div className="text-xs text-foreground/70">{data.description}</div>
+            <span className="mt-1 truncate text-xs text-foreground/70">
+              {data.description}
+            </span>
           )}
         </div>
-        {props.isSelected && (
+        {isSelected && (
           <CheckIcon className="absolute right-3 top-1/2 size-4 -translate-y-1/2" />
         )}
       </div>
@@ -168,6 +205,7 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
  * Description component for the SelectInput component.
  * @param description {string}
  * @constructor SelectDescription
+ * @example <SelectDescription description="This is a description" />
  */
 export function SelectDescription({ description }: { description: string }) {
   return <p className="text-xs text-foreground/70">{description}</p>;
@@ -177,7 +215,7 @@ export function SelectDescription({ description }: { description: string }) {
  * MenuList component for the SelectInput component.
  * @param children {React.ReactNode}
  * @param props {MenuListProps}
- * @constructor MenuList
+ * @example <MenuList selectProps={{ maxOptions: 5 }} />
  */
 export function MenuList({
   children,
@@ -224,7 +262,7 @@ export function MenuList({
  * LoadingMessage component for the SelectInput component.
  * @param children {React.ReactNode}
  * @param props {NoticeProps}
- * @constructor LoadingMessage
+ * @example <LoadingMessage />
  */
 export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
@@ -242,7 +280,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
  * NoOptionsMessage component for the SelectInput component.
  * @param children {React.ReactNode}
  * @param props {NoticeProps}
- * @constructor NoOptionsMessage
+ * @example <NoOptionsMessage />
  */
 export function NoOptionsMessage({
   children,
@@ -261,9 +299,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-xs text-accent-foreground">
-          {children || "No options available..."}
-        </p>
+        <p className="p-2 text-xs text-accent-foreground">{children}</p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
             label={props.selectProps?.popoutLinkLabel as string}
@@ -279,6 +315,8 @@ export function NoOptionsMessage({
  * Gets the label of the option by its value.
  * @param value {PathValue<T, Path<T>>}
  * @param options {OptionsOrGroups<SelectOption, GroupBase<SelectOption>>}
+ * @returns {string}
+ * @example getLabelByValue("value", options)
  */
 export function getLabelByValue<T extends Record<string, unknown>>(
   value: PathValue<T, Path<T>>,
@@ -374,7 +412,7 @@ export function SingleValueComponent(props: SingleValueProps<any>) {
  * Error message component for the SelectInput component.
  * @param isFetchError {boolean}
  * @param formError {string}
- * @constructor ErrorMessage
+ * @example <ErrorMessage isFetchError={true} />
  */
 export function ErrorMessage({
   isFetchError,
@@ -396,6 +434,7 @@ export function ErrorMessage({
  * Popout window component for the SelectInput component.
  * @param popoutLink {string}
  * @param event
+ * @example openPopoutWindow("/add", event)
  */
 function openPopoutWindow(
   popoutLink: string,
@@ -413,7 +452,7 @@ function openPopoutWindow(
  * Add new button component for the SelectInput component.
  * @param label {string}
  * @param popoutLink {string}
- * @constructor AddNewButton
+ * @example <AddNewButton label="Add" popoutLink="/add" />
  */
 function AddNewButton({
   label,
@@ -433,7 +472,7 @@ function AddNewButton({
       onClick={(event) => handleClick(event)}
     >
       <span className="mr-2">{label} Entry</span>
-      <PlusIcon className="size-4" />
+      <FontAwesomeIcon icon={faPlus} className="size-3" />
     </Button>
   );
 }

@@ -16,8 +16,8 @@
  */
 
 import {
-  BoolStatusBadge,
   DataNotFound,
+  StatusBadge,
 } from "@/components/common/table/data-table-components";
 import {
   Table,
@@ -31,7 +31,10 @@ import { cn, truncateText } from "@/lib/utils";
 import { useCustomerFormStore } from "@/stores/CustomerStore";
 import { useTableStore } from "@/stores/TableStore";
 import { Customer } from "@/types/customer";
-import { CircleBackslashIcon, PersonIcon } from "@radix-ui/react-icons";
+import {
+  faPerson,
+  faRoadCircleXmark,
+} from "@fortawesome/pro-duotone-svg-icons";
 import { Row } from "@tanstack/react-table";
 import React from "react";
 import {
@@ -70,7 +73,7 @@ function CustomerContactTable({
       <Table className="flex flex-col overflow-hidden">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/12">Active?</TableHead>
+            <TableHead className="w-1/12">Status</TableHead>
             <TableHead className="w-2/12">Name</TableHead>
             <TableHead className="w-3/12">Email</TableHead>
             <TableHead className="w-2/12">Title</TableHead>
@@ -87,12 +90,12 @@ function CustomerContactTable({
               .map((contact) => (
                 <TableRow key={contact.id} className="border-none">
                   <TableCell className="w-1/12">
-                    <BoolStatusBadge status={contact.isActive} />
+                    <StatusBadge status={contact.status} />
                   </TableCell>
                   <TableCell
                     className={cn(
                       "w-2/12",
-                      contact.isPayableContact && "text-red-500  font-semibold",
+                      contact.isPayableContact && "text-red-500 font-semibold",
                     )}
                   >
                     <TooltipProvider delayDuration={100}>
@@ -117,9 +120,9 @@ function CustomerContactTable({
               ))
           ) : (
             <DataNotFound
-              message="Get Started by adding a contact"
+              message="You have not added any contacts. Add one below."
               name="contacts"
-              Icon={PersonIcon}
+              icon={faPerson}
               onButtonClick={() => onClick("contacts")}
             />
           )}
@@ -176,9 +179,9 @@ function DeliverySlotTable({
               ))
           ) : (
             <DataNotFound
-              message="Get Started by adding a delivery slot"
+              message="You have not added any delivery slots. Add one below."
               name="delivery slots"
-              Icon={CircleBackslashIcon}
+              icon={faRoadCircleXmark}
               onButtonClick={() => onClick("deliverySlots")}
             />
           )}

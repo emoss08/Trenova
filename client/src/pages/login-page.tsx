@@ -20,9 +20,7 @@ import { InputField, PasswordField } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ModeToggle } from "@/components/ui/theme-switcher";
 import axios from "@/lib/axiosConfig";
-import { cn } from "@/lib/utils";
 import { userAuthSchema } from "@/lib/validations/AccountsSchema";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -31,12 +29,31 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
+import { InternalLink } from "@/components/ui/link";
 import trenovaLogo from "../assets/images/logo.webp";
 
 type LoginFormValues = {
   username: string;
   password: string;
 };
+
+function AuthFooter() {
+  return (
+    <footer className="text-muted-foreground absolute bottom-10 w-full text-center">
+      <div className="flex items-center justify-center gap-2">
+        <p className="text-xs">&copy; 2024 Trenova. All rights reserved.</p>
+        <span className="text-xs">|</span>
+        <InternalLink to="/terms" className="text-xs hover:underline">
+          Terms of Service
+        </InternalLink>
+        <span className="text-xs">|</span>
+        <InternalLink to="/privacy" className="text-xs hover:underline">
+          Privacy Policy
+        </InternalLink>
+      </div>
+    </footer>
+  );
+}
 
 function UserAuthForm() {
   const [, setIsAuthenticated] = useAuthStore(
@@ -178,16 +195,16 @@ export default function LoginPage() {
           width={75}
           height={75}
         />
-        <Card className={cn("w-[420px] shadow-sm")}>
+        <Card className="w-[420px]">
           <CardContent className="pt-0">
             <h2 className="pb-2 text-center text-xl font-semibold tracking-tight transition-colors first:mt-5">
-              Welcome Back
+              Sign in to Trenova
             </h2>
             <span className="flex justify-center space-y-5 text-sm">
               Do not have an account yet?&nbsp;
               <a
                 href="#"
-                className="text-sm font-semibold text-primary underline underline-offset-4 hover:decoration-blue-500"
+                className="text-primary text-sm font-semibold underline underline-offset-4 hover:decoration-blue-500"
               >
                 Create an Account
               </a>
@@ -195,27 +212,8 @@ export default function LoginPage() {
             <UserAuthForm />
           </CardContent>
         </Card>
-        <p className="w-[350px] px-8 text-center text-sm text-muted-foreground">
-          By clicking continue, you agree to our&nbsp;
-          <a
-            className="underline underline-offset-4 hover:text-primary"
-            href="/terms"
-          >
-            Terms of Service
-          </a>
-          &nbsp; and&nbsp;
-          <a
-            className="underline underline-offset-4 hover:text-primary"
-            href="/privacy"
-          >
-            Privacy Policy
-          </a>
-          .
-        </p>
       </div>
-      <div className="absolute bottom-10 right-10">
-        <ModeToggle />
-      </div>
+      <AuthFooter />
     </div>
   );
 }

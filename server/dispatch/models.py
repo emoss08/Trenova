@@ -687,6 +687,8 @@ class Rate(GenericModel):
                 }
             )
 
+        # TODO(WOLFRED): Add validation to ensure the same rate is not entered twice.
+
     @classmethod
     def generate_rate_number(cls) -> str:
         """

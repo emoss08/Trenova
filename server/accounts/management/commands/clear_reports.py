@@ -17,11 +17,11 @@
 import logging
 import os
 import typing
+from datetime import timedelta
 
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from datetime import timedelta
 
 from reports import models
 

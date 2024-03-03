@@ -41,8 +41,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { Suspense } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { SidebarNav } from "../user-settings/sidebar-nav";
+import { faTriangleExclamation } from "@fortawesome/pro-solid-svg-icons";
+import { SidebarLink } from "@/types/sidebar-nav";
 
-const links = [
+const links: SidebarLink[] = [
   {
     href: "/admin/dashboard/",
     title: "General Information",
@@ -143,6 +145,18 @@ const links = [
     group: "Organization",
   },
   {
+    href: "/admin/hazardous-rules/",
+    title: "Hazmat Seg. Rules",
+    icon: (
+      <FontAwesomeIcon
+        icon={faTriangleExclamation}
+        className="size-4 text-muted-foreground group-hover:text-foreground"
+      />
+    ),
+    group: "Organization",
+    disabled: true,
+  },
+  {
     href: "#",
     title: "Custom Reports",
     icon: (
@@ -152,6 +166,7 @@ const links = [
       />
     ),
     group: "Reporting & Analytics",
+    disabled: true,
   },
   {
     href: "#",
@@ -163,6 +178,7 @@ const links = [
       />
     ),
     group: "Reporting & Analytics",
+    disabled: true,
   },
   {
     href: "/admin/email-controls/",
@@ -185,6 +201,7 @@ const links = [
       />
     ),
     group: "Email & SMS",
+    disabled: true,
   },
   {
     href: "/admin/email-profiles/",
@@ -207,6 +224,7 @@ const links = [
       />
     ),
     group: "Notifications",
+    disabled: true,
   },
   {
     href: "/admin/data-retention/",
@@ -218,6 +236,7 @@ const links = [
       />
     ),
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "/admin/table-change-alerts/",
@@ -254,6 +273,7 @@ const links = [
       />
     ),
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "#",
@@ -265,6 +285,7 @@ const links = [
       />
     ),
     group: "Document Management",
+    disabled: true,
   },
   {
     href: "#",
@@ -276,6 +297,7 @@ const links = [
       />
     ),
     group: "Document Management",
+    disabled: true,
   },
 ];
 

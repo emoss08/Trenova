@@ -101,34 +101,32 @@ import {
   EquipmentClass,
   EquipmentManufacturer,
   EquipmentType,
+  Trailer,
 } from "@/types/equipment";
 import { InvoiceControl } from "@/types/invoicing";
 import { Location, LocationCategory, USStates } from "@/types/location";
+import {
+  Depot,
+  EmailControl,
+  EmailProfile,
+  TableName,
+  Topic,
+} from "@/types/organization";
+import { RouteControl } from "@/types/route";
 import {
   FormulaTemplate,
   ServiceType,
   ShipmentControl,
   ShipmentType,
 } from "@/types/shipment";
-import {
-  Depot,
-  EmailControl,
-  EmailProfile,
-  Organization,
-  TableName,
-  Topic,
-} from "@/types/organization";
-import { RouteControl } from "@/types/route";
 import { Worker } from "@/types/worker";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Get Tags for select options
  * @param show - show or hide the query
  */
 export function useTags(show: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: tagsData,
     isLoading,
@@ -139,9 +137,6 @@ export function useTags(show: boolean) {
     queryKey: ["tags"] as QueryKeys,
     queryFn: async () => getTags(),
     enabled: show,
-    initialData: () => {
-      return queryClient.getQueryData(["tags"] as QueryKeys);
-    },
   });
 
   const selectTags =
@@ -158,8 +153,6 @@ export function useTags(show: boolean) {
  * @param show - show or hide the query
  */
 export function useGLAccounts(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: glAccountsData,
     isLoading,
@@ -169,7 +162,6 @@ export function useGLAccounts(show?: boolean) {
     queryKey: ["glAccounts"] as QueryKeys,
     queryFn: async () => getGLAccounts(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["glAccounts"] as QueryKeys),
   });
 
   const selectGLAccounts =
@@ -188,14 +180,10 @@ export function useGLAccounts(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useAccessorialCharges(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["accessorialCharges"] as QueryKeys,
     queryFn: async () => getAccessorialCharges(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["accessorialCharges"] as QueryKeys),
   });
 
   const selectAccessorialChargeData =
@@ -211,13 +199,9 @@ export function useAccessorialCharges(show?: boolean) {
  * Use Accounting Control Hook to get Accounting Control Details
  */
 export function useAccountingControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["accountingControl"] as QueryKeys,
     queryFn: async () => getAccountingControl(),
-    initialData: () =>
-      queryClient.getQueryData(["accountingControl"] as QueryKeys),
   });
 
   const accountingControlData = (data as AccountingControl[])?.[0];
@@ -229,12 +213,9 @@ export function useAccountingControl() {
  * Use BillingControl Hook to get Billing Control Details
  */
 export function useBillingControl() {
-  const queryClient = useQueryClient();
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["billingControl"] as QueryKeys,
-    queryFn: () => getBillingControl(),
-    initialData: () =>
-      queryClient.getQueryData(["billingControl"] as QueryKeys),
+    queryFn: async () => getBillingControl(),
   });
 
   // Store first element of BillingControlData in variable
@@ -247,13 +228,9 @@ export function useBillingControl() {
  * Use InvoiceControl Hook to get Invoice Control Details
  */
 export function useInvoiceControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["invoiceControl"] as QueryKeys,
-    queryFn: () => getInvoiceControl(),
-    initialData: () =>
-      queryClient.getQueryData(["invoiceControl"] as QueryKeys),
+    queryFn: async () => getInvoiceControl(),
   });
 
   // Store first element of invoiceControlData in variable
@@ -266,14 +243,9 @@ export function useInvoiceControl() {
  * Use DispatchControl Hook to get Dispatch Control Details
  */
 export function useDispatchControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["dispatchControl"] as QueryKeys,
     queryFn: () => getDispatchControl(),
-    initialData: () =>
-      queryClient.getQueryData(["dispatchControl"] as QueryKeys),
-    staleTime: Infinity,
   });
 
   // Store first element of dispatchControlData in variable
@@ -286,13 +258,9 @@ export function useDispatchControl() {
  * Use ShipmentControl hook to get Shipment Control Details
  */
 export function useShipmentControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["shipmentControl"] as QueryKeys,
-    queryFn: () => getShipmentControl(),
-    initialData: () =>
-      queryClient.getQueryData(["shipmentControl"] as QueryKeys),
+    queryFn: async () => getShipmentControl(),
   });
 
   // Store first element of shipmentControlData in variable
@@ -305,12 +273,9 @@ export function useShipmentControl() {
  * Use RouteControl hook to get Route Control Details
  */
 export function useRouteControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["routeControl"] as QueryKeys,
-    queryFn: () => getRouteControl(),
-    initialData: () => queryClient.getQueryData(["routeControl"] as QueryKeys),
+    queryFn: async () => getRouteControl(),
   });
 
   // Store first element of dispatchControlData in variable
@@ -324,13 +289,10 @@ export function useRouteControl() {
  * @param show - show or hide the query
  */
 export function useCommodities(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["commodities"] as QueryKeys,
     queryFn: async () => getCommodities(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["commodities"] as QueryKeys),
   });
 
   const selectCommodityData =
@@ -347,13 +309,10 @@ export function useCommodities(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useCustomers(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["customers"] as QueryKeys,
     queryFn: async () => getCustomers(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["customers"] as QueryKeys),
   });
 
   const selectCustomersData =
@@ -370,14 +329,10 @@ export function useCustomers(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useDocumentClass(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["documentClassifications"] as QueryKeys,
     queryFn: async () => getDocumentClassifications(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["documentClassifications"] as QueryKeys),
   });
 
   const selectDocumentClassData =
@@ -400,8 +355,6 @@ export function useEquipmentTypes(
   limit: number = 100,
   show?: boolean,
 ) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["equipmentTypes", equipmentClass, limit] as QueryKeyWithParams<
       "equipmentTypes",
@@ -409,8 +362,6 @@ export function useEquipmentTypes(
     >,
     queryFn: async () => getEquipmentTypes(equipmentClass, limit),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["equipmentTypes"] as QueryKeys),
   });
 
   const selectEquipmentType =
@@ -426,12 +377,9 @@ export function useEquipmentTypes(
  * Get Feasibility Control Details
  */
 export function useFeasibilityControl() {
-  const queryClient = useQueryClient();
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["feasibilityControl"] as QueryKeys,
     queryFn: async () => getFeasibilityControl(),
-    initialData: () =>
-      queryClient.getQueryData(["feasibilityControl"] as QueryKeys),
   });
 
   const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
@@ -444,14 +392,10 @@ export function useFeasibilityControl() {
  * @param show - show or hide the query
  */
 export function useHazardousMaterial(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["hazardousMaterials"] as QueryKeys,
     queryFn: async () => getHazardousMaterials(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["hazardousMaterials"] as QueryKeys),
   });
 
   const selectHazardousMaterials =
@@ -469,8 +413,6 @@ export function useHazardousMaterial(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useLocations(locationStatus: string = "A", show?: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: locations,
     isError,
@@ -482,11 +424,6 @@ export function useLocations(locationStatus: string = "A", show?: boolean) {
     >,
     queryFn: async () => getLocations(locationStatus),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData([
-        "locations",
-        locationStatus,
-      ] as QueryKeyWithParams<"locations", [string]>),
   });
 
   const selectLocationData =
@@ -504,13 +441,10 @@ export function useLocations(locationStatus: string = "A", show?: boolean) {
  * @returns
  */
 export function useShipmentTypes(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched } = useQuery({
     queryKey: ["shipmentTypes"] as QueryKeys,
     queryFn: async () => getShipmentTypes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["shipmentTypes"] as QueryKeys),
   });
 
   const selectShipmentType =
@@ -527,14 +461,11 @@ export function useShipmentTypes(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useUsers(show?: boolean) {
-  const queryClient = useQueryClient();
-
   /** Get users for the select input */
   const { data, isError, isLoading } = useQuery({
     queryKey: ["users"] as QueryKeys,
     queryFn: async () => getUsers(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["users"] as QueryKeys),
   });
 
   const selectUsersData =
@@ -551,16 +482,10 @@ export function useUsers(show?: boolean) {
  * @param userId - user id
  */
 export function useUser(userId: string) {
-  const queryClient = useQueryClient();
-
   return useQuery({
     queryKey: ["users", userId] as QueryKeyWithParams<"users", [string]>,
-    queryFn: () => (userId ? getUserDetails(userId) : Promise.resolve(null)),
-    initialData: (): User | undefined =>
-      queryClient.getQueryData(["users", userId] as QueryKeyWithParams<
-        "users",
-        [string]
-      >),
+    queryFn: async () =>
+      userId ? getUserDetails(userId) : Promise.resolve(null),
   });
 }
 
@@ -569,14 +494,10 @@ export function useUser(userId: string) {
  * @param show - show or hide the query
  */
 export function useLocationCategories(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["locationCategories"] as QueryKeys,
     queryFn: async () => getLocationCategories(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["locationCategories"] as QueryKeys),
   });
 
   const selectLocationCategories =
@@ -594,13 +515,10 @@ export function useLocationCategories(show?: boolean) {
  * @param limit
  */
 export function useUSStates(show?: boolean, limit?: number) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["usStates", limit] as QueryKeyWithParams<"usStates", [number]>,
     queryFn: async () => getUSStates(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["usStates"] as QueryKeys),
   });
 
   // Create an array of objects with value and label for each state
@@ -618,13 +536,10 @@ export function useUSStates(show?: boolean, limit?: number) {
  * @param show - show or hide the query
  */
 export function useCommentTypes(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["commentTypes"] as QueryKeys,
     queryFn: async () => getCommentTypes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["commentTypes"] as QueryKeys),
   });
 
   const selectCommentTypes =
@@ -641,13 +556,10 @@ export function useCommentTypes(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useDepots(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["depots"] as QueryKeys,
     queryFn: async () => getDepots(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["depots"] as QueryKeys),
   });
 
   const selectDepots =
@@ -665,8 +577,6 @@ export function useDepots(show?: boolean) {
  * @param limit - limit the number of results
  */
 export function useFleetCodes(show?: boolean, limit: number = 100) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["fleetCodes", limit] as QueryKeyWithParams<
       "fleetCodes",
@@ -674,7 +584,6 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
     >,
     queryFn: async () => getFleetCodes(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["fleetCodes"] as QueryKeys),
   });
 
   const selectFleetCodes =
@@ -692,8 +601,6 @@ export function useFleetCodes(show?: boolean, limit: number = 100) {
  * @param limit - limit the number of results
  */
 export function useEquipManufacturers(show?: boolean, limit: number = 100) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["equipmentManufacturers", limit] as QueryKeyWithParams<
       "equipmentManufacturers",
@@ -701,8 +608,6 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
     >,
     queryFn: async () => getEquipmentManufacturers(limit),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData(["equipmentManufacturers"] as QueryKeys),
   });
 
   const selectEquipManufacturers =
@@ -722,13 +627,10 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
  * @param limit - limit the number of results
  */
 export function useWorkers(show?: boolean, limit: number = 100) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["workers", limit] as QueryKeyWithParams<"workers", [number]>,
     queryFn: async () => getWorkers(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["workers"] as QueryKeys),
   });
 
   const selectWorkers =
@@ -741,13 +643,10 @@ export function useWorkers(show?: boolean, limit: number = 100) {
 }
 
 export function useEmailProfiles(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ["emailProfiles"] as QueryKeys,
-    queryFn: () => getEmailProfiles(),
+    queryFn: async () => getEmailProfiles(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["emailProfiles"] as QueryKeys),
   });
 
   const selectEmailProfile =
@@ -760,12 +659,9 @@ export function useEmailProfiles(show?: boolean) {
 }
 
 export function useEmailControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isFetched, isError, isFetching } = useQuery({
     queryKey: ["emailControl"] as QueryKeys,
-    queryFn: () => getEmailControl(),
-    initialData: () => queryClient.getQueryData(["emailControl"] as QueryKeys),
+    queryFn: async () => getEmailControl(),
   });
 
   const emailControlData = (data as EmailControl[])?.[0];
@@ -778,15 +674,10 @@ export function useEmailControl() {
  * @param userId - user id
  */
 export function useNotifications(userId: string) {
-  const queryClient = useQueryClient();
-
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery(
     {
       queryKey: ["userNotifications", userId],
       queryFn: async () => getUserNotifications(),
-      initialData: () => {
-        return queryClient.getQueryData(["userNotifications", userId]);
-      },
     },
   );
 
@@ -797,14 +688,9 @@ export function useNotifications(userId: string) {
  * Get Feature Flags for Admin Dashbaord.
  */
 export function useFeatureFlags() {
-  const queryClient = useQueryClient();
-
   const { data: featureFlagsData, isLoading: featureFlagsLoading } = useQuery({
     queryKey: ["featureFlags"],
     queryFn: async () => getFeatureFlags(),
-    initialData: () => {
-      return queryClient.getQueryData(["featureFlags"]);
-    },
   });
 
   return { featureFlagsData, featureFlagsLoading };
@@ -814,7 +700,6 @@ export function useFeatureFlags() {
  * Get the Logged-in Users Organization
  */
 export function useUserOrganization() {
-  const queryClient = useQueryClient();
   const {
     data: userOrganizationData,
     isLoading: userOrganizationLoading,
@@ -822,8 +707,6 @@ export function useUserOrganization() {
   } = useQuery({
     queryKey: ["userOrganization"] as QueryKeys,
     queryFn: async () => getUserOrganizationDetails(),
-    initialData: (): Organization | undefined =>
-      queryClient.getQueryData(["userOrganization"]),
   });
 
   return {
@@ -837,8 +720,6 @@ export function useUserOrganization() {
  * Get the Google API information for the organization
  */
 export function useGoogleAPI() {
-  const queryClient = useQueryClient();
-
   const {
     data: googleAPIData,
     isLoading,
@@ -846,9 +727,6 @@ export function useGoogleAPI() {
   } = useQuery({
     queryKey: ["googleAPI"] as QueryKeys,
     queryFn: async () => getGoogleApiInformation(),
-    initialData: () => {
-      return queryClient.getQueryData(["googleAPI"] as QueryKeys);
-    },
   });
 
   return { googleAPIData, isLoading, isError };
@@ -859,13 +737,10 @@ export function useGoogleAPI() {
  * @param show - show or hide the query
  */
 export function useTableNames(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["tableNames"] as QueryKeys,
     queryFn: async () => getTableNames(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["tableNames"] as QueryKeys),
   });
 
   const selectTableNames =
@@ -882,13 +757,10 @@ export function useTableNames(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useTopics(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["topicNames"] as QueryKeys,
     queryFn: async () => getTopicNames(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["topicNames"] as QueryKeys),
   });
 
   const selectTopics =
@@ -905,13 +777,10 @@ export function useTopics(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useUserFavorites(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["userFavorites"] as QueryKeys,
     queryFn: async () => getUserFavorites(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["userFavorites"] as QueryKeys),
   });
 
   return { data, isError, isLoading };
@@ -922,8 +791,6 @@ export function useUserFavorites(show?: boolean) {
  * @param show - show or hide the query
  */
 export function useRevenueCodes(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: revenueCodesData,
     isError: isRevenueCodeError,
@@ -932,7 +799,6 @@ export function useRevenueCodes(show?: boolean) {
     queryKey: ["revenueCodes"] as QueryKeys,
     queryFn: async () => getRevenueCodes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["revenueCodes"] as QueryKeys),
   });
 
   const selectRevenueCodes =
@@ -950,8 +816,6 @@ export function useRevenueCodes(show?: boolean) {
  * @returns selectTrailers, isTrailerError, isTrailerLoading, trailerData
  */
 export function useTrailers(show?: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: trailerData,
     isError: isTrailerError,
@@ -960,11 +824,10 @@ export function useTrailers(show?: boolean) {
     queryKey: ["trailers"] as QueryKeys,
     queryFn: async () => getTrailers(),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["trailers"] as QueryKeys),
   });
 
   const selectTrailers =
-    (trailerData as RevenueCode[])?.map((trailer: RevenueCode) => ({
+    (trailerData as Trailer[])?.map((trailer: Trailer) => ({
       value: trailer.id,
       label: trailer.code,
     })) || [];
@@ -976,8 +839,6 @@ export function useTrailers(show?: boolean) {
  * Get the next shipment pro number for the organization
  */
 export function useNextProNumber() {
-  const queryClient = useQueryClient();
-
   const {
     data: proNumber,
     isError: isProNumberError,
@@ -985,14 +846,12 @@ export function useNextProNumber() {
   } = useQuery({
     queryKey: ["proNumber"],
     queryFn: async () => getNextProNumber(),
-    initialData: () => queryClient.getQueryData(["proNumber"]),
   });
 
   return { proNumber, isProNumberError, isProNumberLoading };
 }
 
 export function useLocationAutoComplete(searchQuery: string) {
-  const queryClient = useQueryClient();
   const isQueryEnabled = searchQuery.trim().length > 0;
 
   const {
@@ -1006,11 +865,6 @@ export function useLocationAutoComplete(searchQuery: string) {
     >,
     queryFn: async () => searchLocation(searchQuery),
     enabled: isQueryEnabled,
-    initialData: () =>
-      queryClient.getQueryData([
-        "locationAutoComplete",
-        searchQuery,
-      ] as QueryKeyWithParams<"locationAutoComplete", [string]>),
   });
 
   return { searchResults, searchResultError, isSearchLoading };
@@ -1023,8 +877,6 @@ export function useLocationAutoComplete(searchQuery: string) {
  * @returns selectRates, isRateError, isRatesLoading, ratesData
  */
 export function useRates(limit?: number, show?: boolean) {
-  const queryClient = useQueryClient();
-
   const {
     data: ratesData,
     isError: isRateError,
@@ -1033,7 +885,6 @@ export function useRates(limit?: number, show?: boolean) {
     queryKey: ["rates", limit] as QueryKeyWithParams<"rates", [number]>,
     queryFn: async () => getRates(limit),
     enabled: show,
-    initialData: () => queryClient.getQueryData(["rates"] as QueryKeys),
   });
 
   const selectRates =
@@ -1050,8 +901,6 @@ export function useRates(limit?: number, show?: boolean) {
  * @returns selectFormulaTemplates, isFormulaError, isFormulaLoading
  */
 export function useFormulaTemplates() {
-  const queryClient = useQueryClient();
-
   const {
     data: formulaTemplates,
     isError: isFormulaError,
@@ -1059,7 +908,6 @@ export function useFormulaTemplates() {
   } = useQuery({
     queryKey: ["formulaTemplates"],
     queryFn: async () => getFormulaTemplates(),
-    initialData: () => queryClient.getQueryData(["formulaTemplates"]),
   });
 
   const selectFormulaTemplates =
@@ -1078,8 +926,6 @@ export function useFormulaTemplates() {
  * @returns selectServiceTypes, isServiceTypeError, isServiceTypeLoading
  */
 export function useServiceTypes() {
-  const queryCLient = useQueryClient();
-
   const {
     data: serviceTypes,
     isError: isServiceTypeError,
@@ -1087,7 +933,6 @@ export function useServiceTypes() {
   } = useQuery({
     queryKey: ["serviceTypes"],
     queryFn: async () => getShipmentTypes(),
-    initialData: () => queryCLient.getQueryData(["serviceTypes"] as QueryKeys),
   });
 
   const selectServiceTypes =
@@ -1100,19 +945,12 @@ export function useServiceTypes() {
 }
 
 export function useValidateBOLNumber(bol_number: string) {
-  const queryClient = useQueryClient();
-
   const { data, isError, isLoading } = useQuery({
     queryKey: ["validateBOLNumber", bol_number] as QueryKeyWithParams<
       "validateBOLNumber",
       [string]
     >,
     queryFn: async () => validateBOLNumber(bol_number),
-    initialData: () =>
-      queryClient.getQueryData([
-        "validateBOLNumber",
-        bol_number,
-      ] as QueryKeyWithParams<"validateBOLNumber", [string]>),
   });
 
   return { data, isError, isLoading };

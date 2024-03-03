@@ -53,6 +53,8 @@ function ShipmentControlForm({
       enforceOriginDestination: shipmentControl.enforceOriginDestination,
       checkForDuplicateBol: shipmentControl.checkForDuplicateBol,
       removeShipment: shipmentControl.removeShipment,
+      sendPlacardInfo: shipmentControl.sendPlacardInfo,
+      enforceHazmatSegRules: shipmentControl.enforceHazmatSegRules,
     },
   });
 
@@ -169,6 +171,22 @@ function ShipmentControlForm({
               description={t("fields.removeShipment.description")}
             />
           </div>
+          <div className="col-span-3">
+            <CheckboxInput
+              name="sendPlacardInfo"
+              control={control}
+              label={t("fields.sendPlacardInfo.label")}
+              description={t("fields.sendPlacardInfo.description")}
+            />
+          </div>
+          <div className="col-span-3">
+            <CheckboxInput
+              name="enforceHazmatSegRules"
+              control={control}
+              label={t("fields.enforceHazmatSegRules.label")}
+              description={t("fields.enforceHazmatSegRules.description")}
+            />
+          </div>
         </div>
       </div>
       <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
@@ -213,7 +231,7 @@ export default function ShipmentControl() {
         </div>
       ) : isError ? (
         <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
-          <ErrorLoadingData message="Failed to load dispatch control." />
+          <ErrorLoadingData message="Failed to load shipment control." />
         </div>
       ) : (
         shipmentControlData && (

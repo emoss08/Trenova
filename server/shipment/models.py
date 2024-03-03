@@ -31,6 +31,7 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from commodities.models import HazardousClassChoices
 from location.models import Location
 from utils.models import (
     ChoiceField,
@@ -144,6 +145,20 @@ class ShipmentControl(GenericModel):
         default=False,
         help_text=_(
             "Ability to remove shipment from system. This will disallow the removal of shipments, Movements and Stops"
+        ),
+    )
+    send_placard_info = models.BooleanField(
+        _("Send Placard Info"),
+        default=False,
+        help_text=_(
+            "If checked, the system will apply a comment to the shipment with the placard info."
+        ),
+    )
+    enforce_hazmat_seg_rules = models.BooleanField(
+        _("Enforce Hazardous Material Segregation Rules"),
+        default=False,
+        help_text=_(
+            "If checked, the system will enforce hazardous material segregation rules. When entering an order."
         ),
     )
 
@@ -542,34 +557,6 @@ class Shipment(GenericModel):
         verbose_name=_("Tractor Type"),
         help_text=_("Type of tractor for the shipment."),
     )
-    commodity = models.ForeignKey(
-        "commodities.Commodity",
-        on_delete=models.PROTECT,
-        related_name="shipments",
-        related_query_name="shipment",
-        verbose_name=_("Commodity"),
-        help_text=_("Commodity"),
-        blank=True,
-        null=True,
-    )
-    entered_by = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        related_name="shipments",
-        related_query_name="shipment",
-        verbose_name=_("User"),
-        help_text=_("Shipment entered by User"),
-    )
-    hazardous_material = models.ForeignKey(
-        "commodities.HazardousMaterial",
-        on_delete=models.PROTECT,
-        related_name="shipments",
-        related_query_name="shipment",
-        verbose_name=_("Hazardous Class"),
-        null=True,
-        blank=True,
-        help_text=_("Hazardous Class"),
-    )
     temperature_min = models.PositiveIntegerField(
         _("Minimum Temperature"),
         null=True,
@@ -631,6 +618,14 @@ class Shipment(GenericModel):
         choices=EntryMethodChoices.choices,
         help_text=_("Method of entry for this shipment."),
         editable=False,
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="shipments",
+        related_query_name="shipment",
+        verbose_name=_("User"),
+        help_text=_("Shipment entered by User"),
     )
 
     class Meta:
@@ -713,13 +708,6 @@ class Shipment(GenericModel):
 
         if self.destination_location and not self.destination_address:
             self.destination_address = self.destination_location.get_address_combination
-
-        if self.commodity and self.commodity.min_temp and self.commodity.max_temp:
-            self.temperature_min = self.commodity.min_temp
-            self.temperature_max = self.commodity.max_temp
-
-        if self.commodity and self.commodity.hazardous_material:
-            self.hazardous_material = self.commodity.hazardous_material
 
         if self.status == StatusChoices.VOIDED:
             handle_voided_shipment(shipment=self)
@@ -1297,3 +1285,135 @@ class FormulaTemplate(GenericModel):
                 )
 
         super().clean()
+
+
+class ShipmentCommodity(GenericModel):
+    shipment = models.ForeignKey(
+        Shipment,
+        on_delete=models.CASCADE,
+        related_name="shipment_commodities",
+        related_query_name="shipment_commodity",
+        verbose_name=_("Shipment"),
+    )
+    commodity = models.ForeignKey(
+        "commodities.Commodity",
+        on_delete=models.PROTECT,
+        related_name="shipment_commodities",
+        related_query_name="shipment_commodity",
+        verbose_name=_("Commodity"),
+        help_text=_("Commodity"),
+    )
+    hazardous_material = models.ForeignKey(
+        "commodities.HazardousMaterial",
+        on_delete=models.PROTECT,
+        related_name="shipment_commodities",
+        related_query_name="shipment_commodity",
+        verbose_name=_("Hazardous Material"),
+        help_text=_("Hazardous Material"),
+        blank=True,
+        null=True,
+    )
+    quantity = models.DecimalField(
+        _("Quantity"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Quantity of the commodity in the shipment"),
+    )
+    placard_needed = models.BooleanField(
+        _("Placard Needed"),
+        default=False,
+        help_text=_("Placard Needed"),
+    )
+
+    class Meta:
+        """
+        ShipmentCommodity Metaclass
+        """
+
+        verbose_name = _("Shipment Commodity")
+        verbose_name_plural = _("Shipment Commodities")
+        db_table = "shipment_commodity"
+        db_table_comment = "Stores the commodities for a related shipment."
+
+    def __str__(self) -> str:
+        """String representation of the ShipmentCommodity
+
+        Returns:
+            str: String representation of the ShipmentCommodity
+        """
+        return textwrap.shorten(
+            f"{self.shipment} - {self.commodity}", 50, placeholder="..."
+        )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Overrides the default Django save method to provide custom save behavior for the Shipment Commodity model.
+
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        # If the commodity is hazardous, set the hazardous_material field to the commodity's hazardous_material field.
+        if self.commodity and self.commodity.hazardous_material:
+            self.hazardous_material = self.commodity.hazardous_material
+
+        if self.hazardous_material:
+            self.placard_needed = True
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the ShipmentCommodity
+
+        Returns:
+            str: Absolute url for the ShipmentCommodity
+        """
+        return reverse("shipment-commodity-detail", kwargs={"pk": self.pk})
+
+
+class HazardousMaterialSegregation(GenericModel):
+    """
+    Stores hazardous material segregation information for a related :model:`organization.Organization`.
+    """
+
+    class_a = ChoiceField(
+        verbose_name=_("Class/Division A"),
+        help_text=_("First hazardous material class or division."),
+        choices=HazardousClassChoices.choices,
+    )
+    class_b = ChoiceField(
+        verbose_name=_("Class/Division B"),
+        help_text=_("Second hazardous material class or division."),
+        choices=HazardousClassChoices.choices,
+    )
+    segregation_type = models.CharField(
+        max_length=1,
+        choices=[("X", "Not Allowed"), ("O", "Allowed with Conditions")],
+        verbose_name=_("Segregation Type"),
+        help_text=_(
+            "Indicates if the materials are allowed to be transported together."
+        ),
+    )
+
+    class Meta:
+        """
+        Metaclass for HazardousMaterialSegregation
+        """
+
+        verbose_name = _("Hazardous Material Segregation")
+        verbose_name_plural = _("Hazardous Material Segregations")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "class_a", "class_b"],
+                name="unique_hazmat_segregation",
+            )
+        ]
+
+    def __str__(self):
+        return textwrap.shorten(
+            f"{self.organization} - {self.class_a} {self.class_b}",
+            50,
+            placeholder="...",
+        )

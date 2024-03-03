@@ -15,28 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  faChevronDown,
-  faChevronRight,
-} from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Row } from "@tanstack/react-table";
+import { QueryClient } from "@tanstack/react-query";
 
-export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
-  return row.getCanExpand() ? (
-    <button
-      {...{
-        onClick: row.getToggleExpandedHandler(),
-        className: "cursor-pointer",
-      }}
-    >
-      {row.getIsExpanded() ? (
-        <FontAwesomeIcon icon={faChevronDown} className="size-3" /> // Apply rotation
-      ) : (
-        <FontAwesomeIcon icon={faChevronRight} className="size-3" /> // Apply rotation
-      )}
-    </button>
-  ) : (
-    "🔵"
-  );
-}
+export const tanstackQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 60 * 2, // 1 hour
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  },
+});

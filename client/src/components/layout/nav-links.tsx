@@ -72,17 +72,27 @@ export const ProtectedLink: React.FC<
 const SingleLink: React.FC<{
   subItem: LinkData;
   setActiveSubLinks: (links: LinkData[] | null) => void;
-}> = ({ subItem, setActiveSubLinks }) => (
-  <ProtectedLink
-    {...subItem}
-    onClick={(event) => {
-      if (subItem.subLinks) {
-        event.preventDefault();
-        setActiveSubLinks(subItem.subLinks);
-      }
-    }}
-  />
-);
+}> = ({ subItem, setActiveSubLinks }) => {
+  const { userHasPermission } = useUserPermissions();
+
+  const hasAccessibleSubLink = subItem.subLinks?.some(
+    (link) => !link.permission || userHasPermission(link.permission),
+  );
+
+  if (!hasAccessibleSubLink) return null;
+
+  return (
+    <ProtectedLink
+      {...subItem}
+      onClick={(event) => {
+        if (subItem.subLinks) {
+          event.preventDefault();
+          setActiveSubLinks(subItem.subLinks);
+        }
+      }}
+    />
+  );
+};
 
 /**
  * The LinksComponent renders a list of links.
@@ -92,19 +102,28 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
   const { userHasPermission } = useUserPermissions();
   const [, setMenuOpen] = useHeaderStore.use("menuOpen");
 
-  // Handler for the back click, to navigate back from sublinks
   const handleBackClick = () => setActiveSubLinks(null);
 
-  // The SingleLink component should only be rendered if permissions allow
   const renderLink = (linkItem: LinkData) => {
-    if (linkItem.permission && !userHasPermission(linkItem.permission)) {
+    const hasPermission =
+      !linkItem.permission || userHasPermission(linkItem.permission);
+    const hasAccessibleSubLink = linkItem.subLinks?.some(
+      (subLink) => !subLink.permission || userHasPermission(subLink.permission),
+    );
+
+    // Do not render the link if it has no permission or if it has sub-links and none are accessible
+    if (!hasPermission || (linkItem.subLinks && !hasAccessibleSubLink)) {
       return null;
     }
 
-    if (!linkItem.subLinks) {
-      // Render main link that navigates directly
-      return (
-        <li key={linkItem.label}>
+    return (
+      <li key={linkItem.label}>
+        {linkItem.subLinks ? (
+          <SingleLink
+            subItem={linkItem}
+            setActiveSubLinks={setActiveSubLinks}
+          />
+        ) : (
           <ListItem
             title={linkItem.label}
             to={linkItem.link}
@@ -112,19 +131,11 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
           >
             {linkItem.description}
           </ListItem>
-        </li>
-      );
-    }
-
-    // Render link with sub-links
-    return (
-      <li key={linkItem.label}>
-        <SingleLink subItem={linkItem} setActiveSubLinks={setActiveSubLinks} />
+        )}
       </li>
     );
   };
 
-  // Map link data to permitted links, ensuring no empty <li> elements are created
   const permittedLinks = linkData.flatMap(
     (mainItem) => mainItem.links.map(renderLink).filter(Boolean), // Filter out null values
   );
@@ -149,22 +160,16 @@ export function LinksComponent({ linkData }: LinksComponentProps) {
           >
             Back
           </Button>
-          {activeSubLinks.map((subLink) => {
-            if (subLink.permission && !userHasPermission(subLink.permission)) {
-              return null; // Don't render the list item if permission is not granted
-            }
-            return (
-              <li key={subLink.label}>
-                <ListItem
-                  onClick={() => useHeaderStore.set("menuOpen", undefined)}
-                  title={subLink.label}
-                  to={subLink.link}
-                >
-                  {subLink.description}
-                </ListItem>
-              </li>
-            );
-          })}
+          {activeSubLinks.map((subLink) => (
+            <ListItem
+              key={subLink.label}
+              title={subLink.label}
+              to={subLink.link}
+              onClick={() => setMenuOpen(undefined)}
+            >
+              {subLink.description}
+            </ListItem>
+          ))}
         </>
       )}
     </ul>
