@@ -65,6 +65,9 @@ const EmailControlPage = lazy(
 );
 const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
 const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
+const HazardousMaterialSegregationPage = lazy(
+  () => import("../pages/admin/HazardousMaterialSegregation"),
+);
 const TableChangeAlertPage = lazy(
   () => import("../pages/admin/TableChangeAlerts"),
 );
@@ -543,6 +546,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Data Retention",
     element: <DataRetentionPage />,
     permission: "view_dataretention",
+    isPublic: false,
+  },
+  {
+    title: "Hazardous Material Seg. Rules",
+    group: "Administration",
+    path: "/admin/hazardous-rules/",
+    description: "Hazardous Material Seg. Rules",
+    element: <HazardousMaterialSegregationPage />,
+    permission: "view_hazardousmaterialsegregation",
     isPublic: false,
   },
   // Error Page

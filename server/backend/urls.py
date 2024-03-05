@@ -286,6 +286,12 @@ router.register(
     shipment_api.FormulaTemplateViewSet,
     basename="formula-templates",
 )
+router.register(
+    r"hazardous_material_segregation",
+    shipment_api.HazardousMaterialSegregationViewSet,
+    basename="hazardous-material-segregation",
+)
+
 
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")

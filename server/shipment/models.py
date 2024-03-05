@@ -1422,9 +1422,14 @@ class HazardousMaterialSegregation(GenericModel):
         ]
         db_table = "hazardous_material_segregation"
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """String representation of the HazardousMaterialSegregation
+
+        Returns:
+            str: String representation of the HazardousMaterialSegregation
+        """
         return textwrap.shorten(
-            f"{self.organization} - {self.class_a} {self.class_b}",
+            f"Class A: {self.class_a}, Class B: {self.class_b} - {self.segregation_type}",
             50,
             placeholder="...",
         )

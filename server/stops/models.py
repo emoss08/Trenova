@@ -22,7 +22,6 @@ import uuid
 from typing import Any
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
@@ -35,7 +34,6 @@ from utils.models import (
     StatusChoices,
     StopChoices,
 )
-from utils.types import ModelDelete
 
 User = settings.AUTH_USER_MODEL
 
@@ -221,39 +219,6 @@ class Stop(GenericModel):
             placeholder="...",
         )
 
-    def delete(self, *args: Any, **kwargs: Any) -> ModelDelete:
-        """Override default Django delete behaviour by checking if the removal of shipments is allowed by the organization.
-
-        Before the stop instance is deleted, this delete function checks if the organization associated with it
-        allows the removal of shipments.
-
-        If the removal is not allowed, it raises a ValidationError. Error messages are marked for translation allowing
-        the support of multiple languages and regional dialects.
-
-        If removal is allowed, it proceeds to call super().delete(), which calls the built-in delete method from Django's
-        Model class, and thus, deletes the stop instance.
-
-        Note:
-            It's important to clearly communicate to the user about any deletion operation as it typically
-            cannot be undone.
-
-        Raises:
-            ValidationError: If the stop organization's Shipment Control configuration disallows shipment removal.
-
-        Returns:
-            ModelDelete: The result from the super class delete operation.
-        """
-        if self.organization.shipment_control.remove_shipment is False:
-            raise ValidationError(
-                {
-                    "ref_num": _(
-                        "Organization does not allow Stop removal. Please contact your administrator."
-                    ),
-                },
-                code="invalid",
-            )
-        return super().delete(*args, **kwargs)
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the stop object
 
@@ -295,10 +260,10 @@ class Stop(GenericModel):
         Raises:
             ValidationError: If the stop is not valid.
         """
-        super().clean()
         from stops.validation import StopValidation
 
         StopValidation(instance=self)
+        super().clean()
 
     def update_status_based_on_times(self) -> None:
         """

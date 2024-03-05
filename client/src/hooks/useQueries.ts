@@ -120,7 +120,7 @@ import type {
   ShipmentControl,
   ShipmentType,
 } from "@/types/shipment";
-import { Worker } from "@/types/worker";
+import type { Worker } from "@/types/worker";
 import { useQuery } from "@tanstack/react-query";
 
 /**

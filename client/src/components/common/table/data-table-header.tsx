@@ -17,13 +17,16 @@
 
 import { Button } from "@/components/ui/button";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StoreType } from "@/lib/useGlobalStore";
+import { type StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/stores/TableStore";
-import { DataTableFacetedFilterListProps, FilterConfig } from "@/types/tables";
-import { faPlus, faX } from "@fortawesome/pro-solid-svg-icons";
+import type {
+  DataTableFacetedFilterListProps,
+  FilterConfig,
+} from "@/types/tables";
+import { faX } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { flexRender, Table as TableType } from "@tanstack/react-table";
-import React, { ChangeEvent } from "react";
+import { flexRender, type Table as TableType } from "@tanstack/react-table";
+import React, { type ChangeEvent } from "react";
 import { Input } from "../fields/input";
 import { DataTableImportExportOption } from "./data-table-export-modal";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";

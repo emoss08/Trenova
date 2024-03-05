@@ -133,6 +133,7 @@ export type API_ENDPOINTS =
   | "/user/notifications/"
   | "/billing/shipments_ready/"
   | "/tags/"
+  | "/hazardous_material_segregation/"
   | "/finance_transactions/"
   | "/reconciliation_queue/"
   | "/me/organization/"

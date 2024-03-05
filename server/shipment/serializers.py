@@ -355,3 +355,28 @@ class FormulaTemplateSerializer(GenericSerializer):
             "organization": {"required": False},
             "business_unit": {"required": False},
         }
+
+
+class HazardousMaterialSegregationSerializer(GenericSerializer):
+    """A serializer for the `HazardousMaterialSegregation` model.
+
+    A serializer class for the HazardousMaterialSegregation Model. This serializer is used
+    to convert the HazardousMaterialSegregation model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+    """
+
+    class Meta:
+        """Metaclass for HazardousMaterialSegregationSerializer
+
+        Attributes:
+            model(models.HazardousMaterialSegregation): The model that the serializer is for.
+        """
+
+        model = models.HazardousMaterialSegregation
+        fields = "__all__"
+        read_only_fields = ("organization", "business_unit")
+        extra_kwargs = {
+            "organization": {"required": False},
+            "business_unit": {"required": False},
+        }
