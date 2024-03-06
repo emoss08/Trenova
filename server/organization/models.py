@@ -37,7 +37,6 @@ from localflavor.us.models import USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from kafka.managers import KafkaManager
-
 from .exceptions import ConditionalStructureError
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
@@ -400,7 +399,7 @@ class Organization(TimeStampedModel):
         default="HH:mm",
         help_text=_("Time Format"),
     )
-    logo = models.ImageField(
+    logo = models.FileField(
         _("Logo"),
         upload_to="organizations/logo/",
         null=True,

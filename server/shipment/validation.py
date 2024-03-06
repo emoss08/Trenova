@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
@@ -64,7 +65,7 @@ class ShipmentValidator:
         self.validate_voided_shipment()
         self.validate_shipment_weight_limit()
         self.validate_trailer_and_tractor_type()
-        self.check_hazardous_material_compatibility()
+        # self.check_hazardous_material_compatibility()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -429,32 +430,109 @@ class ShipmentValidator:
         shipment_control = self.shipment.organization.shipment_control
 
         # If the organization does not enforce hazmat segregation rules, skip this check.
-        if shipment_control.enforce_hazmat_seg_rules is False:
+        if not shipment_control.enforce_hazmat_seg_rules:
             return
 
+        # Fetch all hazardous materials in the shipment
         hazardous_material_classes = {
             shipment_commodity.hazardous_material.hazard_class
             for shipment_commodity in self.shipment.shipment_commodities.all()
             if shipment_commodity.hazardous_material
         }
 
+        print("Hazmat material class", hazardous_material_classes)
+
+        # Fetch segregation rules that might affect any of the hazardous materials in this shipment
         segregation_rules = models.HazardousMaterialSegregation.objects.filter(
             organization=self.shipment.organization,
-            class_a__in=hazardous_material_classes,
-            class_b__in=hazardous_material_classes,
             segregation_type=models.HazardousMaterialSegregation.SegregationTypeChoices.NOT_ALLOWED,
+        ).filter(
+            Q(class_a__in=hazardous_material_classes)
+            | Q(class_b__in=hazardous_material_classes)
         )
 
-        # Create a set if incompatible pairs for quick lookup
+        # Create a set of incompatible pairs for quick lookup
         incompatible_pairs = {
             (rule.class_a, rule.class_b) for rule in segregation_rules
         }
 
+        # Check each pair of hazardous material classes for segregation rules
         for class_a in hazardous_material_classes:
             for class_b in hazardous_material_classes:
-                if class_a != class_b and (class_a, class_b) in incompatible_pairs:
+                if class_a != class_b and (
+                    (class_a, class_b) in incompatible_pairs
+                    or (class_b, class_a) in incompatible_pairs
+                ):
+                    # Raise a validation error if an incompatible pair is found
                     self.errors["__all__"] = _(
-                        "The hazardous material in this shipment not compatible and cannot be shipped together. "
+                        "The hazardous materials in this shipment are not compatible and cannot be shipped together. "
                         "Please try again."
                     )
                     return
+
+
+def check_hazardous_material_compatibility(commodity: models.ShipmentCommodity) -> None:
+    """Validate that the hazardous materials in the shipment are compatible with each other.
+
+    This function checks if the hazardous materials in the shipment are compatible with each other
+    based on the organization's hazardous material segregation rules. If the hazardous materials are
+    not compatible, a validation error is raised.
+
+    Args:
+        commodity (models.ShipmentCommodity): The commodity to check for hazardous material compatibility.
+
+    Returns:
+        None: This function does not return anything.
+
+    Raises:
+        ValidationError: If the hazardous materials in the shipment are not compatible with each other.
+    """
+    shipment = commodity.shipment
+    shipment_control = shipment.organization.shipment_control
+
+    # Skip the check if hazmat segregation rules are not enforced.
+    if not shipment_control.enforce_hazmat_seg_rules:
+        return
+
+    # Include the current commodity's class for rule fetching if it's hazardous.
+    current_class = (
+        commodity.hazardous_material.hazard_class
+        if commodity.hazardous_material
+        else None
+    )
+    if not current_class:
+        return  # No need to proceed if the current commodity is not hazardous.
+
+    hazardous_material_classes = {current_class}
+
+    # Include other commodities' classes in the shipment.
+    for shipment_commodity in shipment.shipment_commodities.exclude(id=commodity.id):
+        if shipment_commodity.hazardous_material:
+            hazardous_material_classes.add(
+                shipment_commodity.hazardous_material.hazard_class
+            )
+
+    # Fetch segregation rules that might affect any of the hazardous materials in this shipment.
+    segregation_rules = models.HazardousMaterialSegregation.objects.filter(
+        organization=shipment.organization,
+        segregation_type=models.HazardousMaterialSegregation.SegregationTypeChoices.NOT_ALLOWED,
+    ).filter(Q(class_a=current_class) | Q(class_b=current_class))
+
+    # Create a set of incompatible pairs for quick lookup.
+    incompatible_pairs = {(rule.class_a, rule.class_b) for rule in segregation_rules}
+
+    # Check if the current commodity's class is incompatible with any other commodity in the shipment.
+    for class_ in hazardous_material_classes:
+        if class_ != current_class and (
+            (current_class, class_) in incompatible_pairs
+            or (class_, current_class) in incompatible_pairs
+        ):
+            raise ValidationError(
+                {
+                    "hazardous_material": _(
+                        "This hazardous material is not compatible with others in the shipment and cannot be shipped "
+                        "together. Please review the hazardous material segregation rules."
+                    )
+                },
+                code="incompatible_hazardous_material",
+            )

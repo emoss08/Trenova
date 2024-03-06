@@ -52,6 +52,7 @@ from shipment.tests.factories import (
     ShipmentDocumentationFactory,
     ShipmentFactory,
     ShipmentTypeFactory,
+    ShipmentCommodityFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -335,3 +336,11 @@ def movement() -> Generator[Any, Any, None]:
     Pytest Fixture for Movement
     """
     yield MovementFactory()
+
+
+@pytest.fixture
+def shipment_commodity() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Shipment Commodity
+    """
+    yield ShipmentCommodityFactory()

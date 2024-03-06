@@ -103,7 +103,7 @@ export default function HazardousMaterialSegregation() {
         link="/hazardous_material_segregation/"
         name="Hazmat Seg. Rules"
         exportModelName="HazardousMaterialSegregation"
-        filterColumn="segregationType"
+        filterColumn="classA"
         tableFacetedFilters={filters}
         TableSheet={HazmatSegRulesDialog}
         TableEditSheet={HazardousMaterialEditDialog}

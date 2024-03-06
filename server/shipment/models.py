@@ -149,7 +149,7 @@ class ShipmentControl(GenericModel):
     )
     enforce_hazmat_seg_rules = models.BooleanField(
         _("Enforce Hazardous Material Segregation Rules"),
-        default=False,
+        default=True,
         help_text=_(
             "If checked, the system will enforce hazardous material segregation rules. When entering an order."
         ),
@@ -1343,6 +1343,12 @@ class ShipmentCommodity(GenericModel):
             f"{self.shipment} - {self.commodity}", 50, placeholder="..."
         )
 
+    def clean(self) -> None:
+        from shipment.validation import check_hazardous_material_compatibility
+
+        check_hazardous_material_compatibility(commodity=self)
+        super().clean()
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Overrides the default Django save method to provide custom save behavior for the Shipment Commodity model.
 
@@ -1353,6 +1359,7 @@ class ShipmentCommodity(GenericModel):
         Returns:
             None: This function does not return anything.
         """
+        super().full_clean()
 
         # If the commodity is hazardous, set the hazardous_material field to the commodity's hazardous_material field.
         # Also, set the shipment's is_hazmat field to True.

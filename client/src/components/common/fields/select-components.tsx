@@ -86,8 +86,9 @@ export type SelectOption = {
  * @param props {OptionProps}
  * @constructor Option
  */
-export function Option({ ...props }: OptionProps<SelectOption, false>) {
-  const { data, isSelected, label } = props;
+export function Option({ ...props }: OptionProps) {
+  const { isSelected, label } = props;
+  const data = props.data as SelectOption;
 
   return (
     <components.Option {...props}>
