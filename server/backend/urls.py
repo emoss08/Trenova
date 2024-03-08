@@ -373,11 +373,6 @@ urlpatterns = [
         billing_api.transfer_to_billing,
         name="transfer-to-billing",
     ),
-    path(
-        "generate_excel_report/<str:report_id>/",
-        reports_views.generate_excel_report,
-        name="generate-excel-report",
-    ),
     path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
     path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
     path(

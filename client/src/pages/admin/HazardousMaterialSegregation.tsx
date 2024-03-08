@@ -19,13 +19,13 @@ import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { HazardousMaterialEditDialog } from "@/components/hazmat-seg-rules-edit-dialog";
 import { HazmatSegRulesDialog } from "@/components/hazmat-seg-rules-table-dialog";
 import { Badge } from "@/components/ui/badge";
 import { segregationTypeChoices } from "@/lib/choices";
 import { type HazardousMaterialSegregationRule } from "@/types/shipment";
 import { type FilterConfig } from "@/types/tables";
 import { type ColumnDef } from "@tanstack/react-table";
-import { HazardousMaterialEditDialog } from "@/components/hazmat-seg-rules-edit-dialog";
 
 const readableSegType = (type: string) => {
   switch (type) {
@@ -78,7 +78,9 @@ const columns: ColumnDef<HazardousMaterialSegregationRule>[] = [
   },
   {
     accessorKey: "segregationType",
-    header: "Segregation Type",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Segregation Type" />
+    ),
     cell: ({ row }) => readableSegType(row.original.segregationType),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
