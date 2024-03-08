@@ -49,10 +49,10 @@ from shipment.tests.factories import (
     AdditionalChargeFactory,
     ReasonCodeFactory,
     ShipmentCommentFactory,
+    ShipmentCommodityFactory,
     ShipmentDocumentationFactory,
     ShipmentFactory,
     ShipmentTypeFactory,
-    ShipmentCommodityFactory,
 )
 
 pytestmark = pytest.mark.django_db
