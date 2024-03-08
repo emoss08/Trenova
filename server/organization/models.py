@@ -400,7 +400,7 @@ class Organization(TimeStampedModel):
         default="HH:mm",
         help_text=_("Time Format"),
     )
-    logo = models.ImageField(
+    logo = models.FileField(
         _("Logo"),
         upload_to="organizations/logo/",
         null=True,

@@ -17,6 +17,8 @@
 
 import {
   CodeTypeProps,
+  HazardousClassChoiceProps,
+  SegregationTypeChoiceProps,
   ShipmentEntryMethodChoices,
   ShipmentStatusChoiceProps,
 } from "@/lib/choices";
@@ -168,3 +170,15 @@ export type ShipmentPageTab = {
   icon: JSX.Element;
   description: string;
 };
+
+export interface HazardousMaterialSegregationRule extends BaseModel {
+  id: string;
+  classA: HazardousClassChoiceProps;
+  classB: HazardousClassChoiceProps;
+  segregationType: SegregationTypeChoiceProps;
+}
+
+export type HazardousMaterialSegregationRuleFormValues = Omit<
+  HazardousMaterialSegregationRule,
+  "id" | "organization" | "created" | "modified"
+>;

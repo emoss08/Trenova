@@ -562,3 +562,21 @@ export const yesAndNoChoices = [
   { value: "Y", label: "Yes" },
   { value: "N", label: "No" },
 ];
+
+export type SegregationTypeChoiceProps = "O" | "X";
+/**
+ * Returns Segregation Type choices when using TableFacetedFilters.
+ * @returns An array of table faceted filter choices.
+ */
+export const segregationTypeChoices = [
+  {
+    value: "O",
+    label: "Allowed With Conditions",
+    icon: CircleIcon,
+  },
+  {
+    value: "X",
+    label: "Not Allowed",
+    icon: MinusCircledIcon,
+  },
+] satisfies TableOptionProps[];

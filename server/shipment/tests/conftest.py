@@ -49,6 +49,7 @@ from shipment.tests.factories import (
     AdditionalChargeFactory,
     ReasonCodeFactory,
     ShipmentCommentFactory,
+    ShipmentCommodityFactory,
     ShipmentDocumentationFactory,
     ShipmentFactory,
     ShipmentTypeFactory,
@@ -335,3 +336,11 @@ def movement() -> Generator[Any, Any, None]:
     Pytest Fixture for Movement
     """
     yield MovementFactory()
+
+
+@pytest.fixture
+def shipment_commodity() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Shipment Commodity
+    """
+    yield ShipmentCommodityFactory()
