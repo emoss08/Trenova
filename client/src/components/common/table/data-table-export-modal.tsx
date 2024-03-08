@@ -49,7 +49,6 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { IChoiceProps } from "@/types";
 import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 
 interface Props {
@@ -295,6 +294,7 @@ function TableExportModalBody({
         <Button
           type="submit"
           isLoading={loading}
+          loadingText="Sending Job..."
           disabled={selectedColumns?.length === 0}
         >
           Export

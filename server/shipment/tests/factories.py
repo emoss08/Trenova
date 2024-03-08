@@ -181,3 +181,25 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     charge_amount = FuzzyDecimal(low=10.00, high=100000.00, precision=4)
     sub_total = FuzzyDecimal(low=10.00, high=100000.00, precision=4)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+
+
+class ShipmentCommodityFactory(factory.django.DjangoModelFactory):
+    """
+    ShipmentCommodity Factory
+    """
+
+    class Meta:
+        """
+        Metaclass for ShipmentCommodityFactory
+        """
+
+        model = "shipment.ShipmentCommodity"
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    shipment = factory.SubFactory(ShipmentFactory)
+    commodity = factory.SubFactory("commodities.factories.CommodityFactory")
+    hazardous_material = factory.SubFactory(
+        "commodities.factories.HazardousMaterialFactory"
+    )
+    quantity = 1

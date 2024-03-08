@@ -54,4 +54,4 @@ class HazardousMaterialFactory(factory.django.DjangoModelFactory):
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
-    hazard_class = "4.1"
+    hazard_class = "1.1"

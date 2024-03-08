@@ -16,8 +16,9 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import {
+import type {
   FormulaTemplate,
+  HazardousMaterialSegregationRule,
   ServiceType,
   Shipment,
   ShipmentType,
@@ -113,10 +114,22 @@ export async function validateBOLNumber(
 }
 
 /**
- * Fetches order types from the server.
- * @returns A promise that resolves to an array of order types.
+ * Fetches shipment types from the server.
+ * @returns A promise that resolves to an array of shipment types.
  */
 export async function getShipmentTypes(): Promise<ReadonlyArray<ShipmentType>> {
   const response = await axios.get("/shipment_types/");
+  return response.data.results;
+}
+
+/**
+ * Fetches Hazardous material segregation rules from the server.
+ * @returns A Promise that resolves to an array of HazardousMaterialSegregationRule objects.
+ */
+
+export async function getHazardousSegregationRules(): Promise<
+  ReadonlyArray<HazardousMaterialSegregationRule>
+> {
+  const response = await axios.get("/hazardous_material_segregation_rules/");
   return response.data.results;
 }

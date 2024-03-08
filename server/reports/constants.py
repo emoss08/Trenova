@@ -421,4 +421,15 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified"},
         ],
     },
+    "HazardousMaterialSegregation": {
+        "app_label": "shipment",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "class_a", "label": "Class A"},
+            {"value": "class_b", "label": "Class B"},
+            {"value": "segregation_type", "label": "Segregation Type"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }

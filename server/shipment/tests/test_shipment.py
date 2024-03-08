@@ -1018,10 +1018,6 @@ def test_create_api(
         format="json",
     )
 
-    import json
-
-    print("response", json.dumps(response.json(), indent=4))
-
     assert response.status_code == 201
     assert response.data["origin_address"] == "123 Main St, Anytown, USA"
     assert response.data["destination_address"] == "456 Elm St, Anytown, USA"

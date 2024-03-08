@@ -18,21 +18,15 @@
 import axios from "@/lib/axiosConfig";
 import { TOAST_STYLE } from "@/lib/constants";
 import { useTableStore } from "@/stores/TableStore";
-import { QueryKeyWithParams, QueryKeys } from "@/types";
-import { APIError } from "@/types/server";
+import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import { type APIError } from "@/types/server";
 import {
   QueryClient,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
-import {
-  Control,
-  ErrorOption,
-  FieldValues,
-  Path,
-  UseFormReset,
-} from "react-hook-form";
+import { type AxiosResponse } from "axios";
+import type { Control, FieldValues, Path, UseFormReset } from "react-hook-form";
 import toast from "react-hot-toast";
 
 type DataProp = Record<string, unknown> | FormData;
@@ -233,20 +227,27 @@ function showErrorNotification(errorMessage?: string) {
   );
 }
 
+/**
+ * Handle validation errors by setting errors on the form control and showing notifications.
+ *
+ * @param {APIError[]} errors - Array of errors from the API.
+ * @param {Control<T>} control - React Hook Form control object.
+ */
 function handleValidationErrors<T extends FieldValues>(
   errors: APIError[],
   control: Control<T>,
 ) {
-  errors.forEach((e: APIError) => {
-    control.setError(
-      e.attr as Path<T>,
-      {
-        type: "manual",
-        message: e.detail,
-      } as ErrorOption,
-    );
-    if (e.attr === "nonFieldErrors") {
-      showErrorNotification(e.detail);
+  errors.forEach((error: APIError) => {
+    const { attr, detail } = error;
+
+    // Set error on the control
+    control.setError(attr as Path<T>, { type: "manual", message: detail });
+
+    // Show appropriate notification based on the error attribute
+    if (attr === "nonFieldErrors" || attr === "All") {
+      showErrorNotification(detail);
+    } else {
+      showErrorNotification("Please fix the errors and try again.");
     }
   });
 }

@@ -418,3 +418,32 @@ class FormulaTemplateViewSet(viewsets.ModelViewSet):
         "customer",
         "template_type",
     )
+
+
+class HazardousMaterialSegregationViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Hazardous Material Segregation in the system.
+
+    The viewset provides default operations for creating, updating and deleting Hazardous Material Segregation,
+    as well as listing and retrieving Hazardous Material Segregation. It uses the ``HazardousMaterialSegregationSerializer``
+    class to convert the Hazardous Material Segregation instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by class_a, class_b, and segregation_type.
+
+    Attributes:
+        queryset (QuerySet): A queryset of HazardousMaterialSegregation objects that will be used to
+        retrieve and update HazardousMaterialSegregation objects.
+
+        serializer_class (HazardousMaterialSegregationSerializer): A serializer class that will be used to
+        convert HazardousMaterialSegregation objects to and from JSON-formatted data.
+    """
+
+    queryset = models.HazardousMaterialSegregation.objects.all()
+    serializer_class = serializers.HazardousMaterialSegregationSerializer
+    filterset_fields = ("class_a", "class_b", "segregation_type")
+
+    def get_queryset(self) -> "QuerySet[models.HazardousMaterialSegregation]":
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        )
+        return queryset

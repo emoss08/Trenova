@@ -75,6 +75,7 @@ export type QueryKey =
   | "glAccounts"
   | "googleAPI"
   | "hazardous-material-table-data"
+  | "hazardous-material-segregation-table-data"
   | "hazardousMaterials"
   | "invoiceControl"
   | "job-title-table-data"

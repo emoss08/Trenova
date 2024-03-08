@@ -41,7 +41,6 @@ from movements import api as movement_api
 from organization import api as org_api
 from plugin import api as plugin_api
 from reports import api as reports_api
-from reports import views as reports_views
 from route import api as route_api
 from shipment import api as shipment_api
 from stops import api as stops_api
@@ -286,6 +285,12 @@ router.register(
     shipment_api.FormulaTemplateViewSet,
     basename="formula-templates",
 )
+router.register(
+    r"hazardous_material_segregation",
+    shipment_api.HazardousMaterialSegregationViewSet,
+    basename="hazardous-material-segregation",
+)
+
 
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")
@@ -366,11 +371,6 @@ urlpatterns = [
         "api/transfer_to_billing/",
         billing_api.transfer_to_billing,
         name="transfer-to-billing",
-    ),
-    path(
-        "generate_excel_report/<str:report_id>/",
-        reports_views.generate_excel_report,
-        name="generate-excel-report",
     ),
     path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
     path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),

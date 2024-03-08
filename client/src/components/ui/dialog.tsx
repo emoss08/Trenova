@@ -18,7 +18,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { faX } from "@fortawesome/pro-duotone-svg-icons";
+import { faX } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const Dialog = DialogPrimitive.Root;

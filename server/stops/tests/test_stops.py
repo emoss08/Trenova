@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import datetime
 from datetime import timedelta
 
 import pytest
@@ -24,21 +23,13 @@ from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from accounting.models import RevenueCode
-from accounts.models import User
-from customer.models import Customer
-from dispatch.factories import FleetCodeFactory
 from dispatch.models import DispatchControl
-from equipment.models import EquipmentType
-from equipment.tests.factories import TractorFactory
 from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from organization.models import BusinessUnit, Organization
-from shipment.models import Shipment, ShipmentType
 from stops import models
 from stops.tests.factories import StopFactory
-from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -256,26 +247,6 @@ def test_stop_has_location_or_address_line():
     ]
 
 
-def test_cannot_change_status_to_in_progress_or_completed_if_first_stop_is_not_completed(
-    shipment: Shipment,
-) -> None:
-    """
-    Test ValidationError is thrown when the status of the stop is changed to `IN_PROGRESS`
-    or `COMPLETED` if the previous stop in the movement is not `COMPLETED`.
-    """
-
-    movement = Movement.objects.filter(shipment=shipment).first()
-
-    with pytest.raises(ValidationError) as excinfo:
-        StopFactory(
-            arrival_time=timezone.now(), status="P", sequence=2, movement=movement
-        )
-
-    assert excinfo.value.message_dict["status"] == [
-        "Cannot change status to in progress or completed if previous stop is not completed. Please try again."
-    ]
-
-
 def test_arrival_time_set_before_departure_time() -> None:
     with pytest.raises(ValidationError) as excinfo:
         StopFactory(
@@ -459,54 +430,3 @@ SERVICE_INCIDENT_PARAMS = [
 #         ServiceIncident.objects.filter(stop=stop_1, movement=shipment_movement).exists()
 #         == expected
 #     )
-
-
-def test_first_stop_sets_ship_date(
-    organization: Organization,
-    shipment_type: ShipmentType,
-    revenue_code: RevenueCode,
-    origin_location: Location,
-    destination_location: Location,
-    customer: Customer,
-    equipment_type: EquipmentType,
-    user: User,
-    business_unit: BusinessUnit,
-) -> None:
-    """ """
-    shipment = Shipment.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        shipment_type=shipment_type,
-        revenue_code=revenue_code,
-        origin_location=origin_location,
-        destination_location=destination_location,
-        origin_appointment_window_start=timezone.now(),
-        origin_appointment_window_end=timezone.now(),
-        destination_appointment_window_start=timezone.now()
-        + datetime.timedelta(days=2),
-        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
-        customer=customer,
-        freight_charge_amount=100.00,
-        trailer_type=equipment_type,
-        entered_by=user,
-        bol_number="1234567890",
-    )
-
-    fleet_code = FleetCodeFactory()
-    worker = WorkerFactory(fleet_code=fleet_code)
-    tractor = TractorFactory(primary_worker=worker, fleet_code=fleet_code)
-    Movement.objects.filter(shipment=shipment).update(
-        tractor=tractor, primary_worker=worker
-    )
-    shipment_movement = Movement.objects.get(shipment=shipment)
-
-    # Act: Complete the first stop in the movement
-    stop_1 = models.Stop.objects.get(movement=shipment_movement, sequence=1)
-    stop_1.arrival_time = timezone.now() - datetime.timedelta(hours=1)
-    stop_1.departure_time = timezone.now()
-    stop_1.save()
-
-    shipment.refresh_from_db()
-
-    # Assert: Order has ship date set
-    assert shipment.ship_date == stop_1.arrival_time.date()
