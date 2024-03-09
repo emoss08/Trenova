@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CookieConsent } from "@/components/layout/cookie-consent";
 import { NavMenu } from "@/components/layout/navbar";
-import { NotificationMenu } from "@/components/layout/notification_menu/notification-menu";
 import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
 import TeamSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
@@ -29,7 +29,6 @@ import { useLocation } from "react-router-dom";
 import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { Logo } from "./logo";
-import { CookieConsent } from "@/components/layout/cookie-consent";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -42,24 +41,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const hideHeader = queryParams.get("hideHeader") === "true";
   useQueryInvalidationListener();
 
+  console.info("user", user);
+
   return (
-    <div className="relative flex min-h-screen flex-col bg-background" id="app">
+    <div className="bg-background relative flex min-h-screen flex-col" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <Logo />
-              <div className="h-7 border-l border-muted-foreground/40" />
+              <div className="border-muted-foreground/40 h-7 border-l" />
               <AsideMenuSheet />
               <TeamSwitcher />
             </div>
             <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
-              <NotificationMenu />
-              <div className="h-7 border-l border-muted-foreground/40" />
+              {/* <NotificationMenu /> */}
+              <div className="border-muted-foreground/40 h-7 border-l" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>

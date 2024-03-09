@@ -59,7 +59,7 @@ func SetupAndRun(db *gorm.DB) {
 	// Server Configuration
 	srv := &http.Server{
 		Handler:      handler,
-		Addr:         "localhost:3000",
+		Addr:         "127.0.0.1:3000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  60 * time.Second,

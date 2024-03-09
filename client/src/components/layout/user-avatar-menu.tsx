@@ -15,6 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -30,6 +40,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 import { useTheme } from "@/components/ui/theme-provider";
 import { useLogout } from "@/hooks/useLogout";
 import { TOAST_STYLE } from "@/lib/constants";
@@ -39,17 +50,6 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -87,13 +87,11 @@ export function SignOutDialog({
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
   ({ user, ...props }, ref) => {
     // Determine the initials for the fallback avatar
-    const initials = user.profile
-      ? user.profile.firstName.charAt(0) + user.profile.lastName.charAt(0)
-      : "";
+    const initials = user.name ? user.name[0].toUpperCase() : user.username[0];
 
     // Determine the avatar image source
     const avatarSrc =
-      user.profile?.thumbnail || `https://avatar.vercel.sh/${user.email}`;
+      user?.thumbnailUrl || `https://avatar.vercel.sh/${user.email}`;
 
     return (
       <div
@@ -121,8 +119,6 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [previousTheme, setPreviousTheme] = useState(theme);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const navigate = useNavigate();
-
-  const fullName = `${user.profile?.firstName} ${user.profile?.lastName}`;
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -205,7 +201,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           </div>
           <button
             onClick={undoThemeChange}
-            className="inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            className="hover:bg-secondary focus:ring-ring inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-1 disabled:pointer-events-none disabled:opacity-50"
           >
             Undo
           </button>
@@ -229,9 +225,9 @@ function UserAvatarMenuContent({ user }: { user: User }) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="truncate text-sm font-medium leading-none">
-              {fullName}
+              {user.name || user.username}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-muted-foreground text-xs leading-none">
               {user.email}
             </p>
           </div>

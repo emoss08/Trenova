@@ -16,7 +16,6 @@
  */
 
 //
-//const isAdmin = useUserStore.get("user").isStaff;
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import React, { useContext, useMemo } from "react";
 
@@ -35,7 +34,9 @@ export const UserPermissionsProvider: React.FC<{
 }> = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useUserStore.get("user");
-  const isAdmin = user?.isStaff ?? false;
+
+  // User is admin or is super admin
+  const isAdmin = user?.isAdmin || user?.isSuperuser;
   const permissions = user?.userPermissions || [];
 
   const userHasPermission = useMemo(

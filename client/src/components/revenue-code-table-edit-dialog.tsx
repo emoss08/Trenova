@@ -30,8 +30,8 @@ import { formatDate } from "@/lib/date";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  RevenueCode,
   RevenueCodeFormValues as FormValues,
+  RevenueCode,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -62,7 +62,7 @@ function RCEditForm({
     control,
     {
       method: "PUT",
-      path: `/revenue_codes/${revenueCode.id}/`,
+      path: `/revenue-codes/${revenueCode.id}/`,
       successMessage: "Revenue Code updated successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
       additionalInvalidateQueries: ["revenueCodes"],
@@ -106,6 +106,8 @@ export function RevenueCodeTableEditDialog({
 
   if (!revenueCode) return null;
 
+  console.info("revenueCode", revenueCode);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -114,7 +116,7 @@ export function RevenueCodeTableEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {revenueCode && formatDate(revenueCode.modified)}
+          {revenueCode && formatDate(revenueCode.updatedAt)}
         </DialogDescription>
         {revenueCode && <RCEditForm revenueCode={revenueCode} open={open} />}
       </DialogContent>
