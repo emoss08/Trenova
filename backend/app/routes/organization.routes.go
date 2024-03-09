@@ -11,5 +11,5 @@ import (
 func OrganizationRoutes(r *mux.Router, db *gorm.DB, store *gormstore.Store) {
 	or := r.PathPrefix("/organization").Subrouter()
 
-	or.HandleFunc("/", handlers.GetOrganization(db, store)).Methods("GET")
+	or.HandleFunc("/me/", handlers.GetOrganization(db, store)).Methods("GET", "OPTIONS")
 }

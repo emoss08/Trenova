@@ -19,7 +19,6 @@ import axios from "@/lib/axiosConfig";
 import { BillingControl } from "@/types/billing";
 import { DispatchControl } from "@/types/dispatch";
 import { InvoiceControl } from "@/types/invoicing";
-import { ShipmentControl } from "@/types/shipment";
 import {
   Depot,
   EmailControl,
@@ -30,13 +29,14 @@ import {
   Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
+import { ShipmentControl } from "@/types/shipment";
 
 /**
  * Featches the details of the user currently assigned organization.
  * @returns A promise that resolves to the organization's details.
  */
 export async function getUserOrganizationDetails(): Promise<Organization> {
-  const response = await axios.get("/me/organization/");
+  const response = await axios.get("/organization/me/");
   return response.data;
 }
 

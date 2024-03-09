@@ -20,5 +20,15 @@ func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	AuthRoutes(apiRouter, db, store)         // Auth routes
 	RevenueCodeRoutes(apiRouter, db, store)  // RevenueCode routes
 	OrganizationRoutes(apiRouter, db, store) // Organization routes
+	UserRoutes(apiRouter, db, store)         // User routes
+
+	// Log all available routes
+	// r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	// 	t, _ := route.GetPathTemplate()
+	// 	m, _ := route.GetMethods()
+	// 	fmt.Println("ROUTE:", t, m)
+	// 	return nil
+	// })
+
 	return r
 }

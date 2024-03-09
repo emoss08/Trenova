@@ -18,11 +18,11 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { RevenueCodeDialog } from "@/components/revenue-code-table-dialog";
+import { RevenueCodeTableEditDialog } from "@/components/revenue-code-table-edit-dialog";
 import { truncateText } from "@/lib/utils";
-import { ColumnDef } from "@tanstack/react-table";
 import { RevenueCode } from "@/types/accounting";
-import {RevenueCodeDialog} from "@/components/revenue-code-table-dialog";
-import {RevenueCodeTableEditDialog} from "@/components/revenue-code-table-edit-dialog";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<RevenueCode>[] = [
   {
@@ -75,7 +75,7 @@ export default function RevenueCodes() {
       addPermissionName={"add_revenuecode"}
       queryKey="revenue-code-table-data"
       columns={columns}
-      link="/revenue_codes/"
+      link="/revenue-codes/"
       name="Revenue Code"
       exportModelName="RevenueCode"
       filterColumn="code"

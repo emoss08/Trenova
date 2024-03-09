@@ -18,24 +18,6 @@
 import { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 
-export type UserProfile = {
-  id: string;
-  organization: string;
-  firstName: string;
-  lastName: string;
-  user: string;
-  jobTitle: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phoneNumber?: string;
-  profilePicture?: string;
-  thumbnail?: string;
-  isPhoneVerified: boolean;
-};
-
 export type UserFavorite = {
   id: string;
   user: string;
@@ -50,26 +32,24 @@ export type MinimalUser = {
   id: string;
   username: string;
   email: string;
-  profile?: UserProfile;
 };
 
 export type User = {
   id: string;
+  businessUnitId: string;
+  organizationId: string;
   username: string;
-  organization: string;
+  name: string;
   email: string;
-  department?: string;
   dateJoined: string;
   isSuperuser: boolean;
-  isStaff: boolean;
-  isActive: boolean;
-  groups: string[];
-  userPermissions: string[];
-  online: boolean;
-  lastLogin: string;
+  isAdmin: boolean;
+  status: StatusChoiceProps;
   timezone: TimezoneChoices;
-  profile?: UserProfile;
-  fullName: string;
+  profilePicUrl?: string;
+  thumbnailUrl?: string;
+  PhoneNumber?: string;
+  userPermissions: string[];
 };
 
 export type UserFormValues = {
@@ -78,18 +58,6 @@ export type UserFormValues = {
   department?: string;
   email: string;
   isSuperuser: boolean;
-  profile: {
-    jobTitle: string;
-    organization: string;
-    firstName: string;
-    lastName: string;
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    phoneNumber?: string;
-  };
 };
 
 export type JobTitle = {

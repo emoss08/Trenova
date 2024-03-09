@@ -16,9 +16,9 @@
  */
 
 import { createGlobalStore } from "@/lib/useGlobalStore";
+import { User } from "@/types/accounts";
 import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { User } from "@/types/accounts";
 
 type AuthState = {
   isAuthenticated: boolean;
@@ -81,35 +81,15 @@ export const useUserStore = createGlobalStore<UserStoreState>({
   user: {
     id: "",
     username: "",
-    organization: "",
+    organizationId: "",
     email: "",
-    department: "",
-    dateJoined: "",
-    isSuperuser: false,
-    isStaff: false,
-    isActive: false,
-    groups: [],
+    isAdmin: false,
+    status: "I",
     userPermissions: [],
-    online: false,
-    lastLogin: "",
     timezone: "America/New_York",
-    profile: {
-      id: "",
-      organization: "",
-      firstName: "",
-      lastName: "",
-      user: "",
-      jobTitle: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      phoneNumber: "",
-      profilePicture: "",
-      thumbnail: "",
-      isPhoneVerified: false,
-    },
-    fullName: "",
+    dateJoined: "",
+    businessUnitId: "",
+    name: "",
+    isSuperuser: false,
   },
 });
