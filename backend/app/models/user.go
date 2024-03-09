@@ -49,6 +49,15 @@ func (u *User) uppercaseName() error {
 	return nil
 }
 
+func (u *User) GetUserByID(db *gorm.DB, userID uuid.UUID) (User, error) {
+	var user User
+	if err := db.Model(&User{}).Where("id = ?", userID).First(&user).Error; err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 type UserFavorite struct {
 	BaseModel
 	UserID   *uuid.UUID `json:"userID" gorm:"type:uuid;not null;"`
