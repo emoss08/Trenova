@@ -22,11 +22,11 @@ type RevenueCode struct {
 }
 
 func (rc *RevenueCode) validateRevenueCode() error {
-	if rc.ExpenseAccountID != nil && rc.ExpenseAccount.AccountType != Exp {
+	if rc.ExpenseAccountID != nil && rc.ExpenseAccount.AccountType != AccountTypeExpense {
 		return errExpenseAccountMustBeExpense
 	}
 
-	if rc.RevenueAccountID != nil && rc.RevenueAccount.AccountType != Rev {
+	if rc.RevenueAccountID != nil && rc.RevenueAccount.AccountType != AccountTypeRevenue {
 		return errRevenueAccountMustBeRevenue
 	}
 

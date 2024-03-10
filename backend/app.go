@@ -1,10 +1,8 @@
 package main
 
 import (
-	"github.com/google/uuid"
 	"log"
 	"os"
-	"trenova/app/models"
 	"trenova/app/server"
 	"trenova/config/database"
 
@@ -40,14 +38,12 @@ func main() {
 		log.Fatal("Failed to run types migration. \n", err)
 	}
 
-	if err := db.Create(&models.AccountingControl{
-		BusinessUnitID:     uuid.MustParse("2aa25333-7032-4295-9d83-9882e6631fe7"),
-		OrganizationID:     uuid.MustParse("f1d60024-7d0d-49e9-84a5-f8add9373fd7"),
-		RecThreshold:       50,
-		RecThresholdAction: "HALT",
-	}).Error; err != nil {
-		log.Fatalf("Failed to create accounting control record: %v", err)
-	}
+	//if err := db.Create(&models.BillingControl{
+	//	BusinessUnitID: uuid.MustParse("2aa25333-7032-4295-9d83-9882e6631fe7"),
+	//	OrganizationID: uuid.MustParse("f1d60024-7d0d-49e9-84a5-f8add9373fd7"),
+	//}).Error; err != nil {
+	//	log.Fatalf("Failed to create accounting control record: %v", err)
+	//}
 
 	defer cancel()
 	// Setup server

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"gorm.io/gorm/logger"
 	"log"
 	"time"
 	"trenova/app/models"
@@ -34,7 +35,7 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{
 		NowFunc: func() time.Time { return time.Now().Local() },
-		// Logger:  logger.Default.LogMode(logger.Info),
+		Logger:  logger.Default.LogMode(logger.Info),
 	})
 
 	if err != nil {
@@ -47,6 +48,7 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		&models.Organization{},
 		&models.EmailProfile{},
 		&models.AccountingControl{},
+		&models.BillingControl{},
 		&models.Token{},
 		&models.User{},
 		&models.UserFavorite{},

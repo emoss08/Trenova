@@ -27,7 +27,7 @@ var ErrDefaultEmailProfileExists = errors.New("default email profile already exi
 
 func (e *EmailProfile) BeforeCreate(tx *gorm.DB) error {
 	if e.Protocol == "" {
-		e.Protocol = Unencrypted
+		e.Protocol = EmailProtocolUnencrypted
 	}
 
 	if e.DefaultProfile {

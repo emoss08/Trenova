@@ -10,7 +10,7 @@ import (
 type AccountingControl struct {
 	TimeStampedModel
 	BusinessUnitID               uuid.UUID                  `gorm:"type:uuid;not null;index"                              json:"businessUnitId"`
-	OrganizationID               uuid.UUID                  `gorm:"type:uuid;not null;index"                              json:"organizationId"`
+	OrganizationID               uuid.UUID                  `gorm:"type:uuid;not null;unique"                             json:"organizationId"`
 	RecThreshold                 int64                      `gorm:"type:int;not null;default:50"                          json:"recThreshold"            validate:"required"`
 	DefaultRevenueAccountID      *uuid.UUID                 `gorm:"type:uuid"                                             json:"defaultRevenueAccountId" validate:"omitempty"`
 	DefaultExpenseAccountID      *uuid.UUID                 `gorm:"type:uuid"                                             json:"defaultExpenseAccountId" validate:"omitempty"`
@@ -30,11 +30,11 @@ var ErrExpenseAccount = errors.New("default expense account must be an expense a
 var ErrRevenueAccount = errors.New("default revenue account must be a revenue account")
 
 func (ac *AccountingControl) validateAccountingControl() error {
-	if ac.DefaultExpenseAccountID != nil && ac.DefaultExpenseAccount.AccountType != Exp {
+	if ac.DefaultExpenseAccountID != nil && ac.DefaultExpenseAccount.AccountType != AccountTypeExpense {
 		return ErrExpenseAccount
 	}
 
-	if ac.DefaultRevenueAccountID != nil && ac.DefaultRevenueAccount.AccountType != Rev {
+	if ac.DefaultRevenueAccountID != nil && ac.DefaultRevenueAccount.AccountType != AccountTypeRevenue {
 		return ErrRevenueAccount
 	}
 

@@ -10,9 +10,9 @@ import (
 type OrgType string
 
 const (
-	Asset     OrgType = "A"
-	Brokerage OrgType = "B"
-	Both      OrgType = "X"
+	orgTypeAsset OrgType = "A"
+	Brokerage    OrgType = "B"
+	Both         OrgType = "X"
 )
 
 type Organization struct {
@@ -26,6 +26,7 @@ type Organization struct {
 	BusinessUnitID    uuid.UUID         `gorm:"type:uuid;not null;uniqueIndex:idx_organization_business_unit_name"                                json:"businessUnitId"    validate:"required"`
 	BusinessUnit      BusinessUnit      `json:"-" validate:"omitempty"`
 	AccountingControl AccountingControl `json:"-" validate:"omitempty"`
+	BillingControl    BillingControl    `json:"-" validate:"omitempty"`
 }
 
 func (org *Organization) BeforeCreate(_ *gorm.DB) (err error) {
@@ -44,6 +45,7 @@ func (org *Organization) AfterCreate(tx *gorm.DB) (err error) {
 		OrganizationID: org.ID,
 		BusinessUnitID: org.BusinessUnitID,
 	}
+
 	if err = tx.Create(ac).Error; err != nil {
 		return
 	}
