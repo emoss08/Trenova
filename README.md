@@ -18,7 +18,7 @@
 
 ## Introduction
 
-**Trenova Suite** represents an innovative web solution engineered for the complex needs of the modern transportation and logistics industry. Leveraging the robust Django framework and integrating cutting-edge frontend technologies, Trenova Suite offers unmatched adaptability and efficiency, customizing itself to meet the specific operational requirements of your business.
+**Trenova Suite** represents an innovative web solution engineered for the complex needs of the modern transportation and logistics industry. Leveraging golang and integrating cutting-edge frontend technologies, Trenova Suite offers unmatched adaptability and efficiency, customizing itself to meet the specific operational requirements of your business.
 
 ## Key Highlights
 
