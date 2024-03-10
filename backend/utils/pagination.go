@@ -65,11 +65,11 @@ func GetPrevPageUrl(r *http.Request, offset, limit int) string {
 	if offset == 0 {
 		return ""
 	}
-	prevOffset := max(0, offset-limit)
+	prevOffset := maximumLimitAndOffset(0, offset-limit)
 	return buildPageURL(r, prevOffset, limit)
 }
 
-func max(a, b int) int {
+func maximumLimitAndOffset(a, b int) int {
 	if a > b {
 		return a
 	}

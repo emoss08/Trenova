@@ -42,22 +42,6 @@ func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body interface
 	return nil
 }
 
-// GetUser is a helper function for getting the authenticated user's ID from the context.
-func GetUser(r *http.Request) *uint {
-	if id, ok := r.Context().Value("USER").(uint); ok {
-		return &id
-	}
-	return nil
-}
-
-// UserFromContext is a helper function to extract the user model from the request context.
-func UserFromContext(r *http.Request) *models.User {
-	if user, ok := r.Context().Value("user").(*models.User); ok {
-		return user
-	}
-	return nil
-}
-
 // GetMuxVar retrieves a variable from the route pattern match and writes an error if it's not found.
 func GetMuxVar(w http.ResponseWriter, r *http.Request, key string) (value string) {
 	vars := mux.Vars(r)
@@ -73,7 +57,7 @@ func GetMuxVar(w http.ResponseWriter, r *http.Request, key string) (value string
 	return value
 }
 
-// RegisterGob registers the UUID type with gob so it can be used in sessions.
+// RegisterGob registers the UUID type with gob, so it can be used in sessions.
 func RegisterGob() {
 	gob.Register(uuid.UUID{})
 	gob.Register(models.User{})

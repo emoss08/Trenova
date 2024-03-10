@@ -106,9 +106,9 @@ export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> 
     requireJournalEntryApproval: Yup.boolean().required(
       "Require Journal Entry Approval must be yes or no",
     ),
-    defaultRevenueAccount: Yup.string().notRequired(),
-    defaultExpenseAccount: Yup.string().notRequired(),
-    enableReconciliationNotifications: Yup.boolean().required(
+    defaultRevenueAccountId: Yup.string().notRequired(),
+    defaultExpenseAccountId: Yup.string().notRequired(),
+    enableRecNotifications: Yup.boolean().required(
       "Enable Reconciliation Notifications must be yes or no",
     ),
     reconciliationNotificationRecipients: Yup.array().of(
@@ -116,14 +116,11 @@ export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> 
         "Reconciliation Notification Recipients is required",
       ),
     ),
-    reconciliationThreshold: Yup.number().required(
-      "Reconciliation Threshold is required",
+    recThreshold: Yup.number().required("Reconciliation Threshold is required"),
+    recThresholdAction: Yup.string<ThresholdActionChoiceType>().required(
+      "Reconciliation Threshold Action is required",
     ),
-    reconciliationThresholdAction:
-      Yup.string<ThresholdActionChoiceType>().required(
-        "Reconciliation Threshold Action is required",
-      ),
-    haltOnPendingReconciliation: Yup.boolean().required(
+    haltOnPendingRec: Yup.boolean().required(
       "Halt on Pending Reconciliation must be yes or no",
     ),
     criticalProcesses: Yup.string().notRequired(),

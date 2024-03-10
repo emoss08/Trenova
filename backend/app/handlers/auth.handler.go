@@ -54,6 +54,7 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 					},
 				},
 			})
+
 			return
 		}
 
@@ -64,17 +65,19 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 				Errors: []models.ValidationErrorDetail{
 					{
 						Code:   "invalid",
-						Detail: "You have enetered an incorrect password. Please try again..",
+						Detail: "You have entered an incorrect password. Please try again..",
 						Attr:   "password",
 					},
 				},
 			})
+
 			return
 		}
 
 		// Create a new session
 		sessionID := utils.GetSystemSessionID()
 		session, err := store.New(r, sessionID)
+
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error creating session")
 			return
@@ -89,6 +92,7 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 		if err := store.Save(r, w, session); err != nil {
 			log.Println(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error saving session")
+
 			return
 		}
 
@@ -101,6 +105,7 @@ func Logout(store *gormstore.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := utils.GetSystemSessionID()
 		session, err := store.Get(r, sessionID)
+
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusUnauthorized, "Not logged in")
 			return
@@ -114,8 +119,6 @@ func Logout(store *gormstore.Store) http.HandlerFunc {
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error updating session")
 			return
 		}
-
-		// No need to call store.Delete as Save takes care of removing the session when MaxAge is -1
 
 		utils.ResponseWithJSON(w, http.StatusOK, "Logged out successfully")
 	}

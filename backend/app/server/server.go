@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -69,12 +70,12 @@ func SetupAndRun(db *gorm.DB) {
 	}
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
 
-	log.Printf("Server is ready to handle requests at http://%s", srv.Addr)
+	log.Printf("Server is ready to handle requests at https://%s", srv.Addr)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

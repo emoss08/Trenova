@@ -58,7 +58,9 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		&models.TableChangeAlert{},
 	}
 
-	migrate(mods...)
+	if err := db.AutoMigrate(mods...); err != nil {
+		return nil, cancel, err
+	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -80,10 +82,4 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 	DB = Dbinstance{Db: db}
 
 	return db, cancel, nil
-}
-
-func migrate(tables ...interface{}) {
-	if err := DB.Db.AutoMigrate(tables...); err != nil {
-		log.Fatal("Failed to run migrations. \n", err)
-	}
 }

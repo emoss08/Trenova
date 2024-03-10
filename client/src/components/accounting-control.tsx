@@ -70,17 +70,14 @@ function AccountingControlForm({
           accountingControl.restrictManualJournalEntries,
         requireJournalEntryApproval:
           accountingControl.requireJournalEntryApproval,
-        defaultRevenueAccount: accountingControl.defaultRevenueAccount,
-        defaultExpenseAccount: accountingControl.defaultExpenseAccount,
-        enableReconciliationNotifications:
-          accountingControl.enableReconciliationNotifications,
+        defaultExpenseAccountId: accountingControl.defaultExpenseAccountId,
+        defaultRevenueAccountId: accountingControl.defaultRevenueAccountId,
+        enableRecNotifications: accountingControl.enableRecNotifications,
         reconciliationNotificationRecipients:
           accountingControl.reconciliationNotificationRecipients,
-        reconciliationThreshold: accountingControl.reconciliationThreshold,
-        reconciliationThresholdAction:
-          accountingControl.reconciliationThresholdAction,
-        haltOnPendingReconciliation:
-          accountingControl.haltOnPendingReconciliation,
+        recThreshold: accountingControl.recThreshold,
+        recThresholdAction: accountingControl.recThresholdAction,
+        haltOnPendingRec: accountingControl.haltOnPendingRec,
         criticalProcesses: accountingControl.criticalProcesses,
       },
     },
@@ -90,7 +87,7 @@ function AccountingControlForm({
     control,
     {
       method: "PUT",
-      path: `/accounting_control/${accountingControl.id}/`,
+      path: "/accounting-control/",
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["accountingControl"],
       errorMessage: t("formErrorMessage"),
@@ -126,7 +123,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="defaultRevenueAccount"
+              name="defaultRevenueAccountId"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}
@@ -142,7 +139,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="defaultExpenseAccount"
+              name="defaultExpenseAccountId"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}
@@ -182,7 +179,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <CheckboxInput
-              name="enableReconciliationNotifications"
+              name="enableRecNotifications"
               control={control}
               label={t("fields.enableReconciliationNotifications.label")}
               description={t(
@@ -213,7 +210,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <InputField
-              name="reconciliationThreshold"
+              name="recThreshold"
               control={control}
               label={t("fields.reconciliationThreshold.label")}
               placeholder={t("fields.reconciliationThreshold.placeholder")}
@@ -222,7 +219,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="reconciliationThresholdAction"
+              name="recThresholdAction"
               control={control}
               options={thresholdActionChoices}
               rules={{ required: true }}
@@ -237,7 +234,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-full">
             <CheckboxInput
-              name="haltOnPendingReconciliation"
+              name="haltOnPendingRec"
               control={control}
               label={t("fields.haltOnPendingReconciliation.label")}
               description={t("fields.haltOnPendingReconciliation.description")}
@@ -276,7 +273,7 @@ function AccountingControlForm({
 }
 
 export default function AccountingControl() {
-  const { accountingControlData, isLoading } = useAccountingControl();
+  const { data, isLoading } = useAccountingControl();
   const { t } = useTranslation(["admin.accountingcontrol"]);
 
   return (
@@ -294,9 +291,7 @@ export default function AccountingControl() {
           <Skeleton className="h-screen w-full" />
         </div>
       ) : (
-        accountingControlData && (
-          <AccountingControlForm accountingControl={accountingControlData} />
-        )
+        data && <AccountingControlForm accountingControl={data} />
       )}
     </div>
   );

@@ -55,7 +55,7 @@ export interface TableChangeAlert extends BaseModel {
 
 export type TableChangeAlertFormValues = Omit<
   TableChangeAlert,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface EmailProfile extends BaseModel {
@@ -72,7 +72,7 @@ export interface EmailProfile extends BaseModel {
 
 export type EmailProfileFormValues = Omit<
   EmailProfile,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export type Department = {
@@ -134,7 +134,7 @@ export type Topic = {
 
 export type GoogleAPIFormValues = Omit<
   GoogleAPI,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 /** Base Trenova Interface
@@ -148,7 +148,7 @@ export type GoogleAPIFormValues = Omit<
  * extends this interface.
  * */
 export type BaseModel = {
-  organization: string;
-  created: string;
-  modified: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
 };

@@ -45,12 +45,12 @@ export interface Tag extends BaseModel {
 
 export type TagFormValues = Omit<
   Tag,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export type DivisionCodeFormValues = Omit<
   DivisionCode,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 /** Types for General Ledger Accounts */
@@ -79,10 +79,10 @@ export interface GeneralLedgerAccount extends BaseModel {
 
 export type GLAccountFormValues = Omit<
   GeneralLedgerAccount,
-  | "organization"
-  | "created"
-  | "modified"
   | "id"
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
   | "dateOpened"
   | "dateClosed"
   | "openingBalance"
@@ -104,32 +104,32 @@ export interface RevenueCode extends BaseModel {
 export type RevenueCodeFormValues = Omit<
   RevenueCode,
   | "id"
-  | "organization"
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
   | "revAccountNum"
   | "expAccountNum"
-  | "created"
-  | "modified"
 >;
 
 /** Types for Accounting Control */
 export interface AccountingControl extends BaseModel {
   id: string;
-  organization: string;
+  organizationId: string;
   autoCreateJournalEntries: boolean;
   journalEntryCriteria: AutomaticJournalEntryChoiceType;
   restrictManualJournalEntries: boolean;
   requireJournalEntryApproval: boolean;
-  defaultRevenueAccount?: string | null;
-  defaultExpenseAccount?: string | null;
-  enableReconciliationNotifications: boolean;
+  defaultRevenueAccountId?: string | null;
+  defaultExpenseAccountId?: string | null;
+  enableRecNotifications: boolean;
   reconciliationNotificationRecipients?: string[] | null;
-  reconciliationThreshold: number;
-  reconciliationThresholdAction: ThresholdActionChoiceType;
-  haltOnPendingReconciliation: boolean;
+  recThreshold: number;
+  recThresholdAction: ThresholdActionChoiceType;
+  haltOnPendingRec: boolean;
   criticalProcesses?: string | null;
 }
 
 export type AccountingControlFormValues = Omit<
   AccountingControl,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;

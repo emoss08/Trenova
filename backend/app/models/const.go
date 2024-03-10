@@ -84,11 +84,11 @@ const (
 	OnExpenseRecognition AutomaticJournalEntryType = "ON_EXPENSE_RECOGNITION"
 )
 
-type ThresholdActiontype string
+type ThresholdActionType string
 
 const (
-	Halt ThresholdActiontype = "HALT"
-	Warn ThresholdActiontype = "WARN"
+	Halt ThresholdActionType = "HALT"
+	Warn ThresholdActionType = "WARN"
 )
 
 type EmailProtocol string

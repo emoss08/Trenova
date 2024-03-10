@@ -8,12 +8,12 @@ import (
 type UserFavorite struct {
 	TimeStampedModel
 	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
+	BusinessUnitID uuid.UUID    `gorm:"type:uuid;not null"       json:"businessUnitId" validate:"required"`
 	Organization   Organization `json:"-" validate:"omitempty"`
-	BusinessUnitID uuid.UUID    `json:"businessUnitId" gorm:"type:uuid;not null" validate:"required"`
 	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
-	UserID         *uuid.UUID   `json:"userID" gorm:"type:uuid;not null;uniqueIndex:idx_user_page_link"`
-	User           *User        `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	PageLink       string       `json:"pageLink" gorm:"type:varchar(255);not null;uniqueIndex:idx_user_page_link" validate:"required,max=255"`
+	UserID         *uuid.UUID   `gorm:"type:uuid;not null;uniqueIndex:idx_user_page_link"               json:"userId"`
+	User           *User        `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"user" `
+	PageLink       string       `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_page_link"       json:"pageLink" validate:"required,max=255"`
 }
 
 func (uf *UserFavorite) FetchUserFavorites(db *gorm.DB, userID, orgID, buID uuid.UUID) ([]UserFavorite, error) {
