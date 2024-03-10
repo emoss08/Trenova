@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"net/http"
-	"trenova-go-backend/app/models"
-	"trenova-go-backend/utils"
+	"trenova/app/middleware"
+	"trenova/app/models"
+	"trenova/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -11,12 +12,12 @@ import (
 
 func GetRevenueCodes(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
 
 		offset, limit, err := utils.PaginationParams(r)
 		if err != nil {
-			utils.ResponseWithError(w, http.StatusBadRequest, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
 				Code:   "invalid",
 				Detail: err.Error(),
 				Attr:   "offset, limit",
@@ -27,7 +28,7 @@ func GetRevenueCodes(db *gorm.DB) http.HandlerFunc {
 		var rc models.RevenueCode
 		revenueCodes, totalRows, err := rc.FetchRevenueCodesForOrg(db, orgID, buID, offset, limit)
 		if err != nil {
-			utils.ResponseWithError(w, http.StatusInternalServerError, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
 				Detail: err.Error(),
 				Attr:   "all",
@@ -52,8 +53,8 @@ func CreateRevenueCode(db *gorm.DB) http.HandlerFunc {
 		var rc models.RevenueCode
 
 		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
 
 		rc.BusinessUnitID = buID
 		rc.OrganizationID = orgID
@@ -77,8 +78,8 @@ func GetRevenueCodeByID(db *gorm.DB) http.HandlerFunc {
 		revenueCodeId := utils.GetMuxVar(w, r, "revenueCodeID")
 
 		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
 
 		if revenueCodeId == "" {
 			return
@@ -89,7 +90,7 @@ func GetRevenueCodeByID(db *gorm.DB) http.HandlerFunc {
 		// Fetch the revenue code details for the organization and business unit
 		revenueCode, err := rc.FetchRevenueCodeDetails(db, orgID, buID, revenueCodeId)
 		if err != nil {
-			utils.ResponseWithError(w, http.StatusNotFound, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusNotFound, models.ValidationErrorDetail{
 				Code:   "notFound",
 				Detail: "Revenue code not found",
 				Attr:   "id",
@@ -104,8 +105,9 @@ func GetRevenueCodeByID(db *gorm.DB) http.HandlerFunc {
 func UpdateRevenueCode(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
 		revenueCodeId := utils.GetMuxVar(w, r, "revenueCodeID")
 		if revenueCodeId == "" {
 			return
@@ -115,7 +117,7 @@ func UpdateRevenueCode(db *gorm.DB) http.HandlerFunc {
 
 		// Let's make sure we're updating the right revenue code, for the right organization and business unit
 		if err := db.Where("id = ? AND organization_id = ? AND business_unit_id = ?", revenueCodeId, orgID, buID).First(&rc).Error; err != nil {
-			utils.ResponseWithError(w, http.StatusNotFound, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusNotFound, models.ValidationErrorDetail{
 				Code:   "notFound",
 				Detail: "Revenue code not found",
 				Attr:   "id",

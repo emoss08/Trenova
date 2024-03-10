@@ -2,21 +2,23 @@ package handlers
 
 import (
 	"net/http"
-	"trenova-go-backend/app/models"
-	"trenova-go-backend/utils"
+	"trenova/app/middleware"
+	"trenova/app/models"
+	"trenova/utils"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/csrf"
 	"gorm.io/gorm"
 )
 
 func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value("userID").(uuid.UUID)
+		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
 
 		var u models.User
 		user, err := u.GetUserByID(db, userID)
 		if err != nil {
-			utils.ResponseWithError(w, http.StatusInternalServerError, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
 				Detail: err.Error(),
 				Attr:   "all",
@@ -45,15 +47,15 @@ func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 
 func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
-		userID := r.Context().Value("userID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
 
 		var uf models.UserFavorite
 
 		userFavorites, err := uf.FetchUserFavorites(db, userID, orgID, buID)
 		if err != nil {
-			utils.ResponseWithError(w, http.StatusInternalServerError, utils.ValidationErrorDetail{
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
 				Detail: err.Error(),
 				Attr:   "all",
@@ -61,6 +63,7 @@ func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
 		utils.ResponseWithJSON(w, http.StatusOK, userFavorites)
 	}
 }
@@ -68,9 +71,9 @@ func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var uf models.UserFavorite
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
-		userID := r.Context().Value("userID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
 
 		uf.OrganizationID = orgID
 		uf.BusinessUnitID = buID
@@ -92,9 +95,9 @@ func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 
 func RemoveUserFavorite(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value("orgID").(uuid.UUID)
-		buID := r.Context().Value("buID").(uuid.UUID)
-		userID := r.Context().Value("userID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
 
 		var uf models.UserFavorite
 		uf.OrganizationID = orgID

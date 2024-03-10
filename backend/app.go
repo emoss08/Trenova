@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"trenova-go-backend/app/server"
-	"trenova-go-backend/config/database"
+	"trenova/app/server"
+	"trenova/config/database"
 
 	"github.com/joho/godotenv"
 )

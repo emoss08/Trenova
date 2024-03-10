@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"trenova-go-backend/app/handlers"
+	"trenova/app/handlers"
 
 	"github.com/gorilla/mux"
 	"github.com/wader/gormstore/v2"

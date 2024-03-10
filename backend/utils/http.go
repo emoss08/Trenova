@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"trenova-go-backend/app/models"
+	"trenova/app/models"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -28,7 +28,7 @@ func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body interface
 	}
 
 	if err := Validate(body); err != nil {
-		var validationErr ValidationErrorResponse
+		var validationErr models.ValidationErrorResponse
 		if jsonErr := json.Unmarshal([]byte(err.Error()), &validationErr); jsonErr == nil {
 			errorBytes, _ := json.Marshal(validationErr)
 			http.Error(w, string(errorBytes), http.StatusBadRequest)
@@ -63,7 +63,7 @@ func GetMuxVar(w http.ResponseWriter, r *http.Request, key string) (value string
 	vars := mux.Vars(r)
 	value, ok := vars[key]
 	if !ok {
-		ResponseWithError(w, http.StatusBadRequest, ValidationErrorDetail{
+		ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
 			Code:   "invalid",
 			Detail: "The required parameter is missing.",
 			Attr:   key,
