@@ -31,6 +31,7 @@ func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 
 	OrganizationRoutes(protectedRouter, db)      // Organization Routes
 	AccountingControlRoutes(protectedRouter, db) // AccountingControl routes
+	BillingControlRoutes(protectedRouter, db)    // BillingControl routes
 	RevenueCodeRoutes(protectedRouter, db)       // RevenueCode routes
 	UserRoutes(protectedRouter, db)              // User routes
 

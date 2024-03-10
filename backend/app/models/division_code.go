@@ -31,15 +31,15 @@ var errApAccountMustBeAp = errors.New("ap account must be an ap account")
 var errRevenueAccountMustBeRevenue = errors.New("revenue account must be a revenue account")
 
 func (dc *DivisionCode) validateDivisionCode() error {
-	if dc.CashAccount.AccountClass != Cash {
+	if dc.CashAccount.AccountClass != AccountClassificationCash {
 		return errCashAccountMustBeCash
 	}
 
-	if dc.ExpenseAccount.AccountType != Exp {
+	if dc.ExpenseAccount.AccountType != AccountTypeExpense {
 		return errExpenseAccountMustBeExpense
 	}
 
-	if dc.ApAccount.AccountClass != Ap {
+	if dc.ApAccount.AccountClass != AccountClassificationAP {
 		return errApAccountMustBeAp
 	}
 
@@ -47,7 +47,7 @@ func (dc *DivisionCode) validateDivisionCode() error {
 }
 
 func (dc *DivisionCode) BeforeCreate(_ *gorm.DB) error {
-	if dc.CashAccount.AccountClass != Cash {
+	if dc.CashAccount.AccountClass != AccountClassificationCash {
 		return errCashAccountMustBeCash
 	}
 

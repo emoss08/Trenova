@@ -10,11 +10,11 @@ const (
 type AcAccountType string
 
 const (
-	Ast AcAccountType = "ASSET"
-	Lib AcAccountType = "LIABILITY"
-	Equ AcAccountType = "EQUITY"
-	Rev AcAccountType = "REVENUE"
-	Exp AcAccountType = "EXPENSE"
+	AccountTypeAsset     AcAccountType = "ASSET"
+	AccountTypeLiability AcAccountType = "LIABILITY"
+	AccountTypeEquity    AcAccountType = "EQUITY"
+	AccountTypeRevenue   AcAccountType = "REVENUE"
+	AccountTypeExpense   AcAccountType = "EXPENSE"
 )
 
 type CashFlowType string
@@ -44,13 +44,13 @@ const (
 type AccountClassification string
 
 const (
-	Bank AccountClassification = "BANK"
-	Cash AccountClassification = "CASH"
-	Ar   AccountClassification = "ACCOUNTS_RECEIVABLE"
-	Ap   AccountClassification = "ACCOUNTS_PAYABLE"
-	Inv  AccountClassification = "INVENTORY"
-	Oca  AccountClassification = "OTHER_CURRENT_ASSET"
-	Fa   AccountClassification = "FIXED_ASSET"
+	AccountClassificationBank AccountClassification = "BANK"
+	AccountClassificationCash AccountClassification = "CASH"
+	AccountClassificationAR   AccountClassification = "ACCOUNTS_RECEIVABLE"
+	AccountClassificationAP   AccountClassification = "ACCOUNTS_PAYABLE"
+	AccountClassificationINV  AccountClassification = "INVENTORY"
+	AccountClassificationOCA  AccountClassification = "OTHER_CURRENT_ASSET"
+	AccountClassificationFA   AccountClassification = "FIXED_ASSET"
 )
 
 type TimezoneType string
@@ -94,7 +94,33 @@ const (
 type EmailProtocol string
 
 const (
-	TLS         EmailProtocol = "TLS"
-	SSL         EmailProtocol = "SSL"
-	Unencrypted EmailProtocol = "UNENCRYPTED"
+	TLS                      EmailProtocol = "TLS"
+	SSL                      EmailProtocol = "SSL"
+	EmailProtocolUnencrypted EmailProtocol = "UNENCRYPTED"
+)
+
+type AutoBillShipmentType string
+
+const (
+	// AutoBillShipmentDelivery is a constant for the AutoBillShipmentType enum. When a shipment is delivered.
+	AutoBillShipmentDelivery AutoBillShipmentType = "D"
+
+	// AutoBillShipmentTransferred is a constant for the AutoBillShipmentType enum. When a shipment is transferred to billing queue.
+	AutoBillShipmentTransferred AutoBillShipmentType = "T"
+
+	// AutoBillingMarkedReady is a constant for the AutoBillShipmentType enum. When a shipment is marked ready to bill.
+	AutoBillingMarkedReady AutoBillShipmentType = "MR"
+)
+
+type ShipmentTransferCriteriaType string
+
+const (
+	// ShipmentTransferCriteriaRAndC  is a constant for the ShipmentTransferCriteriaType enum. When a shipment is ready to bill and confirmed.
+	ShipmentTransferCriteriaRAndC ShipmentTransferCriteriaType = "RC"
+
+	// ShipmentTransferCriteriaCompleted is a constant for the ShipmentTransferCriteriaType enum. When a shipment is completed.
+	ShipmentTransferCriteriaCompleted ShipmentTransferCriteriaType = "C"
+
+	// ShipmentTransferCriteriaReady is a constant for the ShipmentTransferCriteriaType enum. When a shipment is ready to bill.
+	ShipmentTransferCriteriaReady ShipmentTransferCriteriaType = "RTB"
 )

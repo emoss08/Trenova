@@ -209,4 +209,37 @@ IF NOT EXISTS (
     );
 END IF;
 
+-- Billing Control: Auto Bill Shipment Type --
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        pg_type
+    WHERE
+        typname = 'auto_billing_shipment_type'
+) THEN
+    CREATE TYPE auto_billing_shipment_type AS ENUM (
+        'D',
+        'T',
+        'MR'
+        );
+END IF;
+
+
+-- Billing Control: Auto Bill Shipment Type --
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        pg_type
+    WHERE
+        typname = 'shipment_transfer_criteria_type'
+) THEN
+    CREATE TYPE shipment_transfer_criteria_type AS ENUM (
+        'RC',
+        'C',
+        'RTB'
+        );
+END IF;
+
 END $$;

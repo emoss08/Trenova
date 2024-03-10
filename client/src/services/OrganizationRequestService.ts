@@ -45,9 +45,9 @@ export async function getUserOrganizationDetails(): Promise<Organization> {
  * @returns A promise that resolves to an array of billing control.
  * @note This should only return one result.
  */
-export async function getBillingControl(): Promise<BillingControl[]> {
-  const response = await axios.get("/billing_control/");
-  return response.data.results;
+export async function getBillingControl(): Promise<BillingControl> {
+  const response = await axios.get("/billing-control/");
+  return response.data;
 }
 
 /**

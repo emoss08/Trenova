@@ -217,10 +217,7 @@ export function useBillingControl() {
     queryFn: async () => getBillingControl(),
   });
 
-  // Store first element of BillingControlData in variable
-  const billingControlData = (data as BillingControl[])?.[0];
-
-  return { billingControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**

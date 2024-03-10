@@ -22,3 +22,10 @@ func AccountingControlRoutes(r *mux.Router, db *gorm.DB) {
 	acRouter.HandleFunc("/", handlers.GetAccountingControl(db)).Methods("GET")
 	acRouter.HandleFunc("/", handlers.UpdateAccountingControl(db)).Methods("PUT")
 }
+
+func BillingControlRoutes(r *mux.Router, db *gorm.DB) {
+	bcRouter := r.PathPrefix("/billing-control").Subrouter()
+
+	bcRouter.HandleFunc("/", handlers.GetBillingControl(db)).Methods("GET")
+	bcRouter.HandleFunc("/", handlers.UpdateBillingControl(db)).Methods("PUT")
+}
