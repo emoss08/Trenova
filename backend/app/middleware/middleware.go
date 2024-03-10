@@ -153,24 +153,3 @@ func validateToken(db *gorm.DB, tokenStr string) (*models.User, error) {
 
 	return &token.User, nil
 }
-
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow all origins
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		// Setup allowed methods
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-
-		// Setup allowed headers
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-		// Check if it's a preflight request and handle it
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}

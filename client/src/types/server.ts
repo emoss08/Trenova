@@ -32,7 +32,7 @@ export type APIError = {
 
 export type API_ENDPOINTS =
   | "/shipment_types/"
-  | "/favorites/"
+  | "/user/me/favorites/"
   | "/order_types/"
   | "/users/"
   | "/job_titles/"
@@ -114,7 +114,7 @@ export type API_ENDPOINTS =
   | "/schema/redoc/"
   | "/auth/login"
   | "/auth/logout"
-  | "/user/me"
+  | "/user/me/"
   | "/system_health/"
   | "/bill_invoice/"
   | "/active_triggers/"

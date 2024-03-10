@@ -10,19 +10,23 @@ import (
 )
 
 type User struct {
-	BaseModel
-	Status        StatusType   `json:"status" gorm:"type:status_type;not null;default:'A'" validate:"omitempty,len=1,oneof=A I"`
-	Name          string       `json:"name" gorm:"type:varchar(255);not null;" validate:"required,max=255"`
-	Username      string       `json:"username" gorm:"type:varchar(30);not null;" validate:"required,max=30"`
-	Password      string       `json:"password" gorm:"type:varchar(100);not null;" validate:"required,max=100"`
-	Email         string       `json:"email" gorm:"type:varchar(255);not null;" validate:"required,max=255"`
-	DateJoined    string       `json:"dateJoined" gorm:"type:date;not null;" validate:"omitempty"`
-	Timezone      TimezoneType `json:"timezone" gorm:"type:timezone_type;not null;default:'America/Los_Angeles'" validate:"omitempty,oneof=America/Los_Angeles America/Denver"`
-	ProfilePicURL *string      `json:"profilePicUrl" gorm:"type:varchar(255);" validate:"omitempty,url"`
-	ThumbnailURL  *string      `json:"thumbnailUrl" gorm:"type:varchar(255);" validate:"omitempty,url"`
-	PhoneNumber   *string      `json:"phoneNumber" gorm:"type:varchar(20);" validate:"omitempty,max=20,phoneNum"`
-	IsAdmin       bool         `json:"isAdmin" gorm:"type:boolean;not null;default:false" validate:"omitempty"`
-	IsSuperAdmin  bool         `json:"isSuperAdmin" gorm:"type:boolean;not null;default:false" validate:"omitempty"`
+	TimeStampedModel
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
+	Organization   Organization `json:"-" validate:"omitempty"`
+	BusinessUnitID uuid.UUID    `json:"businessUnitId" gorm:"type:uuid;not null" validate:"required"`
+	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
+	Status         StatusType   `json:"status" gorm:"type:status_type;not null;default:'A'" validate:"omitempty,len=1,oneof=A I"`
+	Name           string       `json:"name" gorm:"type:varchar(255);not null;" validate:"required,max=255"`
+	Username       string       `json:"username" gorm:"type:varchar(30);not null;" validate:"required,max=30"`
+	Password       string       `json:"password" gorm:"type:varchar(100);not null;" validate:"required,max=100"`
+	Email          string       `json:"email" gorm:"type:varchar(255);not null;" validate:"required,max=255"`
+	DateJoined     string       `json:"dateJoined" gorm:"type:date;not null;" validate:"omitempty"`
+	Timezone       TimezoneType `json:"timezone" gorm:"type:timezone_type;not null;default:'America/Los_Angeles'" validate:"omitempty,oneof=America/Los_Angeles America/Denver"`
+	ProfilePicURL  *string      `json:"profilePicUrl" gorm:"type:varchar(255);" validate:"omitempty,url"`
+	ThumbnailURL   *string      `json:"thumbnailUrl" gorm:"type:varchar(255);" validate:"omitempty,url"`
+	PhoneNumber    *string      `json:"phoneNumber" gorm:"type:varchar(20);" validate:"omitempty,max=20,phoneNum"`
+	IsAdmin        bool         `json:"isAdmin" gorm:"type:boolean;not null;default:false" validate:"omitempty"`
+	IsSuperAdmin   bool         `json:"isSuperAdmin" gorm:"type:boolean;not null;default:false" validate:"omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -59,14 +63,32 @@ func (u *User) GetUserByID(db *gorm.DB, userID uuid.UUID) (User, error) {
 }
 
 type UserFavorite struct {
-	BaseModel
-	UserID   *uuid.UUID `json:"userID" gorm:"type:uuid;not null;"`
-	User     *User      `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	PageLink string     `json:"pageLink" gorm:"type:varchar(255);not null;" validate:"required,max=255"`
+	TimeStampedModel
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
+	Organization   Organization `json:"-" validate:"omitempty"`
+	BusinessUnitID uuid.UUID    `json:"businessUnitId" gorm:"type:uuid;not null" validate:"required"`
+	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
+	UserID         *uuid.UUID   `json:"userID" gorm:"type:uuid;not null;uniqueIndex:idx_user_page_link"`
+	User           *User        `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	PageLink       string       `json:"pageLink" gorm:"type:varchar(255);not null;uniqueIndex:idx_user_page_link" validate:"required,max=255"`
+}
+
+func (uf *UserFavorite) FetchUserFavorites(db *gorm.DB, userID, orgID, buID uuid.UUID) ([]UserFavorite, error) {
+	var userFavorites []UserFavorite
+	if err := db.Model(&UserFavorite{}).Where("user_id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).Find(&userFavorites).Error; err != nil {
+		return userFavorites, err
+	}
+
+	return userFavorites, nil
 }
 
 type JobTitle struct {
-	BaseModel
+	TimeStampedModel
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
+	Organization   Organization `json:"-" validate:"omitempty"`
+	BusinessUnitID uuid.UUID    `json:"businessUnitId" gorm:"type:uuid;not null" validate:"required"`
+	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
+
 	Status      StatusType      `json:"status" gorm:"type:status_type;not null;default:'A'" validate:"required,len=1,oneof=A I"`
 	Name        string          `json:"name" gorm:"type:varchar(100);not null;" validate:"required,max=100"`
 	Description *string         `json:"description" gorm:"type:varchar(100);" validate:"required,max=100"`
@@ -74,7 +96,12 @@ type JobTitle struct {
 }
 
 type Token struct {
-	BaseModel
+	TimeStampedModel
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
+	Organization   Organization `json:"-" validate:"omitempty"`
+	BusinessUnitID uuid.UUID    `json:"businessUnitId" gorm:"type:uuid;not null" validate:"required"`
+	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
+
 	User     User       `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	UserID   *uuid.UUID `json:"userID" gorm:"type:uuid;not null;" validate:"required"`
 	LastUsed time.Time  `json:"lastUsed" gorm:"type:timestamp;not null;" validate:"required"`

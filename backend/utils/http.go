@@ -87,35 +87,24 @@ func GetSystemSessionID() string {
 
 	return key
 }
-func GetUserIDFromSession(r *http.Request, store *gormstore.Store) (uuid.UUID, bool) {
-	sessionID := GetSystemSessionID()
-	session, err := store.Get(r, sessionID)
-	if err != nil {
-		return uuid.Nil, false
-	}
 
-	userID, ok := session.Values["userID"].(uuid.UUID)
-	return userID, ok
-}
-
-func GetUserOrgFromSession(r *http.Request, store *gormstore.Store) (uuid.UUID, bool) {
+// GetSessionDetails retrieves user ID, organization ID, and business unit ID from the session.
+func GetSessionDetails(r *http.Request, store *gormstore.Store) (userID uuid.UUID, orgID uuid.UUID, buID uuid.UUID, ok bool) {
 	if store == nil {
 		log.Println("Session store is not initialized")
-		return uuid.Nil, false
+		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}
 
 	sessionID := GetSystemSessionID()
 	session, err := store.Get(r, sessionID)
 	if err != nil {
 		log.Printf("Error retrieving session: %v", err)
-		return uuid.Nil, false
+		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}
 
-	orgID, ok := session.Values["organizationID"].(uuid.UUID)
-	if !ok {
-		log.Println("organizationID not found in session")
-		return uuid.Nil, false
-	}
+	userID, userOk := session.Values["userID"].(uuid.UUID)
+	orgID, orgOk := session.Values["organizationID"].(uuid.UUID)
+	buID, buOk := session.Values["businessUnitID"].(uuid.UUID)
 
-	return orgID, true
+	return userID, orgID, buID, userOk && orgOk && buOk
 }

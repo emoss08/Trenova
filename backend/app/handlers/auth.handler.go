@@ -142,6 +142,7 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 		// Set some session values
 		session.Values["userID"] = user.ID
 		session.Values["organizationID"] = user.OrganizationID
+		session.Values["businessUnitID"] = user.BusinessUnitID
 
 		// Save it before we write to the response/return from the handler
 		if err := store.Save(r, w, session); err != nil {

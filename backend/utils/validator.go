@@ -3,14 +3,33 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	enTranslations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/nyaruka/phonenumbers"
 )
 
 var validate = validator.New()
+var english = en.New()
+var uni = ut.New(english, english)
+var trans, _ = uni.GetTranslator("en")
+
+func init() {
+	_ = enTranslations.RegisterDefaultTranslations(validate, trans)
+
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+}
 
 type ValidationErrorDetail struct {
 	Code   string `json:"code"`
@@ -23,31 +42,27 @@ type ValidationErrorResponse struct {
 	Errors []ValidationErrorDetail `json:"errors"`
 }
 
-// Validate validates the input struct. Instead of returning a *fiber.Error,
-// it returns an error interface or nil if the validation passes.
+// Validate validates the input struct and returns an error interface or nil if the validation passes.
 func Validate(payload interface{}) error {
 	err := validate.Struct(payload)
-
 	if err != nil {
 		var errors []ValidationErrorDetail
-		for _, err := range err.(validator.ValidationErrors) {
+		for _, ve := range err.(validator.ValidationErrors) {
+			fieldName := ve.Field()
 			errors = append(errors, ValidationErrorDetail{
 				Code:   "invalid",
-				Detail: fmt.Sprintf("This field may not be %s.", err.Tag()),
-				Attr:   err.Field(),
+				Detail: ve.Translate(trans),
+				Attr:   fieldName,
 			})
 		}
 		errorResponse := ValidationErrorResponse{
-
 			Type:   "validationError",
 			Errors: errors,
 		}
 
-		// Instead of returning a fiber error, return a standard error
 		errMsg, _ := json.Marshal(errorResponse)
 		return fmt.Errorf(string(errMsg))
 	}
-
 	return nil
 }
 

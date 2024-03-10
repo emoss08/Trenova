@@ -4,12 +4,12 @@ import (
 	"trenova-go-backend/app/handlers"
 
 	"github.com/gorilla/mux"
-	"github.com/wader/gormstore/v2"
 	"gorm.io/gorm"
 )
 
-func OrganizationRoutes(r *mux.Router, db *gorm.DB, store *gormstore.Store) {
+func OrganizationRoutes(r *mux.Router, db *gorm.DB) {
 	or := r.PathPrefix("/organization").Subrouter()
 
-	or.HandleFunc("/me/", handlers.GetOrganization(db, store)).Methods("GET", "OPTIONS")
+	or.HandleFunc("/me/", handlers.GetOrganization(db)).Methods("GET")
+	or.HandleFunc("/", handlers.UpdateOrganization(db)).Methods("PUT")
 }

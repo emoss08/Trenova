@@ -131,7 +131,7 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/revenue_codes/",
+      path: "/revenue-codes/",
       successMessage: "Revenue Code created successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
       additionalInvalidateQueries: ["revenueCodes"],

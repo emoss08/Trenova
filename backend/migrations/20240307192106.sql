@@ -47,6 +47,7 @@ CREATE TABLE
     "org_type" "public"."org_type" NOT NULL,
     "dot_number" character varying(12) NOT NULL,
     "logo_url" character varying(255) NULL,
+    "timezone" "public"."timezone_type" NOT NULL DEFAULT 'America/Los_Angeles',
     "business_unit_id" uuid NOT NULL,
     PRIMARY KEY ("id"),
     CONSTRAINT "fk_organizations_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "public"."business_units" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION

@@ -20,9 +20,9 @@ import { StatusChoiceProps } from "@/types/index";
 
 export type UserFavorite = {
   id: string;
-  user: string;
+  userID: string;
   created: string;
-  page: string;
+  pageLink: string;
 };
 
 /**
