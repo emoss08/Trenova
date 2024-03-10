@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"net/http"
-	"trenova-go-backend/app/models"
-	"trenova-go-backend/utils"
+	"trenova/app/middleware"
+	"trenova/app/models"
+	"trenova/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -13,7 +14,8 @@ import (
 func GetOrganization(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value("orgID").(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
 		// buID := r.Context().Value("buID").(uuid.UUID)
 
 		var org models.Organization
@@ -29,11 +31,11 @@ func GetOrganization(db *gorm.DB) http.HandlerFunc {
 
 func UpdateOrganization(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		buId := r.Context().Value("buID").(uuid.UUID)
-		orgId := r.Context().Value("orgID").(uuid.UUID)
+		buId := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 
 		var org models.Organization
-		if err := db.Where("id = ? AND business_unit_id = ?", orgId, buId).First(&org).Error; err != nil {
+		if err := db.Where("id = ? AND business_unit_id = ?", orgID, buId).First(&org).Error; err != nil {
 			errorResponse := utils.FormatDatabaseError(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 			return

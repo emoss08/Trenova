@@ -21,3 +21,6 @@
 go.work
 .env
 tmp
+
+# Package folder
+pkg

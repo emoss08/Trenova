@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"trenova-go-backend/app/routes"
-	"trenova-go-backend/utils"
+	"trenova/app/routes"
+	"trenova/utils"
 
 	"github.com/rs/cors"
 	"github.com/wader/gormstore/v2"
@@ -29,6 +29,10 @@ func SetupAndRun(db *gorm.DB) {
 
 	// Initialize session store
 	store = gormstore.New(db, []byte(os.Getenv("SESSION_KEY")))
+	quit := make(chan struct{})
+
+	// Periodic cleanup of expired sessions
+	go store.PeriodicCleanup(1*time.Hour, quit)
 
 	if store == nil {
 		log.Fatal("Session store could not be initialized")
@@ -53,7 +57,6 @@ func SetupAndRun(db *gorm.DB) {
 		},
 		AllowedHeaders:   []string{"*"}, // Allowing all headers
 		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}).Handler(mux)
 
 	// Server Configuration

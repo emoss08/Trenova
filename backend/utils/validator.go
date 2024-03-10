@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"trenova/app/models"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-playground/locales/en"
@@ -31,31 +32,20 @@ func init() {
 	})
 }
 
-type ValidationErrorDetail struct {
-	Code   string `json:"code"`
-	Detail string `json:"detail"`
-	Attr   string `json:"attr"`
-}
-
-type ValidationErrorResponse struct {
-	Type   string                  `json:"type"`
-	Errors []ValidationErrorDetail `json:"errors"`
-}
-
 // Validate validates the input struct and returns an error interface or nil if the validation passes.
 func Validate(payload interface{}) error {
 	err := validate.Struct(payload)
 	if err != nil {
-		var errors []ValidationErrorDetail
+		var errors []models.ValidationErrorDetail
 		for _, ve := range err.(validator.ValidationErrors) {
 			fieldName := ve.Field()
-			errors = append(errors, ValidationErrorDetail{
+			errors = append(errors, models.ValidationErrorDetail{
 				Code:   "invalid",
 				Detail: ve.Translate(trans),
 				Attr:   fieldName,
 			})
 		}
-		errorResponse := ValidationErrorResponse{
+		errorResponse := models.ValidationErrorResponse{
 			Type:   "validationError",
 			Errors: errors,
 		}
@@ -67,10 +57,10 @@ func Validate(payload interface{}) error {
 }
 
 // FormatDatabaseError formats a database error into a ValidationErrorResponse
-func FormatDatabaseError(err error) ValidationErrorResponse {
-	return ValidationErrorResponse{
+func FormatDatabaseError(err error) models.ValidationErrorResponse {
+	return models.ValidationErrorResponse{
 		Type: "databaseError",
-		Errors: []ValidationErrorDetail{
+		Errors: []models.ValidationErrorDetail{
 			{
 				Code:   "invalid",
 				Detail: err.Error(),

@@ -15,10 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { getCookie } from "@/lib/auth";
 import { API_URL } from "@/lib/constants";
-import axios from "axios";
 import { generateIdempotencyKey } from "@/lib/utils";
+import axios from "axios";
 
 /**
  * Axios request interceptor.
@@ -30,11 +29,9 @@ axios.interceptors.request.use(
     req.baseURL = API_URL;
     req.withCredentials = true;
 
-    // Set CSRF Token
-    const csrfToken = getCookie("csrftoken");
-
+    const csrfToken = "";
     if (csrfToken) {
-      req.headers["X-CSRFToken"] = csrfToken;
+      req.headers["X-CSRF-Token"] = csrfToken;
       req.headers["X-Idempotency-Key"] = generateIdempotencyKey();
     }
 

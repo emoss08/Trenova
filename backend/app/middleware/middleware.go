@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"trenova-go-backend/app/models"
+	"trenova/app/models"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
