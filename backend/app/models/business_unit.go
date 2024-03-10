@@ -14,8 +14,8 @@ import (
 type BusinessUnit struct {
 	ID               uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid();"`
 	Status           StatusType `json:"status" gorm:"type:status_type;not null;default:'A'" validate:"required,len=1,oneof=A I"`
-	Name             string     `json:"name" gorm:"type:varchar(255);not null;unique" validate:"required,max=255"`
-	EntityKey        string     `json:"entityKey" gorm:"type:varchar(10);not null;unique" validate:"omitempty,len=10"`
+	Name             string     `json:"name" gorm:"type:varchar(255);not null;uniqueIndex:idx_business_unit_name,expression:lower(name)" validate:"required,max=255"`
+	EntityKey        string     `json:"entityKey" gorm:"type:varchar(10);not null;uniqueIndex:idx_entity_key,expression:lower(entity_key)" validate:"omitempty,len=10"`
 	ContactName      *string    `json:"contactName" gorm:"type:varchar(255)" validate:"omitempty,max=255"`
 	ContactEmail     *string    `json:"contactEmail" gorm:"type:string;" validate:"omitempty"`
 	PaidUntil        *time.Time `json:"-" validate:"omitempty"`
@@ -25,7 +25,7 @@ type BusinessUnit struct {
 	State            string     `json:"state" gorm:"type:varchar(2)" validate:"len=2"`
 	Country          string     `json:"country" gorm:"type:varchar(2)" validate:"len=2"`
 	PostalCode       string     `json:"postalCode" gorm:"type:varchar(10)" validate:"omitempty,len=10"`
-	ParentID         *uuid.UUID `json:"parentId" gorm:"type:uuid;" validate:"omitempty"`
+	ParentID         *uuid.UUID `json:"parentId" gorm:"type:uuid;index" validate:"omitempty"`
 	Parent           *BusinessUnit
 	Settings         *datatypes.JSON `json:"settings" validate:"omitempty"`
 	TaxID            string          `json:"taxId" gorm:"type:varchar(20)" validate:"omitempty,len=20"`

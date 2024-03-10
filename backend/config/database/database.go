@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"time"
+	"trenova-go-backend/app/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -39,6 +40,23 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 	if err != nil {
 		return nil, cancel, err
 	}
+
+	// Migrating Database
+	db.AutoMigrate(
+		&models.BusinessUnit{},
+		&models.Organization{},
+		&models.EmailProfile{},
+		&models.AccountingControl{},
+		&models.Token{},
+		&models.User{},
+		&models.UserFavorite{},
+		&models.JobTitle{},
+		&models.Tag{},
+		&models.GeneralLedgerAccount{},
+		&models.DivisionCode{},
+		&models.RevenueCode{},
+		&models.TableChangeAlert{},
+	)
 
 	sqlDB, err := db.DB()
 	if err != nil {

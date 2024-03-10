@@ -11,16 +11,16 @@ import (
 func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	r := mux.NewRouter()
 
-	r.Use(middleware.AdvancedLoggingMiddleware) // Logging middleware
-
-	// Register routes
 	apiRouter := r.PathPrefix("/api").Subrouter()
 
-	// Register sub-routes
-	AuthRoutes(apiRouter, db, store)         // Auth routes
-	RevenueCodeRoutes(apiRouter, db, store)  // RevenueCode routes
-	OrganizationRoutes(apiRouter, db, store) // Organization routes
-	UserRoutes(apiRouter, db, store)         // User routes
+	AuthRoutes(apiRouter, db, store)
+
+	protectedRouter := apiRouter.NewRoute().Subrouter()
+	protectedRouter.Use(middleware.SessionMiddleware(store))
+
+	OrganizationRoutes(protectedRouter, db)
+	RevenueCodeRoutes(protectedRouter, db) // RevenueCode routes
+	UserRoutes(protectedRouter, db)        // User routes
 
 	// Log all available routes
 	// r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

@@ -28,21 +28,10 @@ export type Organization = {
   id: string;
   name: string;
   scacCode: string;
-  dotNumber?: number | null;
-  addressLine1: string;
-  addressLine2?: string | null;
-  city: string;
-  state: string;
-  zipCode: string;
-  phoneNumber?: string | null;
-  website?: string | null;
+  dotNumber: string;
   orgType: string;
   timezone: string;
-  language: string;
-  currency: string;
-  dateFormat: string;
-  timeFormat: string;
-  logo?: string | null;
+  logoUrl?: string | null;
 };
 
 export type OrganizationFormValues = Omit<Organization, "id">;

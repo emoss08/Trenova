@@ -21,24 +21,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useUSStates } from "@/hooks/useQueries";
+import { timezoneChoices } from "@/lib/choices";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
 import { Organization, OrganizationFormValues } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { timezoneChoices } from "@/lib/choices";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.generalpage", "common"]);
 
-  const {
-    selectUSStates,
-    isLoading: isStatesLoading,
-    isError: isStateError,
-  } = useUSStates();
+  // const {
+  //   selectUSStates,
+  //   isLoading: isStatesLoading,
+  //   isError: isStateError,
+  // } = useUSStates();
 
   const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     resolver: yupResolver(organizationSchema),
@@ -47,17 +46,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
       orgType: organization.orgType,
       scacCode: organization.scacCode,
       dotNumber: organization?.dotNumber || undefined,
-      addressLine1: organization.addressLine1,
-      addressLine2: organization.addressLine2,
-      city: organization.city,
-      state: organization.state,
-      zipCode: organization.zipCode,
-      phoneNumber: organization.phoneNumber,
-      website: organization.website,
-      language: organization.language,
-      currency: organization.currency,
-      dateFormat: organization.dateFormat,
-      timeFormat: organization.timeFormat,
       timezone: organization.timezone,
     },
   });
@@ -66,7 +54,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     control,
     {
       method: "PUT",
-      path: `/organizations/${organization.id}/`,
+      path: "/organization/",
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["userOrganization"],
       errorMessage: t("formErrorMessage"),
@@ -84,32 +72,32 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-foreground text-2xl font-semibold">
             {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">{t("subTitle")}</p>
+          <p className="text-muted-foreground text-sm">{t("subTitle")}</p>
         </div>
         <Separator />
       </div>
       <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
         <div className="px-4 sm:px-0">
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             {t("organizationDetails")}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
             <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="col-span-full flex items-center gap-x-8">
                 <Avatar className="size-24 flex-none rounded-lg">
-                  <AvatarImage src={organization.logo || ""} />
+                  <AvatarImage src={organization.logoUrl || ""} />
                   <AvatarFallback className="size-24 flex-none rounded-lg">
                     {organization.scacCode}
                   </AvatarFallback>
@@ -124,7 +112,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   >
                     {t("fields.logo.placeholder")}
                   </Button>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  <p className="text-muted-foreground mt-2 text-xs leading-5">
                     {t("fields.logo.description")}
                   </p>
                 </div>
@@ -144,9 +132,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   name="orgType"
                   control={control}
                   options={[
-                    { label: "Asset", value: "ASSET" },
-                    { label: "Brokerage", value: "BROKERAGE" },
-                    { label: "Both", value: "BOTH" },
+                    { label: "Asset", value: "A" },
+                    { label: "Brokerage", value: "B" },
+                    { label: "Both", value: "X" },
                   ]}
                   rules={{ required: true }}
                   label={t("fields.orgType.label")}
@@ -176,127 +164,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 />
               </div>
 
-              <div className="col-span-full">
-                <InputField
-                  control={control}
-                  name="addressLine1"
-                  label={t("fields.addressLine1.label")}
-                  rules={{ required: true }}
-                  placeholder={t("fields.addressLine1.placeholder")}
-                  description={t("fields.addressLine1.description")}
-                />
-              </div>
-
-              <div className="col-span-full">
-                <InputField
-                  control={control}
-                  name="addressLine2"
-                  label={t("fields.addressLine2.label")}
-                  placeholder={t("fields.addressLine2.placeholder")}
-                  description={t("fields.addressLine2.description")}
-                />
-              </div>
-
-              <div className="sm:col-span-2 sm:col-start-1">
-                <InputField
-                  control={control}
-                  name="city"
-                  rules={{ required: true }}
-                  label={t("fields.city.label")}
-                  placeholder={t("fields.city.placeholder")}
-                  description={t("fields.city.description")}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <SelectInput
-                  name="state"
-                  control={control}
-                  options={selectUSStates}
-                  isLoading={isStatesLoading}
-                  isFetchError={isStateError}
-                  rules={{ required: true }}
-                  label={t("fields.state.label")}
-                  placeholder={t("fields.state.placeholder")}
-                  description={t("fields.state.description")}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <InputField
-                  control={control}
-                  name="zipCode"
-                  rules={{ required: true }}
-                  label={t("fields.zipCode.label")}
-                  placeholder={t("fields.zipCode.placeholder")}
-                  description={t("fields.zipCode.description")}
-                />
-              </div>
-              <div className="sm:col-span-full">
-                <InputField
-                  control={control}
-                  name="phoneNumber"
-                  label={t("fields.phoneNumber.label")}
-                  placeholder={t("fields.phoneNumber.placeholder")}
-                  description={t("fields.phoneNumber.description")}
-                />
-              </div>
-              <div className="sm:col-span-full">
-                <InputField
-                  control={control}
-                  name="website"
-                  label={t("fields.website.label")}
-                  placeholder={t("fields.website.placeholder")}
-                  description={t("fields.website.description")}
-                />
-              </div>
-              <div className="sm:col-span-3">
-                <SelectInput
-                  name="language"
-                  control={control}
-                  options={[
-                    { label: "English", value: "en" },
-                    { label: "Spanish", value: "es" },
-                  ]}
-                  rules={{ required: true }}
-                  label={t("fields.language.label")}
-                  placeholder={t("fields.language.placeholder")}
-                  description={t("fields.language.description")}
-                />
-              </div>
-              <div className="sm:col-span-3">
-                <InputField
-                  control={control}
-                  name="currency"
-                  rules={{ required: true }}
-                  readOnly
-                  label={t("fields.currency.label")}
-                  placeholder={t("fields.currency.placeholder")}
-                  description={t("fields.currency.description")}
-                />
-              </div>
-              <div className="sm:col-span-3">
-                <InputField
-                  control={control}
-                  name="dateFormat"
-                  rules={{ required: true }}
-                  readOnly
-                  label={t("fields.dateFormat.label")}
-                  placeholder={t("fields.dateFormat.placeholder")}
-                  description={t("fields.dateFormat.description")}
-                />
-              </div>
-              <div className="col-span-3">
-                <InputField
-                  control={control}
-                  name="timeFormat"
-                  rules={{ required: true }}
-                  readOnly
-                  label={t("fields.timeFormat.label")}
-                  placeholder={t("fields.timeFormat.placeholder")}
-                  description={t("fields.timeFormat.description")}
-                />
-              </div>
               <div className="col-span-3">
                 <SelectInput
                   name="timezone"
@@ -310,7 +177,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
+          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();
@@ -336,9 +203,5 @@ export default function GeneralPage({
 }: {
   organization: Organization;
 }) {
-  return (
-    <>
-      <OrganizationForm organization={organization} />
-    </>
-  );
+  return <OrganizationForm organization={organization} />;
 }

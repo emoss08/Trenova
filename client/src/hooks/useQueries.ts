@@ -76,7 +76,7 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import type { QueryKeyWithParams, QueryKeys } from "@/types";
 import type {
   AccountingControl,
   GeneralLedgerAccount,
@@ -472,7 +472,7 @@ export function useUsers(show?: boolean) {
   const selectUsersData =
     (data as User[])?.map((user: User) => ({
       value: user.id,
-      label: user.fullName || user.username, // if fullName is null, use username
+      label: user.name || user.username, // if fullName is null, use username
     })) || [];
 
   return { selectUsersData, isError, isLoading };
