@@ -17,12 +17,14 @@ func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 
 		var u models.User
 		user, err := u.GetUserByID(db, userID)
+
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
 				Detail: err.Error(),
 				Attr:   "all",
 			})
+
 			return
 		}
 
@@ -45,6 +47,7 @@ func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
+// GetUserFavorites returns a list of user favorites.
 func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
@@ -60,6 +63,7 @@ func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 				Detail: err.Error(),
 				Attr:   "all",
 			})
+
 			return
 		}
 
@@ -71,6 +75,7 @@ func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var uf models.UserFavorite
+
 		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
 		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
@@ -86,6 +91,7 @@ func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 		if err := db.Create(&uf).Error; err != nil {
 			errorResponse := utils.FormatDatabaseError(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
+
 			return
 		}
 
@@ -113,6 +119,7 @@ func RemoveUserFavorite(db *gorm.DB) http.HandlerFunc {
 		if err := db.Where("organization_id = ? AND business_unit_id = ? AND user_id = ? AND page_link = ?", orgID, buID, userID, uf.PageLink).Delete(&uf).Error; err != nil {
 			errorResponse := utils.FormatDatabaseError(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
+
 			return
 		}
 

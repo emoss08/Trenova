@@ -205,9 +205,7 @@ export function useAccountingControl() {
     queryFn: async () => getAccountingControl(),
   });
 
-  const accountingControlData = (data as AccountingControl[])?.[0];
-
-  return { accountingControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**

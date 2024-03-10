@@ -28,9 +28,11 @@ func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	protectedRouter := apiRouter.NewRoute().Subrouter()
 	protectedRouter.Use(middleware.SessionMiddleware(store))
 	protectedRouter.Use(logger.Middleware)
-	OrganizationRoutes(protectedRouter, db)
-	RevenueCodeRoutes(protectedRouter, db) // RevenueCode routes
-	UserRoutes(protectedRouter, db)        // User routes
+
+	OrganizationRoutes(protectedRouter, db)      // Organization Routes
+	AccountingControlRoutes(protectedRouter, db) // AccountingControl routes
+	RevenueCodeRoutes(protectedRouter, db)       // RevenueCode routes
+	UserRoutes(protectedRouter, db)              // User routes
 
 	// Log all available routes
 	// r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

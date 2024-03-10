@@ -79,7 +79,7 @@ export async function getTags(): Promise<Tag[]> {
  * @returns A promise that resolves to an array of accounting control.
  * @note This should only return one result.
  */
-export async function getAccountingControl(): Promise<AccountingControl[]> {
-  const response = await axios.get("/accounting_control/");
-  return response.data.results;
+export async function getAccountingControl(): Promise<AccountingControl> {
+  const response = await axios.get("/accounting-control/");
+  return response.data;
 }

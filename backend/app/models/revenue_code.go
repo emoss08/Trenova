@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -10,25 +9,25 @@ import (
 
 type RevenueCode struct {
 	TimeStampedModel
-	OrganizationID   uuid.UUID            `json:"organizationId" gorm:"type:uuid;not null;uniqueIndex:idx_rev_code_organization_id" validate:"required"`
+	OrganizationID   uuid.UUID            `gorm:"type:uuid;not null;uniqueIndex:idx_rev_code_organization_id" json:"organizationId" validate:"required"`
+	BusinessUnitID   uuid.UUID            `gorm:"type:uuid;not null;index"                                    json:"businessUnitId" validate:"required"`
 	Organization     Organization         `json:"-" validate:"omitempty"`
-	BusinessUnitID   uuid.UUID            `json:"businessUnitId" gorm:"type:uuid;not null;index" validate:"required"`
 	BusinessUnit     BusinessUnit         `json:"-" validate:"omitempty"`
-	Code             string               `json:"code" gorm:"type:varchar(4);not null;uniqueIndex:idx_division_code_organization_id_code,expression:lower(code)" validate:"required,max=4"`
-	Description      string               `json:"description" gorm:"type:varchar(100);not null;" validate:"required,max=100"`
-	ExpenseAccount   GeneralLedgerAccount `json:"-" gorm:"foreignKey:ExpenseAccountID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" validate:"omitempty"`
-	ExpenseAccountID *uuid.UUID           `json:"expenseAccountId" gorm:"type:uuid;index"`
-	RevenueAccount   GeneralLedgerAccount `json:"-" gorm:"foreignKey:RevenueAccountID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" validate:"omitempty"`
-	RevenueAccountID *uuid.UUID           `json:"revenueAccountId" gorm:"type:uuid;index"`
+	Code             string               `gorm:"type:varchar(4);not null;uniqueIndex:idx_division_code_organization_id_code,expression:lower(code)" json:"code"        validate:"required,max=4"`
+	Description      string               `gorm:"type:varchar(100);not null;"                                                                        json:"description" validate:"required,max=100"`
+	ExpenseAccountID *uuid.UUID           `gorm:"type:uuid;index"                                                                                    json:"expenseAccountId"`
+	RevenueAccountID *uuid.UUID           `gorm:"type:uuid;index"                                                                                    json:"revenueAccountId"`
+	ExpenseAccount   GeneralLedgerAccount `gorm:"foreignKey:ExpenseAccountID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"                          json:"-" validate:"omitempty"`
+	RevenueAccount   GeneralLedgerAccount `gorm:"foreignKey:RevenueAccountID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"                          json:"-" validate:"omitempty"`
 }
 
 func (rc *RevenueCode) validateRevenueCode() error {
 	if rc.ExpenseAccountID != nil && rc.ExpenseAccount.AccountType != Exp {
-		return errors.New("expense account must be an expense account")
+		return errExpenseAccountMustBeExpense
 	}
 
-	if rc.ExpenseAccountID != nil && rc.RevenueAccount.AccountType != Rev {
-		return errors.New("revenue account must be a revenue account")
+	if rc.RevenueAccountID != nil && rc.RevenueAccount.AccountType != Rev {
+		return errRevenueAccountMustBeRevenue
 	}
 
 	return nil
@@ -36,6 +35,7 @@ func (rc *RevenueCode) validateRevenueCode() error {
 
 func (rc *RevenueCode) FetchRevenueCodesForOrg(db *gorm.DB, orgID, buID uuid.UUID, offset, limit int) ([]RevenueCode, int64, error) {
 	var revenueCodes []RevenueCode
+
 	var totalRows int64
 
 	if err := db.Model(&RevenueCode{}).Where("organization_id = ? AND business_unit_id = ?", orgID, buID).Count(&totalRows).Error; err != nil {
@@ -59,7 +59,7 @@ func (rc *RevenueCode) FetchRevenueCodeDetails(db *gorm.DB, orgID, buID uuid.UUI
 	return revenueCode, nil
 }
 
-func (rc *RevenueCode) BeforeCreate(tx *gorm.DB) error {
+func (rc *RevenueCode) BeforeCreate(_ *gorm.DB) error {
 	if rc.Code != "" {
 		rc.Code = strings.ToUpper(rc.Code)
 	}

@@ -12,8 +12,8 @@ import (
 type SourceType string
 
 const (
-	Kafka SourceType = "KAFKA"
-	Db    SourceType = "DB"
+	Kafka    SourceType = "KAFKA"
+	DataBase SourceType = "DB"
 )
 
 type DatabaseActionType string
@@ -27,55 +27,69 @@ const (
 
 type TableChangeAlert struct {
 	TimeStampedModel
-	OrganizationID   uuid.UUID          `gorm:"type:uuid;not null;" json:"organizationId"`
+	OrganizationID   uuid.UUID          `gorm:"type:uuid;not null;"                 json:"organizationId"   validate:"required"`
 	Organization     Organization       `json:"-"`
-	BusinessUnitID   uuid.UUID          `gorm:"type:uuid;not null" json:"businessUnitId"`
+	BusinessUnitID   uuid.UUID          `gorm:"type:uuid;not null"                  json:"businessUnitId"   validate:"required"`
 	BusinessUnit     BusinessUnit       `json:"-"`
-	Status           StatusType         `json:"status" gorm:"type:status_type;not null;default:'A'" validate:"required,len=1,oneof=A I"`
-	Name             string             `json:"name" gorm:"type:varchar(50);not null;" validate:"required,max=50"`
-	DatabaseAction   DatabaseActionType `json:"databaseAction" gorm:"type:database_action_type;not null" validate:"required,max=6,oneof=INSERT UPDATE DELETE"`
-	Source           SourceType         `json:"source" gorm:"type:table_change_type;not null" validate:"required,max=6,oneof=KAFKA DB"`
-	TableName        *string            `json:"tableName" gorm:"type:varchar(255);" validate:"required,max=255"`
-	Topic            *string            `json:"topic" gorm:"type:varchar(255)" validate:"omitempty,max=255"`
-	Description      *string            `json:"description" gorm:"type:text" validate:"omitempty"`
-	EmailProfile     EmailProfile       `json:"-" gorm:"foreignKey:EmailProfileID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	EmailProfileID   *uuid.UUID         `json:"emailProfileId" gorm:"type:uuid"`
-	EmailRecipients  *string            `json:"emailRecipients" gorm:"type:text" validate:"omitempty,commaSeparatedEmails"`
-	ConditionalLogic *datatypes.JSON    `json:"conditionalLogic" gorm:"type:json" validate:"omitempty"`
-	CustomSubject    *string            `json:"customSubject" gorm:"type:varchar(255)" validate:"omitempty,max=255"`
-	FunctionName     *string            `json:"functionName" gorm:"type:varchar(50)" validate:"omitempty,max=50"`
-	TriggerName      *string            `json:"triggerName" gorm:"type:varchar(50)" validate:"omitempty,max=50"`
-	ListenerName     *string            `json:"listenerName" gorm:"type:varchar(50)" validate:"omitempty,max=50"`
-	EffectiveDate    *time.Time         `json:"effectiveDate" gorm:"type:date" validate:"omitempty"`
-	ExpirationDate   *time.Time         `json:"expirationDate" gorm:"type:date" validate:"omitempty"`
+	Status           StatusType         `gorm:"type:status_type;not null;default:'A'" json:"status"         validate:"required,len=1,oneof=A I"`
+	Name             string             `gorm:"type:varchar(50);not null;"         json:"name"              validate:"required,max=50"`
+	DatabaseAction   DatabaseActionType `gorm:"type:database_action_type;not null" json:"databaseAction"    validate:"required,max=6,oneof=INSERT UPDATE DELETE"`
+	Source           SourceType         `gorm:"type:table_change_type;not null"    json:"source"            validate:"required,max=6,oneof=KAFKA DB"`
+	TableName        *string            `gorm:"type:varchar(255);"                 json:"tableName"         validate:"required,max=255"`
+	Topic            *string            `gorm:"type:varchar(255)"                  json:"topic"             validate:"omitempty,max=255"`
+	Description      *string            `gorm:"type:text"                          json:"description"       validate:"omitempty"`
+	EmailProfile     EmailProfile       `gorm:"foreignKey:EmailProfileID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
+	EmailProfileID   *uuid.UUID         `gorm:"type:uuid"                          json:"emailProfileId"    validate:"omitempty"`
+	EmailRecipients  *string            `gorm:"type:text"                          json:"emailRecipients"   validate:"omitempty,commaSeparatedEmails"`
+	ConditionalLogic *datatypes.JSON    `gorm:"type:json"                          json:"conditionalLogic"  validate:"omitempty"`
+	CustomSubject    *string            `gorm:"type:varchar(255)"                  json:"customSubject"     validate:"omitempty,max=255"`
+	FunctionName     *string            `gorm:"type:varchar(50)"                   json:"functionName"      validate:"omitempty,max=50"`
+	TriggerName      *string            `gorm:"type:varchar(50)"                   json:"triggerName"       validate:"omitempty,max=50"`
+	ListenerName     *string            `gorm:"type:varchar(50)"                   json:"listenerName"      validate:"omitempty,max=50"`
+	EffectiveDate    *time.Time         `gorm:"type:date"                          json:"effectiveDate"     validate:"omitempty"`
+	ExpirationDate   *time.Time         `gorm:"type:date"                          json:"expirationDate"    validate:"omitempty"`
 }
+
+var errTopicRequiredKafka = errors.New("topic is required when the source is KAFKA")
+
+var errTableNameRequiredDb = errors.New("table name is required when the source is DB")
+
+var errDeleteActionOnlyForDB = errors.New("DELETE action is only valid for DB source")
+
+var errEffectiveDateBeforeExpirationDate = errors.New("effective date must be before expiration date")
 
 func (tbc *TableChangeAlert) validateTableChangeAlert() error {
 	if tbc.Source == Kafka && tbc.Topic == nil {
-		return errors.New("topic is required when the source is KAFKA")
+		return errTopicRequiredKafka
 	}
-	if tbc.Source == Db && tbc.TableName == nil {
-		return errors.New("tableName is required when the source is DB")
+
+	if tbc.Source == DataBase && tbc.TableName == nil {
+		return errTableNameRequiredDb
 	}
-	if tbc.DatabaseAction == Delete && tbc.Source != Db {
-		return errors.New("DELETE action is only valid for DB source")
+
+	if tbc.DatabaseAction == Delete && tbc.Source != DataBase {
+		return errDeleteActionOnlyForDB
 	}
+
 	if tbc.EffectiveDate != nil && tbc.ExpirationDate != nil && tbc.EffectiveDate.After(*tbc.ExpirationDate) {
-		return errors.New("effective date must be before expiration date")
+		return errEffectiveDateBeforeExpirationDate
 	}
+
 	if tbc.Source == Kafka {
 		tbc.TableName = nil
 	}
-	if tbc.Source == Db {
+
+	if tbc.Source == DataBase {
 		tbc.Topic = nil
 	}
+
 	return nil
 }
 
-func (tbc *TableChangeAlert) BeforeCreate(tx *gorm.DB) error {
+func (tbc *TableChangeAlert) BeforeCreate(_ *gorm.DB) error {
 	return tbc.validateTableChangeAlert()
 }
 
-func (tbc *TableChangeAlert) BeforeUpdate(tx *gorm.DB) error {
+func (tbc *TableChangeAlert) BeforeUpdate(_ *gorm.DB) error {
 	return tbc.validateTableChangeAlert()
 }

@@ -44,7 +44,12 @@ func (lfs *LocalFileStorage) StoreFile(file multipart.File, orgID uuid.UUID, fil
 	if err != nil {
 		return "", err
 	}
-	defer dst.Close()
+	defer func(dst *os.File) {
+		err := dst.Close()
+		if err != nil {
+			fmt.Println("Error closing file:", err)
+		}
+	}(dst)
 
 	// Copy the contents of the uploaded file to the new file
 	if _, err := io.Copy(dst, file); err != nil {

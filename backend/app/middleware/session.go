@@ -27,6 +27,7 @@ func SessionMiddleware(store *gormstore.Store) func(http.Handler) http.Handler {
 					Detail: "Unauthorized",
 					Attr:   "session",
 				})
+
 				return
 			}
 

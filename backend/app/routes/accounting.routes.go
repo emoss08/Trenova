@@ -15,3 +15,10 @@ func RevenueCodeRoutes(r *mux.Router, db *gorm.DB) {
 	revCodeRouter.HandleFunc("/{revenueCodeID}/", handlers.GetRevenueCodeByID(db)).Methods("GET")
 	revCodeRouter.HandleFunc("/{revenueCodeID}/", handlers.UpdateRevenueCode(db)).Methods("PUT")
 }
+
+func AccountingControlRoutes(r *mux.Router, db *gorm.DB) {
+	acRouter := r.PathPrefix("/accounting-control").Subrouter()
+
+	acRouter.HandleFunc("/", handlers.GetAccountingControl(db)).Methods("GET")
+	acRouter.HandleFunc("/", handlers.UpdateAccountingControl(db)).Methods("PUT")
+}
