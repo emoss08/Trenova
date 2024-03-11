@@ -106,8 +106,6 @@ export function RevenueCodeTableEditDialog({
 
   if (!revenueCode) return null;
 
-  console.info("revenueCode", revenueCode);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>

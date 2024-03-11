@@ -76,9 +76,8 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import type { QueryKeyWithParams, QueryKeys } from "@/types";
+import type { QueryKeys, QueryKeyWithParams } from "@/types";
 import type {
-  AccountingControl,
   GeneralLedgerAccount,
   RevenueCode,
   Tag,
@@ -86,25 +85,17 @@ import type {
 import type { User } from "@/types/accounts";
 import type {
   AccessorialCharge,
-  BillingControl,
   DocumentClassification,
 } from "@/types/billing";
 import type { Commodity, HazardousMaterial } from "@/types/commodities";
 import type { Customer } from "@/types/customer";
-import type {
-  CommentType,
-  DispatchControl,
-  FeasibilityToolControl,
-  FleetCode,
-  Rate,
-} from "@/types/dispatch";
+import type { CommentType, FleetCode, Rate } from "@/types/dispatch";
 import type {
   EquipmentClass,
   EquipmentManufacturer,
   EquipmentType,
   Trailer,
 } from "@/types/equipment";
-import type { InvoiceControl } from "@/types/invoicing";
 import type { Location, LocationCategory, USStates } from "@/types/location";
 import type {
   Depot,
@@ -113,11 +104,9 @@ import type {
   TableName,
   Topic,
 } from "@/types/organization";
-import type { RouteControl } from "@/types/route";
 import type {
   FormulaTemplate,
   ServiceType,
-  ShipmentControl,
   ShipmentType,
 } from "@/types/shipment";
 import type { Worker } from "@/types/worker";
@@ -229,10 +218,7 @@ export function useInvoiceControl() {
     queryFn: async () => getInvoiceControl(),
   });
 
-  // Store first element of invoiceControlData in variable
-  const invoiceControlData = (data as InvoiceControl[])?.[0];
-
-  return { invoiceControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**
@@ -244,10 +230,7 @@ export function useDispatchControl() {
     queryFn: () => getDispatchControl(),
   });
 
-  // Store first element of dispatchControlData in variable
-  const dispatchControlData = (data as DispatchControl[])?.[0];
-
-  return { dispatchControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**
@@ -259,10 +242,7 @@ export function useShipmentControl() {
     queryFn: async () => getShipmentControl(),
   });
 
-  // Store first element of shipmentControlData in variable
-  const shipmentControlData = (data as ShipmentControl[])?.[0];
-
-  return { shipmentControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**
@@ -274,10 +254,7 @@ export function useRouteControl() {
     queryFn: async () => getRouteControl(),
   });
 
-  // Store first element of dispatchControlData in variable
-  const routeControlData = (data as RouteControl[])?.[0];
-
-  return { routeControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**
@@ -378,9 +355,7 @@ export function useFeasibilityControl() {
     queryFn: async () => getFeasibilityControl(),
   });
 
-  const feasibilityControlData = (data as FeasibilityToolControl[])?.[0];
-
-  return { feasibilityControlData, isLoading, isError, isFetched, isFetching };
+  return { data, isLoading, isError, isFetched, isFetching };
 }
 
 /**

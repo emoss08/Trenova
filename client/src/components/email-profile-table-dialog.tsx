@@ -163,7 +163,7 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/email_profiles/",
+      path: "/email-profiles/",
       successMessage: t("formMessages.postSuccess"),
       queryKeysToInvalidate: ["email-profile-table-data"],
       closeModal: true,

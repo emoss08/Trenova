@@ -19,13 +19,13 @@ import { DateFormatChoiceProps } from "@/lib/choices";
 
 export type InvoiceControl = {
   id: string;
-  organization: string;
+  organizationId: string;
   invoiceNumberPrefix: string;
   creditMemoNumberPrefix: string;
   invoiceDueAfterDays: number;
-  invoiceTerms?: string | null;
-  invoiceFooter?: string | null;
-  invoiceLogo?: any | null;
+  invoiceTerms?: string;
+  invoiceFooter?: string;
+  invoiceLogoUrl?: any;
   invoiceLogoWidth: number;
   showInvoiceDueDate: boolean;
   invoiceDateFormat: DateFormatChoiceProps;
@@ -34,5 +34,5 @@ export type InvoiceControl = {
 };
 export type InvoiceControlFormValues = Omit<
   InvoiceControl,
-  "id" | "organization"
+  "id" | "organizationId"
 >;

@@ -55,7 +55,7 @@ export async function getUserReports(): Promise<UserReportResponse> {
  * @returns A promise that resolves to the user's notifications.
  */
 export async function getUserNotifications(): Promise<UserNotification> {
-  const response = await axios.get("/user/notifications/?max=10", {
+  const response = await axios.get("/users/notifications/?max=10", {
     params: {
       max: 10,
     },

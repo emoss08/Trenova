@@ -38,15 +38,14 @@ func main() {
 		log.Fatal("Failed to run types migration. \n", err)
 	}
 
-	//if err := db.Create(&models.BillingControl{
-	//	BusinessUnitID: uuid.MustParse("2aa25333-7032-4295-9d83-9882e6631fe7"),
+	//if err := db.Create(&models.FeasibilityToolControl{
 	//	OrganizationID: uuid.MustParse("f1d60024-7d0d-49e9-84a5-f8add9373fd7"),
+	//	BusinessUnitID: uuid.MustParse("2aa25333-7032-4295-9d83-9882e6631fe7"),
 	//}).Error; err != nil {
-	//	log.Fatalf("Failed to create accounting control record: %v", err)
+	//	log.Fatalf("Failed to create feasibility control record: %v", err)
 	//}
 
 	defer cancel()
 	// Setup server
 	server.SetupAndRun(db)
-
 }

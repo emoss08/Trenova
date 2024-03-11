@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type BillingControl struct {
@@ -18,11 +19,11 @@ type BillingControl struct {
 	ShipmentTransferCriteria ShipmentTransferCriteriaType `gorm:"type:shipment_transfer_criteria_type;default:'RC'" json:"shipmentTransferCriteria" validate:"omitempty,oneof=RC C RTB"`
 }
 
-func (bc *BillingControl) BeforeCreate() error {
+func (bc *BillingControl) BeforeCreate(_ *gorm.DB) error {
 	return bc.validateBillingControl()
 }
 
-func (bc *BillingControl) BeforeUpdate() error {
+func (bc *BillingControl) BeforeUpdate(_ *gorm.DB) error {
 	return bc.validateBillingControl()
 }
 

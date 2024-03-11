@@ -62,7 +62,7 @@ function EmailProfileEditForm({
     control,
     {
       method: "PUT",
-      path: `/email_profiles/${emailProfile.id}/`,
+      path: `/email-profiles/${emailProfile.id}/`,
       successMessage: "Email Profile updated successfully.",
       queryKeysToInvalidate: ["email-profile-table-data"],
       closeModal: true,
@@ -96,7 +96,7 @@ export function EmailProfileTableEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [emailProfile] = useTableStore.use("currentRecord");
+  const [emailProfile] = useTableStore.use("currentRecord") as EmailProfile[];
 
   if (!emailProfile) {
     return null;
@@ -110,7 +110,7 @@ export function EmailProfileTableEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {emailProfile && formatDate(emailProfile.modified)}
+          {emailProfile && formatDate(emailProfile.createdAt)}
         </DialogDescription>
         {emailProfile && <EmailProfileEditForm emailProfile={emailProfile} />}
       </DialogContent>

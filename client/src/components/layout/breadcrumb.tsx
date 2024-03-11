@@ -58,8 +58,7 @@ async function manageFavorite(
   pageId: string,
   queryClient: QueryClient,
 ): Promise<AxiosResponse> {
-  const endpoint =
-    action === "add" ? "/user/me/favorites/" : "/user/me/favorites/";
+  const endpoint = action === "add" ? "/me/favorites/" : "/me/favorites/";
   const method = action === "add" ? "post" : "delete";
   const data = { pageLink: pageId };
 
@@ -223,9 +222,6 @@ export function Breadcrumb() {
     );
   }
 
-  console.info("Is Favorite: ", isFavorite);
-  console.info("Favorite Links: ", userFavorites);
-
   if (!currentRoute) {
     return null;
   }
@@ -243,7 +239,7 @@ export function Breadcrumb() {
           />
         </h2>
         <div className="flex items-center">
-          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
+          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
             {breadcrumbText}
           </a>
         </div>

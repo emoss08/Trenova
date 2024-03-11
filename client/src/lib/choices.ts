@@ -134,34 +134,29 @@ export const DayOfWeekChoices = [
   { value: 6, label: "Sunday" },
 ] satisfies IChoiceProps<number>[];
 
-export type ServiceIncidentControlChoiceProps =
-  | "Never"
-  | "Pickup"
-  | "Delivery"
-  | "Pickup and Delivery"
-  | "All except shipper";
+export type ServiceIncidentControlChoiceProps = "N" | "P" | "D" | "PD" | "AEP";
 
 export const serviceIncidentControlChoices = [
-  { value: "Never", label: "Never" },
-  { value: "Pickup", label: "Pickup" },
-  { value: "Delivery", label: "Delivery" },
-  { value: "Pickup and Delivery", label: "Pickup and Delivery" },
-  { value: "All except shipper", label: "All except shipper" },
+  { value: "N", label: "Never" },
+  { value: "P", label: "Pickup" },
+  { value: "D", label: "Delivery" },
+  { value: "PD", label: "Pickup and Delivery" },
+  { value: "AEP", label: "All except shipper" },
 ] satisfies ReadonlyArray<IChoiceProps<ServiceIncidentControlChoiceProps>>;
 
 /** Type for Date Format Choices */
 export type DateFormatChoiceProps =
-  | "%m/%d/%Y"
-  | "%d/%m/%Y"
-  | "%Y/%d/%m"
-  | "%Y/%m/%d"
+  | "01/02/2006"
+  | "02/01/2006"
+  | "2006/02/01"
+  | "2006/01/02"
   | "";
 
 export const dateFormatChoices = [
-  { value: "%m/%d/%Y", label: "MM/DD/YYYY" },
-  { value: "%d/%m/%Y", label: "DD/MM/YYYY" },
-  { value: "%Y/%d/%m", label: "YYYY/DD/MM" },
-  { value: "%Y/%m/%d", label: "YYYY/MM/DD" },
+  { value: "01/02/2006", label: "01/02/2006" },
+  { value: "02/01/2006", label: "02/01/2006" },
+  { value: "2006/02/01", label: "2006/02/01" },
+  { value: "2006/01/02", label: "2006/01/02" },
 ] satisfies ReadonlyArray<IChoiceProps<DateFormatChoiceProps>>;
 
 /** Type for Route Avoidance Choices */
@@ -209,20 +204,20 @@ export const emailProtocolChoices = [
 
 /** Type for Feasibility Operator Choices */
 export type FeasibilityOperatorChoiceProps =
-  | "eq"
-  | "ne"
-  | "gt"
-  | "gte"
-  | "lt"
-  | "lte";
+  | "EQ"
+  | "NE"
+  | "GT"
+  | "GTE"
+  | "LT"
+  | "LTE";
 
 export const feasibilityOperatorChoices = [
-  { value: "eq", label: "Equals" },
-  { value: "ne", label: "Not Equals" },
-  { value: "gt", label: "Greater Than" },
-  { value: "gte", label: "Greater Than or Equal To" },
-  { value: "lt", label: "Less Than" },
-  { value: "lte", label: "Less Than or Equal To" },
+  { value: "EQ", label: "Equals" },
+  { value: "NE", label: "Not Equals" },
+  { value: "GT", label: "Greater Than" },
+  { value: "GTE", label: "Greater Than or Equal To" },
+  { value: "LT", label: "Less Than" },
+  { value: "LTE", label: "Less Than or Equal To" },
 ] satisfies ReadonlyArray<IChoiceProps<FeasibilityOperatorChoiceProps>>;
 
 /** Type for Equipment Class Choices */

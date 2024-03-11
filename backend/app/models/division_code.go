@@ -24,11 +24,12 @@ type DivisionCode struct {
 	ExpenseAccount   *GeneralLedgerAccount
 }
 
-var errCashAccountMustBeCash = errors.New("cash account must be a cash account")
-var errExpenseAccountMustBeExpense = errors.New("expense account must be an expense account")
-var errApAccountMustBeAp = errors.New("ap account must be an ap account")
-
-var errRevenueAccountMustBeRevenue = errors.New("revenue account must be a revenue account")
+var (
+	errCashAccountMustBeCash       = errors.New("cash account must be a cash account")
+	errExpenseAccountMustBeExpense = errors.New("expense account must be an expense account")
+	errRevenueAccountMustBeRevenue = errors.New("revenue account must be a revenue account")
+	errApAccountMustBeAp           = errors.New("ap account must be an ap account")
+)
 
 func (dc *DivisionCode) validateDivisionCode() error {
 	if dc.CashAccount.AccountClass != AccountClassificationCash {

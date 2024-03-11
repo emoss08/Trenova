@@ -29,3 +29,10 @@ func BillingControlRoutes(r *mux.Router, db *gorm.DB) {
 	bcRouter.HandleFunc("/", handlers.GetBillingControl(db)).Methods("GET")
 	bcRouter.HandleFunc("/", handlers.UpdateBillingControl(db)).Methods("PUT")
 }
+
+func InvoiceControlRoutes(r *mux.Router, db *gorm.DB) {
+	icRouter := r.PathPrefix("/invoice-control").Subrouter()
+
+	icRouter.HandleFunc("/", handlers.GetInvoiceControl(db)).Methods("GET")
+	icRouter.HandleFunc("/", handlers.UpdateInvoiceControl(db)).Methods("PUT")
+}

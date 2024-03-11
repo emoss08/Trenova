@@ -7,12 +7,12 @@ import (
 
 type UserFavorite struct {
 	TimeStampedModel
-	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
-	BusinessUnitID uuid.UUID    `gorm:"type:uuid;not null"       json:"businessUnitId" validate:"required"`
 	Organization   Organization `json:"-" validate:"omitempty"`
 	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
-	UserID         *uuid.UUID   `gorm:"type:uuid;not null;uniqueIndex:idx_user_page_link"               json:"userId"`
-	User           *User        `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"user" `
+	User           User         `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-" `
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index"                                        json:"organizationId" validate:"required"`
+	BusinessUnitID uuid.UUID    `gorm:"type:uuid;not null"                                              json:"businessUnitId" validate:"required"`
+	UserID         uuid.UUID    `gorm:"type:uuid;not null;uniqueIndex:idx_user_page_link"               json:"userId"`
 	PageLink       string       `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_page_link"       json:"pageLink" validate:"required,max=255"`
 }
 

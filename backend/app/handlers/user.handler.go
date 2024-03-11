@@ -11,6 +11,47 @@ import (
 	"gorm.io/gorm"
 )
 
+func UpdateUser(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		userID := utils.GetMuxVar(w, r, "userID")
+		if userID == "" {
+			// Error is already handled in GetMuxVar
+			return
+		}
+
+		var u models.User
+
+		// Let's make sure we're updating the right user, for the right organization and business unit
+		if err := db.Where("id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).First(&u).Error; err != nil {
+			utils.ResponseWithError(w, http.StatusNotFound, models.ValidationErrorDetail{
+				Code:   "notFound",
+				Detail: "User not found",
+				Attr:   "id",
+			})
+
+			return
+		}
+
+		if err := utils.ParseBodyAndValidate(w, r, &u); err != nil {
+
+			return
+
+		}
+
+		if err := db.Save(&u).Error; err != nil {
+			errorResponse := utils.FormatDatabaseError(err)
+			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
+
+			return
+		}
+
+		utils.ResponseWithJSON(w, http.StatusOK, u)
+	}
+}
+
 func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
@@ -82,7 +123,7 @@ func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 
 		uf.OrganizationID = orgID
 		uf.BusinessUnitID = buID
-		uf.UserID = &userID
+		uf.UserID = userID
 
 		if err := utils.ParseBodyAndValidate(w, r, &uf); err != nil {
 			return
@@ -108,7 +149,7 @@ func RemoveUserFavorite(db *gorm.DB) http.HandlerFunc {
 		var uf models.UserFavorite
 		uf.OrganizationID = orgID
 		uf.BusinessUnitID = buID
-		uf.UserID = &userID
+		uf.UserID = userID
 
 		// Get the pageLink from the body
 		if err := utils.ParseBodyAndValidate(w, r, &uf); err != nil {

@@ -37,6 +37,12 @@ type BusinessUnit struct {
 	UpdatedAt        time.Time       `json:"updatedAt"`
 }
 
+var (
+	errBusUnitNameEmpty = errors.New("the name of the business unit cannot be empty")
+	errGenEntityKey     = errors.New("unable to generate a unique entity key after 1000 attempts")
+	errInvalidStatus    = errors.New("status must be either 'A' or 'I'")
+)
+
 func (b *BusinessUnit) BeforeCreate(tx *gorm.DB) error {
 	if err := b.generateEntityKey(tx); err != nil {
 		return err
@@ -49,8 +55,6 @@ func (b *BusinessUnit) BeforeUpdate(_ *gorm.DB) error {
 	return b.validateBusinessUnit()
 }
 
-var errInvalidStatus = errors.New("status must be either 'A' or 'I'")
-
 func (b *BusinessUnit) validateBusinessUnit() error {
 	if b.Status != Active && b.Status != Inactive {
 		return errInvalidStatus
@@ -58,9 +62,6 @@ func (b *BusinessUnit) validateBusinessUnit() error {
 
 	return nil
 }
-
-var errGenEntityKey = errors.New("unable to generate a unique entity key after 1000 attempts")
-var errBusUnitNameEmpty = errors.New("the name of the business unit cannot be empty")
 
 func (b *BusinessUnit) generateEntityKey(tx *gorm.DB) error {
 	if b.EntityKey != "" {
