@@ -11,9 +11,10 @@ import (
 
 type User struct {
 	TimeStampedModel
-	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`
-	BusinessUnitID uuid.UUID    `gorm:"type:uuid;not null"       json:"businessUnitId" validate:"required"`
 	BusinessUnit   BusinessUnit `json:"-" validate:"omitempty"`
+	Organization   Organization `json:"-" validate:"omitempty"`
+	OrganizationID uuid.UUID    `gorm:"type:uuid;not null;index"                                  json:"organizationId" validate:"required"`
+	BusinessUnitID uuid.UUID    `gorm:"type:uuid;not null"                                        json:"businessUnitId" validate:"required"`
 	Status         StatusType   `gorm:"type:status_type;not null;default:'A'"                     json:"status"        validate:"omitempty,len=1,oneof=A I"`
 	Name           string       `gorm:"type:varchar(255);not null;"                               json:"name"          validate:"required,max=255"`
 	Username       string       `gorm:"type:varchar(30);not null;"                                json:"username"      validate:"required,max=30"`

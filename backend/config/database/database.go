@@ -35,7 +35,7 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{
 		NowFunc: func() time.Time { return time.Now().Local() },
-		Logger:  logger.Default.LogMode(logger.Info),
+		Logger:  logger.Default.LogMode(logger.Silent),
 	})
 
 	if err != nil {
@@ -49,8 +49,14 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		&models.EmailProfile{},
 		&models.AccountingControl{},
 		&models.BillingControl{},
+		&models.DispatchControl{},
+		&models.InvoiceControl{},
+		&models.ShipmentControl{},
+		&models.FeasibilityToolControl{},
+		&models.RouteControl{},
 		&models.Token{},
 		&models.User{},
+		&models.UserNotifications{},
 		&models.UserFavorite{},
 		&models.JobTitle{},
 		&models.Tag{},
@@ -81,6 +87,7 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 	}
 
 	log.Println("Connected to the database")
+
 	DB = Dbinstance{Db: db}
 
 	return db, cancel, nil

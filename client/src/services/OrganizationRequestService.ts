@@ -55,9 +55,9 @@ export async function getBillingControl(): Promise<BillingControl> {
  * @returns A promise that resolves to an array of dispatch control.
  * @note This should only return one result.
  */
-export async function getDispatchControl(): Promise<DispatchControl[]> {
-  const response = await axios.get("/dispatch_control/");
-  return response.data.results;
+export async function getDispatchControl(): Promise<DispatchControl> {
+  const response = await axios.get("/dispatch-control/");
+  return response.data;
 }
 
 /**
@@ -65,9 +65,9 @@ export async function getDispatchControl(): Promise<DispatchControl[]> {
  * @returns A promise that resolves to an array of invoice control.
  * @note This should only return one result.
  */
-export async function getInvoiceControl(): Promise<InvoiceControl[]> {
-  const response = await axios.get("/invoice_control/");
-  return response.data.results;
+export async function getInvoiceControl(): Promise<InvoiceControl> {
+  const response = await axios.get("/invoice-control/");
+  return response.data;
 }
 
 /**
@@ -75,11 +75,9 @@ export async function getInvoiceControl(): Promise<InvoiceControl[]> {
  * @returns A promise that resolves to an array of order control.
  * @note This should only return one result.
  */
-export async function getShipmentControl(): Promise<
-  ReadonlyArray<ShipmentControl>
-> {
-  const response = await axios.get("/shipment_control/");
-  return response.data.results;
+export async function getShipmentControl(): Promise<ShipmentControl> {
+  const response = await axios.get("/shipment-control/");
+  return response.data;
 }
 
 /**
@@ -107,9 +105,9 @@ export async function getEmailControl(): Promise<EmailControl[]> {
  * @returns A promise that resolves to an array of route control.
  * @note This should only return one result.
  */
-export async function getRouteControl(): Promise<RouteControl[]> {
-  const response = await axios.get("/route_control/");
-  return response.data.results;
+export async function getRouteControl(): Promise<RouteControl> {
+  const response = await axios.get("/route-control/");
+  return response.data;
 }
 
 /**

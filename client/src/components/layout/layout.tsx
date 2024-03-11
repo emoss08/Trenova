@@ -41,18 +41,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const hideHeader = queryParams.get("hideHeader") === "true";
   useQueryInvalidationListener();
 
-  console.info("user", user);
-
   return (
-    <div className="bg-background relative flex min-h-screen flex-col" id="app">
+    <div className="relative flex min-h-screen flex-col bg-background" id="app">
       <Toaster position="bottom-right" />
       {!hideHeader && (
-        <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <Logo />
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               <AsideMenuSheet />
               <TeamSwitcher />
             </div>
@@ -60,7 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
               {/* <NotificationMenu /> */}
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>

@@ -28,20 +28,17 @@ import { InputField } from "../common/fields/input";
 import { SelectInput } from "../common/fields/select-input";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import { InternalLink } from "@/components/ui/link";
 
 function PersonalInformation({ user }: { user: User }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const avatarSrc = user.profile?.thumbnail
-    ? user.profile.thumbnail
-    : `https://avatar.vercel.sh/${user.email}`;
+  const avatarSrc =
+    user.thumbnailUrl || `https://avatar.vercel.sh/${user.email}`;
 
   type UserSettingFormValues = {
     email: string;
     timezone: TimezoneChoices;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
+    name: string;
   };
 
   const schema: yup.ObjectSchema<UserSettingFormValues> = yup.object().shape({
@@ -52,10 +49,7 @@ function PersonalInformation({ user }: { user: User }) {
     timezone: yup
       .string<TimezoneChoices>()
       .required("Please select your timezone"),
-    profile: yup.object().shape({
-      firstName: yup.string().required("Please enter your first name"),
-      lastName: yup.string().required("Please enter your last name"),
-    }),
+    name: yup.string().required("Please enter your last name"),
   });
 
   const { handleSubmit, control, reset } = useForm<UserSettingFormValues>({
@@ -63,10 +57,7 @@ function PersonalInformation({ user }: { user: User }) {
     defaultValues: {
       email: user.email,
       timezone: user.timezone,
-      profile: {
-        firstName: user.profile?.firstName || "",
-        lastName: user.profile?.lastName || "",
-      },
+      name: user.name,
     },
   });
 
@@ -96,26 +87,23 @@ function PersonalInformation({ user }: { user: User }) {
     <>
       <div className="space-y-3">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-foreground">
             Manage Your User Profile
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Update your personal information here. Rest assured, your privacy is
             our priority. For more details, read our{" "}
-            <a href="#" className="hover:text-foreground underline">
-              Privacy Policy
-            </a>
-            .
+            <InternalLink to="#">Privacy Policy</InternalLink>.
           </p>
         </div>
         <Separator />
       </div>
       <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3">
         <div>
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             Personal Information
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Provide accurate personal details to ensure seamless communication
             and service delivery.
           </p>
@@ -127,37 +115,26 @@ function PersonalInformation({ user }: { user: User }) {
               <img
                 src={avatarSrc}
                 alt="User Avatar"
-                className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
+                className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
               />
               <div>
                 <Button size="sm" type="button">
                   Change Avatar
                 </Button>
-                <p className="text-muted-foreground mt-2 text-xs leading-5">
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   JPG, GIF or PNG. 1MB max.
                 </p>
               </div>
             </div>
 
-            <div className="sm:col-span-3">
+            <div className="sm:col-span-full">
               <InputField
                 control={control}
-                name="profile.firstName"
-                label="First Name"
+                name="name"
+                label="Full Name"
                 rules={{ required: true }}
                 placeholder="First Name"
                 description="Your first name as it should appear in your profile and communications."
-              />
-            </div>
-
-            <div className="sm:col-span-3">
-              <InputField
-                control={control}
-                name="profile.lastName"
-                label="Last Name"
-                rules={{ required: true }}
-                placeholder="Last Name"
-                description="Your last name as it should appear in your profile and communications."
               />
             </div>
 
@@ -228,16 +205,15 @@ function ChangePasswordForm() {
 
   const onSubmit = (values: ChangePasswordFormValues) => {
     setIsSubmitting(true);
-    console.info(values);
   };
 
   return (
     <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
       <div>
-        <h2 className="text-foreground text-base font-semibold leading-7">
+        <h2 className="text-base font-semibold leading-7 text-foreground">
           Change password
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-6">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           Update your password associated with your account.
         </p>
       </div>

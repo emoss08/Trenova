@@ -37,7 +37,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        expandIcon: "group relative bg-primary text-white hover:bg-primary/90",
+        expandIcon:
+          "group relative bg-primary text-background hover:bg-primary/90",
         ringHover:
           "bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
         shine:

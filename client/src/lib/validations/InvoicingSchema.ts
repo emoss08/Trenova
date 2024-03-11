@@ -44,9 +44,9 @@ export const invoiceControlSchema: ObjectSchema<InvoiceControlFormValues> =
     invoiceDueAfterDays: Yup.number().required(
       "Invoice Due After Days is required",
     ),
-    invoiceTerms: Yup.string().notRequired(),
-    invoiceFooter: Yup.string().notRequired(),
-    invoiceLogo: Yup.mixed()
+    invoiceTerms: Yup.string(),
+    invoiceFooter: Yup.string(),
+    invoiceLogoUrl: Yup.mixed()
       .test("is-valid-type", "Not a valid image type", (value: any) => {
         if (!value) return true;
         return isValidFileType(value && value.name.toLowerCase(), "image");

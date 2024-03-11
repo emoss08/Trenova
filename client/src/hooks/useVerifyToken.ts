@@ -40,9 +40,10 @@ export const useVerifyToken = () => {
       setLoading(true);
 
       try {
-        const response = await axios.get("user/me/", { withCredentials: true });
+        const response = await axios.get("me/", {
+          withCredentials: true,
+        });
         if (response.status === 200) {
-          console.info("User is authenticated");
           setUser(response.data);
           setIsAuthenticated(true);
         } else {

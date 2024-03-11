@@ -124,3 +124,39 @@ const (
 	// ShipmentTransferCriteriaReady is a constant for the ShipmentTransferCriteriaType enum. When a shipment is ready to bill.
 	ShipmentTransferCriteriaReady ShipmentTransferCriteriaType = "RTB"
 )
+
+type DateFormatType string
+
+const (
+	MmDdYyyy DateFormatType = "01/02/2006" // MM/DD/YYYY
+	DdMmYyyy DateFormatType = "02/01/2006" // DD/MM/YYYY
+	YyyyDdMm DateFormatType = "2006/02/01" // YYYY/DD/MM
+	YyyyMmDd DateFormatType = "2006/01/02" // YYYY/MM/DD
+)
+
+type ServiceIncidentType string
+
+const (
+	SiNever             ServiceIncidentType = "N"
+	SiPickup            ServiceIncidentType = "P"
+	SiDelivery          ServiceIncidentType = "D"
+	SiPickupAndDelivery ServiceIncidentType = "PD"
+	SiAllExceptPickup   ServiceIncidentType = "AEP"
+)
+
+type RouteDistanceUnitType string
+
+const (
+	// RduMetric Metric is the same as Kilometers
+	RduMetric RouteDistanceUnitType = "M"
+
+	// RduImperial Imperial is the same as Miles
+	RduImperial RouteDistanceUnitType = "I"
+)
+
+type DistanceMethodType string
+
+const (
+	DmGoogle  DistanceMethodType = "G"
+	DmTrenova DistanceMethodType = "T"
+)

@@ -62,7 +62,7 @@ function ShipmentControlForm({
     control,
     {
       method: "PUT",
-      path: `/shipment_control/${shipmentControl.id}/`,
+      path: "/shipment-control/",
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["shipmentControl"],
       errorMessage: t("formErrorMessage"),
@@ -210,7 +210,7 @@ function ShipmentControlForm({
 }
 
 export default function ShipmentControl() {
-  const { shipmentControlData, isLoading, isError } = useShipmentControl();
+  const { data, isLoading, isError } = useShipmentControl();
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -234,9 +234,7 @@ export default function ShipmentControl() {
           <ErrorLoadingData message="Failed to load shipment control." />
         </div>
       ) : (
-        shipmentControlData && (
-          <ShipmentControlForm shipmentControl={shipmentControlData} />
-        )
+        data && <ShipmentControlForm shipmentControl={data} />
       )}
     </div>
   );

@@ -14,13 +14,13 @@ type EmailProfile struct {
 	Organization   Organization  `json:"-" validate:"omitempty"`
 	BusinessUnit   BusinessUnit  `json:"-" validate:"omitempty"`
 	Protocol       EmailProtocol `gorm:"type:email_protocol_type;not null"                                                                    json:"protocol" validate:"omitempty"`
-	Email          string        `gorm:"type:varchar(255);not null"                                                                           json:"email" validate:"required,email"`
-	Name           string        `gorm:"type:varchar(255);not null;uniqueIndex:idx_email_profile_name_organization_id,expression:lower(name)" json:"name" validate:"required"`
-	Host           string        `gorm:"type:varchar(255);not null"                                                                           json:"host" validate:"required"`
-	Username       string        `gorm:"type:varchar(255);not null"                                                                           json:"username" validate:"required"`
-	Password       string        `gorm:"type:varchar(255);not null"                                                                           json:"password" validate:"required"`
+	Email          string        `gorm:"type:varchar(255);not null"                                                                           json:"email"    validate:"required,email"`
+	Name           string        `gorm:"type:varchar(255);not null;uniqueIndex:idx_email_profile_name_organization_id,expression:lower(name)" json:"name"     validate:"required"`
 	DefaultProfile bool          `gorm:"type:boolean;not null;default:false"                                                                  json:"defaultProfile"`
-	Port           int           `gorm:"type:integer;not null"                                                                                json:"port" validate:"required"`
+	Host           *string       `gorm:"type:varchar(255);"                                                                                   json:"host"     validate:"omitempty"`
+	Username       *string       `gorm:"type:varchar(255);"                                                                                   json:"username" validate:"omitempty"`
+	Password       *string       `gorm:"type:varchar(255);"                                                                                   json:"password" validate:"omitempty"`
+	Port           *int          `gorm:"type:integer;"                                                                                        json:"port"     validate:"omitempty"`
 }
 
 var ErrDefaultEmailProfileExists = errors.New("default email profile already exists for the organization")
@@ -59,4 +59,30 @@ func (e *EmailProfile) BeforeUpdate(tx *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (e *EmailProfile) FetchEmailProfilesForOrg(db *gorm.DB, orgID, buID uuid.UUID, offset, limit int) ([]EmailProfile, int64, error) {
+	var emailProfiles []EmailProfile
+
+	var totalRows int64
+
+	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND business_unit_id = ?", orgID, buID).Count(&totalRows).Error; err != nil {
+		return emailProfiles, 0, err
+	}
+
+	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND business_unit_id = ?", orgID, buID).Offset(offset).Limit(limit).Order("created_at desc").Find(&emailProfiles).Error; err != nil {
+		return emailProfiles, 0, err
+	}
+
+	return emailProfiles, totalRows, nil
+}
+
+func (e *EmailProfile) FetchEmailProfileDetails(db *gorm.DB, orgID, buID uuid.UUID, id string) (EmailProfile, error) {
+	var emailProfile EmailProfile
+
+	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND id = ? AND business_unit_id = ?", orgID, id, buID).First(&emailProfile).Error; err != nil {
+		return emailProfile, err
+	}
+
+	return emailProfile, nil
 }

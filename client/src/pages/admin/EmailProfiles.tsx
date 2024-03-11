@@ -83,7 +83,7 @@ export default function EmailProfiles() {
       <DataTable
         queryKey="email-profile-table-data"
         columns={columns}
-        link="/email_profiles/"
+        link="/email-profiles/"
         name="Email Profile"
         exportModelName="EmailProfile"
         filterColumn="name"

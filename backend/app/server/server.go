@@ -84,8 +84,9 @@ func SetupAndRun(db *gorm.DB) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
+
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		log.Panicf("Server Shutdown Failed:%+v", err)
 	}
 
 	log.Println("Server exiting")

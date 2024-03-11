@@ -26,7 +26,7 @@ import { BaseModel } from "./organization";
 
 export type DispatchControl = {
   id: string;
-  organization: string;
+  organizationId: string;
   recordServiceIncident: ServiceIncidentControlChoiceProps;
   gracePeriod: number;
   deadheadTarget: number;
@@ -43,7 +43,7 @@ export type DispatchControl = {
 
 export type DispatchControlFormValues = Omit<
   DispatchControl,
-  "id" | "organization"
+  "id" | "organizationId"
 >;
 
 export interface DelayCode extends BaseModel {

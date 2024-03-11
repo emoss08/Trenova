@@ -29,7 +29,7 @@ import {
   FleetCodeFormValues,
   RateBillingTableFormValues,
 } from "@/types/dispatch";
-import { ObjectSchema, boolean, number, object, string } from "yup";
+import { boolean, number, object, ObjectSchema, string } from "yup";
 import { validateDecimal } from "../utils";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
@@ -65,19 +65,27 @@ export const feasibilityControlSchema: ObjectSchema<FeasibilityToolControlFormVa
     mpwOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per week operator is required.",
     ),
-    mpwCriteria: number().required("Miles per week criteria is required."),
+    mpwCriteria: number()
+      .moreThan(0, "Miles per week criteria must be greater than 0.")
+      .required("Miles per week criteria is required."),
     mpdOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per day operator is required.",
     ),
-    mpdCriteria: number().required("Miles per day criteria is required."),
+    mpdCriteria: number()
+      .moreThan(0, "Miles per day criteria must be greater than 0.")
+      .required("Miles per day criteria is required."),
     mpgOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per gallon operator is required.",
     ),
-    mpgCriteria: number().required("Miles per gallon criteria is required."),
+    mpgCriteria: number()
+      .moreThan(0, "Miles per gallon criteria must be greater than 0.")
+      .required("Miles per gallon criteria is required."),
     otpOperator: string<FeasibilityOperatorChoiceProps>().required(
       "On-time performance operator is required.",
     ),
-    otpCriteria: number().required("On-time performance criteria is required."),
+    otpCriteria: number()
+      .moreThan(0, "On-time performance criteria must be greater than 0.")
+      .required("On-time performance criteria is required."),
   });
 
 export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =

@@ -16,8 +16,8 @@
  */
 
 import { API_URL } from "@/lib/constants";
-import { generateIdempotencyKey } from "@/lib/utils";
 import axios from "axios";
+import { generateIdempotencyKey } from "@/lib/utils";
 
 /**
  * Axios request interceptor.
@@ -29,11 +29,7 @@ axios.interceptors.request.use(
     req.baseURL = API_URL;
     req.withCredentials = true;
 
-    const csrfToken = "";
-    if (csrfToken) {
-      req.headers["X-CSRF-Token"] = csrfToken;
-      req.headers["X-Idempotency-Key"] = generateIdempotencyKey();
-    }
+    req.headers["X-Idempotency-Key"] = generateIdempotencyKey();
 
     console.log(
       `%c[Trenova] Axios request: ${req.method?.toUpperCase()} ${req.url}`,
