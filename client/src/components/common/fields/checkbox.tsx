@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  Controller,
   FieldValues,
   useController,
   UseControllerProps,
@@ -60,7 +61,7 @@ type CheckboxInputProps = CheckboxPrimitive.CheckboxProps &
 export function CheckboxInput<T extends FieldValues>({
   ...props
 }: CheckboxInputProps & UseControllerProps<T>) {
-  const { field, fieldState } = useController(props);
+  const { fieldState } = useController(props);
 
   const { label, description, id, className } = props;
 
@@ -69,13 +70,19 @@ export function CheckboxInput<T extends FieldValues>({
       htmlFor={id}
       className={cn("items-top flex cursor-pointer space-x-2", className)}
     >
-      <Checkbox
-        {...field}
-        onCheckedChange={(e) => {
-          field.onChange(e);
-        }}
-        checked={field.value as boolean}
-        id={id} // Ensure the checkbox has the same id as the label's htmlFor
+      <Controller
+        name={props.name}
+        control={props.control}
+        render={({ field }) => (
+          <Checkbox
+            {...field}
+            onCheckedChange={(e) => {
+              field.onChange(e);
+            }}
+            checked={field.value as boolean}
+            id={id} // Ensure the checkbox has the same id as the label's htmlFor
+          />
+        )}
       />
       <div className="grid gap-1.5 leading-none">
         {label && (

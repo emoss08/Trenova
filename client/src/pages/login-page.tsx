@@ -39,7 +39,7 @@ type LoginFormValues = {
 
 function AuthFooter() {
   return (
-    <footer className="text-muted-foreground absolute bottom-10 w-full text-center">
+    <footer className="absolute bottom-10 w-full text-center text-muted-foreground">
       <div className="flex items-center justify-center gap-2">
         <p className="text-xs">&copy; 2024 Trenova. All rights reserved.</p>
         <span className="text-xs">|</span>
@@ -75,7 +75,7 @@ function UserAuthForm() {
 
   const fetchUserDetails = async () => {
     try {
-      const response = await axios.get("/user/me/", {
+      const response = await axios.get("/me/", {
         withCredentials: true,
       });
 
@@ -204,7 +204,7 @@ export default function LoginPage() {
               Do not have an account yet?&nbsp;
               <a
                 href="#"
-                className="text-primary text-sm font-semibold underline underline-offset-4 hover:decoration-blue-500"
+                className="text-sm font-semibold text-primary underline underline-offset-4 hover:decoration-blue-500"
               >
                 Create an Account
               </a>
