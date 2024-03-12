@@ -90,7 +90,7 @@ export type API_ENDPOINTS =
   | "/google_api/"
   | "/routes/"
   | "/route_control/"
-  | "/qualifier_codes/"
+  | "/qualifier-codes/"
   | "/stop_comments/"
   | "/service_incidents/"
   | "/stops/"

@@ -89,7 +89,7 @@ export default function QualifierCodes() {
     <DataTable
       queryKey="qualifier-code-table-data"
       columns={columns}
-      link="/qualifier_codes/"
+      link="/qualifier-codes/"
       name="Qualifier Codes"
       exportModelName="QualifierCode"
       filterColumn="code"

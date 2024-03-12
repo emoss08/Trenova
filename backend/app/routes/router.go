@@ -65,6 +65,6 @@ func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	UserRoutes(protectedRouter, db, validator)                   // User routes
 	UsersRoutes(protectedRouter, db, validator)                  // Users routes
 	EmailProfileRoutes(protectedRouter, db, validator)           // EmailProfile routes
-
+	QualifierCodeRoutes(protectedRouter, db, validator)          // QualifierCode routes
 	return r
 }
