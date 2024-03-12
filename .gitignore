@@ -17,3 +17,5 @@ server/test.py
 client/.npmrc
 .fleet
 server/test.edi
+.env
+tmp
