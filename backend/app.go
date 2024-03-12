@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// Connect to the database.
-	db, cancel, err := database.ConnectDb(dbConfig)
+	db, cancel, err := database.ConnectDB(dbConfig)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

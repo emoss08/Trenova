@@ -52,7 +52,7 @@ type TableChangeAlert struct {
 var (
 	errTopicRequiredKafka = errors.New("topic is required when the source is KAFKA")
 
-	errTableNameRequiredDb = errors.New("table name is required when the source is DB")
+	errTableNameRequiredDB = errors.New("table name is required when the source is DB")
 
 	errDeleteActionOnlyForDB = errors.New("DELETE action is only valid for DB source")
 
@@ -65,7 +65,7 @@ func (tbc *TableChangeAlert) validateTableChangeAlert() error {
 	}
 
 	if tbc.Source == DataBase && tbc.TableName == nil {
-		return errTableNameRequiredDb
+		return errTableNameRequiredDB
 	}
 
 	if tbc.DatabaseAction == Delete && tbc.Source != DataBase {

@@ -4,6 +4,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type DateFormatType string
+
+const (
+	MmDdYyyy DateFormatType = "01/02/2006" // MM/DD/YYYY
+	DdMmYyyy DateFormatType = "02/01/2006" // DD/MM/YYYY
+	YyyyDdMm DateFormatType = "2006/02/01" // YYYY/DD/MM
+	YyyyMmDd DateFormatType = "2006/01/02" // YYYY/MM/DD
+)
+
 type InvoiceControl struct {
 	TimeStampedModel
 	BusinessUnitID         uuid.UUID      `gorm:"type:uuid;not null;index"                                            json:"businessUnitId"`

@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
+
 	"trenova/app/models"
 
 	"github.com/asaskevich/govalidator"
@@ -15,62 +16,74 @@ import (
 	"github.com/nyaruka/phonenumbers"
 )
 
-var validate = validator.New()
-var english = en.New()
-var uni = ut.New(english, english)
-var trans, _ = uni.GetTranslator("en")
+type Validator struct {
+	validate *validator.Validate
+	trans    ut.Translator
+}
 
-func init() {
-	_ = enTranslations.RegisterDefaultTranslations(validate, trans)
+const SplitStrNum = 2
+
+func NewValidator() (*Validator, error) {
+	english := en.New()
+	uni := ut.New(english, english)
+	trans, _ := uni.GetTranslator("en")
+	validate := validator.New()
+	err := enTranslations.RegisterDefaultTranslations(validate, trans)
+	if err != nil {
+		return nil, err
+	}
 
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		name := strings.SplitN(fld.Tag.Get("json"), ",", SplitStrNum)[0]
 		if name == "-" {
 			return ""
 		}
 		return name
 	})
+
+	registerCustomValidations(validate)
+
+	return &Validator{validate: validate, trans: trans}, nil
 }
 
-// Validate validates the input struct and returns an error interface or nil if the validation passes.
-func Validate(payload interface{}) error {
-	err := validate.Struct(payload)
+func (v *Validator) Validate(payload interface{}) error {
+	err := v.validate.Struct(payload)
 	if err != nil {
-		var errors []models.ValidationErrorDetail
-		for _, ve := range err.(validator.ValidationErrors) {
-			fieldName := ve.Field()
-			errors = append(errors, models.ValidationErrorDetail{
-				Code:   "invalid",
-				Detail: ve.Translate(trans),
-				Attr:   fieldName,
-			})
+		var valError []models.ValidationErrorDetail
+		var validationErrors validator.ValidationErrors
+		if errors.As(err, &validationErrors) {
+			for _, ve := range validationErrors {
+				fieldName := ve.Field()
+				valError = append(valError, models.ValidationErrorDetail{
+					Code:   "invalid",
+					Detail: ve.Translate(v.trans),
+					Attr:   fieldName,
+				})
+			}
+			verr := models.ValidationErrorResponse{
+				Type:   "validationError",
+				Errors: valError,
+			}
+			return fmt.Errorf("%v", verr)
 		}
-		errorResponse := models.ValidationErrorResponse{
-			Type:   "validationError",
-			Errors: errors,
-		}
-
-		errMsg, _ := json.Marshal(errorResponse)
-		return fmt.Errorf(string(errMsg))
+		return err
 	}
+
 	return nil
 }
 
-// FormatDatabaseError formats a database error into a ValidationErrorResponse
-func FormatDatabaseError(err error) models.ValidationErrorResponse {
-	return models.ValidationErrorResponse{
-		Type: "databaseError",
-		Errors: []models.ValidationErrorDetail{
-			{
-				Code:   "invalid",
-				Detail: err.Error(),
-				Attr:   "all",
-			},
-		},
+func registerCustomValidations(v *validator.Validate) {
+	err := v.RegisterValidation("commaSeparatedEmails", validateCommaSeparatedEmails)
+	if err != nil {
+		return
+	}
+	phoneNumErr := v.RegisterValidation("phoneNum", validatePhoneNumber)
+	if phoneNumErr != nil {
+		return
 	}
 }
 
-var _ = validate.RegisterValidation("commaSeparatedEmails", func(fl validator.FieldLevel) bool {
+func validateCommaSeparatedEmails(fl validator.FieldLevel) bool {
 	emailsStr := fl.Field().String()
 	emails := strings.Split(emailsStr, ",")
 
@@ -80,14 +93,27 @@ var _ = validate.RegisterValidation("commaSeparatedEmails", func(fl validator.Fi
 			return false
 		}
 	}
-
 	return true
-})
+}
 
-var _ = validate.RegisterValidation("phoneNum", func(fl validator.FieldLevel) bool {
+func validatePhoneNumber(fl validator.FieldLevel) bool {
 	num, err := phonenumbers.Parse(fl.Field().String(), "")
 	if err != nil {
 		return false
 	}
 	return phonenumbers.IsValidNumber(num)
-})
+}
+
+// CreateDBErrorResponse formats a database error into a structured response.
+func CreateDBErrorResponse(err error) models.ValidationErrorResponse {
+	return models.ValidationErrorResponse{
+		Type: "databaseError",
+		Errors: []models.ValidationErrorDetail{
+			{
+				Code:   "databaseError",
+				Detail: err.Error(),
+				Attr:   "database",
+			},
+		},
+	}
+}

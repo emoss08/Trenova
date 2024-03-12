@@ -8,12 +8,28 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrgType string
+type AttributeError struct {
+	Message string `json:"message"`
+	Attr    string `json:"attr"`
+}
+
+func (e *AttributeError) Error() string {
+	return e.Message
+}
+
+type (
+	OrgType      string
+	TimezoneType string
+)
 
 const (
-	OrgTypeAsset OrgType = "A"
-	OrgBrokerage OrgType = "B"
-	OrgBoth      OrgType = "X"
+	OrgTypeAsset OrgType      = "A"
+	OrgBrokerage OrgType      = "B"
+	OrgBoth      OrgType      = "X"
+	Pacific      TimezoneType = "America/Los_Angeles"
+	Mountain     TimezoneType = "America/Denver"
+	Central      TimezoneType = "America/Chicago"
+	Eastern      TimezoneType = "America/New_York"
 )
 
 type Organization struct {
@@ -35,7 +51,7 @@ type Organization struct {
 	FeasibilityToolControl FeasibilityToolControl `json:"-" validate:"omitempty"`
 }
 
-func (org *Organization) BeforeCreate(_ *gorm.DB) (err error) {
+func (org *Organization) BeforeCreate(_ *gorm.DB) error {
 	// Uppercase SCAC and DOT numbers, ensure the name is properly formatted
 	org.ScacCode = strings.ToUpper(org.ScacCode)
 	org.DOTNumber = strings.ToUpper(org.DOTNumber)

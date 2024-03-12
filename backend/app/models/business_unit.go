@@ -11,6 +11,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type StatusType string
+
+const (
+	Active   StatusType = "A"
+	Inactive StatusType = "I"
+)
+
 type BusinessUnit struct {
 	ID               uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid();"                                     json:"id"`
 	Status           StatusType `gorm:"type:status_type;not null;default:'A'"                                                json:"status"           validate:"required,len=1,oneof=A I"`
@@ -42,6 +49,8 @@ var (
 	errGenEntityKey     = errors.New("unable to generate a unique entity key after 1000 attempts")
 	errInvalidStatus    = errors.New("status must be either 'A' or 'I'")
 )
+
+const maxEntityKeyValue = 7
 
 func (b *BusinessUnit) BeforeCreate(tx *gorm.DB) error {
 	if err := b.generateEntityKey(tx); err != nil {
@@ -75,7 +84,7 @@ func (b *BusinessUnit) generateEntityKey(tx *gorm.DB) error {
 	cleanedName := strings.ToUpper(strings.ReplaceAll(b.Name, " ", ""))
 	baseKey := cleanedName
 
-	if len(cleanedName) > 7 {
+	if len(cleanedName) > maxEntityKeyValue {
 		baseKey = cleanedName[:7]
 	}
 

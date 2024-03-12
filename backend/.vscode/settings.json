@@ -1,0 +1,9 @@
+{
+    "tooltitude.brokenRefsEnabled": false,
+    "tooltitude.codeAction.navigate": false,
+    "tooltitude.codeAction.rename": true,
+    "tooltitude.codeAction.runDebug": false,
+    "tooltitude.updateImportsOnRename": false,
+    "tooltitude.unusedWritesEnabled": true,
+    "tooltitude.shadowInspectionEnabled": true
+}

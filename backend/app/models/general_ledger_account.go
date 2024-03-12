@@ -7,6 +7,37 @@ import (
 	"gorm.io/gorm"
 )
 
+type (
+	CashFlowType          string
+	AccountSubType        string
+	AccountClassification string
+)
+
+const (
+	OperatingCashFlow CashFlowType   = "OPERATING"
+	InvestingCashFlow CashFlowType   = "INVESTING"
+	FinancingCashFlow CashFlowType   = "FINANCING"
+	CurrentAsset      AccountSubType = "CURRENT_ASSET"
+	FixedAsset        AccountSubType = "FIXED_ASSET"
+	OtherAsset        AccountSubType = "OTHER_ASSET"
+	CurrentLib        AccountSubType = "CURRENT_LIABILITY"
+	LongTermLib       AccountSubType = "LONG_TERM_LIABILITY"
+	Equity            AccountSubType = "EQUITY"
+	Revenue           AccountSubType = "REVENUE"
+	CostOfGoods       AccountSubType = "COST_OF_GOODS_SOLD"
+	Expense           AccountSubType = "EXPENSE"
+	OtherIncome       AccountSubType = "OTHER_INCOME"
+	OtherExpense      AccountSubType = "OTHER_EXPENSE"
+
+	AccountClassificationBank AccountClassification = "BANK"
+	AccountClassificationCash AccountClassification = "CASH"
+	AccountClassificationAR   AccountClassification = "ACCOUNTS_RECEIVABLE"
+	AccountClassificationAP   AccountClassification = "ACCOUNTS_PAYABLE"
+	AccountClassificationINV  AccountClassification = "INVENTORY"
+	AccountClassificationOCA  AccountClassification = "OTHER_CURRENT_ASSET"
+	AccountClassificationFA   AccountClassification = "FIXED_ASSET"
+)
+
 type GeneralLedgerAccount struct {
 	TimeStampedModel
 	OrganizationID uuid.UUID             `json:"organizationId" gorm:"type:uuid;not null;uniqueIndex:idx_gl_account_number_organization_id" validate:"required"`
@@ -15,7 +46,7 @@ type GeneralLedgerAccount struct {
 	BusinessUnit   BusinessUnit          `json:"-"                                                                                          validate:"omitempty"`
 	Status         StatusType            `json:"status"         gorm:"type:status_type;not null;default:'A'"                                validate:"required,len=1,oneof=A I"`
 	AccountNumber  string                `json:"accountNumber"  gorm:"type:varchar(7);not null;uniqueIndex:idx_gl_account_number_organization_id,expression:lower(account_number)" validate:"required,max=7"`
-	AccountType    AcAccountType         `json:"accountType"    gorm:"type:ac_account_type;not null"       validate:"required,oneof=ASSET LIABILITY EQUITY REVENUE EXPENSE"`
+	AccountType    AccountingAccountType `json:"accountType"    gorm:"type:ac_account_type;not null"       validate:"required,oneof=ASSET LIABILITY EQUITY REVENUE EXPENSE"`
 	CashFlowType   CashFlowType          `json:"cashFlowType"   gorm:"type:ac_cash_flow_type;"             validate:"omitempty,oneof=OPERATING INVESTING FINANCING"`
 	AccountSubType AccountSubType        `json:"accountSubType" gorm:"type:ac_account_sub_type;"           validate:"omitempty,oneof=CURRENT_ASSET FIXED_ASSET OTHER_ASSET CURRENT_LIABILITY LONG_TERM_LIABILITY EQUITY REVENUE COST_OF_GOODS_SOLD EXPENSE OTHER_INCOME OTHER_EXPENSE"`
 	AccountClass   AccountClassification `json:"accountClass"   gorm:"type:ac_account_classification;"     validate:"omitempty,oneof=BANK CASH ACCOUNTS_RECEIVABLE ACCOUNTS_PAYABLE INVENTORY OTHER_CURRENT_ASSET FIXED_ASSET"`

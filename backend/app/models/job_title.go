@@ -2,6 +2,20 @@ package models
 
 import "github.com/google/uuid"
 
+type JobFunctionType string
+
+const (
+	Manager           JobFunctionType = "MGR"
+	ManagementTrainee JobFunctionType = "MT"
+	Supervisor        JobFunctionType = "SP"
+	Driver            JobFunctionType = "D"
+	Billing           JobFunctionType = "B"
+	Finance           JobFunctionType = "F"
+	Safety            JobFunctionType = "S"
+	SysAdmin          JobFunctionType = "SA"
+	Admin             JobFunctionType = "A"
+)
+
 type JobTitle struct {
 	TimeStampedModel
 	OrganizationID uuid.UUID       `gorm:"type:uuid;not null;index" json:"organizationId" validate:"required"`

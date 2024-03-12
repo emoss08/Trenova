@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
-	"gorm.io/gorm/logger"
 	"log"
 	"time"
+
+	"gorm.io/gorm/logger"
+
 	"trenova/app/models"
 
 	"gorm.io/driver/postgres"
@@ -12,7 +14,7 @@ import (
 )
 
 type Dbinstance struct {
-	Db *gorm.DB
+	DB *gorm.DB
 }
 
 var DB Dbinstance
@@ -25,25 +27,27 @@ type DBConfig struct {
 	ConnMaxIdleTime time.Duration
 }
 
-// ConnectDb Connect to the database
-func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+const dbContextTimeOut = 10 * time.Second
+
+// ConnectDB Connect to the database.
+func ConnectDB(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbContextTimeOut)
 	defer cancel()
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  config.DSN,
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{
-		NowFunc: func() time.Time { return time.Now().Local() },
-		Logger:  logger.Default.LogMode(logger.Silent),
+		NowFunc:     func() time.Time { return time.Now().Local() },
+		PrepareStmt: true,
+		Logger:      logger.Default.LogMode(logger.Info),
 	})
-
 	if err != nil {
 		return nil, cancel, err
 	}
 
 	// Migrating Database
-	var mods = []interface{}{
+	mods := []interface{}{
 		&models.BusinessUnit{},
 		&models.Organization{},
 		&models.EmailProfile{},
@@ -66,8 +70,8 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		&models.TableChangeAlert{},
 	}
 
-	if err := db.AutoMigrate(mods...); err != nil {
-		return nil, cancel, err
+	if migrateErr := db.AutoMigrate(mods...); migrateErr != nil {
+		return nil, cancel, migrateErr
 	}
 
 	sqlDB, err := db.DB()
@@ -88,7 +92,7 @@ func ConnectDb(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 
 	log.Println("Connected to the database")
 
-	DB = Dbinstance{Db: db}
+	DB = Dbinstance{DB: db}
 
 	return db, cancel, nil
 }

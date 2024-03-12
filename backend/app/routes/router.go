@@ -1,16 +1,35 @@
 package routes
 
 import (
-	"github.com/redis/go-redis/v9"
+	"log"
+
 	"trenova/app/middleware"
+	"trenova/utils"
 
 	"github.com/gorilla/mux"
+	"github.com/henvic/httpretty"
+	"github.com/redis/go-redis/v9"
 	"github.com/wader/gormstore/v2"
 	"gorm.io/gorm"
 )
 
 func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	r := mux.NewRouter()
+
+	validator, err := utils.NewValidator()
+	if err != nil {
+		log.Fatalf("Error initializing validator: %v", err)
+	}
+
+	logger := &httpretty.Logger{
+		Time:           true,
+		TLS:            true,
+		RequestHeader:  true,
+		RequestBody:    true,
+		ResponseHeader: true,
+		ResponseBody:   true,
+		Colors:         true, // erase line if you don't like colors
+	}
 
 	// Server Sent Events
 	sseRouter := r.PathPrefix("/sse").Subrouter()
@@ -32,18 +51,20 @@ func InitializeRouter(db *gorm.DB, store *gormstore.Store) *mux.Router {
 	protectedRouter.Use(middleware.IdempotencyMiddleware(redisClient))
 	protectedRouter.Use(middleware.BasicLoggingMiddleware)
 
-	OrganizationRoutes(protectedRouter, db)           // Organization Routes
-	AccountingControlRoutes(protectedRouter, db)      // AccountingControl routes
-	BillingControlRoutes(protectedRouter, db)         // BillingControl routes
-	InvoiceControlRoutes(protectedRouter, db)         // InvoiceControl routes
-	DispatchControlRoutes(protectedRouter, db)        // DispatchControl routes
-	ShipmentControlRoutes(protectedRouter, db)        // ShipmentControl routes
-	FeasibilityToolControlRoutes(protectedRouter, db) // FeasibilityToolControl routes
-	RouteControlRoutes(protectedRouter, db)           // RouteControl routes
-	RevenueCodeRoutes(protectedRouter, db)            // RevenueCode routes
-	UserRoutes(protectedRouter, db)                   // User routes
-	UsersRoutes(protectedRouter, db)                  // Users routes
-	EmailProfileRoutes(protectedRouter, db)           // EmailProfile routes
+	protectedRouter.Use(logger.Middleware)
+
+	OrganizationRoutes(protectedRouter, db, validator)           // Organization Routes
+	AccountingControlRoutes(protectedRouter, db, validator)      // AccountingControl routes
+	BillingControlRoutes(protectedRouter, db, validator)         // BillingControl routes
+	InvoiceControlRoutes(protectedRouter, db, validator)         // InvoiceControl routes
+	DispatchControlRoutes(protectedRouter, db, validator)        // DispatchControl routes
+	ShipmentControlRoutes(protectedRouter, db, validator)        // ShipmentControl routes
+	FeasibilityToolControlRoutes(protectedRouter, db, validator) // FeasibilityToolControl routes
+	RouteControlRoutes(protectedRouter, db, validator)           // RouteControl routes
+	RevenueCodeRoutes(protectedRouter, db, validator)            // RevenueCode routes
+	UserRoutes(protectedRouter, db, validator)                   // User routes
+	UsersRoutes(protectedRouter, db, validator)                  // Users routes
+	EmailProfileRoutes(protectedRouter, db, validator)           // EmailProfile routes
 
 	return r
 }

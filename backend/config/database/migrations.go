@@ -35,8 +35,8 @@ func executeFromSQLFile(db *gorm.DB, path string) error {
 	}
 
 	statements := string(content)
-	if err := db.Exec(statements).Error; err != nil {
-		return fmt.Errorf("failed to execute SQL from file %s: %w", path, err)
+	if execErr := db.Exec(statements).Error; execErr != nil {
+		return fmt.Errorf("failed to execute SQL from file %s: %w", path, execErr)
 	}
 
 	return nil
