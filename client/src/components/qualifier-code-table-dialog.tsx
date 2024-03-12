@@ -102,7 +102,7 @@ export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/qualifier_codes/",
+      path: "/qualifier-codes/",
       successMessage: "Qualifier Code created successfully.",
       queryKeysToInvalidate: ["qualifier-code-table-data"],
       closeModal: true,

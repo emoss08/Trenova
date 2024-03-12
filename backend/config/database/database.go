@@ -68,6 +68,7 @@ func ConnectDB(config DBConfig) (*gorm.DB, context.CancelFunc, error) {
 		&models.DivisionCode{},
 		&models.RevenueCode{},
 		&models.TableChangeAlert{},
+		&models.QualifierCode{},
 	}
 
 	if migrateErr := db.AutoMigrate(mods...); migrateErr != nil {

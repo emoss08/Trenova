@@ -29,14 +29,14 @@ import { formatDate } from "@/lib/date";
 import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  QualifierCode,
   QualifierCodeFormValues as FormValues,
+  QualifierCode,
 } from "@/types/stop";
+import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { QualifierCodeForm } from "./qualifier-code-table-dialog";
-import { TableSheetProps } from "@/types/tables";
 
 function QualifierCodeEditForm({
   qualifierCode,
@@ -58,7 +58,7 @@ function QualifierCodeEditForm({
     control,
     {
       method: "PUT",
-      path: `/qualifier_codes/${qualifierCode.id}/`,
+      path: `/qualifier-codes/${qualifierCode.id}/`,
       successMessage: "Qualifier Code updated successfully.",
       queryKeysToInvalidate: ["qualifier-code-table-data"],
       closeModal: true,
@@ -103,7 +103,7 @@ export function QualifierCodeEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {qualifierCode && formatDate(qualifierCode.modified)}
+          {qualifierCode && formatDate(qualifierCode.createdAt)}
         </DialogDescription>
         {qualifierCode && (
           <QualifierCodeEditForm qualifierCode={qualifierCode} />
