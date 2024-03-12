@@ -2,6 +2,16 @@ package models
 
 import "github.com/google/uuid"
 
+type ServiceIncidentType string
+
+const (
+	ServiceIncidentNever             ServiceIncidentType = "N"
+	ServiceIncidentPickup            ServiceIncidentType = "P"
+	ServiceIncidentDelivery          ServiceIncidentType = "D"
+	ServiceIncidentPickupAndDelivery ServiceIncidentType = "PD"
+	ServiceIncidentAllExceptPickup   ServiceIncidentType = "AEP"
+)
+
 type DispatchControl struct {
 	TimeStampedModel
 	BusinessUnitID               uuid.UUID           `gorm:"type:uuid;not null;index"                                                 json:"businessUnitId"`

@@ -36,7 +36,7 @@ func (dc *DivisionCode) validateDivisionCode() error {
 		return errCashAccountMustBeCash
 	}
 
-	if dc.ExpenseAccount.AccountType != AccountTypeExpense {
+	if dc.ExpenseAccount.AccountType != ExpenseAccountType {
 		return errExpenseAccountMustBeExpense
 	}
 

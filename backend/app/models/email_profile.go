@@ -7,6 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type EmailProtocol string
+
+const (
+	TLS                      EmailProtocol = "TLS"
+	SSL                      EmailProtocol = "SSL"
+	EmailProtocolUnencrypted EmailProtocol = "UNENCRYPTED"
+)
+
 type EmailProfile struct {
 	TimeStampedModel
 	OrganizationID uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:idx_email_profile_name_organization_id" json:"organizationId" validate:"required"`
@@ -32,7 +40,9 @@ func (e *EmailProfile) BeforeCreate(tx *gorm.DB) error {
 
 	if e.DefaultProfile {
 		var count int64
-		if err := tx.Model(&EmailProfile{}).Where("organization_id = ? AND default_profile = ?", e.OrganizationID, true).Count(&count).Error; err != nil {
+		if err := tx.Model(&EmailProfile{}).
+			Where("organization_id = ? AND default_profile = ?", e.OrganizationID, true).
+			Count(&count).Error; err != nil {
 			return err
 		}
 
@@ -48,7 +58,9 @@ func (e *EmailProfile) BeforeUpdate(tx *gorm.DB) error {
 	if e.DefaultProfile {
 		var count int64
 		// Exclude the current record from the count when checking for existing default profiles.
-		if err := tx.Model(&EmailProfile{}).Where("organization_id = ? AND default_profile = ? AND id <> ?", e.OrganizationID, true, e.ID).Count(&count).Error; err != nil {
+		if err := tx.Model(&EmailProfile{}).
+			Where("organization_id = ? AND default_profile = ? AND id <> ?", e.OrganizationID, true, e.ID).
+			Count(&count).Error; err != nil {
 			return err
 		}
 
@@ -66,11 +78,16 @@ func (e *EmailProfile) FetchEmailProfilesForOrg(db *gorm.DB, orgID, buID uuid.UU
 
 	var totalRows int64
 
-	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND business_unit_id = ?", orgID, buID).Count(&totalRows).Error; err != nil {
+	if err := db.Model(&EmailProfile{}).
+		Where("organization_id = ? AND business_unit_id = ?", orgID, buID).
+		Count(&totalRows).Error; err != nil {
 		return emailProfiles, 0, err
 	}
 
-	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND business_unit_id = ?", orgID, buID).Offset(offset).Limit(limit).Order("created_at desc").Find(&emailProfiles).Error; err != nil {
+	if err := db.Model(&EmailProfile{}).
+		Where("organization_id = ? AND business_unit_id = ?", orgID, buID).
+		Offset(offset).Limit(limit).Order("created_at desc").
+		Find(&emailProfiles).Error; err != nil {
 		return emailProfiles, 0, err
 	}
 
@@ -80,7 +97,9 @@ func (e *EmailProfile) FetchEmailProfilesForOrg(db *gorm.DB, orgID, buID uuid.UU
 func (e *EmailProfile) FetchEmailProfileDetails(db *gorm.DB, orgID, buID uuid.UUID, id string) (EmailProfile, error) {
 	var emailProfile EmailProfile
 
-	if err := db.Model(&EmailProfile{}).Where("organization_id = ? AND id = ? AND business_unit_id = ?", orgID, id, buID).First(&emailProfile).Error; err != nil {
+	if err := db.Model(&EmailProfile{}).
+		Where("organization_id = ? AND id = ? AND business_unit_id = ?", orgID, id, buID).
+		First(&emailProfile).Error; err != nil {
 		return emailProfile, err
 	}
 

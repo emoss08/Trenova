@@ -9,10 +9,10 @@ require (
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/securecookie v1.1.2
+	github.com/gorilla/websocket v1.5.1
 	github.com/nyaruka/phonenumbers v1.3.2
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rs/cors v1.10.1
-	github.com/segmentio/kafka-go v0.4.47
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/net v0.22.0
 	gorm.io/datatypes v1.2.0
@@ -26,12 +26,10 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/microsoft/go-mssqldb v1.7.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gorm.io/driver/sqlite v1.5.5 // indirect

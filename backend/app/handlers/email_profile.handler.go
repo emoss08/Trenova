@@ -1,18 +1,37 @@
 package handlers
 
 import (
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"net/http"
+
 	"trenova/app/middleware"
 	"trenova/app/models"
 	"trenova/utils"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func GetEmailProfiles(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
 
 		offset, limit, err := utils.PaginationParams(r)
 		if err != nil {
@@ -27,7 +46,6 @@ func GetEmailProfiles(db *gorm.DB) http.HandlerFunc {
 
 		var ep models.EmailProfile
 		emailProfiles, totalRows, err := ep.FetchEmailProfilesForOrg(db, orgID, buID, offset, limit)
-
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
@@ -38,8 +56,8 @@ func GetEmailProfiles(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		nextURL := utils.GetNextPageUrl(r, offset, limit, totalRows)
-		prevURL := utils.GetPrevPageUrl(r, offset, limit)
+		nextURL := utils.GetNextPageURL(r, offset, limit, totalRows)
+		prevURL := utils.GetPrevPageURL(r, offset, limit)
 
 		utils.ResponseWithJSON(w, http.StatusOK, models.HTTPResponse{
 			Results:  emailProfiles,
@@ -50,23 +68,39 @@ func GetEmailProfiles(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func CreateEmailProfile(db *gorm.DB) http.HandlerFunc {
+func CreateEmailProfile(db *gorm.DB, validator *utils.Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var ep models.EmailProfile
 
-		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
 
 		ep.BusinessUnitID = buID
 		ep.OrganizationID = orgID
 
-		if err := utils.ParseBodyAndValidate(w, r, &ep); err != nil {
+		if err := utils.ParseBodyAndValidate(validator, w, r, &ep); err != nil {
 			return
 		}
 
 		if err := db.Create(&ep).Error; err != nil {
-			errorResponse := utils.FormatDatabaseError(err)
+			errorResponse := utils.CreateDBErrorResponse(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 
 			return
@@ -76,11 +110,27 @@ func CreateEmailProfile(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateEmailProfile(db *gorm.DB) http.HandlerFunc {
+func UpdateEmailProfile(db *gorm.DB, validator *utils.Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Retrieve the orgID and buID from the request's context
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
 
 		emailProfileID := utils.GetMuxVar(w, r, "emailProfileID")
 		if emailProfileID == "" {
@@ -90,7 +140,9 @@ func UpdateEmailProfile(db *gorm.DB) http.HandlerFunc {
 		var ep models.EmailProfile
 
 		// Let's make sure we're updating the right revenue code, for the right organization and business unit
-		if err := db.Where("id = ? AND organization_id = ? AND business_unit_id = ?", emailProfileID, orgID, buID).First(&ep).Error; err != nil {
+		if err := db.
+			Where("id = ? AND organization_id = ? AND business_unit_id = ?", emailProfileID, orgID, buID).
+			First(&ep).Error; err != nil {
 			utils.ResponseWithError(w, http.StatusNotFound, models.ValidationErrorDetail{
 				Code:   "notFound",
 				Detail: "Revenue code not found",
@@ -99,14 +151,12 @@ func UpdateEmailProfile(db *gorm.DB) http.HandlerFunc {
 
 			return
 		}
-		if err := utils.ParseBodyAndValidate(w, r, &ep); err != nil {
-
+		if err := utils.ParseBodyAndValidate(validator, w, r, &ep); err != nil {
 			return
-
 		}
 
 		if err := db.Save(&ep).Error; err != nil {
-			errorResponse := utils.FormatDatabaseError(err)
+			errorResponse := utils.CreateDBErrorResponse(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 
 			return

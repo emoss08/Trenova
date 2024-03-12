@@ -7,6 +7,25 @@ import (
 	"gorm.io/gorm"
 )
 
+type (
+	AutomaticJournalEntryType string
+	AccountingAccountType     string
+	ThresholdActionType       string
+)
+
+const (
+	AccountTypeAsset     AccountingAccountType     = "ASSET"
+	AccountTypeLiability AccountingAccountType     = "LIABILITY"
+	AccountTypeEquity    AccountingAccountType     = "EQUITY"
+	RevenueAccountType   AccountingAccountType     = "REVENUE"
+	ExpenseAccountType   AccountingAccountType     = "EXPENSE"
+	OnShipmentBill       AutomaticJournalEntryType = "ON_SHIPMENT_BILL"
+	OnReceiptOfPayment   AutomaticJournalEntryType = "ON_RECEIPT_OF_PAYMENT"
+	OnExpenseRecognition AutomaticJournalEntryType = "ON_EXPENSE_RECOGNITION"
+	Halt                 ThresholdActionType       = "HALT"
+	Warn                 ThresholdActionType       = "WARN"
+)
+
 type AccountingControl struct {
 	TimeStampedModel
 	BusinessUnitID               uuid.UUID                  `gorm:"type:uuid;not null;index"                              json:"businessUnitId"`
@@ -33,11 +52,11 @@ var (
 )
 
 func (ac *AccountingControl) validateAccountingControl() error {
-	if ac.DefaultExpenseAccountID != nil && ac.DefaultExpenseAccount.AccountType != AccountTypeExpense {
+	if ac.DefaultExpenseAccountID != nil && ac.DefaultExpenseAccount.AccountType != ExpenseAccountType {
 		return ErrExpenseAccount
 	}
 
-	if ac.DefaultRevenueAccountID != nil && ac.DefaultRevenueAccount.AccountType != AccountTypeRevenue {
+	if ac.DefaultRevenueAccountID != nil && ac.DefaultRevenueAccount.AccountType != RevenueAccountType {
 		return ErrRevenueAccount
 	}
 

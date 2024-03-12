@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+
 	"trenova/app/models"
 	"trenova/utils"
 	"trenova/utils/password"
@@ -77,7 +78,6 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 		// Create a new session
 		sessionID := utils.GetSystemSessionID()
 		session, err := store.New(r, sessionID)
-
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error creating session")
 			return
@@ -89,8 +89,8 @@ func Login(db *gorm.DB, store *gormstore.Store) http.HandlerFunc {
 		session.Values["businessUnitID"] = user.BusinessUnitID
 
 		// Save it before we write to the response/return from the handler
-		if err := store.Save(r, w, session); err != nil {
-			log.Println(err)
+		if saveErr := store.Save(r, w, session); saveErr != nil {
+			log.Printf("Error saving session: %v", saveErr)
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error saving session")
 
 			return
@@ -105,7 +105,6 @@ func Logout(store *gormstore.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID := utils.GetSystemSessionID()
 		session, err := store.Get(r, sessionID)
-
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusUnauthorized, "Not logged in")
 			return
@@ -115,8 +114,10 @@ func Logout(store *gormstore.Store) http.HandlerFunc {
 		session.Options.MaxAge = -1
 
 		// Save the session to update the session in the database and delete the client's cookie
-		if err := store.Save(r, w, session); err != nil {
+		if saveErr := store.Save(r, w, session); saveErr != nil {
+			log.Printf("Error saving session: %v", saveErr)
 			utils.ResponseWithError(w, http.StatusInternalServerError, "Error updating session")
+
 			return
 		}
 

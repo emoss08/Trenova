@@ -18,7 +18,9 @@ type UserFavorite struct {
 
 func (uf *UserFavorite) FetchUserFavorites(db *gorm.DB, userID, orgID, buID uuid.UUID) ([]UserFavorite, error) {
 	var userFavorites []UserFavorite
-	if err := db.Model(&UserFavorite{}).Where("user_id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).Find(&userFavorites).Error; err != nil {
+	if err := db.
+		Model(&UserFavorite{}).Where("user_id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).
+		Find(&userFavorites).Error; err != nil {
 		return userFavorites, err
 	}
 

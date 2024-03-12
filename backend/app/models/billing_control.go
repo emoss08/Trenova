@@ -2,8 +2,35 @@ package models
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+type AutoBillShipmentType string
+
+const (
+	// AutoBillShipmentDelivery is a constant for the AutoBillShipmentType enum. When a shipment is delivered.
+	AutoBillShipmentDelivery AutoBillShipmentType = "D"
+
+	// AutoBillShipmentTransferred is a constant for the AutoBillShipmentType enum. When a shipment is transferred to billing queue.
+	AutoBillShipmentTransferred AutoBillShipmentType = "T"
+
+	// AutoBillingMarkedReady is a constant for the AutoBillShipmentType enum. When a shipment is marked ready to bill.
+	AutoBillingMarkedReady AutoBillShipmentType = "MR"
+)
+
+type ShipmentTransferCriteriaType string
+
+const (
+	// ShipmentTransferCriteriaRAndC  is a constant for the ShipmentTransferCriteriaType enum. When a shipment is ready to bill and confirmed.
+	ShipmentTransferCriteriaRAndC ShipmentTransferCriteriaType = "RC"
+
+	// ShipmentTransferCriteriaCompleted is a constant for the ShipmentTransferCriteriaType enum. When a shipment is completed.
+	ShipmentTransferCriteriaCompleted ShipmentTransferCriteriaType = "C"
+
+	// ShipmentTransferCriteriaReady is a constant for the ShipmentTransferCriteriaType enum. When a shipment is ready to bill.
+	ShipmentTransferCriteriaReady ShipmentTransferCriteriaType = "RTB"
 )
 
 type BillingControl struct {

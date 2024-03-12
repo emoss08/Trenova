@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+
 	"trenova/app/middleware"
 	"trenova/app/models"
 	"trenova/utils"
@@ -11,10 +12,27 @@ import (
 	"gorm.io/gorm"
 )
 
-func UpdateUser(db *gorm.DB) http.HandlerFunc {
+func UpdateUser(db *gorm.DB, validator *utils.Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
 
 		userID := utils.GetMuxVar(w, r, "userID")
 		if userID == "" {
@@ -25,7 +43,9 @@ func UpdateUser(db *gorm.DB) http.HandlerFunc {
 		var u models.User
 
 		// Let's make sure we're updating the right user, for the right organization and business unit
-		if err := db.Where("id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).First(&u).Error; err != nil {
+		if err := db.
+			Where("id = ? AND organization_id = ? AND business_unit_id = ?", userID, orgID, buID).
+			First(&u).Error; err != nil {
 			utils.ResponseWithError(w, http.StatusNotFound, models.ValidationErrorDetail{
 				Code:   "notFound",
 				Detail: "User not found",
@@ -35,14 +55,12 @@ func UpdateUser(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		if err := utils.ParseBodyAndValidate(w, r, &u); err != nil {
-
+		if err := utils.ParseBodyAndValidate(validator, w, r, &u); err != nil {
 			return
-
 		}
 
 		if err := db.Save(&u).Error; err != nil {
-			errorResponse := utils.FormatDatabaseError(err)
+			errorResponse := utils.CreateDBErrorResponse(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 
 			return
@@ -54,11 +72,18 @@ func UpdateUser(db *gorm.DB) http.HandlerFunc {
 
 func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+		userID, ok := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "userId",
+			})
+		}
 
 		var u models.User
 		user, err := u.GetUserByID(db, userID)
-
 		if err != nil {
 			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
 				Code:   "databaseError",
@@ -91,9 +116,35 @@ func GetAuthenticatedUser(db *gorm.DB) http.HandlerFunc {
 // GetUserFavorites returns a list of user favorites.
 func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
-		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
+
+		userID, ok := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "User ID not found in the request context",
+				Attr:   "userId",
+			})
+		}
 
 		var uf models.UserFavorite
 
@@ -113,24 +164,50 @@ func GetUserFavorites(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
+func AddUserFavorite(db *gorm.DB, validator *utils.Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var uf models.UserFavorite
 
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
-		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
+
+		userID, ok := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "User ID not found in the request context",
+				Attr:   "userId",
+			})
+		}
 
 		uf.OrganizationID = orgID
 		uf.BusinessUnitID = buID
 		uf.UserID = userID
 
-		if err := utils.ParseBodyAndValidate(w, r, &uf); err != nil {
+		if err := utils.ParseBodyAndValidate(validator, w, r, &uf); err != nil {
 			return
 		}
 
 		if err := db.Create(&uf).Error; err != nil {
-			errorResponse := utils.FormatDatabaseError(err)
+			errorResponse := utils.CreateDBErrorResponse(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 
 			return
@@ -140,11 +217,37 @@ func AddUserFavorite(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func RemoveUserFavorite(db *gorm.DB) http.HandlerFunc {
+func RemoveUserFavorite(db *gorm.DB, validator *utils.Validator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orgID := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
-		buID := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
-		userID := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+		orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Organization ID not found in the request context",
+				Attr:   "organizationId",
+			})
+		}
+
+		buID, ok := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "Business Unit ID not found in the request context",
+				Attr:   "businessUnitId",
+			})
+		}
+
+		userID, ok := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
+
+		if !ok {
+			utils.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+				Code:   "internalError",
+				Detail: "User ID not found in the request context",
+				Attr:   "userId",
+			})
+		}
 
 		var uf models.UserFavorite
 		uf.OrganizationID = orgID
@@ -152,13 +255,16 @@ func RemoveUserFavorite(db *gorm.DB) http.HandlerFunc {
 		uf.UserID = userID
 
 		// Get the pageLink from the body
-		if err := utils.ParseBodyAndValidate(w, r, &uf); err != nil {
+		if err := utils.ParseBodyAndValidate(validator, w, r, &uf); err != nil {
 			return
 		}
 
 		// Delete the user favorite by the pageLink
-		if err := db.Where("organization_id = ? AND business_unit_id = ? AND user_id = ? AND page_link = ?", orgID, buID, userID, uf.PageLink).Delete(&uf).Error; err != nil {
-			errorResponse := utils.FormatDatabaseError(err)
+		if err := db.
+			Where("organization_id = ? AND business_unit_id = ? AND user_id = ? AND page_link = ?",
+				orgID, buID, userID, uf.PageLink).
+			Delete(&uf).Error; err != nil {
+			errorResponse := utils.CreateDBErrorResponse(err)
 			utils.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 
 			return
