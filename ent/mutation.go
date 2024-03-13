@@ -14,9 +14,11 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/commodity"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -41,9 +43,11 @@ const (
 	TypeAccountingControl      = "AccountingControl"
 	TypeBillingControl         = "BillingControl"
 	TypeBusinessUnit           = "BusinessUnit"
+	TypeCommodity              = "Commodity"
 	TypeDispatchControl        = "DispatchControl"
 	TypeFeasibilityToolControl = "FeasibilityToolControl"
 	TypeGeneralLedgerAccount   = "GeneralLedgerAccount"
+	TypeHazardousMaterial      = "HazardousMaterial"
 	TypeInvoiceControl         = "InvoiceControl"
 	TypeOrganization           = "Organization"
 	TypeRouteControl           = "RouteControl"
@@ -4021,6 +4025,1294 @@ func (m *BusinessUnitMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown BusinessUnit edge %s", name)
 }
 
+// CommodityMutation represents an operation that mutates the Commodity nodes in the graph.
+type CommodityMutation struct {
+	config
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	created_at                *time.Time
+	updated_at                *time.Time
+	status                    *commodity.Status
+	name                      *string
+	is_hazmat                 *bool
+	unit_of_measure           *commodity.UnitOfMeasure
+	min_temp                  *float64
+	addmin_temp               *float64
+	max_temp                  *float64
+	addmax_temp               *float64
+	set_point_temp            *float64
+	addset_point_temp         *float64
+	description               *string
+	clearedFields             map[string]struct{}
+	business_unit             *uuid.UUID
+	clearedbusiness_unit      bool
+	organization              *uuid.UUID
+	clearedorganization       bool
+	hazardous_material        *uuid.UUID
+	clearedhazardous_material bool
+	done                      bool
+	oldValue                  func(context.Context) (*Commodity, error)
+	predicates                []predicate.Commodity
+}
+
+var _ ent.Mutation = (*CommodityMutation)(nil)
+
+// commodityOption allows management of the mutation configuration using functional options.
+type commodityOption func(*CommodityMutation)
+
+// newCommodityMutation creates new mutation for the Commodity entity.
+func newCommodityMutation(c config, op Op, opts ...commodityOption) *CommodityMutation {
+	m := &CommodityMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCommodity,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCommodityID sets the ID field of the mutation.
+func withCommodityID(id uuid.UUID) commodityOption {
+	return func(m *CommodityMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Commodity
+		)
+		m.oldValue = func(ctx context.Context) (*Commodity, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Commodity.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCommodity sets the old Commodity of the mutation.
+func withCommodity(node *Commodity) commodityOption {
+	return func(m *CommodityMutation) {
+		m.oldValue = func(context.Context) (*Commodity, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CommodityMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CommodityMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Commodity entities.
+func (m *CommodityMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CommodityMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CommodityMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Commodity.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *CommodityMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *CommodityMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *CommodityMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *CommodityMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *CommodityMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *CommodityMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CommodityMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CommodityMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CommodityMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CommodityMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CommodityMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CommodityMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *CommodityMutation) SetStatus(c commodity.Status) {
+	m.status = &c
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *CommodityMutation) Status() (r commodity.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldStatus(ctx context.Context) (v commodity.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *CommodityMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetName sets the "name" field.
+func (m *CommodityMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CommodityMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CommodityMutation) ResetName() {
+	m.name = nil
+}
+
+// SetIsHazmat sets the "is_hazmat" field.
+func (m *CommodityMutation) SetIsHazmat(b bool) {
+	m.is_hazmat = &b
+}
+
+// IsHazmat returns the value of the "is_hazmat" field in the mutation.
+func (m *CommodityMutation) IsHazmat() (r bool, exists bool) {
+	v := m.is_hazmat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsHazmat returns the old "is_hazmat" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldIsHazmat(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsHazmat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsHazmat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsHazmat: %w", err)
+	}
+	return oldValue.IsHazmat, nil
+}
+
+// ResetIsHazmat resets all changes to the "is_hazmat" field.
+func (m *CommodityMutation) ResetIsHazmat() {
+	m.is_hazmat = nil
+}
+
+// SetUnitOfMeasure sets the "unit_of_measure" field.
+func (m *CommodityMutation) SetUnitOfMeasure(com commodity.UnitOfMeasure) {
+	m.unit_of_measure = &com
+}
+
+// UnitOfMeasure returns the value of the "unit_of_measure" field in the mutation.
+func (m *CommodityMutation) UnitOfMeasure() (r commodity.UnitOfMeasure, exists bool) {
+	v := m.unit_of_measure
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnitOfMeasure returns the old "unit_of_measure" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldUnitOfMeasure(ctx context.Context) (v *commodity.UnitOfMeasure, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnitOfMeasure is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnitOfMeasure requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnitOfMeasure: %w", err)
+	}
+	return oldValue.UnitOfMeasure, nil
+}
+
+// ClearUnitOfMeasure clears the value of the "unit_of_measure" field.
+func (m *CommodityMutation) ClearUnitOfMeasure() {
+	m.unit_of_measure = nil
+	m.clearedFields[commodity.FieldUnitOfMeasure] = struct{}{}
+}
+
+// UnitOfMeasureCleared returns if the "unit_of_measure" field was cleared in this mutation.
+func (m *CommodityMutation) UnitOfMeasureCleared() bool {
+	_, ok := m.clearedFields[commodity.FieldUnitOfMeasure]
+	return ok
+}
+
+// ResetUnitOfMeasure resets all changes to the "unit_of_measure" field.
+func (m *CommodityMutation) ResetUnitOfMeasure() {
+	m.unit_of_measure = nil
+	delete(m.clearedFields, commodity.FieldUnitOfMeasure)
+}
+
+// SetMinTemp sets the "min_temp" field.
+func (m *CommodityMutation) SetMinTemp(f float64) {
+	m.min_temp = &f
+	m.addmin_temp = nil
+}
+
+// MinTemp returns the value of the "min_temp" field in the mutation.
+func (m *CommodityMutation) MinTemp() (r float64, exists bool) {
+	v := m.min_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMinTemp returns the old "min_temp" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldMinTemp(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMinTemp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMinTemp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMinTemp: %w", err)
+	}
+	return oldValue.MinTemp, nil
+}
+
+// AddMinTemp adds f to the "min_temp" field.
+func (m *CommodityMutation) AddMinTemp(f float64) {
+	if m.addmin_temp != nil {
+		*m.addmin_temp += f
+	} else {
+		m.addmin_temp = &f
+	}
+}
+
+// AddedMinTemp returns the value that was added to the "min_temp" field in this mutation.
+func (m *CommodityMutation) AddedMinTemp() (r float64, exists bool) {
+	v := m.addmin_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMinTemp clears the value of the "min_temp" field.
+func (m *CommodityMutation) ClearMinTemp() {
+	m.min_temp = nil
+	m.addmin_temp = nil
+	m.clearedFields[commodity.FieldMinTemp] = struct{}{}
+}
+
+// MinTempCleared returns if the "min_temp" field was cleared in this mutation.
+func (m *CommodityMutation) MinTempCleared() bool {
+	_, ok := m.clearedFields[commodity.FieldMinTemp]
+	return ok
+}
+
+// ResetMinTemp resets all changes to the "min_temp" field.
+func (m *CommodityMutation) ResetMinTemp() {
+	m.min_temp = nil
+	m.addmin_temp = nil
+	delete(m.clearedFields, commodity.FieldMinTemp)
+}
+
+// SetMaxTemp sets the "max_temp" field.
+func (m *CommodityMutation) SetMaxTemp(f float64) {
+	m.max_temp = &f
+	m.addmax_temp = nil
+}
+
+// MaxTemp returns the value of the "max_temp" field in the mutation.
+func (m *CommodityMutation) MaxTemp() (r float64, exists bool) {
+	v := m.max_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxTemp returns the old "max_temp" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldMaxTemp(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxTemp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxTemp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxTemp: %w", err)
+	}
+	return oldValue.MaxTemp, nil
+}
+
+// AddMaxTemp adds f to the "max_temp" field.
+func (m *CommodityMutation) AddMaxTemp(f float64) {
+	if m.addmax_temp != nil {
+		*m.addmax_temp += f
+	} else {
+		m.addmax_temp = &f
+	}
+}
+
+// AddedMaxTemp returns the value that was added to the "max_temp" field in this mutation.
+func (m *CommodityMutation) AddedMaxTemp() (r float64, exists bool) {
+	v := m.addmax_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMaxTemp clears the value of the "max_temp" field.
+func (m *CommodityMutation) ClearMaxTemp() {
+	m.max_temp = nil
+	m.addmax_temp = nil
+	m.clearedFields[commodity.FieldMaxTemp] = struct{}{}
+}
+
+// MaxTempCleared returns if the "max_temp" field was cleared in this mutation.
+func (m *CommodityMutation) MaxTempCleared() bool {
+	_, ok := m.clearedFields[commodity.FieldMaxTemp]
+	return ok
+}
+
+// ResetMaxTemp resets all changes to the "max_temp" field.
+func (m *CommodityMutation) ResetMaxTemp() {
+	m.max_temp = nil
+	m.addmax_temp = nil
+	delete(m.clearedFields, commodity.FieldMaxTemp)
+}
+
+// SetSetPointTemp sets the "set_point_temp" field.
+func (m *CommodityMutation) SetSetPointTemp(f float64) {
+	m.set_point_temp = &f
+	m.addset_point_temp = nil
+}
+
+// SetPointTemp returns the value of the "set_point_temp" field in the mutation.
+func (m *CommodityMutation) SetPointTemp() (r float64, exists bool) {
+	v := m.set_point_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSetPointTemp returns the old "set_point_temp" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldSetPointTemp(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSetPointTemp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSetPointTemp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSetPointTemp: %w", err)
+	}
+	return oldValue.SetPointTemp, nil
+}
+
+// AddSetPointTemp adds f to the "set_point_temp" field.
+func (m *CommodityMutation) AddSetPointTemp(f float64) {
+	if m.addset_point_temp != nil {
+		*m.addset_point_temp += f
+	} else {
+		m.addset_point_temp = &f
+	}
+}
+
+// AddedSetPointTemp returns the value that was added to the "set_point_temp" field in this mutation.
+func (m *CommodityMutation) AddedSetPointTemp() (r float64, exists bool) {
+	v := m.addset_point_temp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSetPointTemp clears the value of the "set_point_temp" field.
+func (m *CommodityMutation) ClearSetPointTemp() {
+	m.set_point_temp = nil
+	m.addset_point_temp = nil
+	m.clearedFields[commodity.FieldSetPointTemp] = struct{}{}
+}
+
+// SetPointTempCleared returns if the "set_point_temp" field was cleared in this mutation.
+func (m *CommodityMutation) SetPointTempCleared() bool {
+	_, ok := m.clearedFields[commodity.FieldSetPointTemp]
+	return ok
+}
+
+// ResetSetPointTemp resets all changes to the "set_point_temp" field.
+func (m *CommodityMutation) ResetSetPointTemp() {
+	m.set_point_temp = nil
+	m.addset_point_temp = nil
+	delete(m.clearedFields, commodity.FieldSetPointTemp)
+}
+
+// SetDescription sets the "description" field.
+func (m *CommodityMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *CommodityMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *CommodityMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[commodity.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *CommodityMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[commodity.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *CommodityMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, commodity.FieldDescription)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *CommodityMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[commodity.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *CommodityMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *CommodityMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *CommodityMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *CommodityMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[commodity.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *CommodityMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *CommodityMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *CommodityMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetHazardousMaterialID sets the "hazardous_material" edge to the HazardousMaterial entity by id.
+func (m *CommodityMutation) SetHazardousMaterialID(id uuid.UUID) {
+	m.hazardous_material = &id
+}
+
+// ClearHazardousMaterial clears the "hazardous_material" edge to the HazardousMaterial entity.
+func (m *CommodityMutation) ClearHazardousMaterial() {
+	m.clearedhazardous_material = true
+}
+
+// HazardousMaterialCleared reports if the "hazardous_material" edge to the HazardousMaterial entity was cleared.
+func (m *CommodityMutation) HazardousMaterialCleared() bool {
+	return m.clearedhazardous_material
+}
+
+// HazardousMaterialID returns the "hazardous_material" edge ID in the mutation.
+func (m *CommodityMutation) HazardousMaterialID() (id uuid.UUID, exists bool) {
+	if m.hazardous_material != nil {
+		return *m.hazardous_material, true
+	}
+	return
+}
+
+// HazardousMaterialIDs returns the "hazardous_material" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// HazardousMaterialID instead. It exists only for internal usage by the builders.
+func (m *CommodityMutation) HazardousMaterialIDs() (ids []uuid.UUID) {
+	if id := m.hazardous_material; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetHazardousMaterial resets all changes to the "hazardous_material" edge.
+func (m *CommodityMutation) ResetHazardousMaterial() {
+	m.hazardous_material = nil
+	m.clearedhazardous_material = false
+}
+
+// Where appends a list predicates to the CommodityMutation builder.
+func (m *CommodityMutation) Where(ps ...predicate.Commodity) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CommodityMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CommodityMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Commodity, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CommodityMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CommodityMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Commodity).
+func (m *CommodityMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CommodityMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.business_unit != nil {
+		fields = append(fields, commodity.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, commodity.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, commodity.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, commodity.FieldUpdatedAt)
+	}
+	if m.status != nil {
+		fields = append(fields, commodity.FieldStatus)
+	}
+	if m.name != nil {
+		fields = append(fields, commodity.FieldName)
+	}
+	if m.is_hazmat != nil {
+		fields = append(fields, commodity.FieldIsHazmat)
+	}
+	if m.unit_of_measure != nil {
+		fields = append(fields, commodity.FieldUnitOfMeasure)
+	}
+	if m.min_temp != nil {
+		fields = append(fields, commodity.FieldMinTemp)
+	}
+	if m.max_temp != nil {
+		fields = append(fields, commodity.FieldMaxTemp)
+	}
+	if m.set_point_temp != nil {
+		fields = append(fields, commodity.FieldSetPointTemp)
+	}
+	if m.description != nil {
+		fields = append(fields, commodity.FieldDescription)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CommodityMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case commodity.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case commodity.FieldOrganizationID:
+		return m.OrganizationID()
+	case commodity.FieldCreatedAt:
+		return m.CreatedAt()
+	case commodity.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case commodity.FieldStatus:
+		return m.Status()
+	case commodity.FieldName:
+		return m.Name()
+	case commodity.FieldIsHazmat:
+		return m.IsHazmat()
+	case commodity.FieldUnitOfMeasure:
+		return m.UnitOfMeasure()
+	case commodity.FieldMinTemp:
+		return m.MinTemp()
+	case commodity.FieldMaxTemp:
+		return m.MaxTemp()
+	case commodity.FieldSetPointTemp:
+		return m.SetPointTemp()
+	case commodity.FieldDescription:
+		return m.Description()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CommodityMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case commodity.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case commodity.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case commodity.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case commodity.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case commodity.FieldStatus:
+		return m.OldStatus(ctx)
+	case commodity.FieldName:
+		return m.OldName(ctx)
+	case commodity.FieldIsHazmat:
+		return m.OldIsHazmat(ctx)
+	case commodity.FieldUnitOfMeasure:
+		return m.OldUnitOfMeasure(ctx)
+	case commodity.FieldMinTemp:
+		return m.OldMinTemp(ctx)
+	case commodity.FieldMaxTemp:
+		return m.OldMaxTemp(ctx)
+	case commodity.FieldSetPointTemp:
+		return m.OldSetPointTemp(ctx)
+	case commodity.FieldDescription:
+		return m.OldDescription(ctx)
+	}
+	return nil, fmt.Errorf("unknown Commodity field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommodityMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case commodity.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case commodity.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case commodity.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case commodity.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case commodity.FieldStatus:
+		v, ok := value.(commodity.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case commodity.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case commodity.FieldIsHazmat:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsHazmat(v)
+		return nil
+	case commodity.FieldUnitOfMeasure:
+		v, ok := value.(commodity.UnitOfMeasure)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnitOfMeasure(v)
+		return nil
+	case commodity.FieldMinTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMinTemp(v)
+		return nil
+	case commodity.FieldMaxTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxTemp(v)
+		return nil
+	case commodity.FieldSetPointTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSetPointTemp(v)
+		return nil
+	case commodity.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CommodityMutation) AddedFields() []string {
+	var fields []string
+	if m.addmin_temp != nil {
+		fields = append(fields, commodity.FieldMinTemp)
+	}
+	if m.addmax_temp != nil {
+		fields = append(fields, commodity.FieldMaxTemp)
+	}
+	if m.addset_point_temp != nil {
+		fields = append(fields, commodity.FieldSetPointTemp)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CommodityMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case commodity.FieldMinTemp:
+		return m.AddedMinTemp()
+	case commodity.FieldMaxTemp:
+		return m.AddedMaxTemp()
+	case commodity.FieldSetPointTemp:
+		return m.AddedSetPointTemp()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommodityMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case commodity.FieldMinTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMinTemp(v)
+		return nil
+	case commodity.FieldMaxTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxTemp(v)
+		return nil
+	case commodity.FieldSetPointTemp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSetPointTemp(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CommodityMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(commodity.FieldUnitOfMeasure) {
+		fields = append(fields, commodity.FieldUnitOfMeasure)
+	}
+	if m.FieldCleared(commodity.FieldMinTemp) {
+		fields = append(fields, commodity.FieldMinTemp)
+	}
+	if m.FieldCleared(commodity.FieldMaxTemp) {
+		fields = append(fields, commodity.FieldMaxTemp)
+	}
+	if m.FieldCleared(commodity.FieldSetPointTemp) {
+		fields = append(fields, commodity.FieldSetPointTemp)
+	}
+	if m.FieldCleared(commodity.FieldDescription) {
+		fields = append(fields, commodity.FieldDescription)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CommodityMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CommodityMutation) ClearField(name string) error {
+	switch name {
+	case commodity.FieldUnitOfMeasure:
+		m.ClearUnitOfMeasure()
+		return nil
+	case commodity.FieldMinTemp:
+		m.ClearMinTemp()
+		return nil
+	case commodity.FieldMaxTemp:
+		m.ClearMaxTemp()
+		return nil
+	case commodity.FieldSetPointTemp:
+		m.ClearSetPointTemp()
+		return nil
+	case commodity.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CommodityMutation) ResetField(name string) error {
+	switch name {
+	case commodity.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case commodity.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case commodity.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case commodity.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case commodity.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case commodity.FieldName:
+		m.ResetName()
+		return nil
+	case commodity.FieldIsHazmat:
+		m.ResetIsHazmat()
+		return nil
+	case commodity.FieldUnitOfMeasure:
+		m.ResetUnitOfMeasure()
+		return nil
+	case commodity.FieldMinTemp:
+		m.ResetMinTemp()
+		return nil
+	case commodity.FieldMaxTemp:
+		m.ResetMaxTemp()
+		return nil
+	case commodity.FieldSetPointTemp:
+		m.ResetSetPointTemp()
+		return nil
+	case commodity.FieldDescription:
+		m.ResetDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CommodityMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.business_unit != nil {
+		edges = append(edges, commodity.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, commodity.EdgeOrganization)
+	}
+	if m.hazardous_material != nil {
+		edges = append(edges, commodity.EdgeHazardousMaterial)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CommodityMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case commodity.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case commodity.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case commodity.EdgeHazardousMaterial:
+		if id := m.hazardous_material; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CommodityMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CommodityMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CommodityMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedbusiness_unit {
+		edges = append(edges, commodity.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, commodity.EdgeOrganization)
+	}
+	if m.clearedhazardous_material {
+		edges = append(edges, commodity.EdgeHazardousMaterial)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CommodityMutation) EdgeCleared(name string) bool {
+	switch name {
+	case commodity.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case commodity.EdgeOrganization:
+		return m.clearedorganization
+	case commodity.EdgeHazardousMaterial:
+		return m.clearedhazardous_material
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CommodityMutation) ClearEdge(name string) error {
+	switch name {
+	case commodity.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case commodity.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case commodity.EdgeHazardousMaterial:
+		m.ClearHazardousMaterial()
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CommodityMutation) ResetEdge(name string) error {
+	switch name {
+	case commodity.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case commodity.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case commodity.EdgeHazardousMaterial:
+		m.ResetHazardousMaterial()
+		return nil
+	}
+	return fmt.Errorf("unknown Commodity edge %s", name)
+}
+
 // DispatchControlMutation represents an operation that mutates the DispatchControl nodes in the graph.
 type DispatchControlMutation struct {
 	config
@@ -7948,6 +9240,1088 @@ func (m *GeneralLedgerAccountMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown GeneralLedgerAccount edge %s", name)
+}
+
+// HazardousMaterialMutation represents an operation that mutates the HazardousMaterial nodes in the graph.
+type HazardousMaterialMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	name                 *string
+	hazard_class         *hazardousmaterial.HazardClass
+	erg_number           *string
+	description          *string
+	packing_group        *hazardousmaterial.PackingGroup
+	proper_shipping_name *string
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	commodities          map[uuid.UUID]struct{}
+	removedcommodities   map[uuid.UUID]struct{}
+	clearedcommodities   bool
+	done                 bool
+	oldValue             func(context.Context) (*HazardousMaterial, error)
+	predicates           []predicate.HazardousMaterial
+}
+
+var _ ent.Mutation = (*HazardousMaterialMutation)(nil)
+
+// hazardousmaterialOption allows management of the mutation configuration using functional options.
+type hazardousmaterialOption func(*HazardousMaterialMutation)
+
+// newHazardousMaterialMutation creates new mutation for the HazardousMaterial entity.
+func newHazardousMaterialMutation(c config, op Op, opts ...hazardousmaterialOption) *HazardousMaterialMutation {
+	m := &HazardousMaterialMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeHazardousMaterial,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withHazardousMaterialID sets the ID field of the mutation.
+func withHazardousMaterialID(id uuid.UUID) hazardousmaterialOption {
+	return func(m *HazardousMaterialMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *HazardousMaterial
+		)
+		m.oldValue = func(ctx context.Context) (*HazardousMaterial, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().HazardousMaterial.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withHazardousMaterial sets the old HazardousMaterial of the mutation.
+func withHazardousMaterial(node *HazardousMaterial) hazardousmaterialOption {
+	return func(m *HazardousMaterialMutation) {
+		m.oldValue = func(context.Context) (*HazardousMaterial, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m HazardousMaterialMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m HazardousMaterialMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of HazardousMaterial entities.
+func (m *HazardousMaterialMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *HazardousMaterialMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *HazardousMaterialMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().HazardousMaterial.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *HazardousMaterialMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *HazardousMaterialMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *HazardousMaterialMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *HazardousMaterialMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *HazardousMaterialMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *HazardousMaterialMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *HazardousMaterialMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *HazardousMaterialMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *HazardousMaterialMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *HazardousMaterialMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *HazardousMaterialMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *HazardousMaterialMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *HazardousMaterialMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *HazardousMaterialMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *HazardousMaterialMutation) ResetName() {
+	m.name = nil
+}
+
+// SetHazardClass sets the "hazard_class" field.
+func (m *HazardousMaterialMutation) SetHazardClass(hc hazardousmaterial.HazardClass) {
+	m.hazard_class = &hc
+}
+
+// HazardClass returns the value of the "hazard_class" field in the mutation.
+func (m *HazardousMaterialMutation) HazardClass() (r hazardousmaterial.HazardClass, exists bool) {
+	v := m.hazard_class
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHazardClass returns the old "hazard_class" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldHazardClass(ctx context.Context) (v hazardousmaterial.HazardClass, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHazardClass is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHazardClass requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHazardClass: %w", err)
+	}
+	return oldValue.HazardClass, nil
+}
+
+// ResetHazardClass resets all changes to the "hazard_class" field.
+func (m *HazardousMaterialMutation) ResetHazardClass() {
+	m.hazard_class = nil
+}
+
+// SetErgNumber sets the "erg_number" field.
+func (m *HazardousMaterialMutation) SetErgNumber(s string) {
+	m.erg_number = &s
+}
+
+// ErgNumber returns the value of the "erg_number" field in the mutation.
+func (m *HazardousMaterialMutation) ErgNumber() (r string, exists bool) {
+	v := m.erg_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErgNumber returns the old "erg_number" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldErgNumber(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErgNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErgNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErgNumber: %w", err)
+	}
+	return oldValue.ErgNumber, nil
+}
+
+// ClearErgNumber clears the value of the "erg_number" field.
+func (m *HazardousMaterialMutation) ClearErgNumber() {
+	m.erg_number = nil
+	m.clearedFields[hazardousmaterial.FieldErgNumber] = struct{}{}
+}
+
+// ErgNumberCleared returns if the "erg_number" field was cleared in this mutation.
+func (m *HazardousMaterialMutation) ErgNumberCleared() bool {
+	_, ok := m.clearedFields[hazardousmaterial.FieldErgNumber]
+	return ok
+}
+
+// ResetErgNumber resets all changes to the "erg_number" field.
+func (m *HazardousMaterialMutation) ResetErgNumber() {
+	m.erg_number = nil
+	delete(m.clearedFields, hazardousmaterial.FieldErgNumber)
+}
+
+// SetDescription sets the "description" field.
+func (m *HazardousMaterialMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *HazardousMaterialMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *HazardousMaterialMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[hazardousmaterial.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *HazardousMaterialMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[hazardousmaterial.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *HazardousMaterialMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, hazardousmaterial.FieldDescription)
+}
+
+// SetPackingGroup sets the "packing_group" field.
+func (m *HazardousMaterialMutation) SetPackingGroup(hg hazardousmaterial.PackingGroup) {
+	m.packing_group = &hg
+}
+
+// PackingGroup returns the value of the "packing_group" field in the mutation.
+func (m *HazardousMaterialMutation) PackingGroup() (r hazardousmaterial.PackingGroup, exists bool) {
+	v := m.packing_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPackingGroup returns the old "packing_group" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldPackingGroup(ctx context.Context) (v *hazardousmaterial.PackingGroup, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPackingGroup is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPackingGroup requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPackingGroup: %w", err)
+	}
+	return oldValue.PackingGroup, nil
+}
+
+// ClearPackingGroup clears the value of the "packing_group" field.
+func (m *HazardousMaterialMutation) ClearPackingGroup() {
+	m.packing_group = nil
+	m.clearedFields[hazardousmaterial.FieldPackingGroup] = struct{}{}
+}
+
+// PackingGroupCleared returns if the "packing_group" field was cleared in this mutation.
+func (m *HazardousMaterialMutation) PackingGroupCleared() bool {
+	_, ok := m.clearedFields[hazardousmaterial.FieldPackingGroup]
+	return ok
+}
+
+// ResetPackingGroup resets all changes to the "packing_group" field.
+func (m *HazardousMaterialMutation) ResetPackingGroup() {
+	m.packing_group = nil
+	delete(m.clearedFields, hazardousmaterial.FieldPackingGroup)
+}
+
+// SetProperShippingName sets the "proper_shipping_name" field.
+func (m *HazardousMaterialMutation) SetProperShippingName(s string) {
+	m.proper_shipping_name = &s
+}
+
+// ProperShippingName returns the value of the "proper_shipping_name" field in the mutation.
+func (m *HazardousMaterialMutation) ProperShippingName() (r string, exists bool) {
+	v := m.proper_shipping_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProperShippingName returns the old "proper_shipping_name" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldProperShippingName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProperShippingName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProperShippingName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProperShippingName: %w", err)
+	}
+	return oldValue.ProperShippingName, nil
+}
+
+// ClearProperShippingName clears the value of the "proper_shipping_name" field.
+func (m *HazardousMaterialMutation) ClearProperShippingName() {
+	m.proper_shipping_name = nil
+	m.clearedFields[hazardousmaterial.FieldProperShippingName] = struct{}{}
+}
+
+// ProperShippingNameCleared returns if the "proper_shipping_name" field was cleared in this mutation.
+func (m *HazardousMaterialMutation) ProperShippingNameCleared() bool {
+	_, ok := m.clearedFields[hazardousmaterial.FieldProperShippingName]
+	return ok
+}
+
+// ResetProperShippingName resets all changes to the "proper_shipping_name" field.
+func (m *HazardousMaterialMutation) ResetProperShippingName() {
+	m.proper_shipping_name = nil
+	delete(m.clearedFields, hazardousmaterial.FieldProperShippingName)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *HazardousMaterialMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[hazardousmaterial.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *HazardousMaterialMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *HazardousMaterialMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *HazardousMaterialMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *HazardousMaterialMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[hazardousmaterial.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *HazardousMaterialMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *HazardousMaterialMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *HazardousMaterialMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// AddCommodityIDs adds the "commodities" edge to the Commodity entity by ids.
+func (m *HazardousMaterialMutation) AddCommodityIDs(ids ...uuid.UUID) {
+	if m.commodities == nil {
+		m.commodities = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.commodities[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCommodities clears the "commodities" edge to the Commodity entity.
+func (m *HazardousMaterialMutation) ClearCommodities() {
+	m.clearedcommodities = true
+}
+
+// CommoditiesCleared reports if the "commodities" edge to the Commodity entity was cleared.
+func (m *HazardousMaterialMutation) CommoditiesCleared() bool {
+	return m.clearedcommodities
+}
+
+// RemoveCommodityIDs removes the "commodities" edge to the Commodity entity by IDs.
+func (m *HazardousMaterialMutation) RemoveCommodityIDs(ids ...uuid.UUID) {
+	if m.removedcommodities == nil {
+		m.removedcommodities = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.commodities, ids[i])
+		m.removedcommodities[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCommodities returns the removed IDs of the "commodities" edge to the Commodity entity.
+func (m *HazardousMaterialMutation) RemovedCommoditiesIDs() (ids []uuid.UUID) {
+	for id := range m.removedcommodities {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CommoditiesIDs returns the "commodities" edge IDs in the mutation.
+func (m *HazardousMaterialMutation) CommoditiesIDs() (ids []uuid.UUID) {
+	for id := range m.commodities {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCommodities resets all changes to the "commodities" edge.
+func (m *HazardousMaterialMutation) ResetCommodities() {
+	m.commodities = nil
+	m.clearedcommodities = false
+	m.removedcommodities = nil
+}
+
+// Where appends a list predicates to the HazardousMaterialMutation builder.
+func (m *HazardousMaterialMutation) Where(ps ...predicate.HazardousMaterial) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the HazardousMaterialMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *HazardousMaterialMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.HazardousMaterial, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *HazardousMaterialMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *HazardousMaterialMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (HazardousMaterial).
+func (m *HazardousMaterialMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *HazardousMaterialMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.business_unit != nil {
+		fields = append(fields, hazardousmaterial.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, hazardousmaterial.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, hazardousmaterial.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, hazardousmaterial.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, hazardousmaterial.FieldName)
+	}
+	if m.hazard_class != nil {
+		fields = append(fields, hazardousmaterial.FieldHazardClass)
+	}
+	if m.erg_number != nil {
+		fields = append(fields, hazardousmaterial.FieldErgNumber)
+	}
+	if m.description != nil {
+		fields = append(fields, hazardousmaterial.FieldDescription)
+	}
+	if m.packing_group != nil {
+		fields = append(fields, hazardousmaterial.FieldPackingGroup)
+	}
+	if m.proper_shipping_name != nil {
+		fields = append(fields, hazardousmaterial.FieldProperShippingName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *HazardousMaterialMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case hazardousmaterial.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case hazardousmaterial.FieldOrganizationID:
+		return m.OrganizationID()
+	case hazardousmaterial.FieldCreatedAt:
+		return m.CreatedAt()
+	case hazardousmaterial.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case hazardousmaterial.FieldName:
+		return m.Name()
+	case hazardousmaterial.FieldHazardClass:
+		return m.HazardClass()
+	case hazardousmaterial.FieldErgNumber:
+		return m.ErgNumber()
+	case hazardousmaterial.FieldDescription:
+		return m.Description()
+	case hazardousmaterial.FieldPackingGroup:
+		return m.PackingGroup()
+	case hazardousmaterial.FieldProperShippingName:
+		return m.ProperShippingName()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *HazardousMaterialMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case hazardousmaterial.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case hazardousmaterial.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case hazardousmaterial.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case hazardousmaterial.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case hazardousmaterial.FieldName:
+		return m.OldName(ctx)
+	case hazardousmaterial.FieldHazardClass:
+		return m.OldHazardClass(ctx)
+	case hazardousmaterial.FieldErgNumber:
+		return m.OldErgNumber(ctx)
+	case hazardousmaterial.FieldDescription:
+		return m.OldDescription(ctx)
+	case hazardousmaterial.FieldPackingGroup:
+		return m.OldPackingGroup(ctx)
+	case hazardousmaterial.FieldProperShippingName:
+		return m.OldProperShippingName(ctx)
+	}
+	return nil, fmt.Errorf("unknown HazardousMaterial field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HazardousMaterialMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case hazardousmaterial.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case hazardousmaterial.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case hazardousmaterial.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case hazardousmaterial.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case hazardousmaterial.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case hazardousmaterial.FieldHazardClass:
+		v, ok := value.(hazardousmaterial.HazardClass)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHazardClass(v)
+		return nil
+	case hazardousmaterial.FieldErgNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErgNumber(v)
+		return nil
+	case hazardousmaterial.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case hazardousmaterial.FieldPackingGroup:
+		v, ok := value.(hazardousmaterial.PackingGroup)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPackingGroup(v)
+		return nil
+	case hazardousmaterial.FieldProperShippingName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProperShippingName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterial field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *HazardousMaterialMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *HazardousMaterialMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HazardousMaterialMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown HazardousMaterial numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *HazardousMaterialMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(hazardousmaterial.FieldErgNumber) {
+		fields = append(fields, hazardousmaterial.FieldErgNumber)
+	}
+	if m.FieldCleared(hazardousmaterial.FieldDescription) {
+		fields = append(fields, hazardousmaterial.FieldDescription)
+	}
+	if m.FieldCleared(hazardousmaterial.FieldPackingGroup) {
+		fields = append(fields, hazardousmaterial.FieldPackingGroup)
+	}
+	if m.FieldCleared(hazardousmaterial.FieldProperShippingName) {
+		fields = append(fields, hazardousmaterial.FieldProperShippingName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *HazardousMaterialMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *HazardousMaterialMutation) ClearField(name string) error {
+	switch name {
+	case hazardousmaterial.FieldErgNumber:
+		m.ClearErgNumber()
+		return nil
+	case hazardousmaterial.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case hazardousmaterial.FieldPackingGroup:
+		m.ClearPackingGroup()
+		return nil
+	case hazardousmaterial.FieldProperShippingName:
+		m.ClearProperShippingName()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterial nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *HazardousMaterialMutation) ResetField(name string) error {
+	switch name {
+	case hazardousmaterial.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case hazardousmaterial.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case hazardousmaterial.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case hazardousmaterial.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case hazardousmaterial.FieldName:
+		m.ResetName()
+		return nil
+	case hazardousmaterial.FieldHazardClass:
+		m.ResetHazardClass()
+		return nil
+	case hazardousmaterial.FieldErgNumber:
+		m.ResetErgNumber()
+		return nil
+	case hazardousmaterial.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case hazardousmaterial.FieldPackingGroup:
+		m.ResetPackingGroup()
+		return nil
+	case hazardousmaterial.FieldProperShippingName:
+		m.ResetProperShippingName()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterial field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *HazardousMaterialMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.business_unit != nil {
+		edges = append(edges, hazardousmaterial.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, hazardousmaterial.EdgeOrganization)
+	}
+	if m.commodities != nil {
+		edges = append(edges, hazardousmaterial.EdgeCommodities)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *HazardousMaterialMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case hazardousmaterial.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case hazardousmaterial.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case hazardousmaterial.EdgeCommodities:
+		ids := make([]ent.Value, 0, len(m.commodities))
+		for id := range m.commodities {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *HazardousMaterialMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.removedcommodities != nil {
+		edges = append(edges, hazardousmaterial.EdgeCommodities)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *HazardousMaterialMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case hazardousmaterial.EdgeCommodities:
+		ids := make([]ent.Value, 0, len(m.removedcommodities))
+		for id := range m.removedcommodities {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *HazardousMaterialMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedbusiness_unit {
+		edges = append(edges, hazardousmaterial.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, hazardousmaterial.EdgeOrganization)
+	}
+	if m.clearedcommodities {
+		edges = append(edges, hazardousmaterial.EdgeCommodities)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *HazardousMaterialMutation) EdgeCleared(name string) bool {
+	switch name {
+	case hazardousmaterial.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case hazardousmaterial.EdgeOrganization:
+		return m.clearedorganization
+	case hazardousmaterial.EdgeCommodities:
+		return m.clearedcommodities
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *HazardousMaterialMutation) ClearEdge(name string) error {
+	switch name {
+	case hazardousmaterial.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case hazardousmaterial.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterial unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *HazardousMaterialMutation) ResetEdge(name string) error {
+	switch name {
+	case hazardousmaterial.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case hazardousmaterial.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case hazardousmaterial.EdgeCommodities:
+		m.ResetCommodities()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterial edge %s", name)
 }
 
 // InvoiceControlMutation represents an operation that mutates the InvoiceControl nodes in the graph.

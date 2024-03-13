@@ -18,12 +18,16 @@ type Tx struct {
 	BillingControl *BillingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
+	// Commodity is the client for interacting with the Commodity builders.
+	Commodity *CommodityClient
 	// DispatchControl is the client for interacting with the DispatchControl builders.
 	DispatchControl *DispatchControlClient
 	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
 	FeasibilityToolControl *FeasibilityToolControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
+	HazardousMaterial *HazardousMaterialClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
 	// Organization is the client for interacting with the Organization builders.
@@ -172,9 +176,11 @@ func (tx *Tx) init() {
 	tx.AccountingControl = NewAccountingControlClient(tx.config)
 	tx.BillingControl = NewBillingControlClient(tx.config)
 	tx.BusinessUnit = NewBusinessUnitClient(tx.config)
+	tx.Commodity = NewCommodityClient(tx.config)
 	tx.DispatchControl = NewDispatchControlClient(tx.config)
 	tx.FeasibilityToolControl = NewFeasibilityToolControlClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
+	tx.HazardousMaterial = NewHazardousMaterialClient(tx.config)
 	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.RouteControl = NewRouteControlClient(tx.config)

@@ -15,6 +15,9 @@ type BillingControl func(*sql.Selector)
 // BusinessUnit is the predicate function for businessunit builders.
 type BusinessUnit func(*sql.Selector)
 
+// Commodity is the predicate function for commodity builders.
+type Commodity func(*sql.Selector)
+
 // DispatchControl is the predicate function for dispatchcontrol builders.
 type DispatchControl func(*sql.Selector)
 
@@ -23,6 +26,9 @@ type FeasibilityToolControl func(*sql.Selector)
 
 // GeneralLedgerAccount is the predicate function for generalledgeraccount builders.
 type GeneralLedgerAccount func(*sql.Selector)
+
+// HazardousMaterial is the predicate function for hazardousmaterial builders.
+type HazardousMaterial func(*sql.Selector)
 
 // InvoiceControl is the predicate function for invoicecontrol builders.
 type InvoiceControl func(*sql.Selector)

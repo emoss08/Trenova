@@ -45,6 +45,18 @@ func (f BusinessUnitFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BusinessUnitMutation", m)
 }
 
+// The CommodityFunc type is an adapter to allow the use of ordinary
+// function as Commodity mutator.
+type CommodityFunc func(context.Context, *ent.CommodityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommodityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CommodityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommodityMutation", m)
+}
+
 // The DispatchControlFunc type is an adapter to allow the use of ordinary
 // function as DispatchControl mutator.
 type DispatchControlFunc func(context.Context, *ent.DispatchControlMutation) (ent.Value, error)
@@ -79,6 +91,18 @@ func (f GeneralLedgerAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneralLedgerAccountMutation", m)
+}
+
+// The HazardousMaterialFunc type is an adapter to allow the use of ordinary
+// function as HazardousMaterial mutator.
+type HazardousMaterialFunc func(context.Context, *ent.HazardousMaterialMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f HazardousMaterialFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.HazardousMaterialMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HazardousMaterialMutation", m)
 }
 
 // The InvoiceControlFunc type is an adapter to allow the use of ordinary
