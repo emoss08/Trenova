@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -103,7 +104,7 @@ func (oq *OrganizationQuery) QueryAccountingControl() *AccountingControlQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(accountingcontrol.Table, accountingcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -487,7 +488,7 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			oq.withDispatchControl != nil,
 		}
 	)
-	if oq.withBusinessUnit != nil || oq.withAccountingControl != nil || oq.withBillingControl != nil || oq.withDispatchControl != nil {
+	if oq.withBillingControl != nil || oq.withDispatchControl != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -542,10 +543,7 @@ func (oq *OrganizationQuery) loadBusinessUnit(ctx context.Context, query *Busine
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Organization)
 	for i := range nodes {
-		if nodes[i].business_unit_id == nil {
-			continue
-		}
-		fk := *nodes[i].business_unit_id
+		fk := nodes[i].BusinessUnitID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -571,34 +569,30 @@ func (oq *OrganizationQuery) loadBusinessUnit(ctx context.Context, query *Busine
 	return nil
 }
 func (oq *OrganizationQuery) loadAccountingControl(ctx context.Context, query *AccountingControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *AccountingControl)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Organization)
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
 	for i := range nodes {
-		if nodes[i].organization_accounting_control == nil {
-			continue
-		}
-		fk := *nodes[i].organization_accounting_control
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(accountingcontrol.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.AccountingControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.AccountingControlColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "organization_accounting_control" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -691,6 +685,9 @@ func (oq *OrganizationQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != organization.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if oq.withBusinessUnit != nil {
+			_spec.Node.AddColumnOnce(organization.FieldBusinessUnitID)
 		}
 	}
 	if ps := oq.predicates; len(ps) > 0 {

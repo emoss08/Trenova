@@ -66,6 +66,11 @@ func UpdatedAt(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// BusinessUnitID applies equality check predicate on the "business_unit_id" field. It's identical to BusinessUnitIDEQ.
+func BusinessUnitID(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldBusinessUnitID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldName, v))
@@ -164,6 +169,26 @@ func UpdatedAtLT(v time.Time) predicate.Organization {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
+func BusinessUnitIDEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldBusinessUnitID, v))
+}
+
+// BusinessUnitIDNEQ applies the NEQ predicate on the "business_unit_id" field.
+func BusinessUnitIDNEQ(v uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldBusinessUnitID, v))
+}
+
+// BusinessUnitIDIn applies the In predicate on the "business_unit_id" field.
+func BusinessUnitIDIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldBusinessUnitID, vs...))
+}
+
+// BusinessUnitIDNotIn applies the NotIn predicate on the "business_unit_id" field.
+func BusinessUnitIDNotIn(vs ...uuid.UUID) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldBusinessUnitID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -504,7 +529,7 @@ func HasAccountingControl() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, AccountingControlTable, AccountingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, AccountingControlTable, AccountingControlColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

@@ -380,7 +380,7 @@ func (c *AccountingControlClient) QueryOrganization(ac *AccountingControl) *Orga
 		step := sqlgraph.NewStep(
 			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, id),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.OrganizationTable, accountingcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, accountingcontrol.OrganizationTable, accountingcontrol.OrganizationColumn),
 		)
 		fromV = sqlgraph.Neighbors(ac.driver.Dialect(), step)
 		return fromV, nil
@@ -1285,7 +1285,7 @@ func (c *OrganizationClient) QueryAccountingControl(o *Organization) *Accounting
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(accountingcontrol.Table, accountingcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil

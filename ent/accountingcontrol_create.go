@@ -52,18 +52,6 @@ func (acc *AccountingControlCreate) SetNillableUpdatedAt(t *time.Time) *Accounti
 	return acc
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (acc *AccountingControlCreate) SetOrganizationID(u uuid.UUID) *AccountingControlCreate {
-	acc.mutation.SetOrganizationID(u)
-	return acc
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (acc *AccountingControlCreate) SetBusinessUnitID(u uuid.UUID) *AccountingControlCreate {
-	acc.mutation.SetBusinessUnitID(u)
-	return acc
-}
-
 // SetRecThreshold sets the "rec_threshold" field.
 func (acc *AccountingControlCreate) SetRecThreshold(i int64) *AccountingControlCreate {
 	acc.mutation.SetRecThreshold(i)
@@ -168,6 +156,14 @@ func (acc *AccountingControlCreate) SetCriticalProcesses(s string) *AccountingCo
 	return acc
 }
 
+// SetNillableCriticalProcesses sets the "critical_processes" field if the given value is not nil.
+func (acc *AccountingControlCreate) SetNillableCriticalProcesses(s *string) *AccountingControlCreate {
+	if s != nil {
+		acc.SetCriticalProcesses(*s)
+	}
+	return acc
+}
+
 // SetDefaultRevAccountID sets the "default_rev_account_id" field.
 func (acc *AccountingControlCreate) SetDefaultRevAccountID(u uuid.UUID) *AccountingControlCreate {
 	acc.mutation.SetDefaultRevAccountID(u)
@@ -210,9 +206,21 @@ func (acc *AccountingControlCreate) SetNillableID(u *uuid.UUID) *AccountingContr
 	return acc
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (acc *AccountingControlCreate) SetOrganizationID(id uuid.UUID) *AccountingControlCreate {
+	acc.mutation.SetOrganizationID(id)
+	return acc
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (acc *AccountingControlCreate) SetOrganization(o *Organization) *AccountingControlCreate {
 	return acc.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (acc *AccountingControlCreate) SetBusinessUnitID(id uuid.UUID) *AccountingControlCreate {
+	acc.mutation.SetBusinessUnitID(id)
+	return acc
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -315,12 +323,6 @@ func (acc *AccountingControlCreate) check() error {
 	if _, ok := acc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "AccountingControl.updated_at"`)}
 	}
-	if _, ok := acc.mutation.OrganizationID(); !ok {
-		return &ValidationError{Name: "organization_id", err: errors.New(`ent: missing required field "AccountingControl.organization_id"`)}
-	}
-	if _, ok := acc.mutation.BusinessUnitID(); !ok {
-		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "AccountingControl.business_unit_id"`)}
-	}
 	if _, ok := acc.mutation.RecThreshold(); !ok {
 		return &ValidationError{Name: "rec_threshold", err: errors.New(`ent: missing required field "AccountingControl.rec_threshold"`)}
 	}
@@ -351,9 +353,6 @@ func (acc *AccountingControlCreate) check() error {
 	}
 	if _, ok := acc.mutation.HaltOnPendingRec(); !ok {
 		return &ValidationError{Name: "halt_on_pending_rec", err: errors.New(`ent: missing required field "AccountingControl.halt_on_pending_rec"`)}
-	}
-	if _, ok := acc.mutation.CriticalProcesses(); !ok {
-		return &ValidationError{Name: "critical_processes", err: errors.New(`ent: missing required field "AccountingControl.critical_processes"`)}
 	}
 	if _, ok := acc.mutation.OrganizationID(); !ok {
 		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "AccountingControl.organization"`)}
@@ -438,8 +437,8 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 	}
 	if nodes := acc.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   accountingcontrol.OrganizationTable,
 			Columns: []string{accountingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -450,7 +449,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.OrganizationID = nodes[0]
+		_node.organization_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := acc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
@@ -467,7 +466,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.BusinessUnitID = nodes[0]
+		_node.business_unit_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := acc.mutation.DefaultRevAccountIDs(); len(nodes) > 0 {

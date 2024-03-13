@@ -66,16 +66,6 @@ func UpdatedAt(v time.Time) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// OrganizationID applies equality check predicate on the "organization_id" field. It's identical to OrganizationIDEQ.
-func OrganizationID(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldEQ(FieldOrganizationID, v))
-}
-
-// BusinessUnitID applies equality check predicate on the "business_unit_id" field. It's identical to BusinessUnitIDEQ.
-func BusinessUnitID(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
 // RecThreshold applies equality check predicate on the "rec_threshold" field. It's identical to RecThresholdEQ.
 func RecThreshold(v int64) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldEQ(FieldRecThreshold, v))
@@ -199,46 +189,6 @@ func UpdatedAtLT(v time.Time) predicate.AccountingControl {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// OrganizationIDEQ applies the EQ predicate on the "organization_id" field.
-func OrganizationIDEQ(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldEQ(FieldOrganizationID, v))
-}
-
-// OrganizationIDNEQ applies the NEQ predicate on the "organization_id" field.
-func OrganizationIDNEQ(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldNEQ(FieldOrganizationID, v))
-}
-
-// OrganizationIDIn applies the In predicate on the "organization_id" field.
-func OrganizationIDIn(vs ...uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldIn(FieldOrganizationID, vs...))
-}
-
-// OrganizationIDNotIn applies the NotIn predicate on the "organization_id" field.
-func OrganizationIDNotIn(vs ...uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldNotIn(FieldOrganizationID, vs...))
-}
-
-// BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
-func BusinessUnitIDEQ(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDNEQ applies the NEQ predicate on the "business_unit_id" field.
-func BusinessUnitIDNEQ(v uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldNEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDIn applies the In predicate on the "business_unit_id" field.
-func BusinessUnitIDIn(vs ...uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldIn(FieldBusinessUnitID, vs...))
-}
-
-// BusinessUnitIDNotIn applies the NotIn predicate on the "business_unit_id" field.
-func BusinessUnitIDNotIn(vs ...uuid.UUID) predicate.AccountingControl {
-	return predicate.AccountingControl(sql.FieldNotIn(FieldBusinessUnitID, vs...))
 }
 
 // RecThresholdEQ applies the EQ predicate on the "rec_threshold" field.
@@ -406,6 +356,16 @@ func CriticalProcessesHasSuffix(v string) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldHasSuffix(FieldCriticalProcesses, v))
 }
 
+// CriticalProcessesIsNil applies the IsNil predicate on the "critical_processes" field.
+func CriticalProcessesIsNil() predicate.AccountingControl {
+	return predicate.AccountingControl(sql.FieldIsNull(FieldCriticalProcesses))
+}
+
+// CriticalProcessesNotNil applies the NotNil predicate on the "critical_processes" field.
+func CriticalProcessesNotNil() predicate.AccountingControl {
+	return predicate.AccountingControl(sql.FieldNotNull(FieldCriticalProcesses))
+}
+
 // CriticalProcessesEqualFold applies the EqualFold predicate on the "critical_processes" field.
 func CriticalProcessesEqualFold(v string) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldEqualFold(FieldCriticalProcesses, v))
@@ -481,7 +441,7 @@ func HasOrganization() predicate.AccountingControl {
 	return predicate.AccountingControl(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, OrganizationTable, OrganizationColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

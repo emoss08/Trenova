@@ -20,11 +20,11 @@ var (
 		{Name: "require_journal_entry_approval", Type: field.TypeBool, Default: false},
 		{Name: "enable_rec_notifications", Type: field.TypeBool, Default: true},
 		{Name: "halt_on_pending_rec", Type: field.TypeBool, Default: false},
-		{Name: "critical_processes", Type: field.TypeString, Size: 2147483647},
-		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "critical_processes", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "default_rev_account_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "default_exp_account_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 	}
 	// AccountingControlsTable holds the schema information for the "accounting_controls" table.
 	AccountingControlsTable = &schema.Table{
@@ -33,28 +33,28 @@ var (
 		PrimaryKey: []*schema.Column{AccountingControlsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "accounting_controls_organizations_organization",
-				Columns:    []*schema.Column{AccountingControlsColumns[11]},
-				RefColumns: []*schema.Column{OrganizationsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
 				Symbol:     "accounting_controls_business_units_business_unit",
-				Columns:    []*schema.Column{AccountingControlsColumns[12]},
+				Columns:    []*schema.Column{AccountingControlsColumns[11]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "accounting_controls_general_ledger_accounts_default_rev_account",
-				Columns:    []*schema.Column{AccountingControlsColumns[13]},
+				Columns:    []*schema.Column{AccountingControlsColumns[12]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "accounting_controls_general_ledger_accounts_default_exp_account",
-				Columns:    []*schema.Column{AccountingControlsColumns[14]},
+				Columns:    []*schema.Column{AccountingControlsColumns[13]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "accounting_controls_organizations_accounting_control",
+				Columns:    []*schema.Column{AccountingControlsColumns[14]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -241,11 +241,10 @@ var (
 		{Name: "dot_number", Type: field.TypeString, Size: 12},
 		{Name: "logo_url", Type: field.TypeString, Nullable: true},
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A"},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
+		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles"},
 		{Name: "business_unit_id", Type: field.TypeUUID},
-		{Name: "organization_accounting_control", Type: field.TypeUUID},
-		{Name: "organization_billing_control", Type: field.TypeUUID},
-		{Name: "organization_dispatch_control", Type: field.TypeUUID},
+		{Name: "organization_billing_control", Type: field.TypeUUID, Nullable: true},
+		{Name: "organization_dispatch_control", Type: field.TypeUUID, Nullable: true},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
 	OrganizationsTable = &schema.Table{
@@ -260,22 +259,23 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "organizations_accounting_controls_accounting_control",
-				Columns:    []*schema.Column{OrganizationsColumns[10]},
-				RefColumns: []*schema.Column{AccountingControlsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
 				Symbol:     "organizations_billing_controls_billing_control",
-				Columns:    []*schema.Column{OrganizationsColumns[11]},
+				Columns:    []*schema.Column{OrganizationsColumns[10]},
 				RefColumns: []*schema.Column{BillingControlsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "organizations_dispatch_controls_dispatch_control",
-				Columns:    []*schema.Column{OrganizationsColumns[12]},
+				Columns:    []*schema.Column{OrganizationsColumns[11]},
 				RefColumns: []*schema.Column{DispatchControlsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "organization_business_unit_id_scac_code",
+				Unique:  true,
+				Columns: []*schema.Column{OrganizationsColumns[9], OrganizationsColumns[4]},
 			},
 		},
 	}
@@ -377,10 +377,10 @@ var (
 )
 
 func init() {
-	AccountingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
-	AccountingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	AccountingControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	AccountingControlsTable.ForeignKeys[1].RefTable = GeneralLedgerAccountsTable
 	AccountingControlsTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
-	AccountingControlsTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
+	AccountingControlsTable.ForeignKeys[3].RefTable = OrganizationsTable
 	BillingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	BillingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -389,9 +389,8 @@ func init() {
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	OrganizationsTable.ForeignKeys[1].RefTable = AccountingControlsTable
-	OrganizationsTable.ForeignKeys[2].RefTable = BillingControlsTable
-	OrganizationsTable.ForeignKeys[3].RefTable = DispatchControlsTable
+	OrganizationsTable.ForeignKeys[1].RefTable = BillingControlsTable
+	OrganizationsTable.ForeignKeys[2].RefTable = DispatchControlsTable
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable

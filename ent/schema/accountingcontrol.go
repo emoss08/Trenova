@@ -16,10 +16,6 @@ type AccountingControl struct {
 // Fields of the AccountingControl.
 func (AccountingControl) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("organization_id", uuid.UUID{}).
-			StructTag(`json:"organizationId"`),
-		field.UUID("business_unit_id", uuid.UUID{}).
-			StructTag(`json:"businessUnitId"`),
 		field.Int64("rec_threshold").
 			Default(50).
 			Positive().
@@ -43,7 +39,9 @@ func (AccountingControl) Fields() []ent.Field {
 		field.Bool("halt_on_pending_rec").
 			Default(false).
 			StructTag(`json:"haltOnPendingRec"`),
-		field.Text("critical_processes").StructTag(`json:"criticalProcesses"`),
+		field.Text("critical_processes").
+			Optional().
+			StructTag(`json:"criticalProcesses"`),
 		field.UUID("default_rev_account_id", uuid.UUID{}).
 			Optional().
 			StructTag(`json:"defaultRevAccountId"`),
@@ -63,13 +61,13 @@ func (AccountingControl) Mixin() []ent.Mixin {
 // Edges of the AccountingControl.
 func (AccountingControl) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("organization", Organization.Type).
-			Field("organization_id").
+		edge.From("organization", Organization.Type).
+			Ref("accounting_control").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),
 		edge.To("business_unit", BusinessUnit.Type).
-			Field("business_unit_id").
+			StorageKey(edge.Column("business_unit_id")).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),

@@ -53,6 +53,12 @@ func (oc *OrganizationCreate) SetNillableUpdatedAt(t *time.Time) *OrganizationCr
 	return oc
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (oc *OrganizationCreate) SetBusinessUnitID(u uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetBusinessUnitID(u)
+	return oc
+}
+
 // SetName sets the "name" field.
 func (oc *OrganizationCreate) SetName(s string) *OrganizationCreate {
 	oc.mutation.SetName(s)
@@ -127,12 +133,6 @@ func (oc *OrganizationCreate) SetNillableID(u *uuid.UUID) *OrganizationCreate {
 	return oc
 }
 
-// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
-func (oc *OrganizationCreate) SetBusinessUnitID(id uuid.UUID) *OrganizationCreate {
-	oc.mutation.SetBusinessUnitID(id)
-	return oc
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (oc *OrganizationCreate) SetBusinessUnit(b *BusinessUnit) *OrganizationCreate {
 	return oc.SetBusinessUnitID(b.ID)
@@ -141,6 +141,14 @@ func (oc *OrganizationCreate) SetBusinessUnit(b *BusinessUnit) *OrganizationCrea
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
 func (oc *OrganizationCreate) SetAccountingControlID(id uuid.UUID) *OrganizationCreate {
 	oc.mutation.SetAccountingControlID(id)
+	return oc
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetAccountingControlID(*id)
+	}
 	return oc
 }
 
@@ -155,6 +163,14 @@ func (oc *OrganizationCreate) SetBillingControlID(id uuid.UUID) *OrganizationCre
 	return oc
 }
 
+// SetNillableBillingControlID sets the "billing_control" edge to the BillingControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableBillingControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetBillingControlID(*id)
+	}
+	return oc
+}
+
 // SetBillingControl sets the "billing_control" edge to the BillingControl entity.
 func (oc *OrganizationCreate) SetBillingControl(b *BillingControl) *OrganizationCreate {
 	return oc.SetBillingControlID(b.ID)
@@ -163,6 +179,14 @@ func (oc *OrganizationCreate) SetBillingControl(b *BillingControl) *Organization
 // SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
 func (oc *OrganizationCreate) SetDispatchControlID(id uuid.UUID) *OrganizationCreate {
 	oc.mutation.SetDispatchControlID(id)
+	return oc
+}
+
+// SetNillableDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableDispatchControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetDispatchControlID(*id)
+	}
 	return oc
 }
 
@@ -236,6 +260,9 @@ func (oc *OrganizationCreate) check() error {
 	if _, ok := oc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Organization.updated_at"`)}
 	}
+	if _, ok := oc.mutation.BusinessUnitID(); !ok {
+		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "Organization.business_unit_id"`)}
+	}
 	if _, ok := oc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Organization.name"`)}
 	}
@@ -278,15 +305,6 @@ func (oc *OrganizationCreate) check() error {
 	}
 	if _, ok := oc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "Organization.business_unit"`)}
-	}
-	if _, ok := oc.mutation.AccountingControlID(); !ok {
-		return &ValidationError{Name: "accounting_control", err: errors.New(`ent: missing required edge "Organization.accounting_control"`)}
-	}
-	if _, ok := oc.mutation.BillingControlID(); !ok {
-		return &ValidationError{Name: "billing_control", err: errors.New(`ent: missing required edge "Organization.billing_control"`)}
-	}
-	if _, ok := oc.mutation.DispatchControlID(); !ok {
-		return &ValidationError{Name: "dispatch_control", err: errors.New(`ent: missing required edge "Organization.dispatch_control"`)}
 	}
 	return nil
 }
@@ -345,7 +363,7 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 	}
 	if value, ok := oc.mutation.LogoURL(); ok {
 		_spec.SetField(organization.FieldLogoURL, field.TypeString, value)
-		_node.LogoURL = value
+		_node.LogoURL = &value
 	}
 	if value, ok := oc.mutation.OrgType(); ok {
 		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
@@ -369,12 +387,12 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.business_unit_id = &nodes[0]
+		_node.BusinessUnitID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.AccountingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.AccountingControlTable,
 			Columns: []string{organization.AccountingControlColumn},
@@ -386,7 +404,6 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.organization_accounting_control = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.BillingControlIDs(); len(nodes) > 0 {

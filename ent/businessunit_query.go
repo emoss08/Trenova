@@ -560,6 +560,9 @@ func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *Orga
 		}
 	}
 	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(organization.FieldBusinessUnitID)
+	}
 	query.Where(predicate.Organization(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(businessunit.OrganizationsColumn), fks...))
 	}))
@@ -568,13 +571,10 @@ func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *Orga
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.business_unit_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "business_unit_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.BusinessUnitID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "business_unit_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "business_unit_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

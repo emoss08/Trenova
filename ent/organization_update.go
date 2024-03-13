@@ -39,6 +39,20 @@ func (ou *OrganizationUpdate) SetUpdatedAt(t time.Time) *OrganizationUpdate {
 	return ou
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (ou *OrganizationUpdate) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetBusinessUnitID(u)
+	return ou
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdate {
+	if u != nil {
+		ou.SetBusinessUnitID(*u)
+	}
+	return ou
+}
+
 // SetName sets the "name" field.
 func (ou *OrganizationUpdate) SetName(s string) *OrganizationUpdate {
 	ou.mutation.SetName(s)
@@ -129,12 +143,6 @@ func (ou *OrganizationUpdate) SetNillableTimezone(o *organization.Timezone) *Org
 	return ou
 }
 
-// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
-func (ou *OrganizationUpdate) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdate {
-	ou.mutation.SetBusinessUnitID(id)
-	return ou
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (ou *OrganizationUpdate) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdate {
 	return ou.SetBusinessUnitID(b.ID)
@@ -143,6 +151,14 @@ func (ou *OrganizationUpdate) SetBusinessUnit(b *BusinessUnit) *OrganizationUpda
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
 func (ou *OrganizationUpdate) SetAccountingControlID(id uuid.UUID) *OrganizationUpdate {
 	ou.mutation.SetAccountingControlID(id)
+	return ou
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetAccountingControlID(*id)
+	}
 	return ou
 }
 
@@ -157,6 +173,14 @@ func (ou *OrganizationUpdate) SetBillingControlID(id uuid.UUID) *OrganizationUpd
 	return ou
 }
 
+// SetNillableBillingControlID sets the "billing_control" edge to the BillingControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableBillingControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetBillingControlID(*id)
+	}
+	return ou
+}
+
 // SetBillingControl sets the "billing_control" edge to the BillingControl entity.
 func (ou *OrganizationUpdate) SetBillingControl(b *BillingControl) *OrganizationUpdate {
 	return ou.SetBillingControlID(b.ID)
@@ -165,6 +189,14 @@ func (ou *OrganizationUpdate) SetBillingControl(b *BillingControl) *Organization
 // SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
 func (ou *OrganizationUpdate) SetDispatchControlID(id uuid.UUID) *OrganizationUpdate {
 	ou.mutation.SetDispatchControlID(id)
+	return ou
+}
+
+// SetNillableDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableDispatchControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetDispatchControlID(*id)
+	}
 	return ou
 }
 
@@ -268,15 +300,6 @@ func (ou *OrganizationUpdate) check() error {
 	if _, ok := ou.mutation.BusinessUnitID(); ou.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
 	}
-	if _, ok := ou.mutation.AccountingControlID(); ou.mutation.AccountingControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.accounting_control"`)
-	}
-	if _, ok := ou.mutation.BillingControlID(); ou.mutation.BillingControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
-	}
-	if _, ok := ou.mutation.DispatchControlID(); ou.mutation.DispatchControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.dispatch_control"`)
-	}
 	return nil
 }
 
@@ -347,7 +370,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ou.mutation.AccountingControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.AccountingControlTable,
 			Columns: []string{organization.AccountingControlColumn},
@@ -360,7 +383,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := ou.mutation.AccountingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.AccountingControlTable,
 			Columns: []string{organization.AccountingControlColumn},
@@ -458,6 +481,20 @@ func (ouo *OrganizationUpdateOne) SetUpdatedAt(t time.Time) *OrganizationUpdateO
 	return ouo
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (ouo *OrganizationUpdateOne) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetBusinessUnitID(u)
+	return ouo
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdateOne {
+	if u != nil {
+		ouo.SetBusinessUnitID(*u)
+	}
+	return ouo
+}
+
 // SetName sets the "name" field.
 func (ouo *OrganizationUpdateOne) SetName(s string) *OrganizationUpdateOne {
 	ouo.mutation.SetName(s)
@@ -548,12 +585,6 @@ func (ouo *OrganizationUpdateOne) SetNillableTimezone(o *organization.Timezone) 
 	return ouo
 }
 
-// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
-func (ouo *OrganizationUpdateOne) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.SetBusinessUnitID(id)
-	return ouo
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (ouo *OrganizationUpdateOne) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdateOne {
 	return ouo.SetBusinessUnitID(b.ID)
@@ -562,6 +593,14 @@ func (ouo *OrganizationUpdateOne) SetBusinessUnit(b *BusinessUnit) *Organization
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
 func (ouo *OrganizationUpdateOne) SetAccountingControlID(id uuid.UUID) *OrganizationUpdateOne {
 	ouo.mutation.SetAccountingControlID(id)
+	return ouo
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetAccountingControlID(*id)
+	}
 	return ouo
 }
 
@@ -576,6 +615,14 @@ func (ouo *OrganizationUpdateOne) SetBillingControlID(id uuid.UUID) *Organizatio
 	return ouo
 }
 
+// SetNillableBillingControlID sets the "billing_control" edge to the BillingControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableBillingControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetBillingControlID(*id)
+	}
+	return ouo
+}
+
 // SetBillingControl sets the "billing_control" edge to the BillingControl entity.
 func (ouo *OrganizationUpdateOne) SetBillingControl(b *BillingControl) *OrganizationUpdateOne {
 	return ouo.SetBillingControlID(b.ID)
@@ -584,6 +631,14 @@ func (ouo *OrganizationUpdateOne) SetBillingControl(b *BillingControl) *Organiza
 // SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
 func (ouo *OrganizationUpdateOne) SetDispatchControlID(id uuid.UUID) *OrganizationUpdateOne {
 	ouo.mutation.SetDispatchControlID(id)
+	return ouo
+}
+
+// SetNillableDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableDispatchControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetDispatchControlID(*id)
+	}
 	return ouo
 }
 
@@ -700,15 +755,6 @@ func (ouo *OrganizationUpdateOne) check() error {
 	if _, ok := ouo.mutation.BusinessUnitID(); ouo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
 	}
-	if _, ok := ouo.mutation.AccountingControlID(); ouo.mutation.AccountingControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.accounting_control"`)
-	}
-	if _, ok := ouo.mutation.BillingControlID(); ouo.mutation.BillingControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
-	}
-	if _, ok := ouo.mutation.DispatchControlID(); ouo.mutation.DispatchControlCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Organization.dispatch_control"`)
-	}
 	return nil
 }
 
@@ -796,7 +842,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if ouo.mutation.AccountingControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.AccountingControlTable,
 			Columns: []string{organization.AccountingControlColumn},
@@ -809,7 +855,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if nodes := ouo.mutation.AccountingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.AccountingControlTable,
 			Columns: []string{organization.AccountingControlColumn},

@@ -29,6 +29,7 @@ type AccountingControlQuery struct {
 	withBusinessUnit      *BusinessUnitQuery
 	withDefaultRevAccount *GeneralLedgerAccountQuery
 	withDefaultExpAccount *GeneralLedgerAccountQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -79,7 +80,7 @@ func (acq *AccountingControlQuery) QueryOrganization() *OrganizationQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.OrganizationTable, accountingcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, accountingcontrol.OrganizationTable, accountingcontrol.OrganizationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(acq.driver.Dialect(), step)
 		return fromU, nil
@@ -476,6 +477,7 @@ func (acq *AccountingControlQuery) prepareQuery(ctx context.Context) error {
 func (acq *AccountingControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*AccountingControl, error) {
 	var (
 		nodes       = []*AccountingControl{}
+		withFKs     = acq.withFKs
 		_spec       = acq.querySpec()
 		loadedTypes = [4]bool{
 			acq.withOrganization != nil,
@@ -484,6 +486,12 @@ func (acq *AccountingControlQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 			acq.withDefaultExpAccount != nil,
 		}
 	)
+	if acq.withOrganization != nil || acq.withBusinessUnit != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, accountingcontrol.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*AccountingControl).scanValues(nil, columns)
 	}
@@ -533,7 +541,10 @@ func (acq *AccountingControlQuery) loadOrganization(ctx context.Context, query *
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].OrganizationID
+		if nodes[i].organization_id == nil {
+			continue
+		}
+		fk := *nodes[i].organization_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -562,7 +573,10 @@ func (acq *AccountingControlQuery) loadBusinessUnit(ctx context.Context, query *
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].BusinessUnitID
+		if nodes[i].business_unit_id == nil {
+			continue
+		}
+		fk := *nodes[i].business_unit_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -670,12 +684,6 @@ func (acq *AccountingControlQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != accountingcontrol.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if acq.withOrganization != nil {
-			_spec.Node.AddColumnOnce(accountingcontrol.FieldOrganizationID)
-		}
-		if acq.withBusinessUnit != nil {
-			_spec.Node.AddColumnOnce(accountingcontrol.FieldBusinessUnitID)
 		}
 		if acq.withDefaultRevAccount != nil {
 			_spec.Node.AddColumnOnce(accountingcontrol.FieldDefaultRevAccountID)
