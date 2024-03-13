@@ -54,8 +54,8 @@ func buildPageURL(r *http.Request, offset, limit int) string {
 	return fmt.Sprintf("%s://%s%s?%s", scheme, r.Host, r.URL.Path, queryString)
 }
 
-func GetNextPageURL(r *http.Request, offset, limit int, totalRows int64) string {
-	if int64(offset+limit) >= totalRows {
+func GetNextPageURL(r *http.Request, offset, limit int, totalRows int) string {
+	if offset+limit >= totalRows {
 		return ""
 	}
 	return buildPageURL(r, offset+limit, limit)

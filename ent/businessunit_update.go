@@ -126,6 +126,12 @@ func (buu *BusinessUnitUpdate) SetNillableCity(s *string) *BusinessUnitUpdate {
 	return buu
 }
 
+// ClearCity clears the value of the "city" field.
+func (buu *BusinessUnitUpdate) ClearCity() *BusinessUnitUpdate {
+	buu.mutation.ClearCity()
+	return buu
+}
+
 // SetState sets the "state" field.
 func (buu *BusinessUnitUpdate) SetState(s string) *BusinessUnitUpdate {
 	buu.mutation.SetState(s)
@@ -137,6 +143,12 @@ func (buu *BusinessUnitUpdate) SetNillableState(s *string) *BusinessUnitUpdate {
 	if s != nil {
 		buu.SetState(*s)
 	}
+	return buu
+}
+
+// ClearState clears the value of the "state" field.
+func (buu *BusinessUnitUpdate) ClearState() *BusinessUnitUpdate {
+	buu.mutation.ClearState()
 	return buu
 }
 
@@ -154,6 +166,12 @@ func (buu *BusinessUnitUpdate) SetNillableCountry(s *string) *BusinessUnitUpdate
 	return buu
 }
 
+// ClearCountry clears the value of the "country" field.
+func (buu *BusinessUnitUpdate) ClearCountry() *BusinessUnitUpdate {
+	buu.mutation.ClearCountry()
+	return buu
+}
+
 // SetPostalCode sets the "postal_code" field.
 func (buu *BusinessUnitUpdate) SetPostalCode(s string) *BusinessUnitUpdate {
 	buu.mutation.SetPostalCode(s)
@@ -165,6 +183,12 @@ func (buu *BusinessUnitUpdate) SetNillablePostalCode(s *string) *BusinessUnitUpd
 	if s != nil {
 		buu.SetPostalCode(*s)
 	}
+	return buu
+}
+
+// ClearPostalCode clears the value of the "postal_code" field.
+func (buu *BusinessUnitUpdate) ClearPostalCode() *BusinessUnitUpdate {
+	buu.mutation.ClearPostalCode()
 	return buu
 }
 
@@ -182,6 +206,12 @@ func (buu *BusinessUnitUpdate) SetNillableTaxID(s *string) *BusinessUnitUpdate {
 	return buu
 }
 
+// ClearTaxID clears the value of the "tax_id" field.
+func (buu *BusinessUnitUpdate) ClearTaxID() *BusinessUnitUpdate {
+	buu.mutation.ClearTaxID()
+	return buu
+}
+
 // SetSubscriptionPlan sets the "subscription_plan" field.
 func (buu *BusinessUnitUpdate) SetSubscriptionPlan(s string) *BusinessUnitUpdate {
 	buu.mutation.SetSubscriptionPlan(s)
@@ -193,6 +223,12 @@ func (buu *BusinessUnitUpdate) SetNillableSubscriptionPlan(s *string) *BusinessU
 	if s != nil {
 		buu.SetSubscriptionPlan(*s)
 	}
+	return buu
+}
+
+// ClearSubscriptionPlan clears the value of the "subscription_plan" field.
+func (buu *BusinessUnitUpdate) ClearSubscriptionPlan() *BusinessUnitUpdate {
+	buu.mutation.ClearSubscriptionPlan()
 	return buu
 }
 
@@ -227,6 +263,12 @@ func (buu *BusinessUnitUpdate) SetNillableLegalName(s *string) *BusinessUnitUpda
 	if s != nil {
 		buu.SetLegalName(*s)
 	}
+	return buu
+}
+
+// ClearLegalName clears the value of the "legal_name" field.
+func (buu *BusinessUnitUpdate) ClearLegalName() *BusinessUnitUpdate {
+	buu.mutation.ClearLegalName()
 	return buu
 }
 
@@ -510,16 +552,6 @@ func (buu *BusinessUnitUpdate) check() error {
 			return &ValidationError{Name: "tax_id", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.tax_id": %w`, err)}
 		}
 	}
-	if v, ok := buu.mutation.SubscriptionPlan(); ok {
-		if err := businessunit.SubscriptionPlanValidator(v); err != nil {
-			return &ValidationError{Name: "subscription_plan", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.subscription_plan": %w`, err)}
-		}
-	}
-	if v, ok := buu.mutation.LegalName(); ok {
-		if err := businessunit.LegalNameValidator(v); err != nil {
-			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.legal_name": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -559,20 +591,38 @@ func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := buu.mutation.City(); ok {
 		_spec.SetField(businessunit.FieldCity, field.TypeString, value)
 	}
+	if buu.mutation.CityCleared() {
+		_spec.ClearField(businessunit.FieldCity, field.TypeString)
+	}
 	if value, ok := buu.mutation.State(); ok {
 		_spec.SetField(businessunit.FieldState, field.TypeString, value)
+	}
+	if buu.mutation.StateCleared() {
+		_spec.ClearField(businessunit.FieldState, field.TypeString)
 	}
 	if value, ok := buu.mutation.Country(); ok {
 		_spec.SetField(businessunit.FieldCountry, field.TypeString, value)
 	}
+	if buu.mutation.CountryCleared() {
+		_spec.ClearField(businessunit.FieldCountry, field.TypeString)
+	}
 	if value, ok := buu.mutation.PostalCode(); ok {
 		_spec.SetField(businessunit.FieldPostalCode, field.TypeString, value)
+	}
+	if buu.mutation.PostalCodeCleared() {
+		_spec.ClearField(businessunit.FieldPostalCode, field.TypeString)
 	}
 	if value, ok := buu.mutation.TaxID(); ok {
 		_spec.SetField(businessunit.FieldTaxID, field.TypeString, value)
 	}
+	if buu.mutation.TaxIDCleared() {
+		_spec.ClearField(businessunit.FieldTaxID, field.TypeString)
+	}
 	if value, ok := buu.mutation.SubscriptionPlan(); ok {
 		_spec.SetField(businessunit.FieldSubscriptionPlan, field.TypeString, value)
+	}
+	if buu.mutation.SubscriptionPlanCleared() {
+		_spec.ClearField(businessunit.FieldSubscriptionPlan, field.TypeString)
 	}
 	if value, ok := buu.mutation.Description(); ok {
 		_spec.SetField(businessunit.FieldDescription, field.TypeString, value)
@@ -582,6 +632,9 @@ func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := buu.mutation.LegalName(); ok {
 		_spec.SetField(businessunit.FieldLegalName, field.TypeString, value)
+	}
+	if buu.mutation.LegalNameCleared() {
+		_spec.ClearField(businessunit.FieldLegalName, field.TypeString)
 	}
 	if value, ok := buu.mutation.ContactName(); ok {
 		_spec.SetField(businessunit.FieldContactName, field.TypeString, value)
@@ -829,6 +882,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableCity(s *string) *BusinessUnitUpdat
 	return buuo
 }
 
+// ClearCity clears the value of the "city" field.
+func (buuo *BusinessUnitUpdateOne) ClearCity() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearCity()
+	return buuo
+}
+
 // SetState sets the "state" field.
 func (buuo *BusinessUnitUpdateOne) SetState(s string) *BusinessUnitUpdateOne {
 	buuo.mutation.SetState(s)
@@ -840,6 +899,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableState(s *string) *BusinessUnitUpda
 	if s != nil {
 		buuo.SetState(*s)
 	}
+	return buuo
+}
+
+// ClearState clears the value of the "state" field.
+func (buuo *BusinessUnitUpdateOne) ClearState() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearState()
 	return buuo
 }
 
@@ -857,6 +922,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableCountry(s *string) *BusinessUnitUp
 	return buuo
 }
 
+// ClearCountry clears the value of the "country" field.
+func (buuo *BusinessUnitUpdateOne) ClearCountry() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearCountry()
+	return buuo
+}
+
 // SetPostalCode sets the "postal_code" field.
 func (buuo *BusinessUnitUpdateOne) SetPostalCode(s string) *BusinessUnitUpdateOne {
 	buuo.mutation.SetPostalCode(s)
@@ -868,6 +939,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillablePostalCode(s *string) *BusinessUni
 	if s != nil {
 		buuo.SetPostalCode(*s)
 	}
+	return buuo
+}
+
+// ClearPostalCode clears the value of the "postal_code" field.
+func (buuo *BusinessUnitUpdateOne) ClearPostalCode() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearPostalCode()
 	return buuo
 }
 
@@ -885,6 +962,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableTaxID(s *string) *BusinessUnitUpda
 	return buuo
 }
 
+// ClearTaxID clears the value of the "tax_id" field.
+func (buuo *BusinessUnitUpdateOne) ClearTaxID() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearTaxID()
+	return buuo
+}
+
 // SetSubscriptionPlan sets the "subscription_plan" field.
 func (buuo *BusinessUnitUpdateOne) SetSubscriptionPlan(s string) *BusinessUnitUpdateOne {
 	buuo.mutation.SetSubscriptionPlan(s)
@@ -896,6 +979,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableSubscriptionPlan(s *string) *Busin
 	if s != nil {
 		buuo.SetSubscriptionPlan(*s)
 	}
+	return buuo
+}
+
+// ClearSubscriptionPlan clears the value of the "subscription_plan" field.
+func (buuo *BusinessUnitUpdateOne) ClearSubscriptionPlan() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearSubscriptionPlan()
 	return buuo
 }
 
@@ -930,6 +1019,12 @@ func (buuo *BusinessUnitUpdateOne) SetNillableLegalName(s *string) *BusinessUnit
 	if s != nil {
 		buuo.SetLegalName(*s)
 	}
+	return buuo
+}
+
+// ClearLegalName clears the value of the "legal_name" field.
+func (buuo *BusinessUnitUpdateOne) ClearLegalName() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearLegalName()
 	return buuo
 }
 
@@ -1226,16 +1321,6 @@ func (buuo *BusinessUnitUpdateOne) check() error {
 			return &ValidationError{Name: "tax_id", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.tax_id": %w`, err)}
 		}
 	}
-	if v, ok := buuo.mutation.SubscriptionPlan(); ok {
-		if err := businessunit.SubscriptionPlanValidator(v); err != nil {
-			return &ValidationError{Name: "subscription_plan", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.subscription_plan": %w`, err)}
-		}
-	}
-	if v, ok := buuo.mutation.LegalName(); ok {
-		if err := businessunit.LegalNameValidator(v); err != nil {
-			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.legal_name": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -1292,20 +1377,38 @@ func (buuo *BusinessUnitUpdateOne) sqlSave(ctx context.Context) (_node *Business
 	if value, ok := buuo.mutation.City(); ok {
 		_spec.SetField(businessunit.FieldCity, field.TypeString, value)
 	}
+	if buuo.mutation.CityCleared() {
+		_spec.ClearField(businessunit.FieldCity, field.TypeString)
+	}
 	if value, ok := buuo.mutation.State(); ok {
 		_spec.SetField(businessunit.FieldState, field.TypeString, value)
+	}
+	if buuo.mutation.StateCleared() {
+		_spec.ClearField(businessunit.FieldState, field.TypeString)
 	}
 	if value, ok := buuo.mutation.Country(); ok {
 		_spec.SetField(businessunit.FieldCountry, field.TypeString, value)
 	}
+	if buuo.mutation.CountryCleared() {
+		_spec.ClearField(businessunit.FieldCountry, field.TypeString)
+	}
 	if value, ok := buuo.mutation.PostalCode(); ok {
 		_spec.SetField(businessunit.FieldPostalCode, field.TypeString, value)
+	}
+	if buuo.mutation.PostalCodeCleared() {
+		_spec.ClearField(businessunit.FieldPostalCode, field.TypeString)
 	}
 	if value, ok := buuo.mutation.TaxID(); ok {
 		_spec.SetField(businessunit.FieldTaxID, field.TypeString, value)
 	}
+	if buuo.mutation.TaxIDCleared() {
+		_spec.ClearField(businessunit.FieldTaxID, field.TypeString)
+	}
 	if value, ok := buuo.mutation.SubscriptionPlan(); ok {
 		_spec.SetField(businessunit.FieldSubscriptionPlan, field.TypeString, value)
+	}
+	if buuo.mutation.SubscriptionPlanCleared() {
+		_spec.ClearField(businessunit.FieldSubscriptionPlan, field.TypeString)
 	}
 	if value, ok := buuo.mutation.Description(); ok {
 		_spec.SetField(businessunit.FieldDescription, field.TypeString, value)
@@ -1315,6 +1418,9 @@ func (buuo *BusinessUnitUpdateOne) sqlSave(ctx context.Context) (_node *Business
 	}
 	if value, ok := buuo.mutation.LegalName(); ok {
 		_spec.SetField(businessunit.FieldLegalName, field.TypeString, value)
+	}
+	if buuo.mutation.LegalNameCleared() {
+		_spec.ClearField(businessunit.FieldLegalName, field.TypeString)
 	}
 	if value, ok := buuo.mutation.ContactName(); ok {
 		_spec.SetField(businessunit.FieldContactName, field.TypeString, value)

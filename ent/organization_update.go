@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
@@ -128,20 +129,6 @@ func (ou *OrganizationUpdate) SetNillableTimezone(o *organization.Timezone) *Org
 	return ou
 }
 
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (ou *OrganizationUpdate) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdate {
-	ou.mutation.SetBusinessUnitID(u)
-	return ou
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (ou *OrganizationUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdate {
-	if u != nil {
-		ou.SetBusinessUnitID(*u)
-	}
-	return ou
-}
-
 // SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
 func (ou *OrganizationUpdate) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdate {
 	ou.mutation.SetBusinessUnitID(id)
@@ -175,6 +162,17 @@ func (ou *OrganizationUpdate) SetBillingControl(b *BillingControl) *Organization
 	return ou.SetBillingControlID(b.ID)
 }
 
+// SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
+func (ou *OrganizationUpdate) SetDispatchControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetDispatchControlID(id)
+	return ou
+}
+
+// SetDispatchControl sets the "dispatch_control" edge to the DispatchControl entity.
+func (ou *OrganizationUpdate) SetDispatchControl(d *DispatchControl) *OrganizationUpdate {
+	return ou.SetDispatchControlID(d.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ou *OrganizationUpdate) Mutation() *OrganizationMutation {
 	return ou.mutation
@@ -195,6 +193,12 @@ func (ou *OrganizationUpdate) ClearAccountingControl() *OrganizationUpdate {
 // ClearBillingControl clears the "billing_control" edge to the BillingControl entity.
 func (ou *OrganizationUpdate) ClearBillingControl() *OrganizationUpdate {
 	ou.mutation.ClearBillingControl()
+	return ou
+}
+
+// ClearDispatchControl clears the "dispatch_control" edge to the DispatchControl entity.
+func (ou *OrganizationUpdate) ClearDispatchControl() *OrganizationUpdate {
+	ou.mutation.ClearDispatchControl()
 	return ou
 }
 
@@ -270,6 +274,9 @@ func (ou *OrganizationUpdate) check() error {
 	if _, ok := ou.mutation.BillingControlID(); ou.mutation.BillingControlCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
 	}
+	if _, ok := ou.mutation.DispatchControlID(); ou.mutation.DispatchControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.dispatch_control"`)
+	}
 	return nil
 }
 
@@ -308,9 +315,6 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.Timezone(); ok {
 		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
-	}
-	if value, ok := ou.mutation.BusinessUnitID(); ok {
-		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
 	}
 	if ou.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -392,6 +396,35 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.DispatchControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.DispatchControlTable,
+			Columns: []string{organization.DispatchControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.DispatchControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.DispatchControlTable,
+			Columns: []string{organization.DispatchControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -515,20 +548,6 @@ func (ouo *OrganizationUpdateOne) SetNillableTimezone(o *organization.Timezone) 
 	return ouo
 }
 
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (ouo *OrganizationUpdateOne) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.SetBusinessUnitID(u)
-	return ouo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (ouo *OrganizationUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdateOne {
-	if u != nil {
-		ouo.SetBusinessUnitID(*u)
-	}
-	return ouo
-}
-
 // SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
 func (ouo *OrganizationUpdateOne) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdateOne {
 	ouo.mutation.SetBusinessUnitID(id)
@@ -562,6 +581,17 @@ func (ouo *OrganizationUpdateOne) SetBillingControl(b *BillingControl) *Organiza
 	return ouo.SetBillingControlID(b.ID)
 }
 
+// SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetDispatchControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetDispatchControlID(id)
+	return ouo
+}
+
+// SetDispatchControl sets the "dispatch_control" edge to the DispatchControl entity.
+func (ouo *OrganizationUpdateOne) SetDispatchControl(d *DispatchControl) *OrganizationUpdateOne {
+	return ouo.SetDispatchControlID(d.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ouo *OrganizationUpdateOne) Mutation() *OrganizationMutation {
 	return ouo.mutation
@@ -582,6 +612,12 @@ func (ouo *OrganizationUpdateOne) ClearAccountingControl() *OrganizationUpdateOn
 // ClearBillingControl clears the "billing_control" edge to the BillingControl entity.
 func (ouo *OrganizationUpdateOne) ClearBillingControl() *OrganizationUpdateOne {
 	ouo.mutation.ClearBillingControl()
+	return ouo
+}
+
+// ClearDispatchControl clears the "dispatch_control" edge to the DispatchControl entity.
+func (ouo *OrganizationUpdateOne) ClearDispatchControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearDispatchControl()
 	return ouo
 }
 
@@ -670,6 +706,9 @@ func (ouo *OrganizationUpdateOne) check() error {
 	if _, ok := ouo.mutation.BillingControlID(); ouo.mutation.BillingControlCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
 	}
+	if _, ok := ouo.mutation.DispatchControlID(); ouo.mutation.DispatchControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.dispatch_control"`)
+	}
 	return nil
 }
 
@@ -725,9 +764,6 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if value, ok := ouo.mutation.Timezone(); ok {
 		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
-	}
-	if value, ok := ouo.mutation.BusinessUnitID(); ok {
-		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
 	}
 	if ouo.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -809,6 +845,35 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.DispatchControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.DispatchControlTable,
+			Columns: []string{organization.DispatchControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.DispatchControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.DispatchControlTable,
+			Columns: []string{organization.DispatchControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

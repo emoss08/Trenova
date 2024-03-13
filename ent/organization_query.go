@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ type OrganizationQuery struct {
 	withBusinessUnit      *BusinessUnitQuery
 	withAccountingControl *AccountingControlQuery
 	withBillingControl    *BillingControlQuery
+	withDispatchControl   *DispatchControlQuery
 	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -124,6 +126,28 @@ func (oq *OrganizationQuery) QueryBillingControl() *BillingControlQuery {
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDispatchControl chains the current query on the "dispatch_control" edge.
+func (oq *OrganizationQuery) QueryDispatchControl() *DispatchControlQuery {
+	query := (&DispatchControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(dispatchcontrol.Table, dispatchcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +350,7 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		withBusinessUnit:      oq.withBusinessUnit.Clone(),
 		withAccountingControl: oq.withAccountingControl.Clone(),
 		withBillingControl:    oq.withBillingControl.Clone(),
+		withDispatchControl:   oq.withDispatchControl.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -362,6 +387,17 @@ func (oq *OrganizationQuery) WithBillingControl(opts ...func(*BillingControlQuer
 		opt(query)
 	}
 	oq.withBillingControl = query
+	return oq
+}
+
+// WithDispatchControl tells the query-builder to eager-load the nodes that are connected to
+// the "dispatch_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithDispatchControl(opts ...func(*DispatchControlQuery)) *OrganizationQuery {
+	query := (&DispatchControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withDispatchControl = query
 	return oq
 }
 
@@ -444,13 +480,14 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		nodes       = []*Organization{}
 		withFKs     = oq.withFKs
 		_spec       = oq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			oq.withBusinessUnit != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
+			oq.withDispatchControl != nil,
 		}
 	)
-	if oq.withBusinessUnit != nil || oq.withAccountingControl != nil || oq.withBillingControl != nil {
+	if oq.withBusinessUnit != nil || oq.withAccountingControl != nil || oq.withBillingControl != nil || oq.withDispatchControl != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -492,6 +529,12 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	if query := oq.withDispatchControl; query != nil {
+		if err := oq.loadDispatchControl(ctx, query, nodes, nil,
+			func(n *Organization, e *DispatchControl) { n.Edges.DispatchControl = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -499,10 +542,10 @@ func (oq *OrganizationQuery) loadBusinessUnit(ctx context.Context, query *Busine
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Organization)
 	for i := range nodes {
-		if nodes[i].business_unit_organizations == nil {
+		if nodes[i].business_unit_id == nil {
 			continue
 		}
-		fk := *nodes[i].business_unit_organizations
+		fk := *nodes[i].business_unit_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -519,7 +562,7 @@ func (oq *OrganizationQuery) loadBusinessUnit(ctx context.Context, query *Busine
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "business_unit_organizations" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "business_unit_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -584,6 +627,38 @@ func (oq *OrganizationQuery) loadBillingControl(ctx context.Context, query *Bill
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "organization_billing_control" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadDispatchControl(ctx context.Context, query *DispatchControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *DispatchControl)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Organization)
+	for i := range nodes {
+		if nodes[i].organization_dispatch_control == nil {
+			continue
+		}
+		fk := *nodes[i].organization_dispatch_control
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(dispatchcontrol.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "organization_dispatch_control" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

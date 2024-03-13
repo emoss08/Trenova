@@ -80,7 +80,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "organization" package.
 	OrganizationsInverseTable = "organizations"
 	// OrganizationsColumn is the table column denoting the organizations relation/edge.
-	OrganizationsColumn = "business_unit_organizations"
+	OrganizationsColumn = "business_unit_id"
 )
 
 // Columns holds all SQL columns for businessunit fields.
@@ -142,10 +142,6 @@ var (
 	PostalCodeValidator func(string) error
 	// TaxIDValidator is a validator for the "tax_id" field. It is called by the builders before save.
 	TaxIDValidator func(string) error
-	// SubscriptionPlanValidator is a validator for the "subscription_plan" field. It is called by the builders before save.
-	SubscriptionPlanValidator func(string) error
-	// LegalNameValidator is a validator for the "legal_name" field. It is called by the builders before save.
-	LegalNameValidator func(string) error
 	// DefaultFreeTrial holds the default value on creation for the "free_trial" field.
 	DefaultFreeTrial bool
 	// DefaultID holds the default value on creation for the "id" field.

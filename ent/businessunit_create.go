@@ -102,9 +102,25 @@ func (buc *BusinessUnitCreate) SetCity(s string) *BusinessUnitCreate {
 	return buc
 }
 
+// SetNillableCity sets the "city" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableCity(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetCity(*s)
+	}
+	return buc
+}
+
 // SetState sets the "state" field.
 func (buc *BusinessUnitCreate) SetState(s string) *BusinessUnitCreate {
 	buc.mutation.SetState(s)
+	return buc
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableState(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetState(*s)
+	}
 	return buc
 }
 
@@ -114,9 +130,25 @@ func (buc *BusinessUnitCreate) SetCountry(s string) *BusinessUnitCreate {
 	return buc
 }
 
+// SetNillableCountry sets the "country" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableCountry(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetCountry(*s)
+	}
+	return buc
+}
+
 // SetPostalCode sets the "postal_code" field.
 func (buc *BusinessUnitCreate) SetPostalCode(s string) *BusinessUnitCreate {
 	buc.mutation.SetPostalCode(s)
+	return buc
+}
+
+// SetNillablePostalCode sets the "postal_code" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillablePostalCode(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetPostalCode(*s)
+	}
 	return buc
 }
 
@@ -126,9 +158,25 @@ func (buc *BusinessUnitCreate) SetTaxID(s string) *BusinessUnitCreate {
 	return buc
 }
 
+// SetNillableTaxID sets the "tax_id" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableTaxID(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetTaxID(*s)
+	}
+	return buc
+}
+
 // SetSubscriptionPlan sets the "subscription_plan" field.
 func (buc *BusinessUnitCreate) SetSubscriptionPlan(s string) *BusinessUnitCreate {
 	buc.mutation.SetSubscriptionPlan(s)
+	return buc
+}
+
+// SetNillableSubscriptionPlan sets the "subscription_plan" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableSubscriptionPlan(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetSubscriptionPlan(*s)
+	}
 	return buc
 }
 
@@ -149,6 +197,14 @@ func (buc *BusinessUnitCreate) SetNillableDescription(s *string) *BusinessUnitCr
 // SetLegalName sets the "legal_name" field.
 func (buc *BusinessUnitCreate) SetLegalName(s string) *BusinessUnitCreate {
 	buc.mutation.SetLegalName(s)
+	return buc
+}
+
+// SetNillableLegalName sets the "legal_name" field if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableLegalName(s *string) *BusinessUnitCreate {
+	if s != nil {
+		buc.SetLegalName(*s)
+	}
 	return buc
 }
 
@@ -392,60 +448,29 @@ func (buc *BusinessUnitCreate) check() error {
 			return &ValidationError{Name: "phone_number", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.phone_number": %w`, err)}
 		}
 	}
-	if _, ok := buc.mutation.City(); !ok {
-		return &ValidationError{Name: "city", err: errors.New(`ent: missing required field "BusinessUnit.city"`)}
-	}
 	if v, ok := buc.mutation.City(); ok {
 		if err := businessunit.CityValidator(v); err != nil {
 			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.city": %w`, err)}
 		}
-	}
-	if _, ok := buc.mutation.State(); !ok {
-		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "BusinessUnit.state"`)}
 	}
 	if v, ok := buc.mutation.State(); ok {
 		if err := businessunit.StateValidator(v); err != nil {
 			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.state": %w`, err)}
 		}
 	}
-	if _, ok := buc.mutation.Country(); !ok {
-		return &ValidationError{Name: "country", err: errors.New(`ent: missing required field "BusinessUnit.country"`)}
-	}
 	if v, ok := buc.mutation.Country(); ok {
 		if err := businessunit.CountryValidator(v); err != nil {
 			return &ValidationError{Name: "country", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.country": %w`, err)}
 		}
-	}
-	if _, ok := buc.mutation.PostalCode(); !ok {
-		return &ValidationError{Name: "postal_code", err: errors.New(`ent: missing required field "BusinessUnit.postal_code"`)}
 	}
 	if v, ok := buc.mutation.PostalCode(); ok {
 		if err := businessunit.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.postal_code": %w`, err)}
 		}
 	}
-	if _, ok := buc.mutation.TaxID(); !ok {
-		return &ValidationError{Name: "tax_id", err: errors.New(`ent: missing required field "BusinessUnit.tax_id"`)}
-	}
 	if v, ok := buc.mutation.TaxID(); ok {
 		if err := businessunit.TaxIDValidator(v); err != nil {
 			return &ValidationError{Name: "tax_id", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.tax_id": %w`, err)}
-		}
-	}
-	if _, ok := buc.mutation.SubscriptionPlan(); !ok {
-		return &ValidationError{Name: "subscription_plan", err: errors.New(`ent: missing required field "BusinessUnit.subscription_plan"`)}
-	}
-	if v, ok := buc.mutation.SubscriptionPlan(); ok {
-		if err := businessunit.SubscriptionPlanValidator(v); err != nil {
-			return &ValidationError{Name: "subscription_plan", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.subscription_plan": %w`, err)}
-		}
-	}
-	if _, ok := buc.mutation.LegalName(); !ok {
-		return &ValidationError{Name: "legal_name", err: errors.New(`ent: missing required field "BusinessUnit.legal_name"`)}
-	}
-	if v, ok := buc.mutation.LegalName(); ok {
-		if err := businessunit.LegalNameValidator(v); err != nil {
-			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "BusinessUnit.legal_name": %w`, err)}
 		}
 	}
 	if _, ok := buc.mutation.FreeTrial(); !ok {
@@ -580,7 +605,7 @@ func (buc *BusinessUnitCreate) createSpec() (*BusinessUnit, *sqlgraph.CreateSpec
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.ParentID = nodes[0]
+		_node.ParentID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := buc.mutation.NextIDs(); len(nodes) > 0 {

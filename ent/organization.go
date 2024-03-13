@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
@@ -37,14 +38,13 @@ type Organization struct {
 	OrgType organization.OrgType `json:"orgType"`
 	// Timezone holds the value of the "timezone" field.
 	Timezone organization.Timezone `json:"timezone,omitempty"`
-	// BusinessUnitID holds the value of the "business_unit_id" field.
-	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganizationQuery when eager-loading is set.
 	Edges                           OrganizationEdges `json:"edges"`
-	business_unit_organizations     *uuid.UUID
+	business_unit_id                *uuid.UUID
 	organization_accounting_control *uuid.UUID
 	organization_billing_control    *uuid.UUID
+	organization_dispatch_control   *uuid.UUID
 	selectValues                    sql.SelectValues
 }
 
@@ -56,9 +56,11 @@ type OrganizationEdges struct {
 	AccountingControl *AccountingControl `json:"accounting_control,omitempty"`
 	// BillingControl holds the value of the billing_control edge.
 	BillingControl *BillingControl `json:"billing_control,omitempty"`
+	// DispatchControl holds the value of the dispatch_control edge.
+	DispatchControl *DispatchControl `json:"dispatch_control,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -94,6 +96,17 @@ func (e OrganizationEdges) BillingControlOrErr() (*BillingControl, error) {
 	return nil, &NotLoadedError{edge: "billing_control"}
 }
 
+// DispatchControlOrErr returns the DispatchControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) DispatchControlOrErr() (*DispatchControl, error) {
+	if e.DispatchControl != nil {
+		return e.DispatchControl, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: dispatchcontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "dispatch_control"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -103,13 +116,15 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case organization.FieldID, organization.FieldBusinessUnitID:
+		case organization.FieldID:
 			values[i] = new(uuid.UUID)
-		case organization.ForeignKeys[0]: // business_unit_organizations
+		case organization.ForeignKeys[0]: // business_unit_id
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case organization.ForeignKeys[1]: // organization_accounting_control
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case organization.ForeignKeys[2]: // organization_billing_control
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case organization.ForeignKeys[3]: // organization_dispatch_control
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -180,18 +195,12 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.Timezone = organization.Timezone(value.String)
 			}
-		case organization.FieldBusinessUnitID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
-			} else if value != nil {
-				o.BusinessUnitID = *value
-			}
 		case organization.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_organizations", values[i])
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
 			} else if value.Valid {
-				o.business_unit_organizations = new(uuid.UUID)
-				*o.business_unit_organizations = *value.S.(*uuid.UUID)
+				o.business_unit_id = new(uuid.UUID)
+				*o.business_unit_id = *value.S.(*uuid.UUID)
 			}
 		case organization.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -206,6 +215,13 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.organization_billing_control = new(uuid.UUID)
 				*o.organization_billing_control = *value.S.(*uuid.UUID)
+			}
+		case organization.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_dispatch_control", values[i])
+			} else if value.Valid {
+				o.organization_dispatch_control = new(uuid.UUID)
+				*o.organization_dispatch_control = *value.S.(*uuid.UUID)
 			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
@@ -233,6 +249,11 @@ func (o *Organization) QueryAccountingControl() *AccountingControlQuery {
 // QueryBillingControl queries the "billing_control" edge of the Organization entity.
 func (o *Organization) QueryBillingControl() *BillingControlQuery {
 	return NewOrganizationClient(o.config).QueryBillingControl(o)
+}
+
+// QueryDispatchControl queries the "dispatch_control" edge of the Organization entity.
+func (o *Organization) QueryDispatchControl() *DispatchControlQuery {
+	return NewOrganizationClient(o.config).QueryDispatchControl(o)
 }
 
 // Update returns a builder for updating this Organization.
@@ -281,9 +302,6 @@ func (o *Organization) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("timezone=")
 	builder.WriteString(fmt.Sprintf("%v", o.Timezone))
-	builder.WriteString(", ")
-	builder.WriteString("business_unit_id=")
-	builder.WriteString(fmt.Sprintf("%v", o.BusinessUnitID))
 	builder.WriteByte(')')
 	return builder.String()
 }

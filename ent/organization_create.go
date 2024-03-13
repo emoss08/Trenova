@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
@@ -112,12 +113,6 @@ func (oc *OrganizationCreate) SetNillableTimezone(o *organization.Timezone) *Org
 	return oc
 }
 
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (oc *OrganizationCreate) SetBusinessUnitID(u uuid.UUID) *OrganizationCreate {
-	oc.mutation.SetBusinessUnitID(u)
-	return oc
-}
-
 // SetID sets the "id" field.
 func (oc *OrganizationCreate) SetID(u uuid.UUID) *OrganizationCreate {
 	oc.mutation.SetID(u)
@@ -163,6 +158,17 @@ func (oc *OrganizationCreate) SetBillingControlID(id uuid.UUID) *OrganizationCre
 // SetBillingControl sets the "billing_control" edge to the BillingControl entity.
 func (oc *OrganizationCreate) SetBillingControl(b *BillingControl) *OrganizationCreate {
 	return oc.SetBillingControlID(b.ID)
+}
+
+// SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by ID.
+func (oc *OrganizationCreate) SetDispatchControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetDispatchControlID(id)
+	return oc
+}
+
+// SetDispatchControl sets the "dispatch_control" edge to the DispatchControl entity.
+func (oc *OrganizationCreate) SetDispatchControl(d *DispatchControl) *OrganizationCreate {
+	return oc.SetDispatchControlID(d.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -271,9 +277,6 @@ func (oc *OrganizationCreate) check() error {
 		}
 	}
 	if _, ok := oc.mutation.BusinessUnitID(); !ok {
-		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "Organization.business_unit_id"`)}
-	}
-	if _, ok := oc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "Organization.business_unit"`)}
 	}
 	if _, ok := oc.mutation.AccountingControlID(); !ok {
@@ -281,6 +284,9 @@ func (oc *OrganizationCreate) check() error {
 	}
 	if _, ok := oc.mutation.BillingControlID(); !ok {
 		return &ValidationError{Name: "billing_control", err: errors.New(`ent: missing required edge "Organization.billing_control"`)}
+	}
+	if _, ok := oc.mutation.DispatchControlID(); !ok {
+		return &ValidationError{Name: "dispatch_control", err: errors.New(`ent: missing required edge "Organization.dispatch_control"`)}
 	}
 	return nil
 }
@@ -349,10 +355,6 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
 		_node.Timezone = value
 	}
-	if value, ok := oc.mutation.BusinessUnitID(); ok {
-		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
-		_node.BusinessUnitID = value
-	}
 	if nodes := oc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -367,7 +369,7 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.business_unit_organizations = &nodes[0]
+		_node.business_unit_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.AccountingControlIDs(); len(nodes) > 0 {
@@ -402,6 +404,23 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.organization_billing_control = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.DispatchControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.DispatchControlTable,
+			Columns: []string{organization.DispatchControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.organization_dispatch_control = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

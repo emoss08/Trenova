@@ -42,7 +42,7 @@ type BusinessUnit struct {
 	// PostalCode holds the value of the "postal_code" field.
 	PostalCode string `json:"postalCode"`
 	// TaxID holds the value of the "tax_id" field.
-	TaxID string `json:"tax_id,omitempty"`
+	TaxID string `json:"taxId"`
 	// SubscriptionPlan holds the value of the "subscription_plan" field.
 	SubscriptionPlan string `json:"subscriptionPlan"`
 	// Description holds the value of the "description" field.
@@ -60,7 +60,7 @@ type BusinessUnit struct {
 	// FreeTrial holds the value of the "free_trial" field.
 	FreeTrial bool `json:"freeTrial"`
 	// ParentID holds the value of the "parent_id" field.
-	ParentID uuid.UUID `json:"parentId"`
+	ParentID *uuid.UUID `json:"parentId"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BusinessUnitQuery when eager-loading is set.
 	Edges        BusinessUnitEdges `json:"edges"`
@@ -116,6 +116,8 @@ func (*BusinessUnit) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case businessunit.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case businessunit.FieldSettings:
 			values[i] = new([]byte)
 		case businessunit.FieldFreeTrial:
@@ -124,7 +126,7 @@ func (*BusinessUnit) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case businessunit.FieldCreatedAt, businessunit.FieldUpdatedAt, businessunit.FieldPaidUntil:
 			values[i] = new(sql.NullTime)
-		case businessunit.FieldID, businessunit.FieldParentID:
+		case businessunit.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -270,10 +272,11 @@ func (bu *BusinessUnit) assignValues(columns []string, values []any) error {
 				bu.FreeTrial = value.Bool
 			}
 		case businessunit.FieldParentID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
-			} else if value != nil {
-				bu.ParentID = *value
+			} else if value.Valid {
+				bu.ParentID = new(uuid.UUID)
+				*bu.ParentID = *value.S.(*uuid.UUID)
 			}
 		default:
 			bu.selectValues.Set(columns[i], values[i])
@@ -386,8 +389,10 @@ func (bu *BusinessUnit) String() string {
 	builder.WriteString("free_trial=")
 	builder.WriteString(fmt.Sprintf("%v", bu.FreeTrial))
 	builder.WriteString(", ")
-	builder.WriteString("parent_id=")
-	builder.WriteString(fmt.Sprintf("%v", bu.ParentID))
+	if v := bu.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

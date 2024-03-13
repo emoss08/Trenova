@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/schema"
@@ -175,14 +176,6 @@ func init() {
 	businessunitDescTaxID := businessunitFields[9].Descriptor()
 	// businessunit.TaxIDValidator is a validator for the "tax_id" field. It is called by the builders before save.
 	businessunit.TaxIDValidator = businessunitDescTaxID.Validators[0].(func(string) error)
-	// businessunitDescSubscriptionPlan is the schema descriptor for subscription_plan field.
-	businessunitDescSubscriptionPlan := businessunitFields[10].Descriptor()
-	// businessunit.SubscriptionPlanValidator is a validator for the "subscription_plan" field. It is called by the builders before save.
-	businessunit.SubscriptionPlanValidator = businessunitDescSubscriptionPlan.Validators[0].(func(string) error)
-	// businessunitDescLegalName is the schema descriptor for legal_name field.
-	businessunitDescLegalName := businessunitFields[12].Descriptor()
-	// businessunit.LegalNameValidator is a validator for the "legal_name" field. It is called by the builders before save.
-	businessunit.LegalNameValidator = businessunitDescLegalName.Validators[0].(func(string) error)
 	// businessunitDescFreeTrial is the schema descriptor for free_trial field.
 	businessunitDescFreeTrial := businessunitFields[17].Descriptor()
 	// businessunit.DefaultFreeTrial holds the default value on creation for the free_trial field.
@@ -191,6 +184,71 @@ func init() {
 	businessunitDescID := businessunitMixinFields0[0].Descriptor()
 	// businessunit.DefaultID holds the default value on creation for the id field.
 	businessunit.DefaultID = businessunitDescID.Default.(func() uuid.UUID)
+	dispatchcontrolMixin := schema.DispatchControl{}.Mixin()
+	dispatchcontrolMixinFields0 := dispatchcontrolMixin[0].Fields()
+	_ = dispatchcontrolMixinFields0
+	dispatchcontrolFields := schema.DispatchControl{}.Fields()
+	_ = dispatchcontrolFields
+	// dispatchcontrolDescCreatedAt is the schema descriptor for created_at field.
+	dispatchcontrolDescCreatedAt := dispatchcontrolMixinFields0[1].Descriptor()
+	// dispatchcontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	dispatchcontrol.DefaultCreatedAt = dispatchcontrolDescCreatedAt.Default.(time.Time)
+	// dispatchcontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	dispatchcontrolDescUpdatedAt := dispatchcontrolMixinFields0[2].Descriptor()
+	// dispatchcontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	dispatchcontrol.DefaultUpdatedAt = dispatchcontrolDescUpdatedAt.Default.(time.Time)
+	// dispatchcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	dispatchcontrol.UpdateDefaultUpdatedAt = dispatchcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// dispatchcontrolDescDeadheadTarget is the schema descriptor for deadhead_target field.
+	dispatchcontrolDescDeadheadTarget := dispatchcontrolFields[3].Descriptor()
+	// dispatchcontrol.DefaultDeadheadTarget holds the default value on creation for the deadhead_target field.
+	dispatchcontrol.DefaultDeadheadTarget = dispatchcontrolDescDeadheadTarget.Default.(float64)
+	// dispatchcontrolDescMaxShipmentWeightLimit is the schema descriptor for max_shipment_weight_limit field.
+	dispatchcontrolDescMaxShipmentWeightLimit := dispatchcontrolFields[4].Descriptor()
+	// dispatchcontrol.DefaultMaxShipmentWeightLimit holds the default value on creation for the max_shipment_weight_limit field.
+	dispatchcontrol.DefaultMaxShipmentWeightLimit = dispatchcontrolDescMaxShipmentWeightLimit.Default.(int)
+	// dispatchcontrol.MaxShipmentWeightLimitValidator is a validator for the "max_shipment_weight_limit" field. It is called by the builders before save.
+	dispatchcontrol.MaxShipmentWeightLimitValidator = dispatchcontrolDescMaxShipmentWeightLimit.Validators[0].(func(int) error)
+	// dispatchcontrolDescGracePeriod is the schema descriptor for grace_period field.
+	dispatchcontrolDescGracePeriod := dispatchcontrolFields[5].Descriptor()
+	// dispatchcontrol.DefaultGracePeriod holds the default value on creation for the grace_period field.
+	dispatchcontrol.DefaultGracePeriod = dispatchcontrolDescGracePeriod.Default.(uint8)
+	// dispatchcontrolDescEnforceWorkerAssign is the schema descriptor for enforce_worker_assign field.
+	dispatchcontrolDescEnforceWorkerAssign := dispatchcontrolFields[6].Descriptor()
+	// dispatchcontrol.DefaultEnforceWorkerAssign holds the default value on creation for the enforce_worker_assign field.
+	dispatchcontrol.DefaultEnforceWorkerAssign = dispatchcontrolDescEnforceWorkerAssign.Default.(bool)
+	// dispatchcontrolDescTrailerContinuity is the schema descriptor for trailer_continuity field.
+	dispatchcontrolDescTrailerContinuity := dispatchcontrolFields[7].Descriptor()
+	// dispatchcontrol.DefaultTrailerContinuity holds the default value on creation for the trailer_continuity field.
+	dispatchcontrol.DefaultTrailerContinuity = dispatchcontrolDescTrailerContinuity.Default.(bool)
+	// dispatchcontrolDescDupeTrailerCheck is the schema descriptor for dupe_trailer_check field.
+	dispatchcontrolDescDupeTrailerCheck := dispatchcontrolFields[8].Descriptor()
+	// dispatchcontrol.DefaultDupeTrailerCheck holds the default value on creation for the dupe_trailer_check field.
+	dispatchcontrol.DefaultDupeTrailerCheck = dispatchcontrolDescDupeTrailerCheck.Default.(bool)
+	// dispatchcontrolDescMaintenanceCompliance is the schema descriptor for maintenance_compliance field.
+	dispatchcontrolDescMaintenanceCompliance := dispatchcontrolFields[9].Descriptor()
+	// dispatchcontrol.DefaultMaintenanceCompliance holds the default value on creation for the maintenance_compliance field.
+	dispatchcontrol.DefaultMaintenanceCompliance = dispatchcontrolDescMaintenanceCompliance.Default.(bool)
+	// dispatchcontrolDescRegulatoryCheck is the schema descriptor for regulatory_check field.
+	dispatchcontrolDescRegulatoryCheck := dispatchcontrolFields[10].Descriptor()
+	// dispatchcontrol.DefaultRegulatoryCheck holds the default value on creation for the regulatory_check field.
+	dispatchcontrol.DefaultRegulatoryCheck = dispatchcontrolDescRegulatoryCheck.Default.(bool)
+	// dispatchcontrolDescPrevShipmentOnHold is the schema descriptor for prev_shipment_on_hold field.
+	dispatchcontrolDescPrevShipmentOnHold := dispatchcontrolFields[11].Descriptor()
+	// dispatchcontrol.DefaultPrevShipmentOnHold holds the default value on creation for the prev_shipment_on_hold field.
+	dispatchcontrol.DefaultPrevShipmentOnHold = dispatchcontrolDescPrevShipmentOnHold.Default.(bool)
+	// dispatchcontrolDescWorkerTimeAwayRestriction is the schema descriptor for worker_time_away_restriction field.
+	dispatchcontrolDescWorkerTimeAwayRestriction := dispatchcontrolFields[12].Descriptor()
+	// dispatchcontrol.DefaultWorkerTimeAwayRestriction holds the default value on creation for the worker_time_away_restriction field.
+	dispatchcontrol.DefaultWorkerTimeAwayRestriction = dispatchcontrolDescWorkerTimeAwayRestriction.Default.(bool)
+	// dispatchcontrolDescTractorWorkerFleetConstraint is the schema descriptor for tractor_worker_fleet_constraint field.
+	dispatchcontrolDescTractorWorkerFleetConstraint := dispatchcontrolFields[13].Descriptor()
+	// dispatchcontrol.DefaultTractorWorkerFleetConstraint holds the default value on creation for the tractor_worker_fleet_constraint field.
+	dispatchcontrol.DefaultTractorWorkerFleetConstraint = dispatchcontrolDescTractorWorkerFleetConstraint.Default.(bool)
+	// dispatchcontrolDescID is the schema descriptor for id field.
+	dispatchcontrolDescID := dispatchcontrolMixinFields0[0].Descriptor()
+	// dispatchcontrol.DefaultID holds the default value on creation for the id field.
+	dispatchcontrol.DefaultID = dispatchcontrolDescID.Default.(func() uuid.UUID)
 	generalledgeraccountMixin := schema.GeneralLedgerAccount{}.Mixin()
 	generalledgeraccountMixinFields0 := generalledgeraccountMixin[0].Fields()
 	_ = generalledgeraccountMixinFields0
