@@ -14,12 +14,15 @@ import (
 )
 
 func main() {
-	ex, entqlErr := entgql.NewExtension()
+	ex, entqlErr := entgql.NewExtension(
+		entgql.WithSchemaGenerator(),
+		entgql.WithSchemaPath("ent.graphql"),
+	)
 	if entqlErr != nil {
 		log.Fatalf("creating entgql extension: %v", entqlErr)
 	}
 
-	if err := entc.Generate("./schema", &gen.Config{
+	if err := entc.Generate("./ent/schema", &gen.Config{
 		Hooks: []gen.Hook{
 			EnsureStructTag("json"),
 		},
