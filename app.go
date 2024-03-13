@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
+	"github.com/emoss08/trenova/server"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -22,8 +22,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	ctx := context.Background()
 
 	// // Create a business unit
 	// businessUnit := client.BusinessUnit.
@@ -58,5 +56,5 @@ func main() {
 	database.SetClient(client)
 
 	// Setup server
-	// server.SetupAndRun()
+	server.SetupAndRun()
 }

@@ -1,10 +1,10 @@
-package models
+package types
 
 type HTTPResponse struct {
-	Count    int         `json:"count"`
-	Next     string      `json:"next"`
-	Previous string      `json:"previous"`
-	Results  interface{} `json:"results"`
+	Count    int    `json:"count"`
+	Next     string `json:"next"`
+	Previous string `json:"previous"`
+	Results  any    `json:"results"`
 }
 
 type ValidationErrorDetail struct {

@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"context"
-	"github.com/emoss08/trenova/tools"
 	"net/http"
 
-	"github.com/emoss08/trenova/models"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/types"
+
 	"github.com/wader/gormstore/v2"
 )
 
@@ -22,7 +23,7 @@ func SessionMiddleware(store *gormstore.Store) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, orgID, buID, ok := tools.GetSessionDetails(r, store)
 			if !ok {
-				tools.ResponseWithError(w, http.StatusUnauthorized, models.ValidationErrorDetail{
+				tools.ResponseWithError(w, http.StatusUnauthorized, types.ValidationErrorDetail{
 					Code:   "unauthorized",
 					Detail: "Unauthorized",
 					Attr:   "session",

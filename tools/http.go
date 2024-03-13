@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/emoss08/trenova/models"
+	"github.com/emoss08/trenova/tools/types"
 	"github.com/goccy/go-json"
 
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ import (
 )
 
 type ValidationError struct {
-	Response models.ValidationErrorResponse
+	Response types.ValidationErrorResponse
 }
 
 func (ve ValidationError) Error() string {
@@ -59,7 +60,7 @@ func GetMuxVar(w http.ResponseWriter, r *http.Request, key string) string {
 	vars := mux.Vars(r)
 	value, ok := vars[key]
 	if !ok {
-		ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+		ResponseWithError(w, http.StatusBadRequest, types.ValidationErrorDetail{
 			Code:   "invalid",
 			Detail: "The required parameter is missing.",
 			Attr:   key,
