@@ -16,8 +16,11 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 )
 
@@ -26,10 +29,16 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// AccountingControl is the client for interacting with the AccountingControl builders.
+	AccountingControl *AccountingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
+	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
+	GeneralLedgerAccount *GeneralLedgerAccountClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -43,8 +52,11 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.AccountingControl = NewAccountingControlClient(c.config)
 	c.BusinessUnit = NewBusinessUnitClient(c.config)
+	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
+	c.Tag = NewTagClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -136,11 +148,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		BusinessUnit: NewBusinessUnitClient(cfg),
-		Organization: NewOrganizationClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		AccountingControl:    NewAccountingControlClient(cfg),
+		BusinessUnit:         NewBusinessUnitClient(cfg),
+		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
+		Organization:         NewOrganizationClient(cfg),
+		Tag:                  NewTagClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
@@ -158,18 +173,21 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		BusinessUnit: NewBusinessUnitClient(cfg),
-		Organization: NewOrganizationClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		AccountingControl:    NewAccountingControlClient(cfg),
+		BusinessUnit:         NewBusinessUnitClient(cfg),
+		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
+		Organization:         NewOrganizationClient(cfg),
+		Tag:                  NewTagClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		BusinessUnit.
+//		AccountingControl.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -191,30 +209,239 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.BusinessUnit.Use(hooks...)
-	c.Organization.Use(hooks...)
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.AccountingControl, c.BusinessUnit, c.GeneralLedgerAccount, c.Organization,
+		c.Tag, c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.BusinessUnit.Intercept(interceptors...)
-	c.Organization.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.AccountingControl, c.BusinessUnit, c.GeneralLedgerAccount, c.Organization,
+		c.Tag, c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AccountingControlMutation:
+		return c.AccountingControl.mutate(ctx, m)
 	case *BusinessUnitMutation:
 		return c.BusinessUnit.mutate(ctx, m)
+	case *GeneralLedgerAccountMutation:
+		return c.GeneralLedgerAccount.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
+	case *TagMutation:
+		return c.Tag.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AccountingControlClient is a client for the AccountingControl schema.
+type AccountingControlClient struct {
+	config
+}
+
+// NewAccountingControlClient returns a client for the AccountingControl from the given config.
+func NewAccountingControlClient(c config) *AccountingControlClient {
+	return &AccountingControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountingcontrol.Hooks(f(g(h())))`.
+func (c *AccountingControlClient) Use(hooks ...Hook) {
+	c.hooks.AccountingControl = append(c.hooks.AccountingControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountingcontrol.Intercept(f(g(h())))`.
+func (c *AccountingControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountingControl = append(c.inters.AccountingControl, interceptors...)
+}
+
+// Create returns a builder for creating a AccountingControl entity.
+func (c *AccountingControlClient) Create() *AccountingControlCreate {
+	mutation := newAccountingControlMutation(c.config, OpCreate)
+	return &AccountingControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountingControl entities.
+func (c *AccountingControlClient) CreateBulk(builders ...*AccountingControlCreate) *AccountingControlCreateBulk {
+	return &AccountingControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountingControlClient) MapCreateBulk(slice any, setFunc func(*AccountingControlCreate, int)) *AccountingControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountingControlCreateBulk{err: fmt.Errorf("calling to AccountingControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountingControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountingControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountingControl.
+func (c *AccountingControlClient) Update() *AccountingControlUpdate {
+	mutation := newAccountingControlMutation(c.config, OpUpdate)
+	return &AccountingControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountingControlClient) UpdateOne(ac *AccountingControl) *AccountingControlUpdateOne {
+	mutation := newAccountingControlMutation(c.config, OpUpdateOne, withAccountingControl(ac))
+	return &AccountingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountingControlClient) UpdateOneID(id uuid.UUID) *AccountingControlUpdateOne {
+	mutation := newAccountingControlMutation(c.config, OpUpdateOne, withAccountingControlID(id))
+	return &AccountingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountingControl.
+func (c *AccountingControlClient) Delete() *AccountingControlDelete {
+	mutation := newAccountingControlMutation(c.config, OpDelete)
+	return &AccountingControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountingControlClient) DeleteOne(ac *AccountingControl) *AccountingControlDeleteOne {
+	return c.DeleteOneID(ac.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountingControlClient) DeleteOneID(id uuid.UUID) *AccountingControlDeleteOne {
+	builder := c.Delete().Where(accountingcontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountingControlDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountingControl.
+func (c *AccountingControlClient) Query() *AccountingControlQuery {
+	return &AccountingControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountingControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountingControl entity by its id.
+func (c *AccountingControlClient) Get(ctx context.Context, id uuid.UUID) (*AccountingControl, error) {
+	return c.Query().Where(accountingcontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountingControlClient) GetX(ctx context.Context, id uuid.UUID) *AccountingControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a AccountingControl.
+func (c *AccountingControlClient) QueryOrganization(ac *AccountingControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ac.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.OrganizationTable, accountingcontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(ac.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a AccountingControl.
+func (c *AccountingControlClient) QueryBusinessUnit(ac *AccountingControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ac.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.BusinessUnitTable, accountingcontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(ac.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDefaultRevAccount queries the default_rev_account edge of a AccountingControl.
+func (c *AccountingControlClient) QueryDefaultRevAccount(ac *AccountingControl) *GeneralLedgerAccountQuery {
+	query := (&GeneralLedgerAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ac.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, id),
+			sqlgraph.To(generalledgeraccount.Table, generalledgeraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.DefaultRevAccountTable, accountingcontrol.DefaultRevAccountColumn),
+		)
+		fromV = sqlgraph.Neighbors(ac.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDefaultExpAccount queries the default_exp_account edge of a AccountingControl.
+func (c *AccountingControlClient) QueryDefaultExpAccount(ac *AccountingControl) *GeneralLedgerAccountQuery {
+	query := (&GeneralLedgerAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ac.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accountingcontrol.Table, accountingcontrol.FieldID, id),
+			sqlgraph.To(generalledgeraccount.Table, generalledgeraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, accountingcontrol.DefaultExpAccountTable, accountingcontrol.DefaultExpAccountColumn),
+		)
+		fromV = sqlgraph.Neighbors(ac.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AccountingControlClient) Hooks() []Hook {
+	return c.hooks.AccountingControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountingControlClient) Interceptors() []Interceptor {
+	return c.inters.AccountingControl
+}
+
+func (c *AccountingControlClient) mutate(ctx context.Context, m *AccountingControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountingControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountingControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountingControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountingControl mutation op: %q", m.Op())
 	}
 }
 
@@ -326,15 +553,47 @@ func (c *BusinessUnitClient) GetX(ctx context.Context, id uuid.UUID) *BusinessUn
 	return obj
 }
 
-// QueryParent queries the parent edge of a BusinessUnit.
-func (c *BusinessUnitClient) QueryParent(bu *BusinessUnit) *BusinessUnitQuery {
+// QueryPrev queries the prev edge of a BusinessUnit.
+func (c *BusinessUnitClient) QueryPrev(bu *BusinessUnit) *BusinessUnitQuery {
 	query := (&BusinessUnitClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := bu.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(businessunit.Table, businessunit.FieldID, id),
 			sqlgraph.To(businessunit.Table, businessunit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, businessunit.ParentTable, businessunit.ParentColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, businessunit.PrevTable, businessunit.PrevColumn),
+		)
+		fromV = sqlgraph.Neighbors(bu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryNext queries the next edge of a BusinessUnit.
+func (c *BusinessUnitClient) QueryNext(bu *BusinessUnit) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(businessunit.Table, businessunit.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, businessunit.NextTable, businessunit.NextColumn),
+		)
+		fromV = sqlgraph.Neighbors(bu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganizations queries the organizations edge of a BusinessUnit.
+func (c *BusinessUnitClient) QueryOrganizations(bu *BusinessUnit) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(businessunit.Table, businessunit.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, businessunit.OrganizationsTable, businessunit.OrganizationsColumn),
 		)
 		fromV = sqlgraph.Neighbors(bu.driver.Dialect(), step)
 		return fromV, nil
@@ -364,6 +623,187 @@ func (c *BusinessUnitClient) mutate(ctx context.Context, m *BusinessUnitMutation
 		return (&BusinessUnitDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BusinessUnit mutation op: %q", m.Op())
+	}
+}
+
+// GeneralLedgerAccountClient is a client for the GeneralLedgerAccount schema.
+type GeneralLedgerAccountClient struct {
+	config
+}
+
+// NewGeneralLedgerAccountClient returns a client for the GeneralLedgerAccount from the given config.
+func NewGeneralLedgerAccountClient(c config) *GeneralLedgerAccountClient {
+	return &GeneralLedgerAccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `generalledgeraccount.Hooks(f(g(h())))`.
+func (c *GeneralLedgerAccountClient) Use(hooks ...Hook) {
+	c.hooks.GeneralLedgerAccount = append(c.hooks.GeneralLedgerAccount, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `generalledgeraccount.Intercept(f(g(h())))`.
+func (c *GeneralLedgerAccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GeneralLedgerAccount = append(c.inters.GeneralLedgerAccount, interceptors...)
+}
+
+// Create returns a builder for creating a GeneralLedgerAccount entity.
+func (c *GeneralLedgerAccountClient) Create() *GeneralLedgerAccountCreate {
+	mutation := newGeneralLedgerAccountMutation(c.config, OpCreate)
+	return &GeneralLedgerAccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GeneralLedgerAccount entities.
+func (c *GeneralLedgerAccountClient) CreateBulk(builders ...*GeneralLedgerAccountCreate) *GeneralLedgerAccountCreateBulk {
+	return &GeneralLedgerAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GeneralLedgerAccountClient) MapCreateBulk(slice any, setFunc func(*GeneralLedgerAccountCreate, int)) *GeneralLedgerAccountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GeneralLedgerAccountCreateBulk{err: fmt.Errorf("calling to GeneralLedgerAccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GeneralLedgerAccountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GeneralLedgerAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) Update() *GeneralLedgerAccountUpdate {
+	mutation := newGeneralLedgerAccountMutation(c.config, OpUpdate)
+	return &GeneralLedgerAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GeneralLedgerAccountClient) UpdateOne(gla *GeneralLedgerAccount) *GeneralLedgerAccountUpdateOne {
+	mutation := newGeneralLedgerAccountMutation(c.config, OpUpdateOne, withGeneralLedgerAccount(gla))
+	return &GeneralLedgerAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GeneralLedgerAccountClient) UpdateOneID(id uuid.UUID) *GeneralLedgerAccountUpdateOne {
+	mutation := newGeneralLedgerAccountMutation(c.config, OpUpdateOne, withGeneralLedgerAccountID(id))
+	return &GeneralLedgerAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) Delete() *GeneralLedgerAccountDelete {
+	mutation := newGeneralLedgerAccountMutation(c.config, OpDelete)
+	return &GeneralLedgerAccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GeneralLedgerAccountClient) DeleteOne(gla *GeneralLedgerAccount) *GeneralLedgerAccountDeleteOne {
+	return c.DeleteOneID(gla.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GeneralLedgerAccountClient) DeleteOneID(id uuid.UUID) *GeneralLedgerAccountDeleteOne {
+	builder := c.Delete().Where(generalledgeraccount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GeneralLedgerAccountDeleteOne{builder}
+}
+
+// Query returns a query builder for GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) Query() *GeneralLedgerAccountQuery {
+	return &GeneralLedgerAccountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGeneralLedgerAccount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GeneralLedgerAccount entity by its id.
+func (c *GeneralLedgerAccountClient) Get(ctx context.Context, id uuid.UUID) (*GeneralLedgerAccount, error) {
+	return c.Query().Where(generalledgeraccount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GeneralLedgerAccountClient) GetX(ctx context.Context, id uuid.UUID) *GeneralLedgerAccount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) QueryBusinessUnit(gla *GeneralLedgerAccount) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gla.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(generalledgeraccount.Table, generalledgeraccount.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, generalledgeraccount.BusinessUnitTable, generalledgeraccount.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(gla.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) QueryOrganization(gla *GeneralLedgerAccount) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gla.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(generalledgeraccount.Table, generalledgeraccount.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, generalledgeraccount.OrganizationTable, generalledgeraccount.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(gla.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTags queries the tags edge of a GeneralLedgerAccount.
+func (c *GeneralLedgerAccountClient) QueryTags(gla *GeneralLedgerAccount) *TagQuery {
+	query := (&TagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gla.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(generalledgeraccount.Table, generalledgeraccount.FieldID, id),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, generalledgeraccount.TagsTable, generalledgeraccount.TagsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gla.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GeneralLedgerAccountClient) Hooks() []Hook {
+	return c.hooks.GeneralLedgerAccount
+}
+
+// Interceptors returns the client interceptors.
+func (c *GeneralLedgerAccountClient) Interceptors() []Interceptor {
+	return c.inters.GeneralLedgerAccount
+}
+
+func (c *GeneralLedgerAccountClient) mutate(ctx context.Context, m *GeneralLedgerAccountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GeneralLedgerAccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GeneralLedgerAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GeneralLedgerAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GeneralLedgerAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GeneralLedgerAccount mutation op: %q", m.Op())
 	}
 }
 
@@ -475,6 +915,38 @@ func (c *OrganizationClient) GetX(ctx context.Context, id uuid.UUID) *Organizati
 	return obj
 }
 
+// QueryBusinessUnit queries the business_unit edge of a Organization.
+func (c *OrganizationClient) QueryBusinessUnit(o *Organization) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, organization.BusinessUnitTable, organization.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAccountingControl queries the accounting_control edge of a Organization.
+func (c *OrganizationClient) QueryAccountingControl(o *Organization) *AccountingControlQuery {
+	query := (&AccountingControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(accountingcontrol.Table, accountingcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *OrganizationClient) Hooks() []Hook {
 	return c.hooks.Organization
@@ -497,6 +969,171 @@ func (c *OrganizationClient) mutate(ctx context.Context, m *OrganizationMutation
 		return (&OrganizationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Organization mutation op: %q", m.Op())
+	}
+}
+
+// TagClient is a client for the Tag schema.
+type TagClient struct {
+	config
+}
+
+// NewTagClient returns a client for the Tag from the given config.
+func NewTagClient(c config) *TagClient {
+	return &TagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tag.Hooks(f(g(h())))`.
+func (c *TagClient) Use(hooks ...Hook) {
+	c.hooks.Tag = append(c.hooks.Tag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tag.Intercept(f(g(h())))`.
+func (c *TagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Tag = append(c.inters.Tag, interceptors...)
+}
+
+// Create returns a builder for creating a Tag entity.
+func (c *TagClient) Create() *TagCreate {
+	mutation := newTagMutation(c.config, OpCreate)
+	return &TagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Tag entities.
+func (c *TagClient) CreateBulk(builders ...*TagCreate) *TagCreateBulk {
+	return &TagCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TagClient) MapCreateBulk(slice any, setFunc func(*TagCreate, int)) *TagCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TagCreateBulk{err: fmt.Errorf("calling to TagClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TagCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Tag.
+func (c *TagClient) Update() *TagUpdate {
+	mutation := newTagMutation(c.config, OpUpdate)
+	return &TagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TagClient) UpdateOne(t *Tag) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTag(t))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TagClient) UpdateOneID(id uuid.UUID) *TagUpdateOne {
+	mutation := newTagMutation(c.config, OpUpdateOne, withTagID(id))
+	return &TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Tag.
+func (c *TagClient) Delete() *TagDelete {
+	mutation := newTagMutation(c.config, OpDelete)
+	return &TagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TagClient) DeleteOne(t *Tag) *TagDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TagClient) DeleteOneID(id uuid.UUID) *TagDeleteOne {
+	builder := c.Delete().Where(tag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TagDeleteOne{builder}
+}
+
+// Query returns a query builder for Tag.
+func (c *TagClient) Query() *TagQuery {
+	return &TagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Tag entity by its id.
+func (c *TagClient) Get(ctx context.Context, id uuid.UUID) (*Tag, error) {
+	return c.Query().Where(tag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TagClient) GetX(ctx context.Context, id uuid.UUID) *Tag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Tag.
+func (c *TagClient) QueryBusinessUnit(t *Tag) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tag.BusinessUnitTable, tag.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Tag.
+func (c *TagClient) QueryOrganization(t *Tag) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tag.OrganizationTable, tag.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TagClient) Hooks() []Hook {
+	return c.hooks.Tag
+}
+
+// Interceptors returns the client interceptors.
+func (c *TagClient) Interceptors() []Interceptor {
+	return c.inters.Tag
+}
+
+func (c *TagClient) mutate(ctx context.Context, m *TagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Tag mutation op: %q", m.Op())
 	}
 }
 
@@ -561,7 +1198,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id uuid.UUID) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -578,7 +1215,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id uuid.UUID) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -595,17 +1232,49 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id uuid.UUID) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a User.
+func (c *UserClient) QueryBusinessUnit(u *User) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, user.BusinessUnitTable, user.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a User.
+func (c *UserClient) QueryOrganization(u *User) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, user.OrganizationTable, user.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -636,9 +1305,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		BusinessUnit, Organization, User []ent.Hook
+		AccountingControl, BusinessUnit, GeneralLedgerAccount, Organization, Tag,
+		User []ent.Hook
 	}
 	inters struct {
-		BusinessUnit, Organization, User []ent.Interceptor
+		AccountingControl, BusinessUnit, GeneralLedgerAccount, Organization, Tag,
+		User []ent.Interceptor
 	}
 )

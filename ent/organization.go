@@ -9,6 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
@@ -21,8 +23,60 @@ type Organization struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
-	selectValues sql.SelectValues
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// ScacCode holds the value of the "scac_code" field.
+	ScacCode string `json:"scacCode"`
+	// DotNumber holds the value of the "dot_number" field.
+	DotNumber string `json:"dotNumber"`
+	// LogoURL holds the value of the "logo_url" field.
+	LogoURL string `json:"logoUrl"`
+	// OrgType holds the value of the "org_type" field.
+	OrgType organization.OrgType `json:"orgType"`
+	// Timezone holds the value of the "timezone" field.
+	Timezone organization.Timezone `json:"timezone,omitempty"`
+	// BusinessUnitID holds the value of the "business_unit_id" field.
+	BusinessUnitID uuid.UUID `json:"businessUnitId"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the OrganizationQuery when eager-loading is set.
+	Edges                           OrganizationEdges `json:"edges"`
+	business_unit_organizations     *uuid.UUID
+	organization_accounting_control *uuid.UUID
+	selectValues                    sql.SelectValues
+}
+
+// OrganizationEdges holds the relations/edges for other nodes in the graph.
+type OrganizationEdges struct {
+	// BusinessUnit holds the value of the business_unit edge.
+	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
+	// AccountingControl holds the value of the accounting_control edge.
+	AccountingControl *AccountingControl `json:"accounting_control,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
+	if e.BusinessUnit != nil {
+		return e.BusinessUnit, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: businessunit.Label}
+	}
+	return nil, &NotLoadedError{edge: "business_unit"}
+}
+
+// AccountingControlOrErr returns the AccountingControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) AccountingControlOrErr() (*AccountingControl, error) {
+	if e.AccountingControl != nil {
+		return e.AccountingControl, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: accountingcontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "accounting_control"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -30,10 +84,16 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case organization.FieldName, organization.FieldScacCode, organization.FieldDotNumber, organization.FieldLogoURL, organization.FieldOrgType, organization.FieldTimezone:
+			values[i] = new(sql.NullString)
 		case organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case organization.FieldID:
+		case organization.FieldID, organization.FieldBusinessUnitID:
 			values[i] = new(uuid.UUID)
+		case organization.ForeignKeys[0]: // business_unit_organizations
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case organization.ForeignKeys[1]: // organization_accounting_control
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -67,6 +127,62 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.UpdatedAt = value.Time
 			}
+		case organization.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				o.Name = value.String
+			}
+		case organization.FieldScacCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field scac_code", values[i])
+			} else if value.Valid {
+				o.ScacCode = value.String
+			}
+		case organization.FieldDotNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field dot_number", values[i])
+			} else if value.Valid {
+				o.DotNumber = value.String
+			}
+		case organization.FieldLogoURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field logo_url", values[i])
+			} else if value.Valid {
+				o.LogoURL = value.String
+			}
+		case organization.FieldOrgType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field org_type", values[i])
+			} else if value.Valid {
+				o.OrgType = organization.OrgType(value.String)
+			}
+		case organization.FieldTimezone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field timezone", values[i])
+			} else if value.Valid {
+				o.Timezone = organization.Timezone(value.String)
+			}
+		case organization.FieldBusinessUnitID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value != nil {
+				o.BusinessUnitID = *value
+			}
+		case organization.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_organizations", values[i])
+			} else if value.Valid {
+				o.business_unit_organizations = new(uuid.UUID)
+				*o.business_unit_organizations = *value.S.(*uuid.UUID)
+			}
+		case organization.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_accounting_control", values[i])
+			} else if value.Valid {
+				o.organization_accounting_control = new(uuid.UUID)
+				*o.organization_accounting_control = *value.S.(*uuid.UUID)
+			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
 		}
@@ -78,6 +194,16 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (o *Organization) Value(name string) (ent.Value, error) {
 	return o.selectValues.Get(name)
+}
+
+// QueryBusinessUnit queries the "business_unit" edge of the Organization entity.
+func (o *Organization) QueryBusinessUnit() *BusinessUnitQuery {
+	return NewOrganizationClient(o.config).QueryBusinessUnit(o)
+}
+
+// QueryAccountingControl queries the "accounting_control" edge of the Organization entity.
+func (o *Organization) QueryAccountingControl() *AccountingControlQuery {
+	return NewOrganizationClient(o.config).QueryAccountingControl(o)
 }
 
 // Update returns a builder for updating this Organization.
@@ -108,6 +234,27 @@ func (o *Organization) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(o.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(o.Name)
+	builder.WriteString(", ")
+	builder.WriteString("scac_code=")
+	builder.WriteString(o.ScacCode)
+	builder.WriteString(", ")
+	builder.WriteString("dot_number=")
+	builder.WriteString(o.DotNumber)
+	builder.WriteString(", ")
+	builder.WriteString("logo_url=")
+	builder.WriteString(o.LogoURL)
+	builder.WriteString(", ")
+	builder.WriteString("org_type=")
+	builder.WriteString(fmt.Sprintf("%v", o.OrgType))
+	builder.WriteString(", ")
+	builder.WriteString("timezone=")
+	builder.WriteString(fmt.Sprintf("%v", o.Timezone))
+	builder.WriteString(", ")
+	builder.WriteString("business_unit_id=")
+	builder.WriteString(fmt.Sprintf("%v", o.BusinessUnitID))
 	builder.WriteByte(')')
 	return builder.String()
 }

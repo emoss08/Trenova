@@ -10,6 +10,8 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
@@ -49,6 +51,72 @@ func (oc *OrganizationCreate) SetNillableUpdatedAt(t *time.Time) *OrganizationCr
 	return oc
 }
 
+// SetName sets the "name" field.
+func (oc *OrganizationCreate) SetName(s string) *OrganizationCreate {
+	oc.mutation.SetName(s)
+	return oc
+}
+
+// SetScacCode sets the "scac_code" field.
+func (oc *OrganizationCreate) SetScacCode(s string) *OrganizationCreate {
+	oc.mutation.SetScacCode(s)
+	return oc
+}
+
+// SetDotNumber sets the "dot_number" field.
+func (oc *OrganizationCreate) SetDotNumber(s string) *OrganizationCreate {
+	oc.mutation.SetDotNumber(s)
+	return oc
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (oc *OrganizationCreate) SetLogoURL(s string) *OrganizationCreate {
+	oc.mutation.SetLogoURL(s)
+	return oc
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableLogoURL(s *string) *OrganizationCreate {
+	if s != nil {
+		oc.SetLogoURL(*s)
+	}
+	return oc
+}
+
+// SetOrgType sets the "org_type" field.
+func (oc *OrganizationCreate) SetOrgType(ot organization.OrgType) *OrganizationCreate {
+	oc.mutation.SetOrgType(ot)
+	return oc
+}
+
+// SetNillableOrgType sets the "org_type" field if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableOrgType(ot *organization.OrgType) *OrganizationCreate {
+	if ot != nil {
+		oc.SetOrgType(*ot)
+	}
+	return oc
+}
+
+// SetTimezone sets the "timezone" field.
+func (oc *OrganizationCreate) SetTimezone(o organization.Timezone) *OrganizationCreate {
+	oc.mutation.SetTimezone(o)
+	return oc
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableTimezone(o *organization.Timezone) *OrganizationCreate {
+	if o != nil {
+		oc.SetTimezone(*o)
+	}
+	return oc
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (oc *OrganizationCreate) SetBusinessUnitID(u uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetBusinessUnitID(u)
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *OrganizationCreate) SetID(u uuid.UUID) *OrganizationCreate {
 	oc.mutation.SetID(u)
@@ -61,6 +129,44 @@ func (oc *OrganizationCreate) SetNillableID(u *uuid.UUID) *OrganizationCreate {
 		oc.SetID(*u)
 	}
 	return oc
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (oc *OrganizationCreate) SetBusinessUnitID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetBusinessUnitID(id)
+	return oc
+}
+
+// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetBusinessUnitID(*id)
+	}
+	return oc
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (oc *OrganizationCreate) SetBusinessUnit(b *BusinessUnit) *OrganizationCreate {
+	return oc.SetBusinessUnitID(b.ID)
+}
+
+// SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
+func (oc *OrganizationCreate) SetAccountingControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetAccountingControlID(id)
+	return oc
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetAccountingControlID(*id)
+	}
+	return oc
+}
+
+// SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
+func (oc *OrganizationCreate) SetAccountingControl(a *AccountingControl) *OrganizationCreate {
+	return oc.SetAccountingControlID(a.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -106,6 +212,14 @@ func (oc *OrganizationCreate) defaults() {
 		v := organization.DefaultUpdatedAt
 		oc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := oc.mutation.OrgType(); !ok {
+		v := organization.DefaultOrgType
+		oc.mutation.SetOrgType(v)
+	}
+	if _, ok := oc.mutation.Timezone(); !ok {
+		v := organization.DefaultTimezone
+		oc.mutation.SetTimezone(v)
+	}
 	if _, ok := oc.mutation.ID(); !ok {
 		v := organization.DefaultID()
 		oc.mutation.SetID(v)
@@ -119,6 +233,49 @@ func (oc *OrganizationCreate) check() error {
 	}
 	if _, ok := oc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Organization.updated_at"`)}
+	}
+	if _, ok := oc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Organization.name"`)}
+	}
+	if v, ok := oc.mutation.Name(); ok {
+		if err := organization.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Organization.name": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.ScacCode(); !ok {
+		return &ValidationError{Name: "scac_code", err: errors.New(`ent: missing required field "Organization.scac_code"`)}
+	}
+	if v, ok := oc.mutation.ScacCode(); ok {
+		if err := organization.ScacCodeValidator(v); err != nil {
+			return &ValidationError{Name: "scac_code", err: fmt.Errorf(`ent: validator failed for field "Organization.scac_code": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.DotNumber(); !ok {
+		return &ValidationError{Name: "dot_number", err: errors.New(`ent: missing required field "Organization.dot_number"`)}
+	}
+	if v, ok := oc.mutation.DotNumber(); ok {
+		if err := organization.DotNumberValidator(v); err != nil {
+			return &ValidationError{Name: "dot_number", err: fmt.Errorf(`ent: validator failed for field "Organization.dot_number": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.OrgType(); !ok {
+		return &ValidationError{Name: "org_type", err: errors.New(`ent: missing required field "Organization.org_type"`)}
+	}
+	if v, ok := oc.mutation.OrgType(); ok {
+		if err := organization.OrgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.Timezone(); !ok {
+		return &ValidationError{Name: "timezone", err: errors.New(`ent: missing required field "Organization.timezone"`)}
+	}
+	if v, ok := oc.mutation.Timezone(); ok {
+		if err := organization.TimezoneValidator(v); err != nil {
+			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
+		}
+	}
+	if _, ok := oc.mutation.BusinessUnitID(); !ok {
+		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "Organization.business_unit_id"`)}
 	}
 	return nil
 }
@@ -162,6 +319,68 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 	if value, ok := oc.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := oc.mutation.Name(); ok {
+		_spec.SetField(organization.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := oc.mutation.ScacCode(); ok {
+		_spec.SetField(organization.FieldScacCode, field.TypeString, value)
+		_node.ScacCode = value
+	}
+	if value, ok := oc.mutation.DotNumber(); ok {
+		_spec.SetField(organization.FieldDotNumber, field.TypeString, value)
+		_node.DotNumber = value
+	}
+	if value, ok := oc.mutation.LogoURL(); ok {
+		_spec.SetField(organization.FieldLogoURL, field.TypeString, value)
+		_node.LogoURL = value
+	}
+	if value, ok := oc.mutation.OrgType(); ok {
+		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
+		_node.OrgType = value
+	}
+	if value, ok := oc.mutation.Timezone(); ok {
+		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+		_node.Timezone = value
+	}
+	if value, ok := oc.mutation.BusinessUnitID(); ok {
+		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
+		_node.BusinessUnitID = value
+	}
+	if nodes := oc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.BusinessUnitTable,
+			Columns: []string{organization.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.business_unit_organizations = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.AccountingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.AccountingControlTable,
+			Columns: []string{organization.AccountingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.organization_accounting_control = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

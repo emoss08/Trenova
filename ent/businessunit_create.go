@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
 
@@ -241,9 +242,57 @@ func (buc *BusinessUnitCreate) SetNillableID(u *uuid.UUID) *BusinessUnitCreate {
 	return buc
 }
 
-// SetParent sets the "parent" edge to the BusinessUnit entity.
-func (buc *BusinessUnitCreate) SetParent(b *BusinessUnit) *BusinessUnitCreate {
-	return buc.SetParentID(b.ID)
+// SetPrevID sets the "prev" edge to the BusinessUnit entity by ID.
+func (buc *BusinessUnitCreate) SetPrevID(id uuid.UUID) *BusinessUnitCreate {
+	buc.mutation.SetPrevID(id)
+	return buc
+}
+
+// SetNillablePrevID sets the "prev" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillablePrevID(id *uuid.UUID) *BusinessUnitCreate {
+	if id != nil {
+		buc = buc.SetPrevID(*id)
+	}
+	return buc
+}
+
+// SetPrev sets the "prev" edge to the BusinessUnit entity.
+func (buc *BusinessUnitCreate) SetPrev(b *BusinessUnit) *BusinessUnitCreate {
+	return buc.SetPrevID(b.ID)
+}
+
+// SetNextID sets the "next" edge to the BusinessUnit entity by ID.
+func (buc *BusinessUnitCreate) SetNextID(id uuid.UUID) *BusinessUnitCreate {
+	buc.mutation.SetNextID(id)
+	return buc
+}
+
+// SetNillableNextID sets the "next" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buc *BusinessUnitCreate) SetNillableNextID(id *uuid.UUID) *BusinessUnitCreate {
+	if id != nil {
+		buc = buc.SetNextID(*id)
+	}
+	return buc
+}
+
+// SetNext sets the "next" edge to the BusinessUnit entity.
+func (buc *BusinessUnitCreate) SetNext(b *BusinessUnit) *BusinessUnitCreate {
+	return buc.SetNextID(b.ID)
+}
+
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (buc *BusinessUnitCreate) AddOrganizationIDs(ids ...uuid.UUID) *BusinessUnitCreate {
+	buc.mutation.AddOrganizationIDs(ids...)
+	return buc
+}
+
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (buc *BusinessUnitCreate) AddOrganizations(o ...*Organization) *BusinessUnitCreate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return buc.AddOrganizationIDs(ids...)
 }
 
 // Mutation returns the BusinessUnitMutation object of the builder.
@@ -517,13 +566,13 @@ func (buc *BusinessUnitCreate) createSpec() (*BusinessUnit, *sqlgraph.CreateSpec
 		_spec.SetField(businessunit.FieldFreeTrial, field.TypeBool, value)
 		_node.FreeTrial = value
 	}
-	if nodes := buc.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := buc.mutation.PrevIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   businessunit.ParentTable,
-			Columns: []string{businessunit.ParentColumn},
-			Bidi:    true,
+			Inverse: true,
+			Table:   businessunit.PrevTable,
+			Columns: []string{businessunit.PrevColumn},
+			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
 			},
@@ -532,6 +581,38 @@ func (buc *BusinessUnitCreate) createSpec() (*BusinessUnit, *sqlgraph.CreateSpec
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ParentID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := buc.mutation.NextIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   businessunit.NextTable,
+			Columns: []string{businessunit.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := buc.mutation.OrganizationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -58,14 +58,29 @@ const (
 	FieldFreeTrial = "free_trial"
 	// FieldParentID holds the string denoting the parent_id field in the database.
 	FieldParentID = "parent_id"
-	// EdgeParent holds the string denoting the parent edge name in mutations.
-	EdgeParent = "parent"
+	// EdgePrev holds the string denoting the prev edge name in mutations.
+	EdgePrev = "prev"
+	// EdgeNext holds the string denoting the next edge name in mutations.
+	EdgeNext = "next"
+	// EdgeOrganizations holds the string denoting the organizations edge name in mutations.
+	EdgeOrganizations = "organizations"
 	// Table holds the table name of the businessunit in the database.
 	Table = "business_units"
-	// ParentTable is the table that holds the parent relation/edge.
-	ParentTable = "business_units"
-	// ParentColumn is the table column denoting the parent relation/edge.
-	ParentColumn = "parent_id"
+	// PrevTable is the table that holds the prev relation/edge.
+	PrevTable = "business_units"
+	// PrevColumn is the table column denoting the prev relation/edge.
+	PrevColumn = "parent_id"
+	// NextTable is the table that holds the next relation/edge.
+	NextTable = "business_units"
+	// NextColumn is the table column denoting the next relation/edge.
+	NextColumn = "parent_id"
+	// OrganizationsTable is the table that holds the organizations relation/edge.
+	OrganizationsTable = "organizations"
+	// OrganizationsInverseTable is the table name for the Organization entity.
+	// It exists in this package in order to avoid circular dependency with the "organization" package.
+	OrganizationsInverseTable = "organizations"
+	// OrganizationsColumn is the table column denoting the organizations relation/edge.
+	OrganizationsColumn = "business_unit_organizations"
 )
 
 // Columns holds all SQL columns for businessunit fields.
@@ -271,16 +286,51 @@ func ByParentID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldParentID, opts...).ToFunc()
 }
 
-// ByParentField orders the results by parent field.
-func ByParentField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByPrevField orders the results by prev field.
+func ByPrevField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newParentStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newPrevStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newParentStep() *sqlgraph.Step {
+
+// ByNextField orders the results by next field.
+func ByNextField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newNextStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByOrganizationsCount orders the results by organizations count.
+func ByOrganizationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOrganizationsStep(), opts...)
+	}
+}
+
+// ByOrganizations orders the results by organizations terms.
+func ByOrganizations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOrganizationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newPrevStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, ParentTable, ParentColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, PrevTable, PrevColumn),
+	)
+}
+func newNextStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, NextTable, NextColumn),
+	)
+}
+func newOrganizationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OrganizationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OrganizationsTable, OrganizationsColumn),
 	)
 }

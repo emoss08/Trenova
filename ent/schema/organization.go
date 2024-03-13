@@ -2,7 +2,6 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -42,11 +41,8 @@ func (Organization) Fields() []ent.Field {
 // Edges of the Organization.
 func (Organization) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("business_unit", BusinessUnit.Type).
-			Field("business_unit_id").
-			Required().
-			Annotations(entsql.OnDelete(entsql.Cascade)).
-			Unique(),
+		edge.From("business_unit", BusinessUnit.Type).Ref("organizations").Unique(),
+		edge.To("accounting_control", AccountingControl.Type).Unique(),
 	}
 }
 

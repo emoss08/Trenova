@@ -11,8 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // OrganizationUpdate is the builder for updating Organization entities.
@@ -34,9 +37,163 @@ func (ou *OrganizationUpdate) SetUpdatedAt(t time.Time) *OrganizationUpdate {
 	return ou
 }
 
+// SetName sets the "name" field.
+func (ou *OrganizationUpdate) SetName(s string) *OrganizationUpdate {
+	ou.mutation.SetName(s)
+	return ou
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableName(s *string) *OrganizationUpdate {
+	if s != nil {
+		ou.SetName(*s)
+	}
+	return ou
+}
+
+// SetScacCode sets the "scac_code" field.
+func (ou *OrganizationUpdate) SetScacCode(s string) *OrganizationUpdate {
+	ou.mutation.SetScacCode(s)
+	return ou
+}
+
+// SetNillableScacCode sets the "scac_code" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableScacCode(s *string) *OrganizationUpdate {
+	if s != nil {
+		ou.SetScacCode(*s)
+	}
+	return ou
+}
+
+// SetDotNumber sets the "dot_number" field.
+func (ou *OrganizationUpdate) SetDotNumber(s string) *OrganizationUpdate {
+	ou.mutation.SetDotNumber(s)
+	return ou
+}
+
+// SetNillableDotNumber sets the "dot_number" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableDotNumber(s *string) *OrganizationUpdate {
+	if s != nil {
+		ou.SetDotNumber(*s)
+	}
+	return ou
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (ou *OrganizationUpdate) SetLogoURL(s string) *OrganizationUpdate {
+	ou.mutation.SetLogoURL(s)
+	return ou
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableLogoURL(s *string) *OrganizationUpdate {
+	if s != nil {
+		ou.SetLogoURL(*s)
+	}
+	return ou
+}
+
+// ClearLogoURL clears the value of the "logo_url" field.
+func (ou *OrganizationUpdate) ClearLogoURL() *OrganizationUpdate {
+	ou.mutation.ClearLogoURL()
+	return ou
+}
+
+// SetOrgType sets the "org_type" field.
+func (ou *OrganizationUpdate) SetOrgType(ot organization.OrgType) *OrganizationUpdate {
+	ou.mutation.SetOrgType(ot)
+	return ou
+}
+
+// SetNillableOrgType sets the "org_type" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableOrgType(ot *organization.OrgType) *OrganizationUpdate {
+	if ot != nil {
+		ou.SetOrgType(*ot)
+	}
+	return ou
+}
+
+// SetTimezone sets the "timezone" field.
+func (ou *OrganizationUpdate) SetTimezone(o organization.Timezone) *OrganizationUpdate {
+	ou.mutation.SetTimezone(o)
+	return ou
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableTimezone(o *organization.Timezone) *OrganizationUpdate {
+	if o != nil {
+		ou.SetTimezone(*o)
+	}
+	return ou
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (ou *OrganizationUpdate) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetBusinessUnitID(u)
+	return ou
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdate {
+	if u != nil {
+		ou.SetBusinessUnitID(*u)
+	}
+	return ou
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (ou *OrganizationUpdate) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetBusinessUnitID(id)
+	return ou
+}
+
+// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetBusinessUnitID(*id)
+	}
+	return ou
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (ou *OrganizationUpdate) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdate {
+	return ou.SetBusinessUnitID(b.ID)
+}
+
+// SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
+func (ou *OrganizationUpdate) SetAccountingControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetAccountingControlID(id)
+	return ou
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetAccountingControlID(*id)
+	}
+	return ou
+}
+
+// SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
+func (ou *OrganizationUpdate) SetAccountingControl(a *AccountingControl) *OrganizationUpdate {
+	return ou.SetAccountingControlID(a.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ou *OrganizationUpdate) Mutation() *OrganizationMutation {
 	return ou.mutation
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (ou *OrganizationUpdate) ClearBusinessUnit() *OrganizationUpdate {
+	ou.mutation.ClearBusinessUnit()
+	return ou
+}
+
+// ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
+func (ou *OrganizationUpdate) ClearAccountingControl() *OrganizationUpdate {
+	ou.mutation.ClearAccountingControl()
+	return ou
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -75,7 +232,40 @@ func (ou *OrganizationUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ou *OrganizationUpdate) check() error {
+	if v, ok := ou.mutation.Name(); ok {
+		if err := organization.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Organization.name": %w`, err)}
+		}
+	}
+	if v, ok := ou.mutation.ScacCode(); ok {
+		if err := organization.ScacCodeValidator(v); err != nil {
+			return &ValidationError{Name: "scac_code", err: fmt.Errorf(`ent: validator failed for field "Organization.scac_code": %w`, err)}
+		}
+	}
+	if v, ok := ou.mutation.DotNumber(); ok {
+		if err := organization.DotNumberValidator(v); err != nil {
+			return &ValidationError{Name: "dot_number", err: fmt.Errorf(`ent: validator failed for field "Organization.dot_number": %w`, err)}
+		}
+	}
+	if v, ok := ou.mutation.OrgType(); ok {
+		if err := organization.OrgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
+		}
+	}
+	if v, ok := ou.mutation.Timezone(); ok {
+		if err := organization.TimezoneValidator(v); err != nil {
+			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := ou.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(organization.Table, organization.Columns, sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID))
 	if ps := ou.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -86,6 +276,88 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := ou.mutation.Name(); ok {
+		_spec.SetField(organization.FieldName, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.ScacCode(); ok {
+		_spec.SetField(organization.FieldScacCode, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.DotNumber(); ok {
+		_spec.SetField(organization.FieldDotNumber, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.LogoURL(); ok {
+		_spec.SetField(organization.FieldLogoURL, field.TypeString, value)
+	}
+	if ou.mutation.LogoURLCleared() {
+		_spec.ClearField(organization.FieldLogoURL, field.TypeString)
+	}
+	if value, ok := ou.mutation.OrgType(); ok {
+		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
+	}
+	if value, ok := ou.mutation.Timezone(); ok {
+		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+	}
+	if value, ok := ou.mutation.BusinessUnitID(); ok {
+		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
+	}
+	if ou.mutation.BusinessUnitCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.BusinessUnitTable,
+			Columns: []string{organization.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.BusinessUnitTable,
+			Columns: []string{organization.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.AccountingControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.AccountingControlTable,
+			Columns: []string{organization.AccountingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.AccountingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.AccountingControlTable,
+			Columns: []string{organization.AccountingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -113,9 +385,163 @@ func (ouo *OrganizationUpdateOne) SetUpdatedAt(t time.Time) *OrganizationUpdateO
 	return ouo
 }
 
+// SetName sets the "name" field.
+func (ouo *OrganizationUpdateOne) SetName(s string) *OrganizationUpdateOne {
+	ouo.mutation.SetName(s)
+	return ouo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableName(s *string) *OrganizationUpdateOne {
+	if s != nil {
+		ouo.SetName(*s)
+	}
+	return ouo
+}
+
+// SetScacCode sets the "scac_code" field.
+func (ouo *OrganizationUpdateOne) SetScacCode(s string) *OrganizationUpdateOne {
+	ouo.mutation.SetScacCode(s)
+	return ouo
+}
+
+// SetNillableScacCode sets the "scac_code" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableScacCode(s *string) *OrganizationUpdateOne {
+	if s != nil {
+		ouo.SetScacCode(*s)
+	}
+	return ouo
+}
+
+// SetDotNumber sets the "dot_number" field.
+func (ouo *OrganizationUpdateOne) SetDotNumber(s string) *OrganizationUpdateOne {
+	ouo.mutation.SetDotNumber(s)
+	return ouo
+}
+
+// SetNillableDotNumber sets the "dot_number" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableDotNumber(s *string) *OrganizationUpdateOne {
+	if s != nil {
+		ouo.SetDotNumber(*s)
+	}
+	return ouo
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (ouo *OrganizationUpdateOne) SetLogoURL(s string) *OrganizationUpdateOne {
+	ouo.mutation.SetLogoURL(s)
+	return ouo
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableLogoURL(s *string) *OrganizationUpdateOne {
+	if s != nil {
+		ouo.SetLogoURL(*s)
+	}
+	return ouo
+}
+
+// ClearLogoURL clears the value of the "logo_url" field.
+func (ouo *OrganizationUpdateOne) ClearLogoURL() *OrganizationUpdateOne {
+	ouo.mutation.ClearLogoURL()
+	return ouo
+}
+
+// SetOrgType sets the "org_type" field.
+func (ouo *OrganizationUpdateOne) SetOrgType(ot organization.OrgType) *OrganizationUpdateOne {
+	ouo.mutation.SetOrgType(ot)
+	return ouo
+}
+
+// SetNillableOrgType sets the "org_type" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableOrgType(ot *organization.OrgType) *OrganizationUpdateOne {
+	if ot != nil {
+		ouo.SetOrgType(*ot)
+	}
+	return ouo
+}
+
+// SetTimezone sets the "timezone" field.
+func (ouo *OrganizationUpdateOne) SetTimezone(o organization.Timezone) *OrganizationUpdateOne {
+	ouo.mutation.SetTimezone(o)
+	return ouo
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableTimezone(o *organization.Timezone) *OrganizationUpdateOne {
+	if o != nil {
+		ouo.SetTimezone(*o)
+	}
+	return ouo
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (ouo *OrganizationUpdateOne) SetBusinessUnitID(u uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetBusinessUnitID(u)
+	return ouo
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *OrganizationUpdateOne {
+	if u != nil {
+		ouo.SetBusinessUnitID(*u)
+	}
+	return ouo
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (ouo *OrganizationUpdateOne) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetBusinessUnitID(id)
+	return ouo
+}
+
+// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetBusinessUnitID(*id)
+	}
+	return ouo
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (ouo *OrganizationUpdateOne) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdateOne {
+	return ouo.SetBusinessUnitID(b.ID)
+}
+
+// SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetAccountingControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetAccountingControlID(id)
+	return ouo
+}
+
+// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetAccountingControlID(*id)
+	}
+	return ouo
+}
+
+// SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
+func (ouo *OrganizationUpdateOne) SetAccountingControl(a *AccountingControl) *OrganizationUpdateOne {
+	return ouo.SetAccountingControlID(a.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ouo *OrganizationUpdateOne) Mutation() *OrganizationMutation {
 	return ouo.mutation
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (ouo *OrganizationUpdateOne) ClearBusinessUnit() *OrganizationUpdateOne {
+	ouo.mutation.ClearBusinessUnit()
+	return ouo
+}
+
+// ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
+func (ouo *OrganizationUpdateOne) ClearAccountingControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearAccountingControl()
+	return ouo
 }
 
 // Where appends a list predicates to the OrganizationUpdate builder.
@@ -167,7 +593,40 @@ func (ouo *OrganizationUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ouo *OrganizationUpdateOne) check() error {
+	if v, ok := ouo.mutation.Name(); ok {
+		if err := organization.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Organization.name": %w`, err)}
+		}
+	}
+	if v, ok := ouo.mutation.ScacCode(); ok {
+		if err := organization.ScacCodeValidator(v); err != nil {
+			return &ValidationError{Name: "scac_code", err: fmt.Errorf(`ent: validator failed for field "Organization.scac_code": %w`, err)}
+		}
+	}
+	if v, ok := ouo.mutation.DotNumber(); ok {
+		if err := organization.DotNumberValidator(v); err != nil {
+			return &ValidationError{Name: "dot_number", err: fmt.Errorf(`ent: validator failed for field "Organization.dot_number": %w`, err)}
+		}
+	}
+	if v, ok := ouo.mutation.OrgType(); ok {
+		if err := organization.OrgTypeValidator(v); err != nil {
+			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
+		}
+	}
+	if v, ok := ouo.mutation.Timezone(); ok {
+		if err := organization.TimezoneValidator(v); err != nil {
+			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organization, err error) {
+	if err := ouo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(organization.Table, organization.Columns, sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID))
 	id, ok := ouo.mutation.ID()
 	if !ok {
@@ -195,6 +654,88 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if value, ok := ouo.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := ouo.mutation.Name(); ok {
+		_spec.SetField(organization.FieldName, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.ScacCode(); ok {
+		_spec.SetField(organization.FieldScacCode, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.DotNumber(); ok {
+		_spec.SetField(organization.FieldDotNumber, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.LogoURL(); ok {
+		_spec.SetField(organization.FieldLogoURL, field.TypeString, value)
+	}
+	if ouo.mutation.LogoURLCleared() {
+		_spec.ClearField(organization.FieldLogoURL, field.TypeString)
+	}
+	if value, ok := ouo.mutation.OrgType(); ok {
+		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
+	}
+	if value, ok := ouo.mutation.Timezone(); ok {
+		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+	}
+	if value, ok := ouo.mutation.BusinessUnitID(); ok {
+		_spec.SetField(organization.FieldBusinessUnitID, field.TypeUUID, value)
+	}
+	if ouo.mutation.BusinessUnitCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.BusinessUnitTable,
+			Columns: []string{organization.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   organization.BusinessUnitTable,
+			Columns: []string{organization.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.AccountingControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.AccountingControlTable,
+			Columns: []string{organization.AccountingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.AccountingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.AccountingControlTable,
+			Columns: []string{organization.AccountingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Organization{config: ouo.config}
 	_spec.Assign = _node.assignValues
