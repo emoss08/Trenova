@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -503,6 +504,53 @@ func init() {
 	shipmentcontrolDescID := shipmentcontrolMixinFields0[0].Descriptor()
 	// shipmentcontrol.DefaultID holds the default value on creation for the id field.
 	shipmentcontrol.DefaultID = shipmentcontrolDescID.Default.(func() uuid.UUID)
+	tablechangealertMixin := schema.TableChangeAlert{}.Mixin()
+	tablechangealertMixinFields0 := tablechangealertMixin[0].Fields()
+	_ = tablechangealertMixinFields0
+	tablechangealertFields := schema.TableChangeAlert{}.Fields()
+	_ = tablechangealertFields
+	// tablechangealertDescCreatedAt is the schema descriptor for created_at field.
+	tablechangealertDescCreatedAt := tablechangealertMixinFields0[3].Descriptor()
+	// tablechangealert.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tablechangealert.DefaultCreatedAt = tablechangealertDescCreatedAt.Default.(time.Time)
+	// tablechangealertDescUpdatedAt is the schema descriptor for updated_at field.
+	tablechangealertDescUpdatedAt := tablechangealertMixinFields0[4].Descriptor()
+	// tablechangealert.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tablechangealert.DefaultUpdatedAt = tablechangealertDescUpdatedAt.Default.(time.Time)
+	// tablechangealert.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tablechangealert.UpdateDefaultUpdatedAt = tablechangealertDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tablechangealertDescName is the schema descriptor for name field.
+	tablechangealertDescName := tablechangealertFields[1].Descriptor()
+	// tablechangealert.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	tablechangealert.NameValidator = tablechangealertDescName.Validators[0].(func(string) error)
+	// tablechangealertDescTableName is the schema descriptor for table_name field.
+	tablechangealertDescTableName := tablechangealertFields[4].Descriptor()
+	// tablechangealert.TableNameValidator is a validator for the "table_name" field. It is called by the builders before save.
+	tablechangealert.TableNameValidator = tablechangealertDescTableName.Validators[0].(func(string) error)
+	// tablechangealertDescTopic is the schema descriptor for topic field.
+	tablechangealertDescTopic := tablechangealertFields[5].Descriptor()
+	// tablechangealert.TopicValidator is a validator for the "topic" field. It is called by the builders before save.
+	tablechangealert.TopicValidator = tablechangealertDescTopic.Validators[0].(func(string) error)
+	// tablechangealertDescCustomSubject is the schema descriptor for custom_subject field.
+	tablechangealertDescCustomSubject := tablechangealertFields[7].Descriptor()
+	// tablechangealert.CustomSubjectValidator is a validator for the "custom_subject" field. It is called by the builders before save.
+	tablechangealert.CustomSubjectValidator = tablechangealertDescCustomSubject.Validators[0].(func(string) error)
+	// tablechangealertDescFunctionName is the schema descriptor for function_name field.
+	tablechangealertDescFunctionName := tablechangealertFields[8].Descriptor()
+	// tablechangealert.FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
+	tablechangealert.FunctionNameValidator = tablechangealertDescFunctionName.Validators[0].(func(string) error)
+	// tablechangealertDescTriggerName is the schema descriptor for trigger_name field.
+	tablechangealertDescTriggerName := tablechangealertFields[9].Descriptor()
+	// tablechangealert.TriggerNameValidator is a validator for the "trigger_name" field. It is called by the builders before save.
+	tablechangealert.TriggerNameValidator = tablechangealertDescTriggerName.Validators[0].(func(string) error)
+	// tablechangealertDescListenerName is the schema descriptor for listener_name field.
+	tablechangealertDescListenerName := tablechangealertFields[10].Descriptor()
+	// tablechangealert.ListenerNameValidator is a validator for the "listener_name" field. It is called by the builders before save.
+	tablechangealert.ListenerNameValidator = tablechangealertDescListenerName.Validators[0].(func(string) error)
+	// tablechangealertDescID is the schema descriptor for id field.
+	tablechangealertDescID := tablechangealertMixinFields0[0].Descriptor()
+	// tablechangealert.DefaultID holds the default value on creation for the id field.
+	tablechangealert.DefaultID = tablechangealertDescID.Default.(func() uuid.UUID)
 	tagMixin := schema.Tag{}.Mixin()
 	tagMixinFields0 := tagMixin[0].Fields()
 	_ = tagMixinFields0

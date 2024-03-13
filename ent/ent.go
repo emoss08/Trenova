@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 )
@@ -94,6 +95,7 @@ func checkColumn(table, column string) error {
 			organization.Table:           organization.ValidColumn,
 			routecontrol.Table:           routecontrol.ValidColumn,
 			shipmentcontrol.Table:        shipmentcontrol.ValidColumn,
+			tablechangealert.Table:       tablechangealert.ValidColumn,
 			tag.Table:                    tag.ValidColumn,
 			user.Table:                   user.ValidColumn,
 		})

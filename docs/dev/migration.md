@@ -18,13 +18,22 @@ Atlas is a powerful tool for managing database schemas and migrations. Here's ho
    ```
    *Note: Replace `migration_name` with the name you wish to give your migration.*
 
-2. **Generate Migration Hash**:
+2. **Lint your Migration**:
+   Check your migration files for any errors or inconsistencies.
+   ```bash
+   atlas migrate lint \
+      --dev-url="docker://postgres/15/test?search_path=public" \
+      --dir="file://ent/migrate/migrations" \
+      --latest=1
+   ```
+
+3. **Generate Migration Hash**:
    Create a hash for your migration files.
    ```bash
    atlas migrate hash --dir file://ent/migrate/migrations
    ```
 
-3. **Apply Migration**:
+4. **Apply Migration**:
    Execute the migration files to update your database schema.
    ```bash
    atlas migrate apply \
@@ -32,7 +41,7 @@ Atlas is a powerful tool for managing database schemas and migrations. Here's ho
      --url "postgresql://postgres:postgres@localhost:5432/trenova_go_db?sslmode=disable"
    ```
 
-4. **Check Migration Status**:
+5. **Check Migration Status**:
    View the current status of your migrations.
    ```bash
    atlas migrate status \
@@ -40,7 +49,7 @@ Atlas is a powerful tool for managing database schemas and migrations. Here's ho
      --url "postgresql://postgres:postgres@localhost:5432/trenova_go_db?sslmode=disable"
    ```
 
-5. **Inspect the Schema**:
+6. **Inspect the Schema**:
    Analyze and output the details of your database schema.
    ```bash
    atlas schema inspect \
