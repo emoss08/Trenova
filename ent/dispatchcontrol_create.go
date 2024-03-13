@@ -51,18 +51,6 @@ func (dcc *DispatchControlCreate) SetNillableUpdatedAt(t *time.Time) *DispatchCo
 	return dcc
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (dcc *DispatchControlCreate) SetOrganizationID(u uuid.UUID) *DispatchControlCreate {
-	dcc.mutation.SetOrganizationID(u)
-	return dcc
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (dcc *DispatchControlCreate) SetBusinessUnitID(u uuid.UUID) *DispatchControlCreate {
-	dcc.mutation.SetBusinessUnitID(u)
-	return dcc
-}
-
 // SetRecordServiceIncident sets the "record_service_incident" field.
 func (dcc *DispatchControlCreate) SetRecordServiceIncident(dsi dispatchcontrol.RecordServiceIncident) *DispatchControlCreate {
 	dcc.mutation.SetRecordServiceIncident(dsi)
@@ -245,9 +233,21 @@ func (dcc *DispatchControlCreate) SetNillableID(u *uuid.UUID) *DispatchControlCr
 	return dcc
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (dcc *DispatchControlCreate) SetOrganizationID(id uuid.UUID) *DispatchControlCreate {
+	dcc.mutation.SetOrganizationID(id)
+	return dcc
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (dcc *DispatchControlCreate) SetOrganization(o *Organization) *DispatchControlCreate {
 	return dcc.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (dcc *DispatchControlCreate) SetBusinessUnitID(id uuid.UUID) *DispatchControlCreate {
+	dcc.mutation.SetBusinessUnitID(id)
+	return dcc
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -359,12 +359,6 @@ func (dcc *DispatchControlCreate) check() error {
 	}
 	if _, ok := dcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "DispatchControl.updated_at"`)}
-	}
-	if _, ok := dcc.mutation.OrganizationID(); !ok {
-		return &ValidationError{Name: "organization_id", err: errors.New(`ent: missing required field "DispatchControl.organization_id"`)}
-	}
-	if _, ok := dcc.mutation.BusinessUnitID(); !ok {
-		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "DispatchControl.business_unit_id"`)}
 	}
 	if _, ok := dcc.mutation.RecordServiceIncident(); !ok {
 		return &ValidationError{Name: "record_service_incident", err: errors.New(`ent: missing required field "DispatchControl.record_service_incident"`)}
@@ -511,8 +505,8 @@ func (dcc *DispatchControlCreate) createSpec() (*DispatchControl, *sqlgraph.Crea
 	}
 	if nodes := dcc.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   dispatchcontrol.OrganizationTable,
 			Columns: []string{dispatchcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -523,7 +517,7 @@ func (dcc *DispatchControlCreate) createSpec() (*DispatchControl, *sqlgraph.Crea
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.OrganizationID = nodes[0]
+		_node.organization_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := dcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
@@ -540,7 +534,7 @@ func (dcc *DispatchControlCreate) createSpec() (*DispatchControl, *sqlgraph.Crea
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.BusinessUnitID = nodes[0]
+		_node.business_unit_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

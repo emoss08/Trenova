@@ -69,8 +69,8 @@ var (
 		{Name: "validate_customer_rates", Type: field.TypeBool, Default: false},
 		{Name: "auto_bill_criteria", Type: field.TypeEnum, Enums: []string{"Delivered", "TransferredToBilling", "MarkedReadyToBill"}, Default: "MarkedReadyToBill"},
 		{Name: "shipment_transfer_criteria", Type: field.TypeEnum, Enums: []string{"ReadyAndCompleted", "Completed", "ReadyToBill"}, Default: "ReadyToBill"},
-		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 	}
 	// BillingControlsTable holds the schema information for the "billing_controls" table.
 	BillingControlsTable = &schema.Table{
@@ -79,16 +79,16 @@ var (
 		PrimaryKey: []*schema.Column{BillingControlsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "billing_controls_organizations_organization",
+				Symbol:     "billing_controls_business_units_business_unit",
 				Columns:    []*schema.Column{BillingControlsColumns[9]},
-				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "billing_controls_business_units_business_unit",
+				Symbol:     "billing_controls_organizations_billing_control",
 				Columns:    []*schema.Column{BillingControlsColumns[10]},
-				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
-				OnDelete:   schema.Cascade,
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -160,8 +160,8 @@ var (
 		{Name: "prev_shipment_on_hold", Type: field.TypeBool, Default: false},
 		{Name: "worker_time_away_restriction", Type: field.TypeBool, Default: true},
 		{Name: "tractor_worker_fleet_constraint", Type: field.TypeBool, Default: false},
-		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 	}
 	// DispatchControlsTable holds the schema information for the "dispatch_controls" table.
 	DispatchControlsTable = &schema.Table{
@@ -170,16 +170,52 @@ var (
 		PrimaryKey: []*schema.Column{DispatchControlsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "dispatch_controls_organizations_organization",
+				Symbol:     "dispatch_controls_business_units_business_unit",
 				Columns:    []*schema.Column{DispatchControlsColumns[15]},
-				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "dispatch_controls_business_units_business_unit",
+				Symbol:     "dispatch_controls_organizations_dispatch_control",
 				Columns:    []*schema.Column{DispatchControlsColumns[16]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// FeasibilityToolControlsColumns holds the columns for the "feasibility_tool_controls" table.
+	FeasibilityToolControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "otp_operator", Type: field.TypeEnum, Enums: []string{"Eq", "Ne", "Gt", "Gte", "Lt", "Lte"}, Default: "Eq"},
+		{Name: "otp_value", Type: field.TypeFloat64, Default: 100},
+		{Name: "mpw_operator", Type: field.TypeEnum, Enums: []string{"Eq", "Ne", "Gt", "Gte", "Lt", "Lte"}, Default: "Eq"},
+		{Name: "mpw_value", Type: field.TypeFloat64, Default: 100},
+		{Name: "mpd_operator", Type: field.TypeEnum, Enums: []string{"Eq", "Ne", "Gt", "Gte", "Lt", "Lte"}, Default: "Eq"},
+		{Name: "mpd_value", Type: field.TypeFloat64, Default: 100},
+		{Name: "mpg_operator", Type: field.TypeEnum, Enums: []string{"Eq", "Ne", "Gt", "Gte", "Lt", "Lte"}, Default: "Eq"},
+		{Name: "mpg_value", Type: field.TypeFloat64, Default: 100},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
+	}
+	// FeasibilityToolControlsTable holds the schema information for the "feasibility_tool_controls" table.
+	FeasibilityToolControlsTable = &schema.Table{
+		Name:       "feasibility_tool_controls",
+		Columns:    FeasibilityToolControlsColumns,
+		PrimaryKey: []*schema.Column{FeasibilityToolControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "feasibility_tool_controls_business_units_business_unit",
+				Columns:    []*schema.Column{FeasibilityToolControlsColumns[11]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "feasibility_tool_controls_organizations_feasibility_tool_control",
+				Columns:    []*schema.Column{FeasibilityToolControlsColumns[12]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -231,6 +267,45 @@ var (
 			},
 		},
 	}
+	// InvoiceControlsColumns holds the columns for the "invoice_controls" table.
+	InvoiceControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "invoice_number_prefix", Type: field.TypeString, Size: 10, Default: "INV-"},
+		{Name: "credit_memo_number_prefix", Type: field.TypeString, Size: 10, Default: "CM-"},
+		{Name: "invoice_terms", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "invoice_footer", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "invoice_logo_url", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "invoice_date_format", Type: field.TypeEnum, Enums: []string{"InvoiceDateFormatMDY", "InvoiceDateFormatDMY", "InvoiceDateFormatYMD", "InvoiceDateFormatYDM"}, Default: "InvoiceDateFormatMDY"},
+		{Name: "invoice_due_after_days", Type: field.TypeUint8, Default: 30},
+		{Name: "invoice_logo_width", Type: field.TypeUint16, Default: 100},
+		{Name: "show_amount_due", Type: field.TypeBool, Default: true},
+		{Name: "attach_pdf", Type: field.TypeBool, Default: true},
+		{Name: "show_invoice_due_date", Type: field.TypeBool, Default: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
+	}
+	// InvoiceControlsTable holds the schema information for the "invoice_controls" table.
+	InvoiceControlsTable = &schema.Table{
+		Name:       "invoice_controls",
+		Columns:    InvoiceControlsColumns,
+		PrimaryKey: []*schema.Column{InvoiceControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "invoice_controls_business_units_business_unit",
+				Columns:    []*schema.Column{InvoiceControlsColumns[14]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "invoice_controls_organizations_invoice_control",
+				Columns:    []*schema.Column{InvoiceControlsColumns[15]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -243,8 +318,6 @@ var (
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A"},
 		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles"},
 		{Name: "business_unit_id", Type: field.TypeUUID},
-		{Name: "organization_billing_control", Type: field.TypeUUID, Nullable: true},
-		{Name: "organization_dispatch_control", Type: field.TypeUUID, Nullable: true},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
 	OrganizationsTable = &schema.Table{
@@ -258,24 +331,83 @@ var (
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
-			{
-				Symbol:     "organizations_billing_controls_billing_control",
-				Columns:    []*schema.Column{OrganizationsColumns[10]},
-				RefColumns: []*schema.Column{BillingControlsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "organizations_dispatch_controls_dispatch_control",
-				Columns:    []*schema.Column{OrganizationsColumns[11]},
-				RefColumns: []*schema.Column{DispatchControlsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
 		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "organization_business_unit_id_scac_code",
 				Unique:  true,
 				Columns: []*schema.Column{OrganizationsColumns[9], OrganizationsColumns[4]},
+			},
+		},
+	}
+	// RouteControlsColumns holds the columns for the "route_controls" table.
+	RouteControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "distance_method", Type: field.TypeEnum, Enums: []string{"T", "G"}, Default: "T"},
+		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"M", "I"}, Default: "M"},
+		{Name: "generate_routes", Type: field.TypeBool, Default: false},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+	}
+	// RouteControlsTable holds the schema information for the "route_controls" table.
+	RouteControlsTable = &schema.Table{
+		Name:       "route_controls",
+		Columns:    RouteControlsColumns,
+		PrimaryKey: []*schema.Column{RouteControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "route_controls_organizations_route_control",
+				Columns:    []*schema.Column{RouteControlsColumns[6]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "route_controls_business_units_business_unit",
+				Columns:    []*schema.Column{RouteControlsColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ShipmentControlsColumns holds the columns for the "shipment_controls" table.
+	ShipmentControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "auto_rate_shipment", Type: field.TypeBool, Default: true},
+		{Name: "calculate_distance", Type: field.TypeBool, Default: true},
+		{Name: "enforce_rev_code", Type: field.TypeBool, Default: false},
+		{Name: "enforce_voided_comm", Type: field.TypeBool, Default: false},
+		{Name: "generate_routes", Type: field.TypeBool, Default: false},
+		{Name: "enforce_commodity", Type: field.TypeBool, Default: false},
+		{Name: "auto_sequence_stops", Type: field.TypeBool, Default: true},
+		{Name: "auto_shipment_total", Type: field.TypeBool, Default: true},
+		{Name: "enforce_origin_destination", Type: field.TypeBool, Default: false},
+		{Name: "check_for_duplicate_bol", Type: field.TypeBool, Default: false},
+		{Name: "send_placard_info", Type: field.TypeBool, Default: false},
+		{Name: "enforce_hazmat_seg_rules", Type: field.TypeBool, Default: true},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+	}
+	// ShipmentControlsTable holds the schema information for the "shipment_controls" table.
+	ShipmentControlsTable = &schema.Table{
+		Name:       "shipment_controls",
+		Columns:    ShipmentControlsColumns,
+		PrimaryKey: []*schema.Column{ShipmentControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_controls_organizations_shipment_control",
+				Columns:    []*schema.Column{ShipmentControlsColumns[15]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipment_controls_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentControlsColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -369,8 +501,12 @@ var (
 		BillingControlsTable,
 		BusinessUnitsTable,
 		DispatchControlsTable,
+		FeasibilityToolControlsTable,
 		GeneralLedgerAccountsTable,
+		InvoiceControlsTable,
 		OrganizationsTable,
+		RouteControlsTable,
+		ShipmentControlsTable,
 		TagsTable,
 		UsersTable,
 	}
@@ -381,16 +517,22 @@ func init() {
 	AccountingControlsTable.ForeignKeys[1].RefTable = GeneralLedgerAccountsTable
 	AccountingControlsTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	AccountingControlsTable.ForeignKeys[3].RefTable = OrganizationsTable
-	BillingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
-	BillingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	BillingControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	BillingControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	DispatchControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
-	DispatchControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	DispatchControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	DispatchControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	FeasibilityToolControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	FeasibilityToolControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	InvoiceControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	OrganizationsTable.ForeignKeys[1].RefTable = BillingControlsTable
-	OrganizationsTable.ForeignKeys[2].RefTable = DispatchControlsTable
+	RouteControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	RouteControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	ShipmentControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	ShipmentControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable

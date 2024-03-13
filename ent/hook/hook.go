@@ -57,6 +57,18 @@ func (f DispatchControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DispatchControlMutation", m)
 }
 
+// The FeasibilityToolControlFunc type is an adapter to allow the use of ordinary
+// function as FeasibilityToolControl mutator.
+type FeasibilityToolControlFunc func(context.Context, *ent.FeasibilityToolControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f FeasibilityToolControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.FeasibilityToolControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FeasibilityToolControlMutation", m)
+}
+
 // The GeneralLedgerAccountFunc type is an adapter to allow the use of ordinary
 // function as GeneralLedgerAccount mutator.
 type GeneralLedgerAccountFunc func(context.Context, *ent.GeneralLedgerAccountMutation) (ent.Value, error)
@@ -69,6 +81,18 @@ func (f GeneralLedgerAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneralLedgerAccountMutation", m)
 }
 
+// The InvoiceControlFunc type is an adapter to allow the use of ordinary
+// function as InvoiceControl mutator.
+type InvoiceControlFunc func(context.Context, *ent.InvoiceControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f InvoiceControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.InvoiceControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InvoiceControlMutation", m)
+}
+
 // The OrganizationFunc type is an adapter to allow the use of ordinary
 // function as Organization mutator.
 type OrganizationFunc func(context.Context, *ent.OrganizationMutation) (ent.Value, error)
@@ -79,6 +103,30 @@ func (f OrganizationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrganizationMutation", m)
+}
+
+// The RouteControlFunc type is an adapter to allow the use of ordinary
+// function as RouteControl mutator.
+type RouteControlFunc func(context.Context, *ent.RouteControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RouteControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RouteControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RouteControlMutation", m)
+}
+
+// The ShipmentControlFunc type is an adapter to allow the use of ordinary
+// function as ShipmentControl mutator.
+type ShipmentControlFunc func(context.Context, *ent.ShipmentControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ShipmentControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ShipmentControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentControlMutation", m)
 }
 
 // The TagFunc type is an adapter to allow the use of ordinary

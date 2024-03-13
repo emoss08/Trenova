@@ -9,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/schema"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -82,19 +86,19 @@ func init() {
 	// billingcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	billingcontrol.UpdateDefaultUpdatedAt = billingcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// billingcontrolDescRemoveBillingHistory is the schema descriptor for remove_billing_history field.
-	billingcontrolDescRemoveBillingHistory := billingcontrolFields[2].Descriptor()
+	billingcontrolDescRemoveBillingHistory := billingcontrolFields[0].Descriptor()
 	// billingcontrol.DefaultRemoveBillingHistory holds the default value on creation for the remove_billing_history field.
 	billingcontrol.DefaultRemoveBillingHistory = billingcontrolDescRemoveBillingHistory.Default.(bool)
 	// billingcontrolDescAutoBillShipment is the schema descriptor for auto_bill_shipment field.
-	billingcontrolDescAutoBillShipment := billingcontrolFields[3].Descriptor()
+	billingcontrolDescAutoBillShipment := billingcontrolFields[1].Descriptor()
 	// billingcontrol.DefaultAutoBillShipment holds the default value on creation for the auto_bill_shipment field.
 	billingcontrol.DefaultAutoBillShipment = billingcontrolDescAutoBillShipment.Default.(bool)
 	// billingcontrolDescAutoMarkReadyToBill is the schema descriptor for auto_mark_ready_to_bill field.
-	billingcontrolDescAutoMarkReadyToBill := billingcontrolFields[4].Descriptor()
+	billingcontrolDescAutoMarkReadyToBill := billingcontrolFields[2].Descriptor()
 	// billingcontrol.DefaultAutoMarkReadyToBill holds the default value on creation for the auto_mark_ready_to_bill field.
 	billingcontrol.DefaultAutoMarkReadyToBill = billingcontrolDescAutoMarkReadyToBill.Default.(bool)
 	// billingcontrolDescValidateCustomerRates is the schema descriptor for validate_customer_rates field.
-	billingcontrolDescValidateCustomerRates := billingcontrolFields[5].Descriptor()
+	billingcontrolDescValidateCustomerRates := billingcontrolFields[3].Descriptor()
 	// billingcontrol.DefaultValidateCustomerRates holds the default value on creation for the validate_customer_rates field.
 	billingcontrol.DefaultValidateCustomerRates = billingcontrolDescValidateCustomerRates.Default.(bool)
 	// billingcontrolDescID is the schema descriptor for id field.
@@ -200,55 +204,90 @@ func init() {
 	// dispatchcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	dispatchcontrol.UpdateDefaultUpdatedAt = dispatchcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// dispatchcontrolDescDeadheadTarget is the schema descriptor for deadhead_target field.
-	dispatchcontrolDescDeadheadTarget := dispatchcontrolFields[3].Descriptor()
+	dispatchcontrolDescDeadheadTarget := dispatchcontrolFields[1].Descriptor()
 	// dispatchcontrol.DefaultDeadheadTarget holds the default value on creation for the deadhead_target field.
 	dispatchcontrol.DefaultDeadheadTarget = dispatchcontrolDescDeadheadTarget.Default.(float64)
 	// dispatchcontrolDescMaxShipmentWeightLimit is the schema descriptor for max_shipment_weight_limit field.
-	dispatchcontrolDescMaxShipmentWeightLimit := dispatchcontrolFields[4].Descriptor()
+	dispatchcontrolDescMaxShipmentWeightLimit := dispatchcontrolFields[2].Descriptor()
 	// dispatchcontrol.DefaultMaxShipmentWeightLimit holds the default value on creation for the max_shipment_weight_limit field.
 	dispatchcontrol.DefaultMaxShipmentWeightLimit = dispatchcontrolDescMaxShipmentWeightLimit.Default.(int)
 	// dispatchcontrol.MaxShipmentWeightLimitValidator is a validator for the "max_shipment_weight_limit" field. It is called by the builders before save.
 	dispatchcontrol.MaxShipmentWeightLimitValidator = dispatchcontrolDescMaxShipmentWeightLimit.Validators[0].(func(int) error)
 	// dispatchcontrolDescGracePeriod is the schema descriptor for grace_period field.
-	dispatchcontrolDescGracePeriod := dispatchcontrolFields[5].Descriptor()
+	dispatchcontrolDescGracePeriod := dispatchcontrolFields[3].Descriptor()
 	// dispatchcontrol.DefaultGracePeriod holds the default value on creation for the grace_period field.
 	dispatchcontrol.DefaultGracePeriod = dispatchcontrolDescGracePeriod.Default.(uint8)
 	// dispatchcontrolDescEnforceWorkerAssign is the schema descriptor for enforce_worker_assign field.
-	dispatchcontrolDescEnforceWorkerAssign := dispatchcontrolFields[6].Descriptor()
+	dispatchcontrolDescEnforceWorkerAssign := dispatchcontrolFields[4].Descriptor()
 	// dispatchcontrol.DefaultEnforceWorkerAssign holds the default value on creation for the enforce_worker_assign field.
 	dispatchcontrol.DefaultEnforceWorkerAssign = dispatchcontrolDescEnforceWorkerAssign.Default.(bool)
 	// dispatchcontrolDescTrailerContinuity is the schema descriptor for trailer_continuity field.
-	dispatchcontrolDescTrailerContinuity := dispatchcontrolFields[7].Descriptor()
+	dispatchcontrolDescTrailerContinuity := dispatchcontrolFields[5].Descriptor()
 	// dispatchcontrol.DefaultTrailerContinuity holds the default value on creation for the trailer_continuity field.
 	dispatchcontrol.DefaultTrailerContinuity = dispatchcontrolDescTrailerContinuity.Default.(bool)
 	// dispatchcontrolDescDupeTrailerCheck is the schema descriptor for dupe_trailer_check field.
-	dispatchcontrolDescDupeTrailerCheck := dispatchcontrolFields[8].Descriptor()
+	dispatchcontrolDescDupeTrailerCheck := dispatchcontrolFields[6].Descriptor()
 	// dispatchcontrol.DefaultDupeTrailerCheck holds the default value on creation for the dupe_trailer_check field.
 	dispatchcontrol.DefaultDupeTrailerCheck = dispatchcontrolDescDupeTrailerCheck.Default.(bool)
 	// dispatchcontrolDescMaintenanceCompliance is the schema descriptor for maintenance_compliance field.
-	dispatchcontrolDescMaintenanceCompliance := dispatchcontrolFields[9].Descriptor()
+	dispatchcontrolDescMaintenanceCompliance := dispatchcontrolFields[7].Descriptor()
 	// dispatchcontrol.DefaultMaintenanceCompliance holds the default value on creation for the maintenance_compliance field.
 	dispatchcontrol.DefaultMaintenanceCompliance = dispatchcontrolDescMaintenanceCompliance.Default.(bool)
 	// dispatchcontrolDescRegulatoryCheck is the schema descriptor for regulatory_check field.
-	dispatchcontrolDescRegulatoryCheck := dispatchcontrolFields[10].Descriptor()
+	dispatchcontrolDescRegulatoryCheck := dispatchcontrolFields[8].Descriptor()
 	// dispatchcontrol.DefaultRegulatoryCheck holds the default value on creation for the regulatory_check field.
 	dispatchcontrol.DefaultRegulatoryCheck = dispatchcontrolDescRegulatoryCheck.Default.(bool)
 	// dispatchcontrolDescPrevShipmentOnHold is the schema descriptor for prev_shipment_on_hold field.
-	dispatchcontrolDescPrevShipmentOnHold := dispatchcontrolFields[11].Descriptor()
+	dispatchcontrolDescPrevShipmentOnHold := dispatchcontrolFields[9].Descriptor()
 	// dispatchcontrol.DefaultPrevShipmentOnHold holds the default value on creation for the prev_shipment_on_hold field.
 	dispatchcontrol.DefaultPrevShipmentOnHold = dispatchcontrolDescPrevShipmentOnHold.Default.(bool)
 	// dispatchcontrolDescWorkerTimeAwayRestriction is the schema descriptor for worker_time_away_restriction field.
-	dispatchcontrolDescWorkerTimeAwayRestriction := dispatchcontrolFields[12].Descriptor()
+	dispatchcontrolDescWorkerTimeAwayRestriction := dispatchcontrolFields[10].Descriptor()
 	// dispatchcontrol.DefaultWorkerTimeAwayRestriction holds the default value on creation for the worker_time_away_restriction field.
 	dispatchcontrol.DefaultWorkerTimeAwayRestriction = dispatchcontrolDescWorkerTimeAwayRestriction.Default.(bool)
 	// dispatchcontrolDescTractorWorkerFleetConstraint is the schema descriptor for tractor_worker_fleet_constraint field.
-	dispatchcontrolDescTractorWorkerFleetConstraint := dispatchcontrolFields[13].Descriptor()
+	dispatchcontrolDescTractorWorkerFleetConstraint := dispatchcontrolFields[11].Descriptor()
 	// dispatchcontrol.DefaultTractorWorkerFleetConstraint holds the default value on creation for the tractor_worker_fleet_constraint field.
 	dispatchcontrol.DefaultTractorWorkerFleetConstraint = dispatchcontrolDescTractorWorkerFleetConstraint.Default.(bool)
 	// dispatchcontrolDescID is the schema descriptor for id field.
 	dispatchcontrolDescID := dispatchcontrolMixinFields0[0].Descriptor()
 	// dispatchcontrol.DefaultID holds the default value on creation for the id field.
 	dispatchcontrol.DefaultID = dispatchcontrolDescID.Default.(func() uuid.UUID)
+	feasibilitytoolcontrolMixin := schema.FeasibilityToolControl{}.Mixin()
+	feasibilitytoolcontrolMixinFields0 := feasibilitytoolcontrolMixin[0].Fields()
+	_ = feasibilitytoolcontrolMixinFields0
+	feasibilitytoolcontrolFields := schema.FeasibilityToolControl{}.Fields()
+	_ = feasibilitytoolcontrolFields
+	// feasibilitytoolcontrolDescCreatedAt is the schema descriptor for created_at field.
+	feasibilitytoolcontrolDescCreatedAt := feasibilitytoolcontrolMixinFields0[1].Descriptor()
+	// feasibilitytoolcontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	feasibilitytoolcontrol.DefaultCreatedAt = feasibilitytoolcontrolDescCreatedAt.Default.(time.Time)
+	// feasibilitytoolcontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	feasibilitytoolcontrolDescUpdatedAt := feasibilitytoolcontrolMixinFields0[2].Descriptor()
+	// feasibilitytoolcontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	feasibilitytoolcontrol.DefaultUpdatedAt = feasibilitytoolcontrolDescUpdatedAt.Default.(time.Time)
+	// feasibilitytoolcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	feasibilitytoolcontrol.UpdateDefaultUpdatedAt = feasibilitytoolcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// feasibilitytoolcontrolDescOtpValue is the schema descriptor for otp_value field.
+	feasibilitytoolcontrolDescOtpValue := feasibilitytoolcontrolFields[1].Descriptor()
+	// feasibilitytoolcontrol.DefaultOtpValue holds the default value on creation for the otp_value field.
+	feasibilitytoolcontrol.DefaultOtpValue = feasibilitytoolcontrolDescOtpValue.Default.(float64)
+	// feasibilitytoolcontrolDescMpwValue is the schema descriptor for mpw_value field.
+	feasibilitytoolcontrolDescMpwValue := feasibilitytoolcontrolFields[3].Descriptor()
+	// feasibilitytoolcontrol.DefaultMpwValue holds the default value on creation for the mpw_value field.
+	feasibilitytoolcontrol.DefaultMpwValue = feasibilitytoolcontrolDescMpwValue.Default.(float64)
+	// feasibilitytoolcontrolDescMpdValue is the schema descriptor for mpd_value field.
+	feasibilitytoolcontrolDescMpdValue := feasibilitytoolcontrolFields[5].Descriptor()
+	// feasibilitytoolcontrol.DefaultMpdValue holds the default value on creation for the mpd_value field.
+	feasibilitytoolcontrol.DefaultMpdValue = feasibilitytoolcontrolDescMpdValue.Default.(float64)
+	// feasibilitytoolcontrolDescMpgValue is the schema descriptor for mpg_value field.
+	feasibilitytoolcontrolDescMpgValue := feasibilitytoolcontrolFields[7].Descriptor()
+	// feasibilitytoolcontrol.DefaultMpgValue holds the default value on creation for the mpg_value field.
+	feasibilitytoolcontrol.DefaultMpgValue = feasibilitytoolcontrolDescMpgValue.Default.(float64)
+	// feasibilitytoolcontrolDescID is the schema descriptor for id field.
+	feasibilitytoolcontrolDescID := feasibilitytoolcontrolMixinFields0[0].Descriptor()
+	// feasibilitytoolcontrol.DefaultID holds the default value on creation for the id field.
+	feasibilitytoolcontrol.DefaultID = feasibilitytoolcontrolDescID.Default.(func() uuid.UUID)
 	generalledgeraccountMixin := schema.GeneralLedgerAccount{}.Mixin()
 	generalledgeraccountMixinFields0 := generalledgeraccountMixin[0].Fields()
 	_ = generalledgeraccountMixinFields0
@@ -284,6 +323,65 @@ func init() {
 	generalledgeraccountDescID := generalledgeraccountMixinFields0[0].Descriptor()
 	// generalledgeraccount.DefaultID holds the default value on creation for the id field.
 	generalledgeraccount.DefaultID = generalledgeraccountDescID.Default.(func() uuid.UUID)
+	invoicecontrolMixin := schema.InvoiceControl{}.Mixin()
+	invoicecontrolMixinFields0 := invoicecontrolMixin[0].Fields()
+	_ = invoicecontrolMixinFields0
+	invoicecontrolFields := schema.InvoiceControl{}.Fields()
+	_ = invoicecontrolFields
+	// invoicecontrolDescCreatedAt is the schema descriptor for created_at field.
+	invoicecontrolDescCreatedAt := invoicecontrolMixinFields0[1].Descriptor()
+	// invoicecontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	invoicecontrol.DefaultCreatedAt = invoicecontrolDescCreatedAt.Default.(time.Time)
+	// invoicecontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	invoicecontrolDescUpdatedAt := invoicecontrolMixinFields0[2].Descriptor()
+	// invoicecontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	invoicecontrol.DefaultUpdatedAt = invoicecontrolDescUpdatedAt.Default.(time.Time)
+	// invoicecontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	invoicecontrol.UpdateDefaultUpdatedAt = invoicecontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// invoicecontrolDescInvoiceNumberPrefix is the schema descriptor for invoice_number_prefix field.
+	invoicecontrolDescInvoiceNumberPrefix := invoicecontrolFields[0].Descriptor()
+	// invoicecontrol.DefaultInvoiceNumberPrefix holds the default value on creation for the invoice_number_prefix field.
+	invoicecontrol.DefaultInvoiceNumberPrefix = invoicecontrolDescInvoiceNumberPrefix.Default.(string)
+	// invoicecontrol.InvoiceNumberPrefixValidator is a validator for the "invoice_number_prefix" field. It is called by the builders before save.
+	invoicecontrol.InvoiceNumberPrefixValidator = invoicecontrolDescInvoiceNumberPrefix.Validators[0].(func(string) error)
+	// invoicecontrolDescCreditMemoNumberPrefix is the schema descriptor for credit_memo_number_prefix field.
+	invoicecontrolDescCreditMemoNumberPrefix := invoicecontrolFields[1].Descriptor()
+	// invoicecontrol.DefaultCreditMemoNumberPrefix holds the default value on creation for the credit_memo_number_prefix field.
+	invoicecontrol.DefaultCreditMemoNumberPrefix = invoicecontrolDescCreditMemoNumberPrefix.Default.(string)
+	// invoicecontrol.CreditMemoNumberPrefixValidator is a validator for the "credit_memo_number_prefix" field. It is called by the builders before save.
+	invoicecontrol.CreditMemoNumberPrefixValidator = invoicecontrolDescCreditMemoNumberPrefix.Validators[0].(func(string) error)
+	// invoicecontrolDescInvoiceLogoURL is the schema descriptor for invoice_logo_url field.
+	invoicecontrolDescInvoiceLogoURL := invoicecontrolFields[4].Descriptor()
+	// invoicecontrol.InvoiceLogoURLValidator is a validator for the "invoice_logo_url" field. It is called by the builders before save.
+	invoicecontrol.InvoiceLogoURLValidator = invoicecontrolDescInvoiceLogoURL.Validators[0].(func(string) error)
+	// invoicecontrolDescInvoiceDueAfterDays is the schema descriptor for invoice_due_after_days field.
+	invoicecontrolDescInvoiceDueAfterDays := invoicecontrolFields[6].Descriptor()
+	// invoicecontrol.DefaultInvoiceDueAfterDays holds the default value on creation for the invoice_due_after_days field.
+	invoicecontrol.DefaultInvoiceDueAfterDays = invoicecontrolDescInvoiceDueAfterDays.Default.(uint8)
+	// invoicecontrol.InvoiceDueAfterDaysValidator is a validator for the "invoice_due_after_days" field. It is called by the builders before save.
+	invoicecontrol.InvoiceDueAfterDaysValidator = invoicecontrolDescInvoiceDueAfterDays.Validators[0].(func(uint8) error)
+	// invoicecontrolDescInvoiceLogoWidth is the schema descriptor for invoice_logo_width field.
+	invoicecontrolDescInvoiceLogoWidth := invoicecontrolFields[7].Descriptor()
+	// invoicecontrol.DefaultInvoiceLogoWidth holds the default value on creation for the invoice_logo_width field.
+	invoicecontrol.DefaultInvoiceLogoWidth = invoicecontrolDescInvoiceLogoWidth.Default.(uint16)
+	// invoicecontrol.InvoiceLogoWidthValidator is a validator for the "invoice_logo_width" field. It is called by the builders before save.
+	invoicecontrol.InvoiceLogoWidthValidator = invoicecontrolDescInvoiceLogoWidth.Validators[0].(func(uint16) error)
+	// invoicecontrolDescShowAmountDue is the schema descriptor for show_amount_due field.
+	invoicecontrolDescShowAmountDue := invoicecontrolFields[8].Descriptor()
+	// invoicecontrol.DefaultShowAmountDue holds the default value on creation for the show_amount_due field.
+	invoicecontrol.DefaultShowAmountDue = invoicecontrolDescShowAmountDue.Default.(bool)
+	// invoicecontrolDescAttachPdf is the schema descriptor for attach_pdf field.
+	invoicecontrolDescAttachPdf := invoicecontrolFields[9].Descriptor()
+	// invoicecontrol.DefaultAttachPdf holds the default value on creation for the attach_pdf field.
+	invoicecontrol.DefaultAttachPdf = invoicecontrolDescAttachPdf.Default.(bool)
+	// invoicecontrolDescShowInvoiceDueDate is the schema descriptor for show_invoice_due_date field.
+	invoicecontrolDescShowInvoiceDueDate := invoicecontrolFields[10].Descriptor()
+	// invoicecontrol.DefaultShowInvoiceDueDate holds the default value on creation for the show_invoice_due_date field.
+	invoicecontrol.DefaultShowInvoiceDueDate = invoicecontrolDescShowInvoiceDueDate.Default.(bool)
+	// invoicecontrolDescID is the schema descriptor for id field.
+	invoicecontrolDescID := invoicecontrolMixinFields0[0].Descriptor()
+	// invoicecontrol.DefaultID holds the default value on creation for the id field.
+	invoicecontrol.DefaultID = invoicecontrolDescID.Default.(func() uuid.UUID)
 	organizationMixin := schema.Organization{}.Mixin()
 	organizationMixinFields0 := organizationMixin[0].Fields()
 	_ = organizationMixinFields0
@@ -315,6 +413,96 @@ func init() {
 	organizationDescID := organizationMixinFields0[0].Descriptor()
 	// organization.DefaultID holds the default value on creation for the id field.
 	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
+	routecontrolMixin := schema.RouteControl{}.Mixin()
+	routecontrolMixinFields0 := routecontrolMixin[0].Fields()
+	_ = routecontrolMixinFields0
+	routecontrolFields := schema.RouteControl{}.Fields()
+	_ = routecontrolFields
+	// routecontrolDescCreatedAt is the schema descriptor for created_at field.
+	routecontrolDescCreatedAt := routecontrolMixinFields0[1].Descriptor()
+	// routecontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	routecontrol.DefaultCreatedAt = routecontrolDescCreatedAt.Default.(time.Time)
+	// routecontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	routecontrolDescUpdatedAt := routecontrolMixinFields0[2].Descriptor()
+	// routecontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	routecontrol.DefaultUpdatedAt = routecontrolDescUpdatedAt.Default.(time.Time)
+	// routecontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	routecontrol.UpdateDefaultUpdatedAt = routecontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// routecontrolDescGenerateRoutes is the schema descriptor for generate_routes field.
+	routecontrolDescGenerateRoutes := routecontrolFields[2].Descriptor()
+	// routecontrol.DefaultGenerateRoutes holds the default value on creation for the generate_routes field.
+	routecontrol.DefaultGenerateRoutes = routecontrolDescGenerateRoutes.Default.(bool)
+	// routecontrolDescID is the schema descriptor for id field.
+	routecontrolDescID := routecontrolMixinFields0[0].Descriptor()
+	// routecontrol.DefaultID holds the default value on creation for the id field.
+	routecontrol.DefaultID = routecontrolDescID.Default.(func() uuid.UUID)
+	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
+	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
+	_ = shipmentcontrolMixinFields0
+	shipmentcontrolFields := schema.ShipmentControl{}.Fields()
+	_ = shipmentcontrolFields
+	// shipmentcontrolDescCreatedAt is the schema descriptor for created_at field.
+	shipmentcontrolDescCreatedAt := shipmentcontrolMixinFields0[1].Descriptor()
+	// shipmentcontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentcontrol.DefaultCreatedAt = shipmentcontrolDescCreatedAt.Default.(time.Time)
+	// shipmentcontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentcontrolDescUpdatedAt := shipmentcontrolMixinFields0[2].Descriptor()
+	// shipmentcontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentcontrol.DefaultUpdatedAt = shipmentcontrolDescUpdatedAt.Default.(time.Time)
+	// shipmentcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentcontrol.UpdateDefaultUpdatedAt = shipmentcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentcontrolDescAutoRateShipment is the schema descriptor for auto_rate_shipment field.
+	shipmentcontrolDescAutoRateShipment := shipmentcontrolFields[0].Descriptor()
+	// shipmentcontrol.DefaultAutoRateShipment holds the default value on creation for the auto_rate_shipment field.
+	shipmentcontrol.DefaultAutoRateShipment = shipmentcontrolDescAutoRateShipment.Default.(bool)
+	// shipmentcontrolDescCalculateDistance is the schema descriptor for calculate_distance field.
+	shipmentcontrolDescCalculateDistance := shipmentcontrolFields[1].Descriptor()
+	// shipmentcontrol.DefaultCalculateDistance holds the default value on creation for the calculate_distance field.
+	shipmentcontrol.DefaultCalculateDistance = shipmentcontrolDescCalculateDistance.Default.(bool)
+	// shipmentcontrolDescEnforceRevCode is the schema descriptor for enforce_rev_code field.
+	shipmentcontrolDescEnforceRevCode := shipmentcontrolFields[2].Descriptor()
+	// shipmentcontrol.DefaultEnforceRevCode holds the default value on creation for the enforce_rev_code field.
+	shipmentcontrol.DefaultEnforceRevCode = shipmentcontrolDescEnforceRevCode.Default.(bool)
+	// shipmentcontrolDescEnforceVoidedComm is the schema descriptor for enforce_voided_comm field.
+	shipmentcontrolDescEnforceVoidedComm := shipmentcontrolFields[3].Descriptor()
+	// shipmentcontrol.DefaultEnforceVoidedComm holds the default value on creation for the enforce_voided_comm field.
+	shipmentcontrol.DefaultEnforceVoidedComm = shipmentcontrolDescEnforceVoidedComm.Default.(bool)
+	// shipmentcontrolDescGenerateRoutes is the schema descriptor for generate_routes field.
+	shipmentcontrolDescGenerateRoutes := shipmentcontrolFields[4].Descriptor()
+	// shipmentcontrol.DefaultGenerateRoutes holds the default value on creation for the generate_routes field.
+	shipmentcontrol.DefaultGenerateRoutes = shipmentcontrolDescGenerateRoutes.Default.(bool)
+	// shipmentcontrolDescEnforceCommodity is the schema descriptor for enforce_commodity field.
+	shipmentcontrolDescEnforceCommodity := shipmentcontrolFields[5].Descriptor()
+	// shipmentcontrol.DefaultEnforceCommodity holds the default value on creation for the enforce_commodity field.
+	shipmentcontrol.DefaultEnforceCommodity = shipmentcontrolDescEnforceCommodity.Default.(bool)
+	// shipmentcontrolDescAutoSequenceStops is the schema descriptor for auto_sequence_stops field.
+	shipmentcontrolDescAutoSequenceStops := shipmentcontrolFields[6].Descriptor()
+	// shipmentcontrol.DefaultAutoSequenceStops holds the default value on creation for the auto_sequence_stops field.
+	shipmentcontrol.DefaultAutoSequenceStops = shipmentcontrolDescAutoSequenceStops.Default.(bool)
+	// shipmentcontrolDescAutoShipmentTotal is the schema descriptor for auto_shipment_total field.
+	shipmentcontrolDescAutoShipmentTotal := shipmentcontrolFields[7].Descriptor()
+	// shipmentcontrol.DefaultAutoShipmentTotal holds the default value on creation for the auto_shipment_total field.
+	shipmentcontrol.DefaultAutoShipmentTotal = shipmentcontrolDescAutoShipmentTotal.Default.(bool)
+	// shipmentcontrolDescEnforceOriginDestination is the schema descriptor for enforce_origin_destination field.
+	shipmentcontrolDescEnforceOriginDestination := shipmentcontrolFields[8].Descriptor()
+	// shipmentcontrol.DefaultEnforceOriginDestination holds the default value on creation for the enforce_origin_destination field.
+	shipmentcontrol.DefaultEnforceOriginDestination = shipmentcontrolDescEnforceOriginDestination.Default.(bool)
+	// shipmentcontrolDescCheckForDuplicateBol is the schema descriptor for check_for_duplicate_bol field.
+	shipmentcontrolDescCheckForDuplicateBol := shipmentcontrolFields[9].Descriptor()
+	// shipmentcontrol.DefaultCheckForDuplicateBol holds the default value on creation for the check_for_duplicate_bol field.
+	shipmentcontrol.DefaultCheckForDuplicateBol = shipmentcontrolDescCheckForDuplicateBol.Default.(bool)
+	// shipmentcontrolDescSendPlacardInfo is the schema descriptor for send_placard_info field.
+	shipmentcontrolDescSendPlacardInfo := shipmentcontrolFields[10].Descriptor()
+	// shipmentcontrol.DefaultSendPlacardInfo holds the default value on creation for the send_placard_info field.
+	shipmentcontrol.DefaultSendPlacardInfo = shipmentcontrolDescSendPlacardInfo.Default.(bool)
+	// shipmentcontrolDescEnforceHazmatSegRules is the schema descriptor for enforce_hazmat_seg_rules field.
+	shipmentcontrolDescEnforceHazmatSegRules := shipmentcontrolFields[11].Descriptor()
+	// shipmentcontrol.DefaultEnforceHazmatSegRules holds the default value on creation for the enforce_hazmat_seg_rules field.
+	shipmentcontrol.DefaultEnforceHazmatSegRules = shipmentcontrolDescEnforceHazmatSegRules.Default.(bool)
+	// shipmentcontrolDescID is the schema descriptor for id field.
+	shipmentcontrolDescID := shipmentcontrolMixinFields0[0].Descriptor()
+	// shipmentcontrol.DefaultID holds the default value on creation for the id field.
+	shipmentcontrol.DefaultID = shipmentcontrolDescID.Default.(func() uuid.UUID)
 	tagMixin := schema.Tag{}.Mixin()
 	tagMixinFields0 := tagMixin[0].Fields()
 	_ = tagMixinFields0

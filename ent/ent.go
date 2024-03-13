@@ -16,8 +16,12 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 )
@@ -80,14 +84,18 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			accountingcontrol.Table:    accountingcontrol.ValidColumn,
-			billingcontrol.Table:       billingcontrol.ValidColumn,
-			businessunit.Table:         businessunit.ValidColumn,
-			dispatchcontrol.Table:      dispatchcontrol.ValidColumn,
-			generalledgeraccount.Table: generalledgeraccount.ValidColumn,
-			organization.Table:         organization.ValidColumn,
-			tag.Table:                  tag.ValidColumn,
-			user.Table:                 user.ValidColumn,
+			accountingcontrol.Table:      accountingcontrol.ValidColumn,
+			billingcontrol.Table:         billingcontrol.ValidColumn,
+			businessunit.Table:           businessunit.ValidColumn,
+			dispatchcontrol.Table:        dispatchcontrol.ValidColumn,
+			feasibilitytoolcontrol.Table: feasibilitytoolcontrol.ValidColumn,
+			generalledgeraccount.Table:   generalledgeraccount.ValidColumn,
+			invoicecontrol.Table:         invoicecontrol.ValidColumn,
+			organization.Table:           organization.ValidColumn,
+			routecontrol.Table:           routecontrol.ValidColumn,
+			shipmentcontrol.Table:        shipmentcontrol.ValidColumn,
+			tag.Table:                    tag.ValidColumn,
+			user.Table:                   user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

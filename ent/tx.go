@@ -20,10 +20,18 @@ type Tx struct {
 	BusinessUnit *BusinessUnitClient
 	// DispatchControl is the client for interacting with the DispatchControl builders.
 	DispatchControl *DispatchControlClient
+	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
+	FeasibilityToolControl *FeasibilityToolControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// InvoiceControl is the client for interacting with the InvoiceControl builders.
+	InvoiceControl *InvoiceControlClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
+	// RouteControl is the client for interacting with the RouteControl builders.
+	RouteControl *RouteControlClient
+	// ShipmentControl is the client for interacting with the ShipmentControl builders.
+	ShipmentControl *ShipmentControlClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// User is the client for interacting with the User builders.
@@ -163,8 +171,12 @@ func (tx *Tx) init() {
 	tx.BillingControl = NewBillingControlClient(tx.config)
 	tx.BusinessUnit = NewBusinessUnitClient(tx.config)
 	tx.DispatchControl = NewDispatchControlClient(tx.config)
+	tx.FeasibilityToolControl = NewFeasibilityToolControlClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
+	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
+	tx.RouteControl = NewRouteControlClient(tx.config)
+	tx.ShipmentControl = NewShipmentControlClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

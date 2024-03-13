@@ -15,9 +15,13 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -32,14 +36,18 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAccountingControl    = "AccountingControl"
-	TypeBillingControl       = "BillingControl"
-	TypeBusinessUnit         = "BusinessUnit"
-	TypeDispatchControl      = "DispatchControl"
-	TypeGeneralLedgerAccount = "GeneralLedgerAccount"
-	TypeOrganization         = "Organization"
-	TypeTag                  = "Tag"
-	TypeUser                 = "User"
+	TypeAccountingControl      = "AccountingControl"
+	TypeBillingControl         = "BillingControl"
+	TypeBusinessUnit           = "BusinessUnit"
+	TypeDispatchControl        = "DispatchControl"
+	TypeFeasibilityToolControl = "FeasibilityToolControl"
+	TypeGeneralLedgerAccount   = "GeneralLedgerAccount"
+	TypeInvoiceControl         = "InvoiceControl"
+	TypeOrganization           = "Organization"
+	TypeRouteControl           = "RouteControl"
+	TypeShipmentControl        = "ShipmentControl"
+	TypeTag                    = "Tag"
+	TypeUser                   = "User"
 )
 
 // AccountingControlMutation represents an operation that mutates the AccountingControl nodes in the graph.
@@ -1482,78 +1490,6 @@ func (m *BillingControlMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (m *BillingControlMutation) SetOrganizationID(u uuid.UUID) {
-	m.organization = &u
-}
-
-// OrganizationID returns the value of the "organization_id" field in the mutation.
-func (m *BillingControlMutation) OrganizationID() (r uuid.UUID, exists bool) {
-	v := m.organization
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldOrganizationID returns the old "organization_id" field's value of the BillingControl entity.
-// If the BillingControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BillingControlMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
-	}
-	return oldValue.OrganizationID, nil
-}
-
-// ResetOrganizationID resets all changes to the "organization_id" field.
-func (m *BillingControlMutation) ResetOrganizationID() {
-	m.organization = nil
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (m *BillingControlMutation) SetBusinessUnitID(u uuid.UUID) {
-	m.business_unit = &u
-}
-
-// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
-func (m *BillingControlMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
-	v := m.business_unit
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBusinessUnitID returns the old "business_unit_id" field's value of the BillingControl entity.
-// If the BillingControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BillingControlMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
-	}
-	return oldValue.BusinessUnitID, nil
-}
-
-// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
-func (m *BillingControlMutation) ResetBusinessUnitID() {
-	m.business_unit = nil
-}
-
 // SetRemoveBillingHistory sets the "remove_billing_history" field.
 func (m *BillingControlMutation) SetRemoveBillingHistory(b bool) {
 	m.remove_billing_history = &b
@@ -1770,15 +1706,27 @@ func (m *BillingControlMutation) ResetShipmentTransferCriteria() {
 	m.shipment_transfer_criteria = nil
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *BillingControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
 // ClearOrganization clears the "organization" edge to the Organization entity.
 func (m *BillingControlMutation) ClearOrganization() {
 	m.clearedorganization = true
-	m.clearedFields[billingcontrol.FieldOrganizationID] = struct{}{}
 }
 
 // OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
 func (m *BillingControlMutation) OrganizationCleared() bool {
 	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *BillingControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
 }
 
 // OrganizationIDs returns the "organization" edge IDs in the mutation.
@@ -1797,15 +1745,27 @@ func (m *BillingControlMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *BillingControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *BillingControlMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
-	m.clearedFields[billingcontrol.FieldBusinessUnitID] = struct{}{}
 }
 
 // BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
 func (m *BillingControlMutation) BusinessUnitCleared() bool {
 	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *BillingControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
 }
 
 // BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
@@ -1858,18 +1818,12 @@ func (m *BillingControlMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BillingControlMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, billingcontrol.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, billingcontrol.FieldUpdatedAt)
-	}
-	if m.organization != nil {
-		fields = append(fields, billingcontrol.FieldOrganizationID)
-	}
-	if m.business_unit != nil {
-		fields = append(fields, billingcontrol.FieldBusinessUnitID)
 	}
 	if m.remove_billing_history != nil {
 		fields = append(fields, billingcontrol.FieldRemoveBillingHistory)
@@ -1901,10 +1855,6 @@ func (m *BillingControlMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case billingcontrol.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case billingcontrol.FieldOrganizationID:
-		return m.OrganizationID()
-	case billingcontrol.FieldBusinessUnitID:
-		return m.BusinessUnitID()
 	case billingcontrol.FieldRemoveBillingHistory:
 		return m.RemoveBillingHistory()
 	case billingcontrol.FieldAutoBillShipment:
@@ -1930,10 +1880,6 @@ func (m *BillingControlMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldCreatedAt(ctx)
 	case billingcontrol.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case billingcontrol.FieldOrganizationID:
-		return m.OldOrganizationID(ctx)
-	case billingcontrol.FieldBusinessUnitID:
-		return m.OldBusinessUnitID(ctx)
 	case billingcontrol.FieldRemoveBillingHistory:
 		return m.OldRemoveBillingHistory(ctx)
 	case billingcontrol.FieldAutoBillShipment:
@@ -1968,20 +1914,6 @@ func (m *BillingControlMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
-		return nil
-	case billingcontrol.FieldOrganizationID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetOrganizationID(v)
-		return nil
-	case billingcontrol.FieldBusinessUnitID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBusinessUnitID(v)
 		return nil
 	case billingcontrol.FieldRemoveBillingHistory:
 		v, ok := value.(bool)
@@ -2079,12 +2011,6 @@ func (m *BillingControlMutation) ResetField(name string) error {
 		return nil
 	case billingcontrol.FieldUpdatedAt:
 		m.ResetUpdatedAt()
-		return nil
-	case billingcontrol.FieldOrganizationID:
-		m.ResetOrganizationID()
-		return nil
-	case billingcontrol.FieldBusinessUnitID:
-		m.ResetBusinessUnitID()
 		return nil
 	case billingcontrol.FieldRemoveBillingHistory:
 		m.ResetRemoveBillingHistory()
@@ -4301,78 +4227,6 @@ func (m *DispatchControlMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (m *DispatchControlMutation) SetOrganizationID(u uuid.UUID) {
-	m.organization = &u
-}
-
-// OrganizationID returns the value of the "organization_id" field in the mutation.
-func (m *DispatchControlMutation) OrganizationID() (r uuid.UUID, exists bool) {
-	v := m.organization
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldOrganizationID returns the old "organization_id" field's value of the DispatchControl entity.
-// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DispatchControlMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
-	}
-	return oldValue.OrganizationID, nil
-}
-
-// ResetOrganizationID resets all changes to the "organization_id" field.
-func (m *DispatchControlMutation) ResetOrganizationID() {
-	m.organization = nil
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (m *DispatchControlMutation) SetBusinessUnitID(u uuid.UUID) {
-	m.business_unit = &u
-}
-
-// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
-func (m *DispatchControlMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
-	v := m.business_unit
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBusinessUnitID returns the old "business_unit_id" field's value of the DispatchControl entity.
-// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DispatchControlMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
-	}
-	return oldValue.BusinessUnitID, nil
-}
-
-// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
-func (m *DispatchControlMutation) ResetBusinessUnitID() {
-	m.business_unit = nil
-}
-
 // SetRecordServiceIncident sets the "record_service_incident" field.
 func (m *DispatchControlMutation) SetRecordServiceIncident(dsi dispatchcontrol.RecordServiceIncident) {
 	m.record_service_incident = &dsi
@@ -4865,15 +4719,27 @@ func (m *DispatchControlMutation) ResetTractorWorkerFleetConstraint() {
 	m.tractor_worker_fleet_constraint = nil
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *DispatchControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
 // ClearOrganization clears the "organization" edge to the Organization entity.
 func (m *DispatchControlMutation) ClearOrganization() {
 	m.clearedorganization = true
-	m.clearedFields[dispatchcontrol.FieldOrganizationID] = struct{}{}
 }
 
 // OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
 func (m *DispatchControlMutation) OrganizationCleared() bool {
 	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *DispatchControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
 }
 
 // OrganizationIDs returns the "organization" edge IDs in the mutation.
@@ -4892,15 +4758,27 @@ func (m *DispatchControlMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *DispatchControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *DispatchControlMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
-	m.clearedFields[dispatchcontrol.FieldBusinessUnitID] = struct{}{}
 }
 
 // BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
 func (m *DispatchControlMutation) BusinessUnitCleared() bool {
 	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *DispatchControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
 }
 
 // BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
@@ -4953,18 +4831,12 @@ func (m *DispatchControlMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DispatchControlMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, dispatchcontrol.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, dispatchcontrol.FieldUpdatedAt)
-	}
-	if m.organization != nil {
-		fields = append(fields, dispatchcontrol.FieldOrganizationID)
-	}
-	if m.business_unit != nil {
-		fields = append(fields, dispatchcontrol.FieldBusinessUnitID)
 	}
 	if m.record_service_incident != nil {
 		fields = append(fields, dispatchcontrol.FieldRecordServiceIncident)
@@ -5014,10 +4886,6 @@ func (m *DispatchControlMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case dispatchcontrol.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case dispatchcontrol.FieldOrganizationID:
-		return m.OrganizationID()
-	case dispatchcontrol.FieldBusinessUnitID:
-		return m.BusinessUnitID()
 	case dispatchcontrol.FieldRecordServiceIncident:
 		return m.RecordServiceIncident()
 	case dispatchcontrol.FieldDeadheadTarget:
@@ -5055,10 +4923,6 @@ func (m *DispatchControlMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case dispatchcontrol.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case dispatchcontrol.FieldOrganizationID:
-		return m.OldOrganizationID(ctx)
-	case dispatchcontrol.FieldBusinessUnitID:
-		return m.OldBusinessUnitID(ctx)
 	case dispatchcontrol.FieldRecordServiceIncident:
 		return m.OldRecordServiceIncident(ctx)
 	case dispatchcontrol.FieldDeadheadTarget:
@@ -5105,20 +4969,6 @@ func (m *DispatchControlMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
-		return nil
-	case dispatchcontrol.FieldOrganizationID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetOrganizationID(v)
-		return nil
-	case dispatchcontrol.FieldBusinessUnitID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBusinessUnitID(v)
 		return nil
 	case dispatchcontrol.FieldRecordServiceIncident:
 		v, ok := value.(dispatchcontrol.RecordServiceIncident)
@@ -5298,12 +5148,6 @@ func (m *DispatchControlMutation) ResetField(name string) error {
 	case dispatchcontrol.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
-	case dispatchcontrol.FieldOrganizationID:
-		m.ResetOrganizationID()
-		return nil
-	case dispatchcontrol.FieldBusinessUnitID:
-		m.ResetBusinessUnitID()
-		return nil
 	case dispatchcontrol.FieldRecordServiceIncident:
 		m.ResetRecordServiceIncident()
 		return nil
@@ -5434,6 +5278,1085 @@ func (m *DispatchControlMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown DispatchControl edge %s", name)
+}
+
+// FeasibilityToolControlMutation represents an operation that mutates the FeasibilityToolControl nodes in the graph.
+type FeasibilityToolControlMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	otp_operator         *feasibilitytoolcontrol.OtpOperator
+	otp_value            *float64
+	addotp_value         *float64
+	mpw_operator         *feasibilitytoolcontrol.MpwOperator
+	mpw_value            *float64
+	addmpw_value         *float64
+	mpd_operator         *feasibilitytoolcontrol.MpdOperator
+	mpd_value            *float64
+	addmpd_value         *float64
+	mpg_operator         *feasibilitytoolcontrol.MpgOperator
+	mpg_value            *float64
+	addmpg_value         *float64
+	clearedFields        map[string]struct{}
+	organization         *uuid.UUID
+	clearedorganization  bool
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	done                 bool
+	oldValue             func(context.Context) (*FeasibilityToolControl, error)
+	predicates           []predicate.FeasibilityToolControl
+}
+
+var _ ent.Mutation = (*FeasibilityToolControlMutation)(nil)
+
+// feasibilitytoolcontrolOption allows management of the mutation configuration using functional options.
+type feasibilitytoolcontrolOption func(*FeasibilityToolControlMutation)
+
+// newFeasibilityToolControlMutation creates new mutation for the FeasibilityToolControl entity.
+func newFeasibilityToolControlMutation(c config, op Op, opts ...feasibilitytoolcontrolOption) *FeasibilityToolControlMutation {
+	m := &FeasibilityToolControlMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeFeasibilityToolControl,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withFeasibilityToolControlID sets the ID field of the mutation.
+func withFeasibilityToolControlID(id uuid.UUID) feasibilitytoolcontrolOption {
+	return func(m *FeasibilityToolControlMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *FeasibilityToolControl
+		)
+		m.oldValue = func(ctx context.Context) (*FeasibilityToolControl, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().FeasibilityToolControl.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withFeasibilityToolControl sets the old FeasibilityToolControl of the mutation.
+func withFeasibilityToolControl(node *FeasibilityToolControl) feasibilitytoolcontrolOption {
+	return func(m *FeasibilityToolControlMutation) {
+		m.oldValue = func(context.Context) (*FeasibilityToolControl, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m FeasibilityToolControlMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m FeasibilityToolControlMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of FeasibilityToolControl entities.
+func (m *FeasibilityToolControlMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *FeasibilityToolControlMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *FeasibilityToolControlMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().FeasibilityToolControl.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *FeasibilityToolControlMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *FeasibilityToolControlMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *FeasibilityToolControlMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *FeasibilityToolControlMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *FeasibilityToolControlMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *FeasibilityToolControlMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetOtpOperator sets the "otp_operator" field.
+func (m *FeasibilityToolControlMutation) SetOtpOperator(fo feasibilitytoolcontrol.OtpOperator) {
+	m.otp_operator = &fo
+}
+
+// OtpOperator returns the value of the "otp_operator" field in the mutation.
+func (m *FeasibilityToolControlMutation) OtpOperator() (r feasibilitytoolcontrol.OtpOperator, exists bool) {
+	v := m.otp_operator
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOtpOperator returns the old "otp_operator" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldOtpOperator(ctx context.Context) (v feasibilitytoolcontrol.OtpOperator, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOtpOperator is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOtpOperator requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOtpOperator: %w", err)
+	}
+	return oldValue.OtpOperator, nil
+}
+
+// ResetOtpOperator resets all changes to the "otp_operator" field.
+func (m *FeasibilityToolControlMutation) ResetOtpOperator() {
+	m.otp_operator = nil
+}
+
+// SetOtpValue sets the "otp_value" field.
+func (m *FeasibilityToolControlMutation) SetOtpValue(f float64) {
+	m.otp_value = &f
+	m.addotp_value = nil
+}
+
+// OtpValue returns the value of the "otp_value" field in the mutation.
+func (m *FeasibilityToolControlMutation) OtpValue() (r float64, exists bool) {
+	v := m.otp_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOtpValue returns the old "otp_value" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldOtpValue(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOtpValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOtpValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOtpValue: %w", err)
+	}
+	return oldValue.OtpValue, nil
+}
+
+// AddOtpValue adds f to the "otp_value" field.
+func (m *FeasibilityToolControlMutation) AddOtpValue(f float64) {
+	if m.addotp_value != nil {
+		*m.addotp_value += f
+	} else {
+		m.addotp_value = &f
+	}
+}
+
+// AddedOtpValue returns the value that was added to the "otp_value" field in this mutation.
+func (m *FeasibilityToolControlMutation) AddedOtpValue() (r float64, exists bool) {
+	v := m.addotp_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOtpValue resets all changes to the "otp_value" field.
+func (m *FeasibilityToolControlMutation) ResetOtpValue() {
+	m.otp_value = nil
+	m.addotp_value = nil
+}
+
+// SetMpwOperator sets the "mpw_operator" field.
+func (m *FeasibilityToolControlMutation) SetMpwOperator(fo feasibilitytoolcontrol.MpwOperator) {
+	m.mpw_operator = &fo
+}
+
+// MpwOperator returns the value of the "mpw_operator" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpwOperator() (r feasibilitytoolcontrol.MpwOperator, exists bool) {
+	v := m.mpw_operator
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpwOperator returns the old "mpw_operator" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpwOperator(ctx context.Context) (v feasibilitytoolcontrol.MpwOperator, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpwOperator is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpwOperator requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpwOperator: %w", err)
+	}
+	return oldValue.MpwOperator, nil
+}
+
+// ResetMpwOperator resets all changes to the "mpw_operator" field.
+func (m *FeasibilityToolControlMutation) ResetMpwOperator() {
+	m.mpw_operator = nil
+}
+
+// SetMpwValue sets the "mpw_value" field.
+func (m *FeasibilityToolControlMutation) SetMpwValue(f float64) {
+	m.mpw_value = &f
+	m.addmpw_value = nil
+}
+
+// MpwValue returns the value of the "mpw_value" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpwValue() (r float64, exists bool) {
+	v := m.mpw_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpwValue returns the old "mpw_value" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpwValue(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpwValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpwValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpwValue: %w", err)
+	}
+	return oldValue.MpwValue, nil
+}
+
+// AddMpwValue adds f to the "mpw_value" field.
+func (m *FeasibilityToolControlMutation) AddMpwValue(f float64) {
+	if m.addmpw_value != nil {
+		*m.addmpw_value += f
+	} else {
+		m.addmpw_value = &f
+	}
+}
+
+// AddedMpwValue returns the value that was added to the "mpw_value" field in this mutation.
+func (m *FeasibilityToolControlMutation) AddedMpwValue() (r float64, exists bool) {
+	v := m.addmpw_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMpwValue resets all changes to the "mpw_value" field.
+func (m *FeasibilityToolControlMutation) ResetMpwValue() {
+	m.mpw_value = nil
+	m.addmpw_value = nil
+}
+
+// SetMpdOperator sets the "mpd_operator" field.
+func (m *FeasibilityToolControlMutation) SetMpdOperator(fo feasibilitytoolcontrol.MpdOperator) {
+	m.mpd_operator = &fo
+}
+
+// MpdOperator returns the value of the "mpd_operator" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpdOperator() (r feasibilitytoolcontrol.MpdOperator, exists bool) {
+	v := m.mpd_operator
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpdOperator returns the old "mpd_operator" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpdOperator(ctx context.Context) (v feasibilitytoolcontrol.MpdOperator, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpdOperator is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpdOperator requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpdOperator: %w", err)
+	}
+	return oldValue.MpdOperator, nil
+}
+
+// ResetMpdOperator resets all changes to the "mpd_operator" field.
+func (m *FeasibilityToolControlMutation) ResetMpdOperator() {
+	m.mpd_operator = nil
+}
+
+// SetMpdValue sets the "mpd_value" field.
+func (m *FeasibilityToolControlMutation) SetMpdValue(f float64) {
+	m.mpd_value = &f
+	m.addmpd_value = nil
+}
+
+// MpdValue returns the value of the "mpd_value" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpdValue() (r float64, exists bool) {
+	v := m.mpd_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpdValue returns the old "mpd_value" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpdValue(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpdValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpdValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpdValue: %w", err)
+	}
+	return oldValue.MpdValue, nil
+}
+
+// AddMpdValue adds f to the "mpd_value" field.
+func (m *FeasibilityToolControlMutation) AddMpdValue(f float64) {
+	if m.addmpd_value != nil {
+		*m.addmpd_value += f
+	} else {
+		m.addmpd_value = &f
+	}
+}
+
+// AddedMpdValue returns the value that was added to the "mpd_value" field in this mutation.
+func (m *FeasibilityToolControlMutation) AddedMpdValue() (r float64, exists bool) {
+	v := m.addmpd_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMpdValue resets all changes to the "mpd_value" field.
+func (m *FeasibilityToolControlMutation) ResetMpdValue() {
+	m.mpd_value = nil
+	m.addmpd_value = nil
+}
+
+// SetMpgOperator sets the "mpg_operator" field.
+func (m *FeasibilityToolControlMutation) SetMpgOperator(fo feasibilitytoolcontrol.MpgOperator) {
+	m.mpg_operator = &fo
+}
+
+// MpgOperator returns the value of the "mpg_operator" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpgOperator() (r feasibilitytoolcontrol.MpgOperator, exists bool) {
+	v := m.mpg_operator
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpgOperator returns the old "mpg_operator" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpgOperator(ctx context.Context) (v feasibilitytoolcontrol.MpgOperator, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpgOperator is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpgOperator requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpgOperator: %w", err)
+	}
+	return oldValue.MpgOperator, nil
+}
+
+// ResetMpgOperator resets all changes to the "mpg_operator" field.
+func (m *FeasibilityToolControlMutation) ResetMpgOperator() {
+	m.mpg_operator = nil
+}
+
+// SetMpgValue sets the "mpg_value" field.
+func (m *FeasibilityToolControlMutation) SetMpgValue(f float64) {
+	m.mpg_value = &f
+	m.addmpg_value = nil
+}
+
+// MpgValue returns the value of the "mpg_value" field in the mutation.
+func (m *FeasibilityToolControlMutation) MpgValue() (r float64, exists bool) {
+	v := m.mpg_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMpgValue returns the old "mpg_value" field's value of the FeasibilityToolControl entity.
+// If the FeasibilityToolControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeasibilityToolControlMutation) OldMpgValue(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMpgValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMpgValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMpgValue: %w", err)
+	}
+	return oldValue.MpgValue, nil
+}
+
+// AddMpgValue adds f to the "mpg_value" field.
+func (m *FeasibilityToolControlMutation) AddMpgValue(f float64) {
+	if m.addmpg_value != nil {
+		*m.addmpg_value += f
+	} else {
+		m.addmpg_value = &f
+	}
+}
+
+// AddedMpgValue returns the value that was added to the "mpg_value" field in this mutation.
+func (m *FeasibilityToolControlMutation) AddedMpgValue() (r float64, exists bool) {
+	v := m.addmpg_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMpgValue resets all changes to the "mpg_value" field.
+func (m *FeasibilityToolControlMutation) ResetMpgValue() {
+	m.mpg_value = nil
+	m.addmpg_value = nil
+}
+
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *FeasibilityToolControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *FeasibilityToolControlMutation) ClearOrganization() {
+	m.clearedorganization = true
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *FeasibilityToolControlMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *FeasibilityToolControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *FeasibilityToolControlMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *FeasibilityToolControlMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *FeasibilityToolControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *FeasibilityToolControlMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *FeasibilityToolControlMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *FeasibilityToolControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *FeasibilityToolControlMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *FeasibilityToolControlMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the FeasibilityToolControlMutation builder.
+func (m *FeasibilityToolControlMutation) Where(ps ...predicate.FeasibilityToolControl) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the FeasibilityToolControlMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *FeasibilityToolControlMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.FeasibilityToolControl, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *FeasibilityToolControlMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *FeasibilityToolControlMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (FeasibilityToolControl).
+func (m *FeasibilityToolControlMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *FeasibilityToolControlMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.created_at != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldUpdatedAt)
+	}
+	if m.otp_operator != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldOtpOperator)
+	}
+	if m.otp_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldOtpValue)
+	}
+	if m.mpw_operator != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpwOperator)
+	}
+	if m.mpw_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpwValue)
+	}
+	if m.mpd_operator != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpdOperator)
+	}
+	if m.mpd_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpdValue)
+	}
+	if m.mpg_operator != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpgOperator)
+	}
+	if m.mpg_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpgValue)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *FeasibilityToolControlMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case feasibilitytoolcontrol.FieldCreatedAt:
+		return m.CreatedAt()
+	case feasibilitytoolcontrol.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case feasibilitytoolcontrol.FieldOtpOperator:
+		return m.OtpOperator()
+	case feasibilitytoolcontrol.FieldOtpValue:
+		return m.OtpValue()
+	case feasibilitytoolcontrol.FieldMpwOperator:
+		return m.MpwOperator()
+	case feasibilitytoolcontrol.FieldMpwValue:
+		return m.MpwValue()
+	case feasibilitytoolcontrol.FieldMpdOperator:
+		return m.MpdOperator()
+	case feasibilitytoolcontrol.FieldMpdValue:
+		return m.MpdValue()
+	case feasibilitytoolcontrol.FieldMpgOperator:
+		return m.MpgOperator()
+	case feasibilitytoolcontrol.FieldMpgValue:
+		return m.MpgValue()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *FeasibilityToolControlMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case feasibilitytoolcontrol.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case feasibilitytoolcontrol.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case feasibilitytoolcontrol.FieldOtpOperator:
+		return m.OldOtpOperator(ctx)
+	case feasibilitytoolcontrol.FieldOtpValue:
+		return m.OldOtpValue(ctx)
+	case feasibilitytoolcontrol.FieldMpwOperator:
+		return m.OldMpwOperator(ctx)
+	case feasibilitytoolcontrol.FieldMpwValue:
+		return m.OldMpwValue(ctx)
+	case feasibilitytoolcontrol.FieldMpdOperator:
+		return m.OldMpdOperator(ctx)
+	case feasibilitytoolcontrol.FieldMpdValue:
+		return m.OldMpdValue(ctx)
+	case feasibilitytoolcontrol.FieldMpgOperator:
+		return m.OldMpgOperator(ctx)
+	case feasibilitytoolcontrol.FieldMpgValue:
+		return m.OldMpgValue(ctx)
+	}
+	return nil, fmt.Errorf("unknown FeasibilityToolControl field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FeasibilityToolControlMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case feasibilitytoolcontrol.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case feasibilitytoolcontrol.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case feasibilitytoolcontrol.FieldOtpOperator:
+		v, ok := value.(feasibilitytoolcontrol.OtpOperator)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOtpOperator(v)
+		return nil
+	case feasibilitytoolcontrol.FieldOtpValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOtpValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpwOperator:
+		v, ok := value.(feasibilitytoolcontrol.MpwOperator)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpwOperator(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpwValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpwValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpdOperator:
+		v, ok := value.(feasibilitytoolcontrol.MpdOperator)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpdOperator(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpdValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpdValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpgOperator:
+		v, ok := value.(feasibilitytoolcontrol.MpgOperator)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpgOperator(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpgValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMpgValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FeasibilityToolControl field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *FeasibilityToolControlMutation) AddedFields() []string {
+	var fields []string
+	if m.addotp_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldOtpValue)
+	}
+	if m.addmpw_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpwValue)
+	}
+	if m.addmpd_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpdValue)
+	}
+	if m.addmpg_value != nil {
+		fields = append(fields, feasibilitytoolcontrol.FieldMpgValue)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *FeasibilityToolControlMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case feasibilitytoolcontrol.FieldOtpValue:
+		return m.AddedOtpValue()
+	case feasibilitytoolcontrol.FieldMpwValue:
+		return m.AddedMpwValue()
+	case feasibilitytoolcontrol.FieldMpdValue:
+		return m.AddedMpdValue()
+	case feasibilitytoolcontrol.FieldMpgValue:
+		return m.AddedMpgValue()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FeasibilityToolControlMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case feasibilitytoolcontrol.FieldOtpValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOtpValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpwValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMpwValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpdValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMpdValue(v)
+		return nil
+	case feasibilitytoolcontrol.FieldMpgValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMpgValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FeasibilityToolControl numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *FeasibilityToolControlMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *FeasibilityToolControlMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *FeasibilityToolControlMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown FeasibilityToolControl nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *FeasibilityToolControlMutation) ResetField(name string) error {
+	switch name {
+	case feasibilitytoolcontrol.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case feasibilitytoolcontrol.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case feasibilitytoolcontrol.FieldOtpOperator:
+		m.ResetOtpOperator()
+		return nil
+	case feasibilitytoolcontrol.FieldOtpValue:
+		m.ResetOtpValue()
+		return nil
+	case feasibilitytoolcontrol.FieldMpwOperator:
+		m.ResetMpwOperator()
+		return nil
+	case feasibilitytoolcontrol.FieldMpwValue:
+		m.ResetMpwValue()
+		return nil
+	case feasibilitytoolcontrol.FieldMpdOperator:
+		m.ResetMpdOperator()
+		return nil
+	case feasibilitytoolcontrol.FieldMpdValue:
+		m.ResetMpdValue()
+		return nil
+	case feasibilitytoolcontrol.FieldMpgOperator:
+		m.ResetMpgOperator()
+		return nil
+	case feasibilitytoolcontrol.FieldMpgValue:
+		m.ResetMpgValue()
+		return nil
+	}
+	return fmt.Errorf("unknown FeasibilityToolControl field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *FeasibilityToolControlMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, feasibilitytoolcontrol.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, feasibilitytoolcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *FeasibilityToolControlMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case feasibilitytoolcontrol.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case feasibilitytoolcontrol.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *FeasibilityToolControlMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *FeasibilityToolControlMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *FeasibilityToolControlMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, feasibilitytoolcontrol.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, feasibilitytoolcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *FeasibilityToolControlMutation) EdgeCleared(name string) bool {
+	switch name {
+	case feasibilitytoolcontrol.EdgeOrganization:
+		return m.clearedorganization
+	case feasibilitytoolcontrol.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *FeasibilityToolControlMutation) ClearEdge(name string) error {
+	switch name {
+	case feasibilitytoolcontrol.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case feasibilitytoolcontrol.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown FeasibilityToolControl unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *FeasibilityToolControlMutation) ResetEdge(name string) error {
+	switch name {
+	case feasibilitytoolcontrol.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case feasibilitytoolcontrol.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown FeasibilityToolControl edge %s", name)
 }
 
 // GeneralLedgerAccountMutation represents an operation that mutates the GeneralLedgerAccount nodes in the graph.
@@ -7024,32 +7947,1275 @@ func (m *GeneralLedgerAccountMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GeneralLedgerAccount edge %s", name)
 }
 
-// OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
-type OrganizationMutation struct {
+// InvoiceControlMutation represents an operation that mutates the InvoiceControl nodes in the graph.
+type InvoiceControlMutation struct {
 	config
 	op                        Op
 	typ                       string
 	id                        *uuid.UUID
 	created_at                *time.Time
 	updated_at                *time.Time
-	name                      *string
-	scac_code                 *string
-	dot_number                *string
-	logo_url                  *string
-	org_type                  *organization.OrgType
-	timezone                  *organization.Timezone
+	invoice_number_prefix     *string
+	credit_memo_number_prefix *string
+	invoice_terms             *string
+	invoice_footer            *string
+	invoice_logo_url          *string
+	invoice_date_format       *invoicecontrol.InvoiceDateFormat
+	invoice_due_after_days    *uint8
+	addinvoice_due_after_days *int8
+	invoice_logo_width        *uint16
+	addinvoice_logo_width     *int16
+	show_amount_due           *bool
+	attach_pdf                *bool
+	show_invoice_due_date     *bool
 	clearedFields             map[string]struct{}
+	organization              *uuid.UUID
+	clearedorganization       bool
 	business_unit             *uuid.UUID
 	clearedbusiness_unit      bool
-	accounting_control        *uuid.UUID
-	clearedaccounting_control bool
-	billing_control           *uuid.UUID
-	clearedbilling_control    bool
-	dispatch_control          *uuid.UUID
-	cleareddispatch_control   bool
 	done                      bool
-	oldValue                  func(context.Context) (*Organization, error)
-	predicates                []predicate.Organization
+	oldValue                  func(context.Context) (*InvoiceControl, error)
+	predicates                []predicate.InvoiceControl
+}
+
+var _ ent.Mutation = (*InvoiceControlMutation)(nil)
+
+// invoicecontrolOption allows management of the mutation configuration using functional options.
+type invoicecontrolOption func(*InvoiceControlMutation)
+
+// newInvoiceControlMutation creates new mutation for the InvoiceControl entity.
+func newInvoiceControlMutation(c config, op Op, opts ...invoicecontrolOption) *InvoiceControlMutation {
+	m := &InvoiceControlMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeInvoiceControl,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withInvoiceControlID sets the ID field of the mutation.
+func withInvoiceControlID(id uuid.UUID) invoicecontrolOption {
+	return func(m *InvoiceControlMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *InvoiceControl
+		)
+		m.oldValue = func(ctx context.Context) (*InvoiceControl, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().InvoiceControl.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withInvoiceControl sets the old InvoiceControl of the mutation.
+func withInvoiceControl(node *InvoiceControl) invoicecontrolOption {
+	return func(m *InvoiceControlMutation) {
+		m.oldValue = func(context.Context) (*InvoiceControl, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m InvoiceControlMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m InvoiceControlMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of InvoiceControl entities.
+func (m *InvoiceControlMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *InvoiceControlMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *InvoiceControlMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().InvoiceControl.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *InvoiceControlMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *InvoiceControlMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *InvoiceControlMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *InvoiceControlMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *InvoiceControlMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *InvoiceControlMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetInvoiceNumberPrefix sets the "invoice_number_prefix" field.
+func (m *InvoiceControlMutation) SetInvoiceNumberPrefix(s string) {
+	m.invoice_number_prefix = &s
+}
+
+// InvoiceNumberPrefix returns the value of the "invoice_number_prefix" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceNumberPrefix() (r string, exists bool) {
+	v := m.invoice_number_prefix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceNumberPrefix returns the old "invoice_number_prefix" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceNumberPrefix(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceNumberPrefix is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceNumberPrefix requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceNumberPrefix: %w", err)
+	}
+	return oldValue.InvoiceNumberPrefix, nil
+}
+
+// ResetInvoiceNumberPrefix resets all changes to the "invoice_number_prefix" field.
+func (m *InvoiceControlMutation) ResetInvoiceNumberPrefix() {
+	m.invoice_number_prefix = nil
+}
+
+// SetCreditMemoNumberPrefix sets the "credit_memo_number_prefix" field.
+func (m *InvoiceControlMutation) SetCreditMemoNumberPrefix(s string) {
+	m.credit_memo_number_prefix = &s
+}
+
+// CreditMemoNumberPrefix returns the value of the "credit_memo_number_prefix" field in the mutation.
+func (m *InvoiceControlMutation) CreditMemoNumberPrefix() (r string, exists bool) {
+	v := m.credit_memo_number_prefix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreditMemoNumberPrefix returns the old "credit_memo_number_prefix" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldCreditMemoNumberPrefix(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreditMemoNumberPrefix is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreditMemoNumberPrefix requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreditMemoNumberPrefix: %w", err)
+	}
+	return oldValue.CreditMemoNumberPrefix, nil
+}
+
+// ResetCreditMemoNumberPrefix resets all changes to the "credit_memo_number_prefix" field.
+func (m *InvoiceControlMutation) ResetCreditMemoNumberPrefix() {
+	m.credit_memo_number_prefix = nil
+}
+
+// SetInvoiceTerms sets the "invoice_terms" field.
+func (m *InvoiceControlMutation) SetInvoiceTerms(s string) {
+	m.invoice_terms = &s
+}
+
+// InvoiceTerms returns the value of the "invoice_terms" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceTerms() (r string, exists bool) {
+	v := m.invoice_terms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceTerms returns the old "invoice_terms" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceTerms(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceTerms is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceTerms requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceTerms: %w", err)
+	}
+	return oldValue.InvoiceTerms, nil
+}
+
+// ClearInvoiceTerms clears the value of the "invoice_terms" field.
+func (m *InvoiceControlMutation) ClearInvoiceTerms() {
+	m.invoice_terms = nil
+	m.clearedFields[invoicecontrol.FieldInvoiceTerms] = struct{}{}
+}
+
+// InvoiceTermsCleared returns if the "invoice_terms" field was cleared in this mutation.
+func (m *InvoiceControlMutation) InvoiceTermsCleared() bool {
+	_, ok := m.clearedFields[invoicecontrol.FieldInvoiceTerms]
+	return ok
+}
+
+// ResetInvoiceTerms resets all changes to the "invoice_terms" field.
+func (m *InvoiceControlMutation) ResetInvoiceTerms() {
+	m.invoice_terms = nil
+	delete(m.clearedFields, invoicecontrol.FieldInvoiceTerms)
+}
+
+// SetInvoiceFooter sets the "invoice_footer" field.
+func (m *InvoiceControlMutation) SetInvoiceFooter(s string) {
+	m.invoice_footer = &s
+}
+
+// InvoiceFooter returns the value of the "invoice_footer" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceFooter() (r string, exists bool) {
+	v := m.invoice_footer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceFooter returns the old "invoice_footer" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceFooter(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceFooter is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceFooter requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceFooter: %w", err)
+	}
+	return oldValue.InvoiceFooter, nil
+}
+
+// ClearInvoiceFooter clears the value of the "invoice_footer" field.
+func (m *InvoiceControlMutation) ClearInvoiceFooter() {
+	m.invoice_footer = nil
+	m.clearedFields[invoicecontrol.FieldInvoiceFooter] = struct{}{}
+}
+
+// InvoiceFooterCleared returns if the "invoice_footer" field was cleared in this mutation.
+func (m *InvoiceControlMutation) InvoiceFooterCleared() bool {
+	_, ok := m.clearedFields[invoicecontrol.FieldInvoiceFooter]
+	return ok
+}
+
+// ResetInvoiceFooter resets all changes to the "invoice_footer" field.
+func (m *InvoiceControlMutation) ResetInvoiceFooter() {
+	m.invoice_footer = nil
+	delete(m.clearedFields, invoicecontrol.FieldInvoiceFooter)
+}
+
+// SetInvoiceLogoURL sets the "invoice_logo_url" field.
+func (m *InvoiceControlMutation) SetInvoiceLogoURL(s string) {
+	m.invoice_logo_url = &s
+}
+
+// InvoiceLogoURL returns the value of the "invoice_logo_url" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceLogoURL() (r string, exists bool) {
+	v := m.invoice_logo_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceLogoURL returns the old "invoice_logo_url" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceLogoURL(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceLogoURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceLogoURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceLogoURL: %w", err)
+	}
+	return oldValue.InvoiceLogoURL, nil
+}
+
+// ClearInvoiceLogoURL clears the value of the "invoice_logo_url" field.
+func (m *InvoiceControlMutation) ClearInvoiceLogoURL() {
+	m.invoice_logo_url = nil
+	m.clearedFields[invoicecontrol.FieldInvoiceLogoURL] = struct{}{}
+}
+
+// InvoiceLogoURLCleared returns if the "invoice_logo_url" field was cleared in this mutation.
+func (m *InvoiceControlMutation) InvoiceLogoURLCleared() bool {
+	_, ok := m.clearedFields[invoicecontrol.FieldInvoiceLogoURL]
+	return ok
+}
+
+// ResetInvoiceLogoURL resets all changes to the "invoice_logo_url" field.
+func (m *InvoiceControlMutation) ResetInvoiceLogoURL() {
+	m.invoice_logo_url = nil
+	delete(m.clearedFields, invoicecontrol.FieldInvoiceLogoURL)
+}
+
+// SetInvoiceDateFormat sets the "invoice_date_format" field.
+func (m *InvoiceControlMutation) SetInvoiceDateFormat(idf invoicecontrol.InvoiceDateFormat) {
+	m.invoice_date_format = &idf
+}
+
+// InvoiceDateFormat returns the value of the "invoice_date_format" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceDateFormat() (r invoicecontrol.InvoiceDateFormat, exists bool) {
+	v := m.invoice_date_format
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceDateFormat returns the old "invoice_date_format" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceDateFormat(ctx context.Context) (v invoicecontrol.InvoiceDateFormat, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceDateFormat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceDateFormat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceDateFormat: %w", err)
+	}
+	return oldValue.InvoiceDateFormat, nil
+}
+
+// ResetInvoiceDateFormat resets all changes to the "invoice_date_format" field.
+func (m *InvoiceControlMutation) ResetInvoiceDateFormat() {
+	m.invoice_date_format = nil
+}
+
+// SetInvoiceDueAfterDays sets the "invoice_due_after_days" field.
+func (m *InvoiceControlMutation) SetInvoiceDueAfterDays(u uint8) {
+	m.invoice_due_after_days = &u
+	m.addinvoice_due_after_days = nil
+}
+
+// InvoiceDueAfterDays returns the value of the "invoice_due_after_days" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceDueAfterDays() (r uint8, exists bool) {
+	v := m.invoice_due_after_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceDueAfterDays returns the old "invoice_due_after_days" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceDueAfterDays(ctx context.Context) (v uint8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceDueAfterDays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceDueAfterDays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceDueAfterDays: %w", err)
+	}
+	return oldValue.InvoiceDueAfterDays, nil
+}
+
+// AddInvoiceDueAfterDays adds u to the "invoice_due_after_days" field.
+func (m *InvoiceControlMutation) AddInvoiceDueAfterDays(u int8) {
+	if m.addinvoice_due_after_days != nil {
+		*m.addinvoice_due_after_days += u
+	} else {
+		m.addinvoice_due_after_days = &u
+	}
+}
+
+// AddedInvoiceDueAfterDays returns the value that was added to the "invoice_due_after_days" field in this mutation.
+func (m *InvoiceControlMutation) AddedInvoiceDueAfterDays() (r int8, exists bool) {
+	v := m.addinvoice_due_after_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetInvoiceDueAfterDays resets all changes to the "invoice_due_after_days" field.
+func (m *InvoiceControlMutation) ResetInvoiceDueAfterDays() {
+	m.invoice_due_after_days = nil
+	m.addinvoice_due_after_days = nil
+}
+
+// SetInvoiceLogoWidth sets the "invoice_logo_width" field.
+func (m *InvoiceControlMutation) SetInvoiceLogoWidth(u uint16) {
+	m.invoice_logo_width = &u
+	m.addinvoice_logo_width = nil
+}
+
+// InvoiceLogoWidth returns the value of the "invoice_logo_width" field in the mutation.
+func (m *InvoiceControlMutation) InvoiceLogoWidth() (r uint16, exists bool) {
+	v := m.invoice_logo_width
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInvoiceLogoWidth returns the old "invoice_logo_width" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldInvoiceLogoWidth(ctx context.Context) (v uint16, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInvoiceLogoWidth is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInvoiceLogoWidth requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInvoiceLogoWidth: %w", err)
+	}
+	return oldValue.InvoiceLogoWidth, nil
+}
+
+// AddInvoiceLogoWidth adds u to the "invoice_logo_width" field.
+func (m *InvoiceControlMutation) AddInvoiceLogoWidth(u int16) {
+	if m.addinvoice_logo_width != nil {
+		*m.addinvoice_logo_width += u
+	} else {
+		m.addinvoice_logo_width = &u
+	}
+}
+
+// AddedInvoiceLogoWidth returns the value that was added to the "invoice_logo_width" field in this mutation.
+func (m *InvoiceControlMutation) AddedInvoiceLogoWidth() (r int16, exists bool) {
+	v := m.addinvoice_logo_width
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetInvoiceLogoWidth resets all changes to the "invoice_logo_width" field.
+func (m *InvoiceControlMutation) ResetInvoiceLogoWidth() {
+	m.invoice_logo_width = nil
+	m.addinvoice_logo_width = nil
+}
+
+// SetShowAmountDue sets the "show_amount_due" field.
+func (m *InvoiceControlMutation) SetShowAmountDue(b bool) {
+	m.show_amount_due = &b
+}
+
+// ShowAmountDue returns the value of the "show_amount_due" field in the mutation.
+func (m *InvoiceControlMutation) ShowAmountDue() (r bool, exists bool) {
+	v := m.show_amount_due
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShowAmountDue returns the old "show_amount_due" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldShowAmountDue(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShowAmountDue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShowAmountDue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShowAmountDue: %w", err)
+	}
+	return oldValue.ShowAmountDue, nil
+}
+
+// ResetShowAmountDue resets all changes to the "show_amount_due" field.
+func (m *InvoiceControlMutation) ResetShowAmountDue() {
+	m.show_amount_due = nil
+}
+
+// SetAttachPdf sets the "attach_pdf" field.
+func (m *InvoiceControlMutation) SetAttachPdf(b bool) {
+	m.attach_pdf = &b
+}
+
+// AttachPdf returns the value of the "attach_pdf" field in the mutation.
+func (m *InvoiceControlMutation) AttachPdf() (r bool, exists bool) {
+	v := m.attach_pdf
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttachPdf returns the old "attach_pdf" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldAttachPdf(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttachPdf is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttachPdf requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttachPdf: %w", err)
+	}
+	return oldValue.AttachPdf, nil
+}
+
+// ResetAttachPdf resets all changes to the "attach_pdf" field.
+func (m *InvoiceControlMutation) ResetAttachPdf() {
+	m.attach_pdf = nil
+}
+
+// SetShowInvoiceDueDate sets the "show_invoice_due_date" field.
+func (m *InvoiceControlMutation) SetShowInvoiceDueDate(b bool) {
+	m.show_invoice_due_date = &b
+}
+
+// ShowInvoiceDueDate returns the value of the "show_invoice_due_date" field in the mutation.
+func (m *InvoiceControlMutation) ShowInvoiceDueDate() (r bool, exists bool) {
+	v := m.show_invoice_due_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShowInvoiceDueDate returns the old "show_invoice_due_date" field's value of the InvoiceControl entity.
+// If the InvoiceControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *InvoiceControlMutation) OldShowInvoiceDueDate(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShowInvoiceDueDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShowInvoiceDueDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShowInvoiceDueDate: %w", err)
+	}
+	return oldValue.ShowInvoiceDueDate, nil
+}
+
+// ResetShowInvoiceDueDate resets all changes to the "show_invoice_due_date" field.
+func (m *InvoiceControlMutation) ResetShowInvoiceDueDate() {
+	m.show_invoice_due_date = nil
+}
+
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *InvoiceControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *InvoiceControlMutation) ClearOrganization() {
+	m.clearedorganization = true
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *InvoiceControlMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *InvoiceControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *InvoiceControlMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *InvoiceControlMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *InvoiceControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *InvoiceControlMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *InvoiceControlMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *InvoiceControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *InvoiceControlMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *InvoiceControlMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the InvoiceControlMutation builder.
+func (m *InvoiceControlMutation) Where(ps ...predicate.InvoiceControl) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the InvoiceControlMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *InvoiceControlMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.InvoiceControl, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *InvoiceControlMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *InvoiceControlMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (InvoiceControl).
+func (m *InvoiceControlMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *InvoiceControlMutation) Fields() []string {
+	fields := make([]string, 0, 13)
+	if m.created_at != nil {
+		fields = append(fields, invoicecontrol.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, invoicecontrol.FieldUpdatedAt)
+	}
+	if m.invoice_number_prefix != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceNumberPrefix)
+	}
+	if m.credit_memo_number_prefix != nil {
+		fields = append(fields, invoicecontrol.FieldCreditMemoNumberPrefix)
+	}
+	if m.invoice_terms != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceTerms)
+	}
+	if m.invoice_footer != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceFooter)
+	}
+	if m.invoice_logo_url != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceLogoURL)
+	}
+	if m.invoice_date_format != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceDateFormat)
+	}
+	if m.invoice_due_after_days != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceDueAfterDays)
+	}
+	if m.invoice_logo_width != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceLogoWidth)
+	}
+	if m.show_amount_due != nil {
+		fields = append(fields, invoicecontrol.FieldShowAmountDue)
+	}
+	if m.attach_pdf != nil {
+		fields = append(fields, invoicecontrol.FieldAttachPdf)
+	}
+	if m.show_invoice_due_date != nil {
+		fields = append(fields, invoicecontrol.FieldShowInvoiceDueDate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *InvoiceControlMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case invoicecontrol.FieldCreatedAt:
+		return m.CreatedAt()
+	case invoicecontrol.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case invoicecontrol.FieldInvoiceNumberPrefix:
+		return m.InvoiceNumberPrefix()
+	case invoicecontrol.FieldCreditMemoNumberPrefix:
+		return m.CreditMemoNumberPrefix()
+	case invoicecontrol.FieldInvoiceTerms:
+		return m.InvoiceTerms()
+	case invoicecontrol.FieldInvoiceFooter:
+		return m.InvoiceFooter()
+	case invoicecontrol.FieldInvoiceLogoURL:
+		return m.InvoiceLogoURL()
+	case invoicecontrol.FieldInvoiceDateFormat:
+		return m.InvoiceDateFormat()
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		return m.InvoiceDueAfterDays()
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		return m.InvoiceLogoWidth()
+	case invoicecontrol.FieldShowAmountDue:
+		return m.ShowAmountDue()
+	case invoicecontrol.FieldAttachPdf:
+		return m.AttachPdf()
+	case invoicecontrol.FieldShowInvoiceDueDate:
+		return m.ShowInvoiceDueDate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *InvoiceControlMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case invoicecontrol.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case invoicecontrol.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case invoicecontrol.FieldInvoiceNumberPrefix:
+		return m.OldInvoiceNumberPrefix(ctx)
+	case invoicecontrol.FieldCreditMemoNumberPrefix:
+		return m.OldCreditMemoNumberPrefix(ctx)
+	case invoicecontrol.FieldInvoiceTerms:
+		return m.OldInvoiceTerms(ctx)
+	case invoicecontrol.FieldInvoiceFooter:
+		return m.OldInvoiceFooter(ctx)
+	case invoicecontrol.FieldInvoiceLogoURL:
+		return m.OldInvoiceLogoURL(ctx)
+	case invoicecontrol.FieldInvoiceDateFormat:
+		return m.OldInvoiceDateFormat(ctx)
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		return m.OldInvoiceDueAfterDays(ctx)
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		return m.OldInvoiceLogoWidth(ctx)
+	case invoicecontrol.FieldShowAmountDue:
+		return m.OldShowAmountDue(ctx)
+	case invoicecontrol.FieldAttachPdf:
+		return m.OldAttachPdf(ctx)
+	case invoicecontrol.FieldShowInvoiceDueDate:
+		return m.OldShowInvoiceDueDate(ctx)
+	}
+	return nil, fmt.Errorf("unknown InvoiceControl field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *InvoiceControlMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case invoicecontrol.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case invoicecontrol.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case invoicecontrol.FieldInvoiceNumberPrefix:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceNumberPrefix(v)
+		return nil
+	case invoicecontrol.FieldCreditMemoNumberPrefix:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreditMemoNumberPrefix(v)
+		return nil
+	case invoicecontrol.FieldInvoiceTerms:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceTerms(v)
+		return nil
+	case invoicecontrol.FieldInvoiceFooter:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceFooter(v)
+		return nil
+	case invoicecontrol.FieldInvoiceLogoURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceLogoURL(v)
+		return nil
+	case invoicecontrol.FieldInvoiceDateFormat:
+		v, ok := value.(invoicecontrol.InvoiceDateFormat)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceDateFormat(v)
+		return nil
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		v, ok := value.(uint8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceDueAfterDays(v)
+		return nil
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		v, ok := value.(uint16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInvoiceLogoWidth(v)
+		return nil
+	case invoicecontrol.FieldShowAmountDue:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShowAmountDue(v)
+		return nil
+	case invoicecontrol.FieldAttachPdf:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttachPdf(v)
+		return nil
+	case invoicecontrol.FieldShowInvoiceDueDate:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShowInvoiceDueDate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *InvoiceControlMutation) AddedFields() []string {
+	var fields []string
+	if m.addinvoice_due_after_days != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceDueAfterDays)
+	}
+	if m.addinvoice_logo_width != nil {
+		fields = append(fields, invoicecontrol.FieldInvoiceLogoWidth)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *InvoiceControlMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		return m.AddedInvoiceDueAfterDays()
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		return m.AddedInvoiceLogoWidth()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *InvoiceControlMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddInvoiceDueAfterDays(v)
+		return nil
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		v, ok := value.(int16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddInvoiceLogoWidth(v)
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *InvoiceControlMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(invoicecontrol.FieldInvoiceTerms) {
+		fields = append(fields, invoicecontrol.FieldInvoiceTerms)
+	}
+	if m.FieldCleared(invoicecontrol.FieldInvoiceFooter) {
+		fields = append(fields, invoicecontrol.FieldInvoiceFooter)
+	}
+	if m.FieldCleared(invoicecontrol.FieldInvoiceLogoURL) {
+		fields = append(fields, invoicecontrol.FieldInvoiceLogoURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *InvoiceControlMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *InvoiceControlMutation) ClearField(name string) error {
+	switch name {
+	case invoicecontrol.FieldInvoiceTerms:
+		m.ClearInvoiceTerms()
+		return nil
+	case invoicecontrol.FieldInvoiceFooter:
+		m.ClearInvoiceFooter()
+		return nil
+	case invoicecontrol.FieldInvoiceLogoURL:
+		m.ClearInvoiceLogoURL()
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *InvoiceControlMutation) ResetField(name string) error {
+	switch name {
+	case invoicecontrol.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case invoicecontrol.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case invoicecontrol.FieldInvoiceNumberPrefix:
+		m.ResetInvoiceNumberPrefix()
+		return nil
+	case invoicecontrol.FieldCreditMemoNumberPrefix:
+		m.ResetCreditMemoNumberPrefix()
+		return nil
+	case invoicecontrol.FieldInvoiceTerms:
+		m.ResetInvoiceTerms()
+		return nil
+	case invoicecontrol.FieldInvoiceFooter:
+		m.ResetInvoiceFooter()
+		return nil
+	case invoicecontrol.FieldInvoiceLogoURL:
+		m.ResetInvoiceLogoURL()
+		return nil
+	case invoicecontrol.FieldInvoiceDateFormat:
+		m.ResetInvoiceDateFormat()
+		return nil
+	case invoicecontrol.FieldInvoiceDueAfterDays:
+		m.ResetInvoiceDueAfterDays()
+		return nil
+	case invoicecontrol.FieldInvoiceLogoWidth:
+		m.ResetInvoiceLogoWidth()
+		return nil
+	case invoicecontrol.FieldShowAmountDue:
+		m.ResetShowAmountDue()
+		return nil
+	case invoicecontrol.FieldAttachPdf:
+		m.ResetAttachPdf()
+		return nil
+	case invoicecontrol.FieldShowInvoiceDueDate:
+		m.ResetShowInvoiceDueDate()
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *InvoiceControlMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, invoicecontrol.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, invoicecontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *InvoiceControlMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case invoicecontrol.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case invoicecontrol.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *InvoiceControlMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *InvoiceControlMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *InvoiceControlMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, invoicecontrol.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, invoicecontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *InvoiceControlMutation) EdgeCleared(name string) bool {
+	switch name {
+	case invoicecontrol.EdgeOrganization:
+		return m.clearedorganization
+	case invoicecontrol.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *InvoiceControlMutation) ClearEdge(name string) error {
+	switch name {
+	case invoicecontrol.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case invoicecontrol.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *InvoiceControlMutation) ResetEdge(name string) error {
+	switch name {
+	case invoicecontrol.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case invoicecontrol.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown InvoiceControl edge %s", name)
+}
+
+// OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
+type OrganizationMutation struct {
+	config
+	op                              Op
+	typ                             string
+	id                              *uuid.UUID
+	created_at                      *time.Time
+	updated_at                      *time.Time
+	name                            *string
+	scac_code                       *string
+	dot_number                      *string
+	logo_url                        *string
+	org_type                        *organization.OrgType
+	timezone                        *organization.Timezone
+	clearedFields                   map[string]struct{}
+	business_unit                   *uuid.UUID
+	clearedbusiness_unit            bool
+	accounting_control              *uuid.UUID
+	clearedaccounting_control       bool
+	billing_control                 *uuid.UUID
+	clearedbilling_control          bool
+	dispatch_control                *uuid.UUID
+	cleareddispatch_control         bool
+	feasibility_tool_control        *uuid.UUID
+	clearedfeasibility_tool_control bool
+	invoice_control                 *uuid.UUID
+	clearedinvoice_control          bool
+	route_control                   *uuid.UUID
+	clearedroute_control            bool
+	shipment_control                *uuid.UUID
+	clearedshipment_control         bool
+	done                            bool
+	oldValue                        func(context.Context) (*Organization, error)
+	predicates                      []predicate.Organization
 }
 
 var _ ent.Mutation = (*OrganizationMutation)(nil)
@@ -7637,6 +9803,162 @@ func (m *OrganizationMutation) ResetDispatchControl() {
 	m.cleareddispatch_control = false
 }
 
+// SetFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by id.
+func (m *OrganizationMutation) SetFeasibilityToolControlID(id uuid.UUID) {
+	m.feasibility_tool_control = &id
+}
+
+// ClearFeasibilityToolControl clears the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (m *OrganizationMutation) ClearFeasibilityToolControl() {
+	m.clearedfeasibility_tool_control = true
+}
+
+// FeasibilityToolControlCleared reports if the "feasibility_tool_control" edge to the FeasibilityToolControl entity was cleared.
+func (m *OrganizationMutation) FeasibilityToolControlCleared() bool {
+	return m.clearedfeasibility_tool_control
+}
+
+// FeasibilityToolControlID returns the "feasibility_tool_control" edge ID in the mutation.
+func (m *OrganizationMutation) FeasibilityToolControlID() (id uuid.UUID, exists bool) {
+	if m.feasibility_tool_control != nil {
+		return *m.feasibility_tool_control, true
+	}
+	return
+}
+
+// FeasibilityToolControlIDs returns the "feasibility_tool_control" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FeasibilityToolControlID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) FeasibilityToolControlIDs() (ids []uuid.UUID) {
+	if id := m.feasibility_tool_control; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFeasibilityToolControl resets all changes to the "feasibility_tool_control" edge.
+func (m *OrganizationMutation) ResetFeasibilityToolControl() {
+	m.feasibility_tool_control = nil
+	m.clearedfeasibility_tool_control = false
+}
+
+// SetInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by id.
+func (m *OrganizationMutation) SetInvoiceControlID(id uuid.UUID) {
+	m.invoice_control = &id
+}
+
+// ClearInvoiceControl clears the "invoice_control" edge to the InvoiceControl entity.
+func (m *OrganizationMutation) ClearInvoiceControl() {
+	m.clearedinvoice_control = true
+}
+
+// InvoiceControlCleared reports if the "invoice_control" edge to the InvoiceControl entity was cleared.
+func (m *OrganizationMutation) InvoiceControlCleared() bool {
+	return m.clearedinvoice_control
+}
+
+// InvoiceControlID returns the "invoice_control" edge ID in the mutation.
+func (m *OrganizationMutation) InvoiceControlID() (id uuid.UUID, exists bool) {
+	if m.invoice_control != nil {
+		return *m.invoice_control, true
+	}
+	return
+}
+
+// InvoiceControlIDs returns the "invoice_control" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// InvoiceControlID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) InvoiceControlIDs() (ids []uuid.UUID) {
+	if id := m.invoice_control; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetInvoiceControl resets all changes to the "invoice_control" edge.
+func (m *OrganizationMutation) ResetInvoiceControl() {
+	m.invoice_control = nil
+	m.clearedinvoice_control = false
+}
+
+// SetRouteControlID sets the "route_control" edge to the RouteControl entity by id.
+func (m *OrganizationMutation) SetRouteControlID(id uuid.UUID) {
+	m.route_control = &id
+}
+
+// ClearRouteControl clears the "route_control" edge to the RouteControl entity.
+func (m *OrganizationMutation) ClearRouteControl() {
+	m.clearedroute_control = true
+}
+
+// RouteControlCleared reports if the "route_control" edge to the RouteControl entity was cleared.
+func (m *OrganizationMutation) RouteControlCleared() bool {
+	return m.clearedroute_control
+}
+
+// RouteControlID returns the "route_control" edge ID in the mutation.
+func (m *OrganizationMutation) RouteControlID() (id uuid.UUID, exists bool) {
+	if m.route_control != nil {
+		return *m.route_control, true
+	}
+	return
+}
+
+// RouteControlIDs returns the "route_control" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RouteControlID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) RouteControlIDs() (ids []uuid.UUID) {
+	if id := m.route_control; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRouteControl resets all changes to the "route_control" edge.
+func (m *OrganizationMutation) ResetRouteControl() {
+	m.route_control = nil
+	m.clearedroute_control = false
+}
+
+// SetShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by id.
+func (m *OrganizationMutation) SetShipmentControlID(id uuid.UUID) {
+	m.shipment_control = &id
+}
+
+// ClearShipmentControl clears the "shipment_control" edge to the ShipmentControl entity.
+func (m *OrganizationMutation) ClearShipmentControl() {
+	m.clearedshipment_control = true
+}
+
+// ShipmentControlCleared reports if the "shipment_control" edge to the ShipmentControl entity was cleared.
+func (m *OrganizationMutation) ShipmentControlCleared() bool {
+	return m.clearedshipment_control
+}
+
+// ShipmentControlID returns the "shipment_control" edge ID in the mutation.
+func (m *OrganizationMutation) ShipmentControlID() (id uuid.UUID, exists bool) {
+	if m.shipment_control != nil {
+		return *m.shipment_control, true
+	}
+	return
+}
+
+// ShipmentControlIDs returns the "shipment_control" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ShipmentControlID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) ShipmentControlIDs() (ids []uuid.UUID) {
+	if id := m.shipment_control; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetShipmentControl resets all changes to the "shipment_control" edge.
+func (m *OrganizationMutation) ResetShipmentControl() {
+	m.shipment_control = nil
+	m.clearedshipment_control = false
+}
+
 // Where appends a list predicates to the OrganizationMutation builder.
 func (m *OrganizationMutation) Where(ps ...predicate.Organization) {
 	m.predicates = append(m.predicates, ps...)
@@ -7915,7 +10237,7 @@ func (m *OrganizationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 8)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -7927,6 +10249,18 @@ func (m *OrganizationMutation) AddedEdges() []string {
 	}
 	if m.dispatch_control != nil {
 		edges = append(edges, organization.EdgeDispatchControl)
+	}
+	if m.feasibility_tool_control != nil {
+		edges = append(edges, organization.EdgeFeasibilityToolControl)
+	}
+	if m.invoice_control != nil {
+		edges = append(edges, organization.EdgeInvoiceControl)
+	}
+	if m.route_control != nil {
+		edges = append(edges, organization.EdgeRouteControl)
+	}
+	if m.shipment_control != nil {
+		edges = append(edges, organization.EdgeShipmentControl)
 	}
 	return edges
 }
@@ -7951,13 +10285,29 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 		if id := m.dispatch_control; id != nil {
 			return []ent.Value{*id}
 		}
+	case organization.EdgeFeasibilityToolControl:
+		if id := m.feasibility_tool_control; id != nil {
+			return []ent.Value{*id}
+		}
+	case organization.EdgeInvoiceControl:
+		if id := m.invoice_control; id != nil {
+			return []ent.Value{*id}
+		}
+	case organization.EdgeRouteControl:
+		if id := m.route_control; id != nil {
+			return []ent.Value{*id}
+		}
+	case organization.EdgeShipmentControl:
+		if id := m.shipment_control; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 8)
 	return edges
 }
 
@@ -7969,7 +10319,7 @@ func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 8)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -7981,6 +10331,18 @@ func (m *OrganizationMutation) ClearedEdges() []string {
 	}
 	if m.cleareddispatch_control {
 		edges = append(edges, organization.EdgeDispatchControl)
+	}
+	if m.clearedfeasibility_tool_control {
+		edges = append(edges, organization.EdgeFeasibilityToolControl)
+	}
+	if m.clearedinvoice_control {
+		edges = append(edges, organization.EdgeInvoiceControl)
+	}
+	if m.clearedroute_control {
+		edges = append(edges, organization.EdgeRouteControl)
+	}
+	if m.clearedshipment_control {
+		edges = append(edges, organization.EdgeShipmentControl)
 	}
 	return edges
 }
@@ -7997,6 +10359,14 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 		return m.clearedbilling_control
 	case organization.EdgeDispatchControl:
 		return m.cleareddispatch_control
+	case organization.EdgeFeasibilityToolControl:
+		return m.clearedfeasibility_tool_control
+	case organization.EdgeInvoiceControl:
+		return m.clearedinvoice_control
+	case organization.EdgeRouteControl:
+		return m.clearedroute_control
+	case organization.EdgeShipmentControl:
+		return m.clearedshipment_control
 	}
 	return false
 }
@@ -8016,6 +10386,18 @@ func (m *OrganizationMutation) ClearEdge(name string) error {
 		return nil
 	case organization.EdgeDispatchControl:
 		m.ClearDispatchControl()
+		return nil
+	case organization.EdgeFeasibilityToolControl:
+		m.ClearFeasibilityToolControl()
+		return nil
+	case organization.EdgeInvoiceControl:
+		m.ClearInvoiceControl()
+		return nil
+	case organization.EdgeRouteControl:
+		m.ClearRouteControl()
+		return nil
+	case organization.EdgeShipmentControl:
+		m.ClearShipmentControl()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization unique edge %s", name)
@@ -8037,8 +10419,1854 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 	case organization.EdgeDispatchControl:
 		m.ResetDispatchControl()
 		return nil
+	case organization.EdgeFeasibilityToolControl:
+		m.ResetFeasibilityToolControl()
+		return nil
+	case organization.EdgeInvoiceControl:
+		m.ResetInvoiceControl()
+		return nil
+	case organization.EdgeRouteControl:
+		m.ResetRouteControl()
+		return nil
+	case organization.EdgeShipmentControl:
+		m.ResetShipmentControl()
+		return nil
 	}
 	return fmt.Errorf("unknown Organization edge %s", name)
+}
+
+// RouteControlMutation represents an operation that mutates the RouteControl nodes in the graph.
+type RouteControlMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	distance_method      *routecontrol.DistanceMethod
+	mileage_unit         *routecontrol.MileageUnit
+	generate_routes      *bool
+	clearedFields        map[string]struct{}
+	organization         *uuid.UUID
+	clearedorganization  bool
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	done                 bool
+	oldValue             func(context.Context) (*RouteControl, error)
+	predicates           []predicate.RouteControl
+}
+
+var _ ent.Mutation = (*RouteControlMutation)(nil)
+
+// routecontrolOption allows management of the mutation configuration using functional options.
+type routecontrolOption func(*RouteControlMutation)
+
+// newRouteControlMutation creates new mutation for the RouteControl entity.
+func newRouteControlMutation(c config, op Op, opts ...routecontrolOption) *RouteControlMutation {
+	m := &RouteControlMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRouteControl,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRouteControlID sets the ID field of the mutation.
+func withRouteControlID(id uuid.UUID) routecontrolOption {
+	return func(m *RouteControlMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RouteControl
+		)
+		m.oldValue = func(ctx context.Context) (*RouteControl, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RouteControl.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRouteControl sets the old RouteControl of the mutation.
+func withRouteControl(node *RouteControl) routecontrolOption {
+	return func(m *RouteControlMutation) {
+		m.oldValue = func(context.Context) (*RouteControl, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RouteControlMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RouteControlMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RouteControl entities.
+func (m *RouteControlMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RouteControlMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RouteControlMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RouteControl.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RouteControlMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RouteControlMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RouteControl entity.
+// If the RouteControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouteControlMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RouteControlMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RouteControlMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RouteControlMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RouteControl entity.
+// If the RouteControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouteControlMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RouteControlMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetDistanceMethod sets the "distance_method" field.
+func (m *RouteControlMutation) SetDistanceMethod(rm routecontrol.DistanceMethod) {
+	m.distance_method = &rm
+}
+
+// DistanceMethod returns the value of the "distance_method" field in the mutation.
+func (m *RouteControlMutation) DistanceMethod() (r routecontrol.DistanceMethod, exists bool) {
+	v := m.distance_method
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDistanceMethod returns the old "distance_method" field's value of the RouteControl entity.
+// If the RouteControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouteControlMutation) OldDistanceMethod(ctx context.Context) (v routecontrol.DistanceMethod, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDistanceMethod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDistanceMethod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDistanceMethod: %w", err)
+	}
+	return oldValue.DistanceMethod, nil
+}
+
+// ResetDistanceMethod resets all changes to the "distance_method" field.
+func (m *RouteControlMutation) ResetDistanceMethod() {
+	m.distance_method = nil
+}
+
+// SetMileageUnit sets the "mileage_unit" field.
+func (m *RouteControlMutation) SetMileageUnit(ru routecontrol.MileageUnit) {
+	m.mileage_unit = &ru
+}
+
+// MileageUnit returns the value of the "mileage_unit" field in the mutation.
+func (m *RouteControlMutation) MileageUnit() (r routecontrol.MileageUnit, exists bool) {
+	v := m.mileage_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMileageUnit returns the old "mileage_unit" field's value of the RouteControl entity.
+// If the RouteControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouteControlMutation) OldMileageUnit(ctx context.Context) (v routecontrol.MileageUnit, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMileageUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMileageUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMileageUnit: %w", err)
+	}
+	return oldValue.MileageUnit, nil
+}
+
+// ResetMileageUnit resets all changes to the "mileage_unit" field.
+func (m *RouteControlMutation) ResetMileageUnit() {
+	m.mileage_unit = nil
+}
+
+// SetGenerateRoutes sets the "generate_routes" field.
+func (m *RouteControlMutation) SetGenerateRoutes(b bool) {
+	m.generate_routes = &b
+}
+
+// GenerateRoutes returns the value of the "generate_routes" field in the mutation.
+func (m *RouteControlMutation) GenerateRoutes() (r bool, exists bool) {
+	v := m.generate_routes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGenerateRoutes returns the old "generate_routes" field's value of the RouteControl entity.
+// If the RouteControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouteControlMutation) OldGenerateRoutes(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGenerateRoutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGenerateRoutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGenerateRoutes: %w", err)
+	}
+	return oldValue.GenerateRoutes, nil
+}
+
+// ResetGenerateRoutes resets all changes to the "generate_routes" field.
+func (m *RouteControlMutation) ResetGenerateRoutes() {
+	m.generate_routes = nil
+}
+
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *RouteControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *RouteControlMutation) ClearOrganization() {
+	m.clearedorganization = true
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *RouteControlMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *RouteControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *RouteControlMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *RouteControlMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *RouteControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *RouteControlMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *RouteControlMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *RouteControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *RouteControlMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *RouteControlMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the RouteControlMutation builder.
+func (m *RouteControlMutation) Where(ps ...predicate.RouteControl) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RouteControlMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RouteControlMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RouteControl, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RouteControlMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RouteControlMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RouteControl).
+func (m *RouteControlMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RouteControlMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, routecontrol.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, routecontrol.FieldUpdatedAt)
+	}
+	if m.distance_method != nil {
+		fields = append(fields, routecontrol.FieldDistanceMethod)
+	}
+	if m.mileage_unit != nil {
+		fields = append(fields, routecontrol.FieldMileageUnit)
+	}
+	if m.generate_routes != nil {
+		fields = append(fields, routecontrol.FieldGenerateRoutes)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RouteControlMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case routecontrol.FieldCreatedAt:
+		return m.CreatedAt()
+	case routecontrol.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case routecontrol.FieldDistanceMethod:
+		return m.DistanceMethod()
+	case routecontrol.FieldMileageUnit:
+		return m.MileageUnit()
+	case routecontrol.FieldGenerateRoutes:
+		return m.GenerateRoutes()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RouteControlMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case routecontrol.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case routecontrol.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case routecontrol.FieldDistanceMethod:
+		return m.OldDistanceMethod(ctx)
+	case routecontrol.FieldMileageUnit:
+		return m.OldMileageUnit(ctx)
+	case routecontrol.FieldGenerateRoutes:
+		return m.OldGenerateRoutes(ctx)
+	}
+	return nil, fmt.Errorf("unknown RouteControl field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RouteControlMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case routecontrol.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case routecontrol.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case routecontrol.FieldDistanceMethod:
+		v, ok := value.(routecontrol.DistanceMethod)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDistanceMethod(v)
+		return nil
+	case routecontrol.FieldMileageUnit:
+		v, ok := value.(routecontrol.MileageUnit)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMileageUnit(v)
+		return nil
+	case routecontrol.FieldGenerateRoutes:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGenerateRoutes(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RouteControl field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RouteControlMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RouteControlMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RouteControlMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RouteControl numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RouteControlMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RouteControlMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RouteControlMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown RouteControl nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RouteControlMutation) ResetField(name string) error {
+	switch name {
+	case routecontrol.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case routecontrol.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case routecontrol.FieldDistanceMethod:
+		m.ResetDistanceMethod()
+		return nil
+	case routecontrol.FieldMileageUnit:
+		m.ResetMileageUnit()
+		return nil
+	case routecontrol.FieldGenerateRoutes:
+		m.ResetGenerateRoutes()
+		return nil
+	}
+	return fmt.Errorf("unknown RouteControl field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RouteControlMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, routecontrol.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, routecontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RouteControlMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case routecontrol.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case routecontrol.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RouteControlMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RouteControlMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RouteControlMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, routecontrol.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, routecontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RouteControlMutation) EdgeCleared(name string) bool {
+	switch name {
+	case routecontrol.EdgeOrganization:
+		return m.clearedorganization
+	case routecontrol.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RouteControlMutation) ClearEdge(name string) error {
+	switch name {
+	case routecontrol.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case routecontrol.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown RouteControl unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RouteControlMutation) ResetEdge(name string) error {
+	switch name {
+	case routecontrol.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case routecontrol.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown RouteControl edge %s", name)
+}
+
+// ShipmentControlMutation represents an operation that mutates the ShipmentControl nodes in the graph.
+type ShipmentControlMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *uuid.UUID
+	created_at                 *time.Time
+	updated_at                 *time.Time
+	auto_rate_shipment         *bool
+	calculate_distance         *bool
+	enforce_rev_code           *bool
+	enforce_voided_comm        *bool
+	generate_routes            *bool
+	enforce_commodity          *bool
+	auto_sequence_stops        *bool
+	auto_shipment_total        *bool
+	enforce_origin_destination *bool
+	check_for_duplicate_bol    *bool
+	send_placard_info          *bool
+	enforce_hazmat_seg_rules   *bool
+	clearedFields              map[string]struct{}
+	organization               *uuid.UUID
+	clearedorganization        bool
+	business_unit              *uuid.UUID
+	clearedbusiness_unit       bool
+	done                       bool
+	oldValue                   func(context.Context) (*ShipmentControl, error)
+	predicates                 []predicate.ShipmentControl
+}
+
+var _ ent.Mutation = (*ShipmentControlMutation)(nil)
+
+// shipmentcontrolOption allows management of the mutation configuration using functional options.
+type shipmentcontrolOption func(*ShipmentControlMutation)
+
+// newShipmentControlMutation creates new mutation for the ShipmentControl entity.
+func newShipmentControlMutation(c config, op Op, opts ...shipmentcontrolOption) *ShipmentControlMutation {
+	m := &ShipmentControlMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeShipmentControl,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withShipmentControlID sets the ID field of the mutation.
+func withShipmentControlID(id uuid.UUID) shipmentcontrolOption {
+	return func(m *ShipmentControlMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ShipmentControl
+		)
+		m.oldValue = func(ctx context.Context) (*ShipmentControl, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ShipmentControl.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withShipmentControl sets the old ShipmentControl of the mutation.
+func withShipmentControl(node *ShipmentControl) shipmentcontrolOption {
+	return func(m *ShipmentControlMutation) {
+		m.oldValue = func(context.Context) (*ShipmentControl, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ShipmentControlMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ShipmentControlMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ShipmentControl entities.
+func (m *ShipmentControlMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ShipmentControlMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ShipmentControlMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ShipmentControl.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ShipmentControlMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ShipmentControlMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ShipmentControlMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ShipmentControlMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ShipmentControlMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ShipmentControlMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAutoRateShipment sets the "auto_rate_shipment" field.
+func (m *ShipmentControlMutation) SetAutoRateShipment(b bool) {
+	m.auto_rate_shipment = &b
+}
+
+// AutoRateShipment returns the value of the "auto_rate_shipment" field in the mutation.
+func (m *ShipmentControlMutation) AutoRateShipment() (r bool, exists bool) {
+	v := m.auto_rate_shipment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoRateShipment returns the old "auto_rate_shipment" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldAutoRateShipment(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoRateShipment is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoRateShipment requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoRateShipment: %w", err)
+	}
+	return oldValue.AutoRateShipment, nil
+}
+
+// ResetAutoRateShipment resets all changes to the "auto_rate_shipment" field.
+func (m *ShipmentControlMutation) ResetAutoRateShipment() {
+	m.auto_rate_shipment = nil
+}
+
+// SetCalculateDistance sets the "calculate_distance" field.
+func (m *ShipmentControlMutation) SetCalculateDistance(b bool) {
+	m.calculate_distance = &b
+}
+
+// CalculateDistance returns the value of the "calculate_distance" field in the mutation.
+func (m *ShipmentControlMutation) CalculateDistance() (r bool, exists bool) {
+	v := m.calculate_distance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalculateDistance returns the old "calculate_distance" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldCalculateDistance(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalculateDistance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalculateDistance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalculateDistance: %w", err)
+	}
+	return oldValue.CalculateDistance, nil
+}
+
+// ResetCalculateDistance resets all changes to the "calculate_distance" field.
+func (m *ShipmentControlMutation) ResetCalculateDistance() {
+	m.calculate_distance = nil
+}
+
+// SetEnforceRevCode sets the "enforce_rev_code" field.
+func (m *ShipmentControlMutation) SetEnforceRevCode(b bool) {
+	m.enforce_rev_code = &b
+}
+
+// EnforceRevCode returns the value of the "enforce_rev_code" field in the mutation.
+func (m *ShipmentControlMutation) EnforceRevCode() (r bool, exists bool) {
+	v := m.enforce_rev_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceRevCode returns the old "enforce_rev_code" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldEnforceRevCode(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceRevCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceRevCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceRevCode: %w", err)
+	}
+	return oldValue.EnforceRevCode, nil
+}
+
+// ResetEnforceRevCode resets all changes to the "enforce_rev_code" field.
+func (m *ShipmentControlMutation) ResetEnforceRevCode() {
+	m.enforce_rev_code = nil
+}
+
+// SetEnforceVoidedComm sets the "enforce_voided_comm" field.
+func (m *ShipmentControlMutation) SetEnforceVoidedComm(b bool) {
+	m.enforce_voided_comm = &b
+}
+
+// EnforceVoidedComm returns the value of the "enforce_voided_comm" field in the mutation.
+func (m *ShipmentControlMutation) EnforceVoidedComm() (r bool, exists bool) {
+	v := m.enforce_voided_comm
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceVoidedComm returns the old "enforce_voided_comm" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldEnforceVoidedComm(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceVoidedComm is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceVoidedComm requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceVoidedComm: %w", err)
+	}
+	return oldValue.EnforceVoidedComm, nil
+}
+
+// ResetEnforceVoidedComm resets all changes to the "enforce_voided_comm" field.
+func (m *ShipmentControlMutation) ResetEnforceVoidedComm() {
+	m.enforce_voided_comm = nil
+}
+
+// SetGenerateRoutes sets the "generate_routes" field.
+func (m *ShipmentControlMutation) SetGenerateRoutes(b bool) {
+	m.generate_routes = &b
+}
+
+// GenerateRoutes returns the value of the "generate_routes" field in the mutation.
+func (m *ShipmentControlMutation) GenerateRoutes() (r bool, exists bool) {
+	v := m.generate_routes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGenerateRoutes returns the old "generate_routes" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldGenerateRoutes(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGenerateRoutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGenerateRoutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGenerateRoutes: %w", err)
+	}
+	return oldValue.GenerateRoutes, nil
+}
+
+// ResetGenerateRoutes resets all changes to the "generate_routes" field.
+func (m *ShipmentControlMutation) ResetGenerateRoutes() {
+	m.generate_routes = nil
+}
+
+// SetEnforceCommodity sets the "enforce_commodity" field.
+func (m *ShipmentControlMutation) SetEnforceCommodity(b bool) {
+	m.enforce_commodity = &b
+}
+
+// EnforceCommodity returns the value of the "enforce_commodity" field in the mutation.
+func (m *ShipmentControlMutation) EnforceCommodity() (r bool, exists bool) {
+	v := m.enforce_commodity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceCommodity returns the old "enforce_commodity" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldEnforceCommodity(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceCommodity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceCommodity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceCommodity: %w", err)
+	}
+	return oldValue.EnforceCommodity, nil
+}
+
+// ResetEnforceCommodity resets all changes to the "enforce_commodity" field.
+func (m *ShipmentControlMutation) ResetEnforceCommodity() {
+	m.enforce_commodity = nil
+}
+
+// SetAutoSequenceStops sets the "auto_sequence_stops" field.
+func (m *ShipmentControlMutation) SetAutoSequenceStops(b bool) {
+	m.auto_sequence_stops = &b
+}
+
+// AutoSequenceStops returns the value of the "auto_sequence_stops" field in the mutation.
+func (m *ShipmentControlMutation) AutoSequenceStops() (r bool, exists bool) {
+	v := m.auto_sequence_stops
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoSequenceStops returns the old "auto_sequence_stops" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldAutoSequenceStops(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoSequenceStops is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoSequenceStops requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoSequenceStops: %w", err)
+	}
+	return oldValue.AutoSequenceStops, nil
+}
+
+// ResetAutoSequenceStops resets all changes to the "auto_sequence_stops" field.
+func (m *ShipmentControlMutation) ResetAutoSequenceStops() {
+	m.auto_sequence_stops = nil
+}
+
+// SetAutoShipmentTotal sets the "auto_shipment_total" field.
+func (m *ShipmentControlMutation) SetAutoShipmentTotal(b bool) {
+	m.auto_shipment_total = &b
+}
+
+// AutoShipmentTotal returns the value of the "auto_shipment_total" field in the mutation.
+func (m *ShipmentControlMutation) AutoShipmentTotal() (r bool, exists bool) {
+	v := m.auto_shipment_total
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoShipmentTotal returns the old "auto_shipment_total" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldAutoShipmentTotal(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoShipmentTotal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoShipmentTotal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoShipmentTotal: %w", err)
+	}
+	return oldValue.AutoShipmentTotal, nil
+}
+
+// ResetAutoShipmentTotal resets all changes to the "auto_shipment_total" field.
+func (m *ShipmentControlMutation) ResetAutoShipmentTotal() {
+	m.auto_shipment_total = nil
+}
+
+// SetEnforceOriginDestination sets the "enforce_origin_destination" field.
+func (m *ShipmentControlMutation) SetEnforceOriginDestination(b bool) {
+	m.enforce_origin_destination = &b
+}
+
+// EnforceOriginDestination returns the value of the "enforce_origin_destination" field in the mutation.
+func (m *ShipmentControlMutation) EnforceOriginDestination() (r bool, exists bool) {
+	v := m.enforce_origin_destination
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceOriginDestination returns the old "enforce_origin_destination" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldEnforceOriginDestination(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceOriginDestination is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceOriginDestination requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceOriginDestination: %w", err)
+	}
+	return oldValue.EnforceOriginDestination, nil
+}
+
+// ResetEnforceOriginDestination resets all changes to the "enforce_origin_destination" field.
+func (m *ShipmentControlMutation) ResetEnforceOriginDestination() {
+	m.enforce_origin_destination = nil
+}
+
+// SetCheckForDuplicateBol sets the "check_for_duplicate_bol" field.
+func (m *ShipmentControlMutation) SetCheckForDuplicateBol(b bool) {
+	m.check_for_duplicate_bol = &b
+}
+
+// CheckForDuplicateBol returns the value of the "check_for_duplicate_bol" field in the mutation.
+func (m *ShipmentControlMutation) CheckForDuplicateBol() (r bool, exists bool) {
+	v := m.check_for_duplicate_bol
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCheckForDuplicateBol returns the old "check_for_duplicate_bol" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldCheckForDuplicateBol(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCheckForDuplicateBol is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCheckForDuplicateBol requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCheckForDuplicateBol: %w", err)
+	}
+	return oldValue.CheckForDuplicateBol, nil
+}
+
+// ResetCheckForDuplicateBol resets all changes to the "check_for_duplicate_bol" field.
+func (m *ShipmentControlMutation) ResetCheckForDuplicateBol() {
+	m.check_for_duplicate_bol = nil
+}
+
+// SetSendPlacardInfo sets the "send_placard_info" field.
+func (m *ShipmentControlMutation) SetSendPlacardInfo(b bool) {
+	m.send_placard_info = &b
+}
+
+// SendPlacardInfo returns the value of the "send_placard_info" field in the mutation.
+func (m *ShipmentControlMutation) SendPlacardInfo() (r bool, exists bool) {
+	v := m.send_placard_info
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSendPlacardInfo returns the old "send_placard_info" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldSendPlacardInfo(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSendPlacardInfo is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSendPlacardInfo requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSendPlacardInfo: %w", err)
+	}
+	return oldValue.SendPlacardInfo, nil
+}
+
+// ResetSendPlacardInfo resets all changes to the "send_placard_info" field.
+func (m *ShipmentControlMutation) ResetSendPlacardInfo() {
+	m.send_placard_info = nil
+}
+
+// SetEnforceHazmatSegRules sets the "enforce_hazmat_seg_rules" field.
+func (m *ShipmentControlMutation) SetEnforceHazmatSegRules(b bool) {
+	m.enforce_hazmat_seg_rules = &b
+}
+
+// EnforceHazmatSegRules returns the value of the "enforce_hazmat_seg_rules" field in the mutation.
+func (m *ShipmentControlMutation) EnforceHazmatSegRules() (r bool, exists bool) {
+	v := m.enforce_hazmat_seg_rules
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceHazmatSegRules returns the old "enforce_hazmat_seg_rules" field's value of the ShipmentControl entity.
+// If the ShipmentControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentControlMutation) OldEnforceHazmatSegRules(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceHazmatSegRules is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceHazmatSegRules requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceHazmatSegRules: %w", err)
+	}
+	return oldValue.EnforceHazmatSegRules, nil
+}
+
+// ResetEnforceHazmatSegRules resets all changes to the "enforce_hazmat_seg_rules" field.
+func (m *ShipmentControlMutation) ResetEnforceHazmatSegRules() {
+	m.enforce_hazmat_seg_rules = nil
+}
+
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *ShipmentControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *ShipmentControlMutation) ClearOrganization() {
+	m.clearedorganization = true
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *ShipmentControlMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *ShipmentControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *ShipmentControlMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *ShipmentControlMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *ShipmentControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *ShipmentControlMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *ShipmentControlMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *ShipmentControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *ShipmentControlMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *ShipmentControlMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the ShipmentControlMutation builder.
+func (m *ShipmentControlMutation) Where(ps ...predicate.ShipmentControl) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ShipmentControlMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ShipmentControlMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ShipmentControl, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ShipmentControlMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ShipmentControlMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ShipmentControl).
+func (m *ShipmentControlMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ShipmentControlMutation) Fields() []string {
+	fields := make([]string, 0, 14)
+	if m.created_at != nil {
+		fields = append(fields, shipmentcontrol.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, shipmentcontrol.FieldUpdatedAt)
+	}
+	if m.auto_rate_shipment != nil {
+		fields = append(fields, shipmentcontrol.FieldAutoRateShipment)
+	}
+	if m.calculate_distance != nil {
+		fields = append(fields, shipmentcontrol.FieldCalculateDistance)
+	}
+	if m.enforce_rev_code != nil {
+		fields = append(fields, shipmentcontrol.FieldEnforceRevCode)
+	}
+	if m.enforce_voided_comm != nil {
+		fields = append(fields, shipmentcontrol.FieldEnforceVoidedComm)
+	}
+	if m.generate_routes != nil {
+		fields = append(fields, shipmentcontrol.FieldGenerateRoutes)
+	}
+	if m.enforce_commodity != nil {
+		fields = append(fields, shipmentcontrol.FieldEnforceCommodity)
+	}
+	if m.auto_sequence_stops != nil {
+		fields = append(fields, shipmentcontrol.FieldAutoSequenceStops)
+	}
+	if m.auto_shipment_total != nil {
+		fields = append(fields, shipmentcontrol.FieldAutoShipmentTotal)
+	}
+	if m.enforce_origin_destination != nil {
+		fields = append(fields, shipmentcontrol.FieldEnforceOriginDestination)
+	}
+	if m.check_for_duplicate_bol != nil {
+		fields = append(fields, shipmentcontrol.FieldCheckForDuplicateBol)
+	}
+	if m.send_placard_info != nil {
+		fields = append(fields, shipmentcontrol.FieldSendPlacardInfo)
+	}
+	if m.enforce_hazmat_seg_rules != nil {
+		fields = append(fields, shipmentcontrol.FieldEnforceHazmatSegRules)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ShipmentControlMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case shipmentcontrol.FieldCreatedAt:
+		return m.CreatedAt()
+	case shipmentcontrol.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case shipmentcontrol.FieldAutoRateShipment:
+		return m.AutoRateShipment()
+	case shipmentcontrol.FieldCalculateDistance:
+		return m.CalculateDistance()
+	case shipmentcontrol.FieldEnforceRevCode:
+		return m.EnforceRevCode()
+	case shipmentcontrol.FieldEnforceVoidedComm:
+		return m.EnforceVoidedComm()
+	case shipmentcontrol.FieldGenerateRoutes:
+		return m.GenerateRoutes()
+	case shipmentcontrol.FieldEnforceCommodity:
+		return m.EnforceCommodity()
+	case shipmentcontrol.FieldAutoSequenceStops:
+		return m.AutoSequenceStops()
+	case shipmentcontrol.FieldAutoShipmentTotal:
+		return m.AutoShipmentTotal()
+	case shipmentcontrol.FieldEnforceOriginDestination:
+		return m.EnforceOriginDestination()
+	case shipmentcontrol.FieldCheckForDuplicateBol:
+		return m.CheckForDuplicateBol()
+	case shipmentcontrol.FieldSendPlacardInfo:
+		return m.SendPlacardInfo()
+	case shipmentcontrol.FieldEnforceHazmatSegRules:
+		return m.EnforceHazmatSegRules()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ShipmentControlMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case shipmentcontrol.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case shipmentcontrol.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case shipmentcontrol.FieldAutoRateShipment:
+		return m.OldAutoRateShipment(ctx)
+	case shipmentcontrol.FieldCalculateDistance:
+		return m.OldCalculateDistance(ctx)
+	case shipmentcontrol.FieldEnforceRevCode:
+		return m.OldEnforceRevCode(ctx)
+	case shipmentcontrol.FieldEnforceVoidedComm:
+		return m.OldEnforceVoidedComm(ctx)
+	case shipmentcontrol.FieldGenerateRoutes:
+		return m.OldGenerateRoutes(ctx)
+	case shipmentcontrol.FieldEnforceCommodity:
+		return m.OldEnforceCommodity(ctx)
+	case shipmentcontrol.FieldAutoSequenceStops:
+		return m.OldAutoSequenceStops(ctx)
+	case shipmentcontrol.FieldAutoShipmentTotal:
+		return m.OldAutoShipmentTotal(ctx)
+	case shipmentcontrol.FieldEnforceOriginDestination:
+		return m.OldEnforceOriginDestination(ctx)
+	case shipmentcontrol.FieldCheckForDuplicateBol:
+		return m.OldCheckForDuplicateBol(ctx)
+	case shipmentcontrol.FieldSendPlacardInfo:
+		return m.OldSendPlacardInfo(ctx)
+	case shipmentcontrol.FieldEnforceHazmatSegRules:
+		return m.OldEnforceHazmatSegRules(ctx)
+	}
+	return nil, fmt.Errorf("unknown ShipmentControl field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentControlMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case shipmentcontrol.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case shipmentcontrol.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case shipmentcontrol.FieldAutoRateShipment:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoRateShipment(v)
+		return nil
+	case shipmentcontrol.FieldCalculateDistance:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalculateDistance(v)
+		return nil
+	case shipmentcontrol.FieldEnforceRevCode:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceRevCode(v)
+		return nil
+	case shipmentcontrol.FieldEnforceVoidedComm:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceVoidedComm(v)
+		return nil
+	case shipmentcontrol.FieldGenerateRoutes:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGenerateRoutes(v)
+		return nil
+	case shipmentcontrol.FieldEnforceCommodity:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceCommodity(v)
+		return nil
+	case shipmentcontrol.FieldAutoSequenceStops:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoSequenceStops(v)
+		return nil
+	case shipmentcontrol.FieldAutoShipmentTotal:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoShipmentTotal(v)
+		return nil
+	case shipmentcontrol.FieldEnforceOriginDestination:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceOriginDestination(v)
+		return nil
+	case shipmentcontrol.FieldCheckForDuplicateBol:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCheckForDuplicateBol(v)
+		return nil
+	case shipmentcontrol.FieldSendPlacardInfo:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSendPlacardInfo(v)
+		return nil
+	case shipmentcontrol.FieldEnforceHazmatSegRules:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceHazmatSegRules(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentControl field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ShipmentControlMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ShipmentControlMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentControlMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ShipmentControl numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ShipmentControlMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ShipmentControlMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ShipmentControlMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ShipmentControl nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ShipmentControlMutation) ResetField(name string) error {
+	switch name {
+	case shipmentcontrol.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case shipmentcontrol.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case shipmentcontrol.FieldAutoRateShipment:
+		m.ResetAutoRateShipment()
+		return nil
+	case shipmentcontrol.FieldCalculateDistance:
+		m.ResetCalculateDistance()
+		return nil
+	case shipmentcontrol.FieldEnforceRevCode:
+		m.ResetEnforceRevCode()
+		return nil
+	case shipmentcontrol.FieldEnforceVoidedComm:
+		m.ResetEnforceVoidedComm()
+		return nil
+	case shipmentcontrol.FieldGenerateRoutes:
+		m.ResetGenerateRoutes()
+		return nil
+	case shipmentcontrol.FieldEnforceCommodity:
+		m.ResetEnforceCommodity()
+		return nil
+	case shipmentcontrol.FieldAutoSequenceStops:
+		m.ResetAutoSequenceStops()
+		return nil
+	case shipmentcontrol.FieldAutoShipmentTotal:
+		m.ResetAutoShipmentTotal()
+		return nil
+	case shipmentcontrol.FieldEnforceOriginDestination:
+		m.ResetEnforceOriginDestination()
+		return nil
+	case shipmentcontrol.FieldCheckForDuplicateBol:
+		m.ResetCheckForDuplicateBol()
+		return nil
+	case shipmentcontrol.FieldSendPlacardInfo:
+		m.ResetSendPlacardInfo()
+		return nil
+	case shipmentcontrol.FieldEnforceHazmatSegRules:
+		m.ResetEnforceHazmatSegRules()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentControl field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ShipmentControlMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, shipmentcontrol.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, shipmentcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ShipmentControlMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case shipmentcontrol.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentcontrol.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ShipmentControlMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ShipmentControlMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ShipmentControlMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, shipmentcontrol.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, shipmentcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ShipmentControlMutation) EdgeCleared(name string) bool {
+	switch name {
+	case shipmentcontrol.EdgeOrganization:
+		return m.clearedorganization
+	case shipmentcontrol.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ShipmentControlMutation) ClearEdge(name string) error {
+	switch name {
+	case shipmentcontrol.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case shipmentcontrol.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentControl unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ShipmentControlMutation) ResetEdge(name string) error {
+	switch name {
+	case shipmentcontrol.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case shipmentcontrol.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentControl edge %s", name)
 }
 
 // TagMutation represents an operation that mutates the Tag nodes in the graph.

@@ -51,18 +51,6 @@ func (bcc *BillingControlCreate) SetNillableUpdatedAt(t *time.Time) *BillingCont
 	return bcc
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (bcc *BillingControlCreate) SetOrganizationID(u uuid.UUID) *BillingControlCreate {
-	bcc.mutation.SetOrganizationID(u)
-	return bcc
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (bcc *BillingControlCreate) SetBusinessUnitID(u uuid.UUID) *BillingControlCreate {
-	bcc.mutation.SetBusinessUnitID(u)
-	return bcc
-}
-
 // SetRemoveBillingHistory sets the "remove_billing_history" field.
 func (bcc *BillingControlCreate) SetRemoveBillingHistory(b bool) *BillingControlCreate {
 	bcc.mutation.SetRemoveBillingHistory(b)
@@ -161,9 +149,21 @@ func (bcc *BillingControlCreate) SetNillableID(u *uuid.UUID) *BillingControlCrea
 	return bcc
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (bcc *BillingControlCreate) SetOrganizationID(id uuid.UUID) *BillingControlCreate {
+	bcc.mutation.SetOrganizationID(id)
+	return bcc
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (bcc *BillingControlCreate) SetOrganization(o *Organization) *BillingControlCreate {
 	return bcc.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (bcc *BillingControlCreate) SetBusinessUnitID(id uuid.UUID) *BillingControlCreate {
+	bcc.mutation.SetBusinessUnitID(id)
+	return bcc
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -251,12 +251,6 @@ func (bcc *BillingControlCreate) check() error {
 	}
 	if _, ok := bcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "BillingControl.updated_at"`)}
-	}
-	if _, ok := bcc.mutation.OrganizationID(); !ok {
-		return &ValidationError{Name: "organization_id", err: errors.New(`ent: missing required field "BillingControl.organization_id"`)}
-	}
-	if _, ok := bcc.mutation.BusinessUnitID(); !ok {
-		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "BillingControl.business_unit_id"`)}
 	}
 	if _, ok := bcc.mutation.RemoveBillingHistory(); !ok {
 		return &ValidationError{Name: "remove_billing_history", err: errors.New(`ent: missing required field "BillingControl.remove_billing_history"`)}
@@ -361,8 +355,8 @@ func (bcc *BillingControlCreate) createSpec() (*BillingControl, *sqlgraph.Create
 	}
 	if nodes := bcc.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   billingcontrol.OrganizationTable,
 			Columns: []string{billingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -373,7 +367,7 @@ func (bcc *BillingControlCreate) createSpec() (*BillingControl, *sqlgraph.Create
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.OrganizationID = nodes[0]
+		_node.organization_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := bcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
@@ -390,7 +384,7 @@ func (bcc *BillingControlCreate) createSpec() (*BillingControl, *sqlgraph.Create
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.BusinessUnitID = nodes[0]
+		_node.business_unit_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

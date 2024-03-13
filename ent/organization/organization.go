@@ -42,6 +42,14 @@ const (
 	EdgeBillingControl = "billing_control"
 	// EdgeDispatchControl holds the string denoting the dispatch_control edge name in mutations.
 	EdgeDispatchControl = "dispatch_control"
+	// EdgeFeasibilityToolControl holds the string denoting the feasibility_tool_control edge name in mutations.
+	EdgeFeasibilityToolControl = "feasibility_tool_control"
+	// EdgeInvoiceControl holds the string denoting the invoice_control edge name in mutations.
+	EdgeInvoiceControl = "invoice_control"
+	// EdgeRouteControl holds the string denoting the route_control edge name in mutations.
+	EdgeRouteControl = "route_control"
+	// EdgeShipmentControl holds the string denoting the shipment_control edge name in mutations.
+	EdgeShipmentControl = "shipment_control"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -59,19 +67,47 @@ const (
 	// AccountingControlColumn is the table column denoting the accounting_control relation/edge.
 	AccountingControlColumn = "organization_id"
 	// BillingControlTable is the table that holds the billing_control relation/edge.
-	BillingControlTable = "organizations"
+	BillingControlTable = "billing_controls"
 	// BillingControlInverseTable is the table name for the BillingControl entity.
 	// It exists in this package in order to avoid circular dependency with the "billingcontrol" package.
 	BillingControlInverseTable = "billing_controls"
 	// BillingControlColumn is the table column denoting the billing_control relation/edge.
-	BillingControlColumn = "organization_billing_control"
+	BillingControlColumn = "organization_id"
 	// DispatchControlTable is the table that holds the dispatch_control relation/edge.
-	DispatchControlTable = "organizations"
+	DispatchControlTable = "dispatch_controls"
 	// DispatchControlInverseTable is the table name for the DispatchControl entity.
 	// It exists in this package in order to avoid circular dependency with the "dispatchcontrol" package.
 	DispatchControlInverseTable = "dispatch_controls"
 	// DispatchControlColumn is the table column denoting the dispatch_control relation/edge.
-	DispatchControlColumn = "organization_dispatch_control"
+	DispatchControlColumn = "organization_id"
+	// FeasibilityToolControlTable is the table that holds the feasibility_tool_control relation/edge.
+	FeasibilityToolControlTable = "feasibility_tool_controls"
+	// FeasibilityToolControlInverseTable is the table name for the FeasibilityToolControl entity.
+	// It exists in this package in order to avoid circular dependency with the "feasibilitytoolcontrol" package.
+	FeasibilityToolControlInverseTable = "feasibility_tool_controls"
+	// FeasibilityToolControlColumn is the table column denoting the feasibility_tool_control relation/edge.
+	FeasibilityToolControlColumn = "organization_id"
+	// InvoiceControlTable is the table that holds the invoice_control relation/edge.
+	InvoiceControlTable = "invoice_controls"
+	// InvoiceControlInverseTable is the table name for the InvoiceControl entity.
+	// It exists in this package in order to avoid circular dependency with the "invoicecontrol" package.
+	InvoiceControlInverseTable = "invoice_controls"
+	// InvoiceControlColumn is the table column denoting the invoice_control relation/edge.
+	InvoiceControlColumn = "organization_id"
+	// RouteControlTable is the table that holds the route_control relation/edge.
+	RouteControlTable = "route_controls"
+	// RouteControlInverseTable is the table name for the RouteControl entity.
+	// It exists in this package in order to avoid circular dependency with the "routecontrol" package.
+	RouteControlInverseTable = "route_controls"
+	// RouteControlColumn is the table column denoting the route_control relation/edge.
+	RouteControlColumn = "organization_id"
+	// ShipmentControlTable is the table that holds the shipment_control relation/edge.
+	ShipmentControlTable = "shipment_controls"
+	// ShipmentControlInverseTable is the table name for the ShipmentControl entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcontrol" package.
+	ShipmentControlInverseTable = "shipment_controls"
+	// ShipmentControlColumn is the table column denoting the shipment_control relation/edge.
+	ShipmentControlColumn = "organization_id"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -88,22 +124,10 @@ var Columns = []string{
 	FieldTimezone,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "organizations"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"organization_billing_control",
-	"organization_dispatch_control",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -262,6 +286,34 @@ func ByDispatchControlField(field string, opts ...sql.OrderTermOption) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newDispatchControlStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByFeasibilityToolControlField orders the results by feasibility_tool_control field.
+func ByFeasibilityToolControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFeasibilityToolControlStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByInvoiceControlField orders the results by invoice_control field.
+func ByInvoiceControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInvoiceControlStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByRouteControlField orders the results by route_control field.
+func ByRouteControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRouteControlStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByShipmentControlField orders the results by shipment_control field.
+func ByShipmentControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentControlStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -280,13 +332,41 @@ func newBillingControlStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BillingControlInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, BillingControlTable, BillingControlColumn),
+		sqlgraph.Edge(sqlgraph.O2O, false, BillingControlTable, BillingControlColumn),
 	)
 }
 func newDispatchControlStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DispatchControlInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, DispatchControlTable, DispatchControlColumn),
+		sqlgraph.Edge(sqlgraph.O2O, false, DispatchControlTable, DispatchControlColumn),
+	)
+}
+func newFeasibilityToolControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(FeasibilityToolControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, FeasibilityToolControlTable, FeasibilityToolControlColumn),
+	)
+}
+func newInvoiceControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InvoiceControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, InvoiceControlTable, InvoiceControlColumn),
+	)
+}
+func newRouteControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RouteControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, RouteControlTable, RouteControlColumn),
+	)
+}
+func newShipmentControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ShipmentControlTable, ShipmentControlColumn),
 	)
 }

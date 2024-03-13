@@ -26,6 +26,7 @@ type DispatchControlQuery struct {
 	predicates       []predicate.DispatchControl
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,7 +77,7 @@ func (dcq *DispatchControlQuery) QueryOrganization() *OrganizationQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(dispatchcontrol.Table, dispatchcontrol.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, dispatchcontrol.OrganizationTable, dispatchcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, dispatchcontrol.OrganizationTable, dispatchcontrol.OrganizationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
 		return fromU, nil
@@ -405,12 +406,19 @@ func (dcq *DispatchControlQuery) prepareQuery(ctx context.Context) error {
 func (dcq *DispatchControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*DispatchControl, error) {
 	var (
 		nodes       = []*DispatchControl{}
+		withFKs     = dcq.withFKs
 		_spec       = dcq.querySpec()
 		loadedTypes = [2]bool{
 			dcq.withOrganization != nil,
 			dcq.withBusinessUnit != nil,
 		}
 	)
+	if dcq.withOrganization != nil || dcq.withBusinessUnit != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, dispatchcontrol.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*DispatchControl).scanValues(nil, columns)
 	}
@@ -448,7 +456,10 @@ func (dcq *DispatchControlQuery) loadOrganization(ctx context.Context, query *Or
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*DispatchControl)
 	for i := range nodes {
-		fk := nodes[i].OrganizationID
+		if nodes[i].organization_id == nil {
+			continue
+		}
+		fk := *nodes[i].organization_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -477,7 +488,10 @@ func (dcq *DispatchControlQuery) loadBusinessUnit(ctx context.Context, query *Bu
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*DispatchControl)
 	for i := range nodes {
-		fk := nodes[i].BusinessUnitID
+		if nodes[i].business_unit_id == nil {
+			continue
+		}
+		fk := *nodes[i].business_unit_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -527,12 +541,6 @@ func (dcq *DispatchControlQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != dispatchcontrol.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if dcq.withOrganization != nil {
-			_spec.Node.AddColumnOnce(dispatchcontrol.FieldOrganizationID)
-		}
-		if dcq.withBusinessUnit != nil {
-			_spec.Node.AddColumnOnce(dispatchcontrol.FieldBusinessUnitID)
 		}
 	}
 	if ps := dcq.predicates; len(ps) > 0 {

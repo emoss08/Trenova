@@ -14,7 +14,11 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
 
@@ -193,6 +197,82 @@ func (oc *OrganizationCreate) SetNillableDispatchControlID(id *uuid.UUID) *Organ
 // SetDispatchControl sets the "dispatch_control" edge to the DispatchControl entity.
 func (oc *OrganizationCreate) SetDispatchControl(d *DispatchControl) *OrganizationCreate {
 	return oc.SetDispatchControlID(d.ID)
+}
+
+// SetFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID.
+func (oc *OrganizationCreate) SetFeasibilityToolControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetFeasibilityToolControlID(id)
+	return oc
+}
+
+// SetNillableFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableFeasibilityToolControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetFeasibilityToolControlID(*id)
+	}
+	return oc
+}
+
+// SetFeasibilityToolControl sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (oc *OrganizationCreate) SetFeasibilityToolControl(f *FeasibilityToolControl) *OrganizationCreate {
+	return oc.SetFeasibilityToolControlID(f.ID)
+}
+
+// SetInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID.
+func (oc *OrganizationCreate) SetInvoiceControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetInvoiceControlID(id)
+	return oc
+}
+
+// SetNillableInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableInvoiceControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetInvoiceControlID(*id)
+	}
+	return oc
+}
+
+// SetInvoiceControl sets the "invoice_control" edge to the InvoiceControl entity.
+func (oc *OrganizationCreate) SetInvoiceControl(i *InvoiceControl) *OrganizationCreate {
+	return oc.SetInvoiceControlID(i.ID)
+}
+
+// SetRouteControlID sets the "route_control" edge to the RouteControl entity by ID.
+func (oc *OrganizationCreate) SetRouteControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetRouteControlID(id)
+	return oc
+}
+
+// SetNillableRouteControlID sets the "route_control" edge to the RouteControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableRouteControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetRouteControlID(*id)
+	}
+	return oc
+}
+
+// SetRouteControl sets the "route_control" edge to the RouteControl entity.
+func (oc *OrganizationCreate) SetRouteControl(r *RouteControl) *OrganizationCreate {
+	return oc.SetRouteControlID(r.ID)
+}
+
+// SetShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID.
+func (oc *OrganizationCreate) SetShipmentControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetShipmentControlID(id)
+	return oc
+}
+
+// SetNillableShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableShipmentControlID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetShipmentControlID(*id)
+	}
+	return oc
+}
+
+// SetShipmentControl sets the "shipment_control" edge to the ShipmentControl entity.
+func (oc *OrganizationCreate) SetShipmentControl(s *ShipmentControl) *OrganizationCreate {
+	return oc.SetShipmentControlID(s.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -408,7 +488,7 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 	}
 	if nodes := oc.mutation.BillingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.BillingControlTable,
 			Columns: []string{organization.BillingControlColumn},
@@ -420,12 +500,11 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.organization_billing_control = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.DispatchControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.DispatchControlTable,
 			Columns: []string{organization.DispatchControlColumn},
@@ -437,7 +516,70 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.organization_dispatch_control = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.FeasibilityToolControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.FeasibilityToolControlTable,
+			Columns: []string{organization.FeasibilityToolControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(feasibilitytoolcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.InvoiceControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.InvoiceControlTable,
+			Columns: []string{organization.InvoiceControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invoicecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.RouteControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.RouteControlTable,
+			Columns: []string{organization.RouteControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(routecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.ShipmentControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.ShipmentControlTable,
+			Columns: []string{organization.ShipmentControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

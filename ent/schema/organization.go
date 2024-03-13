@@ -51,8 +51,22 @@ func (Organization) Edges() []ent.Edge {
 			StorageKey(edge.Column("organization_id")).
 			Unique(),
 		edge.To("billing_control", BillingControl.Type).
+			StorageKey(edge.Column("organization_id")).
 			Unique(),
 		edge.To("dispatch_control", DispatchControl.Type).
+			StorageKey(edge.Column("organization_id")).
+			Unique(),
+		edge.To("feasibility_tool_control", FeasibilityToolControl.Type).
+			StorageKey(edge.Column("organization_id")).
+			Unique(),
+		edge.To("invoice_control", InvoiceControl.Type).
+			StorageKey(edge.Column("organization_id")).
+			Unique(),
+		edge.To("route_control", RouteControl.Type).
+			StorageKey(edge.Column("organization_id")).
+			Unique(),
+		edge.To("shipment_control", ShipmentControl.Type).
+			StorageKey(edge.Column("organization_id")).
 			Unique(),
 	}
 }

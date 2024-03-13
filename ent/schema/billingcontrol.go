@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // BillingControl holds the schema definition for the BillingControl entity.
@@ -16,10 +15,6 @@ type BillingControl struct {
 // Fields of the BillingControl.
 func (BillingControl) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("organization_id", uuid.UUID{}).
-			StructTag(`json:"organizationId"`),
-		field.UUID("business_unit_id", uuid.UUID{}).
-			StructTag(`json:"businessUnitId"`),
 		field.Bool("remove_billing_history").
 			Default(false).
 			StructTag(`json:"removeBillingHistory"`),
@@ -47,13 +42,13 @@ func (BillingControl) Mixin() []ent.Mixin {
 // Edges of the BillingControl.
 func (BillingControl) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("organization", Organization.Type).
-			Field("organization_id").
+		edge.From("organization", Organization.Type).
+			Ref("billing_control").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),
 		edge.To("business_unit", BusinessUnit.Type).
-			Field("business_unit_id").
+			StorageKey(edge.Column("business_unit_id")).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),

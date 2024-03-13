@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -46,8 +45,8 @@ func main() {
 	// 	SaveX(ctx)
 
 	// Create an accounting control
-	// client.AccountingControl.Create().
-	// 	SetOrganizationID(uuid.MustParse("33b5e299-dddf-49c5-84eb-c588edc3560b")).
+	// client.BillingControl.Create().
+	// 	SetOrganizationID(uuid.MustParse("c2ae34ad-cd7f-4dd9-be7e-da27ff0c0308")).
 	// 	SetBusinessUnitID(uuid.MustParse("c4d959bc-0f75-4069-a130-ddd73e51c643")).
 	// 	SaveX(ctx)
 

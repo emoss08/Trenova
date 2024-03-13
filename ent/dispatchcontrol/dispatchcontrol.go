@@ -20,10 +20,6 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldOrganizationID holds the string denoting the organization_id field in the database.
-	FieldOrganizationID = "organization_id"
-	// FieldBusinessUnitID holds the string denoting the business_unit_id field in the database.
-	FieldBusinessUnitID = "business_unit_id"
 	// FieldRecordServiceIncident holds the string denoting the record_service_incident field in the database.
 	FieldRecordServiceIncident = "record_service_incident"
 	// FieldDeadheadTarget holds the string denoting the deadhead_target field in the database.
@@ -75,8 +71,6 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldOrganizationID,
-	FieldBusinessUnitID,
 	FieldRecordServiceIncident,
 	FieldDeadheadTarget,
 	FieldMaxShipmentWeightLimit,
@@ -91,10 +85,22 @@ var Columns = []string{
 	FieldTractorWorkerFleetConstraint,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "dispatch_controls"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"business_unit_id",
+	"organization_id",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -183,16 +189,6 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByOrganizationID orders the results by the organization_id field.
-func ByOrganizationID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOrganizationID, opts...).ToFunc()
-}
-
-// ByBusinessUnitID orders the results by the business_unit_id field.
-func ByBusinessUnitID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBusinessUnitID, opts...).ToFunc()
-}
-
 // ByRecordServiceIncident orders the results by the record_service_incident field.
 func ByRecordServiceIncident(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRecordServiceIncident, opts...).ToFunc()
@@ -270,7 +266,7 @@ func newOrganizationStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, OrganizationTable, OrganizationColumn),
 	)
 }
 func newBusinessUnitStep() *sqlgraph.Step {

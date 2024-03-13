@@ -18,11 +18,23 @@ type BusinessUnit func(*sql.Selector)
 // DispatchControl is the predicate function for dispatchcontrol builders.
 type DispatchControl func(*sql.Selector)
 
+// FeasibilityToolControl is the predicate function for feasibilitytoolcontrol builders.
+type FeasibilityToolControl func(*sql.Selector)
+
 // GeneralLedgerAccount is the predicate function for generalledgeraccount builders.
 type GeneralLedgerAccount func(*sql.Selector)
 
+// InvoiceControl is the predicate function for invoicecontrol builders.
+type InvoiceControl func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
+
+// RouteControl is the predicate function for routecontrol builders.
+type RouteControl func(*sql.Selector)
+
+// ShipmentControl is the predicate function for shipmentcontrol builders.
+type ShipmentControl func(*sql.Selector)
 
 // Tag is the predicate function for tag builders.
 type Tag func(*sql.Selector)

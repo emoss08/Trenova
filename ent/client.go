@@ -20,8 +20,12 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 )
@@ -39,10 +43,18 @@ type Client struct {
 	BusinessUnit *BusinessUnitClient
 	// DispatchControl is the client for interacting with the DispatchControl builders.
 	DispatchControl *DispatchControlClient
+	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
+	FeasibilityToolControl *FeasibilityToolControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// InvoiceControl is the client for interacting with the InvoiceControl builders.
+	InvoiceControl *InvoiceControlClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
+	// RouteControl is the client for interacting with the RouteControl builders.
+	RouteControl *RouteControlClient
+	// ShipmentControl is the client for interacting with the ShipmentControl builders.
+	ShipmentControl *ShipmentControlClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// User is the client for interacting with the User builders.
@@ -62,8 +74,12 @@ func (c *Client) init() {
 	c.BillingControl = NewBillingControlClient(c.config)
 	c.BusinessUnit = NewBusinessUnitClient(c.config)
 	c.DispatchControl = NewDispatchControlClient(c.config)
+	c.FeasibilityToolControl = NewFeasibilityToolControlClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
+	c.InvoiceControl = NewInvoiceControlClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
+	c.RouteControl = NewRouteControlClient(c.config)
+	c.ShipmentControl = NewShipmentControlClient(c.config)
 	c.Tag = NewTagClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -156,16 +172,20 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                  ctx,
-		config:               cfg,
-		AccountingControl:    NewAccountingControlClient(cfg),
-		BillingControl:       NewBillingControlClient(cfg),
-		BusinessUnit:         NewBusinessUnitClient(cfg),
-		DispatchControl:      NewDispatchControlClient(cfg),
-		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
-		Organization:         NewOrganizationClient(cfg),
-		Tag:                  NewTagClient(cfg),
-		User:                 NewUserClient(cfg),
+		ctx:                    ctx,
+		config:                 cfg,
+		AccountingControl:      NewAccountingControlClient(cfg),
+		BillingControl:         NewBillingControlClient(cfg),
+		BusinessUnit:           NewBusinessUnitClient(cfg),
+		DispatchControl:        NewDispatchControlClient(cfg),
+		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
+		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		InvoiceControl:         NewInvoiceControlClient(cfg),
+		Organization:           NewOrganizationClient(cfg),
+		RouteControl:           NewRouteControlClient(cfg),
+		ShipmentControl:        NewShipmentControlClient(cfg),
+		Tag:                    NewTagClient(cfg),
+		User:                   NewUserClient(cfg),
 	}, nil
 }
 
@@ -183,16 +203,20 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                  ctx,
-		config:               cfg,
-		AccountingControl:    NewAccountingControlClient(cfg),
-		BillingControl:       NewBillingControlClient(cfg),
-		BusinessUnit:         NewBusinessUnitClient(cfg),
-		DispatchControl:      NewDispatchControlClient(cfg),
-		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
-		Organization:         NewOrganizationClient(cfg),
-		Tag:                  NewTagClient(cfg),
-		User:                 NewUserClient(cfg),
+		ctx:                    ctx,
+		config:                 cfg,
+		AccountingControl:      NewAccountingControlClient(cfg),
+		BillingControl:         NewBillingControlClient(cfg),
+		BusinessUnit:           NewBusinessUnitClient(cfg),
+		DispatchControl:        NewDispatchControlClient(cfg),
+		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
+		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		InvoiceControl:         NewInvoiceControlClient(cfg),
+		Organization:           NewOrganizationClient(cfg),
+		RouteControl:           NewRouteControlClient(cfg),
+		ShipmentControl:        NewShipmentControlClient(cfg),
+		Tag:                    NewTagClient(cfg),
+		User:                   NewUserClient(cfg),
 	}, nil
 }
 
@@ -223,7 +247,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
-		c.GeneralLedgerAccount, c.Organization, c.Tag, c.User,
+		c.FeasibilityToolControl, c.GeneralLedgerAccount, c.InvoiceControl,
+		c.Organization, c.RouteControl, c.ShipmentControl, c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -234,7 +259,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
-		c.GeneralLedgerAccount, c.Organization, c.Tag, c.User,
+		c.FeasibilityToolControl, c.GeneralLedgerAccount, c.InvoiceControl,
+		c.Organization, c.RouteControl, c.ShipmentControl, c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -251,10 +277,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BusinessUnit.mutate(ctx, m)
 	case *DispatchControlMutation:
 		return c.DispatchControl.mutate(ctx, m)
+	case *FeasibilityToolControlMutation:
+		return c.FeasibilityToolControl.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
 		return c.GeneralLedgerAccount.mutate(ctx, m)
+	case *InvoiceControlMutation:
+		return c.InvoiceControl.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
+	case *RouteControlMutation:
+		return c.RouteControl.mutate(ctx, m)
+	case *ShipmentControlMutation:
+		return c.ShipmentControl.mutate(ctx, m)
 	case *TagMutation:
 		return c.Tag.mutate(ctx, m)
 	case *UserMutation:
@@ -577,7 +611,7 @@ func (c *BillingControlClient) QueryOrganization(bc *BillingControl) *Organizati
 		step := sqlgraph.NewStep(
 			sqlgraph.From(billingcontrol.Table, billingcontrol.FieldID, id),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, billingcontrol.OrganizationTable, billingcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, billingcontrol.OrganizationTable, billingcontrol.OrganizationColumn),
 		)
 		fromV = sqlgraph.Neighbors(bc.driver.Dialect(), step)
 		return fromV, nil
@@ -923,7 +957,7 @@ func (c *DispatchControlClient) QueryOrganization(dc *DispatchControl) *Organiza
 		step := sqlgraph.NewStep(
 			sqlgraph.From(dispatchcontrol.Table, dispatchcontrol.FieldID, id),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, dispatchcontrol.OrganizationTable, dispatchcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, dispatchcontrol.OrganizationTable, dispatchcontrol.OrganizationColumn),
 		)
 		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
 		return fromV, nil
@@ -969,6 +1003,171 @@ func (c *DispatchControlClient) mutate(ctx context.Context, m *DispatchControlMu
 		return (&DispatchControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown DispatchControl mutation op: %q", m.Op())
+	}
+}
+
+// FeasibilityToolControlClient is a client for the FeasibilityToolControl schema.
+type FeasibilityToolControlClient struct {
+	config
+}
+
+// NewFeasibilityToolControlClient returns a client for the FeasibilityToolControl from the given config.
+func NewFeasibilityToolControlClient(c config) *FeasibilityToolControlClient {
+	return &FeasibilityToolControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `feasibilitytoolcontrol.Hooks(f(g(h())))`.
+func (c *FeasibilityToolControlClient) Use(hooks ...Hook) {
+	c.hooks.FeasibilityToolControl = append(c.hooks.FeasibilityToolControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `feasibilitytoolcontrol.Intercept(f(g(h())))`.
+func (c *FeasibilityToolControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.FeasibilityToolControl = append(c.inters.FeasibilityToolControl, interceptors...)
+}
+
+// Create returns a builder for creating a FeasibilityToolControl entity.
+func (c *FeasibilityToolControlClient) Create() *FeasibilityToolControlCreate {
+	mutation := newFeasibilityToolControlMutation(c.config, OpCreate)
+	return &FeasibilityToolControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of FeasibilityToolControl entities.
+func (c *FeasibilityToolControlClient) CreateBulk(builders ...*FeasibilityToolControlCreate) *FeasibilityToolControlCreateBulk {
+	return &FeasibilityToolControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *FeasibilityToolControlClient) MapCreateBulk(slice any, setFunc func(*FeasibilityToolControlCreate, int)) *FeasibilityToolControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &FeasibilityToolControlCreateBulk{err: fmt.Errorf("calling to FeasibilityToolControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*FeasibilityToolControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &FeasibilityToolControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for FeasibilityToolControl.
+func (c *FeasibilityToolControlClient) Update() *FeasibilityToolControlUpdate {
+	mutation := newFeasibilityToolControlMutation(c.config, OpUpdate)
+	return &FeasibilityToolControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FeasibilityToolControlClient) UpdateOne(ftc *FeasibilityToolControl) *FeasibilityToolControlUpdateOne {
+	mutation := newFeasibilityToolControlMutation(c.config, OpUpdateOne, withFeasibilityToolControl(ftc))
+	return &FeasibilityToolControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FeasibilityToolControlClient) UpdateOneID(id uuid.UUID) *FeasibilityToolControlUpdateOne {
+	mutation := newFeasibilityToolControlMutation(c.config, OpUpdateOne, withFeasibilityToolControlID(id))
+	return &FeasibilityToolControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for FeasibilityToolControl.
+func (c *FeasibilityToolControlClient) Delete() *FeasibilityToolControlDelete {
+	mutation := newFeasibilityToolControlMutation(c.config, OpDelete)
+	return &FeasibilityToolControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *FeasibilityToolControlClient) DeleteOne(ftc *FeasibilityToolControl) *FeasibilityToolControlDeleteOne {
+	return c.DeleteOneID(ftc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *FeasibilityToolControlClient) DeleteOneID(id uuid.UUID) *FeasibilityToolControlDeleteOne {
+	builder := c.Delete().Where(feasibilitytoolcontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &FeasibilityToolControlDeleteOne{builder}
+}
+
+// Query returns a query builder for FeasibilityToolControl.
+func (c *FeasibilityToolControlClient) Query() *FeasibilityToolControlQuery {
+	return &FeasibilityToolControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeFeasibilityToolControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a FeasibilityToolControl entity by its id.
+func (c *FeasibilityToolControlClient) Get(ctx context.Context, id uuid.UUID) (*FeasibilityToolControl, error) {
+	return c.Query().Where(feasibilitytoolcontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FeasibilityToolControlClient) GetX(ctx context.Context, id uuid.UUID) *FeasibilityToolControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a FeasibilityToolControl.
+func (c *FeasibilityToolControlClient) QueryOrganization(ftc *FeasibilityToolControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ftc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(feasibilitytoolcontrol.Table, feasibilitytoolcontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, feasibilitytoolcontrol.OrganizationTable, feasibilitytoolcontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(ftc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a FeasibilityToolControl.
+func (c *FeasibilityToolControlClient) QueryBusinessUnit(ftc *FeasibilityToolControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ftc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(feasibilitytoolcontrol.Table, feasibilitytoolcontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, feasibilitytoolcontrol.BusinessUnitTable, feasibilitytoolcontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(ftc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *FeasibilityToolControlClient) Hooks() []Hook {
+	return c.hooks.FeasibilityToolControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *FeasibilityToolControlClient) Interceptors() []Interceptor {
+	return c.inters.FeasibilityToolControl
+}
+
+func (c *FeasibilityToolControlClient) mutate(ctx context.Context, m *FeasibilityToolControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&FeasibilityToolControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&FeasibilityToolControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&FeasibilityToolControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&FeasibilityToolControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown FeasibilityToolControl mutation op: %q", m.Op())
 	}
 }
 
@@ -1153,6 +1352,171 @@ func (c *GeneralLedgerAccountClient) mutate(ctx context.Context, m *GeneralLedge
 	}
 }
 
+// InvoiceControlClient is a client for the InvoiceControl schema.
+type InvoiceControlClient struct {
+	config
+}
+
+// NewInvoiceControlClient returns a client for the InvoiceControl from the given config.
+func NewInvoiceControlClient(c config) *InvoiceControlClient {
+	return &InvoiceControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `invoicecontrol.Hooks(f(g(h())))`.
+func (c *InvoiceControlClient) Use(hooks ...Hook) {
+	c.hooks.InvoiceControl = append(c.hooks.InvoiceControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `invoicecontrol.Intercept(f(g(h())))`.
+func (c *InvoiceControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.InvoiceControl = append(c.inters.InvoiceControl, interceptors...)
+}
+
+// Create returns a builder for creating a InvoiceControl entity.
+func (c *InvoiceControlClient) Create() *InvoiceControlCreate {
+	mutation := newInvoiceControlMutation(c.config, OpCreate)
+	return &InvoiceControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of InvoiceControl entities.
+func (c *InvoiceControlClient) CreateBulk(builders ...*InvoiceControlCreate) *InvoiceControlCreateBulk {
+	return &InvoiceControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *InvoiceControlClient) MapCreateBulk(slice any, setFunc func(*InvoiceControlCreate, int)) *InvoiceControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &InvoiceControlCreateBulk{err: fmt.Errorf("calling to InvoiceControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*InvoiceControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &InvoiceControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for InvoiceControl.
+func (c *InvoiceControlClient) Update() *InvoiceControlUpdate {
+	mutation := newInvoiceControlMutation(c.config, OpUpdate)
+	return &InvoiceControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *InvoiceControlClient) UpdateOne(ic *InvoiceControl) *InvoiceControlUpdateOne {
+	mutation := newInvoiceControlMutation(c.config, OpUpdateOne, withInvoiceControl(ic))
+	return &InvoiceControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *InvoiceControlClient) UpdateOneID(id uuid.UUID) *InvoiceControlUpdateOne {
+	mutation := newInvoiceControlMutation(c.config, OpUpdateOne, withInvoiceControlID(id))
+	return &InvoiceControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for InvoiceControl.
+func (c *InvoiceControlClient) Delete() *InvoiceControlDelete {
+	mutation := newInvoiceControlMutation(c.config, OpDelete)
+	return &InvoiceControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *InvoiceControlClient) DeleteOne(ic *InvoiceControl) *InvoiceControlDeleteOne {
+	return c.DeleteOneID(ic.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *InvoiceControlClient) DeleteOneID(id uuid.UUID) *InvoiceControlDeleteOne {
+	builder := c.Delete().Where(invoicecontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &InvoiceControlDeleteOne{builder}
+}
+
+// Query returns a query builder for InvoiceControl.
+func (c *InvoiceControlClient) Query() *InvoiceControlQuery {
+	return &InvoiceControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeInvoiceControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a InvoiceControl entity by its id.
+func (c *InvoiceControlClient) Get(ctx context.Context, id uuid.UUID) (*InvoiceControl, error) {
+	return c.Query().Where(invoicecontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *InvoiceControlClient) GetX(ctx context.Context, id uuid.UUID) *InvoiceControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a InvoiceControl.
+func (c *InvoiceControlClient) QueryOrganization(ic *InvoiceControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ic.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(invoicecontrol.Table, invoicecontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, invoicecontrol.OrganizationTable, invoicecontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(ic.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a InvoiceControl.
+func (c *InvoiceControlClient) QueryBusinessUnit(ic *InvoiceControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ic.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(invoicecontrol.Table, invoicecontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, invoicecontrol.BusinessUnitTable, invoicecontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(ic.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *InvoiceControlClient) Hooks() []Hook {
+	return c.hooks.InvoiceControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *InvoiceControlClient) Interceptors() []Interceptor {
+	return c.inters.InvoiceControl
+}
+
+func (c *InvoiceControlClient) mutate(ctx context.Context, m *InvoiceControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&InvoiceControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&InvoiceControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&InvoiceControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&InvoiceControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown InvoiceControl mutation op: %q", m.Op())
+	}
+}
+
 // OrganizationClient is a client for the Organization schema.
 type OrganizationClient struct {
 	config
@@ -1301,7 +1665,7 @@ func (c *OrganizationClient) QueryBillingControl(o *Organization) *BillingContro
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.BillingControlTable, organization.BillingControlColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil
@@ -1317,7 +1681,71 @@ func (c *OrganizationClient) QueryDispatchControl(o *Organization) *DispatchCont
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(dispatchcontrol.Table, dispatchcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFeasibilityToolControl queries the feasibility_tool_control edge of a Organization.
+func (c *OrganizationClient) QueryFeasibilityToolControl(o *Organization) *FeasibilityToolControlQuery {
+	query := (&FeasibilityToolControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(feasibilitytoolcontrol.Table, feasibilitytoolcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.FeasibilityToolControlTable, organization.FeasibilityToolControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryInvoiceControl queries the invoice_control edge of a Organization.
+func (c *OrganizationClient) QueryInvoiceControl(o *Organization) *InvoiceControlQuery {
+	query := (&InvoiceControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(invoicecontrol.Table, invoicecontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.InvoiceControlTable, organization.InvoiceControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRouteControl queries the route_control edge of a Organization.
+func (c *OrganizationClient) QueryRouteControl(o *Organization) *RouteControlQuery {
+	query := (&RouteControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(routecontrol.Table, routecontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.RouteControlTable, organization.RouteControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryShipmentControl queries the shipment_control edge of a Organization.
+func (c *OrganizationClient) QueryShipmentControl(o *Organization) *ShipmentControlQuery {
+	query := (&ShipmentControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(shipmentcontrol.Table, shipmentcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.ShipmentControlTable, organization.ShipmentControlColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil
@@ -1347,6 +1775,336 @@ func (c *OrganizationClient) mutate(ctx context.Context, m *OrganizationMutation
 		return (&OrganizationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Organization mutation op: %q", m.Op())
+	}
+}
+
+// RouteControlClient is a client for the RouteControl schema.
+type RouteControlClient struct {
+	config
+}
+
+// NewRouteControlClient returns a client for the RouteControl from the given config.
+func NewRouteControlClient(c config) *RouteControlClient {
+	return &RouteControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `routecontrol.Hooks(f(g(h())))`.
+func (c *RouteControlClient) Use(hooks ...Hook) {
+	c.hooks.RouteControl = append(c.hooks.RouteControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `routecontrol.Intercept(f(g(h())))`.
+func (c *RouteControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RouteControl = append(c.inters.RouteControl, interceptors...)
+}
+
+// Create returns a builder for creating a RouteControl entity.
+func (c *RouteControlClient) Create() *RouteControlCreate {
+	mutation := newRouteControlMutation(c.config, OpCreate)
+	return &RouteControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RouteControl entities.
+func (c *RouteControlClient) CreateBulk(builders ...*RouteControlCreate) *RouteControlCreateBulk {
+	return &RouteControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RouteControlClient) MapCreateBulk(slice any, setFunc func(*RouteControlCreate, int)) *RouteControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RouteControlCreateBulk{err: fmt.Errorf("calling to RouteControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RouteControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RouteControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RouteControl.
+func (c *RouteControlClient) Update() *RouteControlUpdate {
+	mutation := newRouteControlMutation(c.config, OpUpdate)
+	return &RouteControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RouteControlClient) UpdateOne(rc *RouteControl) *RouteControlUpdateOne {
+	mutation := newRouteControlMutation(c.config, OpUpdateOne, withRouteControl(rc))
+	return &RouteControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RouteControlClient) UpdateOneID(id uuid.UUID) *RouteControlUpdateOne {
+	mutation := newRouteControlMutation(c.config, OpUpdateOne, withRouteControlID(id))
+	return &RouteControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RouteControl.
+func (c *RouteControlClient) Delete() *RouteControlDelete {
+	mutation := newRouteControlMutation(c.config, OpDelete)
+	return &RouteControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RouteControlClient) DeleteOne(rc *RouteControl) *RouteControlDeleteOne {
+	return c.DeleteOneID(rc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RouteControlClient) DeleteOneID(id uuid.UUID) *RouteControlDeleteOne {
+	builder := c.Delete().Where(routecontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RouteControlDeleteOne{builder}
+}
+
+// Query returns a query builder for RouteControl.
+func (c *RouteControlClient) Query() *RouteControlQuery {
+	return &RouteControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRouteControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RouteControl entity by its id.
+func (c *RouteControlClient) Get(ctx context.Context, id uuid.UUID) (*RouteControl, error) {
+	return c.Query().Where(routecontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RouteControlClient) GetX(ctx context.Context, id uuid.UUID) *RouteControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a RouteControl.
+func (c *RouteControlClient) QueryOrganization(rc *RouteControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(routecontrol.Table, routecontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, routecontrol.OrganizationTable, routecontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(rc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a RouteControl.
+func (c *RouteControlClient) QueryBusinessUnit(rc *RouteControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(routecontrol.Table, routecontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, routecontrol.BusinessUnitTable, routecontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(rc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RouteControlClient) Hooks() []Hook {
+	return c.hooks.RouteControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *RouteControlClient) Interceptors() []Interceptor {
+	return c.inters.RouteControl
+}
+
+func (c *RouteControlClient) mutate(ctx context.Context, m *RouteControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RouteControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RouteControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RouteControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RouteControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RouteControl mutation op: %q", m.Op())
+	}
+}
+
+// ShipmentControlClient is a client for the ShipmentControl schema.
+type ShipmentControlClient struct {
+	config
+}
+
+// NewShipmentControlClient returns a client for the ShipmentControl from the given config.
+func NewShipmentControlClient(c config) *ShipmentControlClient {
+	return &ShipmentControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `shipmentcontrol.Hooks(f(g(h())))`.
+func (c *ShipmentControlClient) Use(hooks ...Hook) {
+	c.hooks.ShipmentControl = append(c.hooks.ShipmentControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `shipmentcontrol.Intercept(f(g(h())))`.
+func (c *ShipmentControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ShipmentControl = append(c.inters.ShipmentControl, interceptors...)
+}
+
+// Create returns a builder for creating a ShipmentControl entity.
+func (c *ShipmentControlClient) Create() *ShipmentControlCreate {
+	mutation := newShipmentControlMutation(c.config, OpCreate)
+	return &ShipmentControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ShipmentControl entities.
+func (c *ShipmentControlClient) CreateBulk(builders ...*ShipmentControlCreate) *ShipmentControlCreateBulk {
+	return &ShipmentControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ShipmentControlClient) MapCreateBulk(slice any, setFunc func(*ShipmentControlCreate, int)) *ShipmentControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ShipmentControlCreateBulk{err: fmt.Errorf("calling to ShipmentControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ShipmentControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ShipmentControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ShipmentControl.
+func (c *ShipmentControlClient) Update() *ShipmentControlUpdate {
+	mutation := newShipmentControlMutation(c.config, OpUpdate)
+	return &ShipmentControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ShipmentControlClient) UpdateOne(sc *ShipmentControl) *ShipmentControlUpdateOne {
+	mutation := newShipmentControlMutation(c.config, OpUpdateOne, withShipmentControl(sc))
+	return &ShipmentControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ShipmentControlClient) UpdateOneID(id uuid.UUID) *ShipmentControlUpdateOne {
+	mutation := newShipmentControlMutation(c.config, OpUpdateOne, withShipmentControlID(id))
+	return &ShipmentControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ShipmentControl.
+func (c *ShipmentControlClient) Delete() *ShipmentControlDelete {
+	mutation := newShipmentControlMutation(c.config, OpDelete)
+	return &ShipmentControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ShipmentControlClient) DeleteOne(sc *ShipmentControl) *ShipmentControlDeleteOne {
+	return c.DeleteOneID(sc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ShipmentControlClient) DeleteOneID(id uuid.UUID) *ShipmentControlDeleteOne {
+	builder := c.Delete().Where(shipmentcontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ShipmentControlDeleteOne{builder}
+}
+
+// Query returns a query builder for ShipmentControl.
+func (c *ShipmentControlClient) Query() *ShipmentControlQuery {
+	return &ShipmentControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeShipmentControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ShipmentControl entity by its id.
+func (c *ShipmentControlClient) Get(ctx context.Context, id uuid.UUID) (*ShipmentControl, error) {
+	return c.Query().Where(shipmentcontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ShipmentControlClient) GetX(ctx context.Context, id uuid.UUID) *ShipmentControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a ShipmentControl.
+func (c *ShipmentControlClient) QueryOrganization(sc *ShipmentControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentcontrol.Table, shipmentcontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, shipmentcontrol.OrganizationTable, shipmentcontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a ShipmentControl.
+func (c *ShipmentControlClient) QueryBusinessUnit(sc *ShipmentControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentcontrol.Table, shipmentcontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentcontrol.BusinessUnitTable, shipmentcontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ShipmentControlClient) Hooks() []Hook {
+	return c.hooks.ShipmentControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *ShipmentControlClient) Interceptors() []Interceptor {
+	return c.inters.ShipmentControl
+}
+
+func (c *ShipmentControlClient) mutate(ctx context.Context, m *ShipmentControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ShipmentControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ShipmentControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ShipmentControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ShipmentControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ShipmentControl mutation op: %q", m.Op())
 	}
 }
 
@@ -1684,10 +2442,12 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 type (
 	hooks struct {
 		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
-		GeneralLedgerAccount, Organization, Tag, User []ent.Hook
+		FeasibilityToolControl, GeneralLedgerAccount, InvoiceControl, Organization,
+		RouteControl, ShipmentControl, Tag, User []ent.Hook
 	}
 	inters struct {
 		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
-		GeneralLedgerAccount, Organization, Tag, User []ent.Interceptor
+		FeasibilityToolControl, GeneralLedgerAccount, InvoiceControl, Organization,
+		RouteControl, ShipmentControl, Tag, User []ent.Interceptor
 	}
 )

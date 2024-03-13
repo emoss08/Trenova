@@ -37,34 +37,6 @@ func (bcu *BillingControlUpdate) SetUpdatedAt(t time.Time) *BillingControlUpdate
 	return bcu
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (bcu *BillingControlUpdate) SetOrganizationID(u uuid.UUID) *BillingControlUpdate {
-	bcu.mutation.SetOrganizationID(u)
-	return bcu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (bcu *BillingControlUpdate) SetNillableOrganizationID(u *uuid.UUID) *BillingControlUpdate {
-	if u != nil {
-		bcu.SetOrganizationID(*u)
-	}
-	return bcu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (bcu *BillingControlUpdate) SetBusinessUnitID(u uuid.UUID) *BillingControlUpdate {
-	bcu.mutation.SetBusinessUnitID(u)
-	return bcu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (bcu *BillingControlUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *BillingControlUpdate {
-	if u != nil {
-		bcu.SetBusinessUnitID(*u)
-	}
-	return bcu
-}
-
 // SetRemoveBillingHistory sets the "remove_billing_history" field.
 func (bcu *BillingControlUpdate) SetRemoveBillingHistory(b bool) *BillingControlUpdate {
 	bcu.mutation.SetRemoveBillingHistory(b)
@@ -149,9 +121,21 @@ func (bcu *BillingControlUpdate) SetNillableShipmentTransferCriteria(btc *billin
 	return bcu
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (bcu *BillingControlUpdate) SetOrganizationID(id uuid.UUID) *BillingControlUpdate {
+	bcu.mutation.SetOrganizationID(id)
+	return bcu
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (bcu *BillingControlUpdate) SetOrganization(o *Organization) *BillingControlUpdate {
 	return bcu.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (bcu *BillingControlUpdate) SetBusinessUnitID(id uuid.UUID) *BillingControlUpdate {
+	bcu.mutation.SetBusinessUnitID(id)
+	return bcu
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -268,8 +252,8 @@ func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 	}
 	if bcu.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   billingcontrol.OrganizationTable,
 			Columns: []string{billingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -281,8 +265,8 @@ func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 	}
 	if nodes := bcu.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   billingcontrol.OrganizationTable,
 			Columns: []string{billingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -347,34 +331,6 @@ type BillingControlUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (bcuo *BillingControlUpdateOne) SetUpdatedAt(t time.Time) *BillingControlUpdateOne {
 	bcuo.mutation.SetUpdatedAt(t)
-	return bcuo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (bcuo *BillingControlUpdateOne) SetOrganizationID(u uuid.UUID) *BillingControlUpdateOne {
-	bcuo.mutation.SetOrganizationID(u)
-	return bcuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (bcuo *BillingControlUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *BillingControlUpdateOne {
-	if u != nil {
-		bcuo.SetOrganizationID(*u)
-	}
-	return bcuo
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (bcuo *BillingControlUpdateOne) SetBusinessUnitID(u uuid.UUID) *BillingControlUpdateOne {
-	bcuo.mutation.SetBusinessUnitID(u)
-	return bcuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (bcuo *BillingControlUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *BillingControlUpdateOne {
-	if u != nil {
-		bcuo.SetBusinessUnitID(*u)
-	}
 	return bcuo
 }
 
@@ -462,9 +418,21 @@ func (bcuo *BillingControlUpdateOne) SetNillableShipmentTransferCriteria(btc *bi
 	return bcuo
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (bcuo *BillingControlUpdateOne) SetOrganizationID(id uuid.UUID) *BillingControlUpdateOne {
+	bcuo.mutation.SetOrganizationID(id)
+	return bcuo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (bcuo *BillingControlUpdateOne) SetOrganization(o *Organization) *BillingControlUpdateOne {
 	return bcuo.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (bcuo *BillingControlUpdateOne) SetBusinessUnitID(id uuid.UUID) *BillingControlUpdateOne {
+	bcuo.mutation.SetBusinessUnitID(id)
+	return bcuo
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -611,8 +579,8 @@ func (bcuo *BillingControlUpdateOne) sqlSave(ctx context.Context) (_node *Billin
 	}
 	if bcuo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   billingcontrol.OrganizationTable,
 			Columns: []string{billingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -624,8 +592,8 @@ func (bcuo *BillingControlUpdateOne) sqlSave(ctx context.Context) (_node *Billin
 	}
 	if nodes := bcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   billingcontrol.OrganizationTable,
 			Columns: []string{billingcontrol.OrganizationColumn},
 			Bidi:    false,

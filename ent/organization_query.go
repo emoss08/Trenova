@@ -15,23 +15,30 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
 
 // OrganizationQuery is the builder for querying Organization entities.
 type OrganizationQuery struct {
 	config
-	ctx                   *QueryContext
-	order                 []organization.OrderOption
-	inters                []Interceptor
-	predicates            []predicate.Organization
-	withBusinessUnit      *BusinessUnitQuery
-	withAccountingControl *AccountingControlQuery
-	withBillingControl    *BillingControlQuery
-	withDispatchControl   *DispatchControlQuery
-	withFKs               bool
+	ctx                        *QueryContext
+	order                      []organization.OrderOption
+	inters                     []Interceptor
+	predicates                 []predicate.Organization
+	withBusinessUnit           *BusinessUnitQuery
+	withAccountingControl      *AccountingControlQuery
+	withBillingControl         *BillingControlQuery
+	withDispatchControl        *DispatchControlQuery
+	withFeasibilityToolControl *FeasibilityToolControlQuery
+	withInvoiceControl         *InvoiceControlQuery
+	withRouteControl           *RouteControlQuery
+	withShipmentControl        *ShipmentControlQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -126,7 +133,7 @@ func (oq *OrganizationQuery) QueryBillingControl() *BillingControlQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.BillingControlTable, organization.BillingControlColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -148,7 +155,95 @@ func (oq *OrganizationQuery) QueryDispatchControl() *DispatchControlQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(dispatchcontrol.Table, dispatchcontrol.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFeasibilityToolControl chains the current query on the "feasibility_tool_control" edge.
+func (oq *OrganizationQuery) QueryFeasibilityToolControl() *FeasibilityToolControlQuery {
+	query := (&FeasibilityToolControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(feasibilitytoolcontrol.Table, feasibilitytoolcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.FeasibilityToolControlTable, organization.FeasibilityToolControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInvoiceControl chains the current query on the "invoice_control" edge.
+func (oq *OrganizationQuery) QueryInvoiceControl() *InvoiceControlQuery {
+	query := (&InvoiceControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(invoicecontrol.Table, invoicecontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.InvoiceControlTable, organization.InvoiceControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRouteControl chains the current query on the "route_control" edge.
+func (oq *OrganizationQuery) QueryRouteControl() *RouteControlQuery {
+	query := (&RouteControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(routecontrol.Table, routecontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.RouteControlTable, organization.RouteControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentControl chains the current query on the "shipment_control" edge.
+func (oq *OrganizationQuery) QueryShipmentControl() *ShipmentControlQuery {
+	query := (&ShipmentControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(shipmentcontrol.Table, shipmentcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.ShipmentControlTable, organization.ShipmentControlColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -343,15 +438,19 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		return nil
 	}
 	return &OrganizationQuery{
-		config:                oq.config,
-		ctx:                   oq.ctx.Clone(),
-		order:                 append([]organization.OrderOption{}, oq.order...),
-		inters:                append([]Interceptor{}, oq.inters...),
-		predicates:            append([]predicate.Organization{}, oq.predicates...),
-		withBusinessUnit:      oq.withBusinessUnit.Clone(),
-		withAccountingControl: oq.withAccountingControl.Clone(),
-		withBillingControl:    oq.withBillingControl.Clone(),
-		withDispatchControl:   oq.withDispatchControl.Clone(),
+		config:                     oq.config,
+		ctx:                        oq.ctx.Clone(),
+		order:                      append([]organization.OrderOption{}, oq.order...),
+		inters:                     append([]Interceptor{}, oq.inters...),
+		predicates:                 append([]predicate.Organization{}, oq.predicates...),
+		withBusinessUnit:           oq.withBusinessUnit.Clone(),
+		withAccountingControl:      oq.withAccountingControl.Clone(),
+		withBillingControl:         oq.withBillingControl.Clone(),
+		withDispatchControl:        oq.withDispatchControl.Clone(),
+		withFeasibilityToolControl: oq.withFeasibilityToolControl.Clone(),
+		withInvoiceControl:         oq.withInvoiceControl.Clone(),
+		withRouteControl:           oq.withRouteControl.Clone(),
+		withShipmentControl:        oq.withShipmentControl.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -399,6 +498,50 @@ func (oq *OrganizationQuery) WithDispatchControl(opts ...func(*DispatchControlQu
 		opt(query)
 	}
 	oq.withDispatchControl = query
+	return oq
+}
+
+// WithFeasibilityToolControl tells the query-builder to eager-load the nodes that are connected to
+// the "feasibility_tool_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithFeasibilityToolControl(opts ...func(*FeasibilityToolControlQuery)) *OrganizationQuery {
+	query := (&FeasibilityToolControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withFeasibilityToolControl = query
+	return oq
+}
+
+// WithInvoiceControl tells the query-builder to eager-load the nodes that are connected to
+// the "invoice_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithInvoiceControl(opts ...func(*InvoiceControlQuery)) *OrganizationQuery {
+	query := (&InvoiceControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withInvoiceControl = query
+	return oq
+}
+
+// WithRouteControl tells the query-builder to eager-load the nodes that are connected to
+// the "route_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithRouteControl(opts ...func(*RouteControlQuery)) *OrganizationQuery {
+	query := (&RouteControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withRouteControl = query
+	return oq
+}
+
+// WithShipmentControl tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithShipmentControl(opts ...func(*ShipmentControlQuery)) *OrganizationQuery {
+	query := (&ShipmentControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withShipmentControl = query
 	return oq
 }
 
@@ -479,21 +622,18 @@ func (oq *OrganizationQuery) prepareQuery(ctx context.Context) error {
 func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Organization, error) {
 	var (
 		nodes       = []*Organization{}
-		withFKs     = oq.withFKs
 		_spec       = oq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [8]bool{
 			oq.withBusinessUnit != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
 			oq.withDispatchControl != nil,
+			oq.withFeasibilityToolControl != nil,
+			oq.withInvoiceControl != nil,
+			oq.withRouteControl != nil,
+			oq.withShipmentControl != nil,
 		}
 	)
-	if oq.withBillingControl != nil || oq.withDispatchControl != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, organization.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Organization).scanValues(nil, columns)
 	}
@@ -533,6 +673,30 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := oq.withDispatchControl; query != nil {
 		if err := oq.loadDispatchControl(ctx, query, nodes, nil,
 			func(n *Organization, e *DispatchControl) { n.Edges.DispatchControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withFeasibilityToolControl; query != nil {
+		if err := oq.loadFeasibilityToolControl(ctx, query, nodes, nil,
+			func(n *Organization, e *FeasibilityToolControl) { n.Edges.FeasibilityToolControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withInvoiceControl; query != nil {
+		if err := oq.loadInvoiceControl(ctx, query, nodes, nil,
+			func(n *Organization, e *InvoiceControl) { n.Edges.InvoiceControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withRouteControl; query != nil {
+		if err := oq.loadRouteControl(ctx, query, nodes, nil,
+			func(n *Organization, e *RouteControl) { n.Edges.RouteControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withShipmentControl; query != nil {
+		if err := oq.loadShipmentControl(ctx, query, nodes, nil,
+			func(n *Organization, e *ShipmentControl) { n.Edges.ShipmentControl = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -597,66 +761,170 @@ func (oq *OrganizationQuery) loadAccountingControl(ctx context.Context, query *A
 	return nil
 }
 func (oq *OrganizationQuery) loadBillingControl(ctx context.Context, query *BillingControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *BillingControl)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Organization)
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
 	for i := range nodes {
-		if nodes[i].organization_billing_control == nil {
-			continue
-		}
-		fk := *nodes[i].organization_billing_control
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(billingcontrol.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.BillingControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.BillingControlColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "organization_billing_control" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
 func (oq *OrganizationQuery) loadDispatchControl(ctx context.Context, query *DispatchControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *DispatchControl)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Organization)
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
 	for i := range nodes {
-		if nodes[i].organization_dispatch_control == nil {
-			continue
-		}
-		fk := *nodes[i].organization_dispatch_control
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(dispatchcontrol.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.DispatchControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.DispatchControlColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "organization_dispatch_control" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadFeasibilityToolControl(ctx context.Context, query *FeasibilityToolControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *FeasibilityToolControl)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.FeasibilityToolControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.FeasibilityToolControlColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
 		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadInvoiceControl(ctx context.Context, query *InvoiceControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *InvoiceControl)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.InvoiceControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.InvoiceControlColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadRouteControl(ctx context.Context, query *RouteControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *RouteControl)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.RouteControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.RouteControlColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadShipmentControl(ctx context.Context, query *ShipmentControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *ShipmentControl)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.ShipmentControl(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.ShipmentControlColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

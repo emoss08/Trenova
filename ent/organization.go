@@ -13,7 +13,11 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
 
@@ -42,10 +46,8 @@ type Organization struct {
 	Timezone organization.Timezone `json:"timezone,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganizationQuery when eager-loading is set.
-	Edges                         OrganizationEdges `json:"edges"`
-	organization_billing_control  *uuid.UUID
-	organization_dispatch_control *uuid.UUID
-	selectValues                  sql.SelectValues
+	Edges        OrganizationEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // OrganizationEdges holds the relations/edges for other nodes in the graph.
@@ -58,9 +60,17 @@ type OrganizationEdges struct {
 	BillingControl *BillingControl `json:"billing_control,omitempty"`
 	// DispatchControl holds the value of the dispatch_control edge.
 	DispatchControl *DispatchControl `json:"dispatch_control,omitempty"`
+	// FeasibilityToolControl holds the value of the feasibility_tool_control edge.
+	FeasibilityToolControl *FeasibilityToolControl `json:"feasibility_tool_control,omitempty"`
+	// InvoiceControl holds the value of the invoice_control edge.
+	InvoiceControl *InvoiceControl `json:"invoice_control,omitempty"`
+	// RouteControl holds the value of the route_control edge.
+	RouteControl *RouteControl `json:"route_control,omitempty"`
+	// ShipmentControl holds the value of the shipment_control edge.
+	ShipmentControl *ShipmentControl `json:"shipment_control,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [8]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -107,6 +117,50 @@ func (e OrganizationEdges) DispatchControlOrErr() (*DispatchControl, error) {
 	return nil, &NotLoadedError{edge: "dispatch_control"}
 }
 
+// FeasibilityToolControlOrErr returns the FeasibilityToolControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) FeasibilityToolControlOrErr() (*FeasibilityToolControl, error) {
+	if e.FeasibilityToolControl != nil {
+		return e.FeasibilityToolControl, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: feasibilitytoolcontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "feasibility_tool_control"}
+}
+
+// InvoiceControlOrErr returns the InvoiceControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) InvoiceControlOrErr() (*InvoiceControl, error) {
+	if e.InvoiceControl != nil {
+		return e.InvoiceControl, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: invoicecontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "invoice_control"}
+}
+
+// RouteControlOrErr returns the RouteControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) RouteControlOrErr() (*RouteControl, error) {
+	if e.RouteControl != nil {
+		return e.RouteControl, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: routecontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "route_control"}
+}
+
+// ShipmentControlOrErr returns the ShipmentControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) ShipmentControlOrErr() (*ShipmentControl, error) {
+	if e.ShipmentControl != nil {
+		return e.ShipmentControl, nil
+	} else if e.loadedTypes[7] {
+		return nil, &NotFoundError{label: shipmentcontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "shipment_control"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -118,10 +172,6 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case organization.FieldID, organization.FieldBusinessUnitID:
 			values[i] = new(uuid.UUID)
-		case organization.ForeignKeys[0]: // organization_billing_control
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case organization.ForeignKeys[1]: // organization_dispatch_control
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -198,20 +248,6 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.Timezone = organization.Timezone(value.String)
 			}
-		case organization.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_billing_control", values[i])
-			} else if value.Valid {
-				o.organization_billing_control = new(uuid.UUID)
-				*o.organization_billing_control = *value.S.(*uuid.UUID)
-			}
-		case organization.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_dispatch_control", values[i])
-			} else if value.Valid {
-				o.organization_dispatch_control = new(uuid.UUID)
-				*o.organization_dispatch_control = *value.S.(*uuid.UUID)
-			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
 		}
@@ -243,6 +279,26 @@ func (o *Organization) QueryBillingControl() *BillingControlQuery {
 // QueryDispatchControl queries the "dispatch_control" edge of the Organization entity.
 func (o *Organization) QueryDispatchControl() *DispatchControlQuery {
 	return NewOrganizationClient(o.config).QueryDispatchControl(o)
+}
+
+// QueryFeasibilityToolControl queries the "feasibility_tool_control" edge of the Organization entity.
+func (o *Organization) QueryFeasibilityToolControl() *FeasibilityToolControlQuery {
+	return NewOrganizationClient(o.config).QueryFeasibilityToolControl(o)
+}
+
+// QueryInvoiceControl queries the "invoice_control" edge of the Organization entity.
+func (o *Organization) QueryInvoiceControl() *InvoiceControlQuery {
+	return NewOrganizationClient(o.config).QueryInvoiceControl(o)
+}
+
+// QueryRouteControl queries the "route_control" edge of the Organization entity.
+func (o *Organization) QueryRouteControl() *RouteControlQuery {
+	return NewOrganizationClient(o.config).QueryRouteControl(o)
+}
+
+// QueryShipmentControl queries the "shipment_control" edge of the Organization entity.
+func (o *Organization) QueryShipmentControl() *ShipmentControlQuery {
+	return NewOrganizationClient(o.config).QueryShipmentControl(o)
 }
 
 // Update returns a builder for updating this Organization.
