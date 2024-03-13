@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
@@ -43,6 +44,7 @@ type Organization struct {
 	Edges                           OrganizationEdges `json:"edges"`
 	business_unit_organizations     *uuid.UUID
 	organization_accounting_control *uuid.UUID
+	organization_billing_control    *uuid.UUID
 	selectValues                    sql.SelectValues
 }
 
@@ -52,9 +54,11 @@ type OrganizationEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// AccountingControl holds the value of the accounting_control edge.
 	AccountingControl *AccountingControl `json:"accounting_control,omitempty"`
+	// BillingControl holds the value of the billing_control edge.
+	BillingControl *BillingControl `json:"billing_control,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -79,6 +83,17 @@ func (e OrganizationEdges) AccountingControlOrErr() (*AccountingControl, error) 
 	return nil, &NotLoadedError{edge: "accounting_control"}
 }
 
+// BillingControlOrErr returns the BillingControl value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) BillingControlOrErr() (*BillingControl, error) {
+	if e.BillingControl != nil {
+		return e.BillingControl, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: billingcontrol.Label}
+	}
+	return nil, &NotLoadedError{edge: "billing_control"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -93,6 +108,8 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 		case organization.ForeignKeys[0]: // business_unit_organizations
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case organization.ForeignKeys[1]: // organization_accounting_control
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case organization.ForeignKeys[2]: // organization_billing_control
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -183,6 +200,13 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 				o.organization_accounting_control = new(uuid.UUID)
 				*o.organization_accounting_control = *value.S.(*uuid.UUID)
 			}
+		case organization.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_billing_control", values[i])
+			} else if value.Valid {
+				o.organization_billing_control = new(uuid.UUID)
+				*o.organization_billing_control = *value.S.(*uuid.UUID)
+			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
 		}
@@ -204,6 +228,11 @@ func (o *Organization) QueryBusinessUnit() *BusinessUnitQuery {
 // QueryAccountingControl queries the "accounting_control" edge of the Organization entity.
 func (o *Organization) QueryAccountingControl() *AccountingControlQuery {
 	return NewOrganizationClient(o.config).QueryAccountingControl(o)
+}
+
+// QueryBillingControl queries the "billing_control" edge of the Organization entity.
+func (o *Organization) QueryBillingControl() *BillingControlQuery {
+	return NewOrganizationClient(o.config).QueryBillingControl(o)
 }
 
 // Update returns a builder for updating this Organization.

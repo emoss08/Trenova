@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -147,14 +148,6 @@ func (ou *OrganizationUpdate) SetBusinessUnitID(id uuid.UUID) *OrganizationUpdat
 	return ou
 }
 
-// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
-func (ou *OrganizationUpdate) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationUpdate {
-	if id != nil {
-		ou = ou.SetBusinessUnitID(*id)
-	}
-	return ou
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (ou *OrganizationUpdate) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdate {
 	return ou.SetBusinessUnitID(b.ID)
@@ -166,17 +159,20 @@ func (ou *OrganizationUpdate) SetAccountingControlID(id uuid.UUID) *Organization
 	return ou
 }
 
-// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
-func (ou *OrganizationUpdate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdate {
-	if id != nil {
-		ou = ou.SetAccountingControlID(*id)
-	}
-	return ou
-}
-
 // SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
 func (ou *OrganizationUpdate) SetAccountingControl(a *AccountingControl) *OrganizationUpdate {
 	return ou.SetAccountingControlID(a.ID)
+}
+
+// SetBillingControlID sets the "billing_control" edge to the BillingControl entity by ID.
+func (ou *OrganizationUpdate) SetBillingControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetBillingControlID(id)
+	return ou
+}
+
+// SetBillingControl sets the "billing_control" edge to the BillingControl entity.
+func (ou *OrganizationUpdate) SetBillingControl(b *BillingControl) *OrganizationUpdate {
+	return ou.SetBillingControlID(b.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -193,6 +189,12 @@ func (ou *OrganizationUpdate) ClearBusinessUnit() *OrganizationUpdate {
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
 func (ou *OrganizationUpdate) ClearAccountingControl() *OrganizationUpdate {
 	ou.mutation.ClearAccountingControl()
+	return ou
+}
+
+// ClearBillingControl clears the "billing_control" edge to the BillingControl entity.
+func (ou *OrganizationUpdate) ClearBillingControl() *OrganizationUpdate {
+	ou.mutation.ClearBillingControl()
 	return ou
 }
 
@@ -258,6 +260,15 @@ func (ou *OrganizationUpdate) check() error {
 		if err := organization.TimezoneValidator(v); err != nil {
 			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
 		}
+	}
+	if _, ok := ou.mutation.BusinessUnitID(); ou.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
+	}
+	if _, ok := ou.mutation.AccountingControlID(); ou.mutation.AccountingControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.accounting_control"`)
+	}
+	if _, ok := ou.mutation.BillingControlID(); ou.mutation.BillingControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
 	}
 	return nil
 }
@@ -352,6 +363,35 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.BillingControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.BillingControlTable,
+			Columns: []string{organization.BillingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.BillingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.BillingControlTable,
+			Columns: []string{organization.BillingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -495,14 +535,6 @@ func (ouo *OrganizationUpdateOne) SetBusinessUnitID(id uuid.UUID) *OrganizationU
 	return ouo
 }
 
-// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
-func (ouo *OrganizationUpdateOne) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationUpdateOne {
-	if id != nil {
-		ouo = ouo.SetBusinessUnitID(*id)
-	}
-	return ouo
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (ouo *OrganizationUpdateOne) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdateOne {
 	return ouo.SetBusinessUnitID(b.ID)
@@ -514,17 +546,20 @@ func (ouo *OrganizationUpdateOne) SetAccountingControlID(id uuid.UUID) *Organiza
 	return ouo
 }
 
-// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
-func (ouo *OrganizationUpdateOne) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationUpdateOne {
-	if id != nil {
-		ouo = ouo.SetAccountingControlID(*id)
-	}
-	return ouo
-}
-
 // SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
 func (ouo *OrganizationUpdateOne) SetAccountingControl(a *AccountingControl) *OrganizationUpdateOne {
 	return ouo.SetAccountingControlID(a.ID)
+}
+
+// SetBillingControlID sets the "billing_control" edge to the BillingControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetBillingControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetBillingControlID(id)
+	return ouo
+}
+
+// SetBillingControl sets the "billing_control" edge to the BillingControl entity.
+func (ouo *OrganizationUpdateOne) SetBillingControl(b *BillingControl) *OrganizationUpdateOne {
+	return ouo.SetBillingControlID(b.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -541,6 +576,12 @@ func (ouo *OrganizationUpdateOne) ClearBusinessUnit() *OrganizationUpdateOne {
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
 func (ouo *OrganizationUpdateOne) ClearAccountingControl() *OrganizationUpdateOne {
 	ouo.mutation.ClearAccountingControl()
+	return ouo
+}
+
+// ClearBillingControl clears the "billing_control" edge to the BillingControl entity.
+func (ouo *OrganizationUpdateOne) ClearBillingControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearBillingControl()
 	return ouo
 }
 
@@ -619,6 +660,15 @@ func (ouo *OrganizationUpdateOne) check() error {
 		if err := organization.TimezoneValidator(v); err != nil {
 			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
 		}
+	}
+	if _, ok := ouo.mutation.BusinessUnitID(); ouo.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
+	}
+	if _, ok := ouo.mutation.AccountingControlID(); ouo.mutation.AccountingControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.accounting_control"`)
+	}
+	if _, ok := ouo.mutation.BillingControlID(); ouo.mutation.BillingControlCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Organization.billing_control"`)
 	}
 	return nil
 }
@@ -730,6 +780,35 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(accountingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.BillingControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.BillingControlTable,
+			Columns: []string{organization.BillingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.BillingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.BillingControlTable,
+			Columns: []string{organization.BillingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

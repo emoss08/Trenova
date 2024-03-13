@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -26,6 +27,7 @@ type OrganizationQuery struct {
 	predicates            []predicate.Organization
 	withBusinessUnit      *BusinessUnitQuery
 	withAccountingControl *AccountingControlQuery
+	withBillingControl    *BillingControlQuery
 	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -100,6 +102,28 @@ func (oq *OrganizationQuery) QueryAccountingControl() *AccountingControlQuery {
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(accountingcontrol.Table, accountingcontrol.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, organization.AccountingControlTable, organization.AccountingControlColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBillingControl chains the current query on the "billing_control" edge.
+func (oq *OrganizationQuery) QueryBillingControl() *BillingControlQuery {
+	query := (&BillingControlClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -301,6 +325,7 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		predicates:            append([]predicate.Organization{}, oq.predicates...),
 		withBusinessUnit:      oq.withBusinessUnit.Clone(),
 		withAccountingControl: oq.withAccountingControl.Clone(),
+		withBillingControl:    oq.withBillingControl.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -326,6 +351,17 @@ func (oq *OrganizationQuery) WithAccountingControl(opts ...func(*AccountingContr
 		opt(query)
 	}
 	oq.withAccountingControl = query
+	return oq
+}
+
+// WithBillingControl tells the query-builder to eager-load the nodes that are connected to
+// the "billing_control" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithBillingControl(opts ...func(*BillingControlQuery)) *OrganizationQuery {
+	query := (&BillingControlClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withBillingControl = query
 	return oq
 }
 
@@ -408,12 +444,13 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		nodes       = []*Organization{}
 		withFKs     = oq.withFKs
 		_spec       = oq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			oq.withBusinessUnit != nil,
 			oq.withAccountingControl != nil,
+			oq.withBillingControl != nil,
 		}
 	)
-	if oq.withBusinessUnit != nil || oq.withAccountingControl != nil {
+	if oq.withBusinessUnit != nil || oq.withAccountingControl != nil || oq.withBillingControl != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -446,6 +483,12 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := oq.withAccountingControl; query != nil {
 		if err := oq.loadAccountingControl(ctx, query, nodes, nil,
 			func(n *Organization, e *AccountingControl) { n.Edges.AccountingControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withBillingControl; query != nil {
+		if err := oq.loadBillingControl(ctx, query, nodes, nil,
+			func(n *Organization, e *BillingControl) { n.Edges.BillingControl = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -509,6 +552,38 @@ func (oq *OrganizationQuery) loadAccountingControl(ctx context.Context, query *A
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "organization_accounting_control" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadBillingControl(ctx context.Context, query *BillingControlQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *BillingControl)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Organization)
+	for i := range nodes {
+		if nodes[i].organization_billing_control == nil {
+			continue
+		}
+		fk := *nodes[i].organization_billing_control
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(billingcontrol.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "organization_billing_control" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

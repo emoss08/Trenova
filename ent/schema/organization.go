@@ -41,8 +41,15 @@ func (Organization) Fields() []ent.Field {
 // Edges of the Organization.
 func (Organization) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("business_unit", BusinessUnit.Type).Ref("organizations").Unique(),
-		edge.To("accounting_control", AccountingControl.Type).Unique(),
+		edge.From("business_unit", BusinessUnit.Type).Ref("organizations").
+			Required().
+			Unique(),
+		edge.To("accounting_control", AccountingControl.Type).
+			Required().
+			Unique(),
+		edge.To("billing_control", BillingControl.Type).
+			Required().
+			Unique(),
 	}
 }
 

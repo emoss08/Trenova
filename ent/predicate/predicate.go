@@ -9,6 +9,9 @@ import (
 // AccountingControl is the predicate function for accountingcontrol builders.
 type AccountingControl func(*sql.Selector)
 
+// BillingControl is the predicate function for billingcontrol builders.
+type BillingControl func(*sql.Selector)
+
 // BusinessUnit is the predicate function for businessunit builders.
 type BusinessUnit func(*sql.Selector)
 

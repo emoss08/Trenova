@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
@@ -79,6 +80,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			accountingcontrol.Table:    accountingcontrol.ValidColumn,
+			billingcontrol.Table:       billingcontrol.ValidColumn,
 			businessunit.Table:         businessunit.ValidColumn,
 			generalledgeraccount.Table: generalledgeraccount.ValidColumn,
 			organization.Table:         organization.ValidColumn,

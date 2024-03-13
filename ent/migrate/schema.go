@@ -58,6 +58,40 @@ var (
 			},
 		},
 	}
+	// BillingControlsColumns holds the columns for the "billing_controls" table.
+	BillingControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "remove_billing_history", Type: field.TypeBool, Default: false},
+		{Name: "auto_bill_shipment", Type: field.TypeBool, Default: false},
+		{Name: "auto_mark_ready_to_bill", Type: field.TypeBool, Default: false},
+		{Name: "validate_customer_rates", Type: field.TypeBool, Default: false},
+		{Name: "auto_bill_criteria", Type: field.TypeEnum, Enums: []string{"Delivered", "TransferredToBilling", "MarkedReadyToBill"}, Default: "MarkedReadyToBill"},
+		{Name: "shipment_transfer_criteria", Type: field.TypeEnum, Enums: []string{"ReadyAndCompleted", "Completed", "ReadyToBill"}, Default: "ReadyToBill"},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+	}
+	// BillingControlsTable holds the schema information for the "billing_controls" table.
+	BillingControlsTable = &schema.Table{
+		Name:       "billing_controls",
+		Columns:    BillingControlsColumns,
+		PrimaryKey: []*schema.Column{BillingControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "billing_controls_organizations_organization",
+				Columns:    []*schema.Column{BillingControlsColumns[9]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "billing_controls_business_units_business_unit",
+				Columns:    []*schema.Column{BillingControlsColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// BusinessUnitsColumns holds the columns for the "business_units" table.
 	BusinessUnitsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -169,8 +203,9 @@ var (
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A"},
 		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
 		{Name: "business_unit_id", Type: field.TypeUUID},
-		{Name: "business_unit_organizations", Type: field.TypeUUID, Nullable: true},
-		{Name: "organization_accounting_control", Type: field.TypeUUID, Nullable: true},
+		{Name: "business_unit_organizations", Type: field.TypeUUID},
+		{Name: "organization_accounting_control", Type: field.TypeUUID},
+		{Name: "organization_billing_control", Type: field.TypeUUID},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
 	OrganizationsTable = &schema.Table{
@@ -182,13 +217,19 @@ var (
 				Symbol:     "organizations_business_units_organizations",
 				Columns:    []*schema.Column{OrganizationsColumns[10]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "organizations_accounting_controls_accounting_control",
 				Columns:    []*schema.Column{OrganizationsColumns[11]},
 				RefColumns: []*schema.Column{AccountingControlsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "organizations_billing_controls_billing_control",
+				Columns:    []*schema.Column{OrganizationsColumns[12]},
+				RefColumns: []*schema.Column{BillingControlsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -279,6 +320,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccountingControlsTable,
+		BillingControlsTable,
 		BusinessUnitsTable,
 		GeneralLedgerAccountsTable,
 		OrganizationsTable,
@@ -292,11 +334,14 @@ func init() {
 	AccountingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	AccountingControlsTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	AccountingControlsTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
+	BillingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	BillingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	OrganizationsTable.ForeignKeys[1].RefTable = AccountingControlsTable
+	OrganizationsTable.ForeignKeys[2].RefTable = BillingControlsTable
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
