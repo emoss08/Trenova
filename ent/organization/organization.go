@@ -38,6 +38,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeAccountingControl holds the string denoting the accounting_control edge name in mutations.
 	EdgeAccountingControl = "accounting_control"
+	// EdgeBillingControl holds the string denoting the billing_control edge name in mutations.
+	EdgeBillingControl = "billing_control"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -54,6 +56,13 @@ const (
 	AccountingControlInverseTable = "accounting_controls"
 	// AccountingControlColumn is the table column denoting the accounting_control relation/edge.
 	AccountingControlColumn = "organization_accounting_control"
+	// BillingControlTable is the table that holds the billing_control relation/edge.
+	BillingControlTable = "organizations"
+	// BillingControlInverseTable is the table name for the BillingControl entity.
+	// It exists in this package in order to avoid circular dependency with the "billingcontrol" package.
+	BillingControlInverseTable = "billing_controls"
+	// BillingControlColumn is the table column denoting the billing_control relation/edge.
+	BillingControlColumn = "organization_billing_control"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -75,6 +84,7 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"business_unit_organizations",
 	"organization_accounting_control",
+	"organization_billing_control",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -230,6 +240,13 @@ func ByAccountingControlField(field string, opts ...sql.OrderTermOption) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newAccountingControlStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByBillingControlField orders the results by billing_control field.
+func ByBillingControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBillingControlStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -242,5 +259,12 @@ func newAccountingControlStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AccountingControlInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, AccountingControlTable, AccountingControlColumn),
+	)
+}
+func newBillingControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BillingControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, BillingControlTable, BillingControlColumn),
 	)
 }

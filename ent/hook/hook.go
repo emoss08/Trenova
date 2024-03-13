@@ -21,6 +21,18 @@ func (f AccountingControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountingControlMutation", m)
 }
 
+// The BillingControlFunc type is an adapter to allow the use of ordinary
+// function as BillingControl mutator.
+type BillingControlFunc func(context.Context, *ent.BillingControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BillingControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BillingControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BillingControlMutation", m)
+}
+
 // The BusinessUnitFunc type is an adapter to allow the use of ordinary
 // function as BusinessUnit mutator.
 type BusinessUnitFunc func(context.Context, *ent.BusinessUnitMutation) (ent.Value, error)

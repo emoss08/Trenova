@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
@@ -64,6 +65,41 @@ func init() {
 	accountingcontrolDescID := accountingcontrolMixinFields0[0].Descriptor()
 	// accountingcontrol.DefaultID holds the default value on creation for the id field.
 	accountingcontrol.DefaultID = accountingcontrolDescID.Default.(func() uuid.UUID)
+	billingcontrolMixin := schema.BillingControl{}.Mixin()
+	billingcontrolMixinFields0 := billingcontrolMixin[0].Fields()
+	_ = billingcontrolMixinFields0
+	billingcontrolFields := schema.BillingControl{}.Fields()
+	_ = billingcontrolFields
+	// billingcontrolDescCreatedAt is the schema descriptor for created_at field.
+	billingcontrolDescCreatedAt := billingcontrolMixinFields0[1].Descriptor()
+	// billingcontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	billingcontrol.DefaultCreatedAt = billingcontrolDescCreatedAt.Default.(time.Time)
+	// billingcontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	billingcontrolDescUpdatedAt := billingcontrolMixinFields0[2].Descriptor()
+	// billingcontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	billingcontrol.DefaultUpdatedAt = billingcontrolDescUpdatedAt.Default.(time.Time)
+	// billingcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	billingcontrol.UpdateDefaultUpdatedAt = billingcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// billingcontrolDescRemoveBillingHistory is the schema descriptor for remove_billing_history field.
+	billingcontrolDescRemoveBillingHistory := billingcontrolFields[2].Descriptor()
+	// billingcontrol.DefaultRemoveBillingHistory holds the default value on creation for the remove_billing_history field.
+	billingcontrol.DefaultRemoveBillingHistory = billingcontrolDescRemoveBillingHistory.Default.(bool)
+	// billingcontrolDescAutoBillShipment is the schema descriptor for auto_bill_shipment field.
+	billingcontrolDescAutoBillShipment := billingcontrolFields[3].Descriptor()
+	// billingcontrol.DefaultAutoBillShipment holds the default value on creation for the auto_bill_shipment field.
+	billingcontrol.DefaultAutoBillShipment = billingcontrolDescAutoBillShipment.Default.(bool)
+	// billingcontrolDescAutoMarkReadyToBill is the schema descriptor for auto_mark_ready_to_bill field.
+	billingcontrolDescAutoMarkReadyToBill := billingcontrolFields[4].Descriptor()
+	// billingcontrol.DefaultAutoMarkReadyToBill holds the default value on creation for the auto_mark_ready_to_bill field.
+	billingcontrol.DefaultAutoMarkReadyToBill = billingcontrolDescAutoMarkReadyToBill.Default.(bool)
+	// billingcontrolDescValidateCustomerRates is the schema descriptor for validate_customer_rates field.
+	billingcontrolDescValidateCustomerRates := billingcontrolFields[5].Descriptor()
+	// billingcontrol.DefaultValidateCustomerRates holds the default value on creation for the validate_customer_rates field.
+	billingcontrol.DefaultValidateCustomerRates = billingcontrolDescValidateCustomerRates.Default.(bool)
+	// billingcontrolDescID is the schema descriptor for id field.
+	billingcontrolDescID := billingcontrolMixinFields0[0].Descriptor()
+	// billingcontrol.DefaultID holds the default value on creation for the id field.
+	billingcontrol.DefaultID = billingcontrolDescID.Default.(func() uuid.UUID)
 	businessunitMixin := schema.BusinessUnit{}.Mixin()
 	businessunitMixinFields0 := businessunitMixin[0].Fields()
 	_ = businessunitMixinFields0

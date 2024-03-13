@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
@@ -137,14 +138,6 @@ func (oc *OrganizationCreate) SetBusinessUnitID(id uuid.UUID) *OrganizationCreat
 	return oc
 }
 
-// SetNillableBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID if the given value is not nil.
-func (oc *OrganizationCreate) SetNillableBusinessUnitID(id *uuid.UUID) *OrganizationCreate {
-	if id != nil {
-		oc = oc.SetBusinessUnitID(*id)
-	}
-	return oc
-}
-
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (oc *OrganizationCreate) SetBusinessUnit(b *BusinessUnit) *OrganizationCreate {
 	return oc.SetBusinessUnitID(b.ID)
@@ -156,17 +149,20 @@ func (oc *OrganizationCreate) SetAccountingControlID(id uuid.UUID) *Organization
 	return oc
 }
 
-// SetNillableAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID if the given value is not nil.
-func (oc *OrganizationCreate) SetNillableAccountingControlID(id *uuid.UUID) *OrganizationCreate {
-	if id != nil {
-		oc = oc.SetAccountingControlID(*id)
-	}
-	return oc
-}
-
 // SetAccountingControl sets the "accounting_control" edge to the AccountingControl entity.
 func (oc *OrganizationCreate) SetAccountingControl(a *AccountingControl) *OrganizationCreate {
 	return oc.SetAccountingControlID(a.ID)
+}
+
+// SetBillingControlID sets the "billing_control" edge to the BillingControl entity by ID.
+func (oc *OrganizationCreate) SetBillingControlID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetBillingControlID(id)
+	return oc
+}
+
+// SetBillingControl sets the "billing_control" edge to the BillingControl entity.
+func (oc *OrganizationCreate) SetBillingControl(b *BillingControl) *OrganizationCreate {
+	return oc.SetBillingControlID(b.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -277,6 +273,15 @@ func (oc *OrganizationCreate) check() error {
 	if _, ok := oc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "Organization.business_unit_id"`)}
 	}
+	if _, ok := oc.mutation.BusinessUnitID(); !ok {
+		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "Organization.business_unit"`)}
+	}
+	if _, ok := oc.mutation.AccountingControlID(); !ok {
+		return &ValidationError{Name: "accounting_control", err: errors.New(`ent: missing required edge "Organization.accounting_control"`)}
+	}
+	if _, ok := oc.mutation.BillingControlID(); !ok {
+		return &ValidationError{Name: "billing_control", err: errors.New(`ent: missing required edge "Organization.billing_control"`)}
+	}
 	return nil
 }
 
@@ -380,6 +385,23 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.organization_accounting_control = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.BillingControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   organization.BillingControlTable,
+			Columns: []string{organization.BillingControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(billingcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.organization_billing_control = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -567,6 +567,29 @@ func HasAccountingControlWith(preds ...predicate.AccountingControl) predicate.Or
 	})
 }
 
+// HasBillingControl applies the HasEdge predicate on the "billing_control" edge.
+func HasBillingControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, BillingControlTable, BillingControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBillingControlWith applies the HasEdge predicate on the "billing_control" edge with a given conditions (other predicates).
+func HasBillingControlWith(preds ...predicate.BillingControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newBillingControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Organization) predicate.Organization {
 	return predicate.Organization(sql.AndPredicates(predicates...))

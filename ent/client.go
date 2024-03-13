@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
+	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
@@ -31,6 +32,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// AccountingControl is the client for interacting with the AccountingControl builders.
 	AccountingControl *AccountingControlClient
+	// BillingControl is the client for interacting with the BillingControl builders.
+	BillingControl *BillingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
@@ -53,6 +56,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.AccountingControl = NewAccountingControlClient(c.config)
+	c.BillingControl = NewBillingControlClient(c.config)
 	c.BusinessUnit = NewBusinessUnitClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
@@ -151,6 +155,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:                  ctx,
 		config:               cfg,
 		AccountingControl:    NewAccountingControlClient(cfg),
+		BillingControl:       NewBillingControlClient(cfg),
 		BusinessUnit:         NewBusinessUnitClient(cfg),
 		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
 		Organization:         NewOrganizationClient(cfg),
@@ -176,6 +181,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:                  ctx,
 		config:               cfg,
 		AccountingControl:    NewAccountingControlClient(cfg),
+		BillingControl:       NewBillingControlClient(cfg),
 		BusinessUnit:         NewBusinessUnitClient(cfg),
 		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
 		Organization:         NewOrganizationClient(cfg),
@@ -210,8 +216,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AccountingControl, c.BusinessUnit, c.GeneralLedgerAccount, c.Organization,
-		c.Tag, c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.GeneralLedgerAccount,
+		c.Organization, c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -221,8 +227,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AccountingControl, c.BusinessUnit, c.GeneralLedgerAccount, c.Organization,
-		c.Tag, c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.GeneralLedgerAccount,
+		c.Organization, c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -233,6 +239,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AccountingControlMutation:
 		return c.AccountingControl.mutate(ctx, m)
+	case *BillingControlMutation:
+		return c.BillingControl.mutate(ctx, m)
 	case *BusinessUnitMutation:
 		return c.BusinessUnit.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
@@ -442,6 +450,171 @@ func (c *AccountingControlClient) mutate(ctx context.Context, m *AccountingContr
 		return (&AccountingControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AccountingControl mutation op: %q", m.Op())
+	}
+}
+
+// BillingControlClient is a client for the BillingControl schema.
+type BillingControlClient struct {
+	config
+}
+
+// NewBillingControlClient returns a client for the BillingControl from the given config.
+func NewBillingControlClient(c config) *BillingControlClient {
+	return &BillingControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `billingcontrol.Hooks(f(g(h())))`.
+func (c *BillingControlClient) Use(hooks ...Hook) {
+	c.hooks.BillingControl = append(c.hooks.BillingControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `billingcontrol.Intercept(f(g(h())))`.
+func (c *BillingControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BillingControl = append(c.inters.BillingControl, interceptors...)
+}
+
+// Create returns a builder for creating a BillingControl entity.
+func (c *BillingControlClient) Create() *BillingControlCreate {
+	mutation := newBillingControlMutation(c.config, OpCreate)
+	return &BillingControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BillingControl entities.
+func (c *BillingControlClient) CreateBulk(builders ...*BillingControlCreate) *BillingControlCreateBulk {
+	return &BillingControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BillingControlClient) MapCreateBulk(slice any, setFunc func(*BillingControlCreate, int)) *BillingControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BillingControlCreateBulk{err: fmt.Errorf("calling to BillingControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BillingControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BillingControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BillingControl.
+func (c *BillingControlClient) Update() *BillingControlUpdate {
+	mutation := newBillingControlMutation(c.config, OpUpdate)
+	return &BillingControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BillingControlClient) UpdateOne(bc *BillingControl) *BillingControlUpdateOne {
+	mutation := newBillingControlMutation(c.config, OpUpdateOne, withBillingControl(bc))
+	return &BillingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BillingControlClient) UpdateOneID(id uuid.UUID) *BillingControlUpdateOne {
+	mutation := newBillingControlMutation(c.config, OpUpdateOne, withBillingControlID(id))
+	return &BillingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BillingControl.
+func (c *BillingControlClient) Delete() *BillingControlDelete {
+	mutation := newBillingControlMutation(c.config, OpDelete)
+	return &BillingControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BillingControlClient) DeleteOne(bc *BillingControl) *BillingControlDeleteOne {
+	return c.DeleteOneID(bc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BillingControlClient) DeleteOneID(id uuid.UUID) *BillingControlDeleteOne {
+	builder := c.Delete().Where(billingcontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BillingControlDeleteOne{builder}
+}
+
+// Query returns a query builder for BillingControl.
+func (c *BillingControlClient) Query() *BillingControlQuery {
+	return &BillingControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBillingControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BillingControl entity by its id.
+func (c *BillingControlClient) Get(ctx context.Context, id uuid.UUID) (*BillingControl, error) {
+	return c.Query().Where(billingcontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BillingControlClient) GetX(ctx context.Context, id uuid.UUID) *BillingControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a BillingControl.
+func (c *BillingControlClient) QueryOrganization(bc *BillingControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(billingcontrol.Table, billingcontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, billingcontrol.OrganizationTable, billingcontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(bc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a BillingControl.
+func (c *BillingControlClient) QueryBusinessUnit(bc *BillingControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(billingcontrol.Table, billingcontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, billingcontrol.BusinessUnitTable, billingcontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(bc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BillingControlClient) Hooks() []Hook {
+	return c.hooks.BillingControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *BillingControlClient) Interceptors() []Interceptor {
+	return c.inters.BillingControl
+}
+
+func (c *BillingControlClient) mutate(ctx context.Context, m *BillingControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BillingControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BillingControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BillingControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BillingControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BillingControl mutation op: %q", m.Op())
 	}
 }
 
@@ -947,6 +1120,22 @@ func (c *OrganizationClient) QueryAccountingControl(o *Organization) *Accounting
 	return query
 }
 
+// QueryBillingControl queries the billing_control edge of a Organization.
+func (c *OrganizationClient) QueryBillingControl(o *Organization) *BillingControlQuery {
+	query := (&BillingControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *OrganizationClient) Hooks() []Hook {
 	return c.hooks.Organization
@@ -1305,11 +1494,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AccountingControl, BusinessUnit, GeneralLedgerAccount, Organization, Tag,
-		User []ent.Hook
+		AccountingControl, BillingControl, BusinessUnit, GeneralLedgerAccount,
+		Organization, Tag, User []ent.Hook
 	}
 	inters struct {
-		AccountingControl, BusinessUnit, GeneralLedgerAccount, Organization, Tag,
-		User []ent.Interceptor
+		AccountingControl, BillingControl, BusinessUnit, GeneralLedgerAccount,
+		Organization, Tag, User []ent.Interceptor
 	}
 )
