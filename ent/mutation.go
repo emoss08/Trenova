@@ -21,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -46,6 +48,7 @@ const (
 	TypeOrganization           = "Organization"
 	TypeRouteControl           = "RouteControl"
 	TypeShipmentControl        = "ShipmentControl"
+	TypeTableChangeAlert       = "TableChangeAlert"
 	TypeTag                    = "Tag"
 	TypeUser                   = "User"
 )
@@ -12267,6 +12270,1622 @@ func (m *ShipmentControlMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ShipmentControl edge %s", name)
+}
+
+// TableChangeAlertMutation represents an operation that mutates the TableChangeAlert nodes in the graph.
+type TableChangeAlertMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	status               *tablechangealert.Status
+	name                 *string
+	database_action      *tablechangealert.DatabaseAction
+	source               *tablechangealert.Source
+	table_name           *string
+	topic                *string
+	description          *string
+	custom_subject       *string
+	function_name        *string
+	trigger_name         *string
+	listener_name        *string
+	email_recipients     *string
+	conditional_logic    **schema.ConditionalLogic
+	effective_date       *time.Time
+	expiration_date      *time.Time
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	done                 bool
+	oldValue             func(context.Context) (*TableChangeAlert, error)
+	predicates           []predicate.TableChangeAlert
+}
+
+var _ ent.Mutation = (*TableChangeAlertMutation)(nil)
+
+// tablechangealertOption allows management of the mutation configuration using functional options.
+type tablechangealertOption func(*TableChangeAlertMutation)
+
+// newTableChangeAlertMutation creates new mutation for the TableChangeAlert entity.
+func newTableChangeAlertMutation(c config, op Op, opts ...tablechangealertOption) *TableChangeAlertMutation {
+	m := &TableChangeAlertMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTableChangeAlert,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTableChangeAlertID sets the ID field of the mutation.
+func withTableChangeAlertID(id uuid.UUID) tablechangealertOption {
+	return func(m *TableChangeAlertMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TableChangeAlert
+		)
+		m.oldValue = func(ctx context.Context) (*TableChangeAlert, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TableChangeAlert.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTableChangeAlert sets the old TableChangeAlert of the mutation.
+func withTableChangeAlert(node *TableChangeAlert) tablechangealertOption {
+	return func(m *TableChangeAlertMutation) {
+		m.oldValue = func(context.Context) (*TableChangeAlert, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TableChangeAlertMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TableChangeAlertMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TableChangeAlert entities.
+func (m *TableChangeAlertMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TableChangeAlertMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TableChangeAlertMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TableChangeAlert.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *TableChangeAlertMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *TableChangeAlertMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *TableChangeAlertMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *TableChangeAlertMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *TableChangeAlertMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *TableChangeAlertMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TableChangeAlertMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TableChangeAlertMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TableChangeAlertMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TableChangeAlertMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TableChangeAlertMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TableChangeAlertMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *TableChangeAlertMutation) SetStatus(t tablechangealert.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TableChangeAlertMutation) Status() (r tablechangealert.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldStatus(ctx context.Context) (v tablechangealert.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TableChangeAlertMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetName sets the "name" field.
+func (m *TableChangeAlertMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *TableChangeAlertMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *TableChangeAlertMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDatabaseAction sets the "database_action" field.
+func (m *TableChangeAlertMutation) SetDatabaseAction(ta tablechangealert.DatabaseAction) {
+	m.database_action = &ta
+}
+
+// DatabaseAction returns the value of the "database_action" field in the mutation.
+func (m *TableChangeAlertMutation) DatabaseAction() (r tablechangealert.DatabaseAction, exists bool) {
+	v := m.database_action
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDatabaseAction returns the old "database_action" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldDatabaseAction(ctx context.Context) (v tablechangealert.DatabaseAction, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDatabaseAction is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDatabaseAction requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDatabaseAction: %w", err)
+	}
+	return oldValue.DatabaseAction, nil
+}
+
+// ResetDatabaseAction resets all changes to the "database_action" field.
+func (m *TableChangeAlertMutation) ResetDatabaseAction() {
+	m.database_action = nil
+}
+
+// SetSource sets the "source" field.
+func (m *TableChangeAlertMutation) SetSource(t tablechangealert.Source) {
+	m.source = &t
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *TableChangeAlertMutation) Source() (r tablechangealert.Source, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldSource(ctx context.Context) (v tablechangealert.Source, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *TableChangeAlertMutation) ResetSource() {
+	m.source = nil
+}
+
+// SetTableName sets the "table_name" field.
+func (m *TableChangeAlertMutation) SetTableName(s string) {
+	m.table_name = &s
+}
+
+// TableName returns the value of the "table_name" field in the mutation.
+func (m *TableChangeAlertMutation) TableName() (r string, exists bool) {
+	v := m.table_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTableName returns the old "table_name" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldTableName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTableName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTableName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTableName: %w", err)
+	}
+	return oldValue.TableName, nil
+}
+
+// ClearTableName clears the value of the "table_name" field.
+func (m *TableChangeAlertMutation) ClearTableName() {
+	m.table_name = nil
+	m.clearedFields[tablechangealert.FieldTableName] = struct{}{}
+}
+
+// TableNameCleared returns if the "table_name" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) TableNameCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldTableName]
+	return ok
+}
+
+// ResetTableName resets all changes to the "table_name" field.
+func (m *TableChangeAlertMutation) ResetTableName() {
+	m.table_name = nil
+	delete(m.clearedFields, tablechangealert.FieldTableName)
+}
+
+// SetTopic sets the "topic" field.
+func (m *TableChangeAlertMutation) SetTopic(s string) {
+	m.topic = &s
+}
+
+// Topic returns the value of the "topic" field in the mutation.
+func (m *TableChangeAlertMutation) Topic() (r string, exists bool) {
+	v := m.topic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTopic returns the old "topic" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldTopic(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTopic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTopic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTopic: %w", err)
+	}
+	return oldValue.Topic, nil
+}
+
+// ClearTopic clears the value of the "topic" field.
+func (m *TableChangeAlertMutation) ClearTopic() {
+	m.topic = nil
+	m.clearedFields[tablechangealert.FieldTopic] = struct{}{}
+}
+
+// TopicCleared returns if the "topic" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) TopicCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldTopic]
+	return ok
+}
+
+// ResetTopic resets all changes to the "topic" field.
+func (m *TableChangeAlertMutation) ResetTopic() {
+	m.topic = nil
+	delete(m.clearedFields, tablechangealert.FieldTopic)
+}
+
+// SetDescription sets the "description" field.
+func (m *TableChangeAlertMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *TableChangeAlertMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *TableChangeAlertMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[tablechangealert.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *TableChangeAlertMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, tablechangealert.FieldDescription)
+}
+
+// SetCustomSubject sets the "custom_subject" field.
+func (m *TableChangeAlertMutation) SetCustomSubject(s string) {
+	m.custom_subject = &s
+}
+
+// CustomSubject returns the value of the "custom_subject" field in the mutation.
+func (m *TableChangeAlertMutation) CustomSubject() (r string, exists bool) {
+	v := m.custom_subject
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomSubject returns the old "custom_subject" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldCustomSubject(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomSubject is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomSubject requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomSubject: %w", err)
+	}
+	return oldValue.CustomSubject, nil
+}
+
+// ClearCustomSubject clears the value of the "custom_subject" field.
+func (m *TableChangeAlertMutation) ClearCustomSubject() {
+	m.custom_subject = nil
+	m.clearedFields[tablechangealert.FieldCustomSubject] = struct{}{}
+}
+
+// CustomSubjectCleared returns if the "custom_subject" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) CustomSubjectCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldCustomSubject]
+	return ok
+}
+
+// ResetCustomSubject resets all changes to the "custom_subject" field.
+func (m *TableChangeAlertMutation) ResetCustomSubject() {
+	m.custom_subject = nil
+	delete(m.clearedFields, tablechangealert.FieldCustomSubject)
+}
+
+// SetFunctionName sets the "function_name" field.
+func (m *TableChangeAlertMutation) SetFunctionName(s string) {
+	m.function_name = &s
+}
+
+// FunctionName returns the value of the "function_name" field in the mutation.
+func (m *TableChangeAlertMutation) FunctionName() (r string, exists bool) {
+	v := m.function_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFunctionName returns the old "function_name" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldFunctionName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFunctionName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFunctionName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFunctionName: %w", err)
+	}
+	return oldValue.FunctionName, nil
+}
+
+// ClearFunctionName clears the value of the "function_name" field.
+func (m *TableChangeAlertMutation) ClearFunctionName() {
+	m.function_name = nil
+	m.clearedFields[tablechangealert.FieldFunctionName] = struct{}{}
+}
+
+// FunctionNameCleared returns if the "function_name" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) FunctionNameCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldFunctionName]
+	return ok
+}
+
+// ResetFunctionName resets all changes to the "function_name" field.
+func (m *TableChangeAlertMutation) ResetFunctionName() {
+	m.function_name = nil
+	delete(m.clearedFields, tablechangealert.FieldFunctionName)
+}
+
+// SetTriggerName sets the "trigger_name" field.
+func (m *TableChangeAlertMutation) SetTriggerName(s string) {
+	m.trigger_name = &s
+}
+
+// TriggerName returns the value of the "trigger_name" field in the mutation.
+func (m *TableChangeAlertMutation) TriggerName() (r string, exists bool) {
+	v := m.trigger_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTriggerName returns the old "trigger_name" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldTriggerName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTriggerName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTriggerName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTriggerName: %w", err)
+	}
+	return oldValue.TriggerName, nil
+}
+
+// ClearTriggerName clears the value of the "trigger_name" field.
+func (m *TableChangeAlertMutation) ClearTriggerName() {
+	m.trigger_name = nil
+	m.clearedFields[tablechangealert.FieldTriggerName] = struct{}{}
+}
+
+// TriggerNameCleared returns if the "trigger_name" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) TriggerNameCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldTriggerName]
+	return ok
+}
+
+// ResetTriggerName resets all changes to the "trigger_name" field.
+func (m *TableChangeAlertMutation) ResetTriggerName() {
+	m.trigger_name = nil
+	delete(m.clearedFields, tablechangealert.FieldTriggerName)
+}
+
+// SetListenerName sets the "listener_name" field.
+func (m *TableChangeAlertMutation) SetListenerName(s string) {
+	m.listener_name = &s
+}
+
+// ListenerName returns the value of the "listener_name" field in the mutation.
+func (m *TableChangeAlertMutation) ListenerName() (r string, exists bool) {
+	v := m.listener_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListenerName returns the old "listener_name" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldListenerName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListenerName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListenerName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListenerName: %w", err)
+	}
+	return oldValue.ListenerName, nil
+}
+
+// ClearListenerName clears the value of the "listener_name" field.
+func (m *TableChangeAlertMutation) ClearListenerName() {
+	m.listener_name = nil
+	m.clearedFields[tablechangealert.FieldListenerName] = struct{}{}
+}
+
+// ListenerNameCleared returns if the "listener_name" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) ListenerNameCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldListenerName]
+	return ok
+}
+
+// ResetListenerName resets all changes to the "listener_name" field.
+func (m *TableChangeAlertMutation) ResetListenerName() {
+	m.listener_name = nil
+	delete(m.clearedFields, tablechangealert.FieldListenerName)
+}
+
+// SetEmailRecipients sets the "email_recipients" field.
+func (m *TableChangeAlertMutation) SetEmailRecipients(s string) {
+	m.email_recipients = &s
+}
+
+// EmailRecipients returns the value of the "email_recipients" field in the mutation.
+func (m *TableChangeAlertMutation) EmailRecipients() (r string, exists bool) {
+	v := m.email_recipients
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmailRecipients returns the old "email_recipients" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldEmailRecipients(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmailRecipients is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmailRecipients requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmailRecipients: %w", err)
+	}
+	return oldValue.EmailRecipients, nil
+}
+
+// ClearEmailRecipients clears the value of the "email_recipients" field.
+func (m *TableChangeAlertMutation) ClearEmailRecipients() {
+	m.email_recipients = nil
+	m.clearedFields[tablechangealert.FieldEmailRecipients] = struct{}{}
+}
+
+// EmailRecipientsCleared returns if the "email_recipients" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) EmailRecipientsCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldEmailRecipients]
+	return ok
+}
+
+// ResetEmailRecipients resets all changes to the "email_recipients" field.
+func (m *TableChangeAlertMutation) ResetEmailRecipients() {
+	m.email_recipients = nil
+	delete(m.clearedFields, tablechangealert.FieldEmailRecipients)
+}
+
+// SetConditionalLogic sets the "conditional_logic" field.
+func (m *TableChangeAlertMutation) SetConditionalLogic(sl *schema.ConditionalLogic) {
+	m.conditional_logic = &sl
+}
+
+// ConditionalLogic returns the value of the "conditional_logic" field in the mutation.
+func (m *TableChangeAlertMutation) ConditionalLogic() (r *schema.ConditionalLogic, exists bool) {
+	v := m.conditional_logic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConditionalLogic returns the old "conditional_logic" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldConditionalLogic(ctx context.Context) (v *schema.ConditionalLogic, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConditionalLogic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConditionalLogic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConditionalLogic: %w", err)
+	}
+	return oldValue.ConditionalLogic, nil
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (m *TableChangeAlertMutation) ClearConditionalLogic() {
+	m.conditional_logic = nil
+	m.clearedFields[tablechangealert.FieldConditionalLogic] = struct{}{}
+}
+
+// ConditionalLogicCleared returns if the "conditional_logic" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) ConditionalLogicCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldConditionalLogic]
+	return ok
+}
+
+// ResetConditionalLogic resets all changes to the "conditional_logic" field.
+func (m *TableChangeAlertMutation) ResetConditionalLogic() {
+	m.conditional_logic = nil
+	delete(m.clearedFields, tablechangealert.FieldConditionalLogic)
+}
+
+// SetEffectiveDate sets the "effective_date" field.
+func (m *TableChangeAlertMutation) SetEffectiveDate(t time.Time) {
+	m.effective_date = &t
+}
+
+// EffectiveDate returns the value of the "effective_date" field in the mutation.
+func (m *TableChangeAlertMutation) EffectiveDate() (r time.Time, exists bool) {
+	v := m.effective_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEffectiveDate returns the old "effective_date" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldEffectiveDate(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEffectiveDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEffectiveDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEffectiveDate: %w", err)
+	}
+	return oldValue.EffectiveDate, nil
+}
+
+// ClearEffectiveDate clears the value of the "effective_date" field.
+func (m *TableChangeAlertMutation) ClearEffectiveDate() {
+	m.effective_date = nil
+	m.clearedFields[tablechangealert.FieldEffectiveDate] = struct{}{}
+}
+
+// EffectiveDateCleared returns if the "effective_date" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) EffectiveDateCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldEffectiveDate]
+	return ok
+}
+
+// ResetEffectiveDate resets all changes to the "effective_date" field.
+func (m *TableChangeAlertMutation) ResetEffectiveDate() {
+	m.effective_date = nil
+	delete(m.clearedFields, tablechangealert.FieldEffectiveDate)
+}
+
+// SetExpirationDate sets the "expiration_date" field.
+func (m *TableChangeAlertMutation) SetExpirationDate(t time.Time) {
+	m.expiration_date = &t
+}
+
+// ExpirationDate returns the value of the "expiration_date" field in the mutation.
+func (m *TableChangeAlertMutation) ExpirationDate() (r time.Time, exists bool) {
+	v := m.expiration_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpirationDate returns the old "expiration_date" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldExpirationDate(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpirationDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpirationDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpirationDate: %w", err)
+	}
+	return oldValue.ExpirationDate, nil
+}
+
+// ClearExpirationDate clears the value of the "expiration_date" field.
+func (m *TableChangeAlertMutation) ClearExpirationDate() {
+	m.expiration_date = nil
+	m.clearedFields[tablechangealert.FieldExpirationDate] = struct{}{}
+}
+
+// ExpirationDateCleared returns if the "expiration_date" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) ExpirationDateCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldExpirationDate]
+	return ok
+}
+
+// ResetExpirationDate resets all changes to the "expiration_date" field.
+func (m *TableChangeAlertMutation) ResetExpirationDate() {
+	m.expiration_date = nil
+	delete(m.clearedFields, tablechangealert.FieldExpirationDate)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *TableChangeAlertMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[tablechangealert.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *TableChangeAlertMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *TableChangeAlertMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *TableChangeAlertMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *TableChangeAlertMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[tablechangealert.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *TableChangeAlertMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *TableChangeAlertMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *TableChangeAlertMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// Where appends a list predicates to the TableChangeAlertMutation builder.
+func (m *TableChangeAlertMutation) Where(ps ...predicate.TableChangeAlert) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TableChangeAlertMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TableChangeAlertMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TableChangeAlert, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TableChangeAlertMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TableChangeAlertMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TableChangeAlert).
+func (m *TableChangeAlertMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TableChangeAlertMutation) Fields() []string {
+	fields := make([]string, 0, 19)
+	if m.business_unit != nil {
+		fields = append(fields, tablechangealert.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, tablechangealert.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, tablechangealert.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, tablechangealert.FieldUpdatedAt)
+	}
+	if m.status != nil {
+		fields = append(fields, tablechangealert.FieldStatus)
+	}
+	if m.name != nil {
+		fields = append(fields, tablechangealert.FieldName)
+	}
+	if m.database_action != nil {
+		fields = append(fields, tablechangealert.FieldDatabaseAction)
+	}
+	if m.source != nil {
+		fields = append(fields, tablechangealert.FieldSource)
+	}
+	if m.table_name != nil {
+		fields = append(fields, tablechangealert.FieldTableName)
+	}
+	if m.topic != nil {
+		fields = append(fields, tablechangealert.FieldTopic)
+	}
+	if m.description != nil {
+		fields = append(fields, tablechangealert.FieldDescription)
+	}
+	if m.custom_subject != nil {
+		fields = append(fields, tablechangealert.FieldCustomSubject)
+	}
+	if m.function_name != nil {
+		fields = append(fields, tablechangealert.FieldFunctionName)
+	}
+	if m.trigger_name != nil {
+		fields = append(fields, tablechangealert.FieldTriggerName)
+	}
+	if m.listener_name != nil {
+		fields = append(fields, tablechangealert.FieldListenerName)
+	}
+	if m.email_recipients != nil {
+		fields = append(fields, tablechangealert.FieldEmailRecipients)
+	}
+	if m.conditional_logic != nil {
+		fields = append(fields, tablechangealert.FieldConditionalLogic)
+	}
+	if m.effective_date != nil {
+		fields = append(fields, tablechangealert.FieldEffectiveDate)
+	}
+	if m.expiration_date != nil {
+		fields = append(fields, tablechangealert.FieldExpirationDate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case tablechangealert.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case tablechangealert.FieldOrganizationID:
+		return m.OrganizationID()
+	case tablechangealert.FieldCreatedAt:
+		return m.CreatedAt()
+	case tablechangealert.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case tablechangealert.FieldStatus:
+		return m.Status()
+	case tablechangealert.FieldName:
+		return m.Name()
+	case tablechangealert.FieldDatabaseAction:
+		return m.DatabaseAction()
+	case tablechangealert.FieldSource:
+		return m.Source()
+	case tablechangealert.FieldTableName:
+		return m.TableName()
+	case tablechangealert.FieldTopic:
+		return m.Topic()
+	case tablechangealert.FieldDescription:
+		return m.Description()
+	case tablechangealert.FieldCustomSubject:
+		return m.CustomSubject()
+	case tablechangealert.FieldFunctionName:
+		return m.FunctionName()
+	case tablechangealert.FieldTriggerName:
+		return m.TriggerName()
+	case tablechangealert.FieldListenerName:
+		return m.ListenerName()
+	case tablechangealert.FieldEmailRecipients:
+		return m.EmailRecipients()
+	case tablechangealert.FieldConditionalLogic:
+		return m.ConditionalLogic()
+	case tablechangealert.FieldEffectiveDate:
+		return m.EffectiveDate()
+	case tablechangealert.FieldExpirationDate:
+		return m.ExpirationDate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case tablechangealert.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case tablechangealert.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case tablechangealert.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case tablechangealert.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case tablechangealert.FieldStatus:
+		return m.OldStatus(ctx)
+	case tablechangealert.FieldName:
+		return m.OldName(ctx)
+	case tablechangealert.FieldDatabaseAction:
+		return m.OldDatabaseAction(ctx)
+	case tablechangealert.FieldSource:
+		return m.OldSource(ctx)
+	case tablechangealert.FieldTableName:
+		return m.OldTableName(ctx)
+	case tablechangealert.FieldTopic:
+		return m.OldTopic(ctx)
+	case tablechangealert.FieldDescription:
+		return m.OldDescription(ctx)
+	case tablechangealert.FieldCustomSubject:
+		return m.OldCustomSubject(ctx)
+	case tablechangealert.FieldFunctionName:
+		return m.OldFunctionName(ctx)
+	case tablechangealert.FieldTriggerName:
+		return m.OldTriggerName(ctx)
+	case tablechangealert.FieldListenerName:
+		return m.OldListenerName(ctx)
+	case tablechangealert.FieldEmailRecipients:
+		return m.OldEmailRecipients(ctx)
+	case tablechangealert.FieldConditionalLogic:
+		return m.OldConditionalLogic(ctx)
+	case tablechangealert.FieldEffectiveDate:
+		return m.OldEffectiveDate(ctx)
+	case tablechangealert.FieldExpirationDate:
+		return m.OldExpirationDate(ctx)
+	}
+	return nil, fmt.Errorf("unknown TableChangeAlert field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case tablechangealert.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case tablechangealert.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case tablechangealert.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case tablechangealert.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case tablechangealert.FieldStatus:
+		v, ok := value.(tablechangealert.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case tablechangealert.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case tablechangealert.FieldDatabaseAction:
+		v, ok := value.(tablechangealert.DatabaseAction)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDatabaseAction(v)
+		return nil
+	case tablechangealert.FieldSource:
+		v, ok := value.(tablechangealert.Source)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case tablechangealert.FieldTableName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTableName(v)
+		return nil
+	case tablechangealert.FieldTopic:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTopic(v)
+		return nil
+	case tablechangealert.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case tablechangealert.FieldCustomSubject:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomSubject(v)
+		return nil
+	case tablechangealert.FieldFunctionName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFunctionName(v)
+		return nil
+	case tablechangealert.FieldTriggerName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTriggerName(v)
+		return nil
+	case tablechangealert.FieldListenerName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListenerName(v)
+		return nil
+	case tablechangealert.FieldEmailRecipients:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmailRecipients(v)
+		return nil
+	case tablechangealert.FieldConditionalLogic:
+		v, ok := value.(*schema.ConditionalLogic)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConditionalLogic(v)
+		return nil
+	case tablechangealert.FieldEffectiveDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEffectiveDate(v)
+		return nil
+	case tablechangealert.FieldExpirationDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpirationDate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TableChangeAlert field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TableChangeAlertMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TableChangeAlertMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TableChangeAlertMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TableChangeAlert numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TableChangeAlertMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(tablechangealert.FieldTableName) {
+		fields = append(fields, tablechangealert.FieldTableName)
+	}
+	if m.FieldCleared(tablechangealert.FieldTopic) {
+		fields = append(fields, tablechangealert.FieldTopic)
+	}
+	if m.FieldCleared(tablechangealert.FieldDescription) {
+		fields = append(fields, tablechangealert.FieldDescription)
+	}
+	if m.FieldCleared(tablechangealert.FieldCustomSubject) {
+		fields = append(fields, tablechangealert.FieldCustomSubject)
+	}
+	if m.FieldCleared(tablechangealert.FieldFunctionName) {
+		fields = append(fields, tablechangealert.FieldFunctionName)
+	}
+	if m.FieldCleared(tablechangealert.FieldTriggerName) {
+		fields = append(fields, tablechangealert.FieldTriggerName)
+	}
+	if m.FieldCleared(tablechangealert.FieldListenerName) {
+		fields = append(fields, tablechangealert.FieldListenerName)
+	}
+	if m.FieldCleared(tablechangealert.FieldEmailRecipients) {
+		fields = append(fields, tablechangealert.FieldEmailRecipients)
+	}
+	if m.FieldCleared(tablechangealert.FieldConditionalLogic) {
+		fields = append(fields, tablechangealert.FieldConditionalLogic)
+	}
+	if m.FieldCleared(tablechangealert.FieldEffectiveDate) {
+		fields = append(fields, tablechangealert.FieldEffectiveDate)
+	}
+	if m.FieldCleared(tablechangealert.FieldExpirationDate) {
+		fields = append(fields, tablechangealert.FieldExpirationDate)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TableChangeAlertMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TableChangeAlertMutation) ClearField(name string) error {
+	switch name {
+	case tablechangealert.FieldTableName:
+		m.ClearTableName()
+		return nil
+	case tablechangealert.FieldTopic:
+		m.ClearTopic()
+		return nil
+	case tablechangealert.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case tablechangealert.FieldCustomSubject:
+		m.ClearCustomSubject()
+		return nil
+	case tablechangealert.FieldFunctionName:
+		m.ClearFunctionName()
+		return nil
+	case tablechangealert.FieldTriggerName:
+		m.ClearTriggerName()
+		return nil
+	case tablechangealert.FieldListenerName:
+		m.ClearListenerName()
+		return nil
+	case tablechangealert.FieldEmailRecipients:
+		m.ClearEmailRecipients()
+		return nil
+	case tablechangealert.FieldConditionalLogic:
+		m.ClearConditionalLogic()
+		return nil
+	case tablechangealert.FieldEffectiveDate:
+		m.ClearEffectiveDate()
+		return nil
+	case tablechangealert.FieldExpirationDate:
+		m.ClearExpirationDate()
+		return nil
+	}
+	return fmt.Errorf("unknown TableChangeAlert nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TableChangeAlertMutation) ResetField(name string) error {
+	switch name {
+	case tablechangealert.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case tablechangealert.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case tablechangealert.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case tablechangealert.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case tablechangealert.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case tablechangealert.FieldName:
+		m.ResetName()
+		return nil
+	case tablechangealert.FieldDatabaseAction:
+		m.ResetDatabaseAction()
+		return nil
+	case tablechangealert.FieldSource:
+		m.ResetSource()
+		return nil
+	case tablechangealert.FieldTableName:
+		m.ResetTableName()
+		return nil
+	case tablechangealert.FieldTopic:
+		m.ResetTopic()
+		return nil
+	case tablechangealert.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case tablechangealert.FieldCustomSubject:
+		m.ResetCustomSubject()
+		return nil
+	case tablechangealert.FieldFunctionName:
+		m.ResetFunctionName()
+		return nil
+	case tablechangealert.FieldTriggerName:
+		m.ResetTriggerName()
+		return nil
+	case tablechangealert.FieldListenerName:
+		m.ResetListenerName()
+		return nil
+	case tablechangealert.FieldEmailRecipients:
+		m.ResetEmailRecipients()
+		return nil
+	case tablechangealert.FieldConditionalLogic:
+		m.ResetConditionalLogic()
+		return nil
+	case tablechangealert.FieldEffectiveDate:
+		m.ResetEffectiveDate()
+		return nil
+	case tablechangealert.FieldExpirationDate:
+		m.ResetExpirationDate()
+		return nil
+	}
+	return fmt.Errorf("unknown TableChangeAlert field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TableChangeAlertMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.business_unit != nil {
+		edges = append(edges, tablechangealert.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, tablechangealert.EdgeOrganization)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TableChangeAlertMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tablechangealert.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case tablechangealert.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TableChangeAlertMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TableChangeAlertMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TableChangeAlertMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedbusiness_unit {
+		edges = append(edges, tablechangealert.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, tablechangealert.EdgeOrganization)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TableChangeAlertMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tablechangealert.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case tablechangealert.EdgeOrganization:
+		return m.clearedorganization
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TableChangeAlertMutation) ClearEdge(name string) error {
+	switch name {
+	case tablechangealert.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case tablechangealert.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown TableChangeAlert unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TableChangeAlertMutation) ResetEdge(name string) error {
+	switch name {
+	case tablechangealert.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case tablechangealert.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown TableChangeAlert edge %s", name)
 }
 
 // TagMutation represents an operation that mutates the Tag nodes in the graph.

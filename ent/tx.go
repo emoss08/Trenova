@@ -32,6 +32,8 @@ type Tx struct {
 	RouteControl *RouteControlClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
+	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
+	TableChangeAlert *TableChangeAlertClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// User is the client for interacting with the User builders.
@@ -177,6 +179,7 @@ func (tx *Tx) init() {
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.RouteControl = NewRouteControlClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
+	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

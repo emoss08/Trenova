@@ -411,6 +411,49 @@ var (
 			},
 		},
 	}
+	// TableChangeAlertsColumns holds the columns for the "table_change_alerts" table.
+	TableChangeAlertsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "name", Type: field.TypeString, Size: 50},
+		{Name: "database_action", Type: field.TypeEnum, Enums: []string{"Insert", "Update", "Delete", "All"}},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"Kafka", "Db"}},
+		{Name: "table_name", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "topic", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "custom_subject", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "function_name", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "trigger_name", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "listener_name", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "email_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "conditional_logic", Type: field.TypeJSON, Nullable: true},
+		{Name: "effective_date", Type: field.TypeTime, Nullable: true},
+		{Name: "expiration_date", Type: field.TypeTime, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// TableChangeAlertsTable holds the schema information for the "table_change_alerts" table.
+	TableChangeAlertsTable = &schema.Table{
+		Name:       "table_change_alerts",
+		Columns:    TableChangeAlertsColumns,
+		PrimaryKey: []*schema.Column{TableChangeAlertsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "table_change_alerts_business_units_business_unit",
+				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "table_change_alerts_organizations_organization",
+				Columns:    []*schema.Column{TableChangeAlertsColumns[19]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// TagsColumns holds the columns for the "tags" table.
 	TagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -507,6 +550,7 @@ var (
 		OrganizationsTable,
 		RouteControlsTable,
 		ShipmentControlsTable,
+		TableChangeAlertsTable,
 		TagsTable,
 		UsersTable,
 	}
@@ -533,6 +577,8 @@ func init() {
 	RouteControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ShipmentControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	TableChangeAlertsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	TableChangeAlertsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable

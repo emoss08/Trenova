@@ -36,6 +36,9 @@ type RouteControl func(*sql.Selector)
 // ShipmentControl is the predicate function for shipmentcontrol builders.
 type ShipmentControl func(*sql.Selector)
 
+// TableChangeAlert is the predicate function for tablechangealert builders.
+type TableChangeAlert func(*sql.Selector)
+
 // Tag is the predicate function for tag builders.
 type Tag func(*sql.Selector)
 
