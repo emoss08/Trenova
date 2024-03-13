@@ -35,47 +35,47 @@ func getOrgAndBuIDFromContext(r *http.Request) (uuid.UUID, uuid.UUID, bool) {
 	return orgID, buID, true
 }
 
-func GetEntityHandler[T any](service CRUDService[T]) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		orgID, buID, ok := getOrgAndBuIDFromContext(r)
-		if !ok {
-			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
-				Code:   "contextError",
-				Detail: "Organization ID or Business Unit ID not found in the request context",
-			})
-			return
-		}
+// func GetEntityHandler[T any](service CRUDService[T]) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		orgID, buID, ok := getOrgAndBuIDFromContext(r)
+// 		if !ok {
+// 			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+// 				Code:   "contextError",
+// 				Detail: "Organization ID or Business Unit ID not found in the request context",
+// 			})
+// 			return
+// 		}
 
-		offset, limit, err := tools.PaginationParams(r)
-		if err != nil {
-			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
-				Code:   "invalid",
-				Detail: err.Error(),
-				Attr:   "offset, limit",
-			})
-			return
-		}
+// 		offset, limit, err := tools.PaginationParams(r)
+// 		if err != nil {
+// 			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+// 				Code:   "invalid",
+// 				Detail: err.Error(),
+// 				Attr:   "offset, limit",
+// 			})
+// 			return
+// 		}
 
-		entities, totalRows, err := service.GetAll(orgID, buID, offset, limit)
-		if err != nil {
-			tools.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
-				Code:   "databaseError",
-				Detail: err.Error(),
-			})
-			return
-		}
+// 		entities, totalRows, err := service.GetAll(orgID, buID, offset, limit)
+// 		if err != nil {
+// 			tools.ResponseWithError(w, http.StatusInternalServerError, models.ValidationErrorDetail{
+// 				Code:   "databaseError",
+// 				Detail: err.Error(),
+// 			})
+// 			return
+// 		}
 
-		nextURL := tools.GetNextPageURL(r, offset, limit, totalRows)
-		prevURL := tools.GetPrevPageURL(r, offset, limit)
+// 		nextURL := tools.GetNextPageURL(r, offset, limit, totalRows)
+// 		prevURL := tools.GetPrevPageURL(r, offset, limit)
 
-		tools.ResponseWithJSON(w, http.StatusOK, models.HTTPResponse{
-			Results:  entities,
-			Count:    int(totalRows),
-			Next:     nextURL,
-			Previous: prevURL,
-		})
-	}
-}
+// 		tools.ResponseWithJSON(w, http.StatusOK, models.HTTPResponse{
+// 			Results:  entities,
+// 			Count:    int(totalRows),
+// 			Next:     nextURL,
+// 			Previous: prevURL,
+// 		})
+// 	}
+// }
 
 func GetEntityByIDHandler[T any](service CRUDService[T]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

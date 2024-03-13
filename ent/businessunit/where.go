@@ -576,6 +576,16 @@ func CityHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldCity, v))
 }
 
+// CityIsNil applies the IsNil predicate on the "city" field.
+func CityIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldCity))
+}
+
+// CityNotNil applies the NotNil predicate on the "city" field.
+func CityNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldCity))
+}
+
 // CityEqualFold applies the EqualFold predicate on the "city" field.
 func CityEqualFold(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldEqualFold(FieldCity, v))
@@ -639,6 +649,16 @@ func StateHasPrefix(v string) predicate.BusinessUnit {
 // StateHasSuffix applies the HasSuffix predicate on the "state" field.
 func StateHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldState, v))
+}
+
+// StateIsNil applies the IsNil predicate on the "state" field.
+func StateIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldState))
+}
+
+// StateNotNil applies the NotNil predicate on the "state" field.
+func StateNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldState))
 }
 
 // StateEqualFold applies the EqualFold predicate on the "state" field.
@@ -706,6 +726,16 @@ func CountryHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldCountry, v))
 }
 
+// CountryIsNil applies the IsNil predicate on the "country" field.
+func CountryIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldCountry))
+}
+
+// CountryNotNil applies the NotNil predicate on the "country" field.
+func CountryNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldCountry))
+}
+
 // CountryEqualFold applies the EqualFold predicate on the "country" field.
 func CountryEqualFold(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldEqualFold(FieldCountry, v))
@@ -769,6 +799,16 @@ func PostalCodeHasPrefix(v string) predicate.BusinessUnit {
 // PostalCodeHasSuffix applies the HasSuffix predicate on the "postal_code" field.
 func PostalCodeHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldPostalCode, v))
+}
+
+// PostalCodeIsNil applies the IsNil predicate on the "postal_code" field.
+func PostalCodeIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldPostalCode))
+}
+
+// PostalCodeNotNil applies the NotNil predicate on the "postal_code" field.
+func PostalCodeNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldPostalCode))
 }
 
 // PostalCodeEqualFold applies the EqualFold predicate on the "postal_code" field.
@@ -836,6 +876,16 @@ func TaxIDHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldTaxID, v))
 }
 
+// TaxIDIsNil applies the IsNil predicate on the "tax_id" field.
+func TaxIDIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldTaxID))
+}
+
+// TaxIDNotNil applies the NotNil predicate on the "tax_id" field.
+func TaxIDNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldTaxID))
+}
+
 // TaxIDEqualFold applies the EqualFold predicate on the "tax_id" field.
 func TaxIDEqualFold(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldEqualFold(FieldTaxID, v))
@@ -899,6 +949,16 @@ func SubscriptionPlanHasPrefix(v string) predicate.BusinessUnit {
 // SubscriptionPlanHasSuffix applies the HasSuffix predicate on the "subscription_plan" field.
 func SubscriptionPlanHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldSubscriptionPlan, v))
+}
+
+// SubscriptionPlanIsNil applies the IsNil predicate on the "subscription_plan" field.
+func SubscriptionPlanIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldSubscriptionPlan))
+}
+
+// SubscriptionPlanNotNil applies the NotNil predicate on the "subscription_plan" field.
+func SubscriptionPlanNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldSubscriptionPlan))
 }
 
 // SubscriptionPlanEqualFold applies the EqualFold predicate on the "subscription_plan" field.
@@ -1039,6 +1099,16 @@ func LegalNameHasPrefix(v string) predicate.BusinessUnit {
 // LegalNameHasSuffix applies the HasSuffix predicate on the "legal_name" field.
 func LegalNameHasSuffix(v string) predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldHasSuffix(FieldLegalName, v))
+}
+
+// LegalNameIsNil applies the IsNil predicate on the "legal_name" field.
+func LegalNameIsNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldIsNull(FieldLegalName))
+}
+
+// LegalNameNotNil applies the NotNil predicate on the "legal_name" field.
+func LegalNameNotNil() predicate.BusinessUnit {
+	return predicate.BusinessUnit(sql.FieldNotNull(FieldLegalName))
 }
 
 // LegalNameEqualFold applies the EqualFold predicate on the "legal_name" field.

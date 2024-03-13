@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tag"
@@ -36,6 +37,8 @@ type Client struct {
 	BillingControl *BillingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
+	// DispatchControl is the client for interacting with the DispatchControl builders.
+	DispatchControl *DispatchControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
 	// Organization is the client for interacting with the Organization builders.
@@ -58,6 +61,7 @@ func (c *Client) init() {
 	c.AccountingControl = NewAccountingControlClient(c.config)
 	c.BillingControl = NewBillingControlClient(c.config)
 	c.BusinessUnit = NewBusinessUnitClient(c.config)
+	c.DispatchControl = NewDispatchControlClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.Tag = NewTagClient(c.config)
@@ -157,6 +161,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AccountingControl:    NewAccountingControlClient(cfg),
 		BillingControl:       NewBillingControlClient(cfg),
 		BusinessUnit:         NewBusinessUnitClient(cfg),
+		DispatchControl:      NewDispatchControlClient(cfg),
 		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
 		Organization:         NewOrganizationClient(cfg),
 		Tag:                  NewTagClient(cfg),
@@ -183,6 +188,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AccountingControl:    NewAccountingControlClient(cfg),
 		BillingControl:       NewBillingControlClient(cfg),
 		BusinessUnit:         NewBusinessUnitClient(cfg),
+		DispatchControl:      NewDispatchControlClient(cfg),
 		GeneralLedgerAccount: NewGeneralLedgerAccountClient(cfg),
 		Organization:         NewOrganizationClient(cfg),
 		Tag:                  NewTagClient(cfg),
@@ -216,8 +222,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.GeneralLedgerAccount,
-		c.Organization, c.Tag, c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
+		c.GeneralLedgerAccount, c.Organization, c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -227,8 +233,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.GeneralLedgerAccount,
-		c.Organization, c.Tag, c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
+		c.GeneralLedgerAccount, c.Organization, c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -243,6 +249,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BillingControl.mutate(ctx, m)
 	case *BusinessUnitMutation:
 		return c.BusinessUnit.mutate(ctx, m)
+	case *DispatchControlMutation:
+		return c.DispatchControl.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
 		return c.GeneralLedgerAccount.mutate(ctx, m)
 	case *OrganizationMutation:
@@ -799,6 +807,171 @@ func (c *BusinessUnitClient) mutate(ctx context.Context, m *BusinessUnitMutation
 	}
 }
 
+// DispatchControlClient is a client for the DispatchControl schema.
+type DispatchControlClient struct {
+	config
+}
+
+// NewDispatchControlClient returns a client for the DispatchControl from the given config.
+func NewDispatchControlClient(c config) *DispatchControlClient {
+	return &DispatchControlClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `dispatchcontrol.Hooks(f(g(h())))`.
+func (c *DispatchControlClient) Use(hooks ...Hook) {
+	c.hooks.DispatchControl = append(c.hooks.DispatchControl, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `dispatchcontrol.Intercept(f(g(h())))`.
+func (c *DispatchControlClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DispatchControl = append(c.inters.DispatchControl, interceptors...)
+}
+
+// Create returns a builder for creating a DispatchControl entity.
+func (c *DispatchControlClient) Create() *DispatchControlCreate {
+	mutation := newDispatchControlMutation(c.config, OpCreate)
+	return &DispatchControlCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DispatchControl entities.
+func (c *DispatchControlClient) CreateBulk(builders ...*DispatchControlCreate) *DispatchControlCreateBulk {
+	return &DispatchControlCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DispatchControlClient) MapCreateBulk(slice any, setFunc func(*DispatchControlCreate, int)) *DispatchControlCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DispatchControlCreateBulk{err: fmt.Errorf("calling to DispatchControlClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DispatchControlCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DispatchControlCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DispatchControl.
+func (c *DispatchControlClient) Update() *DispatchControlUpdate {
+	mutation := newDispatchControlMutation(c.config, OpUpdate)
+	return &DispatchControlUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DispatchControlClient) UpdateOne(dc *DispatchControl) *DispatchControlUpdateOne {
+	mutation := newDispatchControlMutation(c.config, OpUpdateOne, withDispatchControl(dc))
+	return &DispatchControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DispatchControlClient) UpdateOneID(id uuid.UUID) *DispatchControlUpdateOne {
+	mutation := newDispatchControlMutation(c.config, OpUpdateOne, withDispatchControlID(id))
+	return &DispatchControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DispatchControl.
+func (c *DispatchControlClient) Delete() *DispatchControlDelete {
+	mutation := newDispatchControlMutation(c.config, OpDelete)
+	return &DispatchControlDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DispatchControlClient) DeleteOne(dc *DispatchControl) *DispatchControlDeleteOne {
+	return c.DeleteOneID(dc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DispatchControlClient) DeleteOneID(id uuid.UUID) *DispatchControlDeleteOne {
+	builder := c.Delete().Where(dispatchcontrol.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DispatchControlDeleteOne{builder}
+}
+
+// Query returns a query builder for DispatchControl.
+func (c *DispatchControlClient) Query() *DispatchControlQuery {
+	return &DispatchControlQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDispatchControl},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DispatchControl entity by its id.
+func (c *DispatchControlClient) Get(ctx context.Context, id uuid.UUID) (*DispatchControl, error) {
+	return c.Query().Where(dispatchcontrol.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DispatchControlClient) GetX(ctx context.Context, id uuid.UUID) *DispatchControl {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a DispatchControl.
+func (c *DispatchControlClient) QueryOrganization(dc *DispatchControl) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := dc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(dispatchcontrol.Table, dispatchcontrol.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, dispatchcontrol.OrganizationTable, dispatchcontrol.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a DispatchControl.
+func (c *DispatchControlClient) QueryBusinessUnit(dc *DispatchControl) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := dc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(dispatchcontrol.Table, dispatchcontrol.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, dispatchcontrol.BusinessUnitTable, dispatchcontrol.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DispatchControlClient) Hooks() []Hook {
+	return c.hooks.DispatchControl
+}
+
+// Interceptors returns the client interceptors.
+func (c *DispatchControlClient) Interceptors() []Interceptor {
+	return c.inters.DispatchControl
+}
+
+func (c *DispatchControlClient) mutate(ctx context.Context, m *DispatchControlMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DispatchControlCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DispatchControlUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DispatchControlUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DispatchControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DispatchControl mutation op: %q", m.Op())
+	}
+}
+
 // GeneralLedgerAccountClient is a client for the GeneralLedgerAccount schema.
 type GeneralLedgerAccountClient struct {
 	config
@@ -1129,6 +1302,22 @@ func (c *OrganizationClient) QueryBillingControl(o *Organization) *BillingContro
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(billingcontrol.Table, billingcontrol.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, organization.BillingControlTable, organization.BillingControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDispatchControl queries the dispatch_control edge of a Organization.
+func (c *OrganizationClient) QueryDispatchControl(o *Organization) *DispatchControlQuery {
+	query := (&DispatchControlClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(dispatchcontrol.Table, dispatchcontrol.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organization.DispatchControlTable, organization.DispatchControlColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil
@@ -1494,11 +1683,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AccountingControl, BillingControl, BusinessUnit, GeneralLedgerAccount,
-		Organization, Tag, User []ent.Hook
+		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
+		GeneralLedgerAccount, Organization, Tag, User []ent.Hook
 	}
 	inters struct {
-		AccountingControl, BillingControl, BusinessUnit, GeneralLedgerAccount,
-		Organization, Tag, User []ent.Interceptor
+		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
+		GeneralLedgerAccount, Organization, Tag, User []ent.Interceptor
 	}
 )

@@ -45,6 +45,18 @@ func (f BusinessUnitFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BusinessUnitMutation", m)
 }
 
+// The DispatchControlFunc type is an adapter to allow the use of ordinary
+// function as DispatchControl mutator.
+type DispatchControlFunc func(context.Context, *ent.DispatchControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DispatchControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DispatchControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DispatchControlMutation", m)
+}
+
 // The GeneralLedgerAccountFunc type is an adapter to allow the use of ordinary
 // function as GeneralLedgerAccount mutator.
 type GeneralLedgerAccountFunc func(context.Context, *ent.GeneralLedgerAccountMutation) (ent.Value, error)

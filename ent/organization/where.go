@@ -86,11 +86,6 @@ func LogoURL(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldLogoURL, v))
 }
 
-// BusinessUnitID applies equality check predicate on the "business_unit_id" field. It's identical to BusinessUnitIDEQ.
-func BusinessUnitID(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldCreatedAt, v))
@@ -481,46 +476,6 @@ func TimezoneNotIn(vs ...Timezone) predicate.Organization {
 	return predicate.Organization(sql.FieldNotIn(FieldTimezone, vs...))
 }
 
-// BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
-func BusinessUnitIDEQ(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDNEQ applies the NEQ predicate on the "business_unit_id" field.
-func BusinessUnitIDNEQ(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldNEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDIn applies the In predicate on the "business_unit_id" field.
-func BusinessUnitIDIn(vs ...uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldIn(FieldBusinessUnitID, vs...))
-}
-
-// BusinessUnitIDNotIn applies the NotIn predicate on the "business_unit_id" field.
-func BusinessUnitIDNotIn(vs ...uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldNotIn(FieldBusinessUnitID, vs...))
-}
-
-// BusinessUnitIDGT applies the GT predicate on the "business_unit_id" field.
-func BusinessUnitIDGT(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldGT(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDGTE applies the GTE predicate on the "business_unit_id" field.
-func BusinessUnitIDGTE(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldGTE(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDLT applies the LT predicate on the "business_unit_id" field.
-func BusinessUnitIDLT(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldLT(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDLTE applies the LTE predicate on the "business_unit_id" field.
-func BusinessUnitIDLTE(v uuid.UUID) predicate.Organization {
-	return predicate.Organization(sql.FieldLTE(FieldBusinessUnitID, v))
-}
-
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
 func HasBusinessUnit() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
@@ -582,6 +537,29 @@ func HasBillingControl() predicate.Organization {
 func HasBillingControlWith(preds ...predicate.BillingControl) predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := newBillingControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDispatchControl applies the HasEdge predicate on the "dispatch_control" edge.
+func HasDispatchControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, DispatchControlTable, DispatchControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDispatchControlWith applies the HasEdge predicate on the "dispatch_control" edge with a given conditions (other predicates).
+func HasDispatchControlWith(preds ...predicate.DispatchControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newDispatchControlStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -1,64 +1,46 @@
 package main
 
 import (
-	"context"
 	"log"
+	"os"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/migrate"
+	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
+	"github.com/emoss08/trenova/server"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	client, err := ent.Open("postgres", "host=localhost port=5432 user=postgres dbname=trenova_go_db password=postgres sslmode=disable")
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("failed opening connection to postgres: %v", err)
-	}
-	defer client.Close()
-	ctx := context.Background()
-	// Run migration.
-	err = client.Debug().Schema.Create(
-		ctx,
-		migrate.WithDropIndex(true),
-		migrate.WithDropColumn(true),
-	)
-	if err != nil {
-		log.Fatalf("failed creating schema resources: %v", err)
+		panic("Error loading .env file")
 	}
 
-	//err := godotenv.Load()
-	//if err != nil {
-	//	panic("Error loading .env file")
-	//}
-	//
-	//maxIdleConns, _ := strconv.Atoi(os.Getenv("DB_MAX_IDLE_CONNS"))
-	//maxOpenConns, _ := strconv.Atoi(os.Getenv("DB_MAX_OPEN_CONNS"))
-	//
-	//dbConfig := database.DBConfig{
-	//	DSN:             os.Getenv("DB_DSN"),
-	//	MaxIdleConns:    maxIdleConns,
-	//	MaxOpenConns:    maxOpenConns,
-	//	ConnMaxLifetime: 0,
-	//	ConnMaxIdleTime: 0,
-	//}
-	//
-	//// Connect to the database.
-	//db, cancel, err := database.ConnectDB(dbConfig)
-	//if err != nil {
-	//	log.Fatalf("Failed to connect to database: %v", err)
-	//}
-	//
-	//migrationsPath := "config/database/migrations"
-	//
-	//log.Println("Running types migration...")
-	//
-	//if typeErr := database.MigrateTypes(db, migrationsPath); typeErr != nil {
-	//	log.Fatal("Failed to run types migration. \n", typeErr)
-	//}
-	//
-	//defer cancel()
-	//
-	//// Setup server
-	//server.SetupAndRun(db)
+	// Initialize the database
+	client, err := database.NewEntClient(os.Getenv("DB_DSN"))
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	// ctx := context.Background()
+
+	// client.BusinessUnit.
+	// 	Create().
+	// 	SetName("Trenova Transportation").
+	// 	SetEntityKey("TREN").
+	// 	SetPhoneNumber("123-456-7890").
+	// 	SetCity("San Francisco").
+	// 	SetState("CA").
+	// 	SaveX(ctx)
+
+	defer client.Close()
+
+	// Set the client to variabled defined in the database package
+	// This will enable the client instance to be accessed anywhere through the accessor
+	// named GetClient
+	database.SetClient(client)
+
+	// Setup server
+	server.SetupAndRun()
 }

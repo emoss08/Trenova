@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tag"
@@ -82,6 +83,7 @@ func checkColumn(table, column string) error {
 			accountingcontrol.Table:    accountingcontrol.ValidColumn,
 			billingcontrol.Table:       billingcontrol.ValidColumn,
 			businessunit.Table:         businessunit.ValidColumn,
+			dispatchcontrol.Table:      dispatchcontrol.ValidColumn,
 			generalledgeraccount.Table: generalledgeraccount.ValidColumn,
 			organization.Table:         organization.ValidColumn,
 			tag.Table:                  tag.ValidColumn,

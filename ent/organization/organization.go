@@ -32,14 +32,14 @@ const (
 	FieldOrgType = "org_type"
 	// FieldTimezone holds the string denoting the timezone field in the database.
 	FieldTimezone = "timezone"
-	// FieldBusinessUnitID holds the string denoting the business_unit_id field in the database.
-	FieldBusinessUnitID = "business_unit_id"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeAccountingControl holds the string denoting the accounting_control edge name in mutations.
 	EdgeAccountingControl = "accounting_control"
 	// EdgeBillingControl holds the string denoting the billing_control edge name in mutations.
 	EdgeBillingControl = "billing_control"
+	// EdgeDispatchControl holds the string denoting the dispatch_control edge name in mutations.
+	EdgeDispatchControl = "dispatch_control"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -48,7 +48,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "businessunit" package.
 	BusinessUnitInverseTable = "business_units"
 	// BusinessUnitColumn is the table column denoting the business_unit relation/edge.
-	BusinessUnitColumn = "business_unit_organizations"
+	BusinessUnitColumn = "business_unit_id"
 	// AccountingControlTable is the table that holds the accounting_control relation/edge.
 	AccountingControlTable = "organizations"
 	// AccountingControlInverseTable is the table name for the AccountingControl entity.
@@ -63,6 +63,13 @@ const (
 	BillingControlInverseTable = "billing_controls"
 	// BillingControlColumn is the table column denoting the billing_control relation/edge.
 	BillingControlColumn = "organization_billing_control"
+	// DispatchControlTable is the table that holds the dispatch_control relation/edge.
+	DispatchControlTable = "organizations"
+	// DispatchControlInverseTable is the table name for the DispatchControl entity.
+	// It exists in this package in order to avoid circular dependency with the "dispatchcontrol" package.
+	DispatchControlInverseTable = "dispatch_controls"
+	// DispatchControlColumn is the table column denoting the dispatch_control relation/edge.
+	DispatchControlColumn = "organization_dispatch_control"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -76,15 +83,15 @@ var Columns = []string{
 	FieldLogoURL,
 	FieldOrgType,
 	FieldTimezone,
-	FieldBusinessUnitID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "organizations"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"business_unit_organizations",
+	"business_unit_id",
 	"organization_accounting_control",
 	"organization_billing_control",
+	"organization_dispatch_control",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -222,11 +229,6 @@ func ByTimezone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTimezone, opts...).ToFunc()
 }
 
-// ByBusinessUnitID orders the results by the business_unit_id field.
-func ByBusinessUnitID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBusinessUnitID, opts...).ToFunc()
-}
-
 // ByBusinessUnitField orders the results by business_unit field.
 func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -245,6 +247,13 @@ func ByAccountingControlField(field string, opts ...sql.OrderTermOption) OrderOp
 func ByBillingControlField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newBillingControlStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByDispatchControlField orders the results by dispatch_control field.
+func ByDispatchControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDispatchControlStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -266,5 +275,12 @@ func newBillingControlStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BillingControlInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, BillingControlTable, BillingControlColumn),
+	)
+}
+func newDispatchControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DispatchControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, DispatchControlTable, DispatchControlColumn),
 	)
 }

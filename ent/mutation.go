@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -34,6 +35,7 @@ const (
 	TypeAccountingControl    = "AccountingControl"
 	TypeBillingControl       = "BillingControl"
 	TypeBusinessUnit         = "BusinessUnit"
+	TypeDispatchControl      = "DispatchControl"
 	TypeGeneralLedgerAccount = "GeneralLedgerAccount"
 	TypeOrganization         = "Organization"
 	TypeTag                  = "Tag"
@@ -2700,9 +2702,22 @@ func (m *BusinessUnitMutation) OldCity(ctx context.Context) (v string, err error
 	return oldValue.City, nil
 }
 
+// ClearCity clears the value of the "city" field.
+func (m *BusinessUnitMutation) ClearCity() {
+	m.city = nil
+	m.clearedFields[businessunit.FieldCity] = struct{}{}
+}
+
+// CityCleared returns if the "city" field was cleared in this mutation.
+func (m *BusinessUnitMutation) CityCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldCity]
+	return ok
+}
+
 // ResetCity resets all changes to the "city" field.
 func (m *BusinessUnitMutation) ResetCity() {
 	m.city = nil
+	delete(m.clearedFields, businessunit.FieldCity)
 }
 
 // SetState sets the "state" field.
@@ -2736,9 +2751,22 @@ func (m *BusinessUnitMutation) OldState(ctx context.Context) (v string, err erro
 	return oldValue.State, nil
 }
 
+// ClearState clears the value of the "state" field.
+func (m *BusinessUnitMutation) ClearState() {
+	m.state = nil
+	m.clearedFields[businessunit.FieldState] = struct{}{}
+}
+
+// StateCleared returns if the "state" field was cleared in this mutation.
+func (m *BusinessUnitMutation) StateCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldState]
+	return ok
+}
+
 // ResetState resets all changes to the "state" field.
 func (m *BusinessUnitMutation) ResetState() {
 	m.state = nil
+	delete(m.clearedFields, businessunit.FieldState)
 }
 
 // SetCountry sets the "country" field.
@@ -2772,9 +2800,22 @@ func (m *BusinessUnitMutation) OldCountry(ctx context.Context) (v string, err er
 	return oldValue.Country, nil
 }
 
+// ClearCountry clears the value of the "country" field.
+func (m *BusinessUnitMutation) ClearCountry() {
+	m.country = nil
+	m.clearedFields[businessunit.FieldCountry] = struct{}{}
+}
+
+// CountryCleared returns if the "country" field was cleared in this mutation.
+func (m *BusinessUnitMutation) CountryCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldCountry]
+	return ok
+}
+
 // ResetCountry resets all changes to the "country" field.
 func (m *BusinessUnitMutation) ResetCountry() {
 	m.country = nil
+	delete(m.clearedFields, businessunit.FieldCountry)
 }
 
 // SetPostalCode sets the "postal_code" field.
@@ -2808,9 +2849,22 @@ func (m *BusinessUnitMutation) OldPostalCode(ctx context.Context) (v string, err
 	return oldValue.PostalCode, nil
 }
 
+// ClearPostalCode clears the value of the "postal_code" field.
+func (m *BusinessUnitMutation) ClearPostalCode() {
+	m.postal_code = nil
+	m.clearedFields[businessunit.FieldPostalCode] = struct{}{}
+}
+
+// PostalCodeCleared returns if the "postal_code" field was cleared in this mutation.
+func (m *BusinessUnitMutation) PostalCodeCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldPostalCode]
+	return ok
+}
+
 // ResetPostalCode resets all changes to the "postal_code" field.
 func (m *BusinessUnitMutation) ResetPostalCode() {
 	m.postal_code = nil
+	delete(m.clearedFields, businessunit.FieldPostalCode)
 }
 
 // SetTaxID sets the "tax_id" field.
@@ -2844,9 +2898,22 @@ func (m *BusinessUnitMutation) OldTaxID(ctx context.Context) (v string, err erro
 	return oldValue.TaxID, nil
 }
 
+// ClearTaxID clears the value of the "tax_id" field.
+func (m *BusinessUnitMutation) ClearTaxID() {
+	m.tax_id = nil
+	m.clearedFields[businessunit.FieldTaxID] = struct{}{}
+}
+
+// TaxIDCleared returns if the "tax_id" field was cleared in this mutation.
+func (m *BusinessUnitMutation) TaxIDCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldTaxID]
+	return ok
+}
+
 // ResetTaxID resets all changes to the "tax_id" field.
 func (m *BusinessUnitMutation) ResetTaxID() {
 	m.tax_id = nil
+	delete(m.clearedFields, businessunit.FieldTaxID)
 }
 
 // SetSubscriptionPlan sets the "subscription_plan" field.
@@ -2880,9 +2947,22 @@ func (m *BusinessUnitMutation) OldSubscriptionPlan(ctx context.Context) (v strin
 	return oldValue.SubscriptionPlan, nil
 }
 
+// ClearSubscriptionPlan clears the value of the "subscription_plan" field.
+func (m *BusinessUnitMutation) ClearSubscriptionPlan() {
+	m.subscription_plan = nil
+	m.clearedFields[businessunit.FieldSubscriptionPlan] = struct{}{}
+}
+
+// SubscriptionPlanCleared returns if the "subscription_plan" field was cleared in this mutation.
+func (m *BusinessUnitMutation) SubscriptionPlanCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldSubscriptionPlan]
+	return ok
+}
+
 // ResetSubscriptionPlan resets all changes to the "subscription_plan" field.
 func (m *BusinessUnitMutation) ResetSubscriptionPlan() {
 	m.subscription_plan = nil
+	delete(m.clearedFields, businessunit.FieldSubscriptionPlan)
 }
 
 // SetDescription sets the "description" field.
@@ -2965,9 +3045,22 @@ func (m *BusinessUnitMutation) OldLegalName(ctx context.Context) (v string, err 
 	return oldValue.LegalName, nil
 }
 
+// ClearLegalName clears the value of the "legal_name" field.
+func (m *BusinessUnitMutation) ClearLegalName() {
+	m.legal_name = nil
+	m.clearedFields[businessunit.FieldLegalName] = struct{}{}
+}
+
+// LegalNameCleared returns if the "legal_name" field was cleared in this mutation.
+func (m *BusinessUnitMutation) LegalNameCleared() bool {
+	_, ok := m.clearedFields[businessunit.FieldLegalName]
+	return ok
+}
+
 // ResetLegalName resets all changes to the "legal_name" field.
 func (m *BusinessUnitMutation) ResetLegalName() {
 	m.legal_name = nil
+	delete(m.clearedFields, businessunit.FieldLegalName)
 }
 
 // SetContactName sets the "contact_name" field.
@@ -3219,7 +3312,7 @@ func (m *BusinessUnitMutation) ParentID() (r uuid.UUID, exists bool) {
 // OldParentID returns the old "parent_id" field's value of the BusinessUnit entity.
 // If the BusinessUnit object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BusinessUnitMutation) OldParentID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *BusinessUnitMutation) OldParentID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
 	}
@@ -3772,8 +3865,29 @@ func (m *BusinessUnitMutation) ClearedFields() []string {
 	if m.FieldCleared(businessunit.FieldAddress) {
 		fields = append(fields, businessunit.FieldAddress)
 	}
+	if m.FieldCleared(businessunit.FieldCity) {
+		fields = append(fields, businessunit.FieldCity)
+	}
+	if m.FieldCleared(businessunit.FieldState) {
+		fields = append(fields, businessunit.FieldState)
+	}
+	if m.FieldCleared(businessunit.FieldCountry) {
+		fields = append(fields, businessunit.FieldCountry)
+	}
+	if m.FieldCleared(businessunit.FieldPostalCode) {
+		fields = append(fields, businessunit.FieldPostalCode)
+	}
+	if m.FieldCleared(businessunit.FieldTaxID) {
+		fields = append(fields, businessunit.FieldTaxID)
+	}
+	if m.FieldCleared(businessunit.FieldSubscriptionPlan) {
+		fields = append(fields, businessunit.FieldSubscriptionPlan)
+	}
 	if m.FieldCleared(businessunit.FieldDescription) {
 		fields = append(fields, businessunit.FieldDescription)
+	}
+	if m.FieldCleared(businessunit.FieldLegalName) {
+		fields = append(fields, businessunit.FieldLegalName)
 	}
 	if m.FieldCleared(businessunit.FieldContactName) {
 		fields = append(fields, businessunit.FieldContactName)
@@ -3807,8 +3921,29 @@ func (m *BusinessUnitMutation) ClearField(name string) error {
 	case businessunit.FieldAddress:
 		m.ClearAddress()
 		return nil
+	case businessunit.FieldCity:
+		m.ClearCity()
+		return nil
+	case businessunit.FieldState:
+		m.ClearState()
+		return nil
+	case businessunit.FieldCountry:
+		m.ClearCountry()
+		return nil
+	case businessunit.FieldPostalCode:
+		m.ClearPostalCode()
+		return nil
+	case businessunit.FieldTaxID:
+		m.ClearTaxID()
+		return nil
+	case businessunit.FieldSubscriptionPlan:
+		m.ClearSubscriptionPlan()
+		return nil
 	case businessunit.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case businessunit.FieldLegalName:
+		m.ClearLegalName()
 		return nil
 	case businessunit.FieldContactName:
 		m.ClearContactName()
@@ -4018,6 +4153,1350 @@ func (m *BusinessUnitMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown BusinessUnit edge %s", name)
+}
+
+// DispatchControlMutation represents an operation that mutates the DispatchControl nodes in the graph.
+type DispatchControlMutation struct {
+	config
+	op                              Op
+	typ                             string
+	id                              *uuid.UUID
+	created_at                      *time.Time
+	updated_at                      *time.Time
+	record_service_incident         *dispatchcontrol.RecordServiceIncident
+	deadhead_target                 *float64
+	adddeadhead_target              *float64
+	max_shipment_weight_limit       *int
+	addmax_shipment_weight_limit    *int
+	grace_period                    *uint8
+	addgrace_period                 *int8
+	enforce_worker_assign           *bool
+	trailer_continuity              *bool
+	dupe_trailer_check              *bool
+	maintenance_compliance          *bool
+	regulatory_check                *bool
+	prev_shipment_on_hold           *bool
+	worker_time_away_restriction    *bool
+	tractor_worker_fleet_constraint *bool
+	clearedFields                   map[string]struct{}
+	organization                    *uuid.UUID
+	clearedorganization             bool
+	business_unit                   *uuid.UUID
+	clearedbusiness_unit            bool
+	done                            bool
+	oldValue                        func(context.Context) (*DispatchControl, error)
+	predicates                      []predicate.DispatchControl
+}
+
+var _ ent.Mutation = (*DispatchControlMutation)(nil)
+
+// dispatchcontrolOption allows management of the mutation configuration using functional options.
+type dispatchcontrolOption func(*DispatchControlMutation)
+
+// newDispatchControlMutation creates new mutation for the DispatchControl entity.
+func newDispatchControlMutation(c config, op Op, opts ...dispatchcontrolOption) *DispatchControlMutation {
+	m := &DispatchControlMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDispatchControl,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDispatchControlID sets the ID field of the mutation.
+func withDispatchControlID(id uuid.UUID) dispatchcontrolOption {
+	return func(m *DispatchControlMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DispatchControl
+		)
+		m.oldValue = func(ctx context.Context) (*DispatchControl, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DispatchControl.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDispatchControl sets the old DispatchControl of the mutation.
+func withDispatchControl(node *DispatchControl) dispatchcontrolOption {
+	return func(m *DispatchControlMutation) {
+		m.oldValue = func(context.Context) (*DispatchControl, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DispatchControlMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DispatchControlMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DispatchControl entities.
+func (m *DispatchControlMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DispatchControlMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DispatchControlMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DispatchControl.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DispatchControlMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DispatchControlMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DispatchControlMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *DispatchControlMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *DispatchControlMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *DispatchControlMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *DispatchControlMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *DispatchControlMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *DispatchControlMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *DispatchControlMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *DispatchControlMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *DispatchControlMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetRecordServiceIncident sets the "record_service_incident" field.
+func (m *DispatchControlMutation) SetRecordServiceIncident(dsi dispatchcontrol.RecordServiceIncident) {
+	m.record_service_incident = &dsi
+}
+
+// RecordServiceIncident returns the value of the "record_service_incident" field in the mutation.
+func (m *DispatchControlMutation) RecordServiceIncident() (r dispatchcontrol.RecordServiceIncident, exists bool) {
+	v := m.record_service_incident
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecordServiceIncident returns the old "record_service_incident" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldRecordServiceIncident(ctx context.Context) (v dispatchcontrol.RecordServiceIncident, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecordServiceIncident is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecordServiceIncident requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecordServiceIncident: %w", err)
+	}
+	return oldValue.RecordServiceIncident, nil
+}
+
+// ResetRecordServiceIncident resets all changes to the "record_service_incident" field.
+func (m *DispatchControlMutation) ResetRecordServiceIncident() {
+	m.record_service_incident = nil
+}
+
+// SetDeadheadTarget sets the "deadhead_target" field.
+func (m *DispatchControlMutation) SetDeadheadTarget(f float64) {
+	m.deadhead_target = &f
+	m.adddeadhead_target = nil
+}
+
+// DeadheadTarget returns the value of the "deadhead_target" field in the mutation.
+func (m *DispatchControlMutation) DeadheadTarget() (r float64, exists bool) {
+	v := m.deadhead_target
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeadheadTarget returns the old "deadhead_target" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldDeadheadTarget(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeadheadTarget is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeadheadTarget requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeadheadTarget: %w", err)
+	}
+	return oldValue.DeadheadTarget, nil
+}
+
+// AddDeadheadTarget adds f to the "deadhead_target" field.
+func (m *DispatchControlMutation) AddDeadheadTarget(f float64) {
+	if m.adddeadhead_target != nil {
+		*m.adddeadhead_target += f
+	} else {
+		m.adddeadhead_target = &f
+	}
+}
+
+// AddedDeadheadTarget returns the value that was added to the "deadhead_target" field in this mutation.
+func (m *DispatchControlMutation) AddedDeadheadTarget() (r float64, exists bool) {
+	v := m.adddeadhead_target
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDeadheadTarget resets all changes to the "deadhead_target" field.
+func (m *DispatchControlMutation) ResetDeadheadTarget() {
+	m.deadhead_target = nil
+	m.adddeadhead_target = nil
+}
+
+// SetMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field.
+func (m *DispatchControlMutation) SetMaxShipmentWeightLimit(i int) {
+	m.max_shipment_weight_limit = &i
+	m.addmax_shipment_weight_limit = nil
+}
+
+// MaxShipmentWeightLimit returns the value of the "max_shipment_weight_limit" field in the mutation.
+func (m *DispatchControlMutation) MaxShipmentWeightLimit() (r int, exists bool) {
+	v := m.max_shipment_weight_limit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxShipmentWeightLimit returns the old "max_shipment_weight_limit" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldMaxShipmentWeightLimit(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxShipmentWeightLimit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxShipmentWeightLimit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxShipmentWeightLimit: %w", err)
+	}
+	return oldValue.MaxShipmentWeightLimit, nil
+}
+
+// AddMaxShipmentWeightLimit adds i to the "max_shipment_weight_limit" field.
+func (m *DispatchControlMutation) AddMaxShipmentWeightLimit(i int) {
+	if m.addmax_shipment_weight_limit != nil {
+		*m.addmax_shipment_weight_limit += i
+	} else {
+		m.addmax_shipment_weight_limit = &i
+	}
+}
+
+// AddedMaxShipmentWeightLimit returns the value that was added to the "max_shipment_weight_limit" field in this mutation.
+func (m *DispatchControlMutation) AddedMaxShipmentWeightLimit() (r int, exists bool) {
+	v := m.addmax_shipment_weight_limit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMaxShipmentWeightLimit resets all changes to the "max_shipment_weight_limit" field.
+func (m *DispatchControlMutation) ResetMaxShipmentWeightLimit() {
+	m.max_shipment_weight_limit = nil
+	m.addmax_shipment_weight_limit = nil
+}
+
+// SetGracePeriod sets the "grace_period" field.
+func (m *DispatchControlMutation) SetGracePeriod(u uint8) {
+	m.grace_period = &u
+	m.addgrace_period = nil
+}
+
+// GracePeriod returns the value of the "grace_period" field in the mutation.
+func (m *DispatchControlMutation) GracePeriod() (r uint8, exists bool) {
+	v := m.grace_period
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGracePeriod returns the old "grace_period" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldGracePeriod(ctx context.Context) (v uint8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGracePeriod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGracePeriod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGracePeriod: %w", err)
+	}
+	return oldValue.GracePeriod, nil
+}
+
+// AddGracePeriod adds u to the "grace_period" field.
+func (m *DispatchControlMutation) AddGracePeriod(u int8) {
+	if m.addgrace_period != nil {
+		*m.addgrace_period += u
+	} else {
+		m.addgrace_period = &u
+	}
+}
+
+// AddedGracePeriod returns the value that was added to the "grace_period" field in this mutation.
+func (m *DispatchControlMutation) AddedGracePeriod() (r int8, exists bool) {
+	v := m.addgrace_period
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGracePeriod resets all changes to the "grace_period" field.
+func (m *DispatchControlMutation) ResetGracePeriod() {
+	m.grace_period = nil
+	m.addgrace_period = nil
+}
+
+// SetEnforceWorkerAssign sets the "enforce_worker_assign" field.
+func (m *DispatchControlMutation) SetEnforceWorkerAssign(b bool) {
+	m.enforce_worker_assign = &b
+}
+
+// EnforceWorkerAssign returns the value of the "enforce_worker_assign" field in the mutation.
+func (m *DispatchControlMutation) EnforceWorkerAssign() (r bool, exists bool) {
+	v := m.enforce_worker_assign
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceWorkerAssign returns the old "enforce_worker_assign" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldEnforceWorkerAssign(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceWorkerAssign is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceWorkerAssign requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceWorkerAssign: %w", err)
+	}
+	return oldValue.EnforceWorkerAssign, nil
+}
+
+// ResetEnforceWorkerAssign resets all changes to the "enforce_worker_assign" field.
+func (m *DispatchControlMutation) ResetEnforceWorkerAssign() {
+	m.enforce_worker_assign = nil
+}
+
+// SetTrailerContinuity sets the "trailer_continuity" field.
+func (m *DispatchControlMutation) SetTrailerContinuity(b bool) {
+	m.trailer_continuity = &b
+}
+
+// TrailerContinuity returns the value of the "trailer_continuity" field in the mutation.
+func (m *DispatchControlMutation) TrailerContinuity() (r bool, exists bool) {
+	v := m.trailer_continuity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrailerContinuity returns the old "trailer_continuity" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldTrailerContinuity(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrailerContinuity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrailerContinuity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrailerContinuity: %w", err)
+	}
+	return oldValue.TrailerContinuity, nil
+}
+
+// ResetTrailerContinuity resets all changes to the "trailer_continuity" field.
+func (m *DispatchControlMutation) ResetTrailerContinuity() {
+	m.trailer_continuity = nil
+}
+
+// SetDupeTrailerCheck sets the "dupe_trailer_check" field.
+func (m *DispatchControlMutation) SetDupeTrailerCheck(b bool) {
+	m.dupe_trailer_check = &b
+}
+
+// DupeTrailerCheck returns the value of the "dupe_trailer_check" field in the mutation.
+func (m *DispatchControlMutation) DupeTrailerCheck() (r bool, exists bool) {
+	v := m.dupe_trailer_check
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDupeTrailerCheck returns the old "dupe_trailer_check" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldDupeTrailerCheck(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDupeTrailerCheck is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDupeTrailerCheck requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDupeTrailerCheck: %w", err)
+	}
+	return oldValue.DupeTrailerCheck, nil
+}
+
+// ResetDupeTrailerCheck resets all changes to the "dupe_trailer_check" field.
+func (m *DispatchControlMutation) ResetDupeTrailerCheck() {
+	m.dupe_trailer_check = nil
+}
+
+// SetMaintenanceCompliance sets the "maintenance_compliance" field.
+func (m *DispatchControlMutation) SetMaintenanceCompliance(b bool) {
+	m.maintenance_compliance = &b
+}
+
+// MaintenanceCompliance returns the value of the "maintenance_compliance" field in the mutation.
+func (m *DispatchControlMutation) MaintenanceCompliance() (r bool, exists bool) {
+	v := m.maintenance_compliance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaintenanceCompliance returns the old "maintenance_compliance" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldMaintenanceCompliance(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaintenanceCompliance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaintenanceCompliance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaintenanceCompliance: %w", err)
+	}
+	return oldValue.MaintenanceCompliance, nil
+}
+
+// ResetMaintenanceCompliance resets all changes to the "maintenance_compliance" field.
+func (m *DispatchControlMutation) ResetMaintenanceCompliance() {
+	m.maintenance_compliance = nil
+}
+
+// SetRegulatoryCheck sets the "regulatory_check" field.
+func (m *DispatchControlMutation) SetRegulatoryCheck(b bool) {
+	m.regulatory_check = &b
+}
+
+// RegulatoryCheck returns the value of the "regulatory_check" field in the mutation.
+func (m *DispatchControlMutation) RegulatoryCheck() (r bool, exists bool) {
+	v := m.regulatory_check
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegulatoryCheck returns the old "regulatory_check" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldRegulatoryCheck(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegulatoryCheck is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegulatoryCheck requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegulatoryCheck: %w", err)
+	}
+	return oldValue.RegulatoryCheck, nil
+}
+
+// ResetRegulatoryCheck resets all changes to the "regulatory_check" field.
+func (m *DispatchControlMutation) ResetRegulatoryCheck() {
+	m.regulatory_check = nil
+}
+
+// SetPrevShipmentOnHold sets the "prev_shipment_on_hold" field.
+func (m *DispatchControlMutation) SetPrevShipmentOnHold(b bool) {
+	m.prev_shipment_on_hold = &b
+}
+
+// PrevShipmentOnHold returns the value of the "prev_shipment_on_hold" field in the mutation.
+func (m *DispatchControlMutation) PrevShipmentOnHold() (r bool, exists bool) {
+	v := m.prev_shipment_on_hold
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPrevShipmentOnHold returns the old "prev_shipment_on_hold" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldPrevShipmentOnHold(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPrevShipmentOnHold is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPrevShipmentOnHold requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPrevShipmentOnHold: %w", err)
+	}
+	return oldValue.PrevShipmentOnHold, nil
+}
+
+// ResetPrevShipmentOnHold resets all changes to the "prev_shipment_on_hold" field.
+func (m *DispatchControlMutation) ResetPrevShipmentOnHold() {
+	m.prev_shipment_on_hold = nil
+}
+
+// SetWorkerTimeAwayRestriction sets the "worker_time_away_restriction" field.
+func (m *DispatchControlMutation) SetWorkerTimeAwayRestriction(b bool) {
+	m.worker_time_away_restriction = &b
+}
+
+// WorkerTimeAwayRestriction returns the value of the "worker_time_away_restriction" field in the mutation.
+func (m *DispatchControlMutation) WorkerTimeAwayRestriction() (r bool, exists bool) {
+	v := m.worker_time_away_restriction
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkerTimeAwayRestriction returns the old "worker_time_away_restriction" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldWorkerTimeAwayRestriction(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkerTimeAwayRestriction is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkerTimeAwayRestriction requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkerTimeAwayRestriction: %w", err)
+	}
+	return oldValue.WorkerTimeAwayRestriction, nil
+}
+
+// ResetWorkerTimeAwayRestriction resets all changes to the "worker_time_away_restriction" field.
+func (m *DispatchControlMutation) ResetWorkerTimeAwayRestriction() {
+	m.worker_time_away_restriction = nil
+}
+
+// SetTractorWorkerFleetConstraint sets the "tractor_worker_fleet_constraint" field.
+func (m *DispatchControlMutation) SetTractorWorkerFleetConstraint(b bool) {
+	m.tractor_worker_fleet_constraint = &b
+}
+
+// TractorWorkerFleetConstraint returns the value of the "tractor_worker_fleet_constraint" field in the mutation.
+func (m *DispatchControlMutation) TractorWorkerFleetConstraint() (r bool, exists bool) {
+	v := m.tractor_worker_fleet_constraint
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTractorWorkerFleetConstraint returns the old "tractor_worker_fleet_constraint" field's value of the DispatchControl entity.
+// If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DispatchControlMutation) OldTractorWorkerFleetConstraint(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTractorWorkerFleetConstraint is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTractorWorkerFleetConstraint requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTractorWorkerFleetConstraint: %w", err)
+	}
+	return oldValue.TractorWorkerFleetConstraint, nil
+}
+
+// ResetTractorWorkerFleetConstraint resets all changes to the "tractor_worker_fleet_constraint" field.
+func (m *DispatchControlMutation) ResetTractorWorkerFleetConstraint() {
+	m.tractor_worker_fleet_constraint = nil
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *DispatchControlMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[dispatchcontrol.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *DispatchControlMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *DispatchControlMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *DispatchControlMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *DispatchControlMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[dispatchcontrol.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *DispatchControlMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *DispatchControlMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *DispatchControlMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the DispatchControlMutation builder.
+func (m *DispatchControlMutation) Where(ps ...predicate.DispatchControl) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DispatchControlMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DispatchControlMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DispatchControl, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DispatchControlMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DispatchControlMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DispatchControl).
+func (m *DispatchControlMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DispatchControlMutation) Fields() []string {
+	fields := make([]string, 0, 16)
+	if m.created_at != nil {
+		fields = append(fields, dispatchcontrol.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, dispatchcontrol.FieldUpdatedAt)
+	}
+	if m.organization != nil {
+		fields = append(fields, dispatchcontrol.FieldOrganizationID)
+	}
+	if m.business_unit != nil {
+		fields = append(fields, dispatchcontrol.FieldBusinessUnitID)
+	}
+	if m.record_service_incident != nil {
+		fields = append(fields, dispatchcontrol.FieldRecordServiceIncident)
+	}
+	if m.deadhead_target != nil {
+		fields = append(fields, dispatchcontrol.FieldDeadheadTarget)
+	}
+	if m.max_shipment_weight_limit != nil {
+		fields = append(fields, dispatchcontrol.FieldMaxShipmentWeightLimit)
+	}
+	if m.grace_period != nil {
+		fields = append(fields, dispatchcontrol.FieldGracePeriod)
+	}
+	if m.enforce_worker_assign != nil {
+		fields = append(fields, dispatchcontrol.FieldEnforceWorkerAssign)
+	}
+	if m.trailer_continuity != nil {
+		fields = append(fields, dispatchcontrol.FieldTrailerContinuity)
+	}
+	if m.dupe_trailer_check != nil {
+		fields = append(fields, dispatchcontrol.FieldDupeTrailerCheck)
+	}
+	if m.maintenance_compliance != nil {
+		fields = append(fields, dispatchcontrol.FieldMaintenanceCompliance)
+	}
+	if m.regulatory_check != nil {
+		fields = append(fields, dispatchcontrol.FieldRegulatoryCheck)
+	}
+	if m.prev_shipment_on_hold != nil {
+		fields = append(fields, dispatchcontrol.FieldPrevShipmentOnHold)
+	}
+	if m.worker_time_away_restriction != nil {
+		fields = append(fields, dispatchcontrol.FieldWorkerTimeAwayRestriction)
+	}
+	if m.tractor_worker_fleet_constraint != nil {
+		fields = append(fields, dispatchcontrol.FieldTractorWorkerFleetConstraint)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DispatchControlMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case dispatchcontrol.FieldCreatedAt:
+		return m.CreatedAt()
+	case dispatchcontrol.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case dispatchcontrol.FieldOrganizationID:
+		return m.OrganizationID()
+	case dispatchcontrol.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case dispatchcontrol.FieldRecordServiceIncident:
+		return m.RecordServiceIncident()
+	case dispatchcontrol.FieldDeadheadTarget:
+		return m.DeadheadTarget()
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		return m.MaxShipmentWeightLimit()
+	case dispatchcontrol.FieldGracePeriod:
+		return m.GracePeriod()
+	case dispatchcontrol.FieldEnforceWorkerAssign:
+		return m.EnforceWorkerAssign()
+	case dispatchcontrol.FieldTrailerContinuity:
+		return m.TrailerContinuity()
+	case dispatchcontrol.FieldDupeTrailerCheck:
+		return m.DupeTrailerCheck()
+	case dispatchcontrol.FieldMaintenanceCompliance:
+		return m.MaintenanceCompliance()
+	case dispatchcontrol.FieldRegulatoryCheck:
+		return m.RegulatoryCheck()
+	case dispatchcontrol.FieldPrevShipmentOnHold:
+		return m.PrevShipmentOnHold()
+	case dispatchcontrol.FieldWorkerTimeAwayRestriction:
+		return m.WorkerTimeAwayRestriction()
+	case dispatchcontrol.FieldTractorWorkerFleetConstraint:
+		return m.TractorWorkerFleetConstraint()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DispatchControlMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case dispatchcontrol.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case dispatchcontrol.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case dispatchcontrol.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case dispatchcontrol.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case dispatchcontrol.FieldRecordServiceIncident:
+		return m.OldRecordServiceIncident(ctx)
+	case dispatchcontrol.FieldDeadheadTarget:
+		return m.OldDeadheadTarget(ctx)
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		return m.OldMaxShipmentWeightLimit(ctx)
+	case dispatchcontrol.FieldGracePeriod:
+		return m.OldGracePeriod(ctx)
+	case dispatchcontrol.FieldEnforceWorkerAssign:
+		return m.OldEnforceWorkerAssign(ctx)
+	case dispatchcontrol.FieldTrailerContinuity:
+		return m.OldTrailerContinuity(ctx)
+	case dispatchcontrol.FieldDupeTrailerCheck:
+		return m.OldDupeTrailerCheck(ctx)
+	case dispatchcontrol.FieldMaintenanceCompliance:
+		return m.OldMaintenanceCompliance(ctx)
+	case dispatchcontrol.FieldRegulatoryCheck:
+		return m.OldRegulatoryCheck(ctx)
+	case dispatchcontrol.FieldPrevShipmentOnHold:
+		return m.OldPrevShipmentOnHold(ctx)
+	case dispatchcontrol.FieldWorkerTimeAwayRestriction:
+		return m.OldWorkerTimeAwayRestriction(ctx)
+	case dispatchcontrol.FieldTractorWorkerFleetConstraint:
+		return m.OldTractorWorkerFleetConstraint(ctx)
+	}
+	return nil, fmt.Errorf("unknown DispatchControl field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DispatchControlMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case dispatchcontrol.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case dispatchcontrol.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case dispatchcontrol.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case dispatchcontrol.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case dispatchcontrol.FieldRecordServiceIncident:
+		v, ok := value.(dispatchcontrol.RecordServiceIncident)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecordServiceIncident(v)
+		return nil
+	case dispatchcontrol.FieldDeadheadTarget:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeadheadTarget(v)
+		return nil
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxShipmentWeightLimit(v)
+		return nil
+	case dispatchcontrol.FieldGracePeriod:
+		v, ok := value.(uint8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGracePeriod(v)
+		return nil
+	case dispatchcontrol.FieldEnforceWorkerAssign:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceWorkerAssign(v)
+		return nil
+	case dispatchcontrol.FieldTrailerContinuity:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrailerContinuity(v)
+		return nil
+	case dispatchcontrol.FieldDupeTrailerCheck:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDupeTrailerCheck(v)
+		return nil
+	case dispatchcontrol.FieldMaintenanceCompliance:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaintenanceCompliance(v)
+		return nil
+	case dispatchcontrol.FieldRegulatoryCheck:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegulatoryCheck(v)
+		return nil
+	case dispatchcontrol.FieldPrevShipmentOnHold:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPrevShipmentOnHold(v)
+		return nil
+	case dispatchcontrol.FieldWorkerTimeAwayRestriction:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkerTimeAwayRestriction(v)
+		return nil
+	case dispatchcontrol.FieldTractorWorkerFleetConstraint:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTractorWorkerFleetConstraint(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DispatchControl field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DispatchControlMutation) AddedFields() []string {
+	var fields []string
+	if m.adddeadhead_target != nil {
+		fields = append(fields, dispatchcontrol.FieldDeadheadTarget)
+	}
+	if m.addmax_shipment_weight_limit != nil {
+		fields = append(fields, dispatchcontrol.FieldMaxShipmentWeightLimit)
+	}
+	if m.addgrace_period != nil {
+		fields = append(fields, dispatchcontrol.FieldGracePeriod)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DispatchControlMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case dispatchcontrol.FieldDeadheadTarget:
+		return m.AddedDeadheadTarget()
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		return m.AddedMaxShipmentWeightLimit()
+	case dispatchcontrol.FieldGracePeriod:
+		return m.AddedGracePeriod()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DispatchControlMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case dispatchcontrol.FieldDeadheadTarget:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDeadheadTarget(v)
+		return nil
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxShipmentWeightLimit(v)
+		return nil
+	case dispatchcontrol.FieldGracePeriod:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGracePeriod(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DispatchControl numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DispatchControlMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DispatchControlMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DispatchControlMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown DispatchControl nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DispatchControlMutation) ResetField(name string) error {
+	switch name {
+	case dispatchcontrol.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case dispatchcontrol.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case dispatchcontrol.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case dispatchcontrol.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case dispatchcontrol.FieldRecordServiceIncident:
+		m.ResetRecordServiceIncident()
+		return nil
+	case dispatchcontrol.FieldDeadheadTarget:
+		m.ResetDeadheadTarget()
+		return nil
+	case dispatchcontrol.FieldMaxShipmentWeightLimit:
+		m.ResetMaxShipmentWeightLimit()
+		return nil
+	case dispatchcontrol.FieldGracePeriod:
+		m.ResetGracePeriod()
+		return nil
+	case dispatchcontrol.FieldEnforceWorkerAssign:
+		m.ResetEnforceWorkerAssign()
+		return nil
+	case dispatchcontrol.FieldTrailerContinuity:
+		m.ResetTrailerContinuity()
+		return nil
+	case dispatchcontrol.FieldDupeTrailerCheck:
+		m.ResetDupeTrailerCheck()
+		return nil
+	case dispatchcontrol.FieldMaintenanceCompliance:
+		m.ResetMaintenanceCompliance()
+		return nil
+	case dispatchcontrol.FieldRegulatoryCheck:
+		m.ResetRegulatoryCheck()
+		return nil
+	case dispatchcontrol.FieldPrevShipmentOnHold:
+		m.ResetPrevShipmentOnHold()
+		return nil
+	case dispatchcontrol.FieldWorkerTimeAwayRestriction:
+		m.ResetWorkerTimeAwayRestriction()
+		return nil
+	case dispatchcontrol.FieldTractorWorkerFleetConstraint:
+		m.ResetTractorWorkerFleetConstraint()
+		return nil
+	}
+	return fmt.Errorf("unknown DispatchControl field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DispatchControlMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, dispatchcontrol.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, dispatchcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DispatchControlMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case dispatchcontrol.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case dispatchcontrol.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DispatchControlMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DispatchControlMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DispatchControlMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, dispatchcontrol.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, dispatchcontrol.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DispatchControlMutation) EdgeCleared(name string) bool {
+	switch name {
+	case dispatchcontrol.EdgeOrganization:
+		return m.clearedorganization
+	case dispatchcontrol.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DispatchControlMutation) ClearEdge(name string) error {
+	switch name {
+	case dispatchcontrol.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case dispatchcontrol.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown DispatchControl unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DispatchControlMutation) ResetEdge(name string) error {
+	switch name {
+	case dispatchcontrol.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case dispatchcontrol.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown DispatchControl edge %s", name)
 }
 
 // GeneralLedgerAccountMutation represents an operation that mutates the GeneralLedgerAccount nodes in the graph.
@@ -5622,7 +7101,6 @@ type OrganizationMutation struct {
 	logo_url                  *string
 	org_type                  *organization.OrgType
 	timezone                  *organization.Timezone
-	business_unit_id          *uuid.UUID
 	clearedFields             map[string]struct{}
 	business_unit             *uuid.UUID
 	clearedbusiness_unit      bool
@@ -5630,6 +7108,8 @@ type OrganizationMutation struct {
 	clearedaccounting_control bool
 	billing_control           *uuid.UUID
 	clearedbilling_control    bool
+	dispatch_control          *uuid.UUID
+	cleareddispatch_control   bool
 	done                      bool
 	oldValue                  func(context.Context) (*Organization, error)
 	predicates                []predicate.Organization
@@ -6040,42 +7520,6 @@ func (m *OrganizationMutation) ResetTimezone() {
 	m.timezone = nil
 }
 
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (m *OrganizationMutation) SetBusinessUnitID(u uuid.UUID) {
-	m.business_unit_id = &u
-}
-
-// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
-func (m *OrganizationMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
-	v := m.business_unit_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBusinessUnitID returns the old "business_unit_id" field's value of the Organization entity.
-// If the Organization object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OrganizationMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
-	}
-	return oldValue.BusinessUnitID, nil
-}
-
-// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
-func (m *OrganizationMutation) ResetBusinessUnitID() {
-	m.business_unit_id = nil
-}
-
 // SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
 func (m *OrganizationMutation) SetBusinessUnitID(id uuid.UUID) {
 	m.business_unit = &id
@@ -6193,6 +7637,45 @@ func (m *OrganizationMutation) ResetBillingControl() {
 	m.clearedbilling_control = false
 }
 
+// SetDispatchControlID sets the "dispatch_control" edge to the DispatchControl entity by id.
+func (m *OrganizationMutation) SetDispatchControlID(id uuid.UUID) {
+	m.dispatch_control = &id
+}
+
+// ClearDispatchControl clears the "dispatch_control" edge to the DispatchControl entity.
+func (m *OrganizationMutation) ClearDispatchControl() {
+	m.cleareddispatch_control = true
+}
+
+// DispatchControlCleared reports if the "dispatch_control" edge to the DispatchControl entity was cleared.
+func (m *OrganizationMutation) DispatchControlCleared() bool {
+	return m.cleareddispatch_control
+}
+
+// DispatchControlID returns the "dispatch_control" edge ID in the mutation.
+func (m *OrganizationMutation) DispatchControlID() (id uuid.UUID, exists bool) {
+	if m.dispatch_control != nil {
+		return *m.dispatch_control, true
+	}
+	return
+}
+
+// DispatchControlIDs returns the "dispatch_control" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DispatchControlID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) DispatchControlIDs() (ids []uuid.UUID) {
+	if id := m.dispatch_control; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDispatchControl resets all changes to the "dispatch_control" edge.
+func (m *OrganizationMutation) ResetDispatchControl() {
+	m.dispatch_control = nil
+	m.cleareddispatch_control = false
+}
+
 // Where appends a list predicates to the OrganizationMutation builder.
 func (m *OrganizationMutation) Where(ps ...predicate.Organization) {
 	m.predicates = append(m.predicates, ps...)
@@ -6227,7 +7710,7 @@ func (m *OrganizationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrganizationMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, organization.FieldCreatedAt)
 	}
@@ -6251,9 +7734,6 @@ func (m *OrganizationMutation) Fields() []string {
 	}
 	if m.timezone != nil {
 		fields = append(fields, organization.FieldTimezone)
-	}
-	if m.business_unit_id != nil {
-		fields = append(fields, organization.FieldBusinessUnitID)
 	}
 	return fields
 }
@@ -6279,8 +7759,6 @@ func (m *OrganizationMutation) Field(name string) (ent.Value, bool) {
 		return m.OrgType()
 	case organization.FieldTimezone:
 		return m.Timezone()
-	case organization.FieldBusinessUnitID:
-		return m.BusinessUnitID()
 	}
 	return nil, false
 }
@@ -6306,8 +7784,6 @@ func (m *OrganizationMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldOrgType(ctx)
 	case organization.FieldTimezone:
 		return m.OldTimezone(ctx)
-	case organization.FieldBusinessUnitID:
-		return m.OldBusinessUnitID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Organization field %s", name)
 }
@@ -6372,13 +7848,6 @@ func (m *OrganizationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTimezone(v)
-		return nil
-	case organization.FieldBusinessUnitID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBusinessUnitID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Organization field %s", name)
@@ -6462,16 +7931,13 @@ func (m *OrganizationMutation) ResetField(name string) error {
 	case organization.FieldTimezone:
 		m.ResetTimezone()
 		return nil
-	case organization.FieldBusinessUnitID:
-		m.ResetBusinessUnitID()
-		return nil
 	}
 	return fmt.Errorf("unknown Organization field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -6480,6 +7946,9 @@ func (m *OrganizationMutation) AddedEdges() []string {
 	}
 	if m.billing_control != nil {
 		edges = append(edges, organization.EdgeBillingControl)
+	}
+	if m.dispatch_control != nil {
+		edges = append(edges, organization.EdgeDispatchControl)
 	}
 	return edges
 }
@@ -6500,13 +7969,17 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 		if id := m.billing_control; id != nil {
 			return []ent.Value{*id}
 		}
+	case organization.EdgeDispatchControl:
+		if id := m.dispatch_control; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	return edges
 }
 
@@ -6518,7 +7991,7 @@ func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -6527,6 +8000,9 @@ func (m *OrganizationMutation) ClearedEdges() []string {
 	}
 	if m.clearedbilling_control {
 		edges = append(edges, organization.EdgeBillingControl)
+	}
+	if m.cleareddispatch_control {
+		edges = append(edges, organization.EdgeDispatchControl)
 	}
 	return edges
 }
@@ -6541,6 +8017,8 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 		return m.clearedaccounting_control
 	case organization.EdgeBillingControl:
 		return m.clearedbilling_control
+	case organization.EdgeDispatchControl:
+		return m.cleareddispatch_control
 	}
 	return false
 }
@@ -6558,6 +8036,9 @@ func (m *OrganizationMutation) ClearEdge(name string) error {
 	case organization.EdgeBillingControl:
 		m.ClearBillingControl()
 		return nil
+	case organization.EdgeDispatchControl:
+		m.ClearDispatchControl()
+		return nil
 	}
 	return fmt.Errorf("unknown Organization unique edge %s", name)
 }
@@ -6574,6 +8055,9 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 		return nil
 	case organization.EdgeBillingControl:
 		m.ResetBillingControl()
+		return nil
+	case organization.EdgeDispatchControl:
+		m.ResetDispatchControl()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization edge %s", name)

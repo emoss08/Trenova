@@ -101,23 +101,29 @@ func (BusinessUnit) Fields() []ent.Field {
 		field.String("address").
 			Optional(),
 		field.String("city").
-			MaxLen(255),
+			MaxLen(255).
+			Optional(),
 		field.String("state").
-			MaxLen(2),
+			MaxLen(2).
+			Optional(),
 		field.String("country").
-			MaxLen(2),
+			MaxLen(2).
+			Optional(),
 		field.String("postal_code").
 			MaxLen(10).
+			Optional().
 			StructTag(`json:"postalCode"`),
 		field.String("tax_id").
-			MaxLen(20),
+			MaxLen(20).
+			Optional().
+			StructTag(`json:"taxId"`),
 		field.String("subscription_plan").
-			NotEmpty().
+			Optional().
 			StructTag(`json:"subscriptionPlan"`),
 		field.String("description").
 			Optional(),
 		field.String("legal_name").
-			NotEmpty().
+			Optional().
 			StructTag(`json:"legalName"`),
 		field.String("contact_name").
 			Optional().
@@ -135,6 +141,7 @@ func (BusinessUnit) Fields() []ent.Field {
 			StructTag(`json:"freeTrial"`),
 		field.UUID("parent_id", uuid.UUID{}).
 			Optional().
+			Nillable().
 			StructTag(`json:"parentId"`),
 	}
 }
@@ -149,7 +156,9 @@ func (BusinessUnit) Edges() []ent.Edge {
 			Field("parent_id").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"parent_id"`),
-		edge.To("organizations", Organization.Type),
+		edge.To("organizations", Organization.Type).
+			StorageKey(edge.Column("business_unit_id")).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 

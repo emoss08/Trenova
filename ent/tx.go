@@ -18,6 +18,8 @@ type Tx struct {
 	BillingControl *BillingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
+	// DispatchControl is the client for interacting with the DispatchControl builders.
+	DispatchControl *DispatchControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
 	// Organization is the client for interacting with the Organization builders.
@@ -160,6 +162,7 @@ func (tx *Tx) init() {
 	tx.AccountingControl = NewAccountingControlClient(tx.config)
 	tx.BillingControl = NewBillingControlClient(tx.config)
 	tx.BusinessUnit = NewBusinessUnitClient(tx.config)
+	tx.DispatchControl = NewDispatchControlClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)

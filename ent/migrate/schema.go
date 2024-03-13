@@ -102,14 +102,14 @@ var (
 		{Name: "entity_key", Type: field.TypeString, Size: 10},
 		{Name: "phone_number", Type: field.TypeString, Size: 15},
 		{Name: "address", Type: field.TypeString, Nullable: true},
-		{Name: "city", Type: field.TypeString, Size: 255},
-		{Name: "state", Type: field.TypeString, Size: 2},
-		{Name: "country", Type: field.TypeString, Size: 2},
-		{Name: "postal_code", Type: field.TypeString, Size: 10},
-		{Name: "tax_id", Type: field.TypeString, Size: 20},
-		{Name: "subscription_plan", Type: field.TypeString},
+		{Name: "city", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "state", Type: field.TypeString, Nullable: true, Size: 2},
+		{Name: "country", Type: field.TypeString, Nullable: true, Size: 2},
+		{Name: "postal_code", Type: field.TypeString, Nullable: true, Size: 10},
+		{Name: "tax_id", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "subscription_plan", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
-		{Name: "legal_name", Type: field.TypeString},
+		{Name: "legal_name", Type: field.TypeString, Nullable: true},
 		{Name: "contact_name", Type: field.TypeString, Nullable: true},
 		{Name: "contact_email", Type: field.TypeString, Nullable: true},
 		{Name: "paid_until", Type: field.TypeTime, Nullable: true},
@@ -140,6 +140,46 @@ var (
 				Name:    "businessunit_entity_key",
 				Unique:  true,
 				Columns: []*schema.Column{BusinessUnitsColumns[5]},
+			},
+		},
+	}
+	// DispatchControlsColumns holds the columns for the "dispatch_controls" table.
+	DispatchControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "record_service_incident", Type: field.TypeEnum, Enums: []string{"Never", "Pickup", "Delivery", "PickupAndDelivery", "AllExceptShipper"}, Default: "Never"},
+		{Name: "deadhead_target", Type: field.TypeFloat64, Default: 0},
+		{Name: "max_shipment_weight_limit", Type: field.TypeInt, Default: 80000},
+		{Name: "grace_period", Type: field.TypeUint8, Default: 0},
+		{Name: "enforce_worker_assign", Type: field.TypeBool, Default: true},
+		{Name: "trailer_continuity", Type: field.TypeBool, Default: false},
+		{Name: "dupe_trailer_check", Type: field.TypeBool, Default: false},
+		{Name: "maintenance_compliance", Type: field.TypeBool, Default: true},
+		{Name: "regulatory_check", Type: field.TypeBool, Default: false},
+		{Name: "prev_shipment_on_hold", Type: field.TypeBool, Default: false},
+		{Name: "worker_time_away_restriction", Type: field.TypeBool, Default: true},
+		{Name: "tractor_worker_fleet_constraint", Type: field.TypeBool, Default: false},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+	}
+	// DispatchControlsTable holds the schema information for the "dispatch_controls" table.
+	DispatchControlsTable = &schema.Table{
+		Name:       "dispatch_controls",
+		Columns:    DispatchControlsColumns,
+		PrimaryKey: []*schema.Column{DispatchControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "dispatch_controls_organizations_organization",
+				Columns:    []*schema.Column{DispatchControlsColumns[15]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "dispatch_controls_business_units_business_unit",
+				Columns:    []*schema.Column{DispatchControlsColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -203,9 +243,9 @@ var (
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A"},
 		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
 		{Name: "business_unit_id", Type: field.TypeUUID},
-		{Name: "business_unit_organizations", Type: field.TypeUUID},
 		{Name: "organization_accounting_control", Type: field.TypeUUID},
 		{Name: "organization_billing_control", Type: field.TypeUUID},
+		{Name: "organization_dispatch_control", Type: field.TypeUUID},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
 	OrganizationsTable = &schema.Table{
@@ -215,20 +255,26 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "organizations_business_units_organizations",
-				Columns:    []*schema.Column{OrganizationsColumns[10]},
+				Columns:    []*schema.Column{OrganizationsColumns[9]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "organizations_accounting_controls_accounting_control",
-				Columns:    []*schema.Column{OrganizationsColumns[11]},
+				Columns:    []*schema.Column{OrganizationsColumns[10]},
 				RefColumns: []*schema.Column{AccountingControlsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "organizations_billing_controls_billing_control",
-				Columns:    []*schema.Column{OrganizationsColumns[12]},
+				Columns:    []*schema.Column{OrganizationsColumns[11]},
 				RefColumns: []*schema.Column{BillingControlsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "organizations_dispatch_controls_dispatch_control",
+				Columns:    []*schema.Column{OrganizationsColumns[12]},
+				RefColumns: []*schema.Column{DispatchControlsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -322,6 +368,7 @@ var (
 		AccountingControlsTable,
 		BillingControlsTable,
 		BusinessUnitsTable,
+		DispatchControlsTable,
 		GeneralLedgerAccountsTable,
 		OrganizationsTable,
 		TagsTable,
@@ -337,11 +384,14 @@ func init() {
 	BillingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	BillingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	DispatchControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	DispatchControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	OrganizationsTable.ForeignKeys[1].RefTable = AccountingControlsTable
 	OrganizationsTable.ForeignKeys[2].RefTable = BillingControlsTable
+	OrganizationsTable.ForeignKeys[3].RefTable = DispatchControlsTable
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable

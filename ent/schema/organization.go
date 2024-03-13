@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // Organization holds the schema definition for the Organization entity.
@@ -33,8 +32,6 @@ func (Organization) Fields() []ent.Field {
 		field.Enum("timezone").
 			Values("TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork").
 			Default("TimezoneAmericaLosAngeles"),
-		field.UUID("business_unit_id", uuid.UUID{}).
-			StructTag(`json:"businessUnitId"`),
 	}
 }
 
@@ -48,6 +45,9 @@ func (Organization) Edges() []ent.Edge {
 			Required().
 			Unique(),
 		edge.To("billing_control", BillingControl.Type).
+			Required().
+			Unique(),
+		edge.To("dispatch_control", DispatchControl.Type).
 			Required().
 			Unique(),
 	}
