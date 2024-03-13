@@ -17,6 +17,7 @@ type DefaultMixin struct {
 	mixin.Schema
 }
 
+// Fields of the DefaultMixin.
 func (DefaultMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
@@ -27,6 +28,46 @@ func (DefaultMixin) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now()).
 			UpdateDefault(time.Now),
+	}
+}
+
+// BaseMixin implements the ent.Mixin for sharing time fields with package schemas.
+//
+// This mixin is used to add the common fields to all entities.
+type BaseMixin struct {
+	mixin.Schema
+}
+
+// Fields of the BaseMixin.
+func (BaseMixin) Fields() []ent.Field {
+	return []ent.Field{
+		field.UUID("id", uuid.UUID{}).
+			Default(uuid.New),
+		field.UUID("business_unit_id", uuid.UUID{}).
+			StructTag(`json:"businessUnitId"`),
+		field.UUID("organization_id", uuid.UUID{}).
+			StructTag(`json:"organizationId"`),
+		field.Time("created_at").
+			Immutable().
+			Default(time.Now()),
+		field.Time("updated_at").
+			Default(time.Now()).
+			UpdateDefault(time.Now),
+	}
+}
+
+func (BaseMixin) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("business_unit", BusinessUnit.Type).
+			Field("business_unit_id").
+			Required().
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Unique(),
+		edge.To("organization", Organization.Type).
+			Field("organization_id").
+			Required().
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Unique(),
 	}
 }
 
@@ -101,11 +142,14 @@ func (BusinessUnit) Fields() []ent.Field {
 // Edges of the BusinessUnit.
 func (BusinessUnit) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("parent", BusinessUnit.Type).
+		edge.To("next", BusinessUnit.Type).
+			Unique().
+			From("prev").
+			Unique().
 			Field("parent_id").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
-			Unique().
 			StructTag(`json:"parent_id"`),
+		edge.To("organizations", Organization.Type),
 	}
 }
 

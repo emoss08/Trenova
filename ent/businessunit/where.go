@@ -1301,21 +1301,67 @@ func ParentIDNotNil() predicate.BusinessUnit {
 	return predicate.BusinessUnit(sql.FieldNotNull(FieldParentID))
 }
 
-// HasParent applies the HasEdge predicate on the "parent" edge.
-func HasParent() predicate.BusinessUnit {
+// HasPrev applies the HasEdge predicate on the "prev" edge.
+func HasPrev() predicate.BusinessUnit {
 	return predicate.BusinessUnit(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, ParentTable, ParentColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, PrevTable, PrevColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasParentWith applies the HasEdge predicate on the "parent" edge with a given conditions (other predicates).
-func HasParentWith(preds ...predicate.BusinessUnit) predicate.BusinessUnit {
+// HasPrevWith applies the HasEdge predicate on the "prev" edge with a given conditions (other predicates).
+func HasPrevWith(preds ...predicate.BusinessUnit) predicate.BusinessUnit {
 	return predicate.BusinessUnit(func(s *sql.Selector) {
-		step := newParentStep()
+		step := newPrevStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasNext applies the HasEdge predicate on the "next" edge.
+func HasNext() predicate.BusinessUnit {
+	return predicate.BusinessUnit(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, NextTable, NextColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasNextWith applies the HasEdge predicate on the "next" edge with a given conditions (other predicates).
+func HasNextWith(preds ...predicate.BusinessUnit) predicate.BusinessUnit {
+	return predicate.BusinessUnit(func(s *sql.Selector) {
+		step := newNextStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOrganizations applies the HasEdge predicate on the "organizations" edge.
+func HasOrganizations() predicate.BusinessUnit {
+	return predicate.BusinessUnit(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OrganizationsTable, OrganizationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOrganizationsWith applies the HasEdge predicate on the "organizations" edge with a given conditions (other predicates).
+func HasOrganizationsWith(preds ...predicate.Organization) predicate.BusinessUnit {
+	return predicate.BusinessUnit(func(s *sql.Selector) {
+		step := newOrganizationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

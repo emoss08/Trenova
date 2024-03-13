@@ -6,12 +6,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/google/uuid"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -27,13 +31,262 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return uu
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (uu *UserUpdate) SetBusinessUnitID(u uuid.UUID) *UserUpdate {
+	uu.mutation.SetBusinessUnitID(u)
+	return uu
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *UserUpdate {
+	if u != nil {
+		uu.SetBusinessUnitID(*u)
+	}
+	return uu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (uu *UserUpdate) SetOrganizationID(u uuid.UUID) *UserUpdate {
+	uu.mutation.SetOrganizationID(u)
+	return uu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableOrganizationID(u *uuid.UUID) *UserUpdate {
+	if u != nil {
+		uu.SetOrganizationID(*u)
+	}
+	return uu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
+	uu.mutation.SetUpdatedAt(t)
+	return uu
+}
+
+// SetStatus sets the "status" field.
+func (uu *UserUpdate) SetStatus(u user.Status) *UserUpdate {
+	uu.mutation.SetStatus(u)
+	return uu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableStatus(u *user.Status) *UserUpdate {
+	if u != nil {
+		uu.SetStatus(*u)
+	}
+	return uu
+}
+
+// SetName sets the "name" field.
+func (uu *UserUpdate) SetName(s string) *UserUpdate {
+	uu.mutation.SetName(s)
+	return uu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetName(*s)
+	}
+	return uu
+}
+
+// SetUsername sets the "username" field.
+func (uu *UserUpdate) SetUsername(s string) *UserUpdate {
+	uu.mutation.SetUsername(s)
+	return uu
+}
+
+// SetNillableUsername sets the "username" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableUsername(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetUsername(*s)
+	}
+	return uu
+}
+
+// SetPassword sets the "password" field.
+func (uu *UserUpdate) SetPassword(s string) *UserUpdate {
+	uu.mutation.SetPassword(s)
+	return uu
+}
+
+// SetNillablePassword sets the "password" field if the given value is not nil.
+func (uu *UserUpdate) SetNillablePassword(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetPassword(*s)
+	}
+	return uu
+}
+
+// SetEmail sets the "email" field.
+func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
+	uu.mutation.SetEmail(s)
+	return uu
+}
+
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetEmail(*s)
+	}
+	return uu
+}
+
+// SetDateJoined sets the "date_joined" field.
+func (uu *UserUpdate) SetDateJoined(s string) *UserUpdate {
+	uu.mutation.SetDateJoined(s)
+	return uu
+}
+
+// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDateJoined(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetDateJoined(*s)
+	}
+	return uu
+}
+
+// ClearDateJoined clears the value of the "date_joined" field.
+func (uu *UserUpdate) ClearDateJoined() *UserUpdate {
+	uu.mutation.ClearDateJoined()
+	return uu
+}
+
+// SetTimezone sets the "timezone" field.
+func (uu *UserUpdate) SetTimezone(u user.Timezone) *UserUpdate {
+	uu.mutation.SetTimezone(u)
+	return uu
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableTimezone(u *user.Timezone) *UserUpdate {
+	if u != nil {
+		uu.SetTimezone(*u)
+	}
+	return uu
+}
+
+// SetProfilePicURL sets the "profile_pic_url" field.
+func (uu *UserUpdate) SetProfilePicURL(s string) *UserUpdate {
+	uu.mutation.SetProfilePicURL(s)
+	return uu
+}
+
+// SetNillableProfilePicURL sets the "profile_pic_url" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableProfilePicURL(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetProfilePicURL(*s)
+	}
+	return uu
+}
+
+// ClearProfilePicURL clears the value of the "profile_pic_url" field.
+func (uu *UserUpdate) ClearProfilePicURL() *UserUpdate {
+	uu.mutation.ClearProfilePicURL()
+	return uu
+}
+
+// SetThumbnailURL sets the "thumbnail_url" field.
+func (uu *UserUpdate) SetThumbnailURL(s string) *UserUpdate {
+	uu.mutation.SetThumbnailURL(s)
+	return uu
+}
+
+// SetNillableThumbnailURL sets the "thumbnail_url" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableThumbnailURL(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetThumbnailURL(*s)
+	}
+	return uu
+}
+
+// ClearThumbnailURL clears the value of the "thumbnail_url" field.
+func (uu *UserUpdate) ClearThumbnailURL() *UserUpdate {
+	uu.mutation.ClearThumbnailURL()
+	return uu
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (uu *UserUpdate) SetPhoneNumber(s string) *UserUpdate {
+	uu.mutation.SetPhoneNumber(s)
+	return uu
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (uu *UserUpdate) SetNillablePhoneNumber(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetPhoneNumber(*s)
+	}
+	return uu
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (uu *UserUpdate) ClearPhoneNumber() *UserUpdate {
+	uu.mutation.ClearPhoneNumber()
+	return uu
+}
+
+// SetIsAdmin sets the "is_admin" field.
+func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
+	uu.mutation.SetIsAdmin(b)
+	return uu
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsAdmin(*b)
+	}
+	return uu
+}
+
+// SetIsSuperAdmin sets the "is_super_admin" field.
+func (uu *UserUpdate) SetIsSuperAdmin(b bool) *UserUpdate {
+	uu.mutation.SetIsSuperAdmin(b)
+	return uu
+}
+
+// SetNillableIsSuperAdmin sets the "is_super_admin" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsSuperAdmin(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsSuperAdmin(*b)
+	}
+	return uu
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (uu *UserUpdate) SetBusinessUnit(b *BusinessUnit) *UserUpdate {
+	return uu.SetBusinessUnitID(b.ID)
+}
+
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uu *UserUpdate) SetOrganization(o *Organization) *UserUpdate {
+	return uu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (uu *UserUpdate) ClearBusinessUnit() *UserUpdate {
+	uu.mutation.ClearBusinessUnit()
+	return uu
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uu *UserUpdate) ClearOrganization() *UserUpdate {
+	uu.mutation.ClearOrganization()
+	return uu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
+	uu.defaults()
 	return withHooks(ctx, uu.sqlSave, uu.mutation, uu.hooks)
 }
 
@@ -59,14 +312,175 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (uu *UserUpdate) defaults() {
+	if _, ok := uu.mutation.UpdatedAt(); !ok {
+		v := user.UpdateDefaultUpdatedAt()
+		uu.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Status(); ok {
+		if err := user.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Username(); ok {
+		if err := user.UsernameValidator(v); err != nil {
+			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Password(); ok {
+		if err := user.PasswordValidator(v); err != nil {
+			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Email(); ok {
+		if err := user.EmailValidator(v); err != nil {
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.Timezone(); ok {
+		if err := user.TimezoneValidator(v); err != nil {
+			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
+		}
+	}
+	if _, ok := uu.mutation.BusinessUnitID(); uu.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
+	}
+	if _, ok := uu.mutation.OrganizationID(); uu.mutation.OrganizationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "User.organization"`)
+	}
+	return nil
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	if err := uu.check(); err != nil {
+		return n, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uu.mutation.UpdatedAt(); ok {
+		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uu.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := uu.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Username(); ok {
+		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.DateJoined(); ok {
+		_spec.SetField(user.FieldDateJoined, field.TypeString, value)
+	}
+	if uu.mutation.DateJoinedCleared() {
+		_spec.ClearField(user.FieldDateJoined, field.TypeString)
+	}
+	if value, ok := uu.mutation.Timezone(); ok {
+		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+	}
+	if value, ok := uu.mutation.ProfilePicURL(); ok {
+		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
+	}
+	if uu.mutation.ProfilePicURLCleared() {
+		_spec.ClearField(user.FieldProfilePicURL, field.TypeString)
+	}
+	if value, ok := uu.mutation.ThumbnailURL(); ok {
+		_spec.SetField(user.FieldThumbnailURL, field.TypeString, value)
+	}
+	if uu.mutation.ThumbnailURLCleared() {
+		_spec.ClearField(user.FieldThumbnailURL, field.TypeString)
+	}
+	if value, ok := uu.mutation.PhoneNumber(); ok {
+		_spec.SetField(user.FieldPhoneNumber, field.TypeString, value)
+	}
+	if uu.mutation.PhoneNumberCleared() {
+		_spec.ClearField(user.FieldPhoneNumber, field.TypeString)
+	}
+	if value, ok := uu.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
+	}
+	if value, ok := uu.mutation.IsSuperAdmin(); ok {
+		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
+	}
+	if uu.mutation.BusinessUnitCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.BusinessUnitTable,
+			Columns: []string{user.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.BusinessUnitTable,
+			Columns: []string{user.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -88,9 +502,257 @@ type UserUpdateOne struct {
 	mutation *UserMutation
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (uuo *UserUpdateOne) SetBusinessUnitID(u uuid.UUID) *UserUpdateOne {
+	uuo.mutation.SetBusinessUnitID(u)
+	return uuo
+}
+
+// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *UserUpdateOne {
+	if u != nil {
+		uuo.SetBusinessUnitID(*u)
+	}
+	return uuo
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (uuo *UserUpdateOne) SetOrganizationID(u uuid.UUID) *UserUpdateOne {
+	uuo.mutation.SetOrganizationID(u)
+	return uuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *UserUpdateOne {
+	if u != nil {
+		uuo.SetOrganizationID(*u)
+	}
+	return uuo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetUpdatedAt(t)
+	return uuo
+}
+
+// SetStatus sets the "status" field.
+func (uuo *UserUpdateOne) SetStatus(u user.Status) *UserUpdateOne {
+	uuo.mutation.SetStatus(u)
+	return uuo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableStatus(u *user.Status) *UserUpdateOne {
+	if u != nil {
+		uuo.SetStatus(*u)
+	}
+	return uuo
+}
+
+// SetName sets the "name" field.
+func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
+	uuo.mutation.SetName(s)
+	return uuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetName(*s)
+	}
+	return uuo
+}
+
+// SetUsername sets the "username" field.
+func (uuo *UserUpdateOne) SetUsername(s string) *UserUpdateOne {
+	uuo.mutation.SetUsername(s)
+	return uuo
+}
+
+// SetNillableUsername sets the "username" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableUsername(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetUsername(*s)
+	}
+	return uuo
+}
+
+// SetPassword sets the "password" field.
+func (uuo *UserUpdateOne) SetPassword(s string) *UserUpdateOne {
+	uuo.mutation.SetPassword(s)
+	return uuo
+}
+
+// SetNillablePassword sets the "password" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillablePassword(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetPassword(*s)
+	}
+	return uuo
+}
+
+// SetEmail sets the "email" field.
+func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
+	uuo.mutation.SetEmail(s)
+	return uuo
+}
+
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetEmail(*s)
+	}
+	return uuo
+}
+
+// SetDateJoined sets the "date_joined" field.
+func (uuo *UserUpdateOne) SetDateJoined(s string) *UserUpdateOne {
+	uuo.mutation.SetDateJoined(s)
+	return uuo
+}
+
+// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDateJoined(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetDateJoined(*s)
+	}
+	return uuo
+}
+
+// ClearDateJoined clears the value of the "date_joined" field.
+func (uuo *UserUpdateOne) ClearDateJoined() *UserUpdateOne {
+	uuo.mutation.ClearDateJoined()
+	return uuo
+}
+
+// SetTimezone sets the "timezone" field.
+func (uuo *UserUpdateOne) SetTimezone(u user.Timezone) *UserUpdateOne {
+	uuo.mutation.SetTimezone(u)
+	return uuo
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableTimezone(u *user.Timezone) *UserUpdateOne {
+	if u != nil {
+		uuo.SetTimezone(*u)
+	}
+	return uuo
+}
+
+// SetProfilePicURL sets the "profile_pic_url" field.
+func (uuo *UserUpdateOne) SetProfilePicURL(s string) *UserUpdateOne {
+	uuo.mutation.SetProfilePicURL(s)
+	return uuo
+}
+
+// SetNillableProfilePicURL sets the "profile_pic_url" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableProfilePicURL(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetProfilePicURL(*s)
+	}
+	return uuo
+}
+
+// ClearProfilePicURL clears the value of the "profile_pic_url" field.
+func (uuo *UserUpdateOne) ClearProfilePicURL() *UserUpdateOne {
+	uuo.mutation.ClearProfilePicURL()
+	return uuo
+}
+
+// SetThumbnailURL sets the "thumbnail_url" field.
+func (uuo *UserUpdateOne) SetThumbnailURL(s string) *UserUpdateOne {
+	uuo.mutation.SetThumbnailURL(s)
+	return uuo
+}
+
+// SetNillableThumbnailURL sets the "thumbnail_url" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableThumbnailURL(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetThumbnailURL(*s)
+	}
+	return uuo
+}
+
+// ClearThumbnailURL clears the value of the "thumbnail_url" field.
+func (uuo *UserUpdateOne) ClearThumbnailURL() *UserUpdateOne {
+	uuo.mutation.ClearThumbnailURL()
+	return uuo
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (uuo *UserUpdateOne) SetPhoneNumber(s string) *UserUpdateOne {
+	uuo.mutation.SetPhoneNumber(s)
+	return uuo
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillablePhoneNumber(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetPhoneNumber(*s)
+	}
+	return uuo
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (uuo *UserUpdateOne) ClearPhoneNumber() *UserUpdateOne {
+	uuo.mutation.ClearPhoneNumber()
+	return uuo
+}
+
+// SetIsAdmin sets the "is_admin" field.
+func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsAdmin(b)
+	return uuo
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsAdmin(*b)
+	}
+	return uuo
+}
+
+// SetIsSuperAdmin sets the "is_super_admin" field.
+func (uuo *UserUpdateOne) SetIsSuperAdmin(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsSuperAdmin(b)
+	return uuo
+}
+
+// SetNillableIsSuperAdmin sets the "is_super_admin" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsSuperAdmin(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsSuperAdmin(*b)
+	}
+	return uuo
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (uuo *UserUpdateOne) SetBusinessUnit(b *BusinessUnit) *UserUpdateOne {
+	return uuo.SetBusinessUnitID(b.ID)
+}
+
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uuo *UserUpdateOne) SetOrganization(o *Organization) *UserUpdateOne {
+	return uuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (uuo *UserUpdateOne) ClearBusinessUnit() *UserUpdateOne {
+	uuo.mutation.ClearBusinessUnit()
+	return uuo
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uuo *UserUpdateOne) ClearOrganization() *UserUpdateOne {
+	uuo.mutation.ClearOrganization()
+	return uuo
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -108,6 +770,7 @@ func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne 
 
 // Save executes the query and returns the updated User entity.
 func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
+	uuo.defaults()
 	return withHooks(ctx, uuo.sqlSave, uuo.mutation, uuo.hooks)
 }
 
@@ -133,8 +796,60 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (uuo *UserUpdateOne) defaults() {
+	if _, ok := uuo.mutation.UpdatedAt(); !ok {
+		v := user.UpdateDefaultUpdatedAt()
+		uuo.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Status(); ok {
+		if err := user.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Username(); ok {
+		if err := user.UsernameValidator(v); err != nil {
+			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Password(); ok {
+		if err := user.PasswordValidator(v); err != nil {
+			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Email(); ok {
+		if err := user.EmailValidator(v); err != nil {
+			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.Timezone(); ok {
+		if err := user.TimezoneValidator(v); err != nil {
+			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
+		}
+	}
+	if _, ok := uuo.mutation.BusinessUnitID(); uuo.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
+	}
+	if _, ok := uuo.mutation.OrganizationID(); uuo.mutation.OrganizationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "User.organization"`)
+	}
+	return nil
+}
+
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	if err := uuo.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	id, ok := uuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
@@ -158,6 +873,115 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uuo.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := uuo.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Username(); ok {
+		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.DateJoined(); ok {
+		_spec.SetField(user.FieldDateJoined, field.TypeString, value)
+	}
+	if uuo.mutation.DateJoinedCleared() {
+		_spec.ClearField(user.FieldDateJoined, field.TypeString)
+	}
+	if value, ok := uuo.mutation.Timezone(); ok {
+		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+	}
+	if value, ok := uuo.mutation.ProfilePicURL(); ok {
+		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
+	}
+	if uuo.mutation.ProfilePicURLCleared() {
+		_spec.ClearField(user.FieldProfilePicURL, field.TypeString)
+	}
+	if value, ok := uuo.mutation.ThumbnailURL(); ok {
+		_spec.SetField(user.FieldThumbnailURL, field.TypeString, value)
+	}
+	if uuo.mutation.ThumbnailURLCleared() {
+		_spec.ClearField(user.FieldThumbnailURL, field.TypeString)
+	}
+	if value, ok := uuo.mutation.PhoneNumber(); ok {
+		_spec.SetField(user.FieldPhoneNumber, field.TypeString, value)
+	}
+	if uuo.mutation.PhoneNumberCleared() {
+		_spec.ClearField(user.FieldPhoneNumber, field.TypeString)
+	}
+	if value, ok := uuo.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
+	}
+	if value, ok := uuo.mutation.IsSuperAdmin(); ok {
+		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
+	}
+	if uuo.mutation.BusinessUnitCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.BusinessUnitTable,
+			Columns: []string{user.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.BusinessUnitTable,
+			Columns: []string{user.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

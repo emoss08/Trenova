@@ -6,11 +6,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AccountingControl is the predicate function for accountingcontrol builders.
+type AccountingControl func(*sql.Selector)
+
 // BusinessUnit is the predicate function for businessunit builders.
 type BusinessUnit func(*sql.Selector)
 
+// GeneralLedgerAccount is the predicate function for generalledgeraccount builders.
+type GeneralLedgerAccount func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
+
+// Tag is the predicate function for tag builders.
+type Tag func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

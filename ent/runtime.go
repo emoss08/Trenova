@@ -5,9 +5,13 @@ package ent
 import (
 	"time"
 
+	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/schema"
+	"github.com/emoss08/trenova/ent/tag"
+	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -15,6 +19,51 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	accountingcontrolMixin := schema.AccountingControl{}.Mixin()
+	accountingcontrolMixinFields0 := accountingcontrolMixin[0].Fields()
+	_ = accountingcontrolMixinFields0
+	accountingcontrolFields := schema.AccountingControl{}.Fields()
+	_ = accountingcontrolFields
+	// accountingcontrolDescCreatedAt is the schema descriptor for created_at field.
+	accountingcontrolDescCreatedAt := accountingcontrolMixinFields0[1].Descriptor()
+	// accountingcontrol.DefaultCreatedAt holds the default value on creation for the created_at field.
+	accountingcontrol.DefaultCreatedAt = accountingcontrolDescCreatedAt.Default.(time.Time)
+	// accountingcontrolDescUpdatedAt is the schema descriptor for updated_at field.
+	accountingcontrolDescUpdatedAt := accountingcontrolMixinFields0[2].Descriptor()
+	// accountingcontrol.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	accountingcontrol.DefaultUpdatedAt = accountingcontrolDescUpdatedAt.Default.(time.Time)
+	// accountingcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	accountingcontrol.UpdateDefaultUpdatedAt = accountingcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// accountingcontrolDescRecThreshold is the schema descriptor for rec_threshold field.
+	accountingcontrolDescRecThreshold := accountingcontrolFields[2].Descriptor()
+	// accountingcontrol.DefaultRecThreshold holds the default value on creation for the rec_threshold field.
+	accountingcontrol.DefaultRecThreshold = accountingcontrolDescRecThreshold.Default.(int64)
+	// accountingcontrol.RecThresholdValidator is a validator for the "rec_threshold" field. It is called by the builders before save.
+	accountingcontrol.RecThresholdValidator = accountingcontrolDescRecThreshold.Validators[0].(func(int64) error)
+	// accountingcontrolDescAutoCreateJournalEntries is the schema descriptor for auto_create_journal_entries field.
+	accountingcontrolDescAutoCreateJournalEntries := accountingcontrolFields[4].Descriptor()
+	// accountingcontrol.DefaultAutoCreateJournalEntries holds the default value on creation for the auto_create_journal_entries field.
+	accountingcontrol.DefaultAutoCreateJournalEntries = accountingcontrolDescAutoCreateJournalEntries.Default.(bool)
+	// accountingcontrolDescRestrictManualJournalEntries is the schema descriptor for restrict_manual_journal_entries field.
+	accountingcontrolDescRestrictManualJournalEntries := accountingcontrolFields[5].Descriptor()
+	// accountingcontrol.DefaultRestrictManualJournalEntries holds the default value on creation for the restrict_manual_journal_entries field.
+	accountingcontrol.DefaultRestrictManualJournalEntries = accountingcontrolDescRestrictManualJournalEntries.Default.(bool)
+	// accountingcontrolDescRequireJournalEntryApproval is the schema descriptor for require_journal_entry_approval field.
+	accountingcontrolDescRequireJournalEntryApproval := accountingcontrolFields[6].Descriptor()
+	// accountingcontrol.DefaultRequireJournalEntryApproval holds the default value on creation for the require_journal_entry_approval field.
+	accountingcontrol.DefaultRequireJournalEntryApproval = accountingcontrolDescRequireJournalEntryApproval.Default.(bool)
+	// accountingcontrolDescEnableRecNotifications is the schema descriptor for enable_rec_notifications field.
+	accountingcontrolDescEnableRecNotifications := accountingcontrolFields[7].Descriptor()
+	// accountingcontrol.DefaultEnableRecNotifications holds the default value on creation for the enable_rec_notifications field.
+	accountingcontrol.DefaultEnableRecNotifications = accountingcontrolDescEnableRecNotifications.Default.(bool)
+	// accountingcontrolDescHaltOnPendingRec is the schema descriptor for halt_on_pending_rec field.
+	accountingcontrolDescHaltOnPendingRec := accountingcontrolFields[8].Descriptor()
+	// accountingcontrol.DefaultHaltOnPendingRec holds the default value on creation for the halt_on_pending_rec field.
+	accountingcontrol.DefaultHaltOnPendingRec = accountingcontrolDescHaltOnPendingRec.Default.(bool)
+	// accountingcontrolDescID is the schema descriptor for id field.
+	accountingcontrolDescID := accountingcontrolMixinFields0[0].Descriptor()
+	// accountingcontrol.DefaultID holds the default value on creation for the id field.
+	accountingcontrol.DefaultID = accountingcontrolDescID.Default.(func() uuid.UUID)
 	businessunitMixin := schema.BusinessUnit{}.Mixin()
 	businessunitMixinFields0 := businessunitMixin[0].Fields()
 	_ = businessunitMixinFields0
@@ -106,6 +155,41 @@ func init() {
 	businessunitDescID := businessunitMixinFields0[0].Descriptor()
 	// businessunit.DefaultID holds the default value on creation for the id field.
 	businessunit.DefaultID = businessunitDescID.Default.(func() uuid.UUID)
+	generalledgeraccountMixin := schema.GeneralLedgerAccount{}.Mixin()
+	generalledgeraccountMixinFields0 := generalledgeraccountMixin[0].Fields()
+	_ = generalledgeraccountMixinFields0
+	generalledgeraccountFields := schema.GeneralLedgerAccount{}.Fields()
+	_ = generalledgeraccountFields
+	// generalledgeraccountDescCreatedAt is the schema descriptor for created_at field.
+	generalledgeraccountDescCreatedAt := generalledgeraccountMixinFields0[3].Descriptor()
+	// generalledgeraccount.DefaultCreatedAt holds the default value on creation for the created_at field.
+	generalledgeraccount.DefaultCreatedAt = generalledgeraccountDescCreatedAt.Default.(time.Time)
+	// generalledgeraccountDescUpdatedAt is the schema descriptor for updated_at field.
+	generalledgeraccountDescUpdatedAt := generalledgeraccountMixinFields0[4].Descriptor()
+	// generalledgeraccount.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	generalledgeraccount.DefaultUpdatedAt = generalledgeraccountDescUpdatedAt.Default.(time.Time)
+	// generalledgeraccount.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	generalledgeraccount.UpdateDefaultUpdatedAt = generalledgeraccountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// generalledgeraccountDescAccountNumber is the schema descriptor for account_number field.
+	generalledgeraccountDescAccountNumber := generalledgeraccountFields[1].Descriptor()
+	// generalledgeraccount.AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
+	generalledgeraccount.AccountNumberValidator = generalledgeraccountDescAccountNumber.Validators[0].(func(string) error)
+	// generalledgeraccountDescDateOpened is the schema descriptor for date_opened field.
+	generalledgeraccountDescDateOpened := generalledgeraccountFields[8].Descriptor()
+	// generalledgeraccount.DefaultDateOpened holds the default value on creation for the date_opened field.
+	generalledgeraccount.DefaultDateOpened = generalledgeraccountDescDateOpened.Default.(func() time.Time)
+	// generalledgeraccountDescIsTaxRelevant is the schema descriptor for is_tax_relevant field.
+	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[11].Descriptor()
+	// generalledgeraccount.DefaultIsTaxRelevant holds the default value on creation for the is_tax_relevant field.
+	generalledgeraccount.DefaultIsTaxRelevant = generalledgeraccountDescIsTaxRelevant.Default.(bool)
+	// generalledgeraccountDescIsReconciled is the schema descriptor for is_reconciled field.
+	generalledgeraccountDescIsReconciled := generalledgeraccountFields[12].Descriptor()
+	// generalledgeraccount.DefaultIsReconciled holds the default value on creation for the is_reconciled field.
+	generalledgeraccount.DefaultIsReconciled = generalledgeraccountDescIsReconciled.Default.(bool)
+	// generalledgeraccountDescID is the schema descriptor for id field.
+	generalledgeraccountDescID := generalledgeraccountMixinFields0[0].Descriptor()
+	// generalledgeraccount.DefaultID holds the default value on creation for the id field.
+	generalledgeraccount.DefaultID = generalledgeraccountDescID.Default.(func() uuid.UUID)
 	organizationMixin := schema.Organization{}.Mixin()
 	organizationMixinFields0 := organizationMixin[0].Fields()
 	_ = organizationMixinFields0
@@ -121,8 +205,86 @@ func init() {
 	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(time.Time)
 	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	organization.UpdateDefaultUpdatedAt = organizationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationDescName is the schema descriptor for name field.
+	organizationDescName := organizationFields[0].Descriptor()
+	// organization.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	organization.NameValidator = organizationDescName.Validators[0].(func(string) error)
+	// organizationDescScacCode is the schema descriptor for scac_code field.
+	organizationDescScacCode := organizationFields[1].Descriptor()
+	// organization.ScacCodeValidator is a validator for the "scac_code" field. It is called by the builders before save.
+	organization.ScacCodeValidator = organizationDescScacCode.Validators[0].(func(string) error)
+	// organizationDescDotNumber is the schema descriptor for dot_number field.
+	organizationDescDotNumber := organizationFields[2].Descriptor()
+	// organization.DotNumberValidator is a validator for the "dot_number" field. It is called by the builders before save.
+	organization.DotNumberValidator = organizationDescDotNumber.Validators[0].(func(string) error)
 	// organizationDescID is the schema descriptor for id field.
 	organizationDescID := organizationMixinFields0[0].Descriptor()
 	// organization.DefaultID holds the default value on creation for the id field.
 	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
+	tagMixin := schema.Tag{}.Mixin()
+	tagMixinFields0 := tagMixin[0].Fields()
+	_ = tagMixinFields0
+	tagFields := schema.Tag{}.Fields()
+	_ = tagFields
+	// tagDescCreatedAt is the schema descriptor for created_at field.
+	tagDescCreatedAt := tagMixinFields0[3].Descriptor()
+	// tag.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tag.DefaultCreatedAt = tagDescCreatedAt.Default.(time.Time)
+	// tagDescUpdatedAt is the schema descriptor for updated_at field.
+	tagDescUpdatedAt := tagMixinFields0[4].Descriptor()
+	// tag.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tag.DefaultUpdatedAt = tagDescUpdatedAt.Default.(time.Time)
+	// tag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tag.UpdateDefaultUpdatedAt = tagDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tagDescName is the schema descriptor for name field.
+	tagDescName := tagFields[0].Descriptor()
+	// tag.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	tag.NameValidator = tagDescName.Validators[0].(func(string) error)
+	// tagDescID is the schema descriptor for id field.
+	tagDescID := tagMixinFields0[0].Descriptor()
+	// tag.DefaultID holds the default value on creation for the id field.
+	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
+	userMixin := schema.User{}.Mixin()
+	userMixinFields0 := userMixin[0].Fields()
+	_ = userMixinFields0
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescCreatedAt is the schema descriptor for created_at field.
+	userDescCreatedAt := userMixinFields0[3].Descriptor()
+	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
+	user.DefaultCreatedAt = userDescCreatedAt.Default.(time.Time)
+	// userDescUpdatedAt is the schema descriptor for updated_at field.
+	userDescUpdatedAt := userMixinFields0[4].Descriptor()
+	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(time.Time)
+	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescName is the schema descriptor for name field.
+	userDescName := userFields[1].Descriptor()
+	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	// userDescUsername is the schema descriptor for username field.
+	userDescUsername := userFields[2].Descriptor()
+	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
+	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
+	// userDescPassword is the schema descriptor for password field.
+	userDescPassword := userFields[3].Descriptor()
+	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
+	user.PasswordValidator = userDescPassword.Validators[0].(func(string) error)
+	// userDescEmail is the schema descriptor for email field.
+	userDescEmail := userFields[4].Descriptor()
+	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescIsAdmin is the schema descriptor for is_admin field.
+	userDescIsAdmin := userFields[10].Descriptor()
+	// user.DefaultIsAdmin holds the default value on creation for the is_admin field.
+	user.DefaultIsAdmin = userDescIsAdmin.Default.(bool)
+	// userDescIsSuperAdmin is the schema descriptor for is_super_admin field.
+	userDescIsSuperAdmin := userFields[11].Descriptor()
+	// user.DefaultIsSuperAdmin holds the default value on creation for the is_super_admin field.
+	user.DefaultIsSuperAdmin = userDescIsSuperAdmin.Default.(bool)
+	// userDescID is the schema descriptor for id field.
+	userDescID := userMixinFields0[0].Descriptor()
+	// user.DefaultID holds the default value on creation for the id field.
+	user.DefaultID = userDescID.Default.(func() uuid.UUID)
 }

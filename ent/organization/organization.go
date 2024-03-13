@@ -3,9 +3,11 @@
 package organization
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -18,8 +20,40 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldScacCode holds the string denoting the scac_code field in the database.
+	FieldScacCode = "scac_code"
+	// FieldDotNumber holds the string denoting the dot_number field in the database.
+	FieldDotNumber = "dot_number"
+	// FieldLogoURL holds the string denoting the logo_url field in the database.
+	FieldLogoURL = "logo_url"
+	// FieldOrgType holds the string denoting the org_type field in the database.
+	FieldOrgType = "org_type"
+	// FieldTimezone holds the string denoting the timezone field in the database.
+	FieldTimezone = "timezone"
+	// FieldBusinessUnitID holds the string denoting the business_unit_id field in the database.
+	FieldBusinessUnitID = "business_unit_id"
+	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
+	EdgeBusinessUnit = "business_unit"
+	// EdgeAccountingControl holds the string denoting the accounting_control edge name in mutations.
+	EdgeAccountingControl = "accounting_control"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
+	// BusinessUnitTable is the table that holds the business_unit relation/edge.
+	BusinessUnitTable = "organizations"
+	// BusinessUnitInverseTable is the table name for the BusinessUnit entity.
+	// It exists in this package in order to avoid circular dependency with the "businessunit" package.
+	BusinessUnitInverseTable = "business_units"
+	// BusinessUnitColumn is the table column denoting the business_unit relation/edge.
+	BusinessUnitColumn = "business_unit_organizations"
+	// AccountingControlTable is the table that holds the accounting_control relation/edge.
+	AccountingControlTable = "organizations"
+	// AccountingControlInverseTable is the table name for the AccountingControl entity.
+	// It exists in this package in order to avoid circular dependency with the "accountingcontrol" package.
+	AccountingControlInverseTable = "accounting_controls"
+	// AccountingControlColumn is the table column denoting the accounting_control relation/edge.
+	AccountingControlColumn = "organization_accounting_control"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -27,12 +61,31 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldName,
+	FieldScacCode,
+	FieldDotNumber,
+	FieldLogoURL,
+	FieldOrgType,
+	FieldTimezone,
+	FieldBusinessUnitID,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "organizations"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"business_unit_organizations",
+	"organization_accounting_control",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -46,9 +99,70 @@ var (
 	DefaultUpdatedAt time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
+	// ScacCodeValidator is a validator for the "scac_code" field. It is called by the builders before save.
+	ScacCodeValidator func(string) error
+	// DotNumberValidator is a validator for the "dot_number" field. It is called by the builders before save.
+	DotNumberValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// OrgType defines the type for the "org_type" enum field.
+type OrgType string
+
+// OrgTypeA is the default value of the OrgType enum.
+const DefaultOrgType = OrgTypeA
+
+// OrgType values.
+const (
+	OrgTypeA OrgType = "A"
+	OrgTypeB OrgType = "B"
+	OrgTypeX OrgType = "X"
+)
+
+func (ot OrgType) String() string {
+	return string(ot)
+}
+
+// OrgTypeValidator is a validator for the "org_type" field enum values. It is called by the builders before save.
+func OrgTypeValidator(ot OrgType) error {
+	switch ot {
+	case OrgTypeA, OrgTypeB, OrgTypeX:
+		return nil
+	default:
+		return fmt.Errorf("organization: invalid enum value for org_type field: %q", ot)
+	}
+}
+
+// Timezone defines the type for the "timezone" enum field.
+type Timezone string
+
+// TimezoneTimezoneAmericaLosAngeles is the default value of the Timezone enum.
+const DefaultTimezone = TimezoneTimezoneAmericaLosAngeles
+
+// Timezone values.
+const (
+	TimezoneTimezoneAmericaLosAngeles Timezone = "TimezoneAmericaLosAngeles"
+	TimezoneTimezoneAmericaDenver     Timezone = "TimezoneAmericaDenver"
+	TimezoneTimezoneAmericaChicago    Timezone = "TimezoneAmericaChicago"
+	TimezoneTimezoneAmericaNewYork    Timezone = "TimezoneAmericaNewYork"
+)
+
+func (t Timezone) String() string {
+	return string(t)
+}
+
+// TimezoneValidator is a validator for the "timezone" field enum values. It is called by the builders before save.
+func TimezoneValidator(t Timezone) error {
+	switch t {
+	case TimezoneTimezoneAmericaLosAngeles, TimezoneTimezoneAmericaDenver, TimezoneTimezoneAmericaChicago, TimezoneTimezoneAmericaNewYork:
+		return nil
+	default:
+		return fmt.Errorf("organization: invalid enum value for timezone field: %q", t)
+	}
+}
 
 // OrderOption defines the ordering options for the Organization queries.
 type OrderOption func(*sql.Selector)
@@ -66,4 +180,67 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByScacCode orders the results by the scac_code field.
+func ByScacCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScacCode, opts...).ToFunc()
+}
+
+// ByDotNumber orders the results by the dot_number field.
+func ByDotNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDotNumber, opts...).ToFunc()
+}
+
+// ByLogoURL orders the results by the logo_url field.
+func ByLogoURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLogoURL, opts...).ToFunc()
+}
+
+// ByOrgType orders the results by the org_type field.
+func ByOrgType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrgType, opts...).ToFunc()
+}
+
+// ByTimezone orders the results by the timezone field.
+func ByTimezone(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTimezone, opts...).ToFunc()
+}
+
+// ByBusinessUnitID orders the results by the business_unit_id field.
+func ByBusinessUnitID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBusinessUnitID, opts...).ToFunc()
+}
+
+// ByBusinessUnitField orders the results by business_unit field.
+func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBusinessUnitStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByAccountingControlField orders the results by accounting_control field.
+func ByAccountingControlField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAccountingControlStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newBusinessUnitStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BusinessUnitInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, BusinessUnitTable, BusinessUnitColumn),
+	)
+}
+func newAccountingControlStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AccountingControlInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, AccountingControlTable, AccountingControlColumn),
+	)
 }

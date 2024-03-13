@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -11,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -18,11 +20,13 @@ import (
 // BusinessUnitQuery is the builder for querying BusinessUnit entities.
 type BusinessUnitQuery struct {
 	config
-	ctx        *QueryContext
-	order      []businessunit.OrderOption
-	inters     []Interceptor
-	predicates []predicate.BusinessUnit
-	withParent *BusinessUnitQuery
+	ctx               *QueryContext
+	order             []businessunit.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.BusinessUnit
+	withPrev          *BusinessUnitQuery
+	withNext          *BusinessUnitQuery
+	withOrganizations *OrganizationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,8 +63,8 @@ func (buq *BusinessUnitQuery) Order(o ...businessunit.OrderOption) *BusinessUnit
 	return buq
 }
 
-// QueryParent chains the current query on the "parent" edge.
-func (buq *BusinessUnitQuery) QueryParent() *BusinessUnitQuery {
+// QueryPrev chains the current query on the "prev" edge.
+func (buq *BusinessUnitQuery) QueryPrev() *BusinessUnitQuery {
 	query := (&BusinessUnitClient{config: buq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := buq.prepareQuery(ctx); err != nil {
@@ -73,7 +77,51 @@ func (buq *BusinessUnitQuery) QueryParent() *BusinessUnitQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(businessunit.Table, businessunit.FieldID, selector),
 			sqlgraph.To(businessunit.Table, businessunit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, businessunit.ParentTable, businessunit.ParentColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, businessunit.PrevTable, businessunit.PrevColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(buq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryNext chains the current query on the "next" edge.
+func (buq *BusinessUnitQuery) QueryNext() *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: buq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := buq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := buq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(businessunit.Table, businessunit.FieldID, selector),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, businessunit.NextTable, businessunit.NextColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(buq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOrganizations chains the current query on the "organizations" edge.
+func (buq *BusinessUnitQuery) QueryOrganizations() *OrganizationQuery {
+	query := (&OrganizationClient{config: buq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := buq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := buq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(businessunit.Table, businessunit.FieldID, selector),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, businessunit.OrganizationsTable, businessunit.OrganizationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(buq.driver.Dialect(), step)
 		return fromU, nil
@@ -268,26 +316,50 @@ func (buq *BusinessUnitQuery) Clone() *BusinessUnitQuery {
 		return nil
 	}
 	return &BusinessUnitQuery{
-		config:     buq.config,
-		ctx:        buq.ctx.Clone(),
-		order:      append([]businessunit.OrderOption{}, buq.order...),
-		inters:     append([]Interceptor{}, buq.inters...),
-		predicates: append([]predicate.BusinessUnit{}, buq.predicates...),
-		withParent: buq.withParent.Clone(),
+		config:            buq.config,
+		ctx:               buq.ctx.Clone(),
+		order:             append([]businessunit.OrderOption{}, buq.order...),
+		inters:            append([]Interceptor{}, buq.inters...),
+		predicates:        append([]predicate.BusinessUnit{}, buq.predicates...),
+		withPrev:          buq.withPrev.Clone(),
+		withNext:          buq.withNext.Clone(),
+		withOrganizations: buq.withOrganizations.Clone(),
 		// clone intermediate query.
 		sql:  buq.sql.Clone(),
 		path: buq.path,
 	}
 }
 
-// WithParent tells the query-builder to eager-load the nodes that are connected to
-// the "parent" edge. The optional arguments are used to configure the query builder of the edge.
-func (buq *BusinessUnitQuery) WithParent(opts ...func(*BusinessUnitQuery)) *BusinessUnitQuery {
+// WithPrev tells the query-builder to eager-load the nodes that are connected to
+// the "prev" edge. The optional arguments are used to configure the query builder of the edge.
+func (buq *BusinessUnitQuery) WithPrev(opts ...func(*BusinessUnitQuery)) *BusinessUnitQuery {
 	query := (&BusinessUnitClient{config: buq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	buq.withParent = query
+	buq.withPrev = query
+	return buq
+}
+
+// WithNext tells the query-builder to eager-load the nodes that are connected to
+// the "next" edge. The optional arguments are used to configure the query builder of the edge.
+func (buq *BusinessUnitQuery) WithNext(opts ...func(*BusinessUnitQuery)) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: buq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	buq.withNext = query
+	return buq
+}
+
+// WithOrganizations tells the query-builder to eager-load the nodes that are connected to
+// the "organizations" edge. The optional arguments are used to configure the query builder of the edge.
+func (buq *BusinessUnitQuery) WithOrganizations(opts ...func(*OrganizationQuery)) *BusinessUnitQuery {
+	query := (&OrganizationClient{config: buq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	buq.withOrganizations = query
 	return buq
 }
 
@@ -369,8 +441,10 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	var (
 		nodes       = []*BusinessUnit{}
 		_spec       = buq.querySpec()
-		loadedTypes = [1]bool{
-			buq.withParent != nil,
+		loadedTypes = [3]bool{
+			buq.withPrev != nil,
+			buq.withNext != nil,
+			buq.withOrganizations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -391,16 +465,29 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := buq.withParent; query != nil {
-		if err := buq.loadParent(ctx, query, nodes, nil,
-			func(n *BusinessUnit, e *BusinessUnit) { n.Edges.Parent = e }); err != nil {
+	if query := buq.withPrev; query != nil {
+		if err := buq.loadPrev(ctx, query, nodes, nil,
+			func(n *BusinessUnit, e *BusinessUnit) { n.Edges.Prev = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := buq.withNext; query != nil {
+		if err := buq.loadNext(ctx, query, nodes, nil,
+			func(n *BusinessUnit, e *BusinessUnit) { n.Edges.Next = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := buq.withOrganizations; query != nil {
+		if err := buq.loadOrganizations(ctx, query, nodes,
+			func(n *BusinessUnit) { n.Edges.Organizations = []*Organization{} },
+			func(n *BusinessUnit, e *Organization) { n.Edges.Organizations = append(n.Edges.Organizations, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (buq *BusinessUnitQuery) loadParent(ctx context.Context, query *BusinessUnitQuery, nodes []*BusinessUnit, init func(*BusinessUnit), assign func(*BusinessUnit, *BusinessUnit)) error {
+func (buq *BusinessUnitQuery) loadPrev(ctx context.Context, query *BusinessUnitQuery, nodes []*BusinessUnit, init func(*BusinessUnit), assign func(*BusinessUnit, *BusinessUnit)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*BusinessUnit)
 	for i := range nodes {
@@ -426,6 +513,64 @@ func (buq *BusinessUnitQuery) loadParent(ctx context.Context, query *BusinessUni
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (buq *BusinessUnitQuery) loadNext(ctx context.Context, query *BusinessUnitQuery, nodes []*BusinessUnit, init func(*BusinessUnit), assign func(*BusinessUnit, *BusinessUnit)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*BusinessUnit)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(businessunit.FieldParentID)
+	}
+	query.Where(predicate.BusinessUnit(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(businessunit.NextColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ParentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *OrganizationQuery, nodes []*BusinessUnit, init func(*BusinessUnit), assign func(*BusinessUnit, *Organization)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*BusinessUnit)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Organization(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(businessunit.OrganizationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.business_unit_organizations
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "business_unit_organizations" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "business_unit_organizations" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -455,7 +600,7 @@ func (buq *BusinessUnitQuery) querySpec() *sqlgraph.QuerySpec {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if buq.withParent != nil {
+		if buq.withPrev != nil {
 			_spec.Node.AddColumnOnce(businessunit.FieldParentID)
 		}
 	}

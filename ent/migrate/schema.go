@@ -8,6 +8,56 @@ import (
 )
 
 var (
+	// AccountingControlsColumns holds the columns for the "accounting_controls" table.
+	AccountingControlsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "rec_threshold", Type: field.TypeInt64, Default: 50},
+		{Name: "rec_threshold_action", Type: field.TypeEnum, Enums: []string{"Halt", "Warn"}, Default: "Halt"},
+		{Name: "auto_create_journal_entries", Type: field.TypeBool, Default: false},
+		{Name: "restrict_manual_journal_entries", Type: field.TypeBool, Default: false},
+		{Name: "require_journal_entry_approval", Type: field.TypeBool, Default: false},
+		{Name: "enable_rec_notifications", Type: field.TypeBool, Default: true},
+		{Name: "halt_on_pending_rec", Type: field.TypeBool, Default: false},
+		{Name: "critical_processes", Type: field.TypeString, Size: 2147483647},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "default_rev_account_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "default_exp_account_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// AccountingControlsTable holds the schema information for the "accounting_controls" table.
+	AccountingControlsTable = &schema.Table{
+		Name:       "accounting_controls",
+		Columns:    AccountingControlsColumns,
+		PrimaryKey: []*schema.Column{AccountingControlsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "accounting_controls_organizations_organization",
+				Columns:    []*schema.Column{AccountingControlsColumns[11]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "accounting_controls_business_units_business_unit",
+				Columns:    []*schema.Column{AccountingControlsColumns[12]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "accounting_controls_general_ledger_accounts_default_rev_account",
+				Columns:    []*schema.Column{AccountingControlsColumns[13]},
+				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "accounting_controls_general_ledger_accounts_default_exp_account",
+				Columns:    []*schema.Column{AccountingControlsColumns[14]},
+				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// BusinessUnitsColumns holds the columns for the "business_units" table.
 	BusinessUnitsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -40,10 +90,10 @@ var (
 		PrimaryKey: []*schema.Column{BusinessUnitsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "business_units_business_units_parent",
+				Symbol:     "business_units_business_units_next",
 				Columns:    []*schema.Column{BusinessUnitsColumns[21]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
-				OnDelete:   schema.Cascade,
+				OnDelete:   schema.SetNull,
 			},
 		},
 		Indexes: []*schema.Index{
@@ -59,36 +109,197 @@ var (
 			},
 		},
 	}
+	// GeneralLedgerAccountsColumns holds the columns for the "general_ledger_accounts" table.
+	GeneralLedgerAccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "account_number", Type: field.TypeString, Size: 7},
+		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"AccountTypeAsset", "AccountTypeLiability", "AccountTypeEquity", "AccountTypeRevenue", "AccountTypeExpense"}},
+		{Name: "cash_flow_type", Type: field.TypeEnum, Nullable: true, Enums: []string{"CashFlowOperating", "CashFlowInvesting", "CashFlowFinancing"}},
+		{Name: "account_sub_type", Type: field.TypeEnum, Nullable: true, Enums: []string{"AccountSubTypeCurrentAsset", "AccountSubTypeFixedAsset", "AccountSubTypeOtherAsset", "AccountSubTypeCurrentLiability", "AccountSubTypeLongTermLiability", "AccountSubTypeEquity", "AccountSubTypeRevenue", "AccountSubTypeCostOfGoodsSold", "AccountSubTypeExpense", "AccountSubTypeOtherIncome", "AccountSubTypeOtherExpense"}},
+		{Name: "account_class", Type: field.TypeEnum, Nullable: true, Enums: []string{"AccountClassificationBank", "AccountClassificationCash", "AccountClassificationAR", "AccountClassificationAP", "AccountClassificationINV", "AccountClassificationOCA", "AccountClassificationFA"}},
+		{Name: "balance", Type: field.TypeFloat64, Nullable: true},
+		{Name: "interest_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "date_opened", Type: field.TypeTime},
+		{Name: "date_closed", Type: field.TypeTime, Nullable: true},
+		{Name: "notes", Type: field.TypeString, Nullable: true},
+		{Name: "is_tax_relevant", Type: field.TypeBool, Default: false},
+		{Name: "is_reconciled", Type: field.TypeBool, Default: false},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// GeneralLedgerAccountsTable holds the schema information for the "general_ledger_accounts" table.
+	GeneralLedgerAccountsTable = &schema.Table{
+		Name:       "general_ledger_accounts",
+		Columns:    GeneralLedgerAccountsColumns,
+		PrimaryKey: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "general_ledger_accounts_business_units_business_unit",
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "general_ledger_accounts_organizations_organization",
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "generalledgeraccount_account_number_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{GeneralLedgerAccountsColumns[4], GeneralLedgerAccountsColumns[17]},
+			},
+		},
+	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "scac_code", Type: field.TypeString, Size: 4},
+		{Name: "dot_number", Type: field.TypeString, Size: 12},
+		{Name: "logo_url", Type: field.TypeString, Nullable: true},
+		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A"},
+		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "business_unit_organizations", Type: field.TypeUUID, Nullable: true},
+		{Name: "organization_accounting_control", Type: field.TypeUUID, Nullable: true},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
 	OrganizationsTable = &schema.Table{
 		Name:       "organizations",
 		Columns:    OrganizationsColumns,
 		PrimaryKey: []*schema.Column{OrganizationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "organizations_business_units_organizations",
+				Columns:    []*schema.Column{OrganizationsColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "organizations_accounting_controls_accounting_control",
+				Columns:    []*schema.Column{OrganizationsColumns[11]},
+				RefColumns: []*schema.Column{AccountingControlsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// TagsColumns holds the columns for the "tags" table.
+	TagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Size: 50},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "general_ledger_account_tags", Type: field.TypeUUID, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// TagsTable holds the schema information for the "tags" table.
+	TagsTable = &schema.Table{
+		Name:       "tags",
+		Columns:    TagsColumns,
+		PrimaryKey: []*schema.Column{TagsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tags_general_ledger_accounts_tags",
+				Columns:    []*schema.Column{TagsColumns[5]},
+				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tags_business_units_business_unit",
+				Columns:    []*schema.Column{TagsColumns[6]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tags_organizations_organization",
+				Columns:    []*schema.Column{TagsColumns[7]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tag_name_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{TagsColumns[3], TagsColumns[7]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "name", Type: field.TypeString, Size: 255},
+		{Name: "username", Type: field.TypeString, Size: 30},
+		{Name: "password", Type: field.TypeString, Size: 100},
+		{Name: "email", Type: field.TypeString, Size: 255},
+		{Name: "date_joined", Type: field.TypeString, Nullable: true},
+		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
+		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
+		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
+		{Name: "phone_number", Type: field.TypeString, Nullable: true},
+		{Name: "is_admin", Type: field.TypeBool, Default: false},
+		{Name: "is_super_admin", Type: field.TypeBool, Default: false},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "users_business_units_business_unit",
+				Columns:    []*schema.Column{UsersColumns[15]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "users_organizations_organization",
+				Columns:    []*schema.Column{UsersColumns[16]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AccountingControlsTable,
 		BusinessUnitsTable,
+		GeneralLedgerAccountsTable,
 		OrganizationsTable,
+		TagsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	AccountingControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
+	AccountingControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	AccountingControlsTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
+	AccountingControlsTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	OrganizationsTable.ForeignKeys[1].RefTable = AccountingControlsTable
+	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
+	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
 }

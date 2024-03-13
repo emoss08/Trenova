@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -335,9 +336,57 @@ func (buu *BusinessUnitUpdate) ClearParentID() *BusinessUnitUpdate {
 	return buu
 }
 
-// SetParent sets the "parent" edge to the BusinessUnit entity.
-func (buu *BusinessUnitUpdate) SetParent(b *BusinessUnit) *BusinessUnitUpdate {
-	return buu.SetParentID(b.ID)
+// SetPrevID sets the "prev" edge to the BusinessUnit entity by ID.
+func (buu *BusinessUnitUpdate) SetPrevID(id uuid.UUID) *BusinessUnitUpdate {
+	buu.mutation.SetPrevID(id)
+	return buu
+}
+
+// SetNillablePrevID sets the "prev" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buu *BusinessUnitUpdate) SetNillablePrevID(id *uuid.UUID) *BusinessUnitUpdate {
+	if id != nil {
+		buu = buu.SetPrevID(*id)
+	}
+	return buu
+}
+
+// SetPrev sets the "prev" edge to the BusinessUnit entity.
+func (buu *BusinessUnitUpdate) SetPrev(b *BusinessUnit) *BusinessUnitUpdate {
+	return buu.SetPrevID(b.ID)
+}
+
+// SetNextID sets the "next" edge to the BusinessUnit entity by ID.
+func (buu *BusinessUnitUpdate) SetNextID(id uuid.UUID) *BusinessUnitUpdate {
+	buu.mutation.SetNextID(id)
+	return buu
+}
+
+// SetNillableNextID sets the "next" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buu *BusinessUnitUpdate) SetNillableNextID(id *uuid.UUID) *BusinessUnitUpdate {
+	if id != nil {
+		buu = buu.SetNextID(*id)
+	}
+	return buu
+}
+
+// SetNext sets the "next" edge to the BusinessUnit entity.
+func (buu *BusinessUnitUpdate) SetNext(b *BusinessUnit) *BusinessUnitUpdate {
+	return buu.SetNextID(b.ID)
+}
+
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (buu *BusinessUnitUpdate) AddOrganizationIDs(ids ...uuid.UUID) *BusinessUnitUpdate {
+	buu.mutation.AddOrganizationIDs(ids...)
+	return buu
+}
+
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (buu *BusinessUnitUpdate) AddOrganizations(o ...*Organization) *BusinessUnitUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return buu.AddOrganizationIDs(ids...)
 }
 
 // Mutation returns the BusinessUnitMutation object of the builder.
@@ -345,10 +394,37 @@ func (buu *BusinessUnitUpdate) Mutation() *BusinessUnitMutation {
 	return buu.mutation
 }
 
-// ClearParent clears the "parent" edge to the BusinessUnit entity.
-func (buu *BusinessUnitUpdate) ClearParent() *BusinessUnitUpdate {
-	buu.mutation.ClearParent()
+// ClearPrev clears the "prev" edge to the BusinessUnit entity.
+func (buu *BusinessUnitUpdate) ClearPrev() *BusinessUnitUpdate {
+	buu.mutation.ClearPrev()
 	return buu
+}
+
+// ClearNext clears the "next" edge to the BusinessUnit entity.
+func (buu *BusinessUnitUpdate) ClearNext() *BusinessUnitUpdate {
+	buu.mutation.ClearNext()
+	return buu
+}
+
+// ClearOrganizations clears all "organizations" edges to the Organization entity.
+func (buu *BusinessUnitUpdate) ClearOrganizations() *BusinessUnitUpdate {
+	buu.mutation.ClearOrganizations()
+	return buu
+}
+
+// RemoveOrganizationIDs removes the "organizations" edge to Organization entities by IDs.
+func (buu *BusinessUnitUpdate) RemoveOrganizationIDs(ids ...uuid.UUID) *BusinessUnitUpdate {
+	buu.mutation.RemoveOrganizationIDs(ids...)
+	return buu
+}
+
+// RemoveOrganizations removes "organizations" edges to Organization entities.
+func (buu *BusinessUnitUpdate) RemoveOrganizations(o ...*Organization) *BusinessUnitUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return buu.RemoveOrganizationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -534,28 +610,102 @@ func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := buu.mutation.FreeTrial(); ok {
 		_spec.SetField(businessunit.FieldFreeTrial, field.TypeBool, value)
 	}
-	if buu.mutation.ParentCleared() {
+	if buu.mutation.PrevCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   businessunit.ParentTable,
-			Columns: []string{businessunit.ParentColumn},
-			Bidi:    true,
+			Inverse: true,
+			Table:   businessunit.PrevTable,
+			Columns: []string{businessunit.PrevColumn},
+			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := buu.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := buu.mutation.PrevIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   businessunit.PrevTable,
+			Columns: []string{businessunit.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if buu.mutation.NextCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   businessunit.ParentTable,
-			Columns: []string{businessunit.ParentColumn},
-			Bidi:    true,
+			Table:   businessunit.NextTable,
+			Columns: []string{businessunit.NextColumn},
+			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buu.mutation.NextIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   businessunit.NextTable,
+			Columns: []string{businessunit.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if buu.mutation.OrganizationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buu.mutation.RemovedOrganizationsIDs(); len(nodes) > 0 && !buu.mutation.OrganizationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buu.mutation.OrganizationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -889,9 +1039,57 @@ func (buuo *BusinessUnitUpdateOne) ClearParentID() *BusinessUnitUpdateOne {
 	return buuo
 }
 
-// SetParent sets the "parent" edge to the BusinessUnit entity.
-func (buuo *BusinessUnitUpdateOne) SetParent(b *BusinessUnit) *BusinessUnitUpdateOne {
-	return buuo.SetParentID(b.ID)
+// SetPrevID sets the "prev" edge to the BusinessUnit entity by ID.
+func (buuo *BusinessUnitUpdateOne) SetPrevID(id uuid.UUID) *BusinessUnitUpdateOne {
+	buuo.mutation.SetPrevID(id)
+	return buuo
+}
+
+// SetNillablePrevID sets the "prev" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buuo *BusinessUnitUpdateOne) SetNillablePrevID(id *uuid.UUID) *BusinessUnitUpdateOne {
+	if id != nil {
+		buuo = buuo.SetPrevID(*id)
+	}
+	return buuo
+}
+
+// SetPrev sets the "prev" edge to the BusinessUnit entity.
+func (buuo *BusinessUnitUpdateOne) SetPrev(b *BusinessUnit) *BusinessUnitUpdateOne {
+	return buuo.SetPrevID(b.ID)
+}
+
+// SetNextID sets the "next" edge to the BusinessUnit entity by ID.
+func (buuo *BusinessUnitUpdateOne) SetNextID(id uuid.UUID) *BusinessUnitUpdateOne {
+	buuo.mutation.SetNextID(id)
+	return buuo
+}
+
+// SetNillableNextID sets the "next" edge to the BusinessUnit entity by ID if the given value is not nil.
+func (buuo *BusinessUnitUpdateOne) SetNillableNextID(id *uuid.UUID) *BusinessUnitUpdateOne {
+	if id != nil {
+		buuo = buuo.SetNextID(*id)
+	}
+	return buuo
+}
+
+// SetNext sets the "next" edge to the BusinessUnit entity.
+func (buuo *BusinessUnitUpdateOne) SetNext(b *BusinessUnit) *BusinessUnitUpdateOne {
+	return buuo.SetNextID(b.ID)
+}
+
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (buuo *BusinessUnitUpdateOne) AddOrganizationIDs(ids ...uuid.UUID) *BusinessUnitUpdateOne {
+	buuo.mutation.AddOrganizationIDs(ids...)
+	return buuo
+}
+
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (buuo *BusinessUnitUpdateOne) AddOrganizations(o ...*Organization) *BusinessUnitUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return buuo.AddOrganizationIDs(ids...)
 }
 
 // Mutation returns the BusinessUnitMutation object of the builder.
@@ -899,10 +1097,37 @@ func (buuo *BusinessUnitUpdateOne) Mutation() *BusinessUnitMutation {
 	return buuo.mutation
 }
 
-// ClearParent clears the "parent" edge to the BusinessUnit entity.
-func (buuo *BusinessUnitUpdateOne) ClearParent() *BusinessUnitUpdateOne {
-	buuo.mutation.ClearParent()
+// ClearPrev clears the "prev" edge to the BusinessUnit entity.
+func (buuo *BusinessUnitUpdateOne) ClearPrev() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearPrev()
 	return buuo
+}
+
+// ClearNext clears the "next" edge to the BusinessUnit entity.
+func (buuo *BusinessUnitUpdateOne) ClearNext() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearNext()
+	return buuo
+}
+
+// ClearOrganizations clears all "organizations" edges to the Organization entity.
+func (buuo *BusinessUnitUpdateOne) ClearOrganizations() *BusinessUnitUpdateOne {
+	buuo.mutation.ClearOrganizations()
+	return buuo
+}
+
+// RemoveOrganizationIDs removes the "organizations" edge to Organization entities by IDs.
+func (buuo *BusinessUnitUpdateOne) RemoveOrganizationIDs(ids ...uuid.UUID) *BusinessUnitUpdateOne {
+	buuo.mutation.RemoveOrganizationIDs(ids...)
+	return buuo
+}
+
+// RemoveOrganizations removes "organizations" edges to Organization entities.
+func (buuo *BusinessUnitUpdateOne) RemoveOrganizations(o ...*Organization) *BusinessUnitUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return buuo.RemoveOrganizationIDs(ids...)
 }
 
 // Where appends a list predicates to the BusinessUnitUpdate builder.
@@ -1118,28 +1343,102 @@ func (buuo *BusinessUnitUpdateOne) sqlSave(ctx context.Context) (_node *Business
 	if value, ok := buuo.mutation.FreeTrial(); ok {
 		_spec.SetField(businessunit.FieldFreeTrial, field.TypeBool, value)
 	}
-	if buuo.mutation.ParentCleared() {
+	if buuo.mutation.PrevCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   businessunit.ParentTable,
-			Columns: []string{businessunit.ParentColumn},
-			Bidi:    true,
+			Inverse: true,
+			Table:   businessunit.PrevTable,
+			Columns: []string{businessunit.PrevColumn},
+			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := buuo.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := buuo.mutation.PrevIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   businessunit.PrevTable,
+			Columns: []string{businessunit.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if buuo.mutation.NextCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   businessunit.ParentTable,
-			Columns: []string{businessunit.ParentColumn},
-			Bidi:    true,
+			Table:   businessunit.NextTable,
+			Columns: []string{businessunit.NextColumn},
+			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buuo.mutation.NextIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   businessunit.NextTable,
+			Columns: []string{businessunit.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if buuo.mutation.OrganizationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buuo.mutation.RemovedOrganizationsIDs(); len(nodes) > 0 && !buuo.mutation.OrganizationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buuo.mutation.OrganizationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   businessunit.OrganizationsTable,
+			Columns: []string{businessunit.OrganizationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -69,22 +69,46 @@ type BusinessUnit struct {
 
 // BusinessUnitEdges holds the relations/edges for other nodes in the graph.
 type BusinessUnitEdges struct {
-	// Parent holds the value of the parent edge.
-	Parent *BusinessUnit `json:"parent_id"`
+	// Prev holds the value of the prev edge.
+	Prev *BusinessUnit `json:"parent_id"`
+	// Next holds the value of the next edge.
+	Next *BusinessUnit `json:"next,omitempty"`
+	// Organizations holds the value of the organizations edge.
+	Organizations []*Organization `json:"organizations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
-// ParentOrErr returns the Parent value or an error if the edge
+// PrevOrErr returns the Prev value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e BusinessUnitEdges) ParentOrErr() (*BusinessUnit, error) {
-	if e.Parent != nil {
-		return e.Parent, nil
+func (e BusinessUnitEdges) PrevOrErr() (*BusinessUnit, error) {
+	if e.Prev != nil {
+		return e.Prev, nil
 	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: businessunit.Label}
 	}
-	return nil, &NotLoadedError{edge: "parent"}
+	return nil, &NotLoadedError{edge: "prev"}
+}
+
+// NextOrErr returns the Next value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e BusinessUnitEdges) NextOrErr() (*BusinessUnit, error) {
+	if e.Next != nil {
+		return e.Next, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: businessunit.Label}
+	}
+	return nil, &NotLoadedError{edge: "next"}
+}
+
+// OrganizationsOrErr returns the Organizations value or an error if the edge
+// was not loaded in eager-loading.
+func (e BusinessUnitEdges) OrganizationsOrErr() ([]*Organization, error) {
+	if e.loadedTypes[2] {
+		return e.Organizations, nil
+	}
+	return nil, &NotLoadedError{edge: "organizations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -264,9 +288,19 @@ func (bu *BusinessUnit) Value(name string) (ent.Value, error) {
 	return bu.selectValues.Get(name)
 }
 
-// QueryParent queries the "parent" edge of the BusinessUnit entity.
-func (bu *BusinessUnit) QueryParent() *BusinessUnitQuery {
-	return NewBusinessUnitClient(bu.config).QueryParent(bu)
+// QueryPrev queries the "prev" edge of the BusinessUnit entity.
+func (bu *BusinessUnit) QueryPrev() *BusinessUnitQuery {
+	return NewBusinessUnitClient(bu.config).QueryPrev(bu)
+}
+
+// QueryNext queries the "next" edge of the BusinessUnit entity.
+func (bu *BusinessUnit) QueryNext() *BusinessUnitQuery {
+	return NewBusinessUnitClient(bu.config).QueryNext(bu)
+}
+
+// QueryOrganizations queries the "organizations" edge of the BusinessUnit entity.
+func (bu *BusinessUnit) QueryOrganizations() *OrganizationQuery {
+	return NewBusinessUnitClient(bu.config).QueryOrganizations(bu)
 }
 
 // Update returns a builder for updating this BusinessUnit.

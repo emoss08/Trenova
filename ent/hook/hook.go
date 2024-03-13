@@ -9,6 +9,18 @@ import (
 	"github.com/emoss08/trenova/ent"
 )
 
+// The AccountingControlFunc type is an adapter to allow the use of ordinary
+// function as AccountingControl mutator.
+type AccountingControlFunc func(context.Context, *ent.AccountingControlMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountingControlFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountingControlMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountingControlMutation", m)
+}
+
 // The BusinessUnitFunc type is an adapter to allow the use of ordinary
 // function as BusinessUnit mutator.
 type BusinessUnitFunc func(context.Context, *ent.BusinessUnitMutation) (ent.Value, error)
@@ -21,6 +33,18 @@ func (f BusinessUnitFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BusinessUnitMutation", m)
 }
 
+// The GeneralLedgerAccountFunc type is an adapter to allow the use of ordinary
+// function as GeneralLedgerAccount mutator.
+type GeneralLedgerAccountFunc func(context.Context, *ent.GeneralLedgerAccountMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GeneralLedgerAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GeneralLedgerAccountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneralLedgerAccountMutation", m)
+}
+
 // The OrganizationFunc type is an adapter to allow the use of ordinary
 // function as Organization mutator.
 type OrganizationFunc func(context.Context, *ent.OrganizationMutation) (ent.Value, error)
@@ -31,6 +55,18 @@ func (f OrganizationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrganizationMutation", m)
+}
+
+// The TagFunc type is an adapter to allow the use of ordinary
+// function as Tag mutator.
+type TagFunc func(context.Context, *ent.TagMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TagFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TagMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TagMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary
