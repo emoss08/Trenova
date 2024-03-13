@@ -38,34 +38,6 @@ func (acu *AccountingControlUpdate) SetUpdatedAt(t time.Time) *AccountingControl
 	return acu
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (acu *AccountingControlUpdate) SetOrganizationID(u uuid.UUID) *AccountingControlUpdate {
-	acu.mutation.SetOrganizationID(u)
-	return acu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (acu *AccountingControlUpdate) SetNillableOrganizationID(u *uuid.UUID) *AccountingControlUpdate {
-	if u != nil {
-		acu.SetOrganizationID(*u)
-	}
-	return acu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (acu *AccountingControlUpdate) SetBusinessUnitID(u uuid.UUID) *AccountingControlUpdate {
-	acu.mutation.SetBusinessUnitID(u)
-	return acu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (acu *AccountingControlUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *AccountingControlUpdate {
-	if u != nil {
-		acu.SetBusinessUnitID(*u)
-	}
-	return acu
-}
-
 // SetRecThreshold sets the "rec_threshold" field.
 func (acu *AccountingControlUpdate) SetRecThreshold(i int64) *AccountingControlUpdate {
 	acu.mutation.ResetRecThreshold()
@@ -185,6 +157,12 @@ func (acu *AccountingControlUpdate) SetNillableCriticalProcesses(s *string) *Acc
 	return acu
 }
 
+// ClearCriticalProcesses clears the value of the "critical_processes" field.
+func (acu *AccountingControlUpdate) ClearCriticalProcesses() *AccountingControlUpdate {
+	acu.mutation.ClearCriticalProcesses()
+	return acu
+}
+
 // SetDefaultRevAccountID sets the "default_rev_account_id" field.
 func (acu *AccountingControlUpdate) SetDefaultRevAccountID(u uuid.UUID) *AccountingControlUpdate {
 	acu.mutation.SetDefaultRevAccountID(u)
@@ -225,9 +203,21 @@ func (acu *AccountingControlUpdate) ClearDefaultExpAccountID() *AccountingContro
 	return acu
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (acu *AccountingControlUpdate) SetOrganizationID(id uuid.UUID) *AccountingControlUpdate {
+	acu.mutation.SetOrganizationID(id)
+	return acu
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (acu *AccountingControlUpdate) SetOrganization(o *Organization) *AccountingControlUpdate {
 	return acu.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (acu *AccountingControlUpdate) SetBusinessUnitID(id uuid.UUID) *AccountingControlUpdate {
+	acu.mutation.SetBusinessUnitID(id)
+	return acu
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -373,10 +363,13 @@ func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := acu.mutation.CriticalProcesses(); ok {
 		_spec.SetField(accountingcontrol.FieldCriticalProcesses, field.TypeString, value)
 	}
+	if acu.mutation.CriticalProcessesCleared() {
+		_spec.ClearField(accountingcontrol.FieldCriticalProcesses, field.TypeString)
+	}
 	if acu.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   accountingcontrol.OrganizationTable,
 			Columns: []string{accountingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -388,8 +381,8 @@ func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if nodes := acu.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   accountingcontrol.OrganizationTable,
 			Columns: []string{accountingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -515,34 +508,6 @@ func (acuo *AccountingControlUpdateOne) SetUpdatedAt(t time.Time) *AccountingCon
 	return acuo
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (acuo *AccountingControlUpdateOne) SetOrganizationID(u uuid.UUID) *AccountingControlUpdateOne {
-	acuo.mutation.SetOrganizationID(u)
-	return acuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (acuo *AccountingControlUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *AccountingControlUpdateOne {
-	if u != nil {
-		acuo.SetOrganizationID(*u)
-	}
-	return acuo
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (acuo *AccountingControlUpdateOne) SetBusinessUnitID(u uuid.UUID) *AccountingControlUpdateOne {
-	acuo.mutation.SetBusinessUnitID(u)
-	return acuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (acuo *AccountingControlUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *AccountingControlUpdateOne {
-	if u != nil {
-		acuo.SetBusinessUnitID(*u)
-	}
-	return acuo
-}
-
 // SetRecThreshold sets the "rec_threshold" field.
 func (acuo *AccountingControlUpdateOne) SetRecThreshold(i int64) *AccountingControlUpdateOne {
 	acuo.mutation.ResetRecThreshold()
@@ -662,6 +627,12 @@ func (acuo *AccountingControlUpdateOne) SetNillableCriticalProcesses(s *string) 
 	return acuo
 }
 
+// ClearCriticalProcesses clears the value of the "critical_processes" field.
+func (acuo *AccountingControlUpdateOne) ClearCriticalProcesses() *AccountingControlUpdateOne {
+	acuo.mutation.ClearCriticalProcesses()
+	return acuo
+}
+
 // SetDefaultRevAccountID sets the "default_rev_account_id" field.
 func (acuo *AccountingControlUpdateOne) SetDefaultRevAccountID(u uuid.UUID) *AccountingControlUpdateOne {
 	acuo.mutation.SetDefaultRevAccountID(u)
@@ -702,9 +673,21 @@ func (acuo *AccountingControlUpdateOne) ClearDefaultExpAccountID() *AccountingCo
 	return acuo
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (acuo *AccountingControlUpdateOne) SetOrganizationID(id uuid.UUID) *AccountingControlUpdateOne {
+	acuo.mutation.SetOrganizationID(id)
+	return acuo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (acuo *AccountingControlUpdateOne) SetOrganization(o *Organization) *AccountingControlUpdateOne {
 	return acuo.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (acuo *AccountingControlUpdateOne) SetBusinessUnitID(id uuid.UUID) *AccountingControlUpdateOne {
+	acuo.mutation.SetBusinessUnitID(id)
+	return acuo
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -880,10 +863,13 @@ func (acuo *AccountingControlUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	if value, ok := acuo.mutation.CriticalProcesses(); ok {
 		_spec.SetField(accountingcontrol.FieldCriticalProcesses, field.TypeString, value)
 	}
+	if acuo.mutation.CriticalProcessesCleared() {
+		_spec.ClearField(accountingcontrol.FieldCriticalProcesses, field.TypeString)
+	}
 	if acuo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   accountingcontrol.OrganizationTable,
 			Columns: []string{accountingcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -895,8 +881,8 @@ func (acuo *AccountingControlUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	}
 	if nodes := acuo.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   accountingcontrol.OrganizationTable,
 			Columns: []string{accountingcontrol.OrganizationColumn},
 			Bidi:    false,

@@ -20,6 +20,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldBusinessUnitID holds the string denoting the business_unit_id field in the database.
+	FieldBusinessUnitID = "business_unit_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldScacCode holds the string denoting the scac_code field in the database.
@@ -50,12 +52,12 @@ const (
 	// BusinessUnitColumn is the table column denoting the business_unit relation/edge.
 	BusinessUnitColumn = "business_unit_id"
 	// AccountingControlTable is the table that holds the accounting_control relation/edge.
-	AccountingControlTable = "organizations"
+	AccountingControlTable = "accounting_controls"
 	// AccountingControlInverseTable is the table name for the AccountingControl entity.
 	// It exists in this package in order to avoid circular dependency with the "accountingcontrol" package.
 	AccountingControlInverseTable = "accounting_controls"
 	// AccountingControlColumn is the table column denoting the accounting_control relation/edge.
-	AccountingControlColumn = "organization_accounting_control"
+	AccountingControlColumn = "organization_id"
 	// BillingControlTable is the table that holds the billing_control relation/edge.
 	BillingControlTable = "organizations"
 	// BillingControlInverseTable is the table name for the BillingControl entity.
@@ -77,6 +79,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldBusinessUnitID,
 	FieldName,
 	FieldScacCode,
 	FieldDotNumber,
@@ -88,8 +91,6 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "organizations"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"business_unit_id",
-	"organization_accounting_control",
 	"organization_billing_control",
 	"organization_dispatch_control",
 }
@@ -156,15 +157,15 @@ func OrgTypeValidator(ot OrgType) error {
 // Timezone defines the type for the "timezone" enum field.
 type Timezone string
 
-// TimezoneTimezoneAmericaLosAngeles is the default value of the Timezone enum.
-const DefaultTimezone = TimezoneTimezoneAmericaLosAngeles
+// TimezoneAmericaLosAngeles is the default value of the Timezone enum.
+const DefaultTimezone = TimezoneAmericaLosAngeles
 
 // Timezone values.
 const (
-	TimezoneTimezoneAmericaLosAngeles Timezone = "TimezoneAmericaLosAngeles"
-	TimezoneTimezoneAmericaDenver     Timezone = "TimezoneAmericaDenver"
-	TimezoneTimezoneAmericaChicago    Timezone = "TimezoneAmericaChicago"
-	TimezoneTimezoneAmericaNewYork    Timezone = "TimezoneAmericaNewYork"
+	TimezoneAmericaLosAngeles Timezone = "AmericaLosAngeles"
+	TimezoneAmericaDenver     Timezone = "AmericaDenver"
+	TimezoneAmericaChicago    Timezone = "AmericaChicago"
+	TimezoneAmericaNewYork    Timezone = "AmericaNewYork"
 )
 
 func (t Timezone) String() string {
@@ -174,7 +175,7 @@ func (t Timezone) String() string {
 // TimezoneValidator is a validator for the "timezone" field enum values. It is called by the builders before save.
 func TimezoneValidator(t Timezone) error {
 	switch t {
-	case TimezoneTimezoneAmericaLosAngeles, TimezoneTimezoneAmericaDenver, TimezoneTimezoneAmericaChicago, TimezoneTimezoneAmericaNewYork:
+	case TimezoneAmericaLosAngeles, TimezoneAmericaDenver, TimezoneAmericaChicago, TimezoneAmericaNewYork:
 		return nil
 	default:
 		return fmt.Errorf("organization: invalid enum value for timezone field: %q", t)
@@ -197,6 +198,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByBusinessUnitID orders the results by the business_unit_id field.
+func ByBusinessUnitID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBusinessUnitID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -267,7 +273,7 @@ func newAccountingControlStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AccountingControlInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, AccountingControlTable, AccountingControlColumn),
+		sqlgraph.Edge(sqlgraph.O2O, false, AccountingControlTable, AccountingControlColumn),
 	)
 }
 func newBillingControlStep() *sqlgraph.Step {

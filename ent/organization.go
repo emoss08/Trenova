@@ -26,6 +26,8 @@ type Organization struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// BusinessUnitID holds the value of the "business_unit_id" field.
+	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// ScacCode holds the value of the "scac_code" field.
@@ -33,19 +35,17 @@ type Organization struct {
 	// DotNumber holds the value of the "dot_number" field.
 	DotNumber string `json:"dotNumber"`
 	// LogoURL holds the value of the "logo_url" field.
-	LogoURL string `json:"logoUrl"`
+	LogoURL *string `json:"logoUrl"`
 	// OrgType holds the value of the "org_type" field.
 	OrgType organization.OrgType `json:"orgType"`
 	// Timezone holds the value of the "timezone" field.
 	Timezone organization.Timezone `json:"timezone,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganizationQuery when eager-loading is set.
-	Edges                           OrganizationEdges `json:"edges"`
-	business_unit_id                *uuid.UUID
-	organization_accounting_control *uuid.UUID
-	organization_billing_control    *uuid.UUID
-	organization_dispatch_control   *uuid.UUID
-	selectValues                    sql.SelectValues
+	Edges                         OrganizationEdges `json:"edges"`
+	organization_billing_control  *uuid.UUID
+	organization_dispatch_control *uuid.UUID
+	selectValues                  sql.SelectValues
 }
 
 // OrganizationEdges holds the relations/edges for other nodes in the graph.
@@ -116,15 +116,11 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case organization.FieldID:
+		case organization.FieldID, organization.FieldBusinessUnitID:
 			values[i] = new(uuid.UUID)
-		case organization.ForeignKeys[0]: // business_unit_id
+		case organization.ForeignKeys[0]: // organization_billing_control
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case organization.ForeignKeys[1]: // organization_accounting_control
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case organization.ForeignKeys[2]: // organization_billing_control
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case organization.ForeignKeys[3]: // organization_dispatch_control
+		case organization.ForeignKeys[1]: // organization_dispatch_control
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -159,6 +155,12 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				o.UpdatedAt = value.Time
 			}
+		case organization.FieldBusinessUnitID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value != nil {
+				o.BusinessUnitID = *value
+			}
 		case organization.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -181,7 +183,8 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field logo_url", values[i])
 			} else if value.Valid {
-				o.LogoURL = value.String
+				o.LogoURL = new(string)
+				*o.LogoURL = value.String
 			}
 		case organization.FieldOrgType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -197,26 +200,12 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			}
 		case organization.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
-			} else if value.Valid {
-				o.business_unit_id = new(uuid.UUID)
-				*o.business_unit_id = *value.S.(*uuid.UUID)
-			}
-		case organization.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_accounting_control", values[i])
-			} else if value.Valid {
-				o.organization_accounting_control = new(uuid.UUID)
-				*o.organization_accounting_control = *value.S.(*uuid.UUID)
-			}
-		case organization.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field organization_billing_control", values[i])
 			} else if value.Valid {
 				o.organization_billing_control = new(uuid.UUID)
 				*o.organization_billing_control = *value.S.(*uuid.UUID)
 			}
-		case organization.ForeignKeys[3]:
+		case organization.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field organization_dispatch_control", values[i])
 			} else if value.Valid {
@@ -285,6 +274,9 @@ func (o *Organization) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(o.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("business_unit_id=")
+	builder.WriteString(fmt.Sprintf("%v", o.BusinessUnitID))
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(o.Name)
 	builder.WriteString(", ")
@@ -294,8 +286,10 @@ func (o *Organization) String() string {
 	builder.WriteString("dot_number=")
 	builder.WriteString(o.DotNumber)
 	builder.WriteString(", ")
-	builder.WriteString("logo_url=")
-	builder.WriteString(o.LogoURL)
+	if v := o.LogoURL; v != nil {
+		builder.WriteString("logo_url=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("org_type=")
 	builder.WriteString(fmt.Sprintf("%v", o.OrgType))

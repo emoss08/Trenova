@@ -157,7 +157,6 @@ func (BusinessUnit) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"parent_id"`),
 		edge.To("organizations", Organization.Type).
-			StorageKey(edge.Column("business_unit_id")).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }

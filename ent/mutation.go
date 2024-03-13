@@ -249,78 +249,6 @@ func (m *AccountingControlMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (m *AccountingControlMutation) SetOrganizationID(u uuid.UUID) {
-	m.organization = &u
-}
-
-// OrganizationID returns the value of the "organization_id" field in the mutation.
-func (m *AccountingControlMutation) OrganizationID() (r uuid.UUID, exists bool) {
-	v := m.organization
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldOrganizationID returns the old "organization_id" field's value of the AccountingControl entity.
-// If the AccountingControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountingControlMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
-	}
-	return oldValue.OrganizationID, nil
-}
-
-// ResetOrganizationID resets all changes to the "organization_id" field.
-func (m *AccountingControlMutation) ResetOrganizationID() {
-	m.organization = nil
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (m *AccountingControlMutation) SetBusinessUnitID(u uuid.UUID) {
-	m.business_unit = &u
-}
-
-// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
-func (m *AccountingControlMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
-	v := m.business_unit
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBusinessUnitID returns the old "business_unit_id" field's value of the AccountingControl entity.
-// If the AccountingControl object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountingControlMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
-	}
-	return oldValue.BusinessUnitID, nil
-}
-
-// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
-func (m *AccountingControlMutation) ResetBusinessUnitID() {
-	m.business_unit = nil
-}
-
 // SetRecThreshold sets the "rec_threshold" field.
 func (m *AccountingControlMutation) SetRecThreshold(i int64) {
 	m.rec_threshold = &i
@@ -624,9 +552,22 @@ func (m *AccountingControlMutation) OldCriticalProcesses(ctx context.Context) (v
 	return oldValue.CriticalProcesses, nil
 }
 
+// ClearCriticalProcesses clears the value of the "critical_processes" field.
+func (m *AccountingControlMutation) ClearCriticalProcesses() {
+	m.critical_processes = nil
+	m.clearedFields[accountingcontrol.FieldCriticalProcesses] = struct{}{}
+}
+
+// CriticalProcessesCleared returns if the "critical_processes" field was cleared in this mutation.
+func (m *AccountingControlMutation) CriticalProcessesCleared() bool {
+	_, ok := m.clearedFields[accountingcontrol.FieldCriticalProcesses]
+	return ok
+}
+
 // ResetCriticalProcesses resets all changes to the "critical_processes" field.
 func (m *AccountingControlMutation) ResetCriticalProcesses() {
 	m.critical_processes = nil
+	delete(m.clearedFields, accountingcontrol.FieldCriticalProcesses)
 }
 
 // SetDefaultRevAccountID sets the "default_rev_account_id" field.
@@ -727,15 +668,27 @@ func (m *AccountingControlMutation) ResetDefaultExpAccountID() {
 	delete(m.clearedFields, accountingcontrol.FieldDefaultExpAccountID)
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *AccountingControlMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
 // ClearOrganization clears the "organization" edge to the Organization entity.
 func (m *AccountingControlMutation) ClearOrganization() {
 	m.clearedorganization = true
-	m.clearedFields[accountingcontrol.FieldOrganizationID] = struct{}{}
 }
 
 // OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
 func (m *AccountingControlMutation) OrganizationCleared() bool {
 	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *AccountingControlMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
 }
 
 // OrganizationIDs returns the "organization" edge IDs in the mutation.
@@ -754,15 +707,27 @@ func (m *AccountingControlMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *AccountingControlMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *AccountingControlMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
-	m.clearedFields[accountingcontrol.FieldBusinessUnitID] = struct{}{}
 }
 
 // BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
 func (m *AccountingControlMutation) BusinessUnitCleared() bool {
 	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *AccountingControlMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
 }
 
 // BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
@@ -869,18 +834,12 @@ func (m *AccountingControlMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountingControlMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, accountingcontrol.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, accountingcontrol.FieldUpdatedAt)
-	}
-	if m.organization != nil {
-		fields = append(fields, accountingcontrol.FieldOrganizationID)
-	}
-	if m.business_unit != nil {
-		fields = append(fields, accountingcontrol.FieldBusinessUnitID)
 	}
 	if m.rec_threshold != nil {
 		fields = append(fields, accountingcontrol.FieldRecThreshold)
@@ -924,10 +883,6 @@ func (m *AccountingControlMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case accountingcontrol.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case accountingcontrol.FieldOrganizationID:
-		return m.OrganizationID()
-	case accountingcontrol.FieldBusinessUnitID:
-		return m.BusinessUnitID()
 	case accountingcontrol.FieldRecThreshold:
 		return m.RecThreshold()
 	case accountingcontrol.FieldRecThresholdAction:
@@ -961,10 +916,6 @@ func (m *AccountingControlMutation) OldField(ctx context.Context, name string) (
 		return m.OldCreatedAt(ctx)
 	case accountingcontrol.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case accountingcontrol.FieldOrganizationID:
-		return m.OldOrganizationID(ctx)
-	case accountingcontrol.FieldBusinessUnitID:
-		return m.OldBusinessUnitID(ctx)
 	case accountingcontrol.FieldRecThreshold:
 		return m.OldRecThreshold(ctx)
 	case accountingcontrol.FieldRecThresholdAction:
@@ -1007,20 +958,6 @@ func (m *AccountingControlMutation) SetField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
-		return nil
-	case accountingcontrol.FieldOrganizationID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetOrganizationID(v)
-		return nil
-	case accountingcontrol.FieldBusinessUnitID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBusinessUnitID(v)
 		return nil
 	case accountingcontrol.FieldRecThreshold:
 		v, ok := value.(int64)
@@ -1137,6 +1074,9 @@ func (m *AccountingControlMutation) AddField(name string, value ent.Value) error
 // mutation.
 func (m *AccountingControlMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(accountingcontrol.FieldCriticalProcesses) {
+		fields = append(fields, accountingcontrol.FieldCriticalProcesses)
+	}
 	if m.FieldCleared(accountingcontrol.FieldDefaultRevAccountID) {
 		fields = append(fields, accountingcontrol.FieldDefaultRevAccountID)
 	}
@@ -1157,6 +1097,9 @@ func (m *AccountingControlMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *AccountingControlMutation) ClearField(name string) error {
 	switch name {
+	case accountingcontrol.FieldCriticalProcesses:
+		m.ClearCriticalProcesses()
+		return nil
 	case accountingcontrol.FieldDefaultRevAccountID:
 		m.ClearDefaultRevAccountID()
 		return nil
@@ -1176,12 +1119,6 @@ func (m *AccountingControlMutation) ResetField(name string) error {
 		return nil
 	case accountingcontrol.FieldUpdatedAt:
 		m.ResetUpdatedAt()
-		return nil
-	case accountingcontrol.FieldOrganizationID:
-		m.ResetOrganizationID()
-		return nil
-	case accountingcontrol.FieldBusinessUnitID:
-		m.ResetBusinessUnitID()
 		return nil
 	case accountingcontrol.FieldRecThreshold:
 		m.ResetRecThreshold()
@@ -7291,6 +7228,42 @@ func (m *OrganizationMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *OrganizationMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *OrganizationMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *OrganizationMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
 // SetName sets the "name" field.
 func (m *OrganizationMutation) SetName(s string) {
 	m.name = &s
@@ -7416,7 +7389,7 @@ func (m *OrganizationMutation) LogoURL() (r string, exists bool) {
 // OldLogoURL returns the old "logo_url" field's value of the Organization entity.
 // If the Organization object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OrganizationMutation) OldLogoURL(ctx context.Context) (v string, err error) {
+func (m *OrganizationMutation) OldLogoURL(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLogoURL is only allowed on UpdateOne operations")
 	}
@@ -7520,27 +7493,15 @@ func (m *OrganizationMutation) ResetTimezone() {
 	m.timezone = nil
 }
 
-// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
-func (m *OrganizationMutation) SetBusinessUnitID(id uuid.UUID) {
-	m.business_unit = &id
-}
-
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *OrganizationMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
+	m.clearedFields[organization.FieldBusinessUnitID] = struct{}{}
 }
 
 // BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
 func (m *OrganizationMutation) BusinessUnitCleared() bool {
 	return m.clearedbusiness_unit
-}
-
-// BusinessUnitID returns the "business_unit" edge ID in the mutation.
-func (m *OrganizationMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
-	if m.business_unit != nil {
-		return *m.business_unit, true
-	}
-	return
 }
 
 // BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
@@ -7710,12 +7671,15 @@ func (m *OrganizationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrganizationMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, organization.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, organization.FieldUpdatedAt)
+	}
+	if m.business_unit != nil {
+		fields = append(fields, organization.FieldBusinessUnitID)
 	}
 	if m.name != nil {
 		fields = append(fields, organization.FieldName)
@@ -7747,6 +7711,8 @@ func (m *OrganizationMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case organization.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case organization.FieldBusinessUnitID:
+		return m.BusinessUnitID()
 	case organization.FieldName:
 		return m.Name()
 	case organization.FieldScacCode:
@@ -7772,6 +7738,8 @@ func (m *OrganizationMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case organization.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case organization.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
 	case organization.FieldName:
 		return m.OldName(ctx)
 	case organization.FieldScacCode:
@@ -7806,6 +7774,13 @@ func (m *OrganizationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case organization.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
 		return nil
 	case organization.FieldName:
 		v, ok := value.(string)
@@ -7912,6 +7887,9 @@ func (m *OrganizationMutation) ResetField(name string) error {
 		return nil
 	case organization.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case organization.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
 		return nil
 	case organization.FieldName:
 		m.ResetName()

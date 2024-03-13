@@ -25,10 +25,6 @@ type AccountingControl struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// OrganizationID holds the value of the "organization_id" field.
-	OrganizationID uuid.UUID `json:"organizationId"`
-	// BusinessUnitID holds the value of the "business_unit_id" field.
-	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// RecThreshold holds the value of the "rec_threshold" field.
 	RecThreshold int64 `json:"recThreshold"`
 	// RecThresholdAction holds the value of the "rec_threshold_action" field.
@@ -51,8 +47,10 @@ type AccountingControl struct {
 	DefaultExpAccountID uuid.UUID `json:"defaultExpAccountId"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountingControlQuery when eager-loading is set.
-	Edges        AccountingControlEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges            AccountingControlEdges `json:"edges"`
+	business_unit_id *uuid.UUID
+	organization_id  *uuid.UUID
+	selectValues     sql.SelectValues
 }
 
 // AccountingControlEdges holds the relations/edges for other nodes in the graph.
@@ -127,8 +125,12 @@ func (*AccountingControl) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case accountingcontrol.FieldCreatedAt, accountingcontrol.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case accountingcontrol.FieldID, accountingcontrol.FieldOrganizationID, accountingcontrol.FieldBusinessUnitID, accountingcontrol.FieldDefaultRevAccountID, accountingcontrol.FieldDefaultExpAccountID:
+		case accountingcontrol.FieldID, accountingcontrol.FieldDefaultRevAccountID, accountingcontrol.FieldDefaultExpAccountID:
 			values[i] = new(uuid.UUID)
+		case accountingcontrol.ForeignKeys[0]: // business_unit_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case accountingcontrol.ForeignKeys[1]: // organization_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -161,18 +163,6 @@ func (ac *AccountingControl) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ac.UpdatedAt = value.Time
-			}
-		case accountingcontrol.FieldOrganizationID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
-			} else if value != nil {
-				ac.OrganizationID = *value
-			}
-		case accountingcontrol.FieldBusinessUnitID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
-			} else if value != nil {
-				ac.BusinessUnitID = *value
 			}
 		case accountingcontrol.FieldRecThreshold:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -233,6 +223,20 @@ func (ac *AccountingControl) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field default_exp_account_id", values[i])
 			} else if value != nil {
 				ac.DefaultExpAccountID = *value
+			}
+		case accountingcontrol.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value.Valid {
+				ac.business_unit_id = new(uuid.UUID)
+				*ac.business_unit_id = *value.S.(*uuid.UUID)
+			}
+		case accountingcontrol.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
+			} else if value.Valid {
+				ac.organization_id = new(uuid.UUID)
+				*ac.organization_id = *value.S.(*uuid.UUID)
 			}
 		default:
 			ac.selectValues.Set(columns[i], values[i])
@@ -295,12 +299,6 @@ func (ac *AccountingControl) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ac.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("organization_id=")
-	builder.WriteString(fmt.Sprintf("%v", ac.OrganizationID))
-	builder.WriteString(", ")
-	builder.WriteString("business_unit_id=")
-	builder.WriteString(fmt.Sprintf("%v", ac.BusinessUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("rec_threshold=")
 	builder.WriteString(fmt.Sprintf("%v", ac.RecThreshold))

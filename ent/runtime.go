@@ -37,29 +37,29 @@ func init() {
 	// accountingcontrol.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	accountingcontrol.UpdateDefaultUpdatedAt = accountingcontrolDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// accountingcontrolDescRecThreshold is the schema descriptor for rec_threshold field.
-	accountingcontrolDescRecThreshold := accountingcontrolFields[2].Descriptor()
+	accountingcontrolDescRecThreshold := accountingcontrolFields[0].Descriptor()
 	// accountingcontrol.DefaultRecThreshold holds the default value on creation for the rec_threshold field.
 	accountingcontrol.DefaultRecThreshold = accountingcontrolDescRecThreshold.Default.(int64)
 	// accountingcontrol.RecThresholdValidator is a validator for the "rec_threshold" field. It is called by the builders before save.
 	accountingcontrol.RecThresholdValidator = accountingcontrolDescRecThreshold.Validators[0].(func(int64) error)
 	// accountingcontrolDescAutoCreateJournalEntries is the schema descriptor for auto_create_journal_entries field.
-	accountingcontrolDescAutoCreateJournalEntries := accountingcontrolFields[4].Descriptor()
+	accountingcontrolDescAutoCreateJournalEntries := accountingcontrolFields[2].Descriptor()
 	// accountingcontrol.DefaultAutoCreateJournalEntries holds the default value on creation for the auto_create_journal_entries field.
 	accountingcontrol.DefaultAutoCreateJournalEntries = accountingcontrolDescAutoCreateJournalEntries.Default.(bool)
 	// accountingcontrolDescRestrictManualJournalEntries is the schema descriptor for restrict_manual_journal_entries field.
-	accountingcontrolDescRestrictManualJournalEntries := accountingcontrolFields[5].Descriptor()
+	accountingcontrolDescRestrictManualJournalEntries := accountingcontrolFields[3].Descriptor()
 	// accountingcontrol.DefaultRestrictManualJournalEntries holds the default value on creation for the restrict_manual_journal_entries field.
 	accountingcontrol.DefaultRestrictManualJournalEntries = accountingcontrolDescRestrictManualJournalEntries.Default.(bool)
 	// accountingcontrolDescRequireJournalEntryApproval is the schema descriptor for require_journal_entry_approval field.
-	accountingcontrolDescRequireJournalEntryApproval := accountingcontrolFields[6].Descriptor()
+	accountingcontrolDescRequireJournalEntryApproval := accountingcontrolFields[4].Descriptor()
 	// accountingcontrol.DefaultRequireJournalEntryApproval holds the default value on creation for the require_journal_entry_approval field.
 	accountingcontrol.DefaultRequireJournalEntryApproval = accountingcontrolDescRequireJournalEntryApproval.Default.(bool)
 	// accountingcontrolDescEnableRecNotifications is the schema descriptor for enable_rec_notifications field.
-	accountingcontrolDescEnableRecNotifications := accountingcontrolFields[7].Descriptor()
+	accountingcontrolDescEnableRecNotifications := accountingcontrolFields[5].Descriptor()
 	// accountingcontrol.DefaultEnableRecNotifications holds the default value on creation for the enable_rec_notifications field.
 	accountingcontrol.DefaultEnableRecNotifications = accountingcontrolDescEnableRecNotifications.Default.(bool)
 	// accountingcontrolDescHaltOnPendingRec is the schema descriptor for halt_on_pending_rec field.
-	accountingcontrolDescHaltOnPendingRec := accountingcontrolFields[8].Descriptor()
+	accountingcontrolDescHaltOnPendingRec := accountingcontrolFields[6].Descriptor()
 	// accountingcontrol.DefaultHaltOnPendingRec holds the default value on creation for the halt_on_pending_rec field.
 	accountingcontrol.DefaultHaltOnPendingRec = accountingcontrolDescHaltOnPendingRec.Default.(bool)
 	// accountingcontrolDescID is the schema descriptor for id field.
@@ -300,15 +300,15 @@ func init() {
 	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	organization.UpdateDefaultUpdatedAt = organizationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// organizationDescName is the schema descriptor for name field.
-	organizationDescName := organizationFields[0].Descriptor()
+	organizationDescName := organizationFields[1].Descriptor()
 	// organization.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	organization.NameValidator = organizationDescName.Validators[0].(func(string) error)
 	// organizationDescScacCode is the schema descriptor for scac_code field.
-	organizationDescScacCode := organizationFields[1].Descriptor()
+	organizationDescScacCode := organizationFields[2].Descriptor()
 	// organization.ScacCodeValidator is a validator for the "scac_code" field. It is called by the builders before save.
 	organization.ScacCodeValidator = organizationDescScacCode.Validators[0].(func(string) error)
 	// organizationDescDotNumber is the schema descriptor for dot_number field.
-	organizationDescDotNumber := organizationFields[2].Descriptor()
+	organizationDescDotNumber := organizationFields[3].Descriptor()
 	// organization.DotNumberValidator is a validator for the "dot_number" field. It is called by the builders before save.
 	organization.DotNumberValidator = organizationDescDotNumber.Validators[0].(func(string) error)
 	// organizationDescID is the schema descriptor for id field.
