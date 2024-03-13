@@ -20,7 +20,6 @@ import {
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
-import { validateDecimal } from "@/lib/utils";
 import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
 import {
   CommodityFormValues,
@@ -33,14 +32,14 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string().required("Description is required"),
-    description: Yup.string().notRequired(),
+    description: Yup.string(),
     hazardClass: Yup.string<HazardousClassChoiceProps>().required(
       "Hazardous Class is required",
     ),
-    packingGroup: Yup.string<PackingGroupChoiceProps>().notRequired(),
-    ergNumber: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
-    properShippingName: Yup.string().notRequired(),
-    additionalCost: Yup.string().notRequired(),
+    packingGroup: Yup.string<PackingGroupChoiceProps>(),
+    ergNumber: Yup.string<UnitOfMeasureChoiceProps>(),
+    properShippingName: Yup.string(),
+    additionalCost: Yup.string(),
   });
 
 export const commoditySchema: ObjectSchema<CommodityFormValues> =
@@ -49,37 +48,14 @@ export const commoditySchema: ObjectSchema<CommodityFormValues> =
     name: Yup.string()
       .max(100, "Name cannot be longer than 100 characters long.")
       .required("Name is required"),
-    description: Yup.string().notRequired(),
-    minTemp: Yup.string()
-      .max(
-        Yup.ref("maxTemp"),
-        "Minimum temperature must be less than maximum temperature.",
-      )
-      .test(
-        "is-decimal",
-        "Minimum temperature cannot be more than two decimal places.",
-        (value) => {
-          if (value !== "" && value !== undefined) {
-            return validateDecimal(value, 4);
-          }
-          return true;
-        },
-      )
-      .notRequired(),
-    maxTemp: Yup.string()
-      .test(
-        "is-decimal",
-        "Maximum temperature cannot be more than two decimal places.",
-        (value) => {
-          if (value !== "" && value !== undefined) {
-            return validateDecimal(value, 2);
-          }
-          return true;
-        },
-      )
-      .notRequired(),
-    setPointTemp: Yup.number().notRequired(),
-    unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
-    hazardousMaterial: Yup.string().notRequired(),
+    description: Yup.string(),
+    minTemp: Yup.number().max(
+      Yup.ref("maxTemp"),
+      "Minimum temperature must be less than maximum temperature.",
+    ),
+    maxTemp: Yup.number(),
+    setPointTemp: Yup.number(),
+    unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>(),
+    hazardousMaterial: Yup.string(),
     isHazmat: Yup.string<YesNoChoiceProps>().required("Is Hazmat is required"),
   });

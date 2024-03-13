@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CommodityForm } from "@/components/commodity-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,7 +33,6 @@ import { Commodity, CommodityFormValues } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { CommodityForm } from "@/components/commodity-dialog";
 
 function CommodityEditForm({
   commodity,
@@ -109,7 +109,7 @@ export function CommodityEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [commodity] = useTableStore.use("currentRecord");
+  const [commodity] = useTableStore.use("currentRecord") as Commodity[];
 
   if (!commodity) return null;
 
@@ -121,7 +121,7 @@ export function CommodityEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {commodity && formatDate(commodity.modified)}
+          {commodity && formatDate(commodity.createdAt)}
         </DialogDescription>
         {commodity && <CommodityEditForm commodity={commodity} open={open} />}
       </DialogContent>

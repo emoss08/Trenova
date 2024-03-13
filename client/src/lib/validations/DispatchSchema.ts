@@ -29,7 +29,7 @@ import {
   FleetCodeFormValues,
   RateBillingTableFormValues,
 } from "@/types/dispatch";
-import { boolean, number, object, ObjectSchema, string } from "yup";
+import { ObjectSchema, boolean, number, object, string } from "yup";
 import { validateDecimal } from "../utils";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =

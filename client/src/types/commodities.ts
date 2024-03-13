@@ -27,33 +27,33 @@ export interface HazardousMaterial extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
-  description?: string | null;
+  description?: string;
   hazardClass: HazardousClassChoiceProps;
-  packingGroup?: PackingGroupChoiceProps | null;
-  ergNumber?: string | null;
-  additionalCost?: string | null;
-  properShippingName?: string | null;
+  packingGroup?: PackingGroupChoiceProps;
+  ergNumber?: string;
+  additionalCost?: string;
+  properShippingName?: string;
 }
 
 export type HazardousMaterialFormValues = Omit<
   HazardousMaterial,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface Commodity extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
-  description?: string | null;
-  minTemp?: string | null;
-  maxTemp?: string | null;
-  setPointTemp?: number | null;
-  unitOfMeasure?: UnitOfMeasureChoiceProps | null;
-  hazardousMaterial?: string | null;
+  description?: string;
+  minTemp?: number;
+  maxTemp?: number;
+  setPointTemp?: number;
+  unitOfMeasure?: UnitOfMeasureChoiceProps;
+  hazardousMaterial?: string;
   isHazmat: YesNoChoiceProps;
 }
 
 export type CommodityFormValues = Omit<
   Commodity,
-  "id" | "created" | "modified" | "organization"
+  "id" | "createdAt" | "updatedAt" | "organizationId"
 >;

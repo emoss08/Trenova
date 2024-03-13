@@ -64,7 +64,7 @@ export function USDollarFormatString(num: string): string {
  * @returns {string}
  */
 export function truncateText(str: string, length: number): string {
-  return str.length > length ? str.substring(0, length) + "..." : str;
+  return str?.length > length ? `${str.slice(0, length)}...` : str;
 }
 
 /**

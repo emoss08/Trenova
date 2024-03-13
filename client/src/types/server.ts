@@ -22,7 +22,12 @@ export type ApiResponse<K> = {
   results: K[];
 };
 
-type APIAttrs = "nonFieldErrors" | "validationError" | "All" | "";
+type APIAttrs =
+  | "nonFieldErrors"
+  | "validationError"
+  | "All"
+  | "databaseError"
+  | "";
 
 export type APIError = {
   code: string;
