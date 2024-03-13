@@ -202,8 +202,8 @@ async function handleError<T extends FieldValues>(
   const { data } = error?.response || {};
   if (data?.type === "validationError") {
     handleValidationErrors(data.errors, control);
-  } else {
-    showErrorNotification(options.errorMessage);
+  } else if (data?.type === "databaseError") {
+    handleDatabaseErrors(data.errors, control);
   }
 }
 
@@ -244,7 +244,32 @@ function handleValidationErrors<T extends FieldValues>(
     control.setError(attr as Path<T>, { type: "manual", message: detail });
 
     // Show appropriate notification based on the error attribute
-    if (attr === "nonFieldErrors" || attr === "All") {
+    if (attr === "nonFieldErrors" || attr === "databaseError") {
+      showErrorNotification(detail);
+    } else {
+      showErrorNotification("Please fix the errors and try again.");
+    }
+  });
+}
+
+/**
+ * Handle database errors by showing notifications.
+ *
+ * @param {APIError[]} errors - Array of errors from the API.
+ * @param {Control<T>} control - React Hook Form control object.
+ */
+function handleDatabaseErrors<T extends FieldValues>(
+  errors: APIError[],
+  control: Control<T>,
+) {
+  errors.forEach((error: APIError) => {
+    const { attr, detail } = error;
+
+    // Set error on the control
+    control.setError(attr as Path<T>, { type: "manual", message: detail });
+
+    // Show appropriate notification based on the error attribute
+    if (attr === "nonFieldErrors" || attr === "databaseError") {
       showErrorNotification(detail);
     } else {
       showErrorNotification("Please fix the errors and try again.");

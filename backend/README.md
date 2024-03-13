@@ -1,2 +1,0 @@
-# trenova-go-backend
- 

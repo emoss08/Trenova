@@ -30,17 +30,17 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useHazardousMaterial } from "@/hooks/useQueries";
 import {
-  statusChoices,
   UnitOfMeasureChoices,
+  statusChoices,
   yesAndNoChoices,
 } from "@/lib/choices";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { CommodityFormValues as FormValues } from "@/types/commodities";
+import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React, { useEffect } from "react";
 import { Control, useForm } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "./ui/form";
-import { TableSheetProps } from "@/types/tables";
 
 export function CommodityForm({
   control,
@@ -96,9 +96,7 @@ export function CommodityForm({
             name="minTemp"
             control={control}
             label="Min. Temp"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
+            type="number"
             placeholder="Min. Temp"
             description="Minimum Temperature of the Commodity"
           />
@@ -108,9 +106,7 @@ export function CommodityForm({
             control={control}
             name="maxTemp"
             label="Max. Temp"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
+            type="number"
             placeholder="Max. Temp"
             description="Maximum Temperature of the Commodity"
           />
