@@ -335,7 +335,7 @@ func (ftcq *FeasibilityToolControlQuery) WithBusinessUnit(opts ...func(*Business
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -358,7 +358,7 @@ func (ftcq *FeasibilityToolControlQuery) GroupBy(field string, fields ...string)
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.FeasibilityToolControl.Query().

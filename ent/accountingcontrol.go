@@ -22,9 +22,9 @@ type AccountingControl struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"createdAt"`
 	// RecThreshold holds the value of the "rec_threshold" field.
 	RecThreshold int64 `json:"recThreshold"`
 	// RecThresholdAction holds the value of the "rec_threshold_action" field.

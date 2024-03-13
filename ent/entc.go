@@ -8,10 +8,8 @@ import (
 	"log"
 	"reflect"
 
-	"ariga.io/atlas/sql/migrate"
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
-	"github.com/emoss08/trenova/ent/migrate/migratedata"
 )
 
 func main() {
@@ -25,20 +23,20 @@ func main() {
 	}
 
 	// Migration Directory
-	migrationDir, migrationErr := migrate.NewLocalDir("./migrate/migrations")
+	// migrationDir, migrationErr := migrate.NewLocalDir("./migrate/migrations")
 
-	if migrationErr != nil {
-		log.Fatalf("creating migration directory: %v", migrationErr)
-	}
+	// if migrationErr != nil {
+	// 	log.Fatalf("creating migration directory: %v", migrationErr)
+	// }
 
 	// Call the seeders
-	if err := migratedata.SeedBusinessUnit(migrationDir); err != nil {
-		log.Fatalf("running seed business unit: %v", err)
-	}
+	// if err := migratedata.SeedBusinessUnit(migrationDir); err != nil {
+	// 	log.Fatalf("running seed business unit: %v", err)
+	// }
 
-	if err := migratedata.SeedOrganization(migrationDir); err != nil {
-		log.Fatalf("running seed organization: %v", err)
-	}
+	// if err := migratedata.SeedOrganization(migrationDir); err != nil {
+	// 	log.Fatalf("running seed organization: %v", err)
+	// }
 }
 
 // EnsureStructTag ensures all fields in the graph have a specific tag name.

@@ -551,7 +551,7 @@ func (oq *OrganizationQuery) WithShipmentControl(opts ...func(*ShipmentControlQu
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -574,7 +574,7 @@ func (oq *OrganizationQuery) GroupBy(field string, fields ...string) *Organizati
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.Organization.Query().

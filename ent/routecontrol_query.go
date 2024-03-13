@@ -335,7 +335,7 @@ func (rcq *RouteControlQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery))
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -358,7 +358,7 @@ func (rcq *RouteControlQuery) GroupBy(field string, fields ...string) *RouteCont
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.RouteControl.Query().

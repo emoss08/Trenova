@@ -12,6 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// -------------------------------------------------
+// Mixin definition
+
 // DefaultMixin implements the ent.Mixin for sharing time fields with package schemas.
 type DefaultMixin struct {
 	mixin.Schema
@@ -24,10 +27,12 @@ func (DefaultMixin) Fields() []ent.Field {
 			Default(uuid.New),
 		field.Time("created_at").
 			Immutable().
-			Default(time.Now()),
+			Default(time.Now()).
+			StructTag(`json:"createdAt"`),
 		field.Time("updated_at").
 			Default(time.Now()).
-			UpdateDefault(time.Now),
+			UpdateDefault(time.Now).
+			StructTag(`json:"createdAt"`),
 	}
 }
 
@@ -49,13 +54,16 @@ func (BaseMixin) Fields() []ent.Field {
 			StructTag(`json:"organizationId"`),
 		field.Time("created_at").
 			Immutable().
-			Default(time.Now()),
+			Default(time.Now()).
+			StructTag(`json:"createdAt"`),
 		field.Time("updated_at").
 			Default(time.Now()).
-			UpdateDefault(time.Now),
+			UpdateDefault(time.Now).
+			StructTag(`json:"createdAt"`),
 	}
 }
 
+// Edges of the BaseMixin.
 func (BaseMixin) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("business_unit", BusinessUnit.Type).
@@ -70,6 +78,9 @@ func (BaseMixin) Edges() []ent.Edge {
 			Unique(),
 	}
 }
+
+// -------------------------------------------------
+// Schema definition
 
 // BusinessUnit holds the schema definition for the BusinessUnit entity.
 type BusinessUnit struct {

@@ -21,9 +21,9 @@ type InvoiceControl struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"createdAt"`
 	// InvoiceNumberPrefix holds the value of the "invoice_number_prefix" field.
 	InvoiceNumberPrefix string `json:"invoiceNumberPrefix"`
 	// CreditMemoNumberPrefix holds the value of the "credit_memo_number_prefix" field.

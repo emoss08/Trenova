@@ -406,7 +406,7 @@ func (acq *AccountingControlQuery) WithDefaultExpAccount(opts ...func(*GeneralLe
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -429,7 +429,7 @@ func (acq *AccountingControlQuery) GroupBy(field string, fields ...string) *Acco
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.AccountingControl.Query().

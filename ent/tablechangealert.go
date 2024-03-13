@@ -27,9 +27,9 @@ type TableChangeAlert struct {
 	// OrganizationID holds the value of the "organization_id" field.
 	OrganizationID uuid.UUID `json:"organizationId"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"createdAt"`
 	// Status holds the value of the "status" field.
 	Status tablechangealert.Status `json:"status"`
 	// Name holds the value of the "name" field.

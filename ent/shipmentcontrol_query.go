@@ -335,7 +335,7 @@ func (scq *ShipmentControlQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuer
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -358,7 +358,7 @@ func (scq *ShipmentControlQuery) GroupBy(field string, fields ...string) *Shipme
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.ShipmentControl.Query().
