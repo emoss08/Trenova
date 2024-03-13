@@ -24,10 +24,6 @@ type DispatchControl struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// OrganizationID holds the value of the "organization_id" field.
-	OrganizationID uuid.UUID `json:"organizationId"`
-	// BusinessUnitID holds the value of the "business_unit_id" field.
-	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// RecordServiceIncident holds the value of the "record_service_incident" field.
 	RecordServiceIncident dispatchcontrol.RecordServiceIncident `json:"recordServiceIncident"`
 	// DeadheadTarget holds the value of the "deadhead_target" field.
@@ -54,8 +50,10 @@ type DispatchControl struct {
 	TractorWorkerFleetConstraint bool `json:"tractorWorkerFleetConstraint"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DispatchControlQuery when eager-loading is set.
-	Edges        DispatchControlEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges            DispatchControlEdges `json:"edges"`
+	business_unit_id *uuid.UUID
+	organization_id  *uuid.UUID
+	selectValues     sql.SelectValues
 }
 
 // DispatchControlEdges holds the relations/edges for other nodes in the graph.
@@ -106,8 +104,12 @@ func (*DispatchControl) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case dispatchcontrol.FieldCreatedAt, dispatchcontrol.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case dispatchcontrol.FieldID, dispatchcontrol.FieldOrganizationID, dispatchcontrol.FieldBusinessUnitID:
+		case dispatchcontrol.FieldID:
 			values[i] = new(uuid.UUID)
+		case dispatchcontrol.ForeignKeys[0]: // business_unit_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case dispatchcontrol.ForeignKeys[1]: // organization_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -140,18 +142,6 @@ func (dc *DispatchControl) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				dc.UpdatedAt = value.Time
-			}
-		case dispatchcontrol.FieldOrganizationID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
-			} else if value != nil {
-				dc.OrganizationID = *value
-			}
-		case dispatchcontrol.FieldBusinessUnitID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
-			} else if value != nil {
-				dc.BusinessUnitID = *value
 			}
 		case dispatchcontrol.FieldRecordServiceIncident:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -225,6 +215,20 @@ func (dc *DispatchControl) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				dc.TractorWorkerFleetConstraint = value.Bool
 			}
+		case dispatchcontrol.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value.Valid {
+				dc.business_unit_id = new(uuid.UUID)
+				*dc.business_unit_id = *value.S.(*uuid.UUID)
+			}
+		case dispatchcontrol.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
+			} else if value.Valid {
+				dc.organization_id = new(uuid.UUID)
+				*dc.organization_id = *value.S.(*uuid.UUID)
+			}
 		default:
 			dc.selectValues.Set(columns[i], values[i])
 		}
@@ -276,12 +280,6 @@ func (dc *DispatchControl) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(dc.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("organization_id=")
-	builder.WriteString(fmt.Sprintf("%v", dc.OrganizationID))
-	builder.WriteString(", ")
-	builder.WriteString("business_unit_id=")
-	builder.WriteString(fmt.Sprintf("%v", dc.BusinessUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("record_service_incident=")
 	builder.WriteString(fmt.Sprintf("%v", dc.RecordServiceIncident))

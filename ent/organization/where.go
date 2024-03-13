@@ -552,7 +552,7 @@ func HasBillingControl() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, BillingControlTable, BillingControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, BillingControlTable, BillingControlColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -575,7 +575,7 @@ func HasDispatchControl() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, DispatchControlTable, DispatchControlColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, DispatchControlTable, DispatchControlColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -585,6 +585,98 @@ func HasDispatchControl() predicate.Organization {
 func HasDispatchControlWith(preds ...predicate.DispatchControl) predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := newDispatchControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasFeasibilityToolControl applies the HasEdge predicate on the "feasibility_tool_control" edge.
+func HasFeasibilityToolControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, FeasibilityToolControlTable, FeasibilityToolControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFeasibilityToolControlWith applies the HasEdge predicate on the "feasibility_tool_control" edge with a given conditions (other predicates).
+func HasFeasibilityToolControlWith(preds ...predicate.FeasibilityToolControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newFeasibilityToolControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInvoiceControl applies the HasEdge predicate on the "invoice_control" edge.
+func HasInvoiceControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, InvoiceControlTable, InvoiceControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInvoiceControlWith applies the HasEdge predicate on the "invoice_control" edge with a given conditions (other predicates).
+func HasInvoiceControlWith(preds ...predicate.InvoiceControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newInvoiceControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRouteControl applies the HasEdge predicate on the "route_control" edge.
+func HasRouteControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, RouteControlTable, RouteControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRouteControlWith applies the HasEdge predicate on the "route_control" edge with a given conditions (other predicates).
+func HasRouteControlWith(preds ...predicate.RouteControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newRouteControlStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasShipmentControl applies the HasEdge predicate on the "shipment_control" edge.
+func HasShipmentControl() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ShipmentControlTable, ShipmentControlColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentControlWith applies the HasEdge predicate on the "shipment_control" edge with a given conditions (other predicates).
+func HasShipmentControlWith(preds ...predicate.ShipmentControl) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newShipmentControlStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -24,10 +24,6 @@ type BillingControl struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// OrganizationID holds the value of the "organization_id" field.
-	OrganizationID uuid.UUID `json:"organizationId"`
-	// BusinessUnitID holds the value of the "business_unit_id" field.
-	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// RemoveBillingHistory holds the value of the "remove_billing_history" field.
 	RemoveBillingHistory bool `json:"removeBillingHistory"`
 	// AutoBillShipment holds the value of the "auto_bill_shipment" field.
@@ -42,8 +38,10 @@ type BillingControl struct {
 	ShipmentTransferCriteria billingcontrol.ShipmentTransferCriteria `json:"shipmentTransferCriteria"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BillingControlQuery when eager-loading is set.
-	Edges        BillingControlEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges            BillingControlEdges `json:"edges"`
+	business_unit_id *uuid.UUID
+	organization_id  *uuid.UUID
+	selectValues     sql.SelectValues
 }
 
 // BillingControlEdges holds the relations/edges for other nodes in the graph.
@@ -90,8 +88,12 @@ func (*BillingControl) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case billingcontrol.FieldCreatedAt, billingcontrol.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case billingcontrol.FieldID, billingcontrol.FieldOrganizationID, billingcontrol.FieldBusinessUnitID:
+		case billingcontrol.FieldID:
 			values[i] = new(uuid.UUID)
+		case billingcontrol.ForeignKeys[0]: // business_unit_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case billingcontrol.ForeignKeys[1]: // organization_id
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -124,18 +126,6 @@ func (bc *BillingControl) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				bc.UpdatedAt = value.Time
-			}
-		case billingcontrol.FieldOrganizationID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
-			} else if value != nil {
-				bc.OrganizationID = *value
-			}
-		case billingcontrol.FieldBusinessUnitID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
-			} else if value != nil {
-				bc.BusinessUnitID = *value
 			}
 		case billingcontrol.FieldRemoveBillingHistory:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -172,6 +162,20 @@ func (bc *BillingControl) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field shipment_transfer_criteria", values[i])
 			} else if value.Valid {
 				bc.ShipmentTransferCriteria = billingcontrol.ShipmentTransferCriteria(value.String)
+			}
+		case billingcontrol.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value.Valid {
+				bc.business_unit_id = new(uuid.UUID)
+				*bc.business_unit_id = *value.S.(*uuid.UUID)
+			}
+		case billingcontrol.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
+			} else if value.Valid {
+				bc.organization_id = new(uuid.UUID)
+				*bc.organization_id = *value.S.(*uuid.UUID)
 			}
 		default:
 			bc.selectValues.Set(columns[i], values[i])
@@ -224,12 +228,6 @@ func (bc *BillingControl) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(bc.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("organization_id=")
-	builder.WriteString(fmt.Sprintf("%v", bc.OrganizationID))
-	builder.WriteString(", ")
-	builder.WriteString("business_unit_id=")
-	builder.WriteString(fmt.Sprintf("%v", bc.BusinessUnitID))
 	builder.WriteString(", ")
 	builder.WriteString("remove_billing_history=")
 	builder.WriteString(fmt.Sprintf("%v", bc.RemoveBillingHistory))

@@ -26,6 +26,7 @@ type BillingControlQuery struct {
 	predicates       []predicate.BillingControl
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,7 +77,7 @@ func (bcq *BillingControlQuery) QueryOrganization() *OrganizationQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(billingcontrol.Table, billingcontrol.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, billingcontrol.OrganizationTable, billingcontrol.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, billingcontrol.OrganizationTable, billingcontrol.OrganizationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(bcq.driver.Dialect(), step)
 		return fromU, nil
@@ -405,12 +406,19 @@ func (bcq *BillingControlQuery) prepareQuery(ctx context.Context) error {
 func (bcq *BillingControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*BillingControl, error) {
 	var (
 		nodes       = []*BillingControl{}
+		withFKs     = bcq.withFKs
 		_spec       = bcq.querySpec()
 		loadedTypes = [2]bool{
 			bcq.withOrganization != nil,
 			bcq.withBusinessUnit != nil,
 		}
 	)
+	if bcq.withOrganization != nil || bcq.withBusinessUnit != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, billingcontrol.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*BillingControl).scanValues(nil, columns)
 	}
@@ -448,7 +456,10 @@ func (bcq *BillingControlQuery) loadOrganization(ctx context.Context, query *Org
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*BillingControl)
 	for i := range nodes {
-		fk := nodes[i].OrganizationID
+		if nodes[i].organization_id == nil {
+			continue
+		}
+		fk := *nodes[i].organization_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -477,7 +488,10 @@ func (bcq *BillingControlQuery) loadBusinessUnit(ctx context.Context, query *Bus
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*BillingControl)
 	for i := range nodes {
-		fk := nodes[i].BusinessUnitID
+		if nodes[i].business_unit_id == nil {
+			continue
+		}
+		fk := *nodes[i].business_unit_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -527,12 +541,6 @@ func (bcq *BillingControlQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != billingcontrol.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if bcq.withOrganization != nil {
-			_spec.Node.AddColumnOnce(billingcontrol.FieldOrganizationID)
-		}
-		if bcq.withBusinessUnit != nil {
-			_spec.Node.AddColumnOnce(billingcontrol.FieldBusinessUnitID)
 		}
 	}
 	if ps := bcq.predicates; len(ps) > 0 {

@@ -66,16 +66,6 @@ func UpdatedAt(v time.Time) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// OrganizationID applies equality check predicate on the "organization_id" field. It's identical to OrganizationIDEQ.
-func OrganizationID(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldEQ(FieldOrganizationID, v))
-}
-
-// BusinessUnitID applies equality check predicate on the "business_unit_id" field. It's identical to BusinessUnitIDEQ.
-func BusinessUnitID(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
 // DeadheadTarget applies equality check predicate on the "deadhead_target" field. It's identical to DeadheadTargetEQ.
 func DeadheadTarget(v float64) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldEQ(FieldDeadheadTarget, v))
@@ -209,46 +199,6 @@ func UpdatedAtLT(v time.Time) predicate.DispatchControl {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// OrganizationIDEQ applies the EQ predicate on the "organization_id" field.
-func OrganizationIDEQ(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldEQ(FieldOrganizationID, v))
-}
-
-// OrganizationIDNEQ applies the NEQ predicate on the "organization_id" field.
-func OrganizationIDNEQ(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldNEQ(FieldOrganizationID, v))
-}
-
-// OrganizationIDIn applies the In predicate on the "organization_id" field.
-func OrganizationIDIn(vs ...uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldIn(FieldOrganizationID, vs...))
-}
-
-// OrganizationIDNotIn applies the NotIn predicate on the "organization_id" field.
-func OrganizationIDNotIn(vs ...uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldNotIn(FieldOrganizationID, vs...))
-}
-
-// BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
-func BusinessUnitIDEQ(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDNEQ applies the NEQ predicate on the "business_unit_id" field.
-func BusinessUnitIDNEQ(v uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldNEQ(FieldBusinessUnitID, v))
-}
-
-// BusinessUnitIDIn applies the In predicate on the "business_unit_id" field.
-func BusinessUnitIDIn(vs ...uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldIn(FieldBusinessUnitID, vs...))
-}
-
-// BusinessUnitIDNotIn applies the NotIn predicate on the "business_unit_id" field.
-func BusinessUnitIDNotIn(vs ...uuid.UUID) predicate.DispatchControl {
-	return predicate.DispatchControl(sql.FieldNotIn(FieldBusinessUnitID, vs...))
 }
 
 // RecordServiceIncidentEQ applies the EQ predicate on the "record_service_incident" field.
@@ -476,7 +426,7 @@ func HasOrganization() predicate.DispatchControl {
 	return predicate.DispatchControl(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, OrganizationTable, OrganizationColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

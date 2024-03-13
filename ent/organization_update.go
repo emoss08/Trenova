@@ -15,8 +15,12 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
 
@@ -205,6 +209,82 @@ func (ou *OrganizationUpdate) SetDispatchControl(d *DispatchControl) *Organizati
 	return ou.SetDispatchControlID(d.ID)
 }
 
+// SetFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID.
+func (ou *OrganizationUpdate) SetFeasibilityToolControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetFeasibilityToolControlID(id)
+	return ou
+}
+
+// SetNillableFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableFeasibilityToolControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetFeasibilityToolControlID(*id)
+	}
+	return ou
+}
+
+// SetFeasibilityToolControl sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (ou *OrganizationUpdate) SetFeasibilityToolControl(f *FeasibilityToolControl) *OrganizationUpdate {
+	return ou.SetFeasibilityToolControlID(f.ID)
+}
+
+// SetInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID.
+func (ou *OrganizationUpdate) SetInvoiceControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetInvoiceControlID(id)
+	return ou
+}
+
+// SetNillableInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableInvoiceControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetInvoiceControlID(*id)
+	}
+	return ou
+}
+
+// SetInvoiceControl sets the "invoice_control" edge to the InvoiceControl entity.
+func (ou *OrganizationUpdate) SetInvoiceControl(i *InvoiceControl) *OrganizationUpdate {
+	return ou.SetInvoiceControlID(i.ID)
+}
+
+// SetRouteControlID sets the "route_control" edge to the RouteControl entity by ID.
+func (ou *OrganizationUpdate) SetRouteControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetRouteControlID(id)
+	return ou
+}
+
+// SetNillableRouteControlID sets the "route_control" edge to the RouteControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableRouteControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetRouteControlID(*id)
+	}
+	return ou
+}
+
+// SetRouteControl sets the "route_control" edge to the RouteControl entity.
+func (ou *OrganizationUpdate) SetRouteControl(r *RouteControl) *OrganizationUpdate {
+	return ou.SetRouteControlID(r.ID)
+}
+
+// SetShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID.
+func (ou *OrganizationUpdate) SetShipmentControlID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetShipmentControlID(id)
+	return ou
+}
+
+// SetNillableShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableShipmentControlID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetShipmentControlID(*id)
+	}
+	return ou
+}
+
+// SetShipmentControl sets the "shipment_control" edge to the ShipmentControl entity.
+func (ou *OrganizationUpdate) SetShipmentControl(s *ShipmentControl) *OrganizationUpdate {
+	return ou.SetShipmentControlID(s.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ou *OrganizationUpdate) Mutation() *OrganizationMutation {
 	return ou.mutation
@@ -231,6 +311,30 @@ func (ou *OrganizationUpdate) ClearBillingControl() *OrganizationUpdate {
 // ClearDispatchControl clears the "dispatch_control" edge to the DispatchControl entity.
 func (ou *OrganizationUpdate) ClearDispatchControl() *OrganizationUpdate {
 	ou.mutation.ClearDispatchControl()
+	return ou
+}
+
+// ClearFeasibilityToolControl clears the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (ou *OrganizationUpdate) ClearFeasibilityToolControl() *OrganizationUpdate {
+	ou.mutation.ClearFeasibilityToolControl()
+	return ou
+}
+
+// ClearInvoiceControl clears the "invoice_control" edge to the InvoiceControl entity.
+func (ou *OrganizationUpdate) ClearInvoiceControl() *OrganizationUpdate {
+	ou.mutation.ClearInvoiceControl()
+	return ou
+}
+
+// ClearRouteControl clears the "route_control" edge to the RouteControl entity.
+func (ou *OrganizationUpdate) ClearRouteControl() *OrganizationUpdate {
+	ou.mutation.ClearRouteControl()
+	return ou
+}
+
+// ClearShipmentControl clears the "shipment_control" edge to the ShipmentControl entity.
+func (ou *OrganizationUpdate) ClearShipmentControl() *OrganizationUpdate {
+	ou.mutation.ClearShipmentControl()
 	return ou
 }
 
@@ -399,7 +503,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ou.mutation.BillingControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.BillingControlTable,
 			Columns: []string{organization.BillingControlColumn},
@@ -412,7 +516,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := ou.mutation.BillingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.BillingControlTable,
 			Columns: []string{organization.BillingControlColumn},
@@ -428,7 +532,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ou.mutation.DispatchControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.DispatchControlTable,
 			Columns: []string{organization.DispatchControlColumn},
@@ -441,13 +545,129 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := ou.mutation.DispatchControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.DispatchControlTable,
 			Columns: []string{organization.DispatchControlColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.FeasibilityToolControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.FeasibilityToolControlTable,
+			Columns: []string{organization.FeasibilityToolControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(feasibilitytoolcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.FeasibilityToolControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.FeasibilityToolControlTable,
+			Columns: []string{organization.FeasibilityToolControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(feasibilitytoolcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.InvoiceControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.InvoiceControlTable,
+			Columns: []string{organization.InvoiceControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invoicecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.InvoiceControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.InvoiceControlTable,
+			Columns: []string{organization.InvoiceControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invoicecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.RouteControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.RouteControlTable,
+			Columns: []string{organization.RouteControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(routecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.RouteControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.RouteControlTable,
+			Columns: []string{organization.RouteControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(routecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.ShipmentControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.ShipmentControlTable,
+			Columns: []string{organization.ShipmentControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.ShipmentControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.ShipmentControlTable,
+			Columns: []string{organization.ShipmentControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -647,6 +867,82 @@ func (ouo *OrganizationUpdateOne) SetDispatchControl(d *DispatchControl) *Organi
 	return ouo.SetDispatchControlID(d.ID)
 }
 
+// SetFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetFeasibilityToolControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetFeasibilityToolControlID(id)
+	return ouo
+}
+
+// SetNillableFeasibilityToolControlID sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableFeasibilityToolControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetFeasibilityToolControlID(*id)
+	}
+	return ouo
+}
+
+// SetFeasibilityToolControl sets the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (ouo *OrganizationUpdateOne) SetFeasibilityToolControl(f *FeasibilityToolControl) *OrganizationUpdateOne {
+	return ouo.SetFeasibilityToolControlID(f.ID)
+}
+
+// SetInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetInvoiceControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetInvoiceControlID(id)
+	return ouo
+}
+
+// SetNillableInvoiceControlID sets the "invoice_control" edge to the InvoiceControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableInvoiceControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetInvoiceControlID(*id)
+	}
+	return ouo
+}
+
+// SetInvoiceControl sets the "invoice_control" edge to the InvoiceControl entity.
+func (ouo *OrganizationUpdateOne) SetInvoiceControl(i *InvoiceControl) *OrganizationUpdateOne {
+	return ouo.SetInvoiceControlID(i.ID)
+}
+
+// SetRouteControlID sets the "route_control" edge to the RouteControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetRouteControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetRouteControlID(id)
+	return ouo
+}
+
+// SetNillableRouteControlID sets the "route_control" edge to the RouteControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableRouteControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetRouteControlID(*id)
+	}
+	return ouo
+}
+
+// SetRouteControl sets the "route_control" edge to the RouteControl entity.
+func (ouo *OrganizationUpdateOne) SetRouteControl(r *RouteControl) *OrganizationUpdateOne {
+	return ouo.SetRouteControlID(r.ID)
+}
+
+// SetShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID.
+func (ouo *OrganizationUpdateOne) SetShipmentControlID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetShipmentControlID(id)
+	return ouo
+}
+
+// SetNillableShipmentControlID sets the "shipment_control" edge to the ShipmentControl entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableShipmentControlID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetShipmentControlID(*id)
+	}
+	return ouo
+}
+
+// SetShipmentControl sets the "shipment_control" edge to the ShipmentControl entity.
+func (ouo *OrganizationUpdateOne) SetShipmentControl(s *ShipmentControl) *OrganizationUpdateOne {
+	return ouo.SetShipmentControlID(s.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ouo *OrganizationUpdateOne) Mutation() *OrganizationMutation {
 	return ouo.mutation
@@ -673,6 +969,30 @@ func (ouo *OrganizationUpdateOne) ClearBillingControl() *OrganizationUpdateOne {
 // ClearDispatchControl clears the "dispatch_control" edge to the DispatchControl entity.
 func (ouo *OrganizationUpdateOne) ClearDispatchControl() *OrganizationUpdateOne {
 	ouo.mutation.ClearDispatchControl()
+	return ouo
+}
+
+// ClearFeasibilityToolControl clears the "feasibility_tool_control" edge to the FeasibilityToolControl entity.
+func (ouo *OrganizationUpdateOne) ClearFeasibilityToolControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearFeasibilityToolControl()
+	return ouo
+}
+
+// ClearInvoiceControl clears the "invoice_control" edge to the InvoiceControl entity.
+func (ouo *OrganizationUpdateOne) ClearInvoiceControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearInvoiceControl()
+	return ouo
+}
+
+// ClearRouteControl clears the "route_control" edge to the RouteControl entity.
+func (ouo *OrganizationUpdateOne) ClearRouteControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearRouteControl()
+	return ouo
+}
+
+// ClearShipmentControl clears the "shipment_control" edge to the ShipmentControl entity.
+func (ouo *OrganizationUpdateOne) ClearShipmentControl() *OrganizationUpdateOne {
+	ouo.mutation.ClearShipmentControl()
 	return ouo
 }
 
@@ -871,7 +1191,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if ouo.mutation.BillingControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.BillingControlTable,
 			Columns: []string{organization.BillingControlColumn},
@@ -884,7 +1204,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if nodes := ouo.mutation.BillingControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.BillingControlTable,
 			Columns: []string{organization.BillingControlColumn},
@@ -900,7 +1220,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if ouo.mutation.DispatchControlCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.DispatchControlTable,
 			Columns: []string{organization.DispatchControlColumn},
@@ -913,13 +1233,129 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 	}
 	if nodes := ouo.mutation.DispatchControlIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
 			Table:   organization.DispatchControlTable,
 			Columns: []string{organization.DispatchControlColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(dispatchcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.FeasibilityToolControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.FeasibilityToolControlTable,
+			Columns: []string{organization.FeasibilityToolControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(feasibilitytoolcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.FeasibilityToolControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.FeasibilityToolControlTable,
+			Columns: []string{organization.FeasibilityToolControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(feasibilitytoolcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.InvoiceControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.InvoiceControlTable,
+			Columns: []string{organization.InvoiceControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invoicecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.InvoiceControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.InvoiceControlTable,
+			Columns: []string{organization.InvoiceControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invoicecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.RouteControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.RouteControlTable,
+			Columns: []string{organization.RouteControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(routecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.RouteControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.RouteControlTable,
+			Columns: []string{organization.RouteControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(routecontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.ShipmentControlCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.ShipmentControlTable,
+			Columns: []string{organization.ShipmentControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.ShipmentControlIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.ShipmentControlTable,
+			Columns: []string{organization.ShipmentControlColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

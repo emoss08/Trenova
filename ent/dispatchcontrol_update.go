@@ -37,34 +37,6 @@ func (dcu *DispatchControlUpdate) SetUpdatedAt(t time.Time) *DispatchControlUpda
 	return dcu
 }
 
-// SetOrganizationID sets the "organization_id" field.
-func (dcu *DispatchControlUpdate) SetOrganizationID(u uuid.UUID) *DispatchControlUpdate {
-	dcu.mutation.SetOrganizationID(u)
-	return dcu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (dcu *DispatchControlUpdate) SetNillableOrganizationID(u *uuid.UUID) *DispatchControlUpdate {
-	if u != nil {
-		dcu.SetOrganizationID(*u)
-	}
-	return dcu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (dcu *DispatchControlUpdate) SetBusinessUnitID(u uuid.UUID) *DispatchControlUpdate {
-	dcu.mutation.SetBusinessUnitID(u)
-	return dcu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (dcu *DispatchControlUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *DispatchControlUpdate {
-	if u != nil {
-		dcu.SetBusinessUnitID(*u)
-	}
-	return dcu
-}
-
 // SetRecordServiceIncident sets the "record_service_incident" field.
 func (dcu *DispatchControlUpdate) SetRecordServiceIncident(dsi dispatchcontrol.RecordServiceIncident) *DispatchControlUpdate {
 	dcu.mutation.SetRecordServiceIncident(dsi)
@@ -254,9 +226,21 @@ func (dcu *DispatchControlUpdate) SetNillableTractorWorkerFleetConstraint(b *boo
 	return dcu
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (dcu *DispatchControlUpdate) SetOrganizationID(id uuid.UUID) *DispatchControlUpdate {
+	dcu.mutation.SetOrganizationID(id)
+	return dcu
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (dcu *DispatchControlUpdate) SetOrganization(o *Organization) *DispatchControlUpdate {
 	return dcu.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (dcu *DispatchControlUpdate) SetBusinessUnitID(id uuid.UUID) *DispatchControlUpdate {
+	dcu.mutation.SetBusinessUnitID(id)
+	return dcu
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -400,8 +384,8 @@ func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if dcu.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   dispatchcontrol.OrganizationTable,
 			Columns: []string{dispatchcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -413,8 +397,8 @@ func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if nodes := dcu.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   dispatchcontrol.OrganizationTable,
 			Columns: []string{dispatchcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -479,34 +463,6 @@ type DispatchControlUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (dcuo *DispatchControlUpdateOne) SetUpdatedAt(t time.Time) *DispatchControlUpdateOne {
 	dcuo.mutation.SetUpdatedAt(t)
-	return dcuo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (dcuo *DispatchControlUpdateOne) SetOrganizationID(u uuid.UUID) *DispatchControlUpdateOne {
-	dcuo.mutation.SetOrganizationID(u)
-	return dcuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (dcuo *DispatchControlUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *DispatchControlUpdateOne {
-	if u != nil {
-		dcuo.SetOrganizationID(*u)
-	}
-	return dcuo
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (dcuo *DispatchControlUpdateOne) SetBusinessUnitID(u uuid.UUID) *DispatchControlUpdateOne {
-	dcuo.mutation.SetBusinessUnitID(u)
-	return dcuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (dcuo *DispatchControlUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *DispatchControlUpdateOne {
-	if u != nil {
-		dcuo.SetBusinessUnitID(*u)
-	}
 	return dcuo
 }
 
@@ -699,9 +655,21 @@ func (dcuo *DispatchControlUpdateOne) SetNillableTractorWorkerFleetConstraint(b 
 	return dcuo
 }
 
+// SetOrganizationID sets the "organization" edge to the Organization entity by ID.
+func (dcuo *DispatchControlUpdateOne) SetOrganizationID(id uuid.UUID) *DispatchControlUpdateOne {
+	dcuo.mutation.SetOrganizationID(id)
+	return dcuo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (dcuo *DispatchControlUpdateOne) SetOrganization(o *Organization) *DispatchControlUpdateOne {
 	return dcuo.SetOrganizationID(o.ID)
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by ID.
+func (dcuo *DispatchControlUpdateOne) SetBusinessUnitID(id uuid.UUID) *DispatchControlUpdateOne {
+	dcuo.mutation.SetBusinessUnitID(id)
+	return dcuo
 }
 
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
@@ -875,8 +843,8 @@ func (dcuo *DispatchControlUpdateOne) sqlSave(ctx context.Context) (_node *Dispa
 	}
 	if dcuo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   dispatchcontrol.OrganizationTable,
 			Columns: []string{dispatchcontrol.OrganizationColumn},
 			Bidi:    false,
@@ -888,8 +856,8 @@ func (dcuo *DispatchControlUpdateOne) sqlSave(ctx context.Context) (_node *Dispa
 	}
 	if nodes := dcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   dispatchcontrol.OrganizationTable,
 			Columns: []string{dispatchcontrol.OrganizationColumn},
 			Bidi:    false,

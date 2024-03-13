@@ -559,7 +559,6 @@ func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *Orga
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(organization.FieldBusinessUnitID)
 	}

@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // DispatchControl holds the schema definition for the DispatchControl entity.
@@ -16,10 +15,6 @@ type DispatchControl struct {
 // Fields of the DispatchControl.
 func (DispatchControl) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("organization_id", uuid.UUID{}).
-			StructTag(`json:"organizationId"`),
-		field.UUID("business_unit_id", uuid.UUID{}).
-			StructTag(`json:"businessUnitId"`),
 		field.Enum("record_service_incident").
 			Values("Never", "Pickup", "Delivery", "PickupAndDelivery", "AllExceptShipper").
 			Default("Never").
@@ -71,13 +66,13 @@ func (DispatchControl) Mixin() []ent.Mixin {
 // Edges of the DispatchControl.
 func (DispatchControl) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("organization", Organization.Type).
-			Field("organization_id").
+		edge.From("organization", Organization.Type).
+			Ref("dispatch_control").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),
 		edge.To("business_unit", BusinessUnit.Type).
-			Field("business_unit_id").
+			StorageKey(edge.Column("business_unit_id")).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Required().
 			Unique(),
