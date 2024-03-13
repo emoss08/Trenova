@@ -29,6 +29,8 @@ type CommodityQuery struct {
 	withOrganization      *OrganizationQuery
 	withHazardousMaterial *HazardousMaterialQuery
 	withFKs               bool
+	modifiers             []func(*sql.Selector)
+	loadTotal             []func(context.Context, []*Commodity) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -465,6 +467,9 @@ func (cq *CommodityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Co
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(cq.modifiers) > 0 {
+		_spec.Modifiers = cq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -489,6 +494,11 @@ func (cq *CommodityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Co
 	if query := cq.withHazardousMaterial; query != nil {
 		if err := cq.loadHazardousMaterial(ctx, query, nodes, nil,
 			func(n *Commodity, e *HazardousMaterial) { n.Edges.HazardousMaterial = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range cq.loadTotal {
+		if err := cq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -588,6 +598,9 @@ func (cq *CommodityQuery) loadHazardousMaterial(ctx context.Context, query *Haza
 
 func (cq *CommodityQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
+	if len(cq.modifiers) > 0 {
+		_spec.Modifiers = cq.modifiers
+	}
 	_spec.Node.Columns = cq.ctx.Fields
 	if len(cq.ctx.Fields) > 0 {
 		_spec.Unique = cq.ctx.Unique != nil && *cq.ctx.Unique

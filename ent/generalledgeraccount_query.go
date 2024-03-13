@@ -29,6 +29,9 @@ type GeneralLedgerAccountQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withTags         *TagQuery
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*GeneralLedgerAccount) error
+	withNamedTags    map[string]*TagQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -458,6 +461,9 @@ func (glaq *GeneralLedgerAccountQuery) sqlAll(ctx context.Context, hooks ...quer
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(glaq.modifiers) > 0 {
+		_spec.Modifiers = glaq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -483,6 +489,18 @@ func (glaq *GeneralLedgerAccountQuery) sqlAll(ctx context.Context, hooks ...quer
 		if err := glaq.loadTags(ctx, query, nodes,
 			func(n *GeneralLedgerAccount) { n.Edges.Tags = []*Tag{} },
 			func(n *GeneralLedgerAccount, e *Tag) { n.Edges.Tags = append(n.Edges.Tags, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range glaq.withNamedTags {
+		if err := glaq.loadTags(ctx, query, nodes,
+			func(n *GeneralLedgerAccount) { n.appendNamedTags(name) },
+			func(n *GeneralLedgerAccount, e *Tag) { n.appendNamedTags(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range glaq.loadTotal {
+		if err := glaq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -581,6 +599,9 @@ func (glaq *GeneralLedgerAccountQuery) loadTags(ctx context.Context, query *TagQ
 
 func (glaq *GeneralLedgerAccountQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := glaq.querySpec()
+	if len(glaq.modifiers) > 0 {
+		_spec.Modifiers = glaq.modifiers
+	}
 	_spec.Node.Columns = glaq.ctx.Fields
 	if len(glaq.ctx.Fields) > 0 {
 		_spec.Unique = glaq.ctx.Unique != nil && *glaq.ctx.Unique
@@ -664,6 +685,20 @@ func (glaq *GeneralLedgerAccountQuery) sqlQuery(ctx context.Context) *sql.Select
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedTags tells the query-builder to eager-load the nodes that are connected to the "tags"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (glaq *GeneralLedgerAccountQuery) WithNamedTags(name string, opts ...func(*TagQuery)) *GeneralLedgerAccountQuery {
+	query := (&TagClient{config: glaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if glaq.withNamedTags == nil {
+		glaq.withNamedTags = make(map[string]*TagQuery)
+	}
+	glaq.withNamedTags[name] = query
+	return glaq
 }
 
 // GeneralLedgerAccountGroupBy is the group-by builder for GeneralLedgerAccount entities.

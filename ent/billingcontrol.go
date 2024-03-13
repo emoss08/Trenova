@@ -23,7 +23,7 @@ type BillingControl struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// RemoveBillingHistory holds the value of the "remove_billing_history" field.
 	RemoveBillingHistory bool `json:"removeBillingHistory"`
 	// AutoBillShipment holds the value of the "auto_bill_shipment" field.
@@ -53,6 +53,8 @@ type BillingControlEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
+	// totalCount holds the count of the edges above.
+	totalCount [2]map[string]int
 }
 
 // OrganizationOrErr returns the Organization value or an error if the edge

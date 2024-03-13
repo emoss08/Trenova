@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetInvoiceControl gets the invoice control settings for an organization
 func GetBillingControl(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 

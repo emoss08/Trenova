@@ -4,6 +4,8 @@ package commodity
 
 import (
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -289,4 +291,40 @@ func newHazardousMaterialStep() *sqlgraph.Step {
 		sqlgraph.To(HazardousMaterialInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, HazardousMaterialTable, HazardousMaterialColumn),
 	)
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e Status) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *Status) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = Status(str)
+	if err := StatusValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid Status", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e UnitOfMeasure) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *UnitOfMeasure) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = UnitOfMeasure(str)
+	if err := UnitOfMeasureValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid UnitOfMeasure", str)
+	}
+	return nil
 }

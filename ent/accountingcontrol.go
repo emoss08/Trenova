@@ -24,7 +24,7 @@ type AccountingControl struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// RecThreshold holds the value of the "rec_threshold" field.
 	RecThreshold int64 `json:"recThreshold"`
 	// RecThresholdAction holds the value of the "rec_threshold_action" field.
@@ -66,6 +66,8 @@ type AccountingControlEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [4]bool
+	// totalCount holds the count of the edges above.
+	totalCount [4]map[string]int
 }
 
 // OrganizationOrErr returns the Organization value or an error if the edge

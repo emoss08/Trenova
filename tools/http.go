@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/emoss08/trenova/models"
 	"github.com/emoss08/trenova/tools/types"
 	"github.com/goccy/go-json"
 
@@ -73,7 +72,6 @@ func GetMuxVar(w http.ResponseWriter, r *http.Request, key string) string {
 // RegisterGob registers the UUID type with gob, so it can be used in sessions.
 func RegisterGob() {
 	gob.Register(uuid.UUID{})
-	gob.Register(models.User{})
 }
 
 func GetSystemSessionID() string {

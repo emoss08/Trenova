@@ -4,6 +4,8 @@ package dispatchcontrol
 
 import (
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -275,4 +277,22 @@ func newBusinessUnitStep() *sqlgraph.Step {
 		sqlgraph.To(BusinessUnitInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, BusinessUnitTable, BusinessUnitColumn),
 	)
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e RecordServiceIncident) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *RecordServiceIncident) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = RecordServiceIncident(str)
+	if err := RecordServiceIncidentValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid RecordServiceIncident", str)
+	}
+	return nil
 }

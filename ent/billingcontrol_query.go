@@ -27,6 +27,8 @@ type BillingControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*BillingControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +430,9 @@ func (bcq *BillingControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(bcq.modifiers) > 0 {
+		_spec.Modifiers = bcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -446,6 +451,11 @@ func (bcq *BillingControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if query := bcq.withBusinessUnit; query != nil {
 		if err := bcq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *BillingControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range bcq.loadTotal {
+		if err := bcq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -519,6 +529,9 @@ func (bcq *BillingControlQuery) loadBusinessUnit(ctx context.Context, query *Bus
 
 func (bcq *BillingControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := bcq.querySpec()
+	if len(bcq.modifiers) > 0 {
+		_spec.Modifiers = bcq.modifiers
+	}
 	_spec.Node.Columns = bcq.ctx.Fields
 	if len(bcq.ctx.Fields) > 0 {
 		_spec.Unique = bcq.ctx.Unique != nil && *bcq.ctx.Unique

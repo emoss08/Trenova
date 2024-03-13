@@ -32,7 +32,7 @@ func (DefaultMixin) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now()).
 			UpdateDefault(time.Now).
-			StructTag(`json:"createdAt"`),
+			StructTag(`json:"updatedAt"`),
 	}
 }
 

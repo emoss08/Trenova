@@ -29,7 +29,7 @@ type Organization struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// BusinessUnitID holds the value of the "business_unit_id" field.
 	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// Name holds the value of the "name" field.
@@ -71,6 +71,8 @@ type OrganizationEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [8]bool
+	// totalCount holds the count of the edges above.
+	totalCount [8]map[string]int
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge

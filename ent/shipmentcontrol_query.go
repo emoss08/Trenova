@@ -27,6 +27,8 @@ type ShipmentControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*ShipmentControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +430,9 @@ func (scq *ShipmentControlQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(scq.modifiers) > 0 {
+		_spec.Modifiers = scq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -446,6 +451,11 @@ func (scq *ShipmentControlQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if query := scq.withBusinessUnit; query != nil {
 		if err := scq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *ShipmentControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range scq.loadTotal {
+		if err := scq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -519,6 +529,9 @@ func (scq *ShipmentControlQuery) loadBusinessUnit(ctx context.Context, query *Bu
 
 func (scq *ShipmentControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := scq.querySpec()
+	if len(scq.modifiers) > 0 {
+		_spec.Modifiers = scq.modifiers
+	}
 	_spec.Node.Columns = scq.ctx.Fields
 	if len(scq.ctx.Fields) > 0 {
 		_spec.Unique = scq.ctx.Unique != nil && *scq.ctx.Unique

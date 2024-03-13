@@ -37,11 +37,14 @@ func InitializeRouter() *mux.Router {
 
 	protectedRouter.Use(logger.Middleware)
 
+	// Reigster Business Unit Routes
+	registerBusinessUnitRouter(protectedRouter)
+
 	// Register Billing Control Routes
 	registerBillingControlRouter(protectedRouter)
 
-	// Reigster Business Unit Routes
-	registerBusinessUnitRouter(protectedRouter)
+	// Register Invoice Control Routes
+	registerInvoiceControlRouter(protectedRouter)
 
 	return r
 }

@@ -27,6 +27,8 @@ type InvoiceControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*InvoiceControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +430,9 @@ func (icq *InvoiceControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(icq.modifiers) > 0 {
+		_spec.Modifiers = icq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -446,6 +451,11 @@ func (icq *InvoiceControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if query := icq.withBusinessUnit; query != nil {
 		if err := icq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *InvoiceControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range icq.loadTotal {
+		if err := icq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -519,6 +529,9 @@ func (icq *InvoiceControlQuery) loadBusinessUnit(ctx context.Context, query *Bus
 
 func (icq *InvoiceControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := icq.querySpec()
+	if len(icq.modifiers) > 0 {
+		_spec.Modifiers = icq.modifiers
+	}
 	_spec.Node.Columns = icq.ctx.Fields
 	if len(icq.ctx.Fields) > 0 {
 		_spec.Unique = icq.ctx.Unique != nil && *icq.ctx.Unique

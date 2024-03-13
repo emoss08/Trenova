@@ -30,6 +30,8 @@ type AccountingControlQuery struct {
 	withDefaultRevAccount *GeneralLedgerAccountQuery
 	withDefaultExpAccount *GeneralLedgerAccountQuery
 	withFKs               bool
+	modifiers             []func(*sql.Selector)
+	loadTotal             []func(context.Context, []*AccountingControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -501,6 +503,9 @@ func (acq *AccountingControlQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -531,6 +536,11 @@ func (acq *AccountingControlQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := acq.withDefaultExpAccount; query != nil {
 		if err := acq.loadDefaultExpAccount(ctx, query, nodes, nil,
 			func(n *AccountingControl, e *GeneralLedgerAccount) { n.Edges.DefaultExpAccount = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range acq.loadTotal {
+		if err := acq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -662,6 +672,9 @@ func (acq *AccountingControlQuery) loadDefaultExpAccount(ctx context.Context, qu
 
 func (acq *AccountingControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := acq.querySpec()
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	_spec.Node.Columns = acq.ctx.Fields
 	if len(acq.ctx.Fields) > 0 {
 		_spec.Unique = acq.ctx.Unique != nil && *acq.ctx.Unique

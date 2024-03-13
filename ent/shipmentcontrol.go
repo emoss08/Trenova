@@ -23,7 +23,7 @@ type ShipmentControl struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// AutoRateShipment holds the value of the "auto_rate_shipment" field.
 	AutoRateShipment bool `json:"autoRateShipment"`
 	// CalculateDistance holds the value of the "calculate_distance" field.
@@ -65,6 +65,8 @@ type ShipmentControlEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
+	// totalCount holds the count of the edges above.
+	totalCount [2]map[string]int
 }
 
 // OrganizationOrErr returns the Organization value or an error if the edge

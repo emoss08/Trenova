@@ -4,6 +4,8 @@ package generalledgeraccount
 
 import (
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -408,4 +410,94 @@ func newTagsStep() *sqlgraph.Step {
 		sqlgraph.To(TagsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TagsTable, TagsColumn),
 	)
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e Status) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *Status) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = Status(str)
+	if err := StatusValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid Status", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e AccountType) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *AccountType) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = AccountType(str)
+	if err := AccountTypeValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid AccountType", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e CashFlowType) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *CashFlowType) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = CashFlowType(str)
+	if err := CashFlowTypeValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid CashFlowType", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e AccountSubType) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *AccountSubType) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = AccountSubType(str)
+	if err := AccountSubTypeValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid AccountSubType", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e AccountClass) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *AccountClass) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = AccountClass(str)
+	if err := AccountClassValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid AccountClass", str)
+	}
+	return nil
 }

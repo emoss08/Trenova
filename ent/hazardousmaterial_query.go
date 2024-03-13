@@ -22,13 +22,16 @@ import (
 // HazardousMaterialQuery is the builder for querying HazardousMaterial entities.
 type HazardousMaterialQuery struct {
 	config
-	ctx              *QueryContext
-	order            []hazardousmaterial.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.HazardousMaterial
-	withBusinessUnit *BusinessUnitQuery
-	withOrganization *OrganizationQuery
-	withCommodities  *CommodityQuery
+	ctx                  *QueryContext
+	order                []hazardousmaterial.OrderOption
+	inters               []Interceptor
+	predicates           []predicate.HazardousMaterial
+	withBusinessUnit     *BusinessUnitQuery
+	withOrganization     *OrganizationQuery
+	withCommodities      *CommodityQuery
+	modifiers            []func(*sql.Selector)
+	loadTotal            []func(context.Context, []*HazardousMaterial) error
+	withNamedCommodities map[string]*CommodityQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -458,6 +461,9 @@ func (hmq *HazardousMaterialQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(hmq.modifiers) > 0 {
+		_spec.Modifiers = hmq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -483,6 +489,18 @@ func (hmq *HazardousMaterialQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		if err := hmq.loadCommodities(ctx, query, nodes,
 			func(n *HazardousMaterial) { n.Edges.Commodities = []*Commodity{} },
 			func(n *HazardousMaterial, e *Commodity) { n.Edges.Commodities = append(n.Edges.Commodities, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range hmq.withNamedCommodities {
+		if err := hmq.loadCommodities(ctx, query, nodes,
+			func(n *HazardousMaterial) { n.appendNamedCommodities(name) },
+			func(n *HazardousMaterial, e *Commodity) { n.appendNamedCommodities(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range hmq.loadTotal {
+		if err := hmq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -581,6 +599,9 @@ func (hmq *HazardousMaterialQuery) loadCommodities(ctx context.Context, query *C
 
 func (hmq *HazardousMaterialQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := hmq.querySpec()
+	if len(hmq.modifiers) > 0 {
+		_spec.Modifiers = hmq.modifiers
+	}
 	_spec.Node.Columns = hmq.ctx.Fields
 	if len(hmq.ctx.Fields) > 0 {
 		_spec.Unique = hmq.ctx.Unique != nil && *hmq.ctx.Unique
@@ -664,6 +685,20 @@ func (hmq *HazardousMaterialQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// WithNamedCommodities tells the query-builder to eager-load the nodes that are connected to the "commodities"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (hmq *HazardousMaterialQuery) WithNamedCommodities(name string, opts ...func(*CommodityQuery)) *HazardousMaterialQuery {
+	query := (&CommodityClient{config: hmq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if hmq.withNamedCommodities == nil {
+		hmq.withNamedCommodities = make(map[string]*CommodityQuery)
+	}
+	hmq.withNamedCommodities[name] = query
+	return hmq
 }
 
 // HazardousMaterialGroupBy is the group-by builder for HazardousMaterial entities.

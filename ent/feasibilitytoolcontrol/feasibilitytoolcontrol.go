@@ -4,6 +4,8 @@ package feasibilitytoolcontrol
 
 import (
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -318,4 +320,76 @@ func newBusinessUnitStep() *sqlgraph.Step {
 		sqlgraph.To(BusinessUnitInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, BusinessUnitTable, BusinessUnitColumn),
 	)
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e OtpOperator) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *OtpOperator) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = OtpOperator(str)
+	if err := OtpOperatorValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid OtpOperator", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e MpwOperator) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *MpwOperator) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = MpwOperator(str)
+	if err := MpwOperatorValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid MpwOperator", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e MpdOperator) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *MpdOperator) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = MpdOperator(str)
+	if err := MpdOperatorValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid MpdOperator", str)
+	}
+	return nil
+}
+
+// MarshalGQL implements graphql.Marshaler interface.
+func (e MpgOperator) MarshalGQL(w io.Writer) {
+	io.WriteString(w, strconv.Quote(e.String()))
+}
+
+// UnmarshalGQL implements graphql.Unmarshaler interface.
+func (e *MpgOperator) UnmarshalGQL(val interface{}) error {
+	str, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("enum %T must be a string", val)
+	}
+	*e = MpgOperator(str)
+	if err := MpgOperatorValidator(*e); err != nil {
+		return fmt.Errorf("%s is not a valid MpgOperator", str)
+	}
+	return nil
 }

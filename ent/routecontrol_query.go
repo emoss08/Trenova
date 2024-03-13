@@ -27,6 +27,8 @@ type RouteControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*RouteControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +430,9 @@ func (rcq *RouteControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(rcq.modifiers) > 0 {
+		_spec.Modifiers = rcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -446,6 +451,11 @@ func (rcq *RouteControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if query := rcq.withBusinessUnit; query != nil {
 		if err := rcq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *RouteControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range rcq.loadTotal {
+		if err := rcq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -519,6 +529,9 @@ func (rcq *RouteControlQuery) loadBusinessUnit(ctx context.Context, query *Busin
 
 func (rcq *RouteControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := rcq.querySpec()
+	if len(rcq.modifiers) > 0 {
+		_spec.Modifiers = rcq.modifiers
+	}
 	_spec.Node.Columns = rcq.ctx.Fields
 	if len(rcq.ctx.Fields) > 0 {
 		_spec.Unique = rcq.ctx.Unique != nil && *rcq.ctx.Unique

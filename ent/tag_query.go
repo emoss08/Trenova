@@ -27,6 +27,8 @@ type TagQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
+	loadTotal        []func(context.Context, []*Tag) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -425,6 +427,9 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -443,6 +448,11 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 	if query := tq.withOrganization; query != nil {
 		if err := tq.loadOrganization(ctx, query, nodes, nil,
 			func(n *Tag, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	for i := range tq.loadTotal {
+		if err := tq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -510,6 +520,9 @@ func (tq *TagQuery) loadOrganization(ctx context.Context, query *OrganizationQue
 
 func (tq *TagQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	_spec.Node.Columns = tq.ctx.Fields
 	if len(tq.ctx.Fields) > 0 {
 		_spec.Unique = tq.ctx.Unique != nil && *tq.ctx.Unique
