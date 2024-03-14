@@ -11,4 +11,5 @@ func registerAuthRoutes(r *mux.Router) {
 	authRouter := r.PathPrefix("/auth").Subrouter()
 
 	authRouter.HandleFunc("/login/", controllers.LoginHandler).Methods(http.MethodPost)
+	authRouter.HandleFunc("/logout/", controllers.LogoutHandler).Methods(http.MethodPost)
 }

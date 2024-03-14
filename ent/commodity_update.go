@@ -11,10 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/commodity"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
-	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -29,34 +27,6 @@ type CommodityUpdate struct {
 // Where appends a list predicates to the CommodityUpdate builder.
 func (cu *CommodityUpdate) Where(ps ...predicate.Commodity) *CommodityUpdate {
 	cu.mutation.Where(ps...)
-	return cu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (cu *CommodityUpdate) SetBusinessUnitID(u uuid.UUID) *CommodityUpdate {
-	cu.mutation.SetBusinessUnitID(u)
-	return cu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (cu *CommodityUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *CommodityUpdate {
-	if u != nil {
-		cu.SetBusinessUnitID(*u)
-	}
-	return cu
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (cu *CommodityUpdate) SetOrganizationID(u uuid.UUID) *CommodityUpdate {
-	cu.mutation.SetOrganizationID(u)
-	return cu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (cu *CommodityUpdate) SetNillableOrganizationID(u *uuid.UUID) *CommodityUpdate {
-	if u != nil {
-		cu.SetOrganizationID(*u)
-	}
 	return cu
 }
 
@@ -229,16 +199,6 @@ func (cu *CommodityUpdate) ClearDescription() *CommodityUpdate {
 	return cu
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (cu *CommodityUpdate) SetBusinessUnit(b *BusinessUnit) *CommodityUpdate {
-	return cu.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (cu *CommodityUpdate) SetOrganization(o *Organization) *CommodityUpdate {
-	return cu.SetOrganizationID(o.ID)
-}
-
 // SetHazardousMaterialID sets the "hazardous_material" edge to the HazardousMaterial entity by ID.
 func (cu *CommodityUpdate) SetHazardousMaterialID(id uuid.UUID) *CommodityUpdate {
 	cu.mutation.SetHazardousMaterialID(id)
@@ -253,18 +213,6 @@ func (cu *CommodityUpdate) SetHazardousMaterial(h *HazardousMaterial) *Commodity
 // Mutation returns the CommodityMutation object of the builder.
 func (cu *CommodityUpdate) Mutation() *CommodityMutation {
 	return cu.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (cu *CommodityUpdate) ClearBusinessUnit() *CommodityUpdate {
-	cu.mutation.ClearBusinessUnit()
-	return cu
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (cu *CommodityUpdate) ClearOrganization() *CommodityUpdate {
-	cu.mutation.ClearOrganization()
-	return cu
 }
 
 // ClearHazardousMaterial clears the "hazardous_material" edge to the HazardousMaterial entity.
@@ -401,64 +349,6 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if cu.mutation.DescriptionCleared() {
 		_spec.ClearField(commodity.FieldDescription, field.TypeString)
 	}
-	if cu.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.BusinessUnitTable,
-			Columns: []string{commodity.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cu.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.BusinessUnitTable,
-			Columns: []string{commodity.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if cu.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.OrganizationTable,
-			Columns: []string{commodity.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cu.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.OrganizationTable,
-			Columns: []string{commodity.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if cu.mutation.HazardousMaterialCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -506,34 +396,6 @@ type CommodityUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *CommodityMutation
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (cuo *CommodityUpdateOne) SetBusinessUnitID(u uuid.UUID) *CommodityUpdateOne {
-	cuo.mutation.SetBusinessUnitID(u)
-	return cuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (cuo *CommodityUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *CommodityUpdateOne {
-	if u != nil {
-		cuo.SetBusinessUnitID(*u)
-	}
-	return cuo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (cuo *CommodityUpdateOne) SetOrganizationID(u uuid.UUID) *CommodityUpdateOne {
-	cuo.mutation.SetOrganizationID(u)
-	return cuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (cuo *CommodityUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CommodityUpdateOne {
-	if u != nil {
-		cuo.SetOrganizationID(*u)
-	}
-	return cuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -705,16 +567,6 @@ func (cuo *CommodityUpdateOne) ClearDescription() *CommodityUpdateOne {
 	return cuo
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (cuo *CommodityUpdateOne) SetBusinessUnit(b *BusinessUnit) *CommodityUpdateOne {
-	return cuo.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (cuo *CommodityUpdateOne) SetOrganization(o *Organization) *CommodityUpdateOne {
-	return cuo.SetOrganizationID(o.ID)
-}
-
 // SetHazardousMaterialID sets the "hazardous_material" edge to the HazardousMaterial entity by ID.
 func (cuo *CommodityUpdateOne) SetHazardousMaterialID(id uuid.UUID) *CommodityUpdateOne {
 	cuo.mutation.SetHazardousMaterialID(id)
@@ -729,18 +581,6 @@ func (cuo *CommodityUpdateOne) SetHazardousMaterial(h *HazardousMaterial) *Commo
 // Mutation returns the CommodityMutation object of the builder.
 func (cuo *CommodityUpdateOne) Mutation() *CommodityMutation {
 	return cuo.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (cuo *CommodityUpdateOne) ClearBusinessUnit() *CommodityUpdateOne {
-	cuo.mutation.ClearBusinessUnit()
-	return cuo
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (cuo *CommodityUpdateOne) ClearOrganization() *CommodityUpdateOne {
-	cuo.mutation.ClearOrganization()
-	return cuo
 }
 
 // ClearHazardousMaterial clears the "hazardous_material" edge to the HazardousMaterial entity.
@@ -906,64 +746,6 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 	}
 	if cuo.mutation.DescriptionCleared() {
 		_spec.ClearField(commodity.FieldDescription, field.TypeString)
-	}
-	if cuo.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.BusinessUnitTable,
-			Columns: []string{commodity.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cuo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.BusinessUnitTable,
-			Columns: []string{commodity.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if cuo.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.OrganizationTable,
-			Columns: []string{commodity.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cuo.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   commodity.OrganizationTable,
-			Columns: []string{commodity.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cuo.mutation.HazardousMaterialCleared() {
 		edge := &sqlgraph.EdgeSpec{

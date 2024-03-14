@@ -11,10 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
 )
 
@@ -28,34 +27,6 @@ type UserUpdate struct {
 // Where appends a list predicates to the UserUpdate builder.
 func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	uu.mutation.Where(ps...)
-	return uu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (uu *UserUpdate) SetBusinessUnitID(u uuid.UUID) *UserUpdate {
-	uu.mutation.SetBusinessUnitID(u)
-	return uu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *UserUpdate {
-	if u != nil {
-		uu.SetBusinessUnitID(*u)
-	}
-	return uu
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (uu *UserUpdate) SetOrganizationID(u uuid.UUID) *UserUpdate {
-	uu.mutation.SetOrganizationID(u)
-	return uu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableOrganizationID(u *uuid.UUID) *UserUpdate {
-	if u != nil {
-		uu.SetOrganizationID(*u)
-	}
 	return uu
 }
 
@@ -257,14 +228,19 @@ func (uu *UserUpdate) ClearLastLogin() *UserUpdate {
 	return uu
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (uu *UserUpdate) SetBusinessUnit(b *BusinessUnit) *UserUpdate {
-	return uu.SetBusinessUnitID(b.ID)
+// AddUserFavoriteIDs adds the "user_favorites" edge to the UserFavorite entity by IDs.
+func (uu *UserUpdate) AddUserFavoriteIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddUserFavoriteIDs(ids...)
+	return uu
 }
 
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (uu *UserUpdate) SetOrganization(o *Organization) *UserUpdate {
-	return uu.SetOrganizationID(o.ID)
+// AddUserFavorites adds the "user_favorites" edges to the UserFavorite entity.
+func (uu *UserUpdate) AddUserFavorites(u ...*UserFavorite) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.AddUserFavoriteIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -272,16 +248,25 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (uu *UserUpdate) ClearBusinessUnit() *UserUpdate {
-	uu.mutation.ClearBusinessUnit()
+// ClearUserFavorites clears all "user_favorites" edges to the UserFavorite entity.
+func (uu *UserUpdate) ClearUserFavorites() *UserUpdate {
+	uu.mutation.ClearUserFavorites()
 	return uu
 }
 
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (uu *UserUpdate) ClearOrganization() *UserUpdate {
-	uu.mutation.ClearOrganization()
+// RemoveUserFavoriteIDs removes the "user_favorites" edge to UserFavorite entities by IDs.
+func (uu *UserUpdate) RemoveUserFavoriteIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveUserFavoriteIDs(ids...)
 	return uu
+}
+
+// RemoveUserFavorites removes "user_favorites" edges to UserFavorite entities.
+func (uu *UserUpdate) RemoveUserFavorites(u ...*UserFavorite) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveUserFavoriteIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -424,57 +409,44 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.LastLoginCleared() {
 		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
 	}
-	if uu.mutation.BusinessUnitCleared() {
+	if uu.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BusinessUnitTable,
-			Columns: []string{user.BusinessUnitColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.RemovedUserFavoritesIDs(); len(nodes) > 0 && !uu.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BusinessUnitTable,
-			Columns: []string{user.BusinessUnitColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uu.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   user.OrganizationTable,
-			Columns: []string{user.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.OrganizationIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.UserFavoritesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.OrganizationTable,
-			Columns: []string{user.OrganizationColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -500,34 +472,6 @@ type UserUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *UserMutation
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (uuo *UserUpdateOne) SetBusinessUnitID(u uuid.UUID) *UserUpdateOne {
-	uuo.mutation.SetBusinessUnitID(u)
-	return uuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *UserUpdateOne {
-	if u != nil {
-		uuo.SetBusinessUnitID(*u)
-	}
-	return uuo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (uuo *UserUpdateOne) SetOrganizationID(u uuid.UUID) *UserUpdateOne {
-	uuo.mutation.SetOrganizationID(u)
-	return uuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *UserUpdateOne {
-	if u != nil {
-		uuo.SetOrganizationID(*u)
-	}
-	return uuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -728,14 +672,19 @@ func (uuo *UserUpdateOne) ClearLastLogin() *UserUpdateOne {
 	return uuo
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (uuo *UserUpdateOne) SetBusinessUnit(b *BusinessUnit) *UserUpdateOne {
-	return uuo.SetBusinessUnitID(b.ID)
+// AddUserFavoriteIDs adds the "user_favorites" edge to the UserFavorite entity by IDs.
+func (uuo *UserUpdateOne) AddUserFavoriteIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddUserFavoriteIDs(ids...)
+	return uuo
 }
 
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (uuo *UserUpdateOne) SetOrganization(o *Organization) *UserUpdateOne {
-	return uuo.SetOrganizationID(o.ID)
+// AddUserFavorites adds the "user_favorites" edges to the UserFavorite entity.
+func (uuo *UserUpdateOne) AddUserFavorites(u ...*UserFavorite) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.AddUserFavoriteIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -743,16 +692,25 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (uuo *UserUpdateOne) ClearBusinessUnit() *UserUpdateOne {
-	uuo.mutation.ClearBusinessUnit()
+// ClearUserFavorites clears all "user_favorites" edges to the UserFavorite entity.
+func (uuo *UserUpdateOne) ClearUserFavorites() *UserUpdateOne {
+	uuo.mutation.ClearUserFavorites()
 	return uuo
 }
 
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (uuo *UserUpdateOne) ClearOrganization() *UserUpdateOne {
-	uuo.mutation.ClearOrganization()
+// RemoveUserFavoriteIDs removes the "user_favorites" edge to UserFavorite entities by IDs.
+func (uuo *UserUpdateOne) RemoveUserFavoriteIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveUserFavoriteIDs(ids...)
 	return uuo
+}
+
+// RemoveUserFavorites removes "user_favorites" edges to UserFavorite entities.
+func (uuo *UserUpdateOne) RemoveUserFavorites(u ...*UserFavorite) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveUserFavoriteIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -925,57 +883,44 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.LastLoginCleared() {
 		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
 	}
-	if uuo.mutation.BusinessUnitCleared() {
+	if uuo.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BusinessUnitTable,
-			Columns: []string{user.BusinessUnitColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.RemovedUserFavoritesIDs(); len(nodes) > 0 && !uuo.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BusinessUnitTable,
-			Columns: []string{user.BusinessUnitColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uuo.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   user.OrganizationTable,
-			Columns: []string{user.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.UserFavoritesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.OrganizationTable,
-			Columns: []string{user.OrganizationColumn},
+			Table:   user.UserFavoritesTable,
+			Columns: []string{user.UserFavoritesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

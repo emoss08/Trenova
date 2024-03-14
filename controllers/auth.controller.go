@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/tools/types"
 )
 
+// LoginHandler handles the login request and authenticates the user
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	store, storeErr := session.GetStore()
 	if storeErr != nil {
@@ -72,4 +73,44 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tools.ResponseWithJSON(w, http.StatusOK, "Login successful")
+}
+
+// LogoutHandler handles the logout request and invalidates the session
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	store, storeErr := session.GetStore()
+	if storeErr != nil {
+		tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorDetail{
+			Code:   "sessionError",
+			Detail: storeErr.Error(),
+			Attr:   "session",
+		})
+		return
+	}
+
+	sessionID := tools.GetSystemSessionID()
+	session, sessionErr := store.Get(r, sessionID)
+
+	if sessionErr != nil {
+		tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorDetail{
+			Code:   "sessionError",
+			Detail: "Failed to retrieve session",
+			Attr:   "session",
+		})
+		return
+	}
+
+	// Invalidate the session by setting the MaxAge to -1
+	session.Options.MaxAge = -1
+
+	// Save the session to update the session in the database and delete client's cookie
+	if err := session.Save(r, w); err != nil {
+		tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorDetail{
+			Code:   "sessionError",
+			Detail: "Failed to save session",
+			Attr:   "session",
+		})
+		return
+	}
+
+	tools.ResponseWithJSON(w, http.StatusOK, "Logout successful")
 }
