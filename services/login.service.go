@@ -15,6 +15,7 @@ type LoginOps struct {
 	client *ent.Client
 }
 
+// NewLoginOps returns a new instance of LoginOps
 func NewLoginOps(ctx context.Context) *LoginOps {
 	return &LoginOps{
 		ctx:    ctx,
@@ -22,6 +23,7 @@ func NewLoginOps(ctx context.Context) *LoginOps {
 	}
 }
 
+// AuthenticateUser returns back the user if the username and password are correct
 func (r *LoginOps) AuthenticateUser(username, password string) (*ent.User, error) {
 	u, err := r.client.User.
 		Query().

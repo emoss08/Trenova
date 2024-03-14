@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
 )
 
@@ -56,6 +57,7 @@ const (
 	TypeTableChangeAlert       = "TableChangeAlert"
 	TypeTag                    = "Tag"
 	TypeUser                   = "User"
+	TypeUserFavorite           = "UserFavorite"
 )
 
 // AccountingControlMutation represents an operation that mutates the AccountingControl nodes in the graph.
@@ -11591,9 +11593,6 @@ type OrganizationMutation struct {
 	clearedroute_control            bool
 	shipment_control                *uuid.UUID
 	clearedshipment_control         bool
-	users                           map[uuid.UUID]struct{}
-	removedusers                    map[uuid.UUID]struct{}
-	clearedusers                    bool
 	done                            bool
 	oldValue                        func(context.Context) (*Organization, error)
 	predicates                      []predicate.Organization
@@ -12340,60 +12339,6 @@ func (m *OrganizationMutation) ResetShipmentControl() {
 	m.clearedshipment_control = false
 }
 
-// AddUserIDs adds the "users" edge to the User entity by ids.
-func (m *OrganizationMutation) AddUserIDs(ids ...uuid.UUID) {
-	if m.users == nil {
-		m.users = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.users[ids[i]] = struct{}{}
-	}
-}
-
-// ClearUsers clears the "users" edge to the User entity.
-func (m *OrganizationMutation) ClearUsers() {
-	m.clearedusers = true
-}
-
-// UsersCleared reports if the "users" edge to the User entity was cleared.
-func (m *OrganizationMutation) UsersCleared() bool {
-	return m.clearedusers
-}
-
-// RemoveUserIDs removes the "users" edge to the User entity by IDs.
-func (m *OrganizationMutation) RemoveUserIDs(ids ...uuid.UUID) {
-	if m.removedusers == nil {
-		m.removedusers = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.users, ids[i])
-		m.removedusers[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedUsers returns the removed IDs of the "users" edge to the User entity.
-func (m *OrganizationMutation) RemovedUsersIDs() (ids []uuid.UUID) {
-	for id := range m.removedusers {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// UsersIDs returns the "users" edge IDs in the mutation.
-func (m *OrganizationMutation) UsersIDs() (ids []uuid.UUID) {
-	for id := range m.users {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetUsers resets all changes to the "users" edge.
-func (m *OrganizationMutation) ResetUsers() {
-	m.users = nil
-	m.clearedusers = false
-	m.removedusers = nil
-}
-
 // Where appends a list predicates to the OrganizationMutation builder.
 func (m *OrganizationMutation) Where(ps ...predicate.Organization) {
 	m.predicates = append(m.predicates, ps...)
@@ -12672,7 +12617,7 @@ func (m *OrganizationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 8)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -12696,9 +12641,6 @@ func (m *OrganizationMutation) AddedEdges() []string {
 	}
 	if m.shipment_control != nil {
 		edges = append(edges, organization.EdgeShipmentControl)
-	}
-	if m.users != nil {
-		edges = append(edges, organization.EdgeUsers)
 	}
 	return edges
 }
@@ -12739,42 +12681,25 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 		if id := m.shipment_control; id != nil {
 			return []ent.Value{*id}
 		}
-	case organization.EdgeUsers:
-		ids := make([]ent.Value, 0, len(m.users))
-		for id := range m.users {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 9)
-	if m.removedusers != nil {
-		edges = append(edges, organization.EdgeUsers)
-	}
+	edges := make([]string, 0, 8)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case organization.EdgeUsers:
-		ids := make([]ent.Value, 0, len(m.removedusers))
-		for id := range m.removedusers {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 8)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -12799,9 +12724,6 @@ func (m *OrganizationMutation) ClearedEdges() []string {
 	if m.clearedshipment_control {
 		edges = append(edges, organization.EdgeShipmentControl)
 	}
-	if m.clearedusers {
-		edges = append(edges, organization.EdgeUsers)
-	}
 	return edges
 }
 
@@ -12825,8 +12747,6 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 		return m.clearedroute_control
 	case organization.EdgeShipmentControl:
 		return m.clearedshipment_control
-	case organization.EdgeUsers:
-		return m.clearedusers
 	}
 	return false
 }
@@ -12890,9 +12810,6 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 		return nil
 	case organization.EdgeShipmentControl:
 		m.ResetShipmentControl()
-		return nil
-	case organization.EdgeUsers:
-		m.ResetUsers()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization edge %s", name)
@@ -17496,31 +17413,34 @@ func (m *TagMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *uuid.UUID
-	created_at           *time.Time
-	updated_at           *time.Time
-	status               *user.Status
-	name                 *string
-	username             *string
-	password             *string
-	email                *string
-	timezone             *user.Timezone
-	profile_pic_url      *string
-	thumbnail_url        *string
-	phone_number         *string
-	is_admin             *bool
-	is_super_admin       *bool
-	last_login           *time.Time
-	clearedFields        map[string]struct{}
-	business_unit        *uuid.UUID
-	clearedbusiness_unit bool
-	organization         *uuid.UUID
-	clearedorganization  bool
-	done                 bool
-	oldValue             func(context.Context) (*User, error)
-	predicates           []predicate.User
+	op                    Op
+	typ                   string
+	id                    *uuid.UUID
+	created_at            *time.Time
+	updated_at            *time.Time
+	status                *user.Status
+	name                  *string
+	username              *string
+	password              *string
+	email                 *string
+	timezone              *user.Timezone
+	profile_pic_url       *string
+	thumbnail_url         *string
+	phone_number          *string
+	is_admin              *bool
+	is_super_admin        *bool
+	last_login            *time.Time
+	clearedFields         map[string]struct{}
+	business_unit         *uuid.UUID
+	clearedbusiness_unit  bool
+	organization          *uuid.UUID
+	clearedorganization   bool
+	user_favorites        map[uuid.UUID]struct{}
+	removeduser_favorites map[uuid.UUID]struct{}
+	cleareduser_favorites bool
+	done                  bool
+	oldValue              func(context.Context) (*User, error)
+	predicates            []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -18309,6 +18229,60 @@ func (m *UserMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// AddUserFavoriteIDs adds the "user_favorites" edge to the UserFavorite entity by ids.
+func (m *UserMutation) AddUserFavoriteIDs(ids ...uuid.UUID) {
+	if m.user_favorites == nil {
+		m.user_favorites = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.user_favorites[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUserFavorites clears the "user_favorites" edge to the UserFavorite entity.
+func (m *UserMutation) ClearUserFavorites() {
+	m.cleareduser_favorites = true
+}
+
+// UserFavoritesCleared reports if the "user_favorites" edge to the UserFavorite entity was cleared.
+func (m *UserMutation) UserFavoritesCleared() bool {
+	return m.cleareduser_favorites
+}
+
+// RemoveUserFavoriteIDs removes the "user_favorites" edge to the UserFavorite entity by IDs.
+func (m *UserMutation) RemoveUserFavoriteIDs(ids ...uuid.UUID) {
+	if m.removeduser_favorites == nil {
+		m.removeduser_favorites = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.user_favorites, ids[i])
+		m.removeduser_favorites[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUserFavorites returns the removed IDs of the "user_favorites" edge to the UserFavorite entity.
+func (m *UserMutation) RemovedUserFavoritesIDs() (ids []uuid.UUID) {
+	for id := range m.removeduser_favorites {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UserFavoritesIDs returns the "user_favorites" edge IDs in the mutation.
+func (m *UserMutation) UserFavoritesIDs() (ids []uuid.UUID) {
+	for id := range m.user_favorites {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUserFavorites resets all changes to the "user_favorites" edge.
+func (m *UserMutation) ResetUserFavorites() {
+	m.user_favorites = nil
+	m.cleareduser_favorites = false
+	m.removeduser_favorites = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -18724,12 +18698,15 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.business_unit != nil {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
 	if m.organization != nil {
 		edges = append(edges, user.EdgeOrganization)
+	}
+	if m.user_favorites != nil {
+		edges = append(edges, user.EdgeUserFavorites)
 	}
 	return edges
 }
@@ -18746,30 +18723,50 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		if id := m.organization; id != nil {
 			return []ent.Value{*id}
 		}
+	case user.EdgeUserFavorites:
+		ids := make([]ent.Value, 0, len(m.user_favorites))
+		for id := range m.user_favorites {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removeduser_favorites != nil {
+		edges = append(edges, user.EdgeUserFavorites)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeUserFavorites:
+		ids := make([]ent.Value, 0, len(m.removeduser_favorites))
+		for id := range m.removeduser_favorites {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedbusiness_unit {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
 	if m.clearedorganization {
 		edges = append(edges, user.EdgeOrganization)
+	}
+	if m.cleareduser_favorites {
+		edges = append(edges, user.EdgeUserFavorites)
 	}
 	return edges
 }
@@ -18782,6 +18779,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedbusiness_unit
 	case user.EdgeOrganization:
 		return m.clearedorganization
+	case user.EdgeUserFavorites:
+		return m.cleareduser_favorites
 	}
 	return false
 }
@@ -18810,6 +18809,757 @@ func (m *UserMutation) ResetEdge(name string) error {
 	case user.EdgeOrganization:
 		m.ResetOrganization()
 		return nil
+	case user.EdgeUserFavorites:
+		m.ResetUserFavorites()
+		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// UserFavoriteMutation represents an operation that mutates the UserFavorite nodes in the graph.
+type UserFavoriteMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	page_link            *string
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	user                 *uuid.UUID
+	cleareduser          bool
+	done                 bool
+	oldValue             func(context.Context) (*UserFavorite, error)
+	predicates           []predicate.UserFavorite
+}
+
+var _ ent.Mutation = (*UserFavoriteMutation)(nil)
+
+// userfavoriteOption allows management of the mutation configuration using functional options.
+type userfavoriteOption func(*UserFavoriteMutation)
+
+// newUserFavoriteMutation creates new mutation for the UserFavorite entity.
+func newUserFavoriteMutation(c config, op Op, opts ...userfavoriteOption) *UserFavoriteMutation {
+	m := &UserFavoriteMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserFavorite,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserFavoriteID sets the ID field of the mutation.
+func withUserFavoriteID(id uuid.UUID) userfavoriteOption {
+	return func(m *UserFavoriteMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserFavorite
+		)
+		m.oldValue = func(ctx context.Context) (*UserFavorite, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserFavorite.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserFavorite sets the old UserFavorite of the mutation.
+func withUserFavorite(node *UserFavorite) userfavoriteOption {
+	return func(m *UserFavoriteMutation) {
+		m.oldValue = func(context.Context) (*UserFavorite, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserFavoriteMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserFavoriteMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of UserFavorite entities.
+func (m *UserFavoriteMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserFavoriteMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserFavoriteMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserFavorite.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *UserFavoriteMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *UserFavoriteMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *UserFavoriteMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *UserFavoriteMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *UserFavoriteMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *UserFavoriteMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserFavoriteMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserFavoriteMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserFavoriteMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *UserFavoriteMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *UserFavoriteMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *UserFavoriteMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetPageLink sets the "page_link" field.
+func (m *UserFavoriteMutation) SetPageLink(s string) {
+	m.page_link = &s
+}
+
+// PageLink returns the value of the "page_link" field in the mutation.
+func (m *UserFavoriteMutation) PageLink() (r string, exists bool) {
+	v := m.page_link
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPageLink returns the old "page_link" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldPageLink(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPageLink is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPageLink requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPageLink: %w", err)
+	}
+	return oldValue.PageLink, nil
+}
+
+// ResetPageLink resets all changes to the "page_link" field.
+func (m *UserFavoriteMutation) ResetPageLink() {
+	m.page_link = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *UserFavoriteMutation) SetUserID(u uuid.UUID) {
+	m.user = &u
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *UserFavoriteMutation) UserID() (r uuid.UUID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldUserID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *UserFavoriteMutation) ResetUserID() {
+	m.user = nil
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *UserFavoriteMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[userfavorite.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *UserFavoriteMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *UserFavoriteMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *UserFavoriteMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *UserFavoriteMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[userfavorite.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *UserFavoriteMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *UserFavoriteMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *UserFavoriteMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *UserFavoriteMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[userfavorite.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *UserFavoriteMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *UserFavoriteMutation) UserIDs() (ids []uuid.UUID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *UserFavoriteMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the UserFavoriteMutation builder.
+func (m *UserFavoriteMutation) Where(ps ...predicate.UserFavorite) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserFavoriteMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserFavoriteMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserFavorite, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserFavoriteMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserFavoriteMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserFavorite).
+func (m *UserFavoriteMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserFavoriteMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.business_unit != nil {
+		fields = append(fields, userfavorite.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, userfavorite.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, userfavorite.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, userfavorite.FieldUpdatedAt)
+	}
+	if m.page_link != nil {
+		fields = append(fields, userfavorite.FieldPageLink)
+	}
+	if m.user != nil {
+		fields = append(fields, userfavorite.FieldUserID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserFavoriteMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case userfavorite.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case userfavorite.FieldOrganizationID:
+		return m.OrganizationID()
+	case userfavorite.FieldCreatedAt:
+		return m.CreatedAt()
+	case userfavorite.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case userfavorite.FieldPageLink:
+		return m.PageLink()
+	case userfavorite.FieldUserID:
+		return m.UserID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserFavoriteMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case userfavorite.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case userfavorite.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case userfavorite.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case userfavorite.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case userfavorite.FieldPageLink:
+		return m.OldPageLink(ctx)
+	case userfavorite.FieldUserID:
+		return m.OldUserID(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserFavorite field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserFavoriteMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case userfavorite.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case userfavorite.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case userfavorite.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case userfavorite.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case userfavorite.FieldPageLink:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPageLink(v)
+		return nil
+	case userfavorite.FieldUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserFavorite field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserFavoriteMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserFavoriteMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserFavoriteMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown UserFavorite numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserFavoriteMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserFavoriteMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserFavoriteMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown UserFavorite nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserFavoriteMutation) ResetField(name string) error {
+	switch name {
+	case userfavorite.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case userfavorite.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case userfavorite.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case userfavorite.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case userfavorite.FieldPageLink:
+		m.ResetPageLink()
+		return nil
+	case userfavorite.FieldUserID:
+		m.ResetUserID()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFavorite field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserFavoriteMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.business_unit != nil {
+		edges = append(edges, userfavorite.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, userfavorite.EdgeOrganization)
+	}
+	if m.user != nil {
+		edges = append(edges, userfavorite.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserFavoriteMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case userfavorite.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case userfavorite.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case userfavorite.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserFavoriteMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserFavoriteMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserFavoriteMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedbusiness_unit {
+		edges = append(edges, userfavorite.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, userfavorite.EdgeOrganization)
+	}
+	if m.cleareduser {
+		edges = append(edges, userfavorite.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserFavoriteMutation) EdgeCleared(name string) bool {
+	switch name {
+	case userfavorite.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case userfavorite.EdgeOrganization:
+		return m.clearedorganization
+	case userfavorite.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserFavoriteMutation) ClearEdge(name string) error {
+	switch name {
+	case userfavorite.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case userfavorite.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case userfavorite.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFavorite unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserFavoriteMutation) ResetEdge(name string) error {
+	switch name {
+	case userfavorite.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case userfavorite.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case userfavorite.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFavorite edge %s", name)
 }

@@ -54,9 +54,8 @@ type User struct {
 	LastLogin *time.Time `json:"lastLogin"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges              UserEdges `json:"edges"`
-	organization_users *uuid.UUID
-	selectValues       sql.SelectValues
+	Edges        UserEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -65,9 +64,11 @@ type UserEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// UserFavorites holds the value of the user_favorites edge.
+	UserFavorites []*UserFavorite `json:"user_favorites,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -92,6 +93,15 @@ func (e UserEdges) OrganizationOrErr() (*Organization, error) {
 	return nil, &NotLoadedError{edge: "organization"}
 }
 
+// UserFavoritesOrErr returns the UserFavorites value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) UserFavoritesOrErr() ([]*UserFavorite, error) {
+	if e.loadedTypes[2] {
+		return e.UserFavorites, nil
+	}
+	return nil, &NotLoadedError{edge: "user_favorites"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -105,8 +115,6 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case user.FieldID, user.FieldBusinessUnitID, user.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
-		case user.ForeignKeys[0]: // organization_users
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -226,13 +234,6 @@ func (u *User) assignValues(columns []string, values []any) error {
 				u.LastLogin = new(time.Time)
 				*u.LastLogin = value.Time
 			}
-		case user.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field organization_users", values[i])
-			} else if value.Valid {
-				u.organization_users = new(uuid.UUID)
-				*u.organization_users = *value.S.(*uuid.UUID)
-			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -254,6 +255,11 @@ func (u *User) QueryBusinessUnit() *BusinessUnitQuery {
 // QueryOrganization queries the "organization" edge of the User entity.
 func (u *User) QueryOrganization() *OrganizationQuery {
 	return NewUserClient(u.config).QueryOrganization(u)
+}
+
+// QueryUserFavorites queries the "user_favorites" edge of the User entity.
+func (u *User) QueryUserFavorites() *UserFavoriteQuery {
+	return NewUserClient(u.config).QueryUserFavorites(u)
 }
 
 // Update returns a builder for updating this User.

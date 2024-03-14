@@ -15,6 +15,7 @@ type UserOps struct {
 	client *ent.Client
 }
 
+// NewUserOps creates a new user service
 func NewUserOps(ctx context.Context) *UserOps {
 	return &UserOps{
 		ctx:    ctx,
@@ -22,7 +23,8 @@ func NewUserOps(ctx context.Context) *UserOps {
 	}
 }
 
-func (r UserOps) GetAuthenticatedUser(userID uuid.UUID) (*ent.User, error) {
+// GetAuthenticatedUser returns the user if the user ID is correct
+func (r *UserOps) GetAuthenticatedUser(userID uuid.UUID) (*ent.User, error) {
 	u, err := r.client.User.
 		Query().
 		Where(user.IDEQ(userID)).

@@ -7,8 +7,8 @@ import (
 )
 
 func ResponseWithError(w http.ResponseWriter, statusCode int, data any) {
-	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		return

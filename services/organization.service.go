@@ -5,17 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
-	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
 )
 
-// UserOps is the service for user
+// OrganizationOps is the service for organization
 type OrganizatinOps struct {
 	ctx    context.Context
 	client *ent.Client
 }
 
+// NewOrganizationOps creates a new organization service
 func NewOrganizationOps(ctx context.Context) *OrganizatinOps {
 	return &OrganizatinOps{
 		ctx:    ctx,
@@ -24,10 +25,17 @@ func NewOrganizationOps(ctx context.Context) *OrganizatinOps {
 }
 
 // GetUserOrganization returns the organization of the user
-func (r OrganizatinOps) GetUserOrganization(userID uuid.UUID) (*ent.Organization, error) {
-	org, err := r.client.Organization.
+func (r *OrganizatinOps) GetUserOrganization(buID, orgID uuid.UUID) (*ent.Organization, error) {
+	org, err := r.client.Debug().Organization.
 		Query().
-		Where(organization.HasUsersWith(user.ID(userID))).
+		Where(
+			organization.And(
+				organization.ID(orgID),
+				organization.HasBusinessUnitWith(
+					businessunit.ID(buID),
+				),
+			),
+		).
 		Only(r.ctx)
 	if err != nil {
 		return nil, err

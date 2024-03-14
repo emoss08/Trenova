@@ -21,6 +21,7 @@ import {
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
   SourceChoicesProps,
+  TimezoneChoices,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
 import {
@@ -39,7 +40,7 @@ export const organizationSchema: ObjectSchema<OrganizationFormValues> =
     scacCode: Yup.string().required("SCAC Code is required."),
     dotNumber: Yup.string().required("DOT Number is required."),
     orgType: Yup.string().required("Organization Type is required."),
-    timezone: Yup.string().required("Timezone is required."),
+    timezone: Yup.string<TimezoneChoices>().required("Timezone is required."),
     logoUrl: Yup.string().notRequired(),
   });
 

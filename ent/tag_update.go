@@ -11,11 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tag"
-	"github.com/google/uuid"
 )
 
 // TagUpdate is the builder for updating Tag entities.
@@ -28,34 +25,6 @@ type TagUpdate struct {
 // Where appends a list predicates to the TagUpdate builder.
 func (tu *TagUpdate) Where(ps ...predicate.Tag) *TagUpdate {
 	tu.mutation.Where(ps...)
-	return tu
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (tu *TagUpdate) SetBusinessUnitID(u uuid.UUID) *TagUpdate {
-	tu.mutation.SetBusinessUnitID(u)
-	return tu
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (tu *TagUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *TagUpdate {
-	if u != nil {
-		tu.SetBusinessUnitID(*u)
-	}
-	return tu
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (tu *TagUpdate) SetOrganizationID(u uuid.UUID) *TagUpdate {
-	tu.mutation.SetOrganizationID(u)
-	return tu
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (tu *TagUpdate) SetNillableOrganizationID(u *uuid.UUID) *TagUpdate {
-	if u != nil {
-		tu.SetOrganizationID(*u)
-	}
 	return tu
 }
 
@@ -99,31 +68,9 @@ func (tu *TagUpdate) ClearDescription() *TagUpdate {
 	return tu
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (tu *TagUpdate) SetBusinessUnit(b *BusinessUnit) *TagUpdate {
-	return tu.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (tu *TagUpdate) SetOrganization(o *Organization) *TagUpdate {
-	return tu.SetOrganizationID(o.ID)
-}
-
 // Mutation returns the TagMutation object of the builder.
 func (tu *TagUpdate) Mutation() *TagMutation {
 	return tu.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (tu *TagUpdate) ClearBusinessUnit() *TagUpdate {
-	tu.mutation.ClearBusinessUnit()
-	return tu
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (tu *TagUpdate) ClearOrganization() *TagUpdate {
-	tu.mutation.ClearOrganization()
-	return tu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -202,64 +149,6 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
 	}
-	if tu.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.BusinessUnitTable,
-			Columns: []string{tag.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tu.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.BusinessUnitTable,
-			Columns: []string{tag.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if tu.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.OrganizationTable,
-			Columns: []string{tag.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tu.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.OrganizationTable,
-			Columns: []string{tag.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tag.Label}
@@ -278,34 +167,6 @@ type TagUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TagMutation
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (tuo *TagUpdateOne) SetBusinessUnitID(u uuid.UUID) *TagUpdateOne {
-	tuo.mutation.SetBusinessUnitID(u)
-	return tuo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (tuo *TagUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *TagUpdateOne {
-	if u != nil {
-		tuo.SetBusinessUnitID(*u)
-	}
-	return tuo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (tuo *TagUpdateOne) SetOrganizationID(u uuid.UUID) *TagUpdateOne {
-	tuo.mutation.SetOrganizationID(u)
-	return tuo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (tuo *TagUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *TagUpdateOne {
-	if u != nil {
-		tuo.SetOrganizationID(*u)
-	}
-	return tuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -348,31 +209,9 @@ func (tuo *TagUpdateOne) ClearDescription() *TagUpdateOne {
 	return tuo
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (tuo *TagUpdateOne) SetBusinessUnit(b *BusinessUnit) *TagUpdateOne {
-	return tuo.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (tuo *TagUpdateOne) SetOrganization(o *Organization) *TagUpdateOne {
-	return tuo.SetOrganizationID(o.ID)
-}
-
 // Mutation returns the TagMutation object of the builder.
 func (tuo *TagUpdateOne) Mutation() *TagMutation {
 	return tuo.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (tuo *TagUpdateOne) ClearBusinessUnit() *TagUpdateOne {
-	tuo.mutation.ClearBusinessUnit()
-	return tuo
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (tuo *TagUpdateOne) ClearOrganization() *TagUpdateOne {
-	tuo.mutation.ClearOrganization()
-	return tuo
 }
 
 // Where appends a list predicates to the TagUpdate builder.
@@ -480,64 +319,6 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	}
 	if tuo.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
-	}
-	if tuo.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.BusinessUnitTable,
-			Columns: []string{tag.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tuo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.BusinessUnitTable,
-			Columns: []string{tag.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if tuo.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.OrganizationTable,
-			Columns: []string{tag.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tuo.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tag.OrganizationTable,
-			Columns: []string{tag.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Tag{config: tuo.config}
 	_spec.Assign = _node.assignValues

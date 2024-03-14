@@ -591,14 +591,13 @@ var (
 		{Name: "username", Type: field.TypeString, Size: 30},
 		{Name: "password", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString, Size: 255},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
+		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles"},
 		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
 		{Name: "is_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_super_admin", Type: field.TypeBool, Default: false},
 		{Name: "last_login", Type: field.TypeTime, Nullable: true},
-		{Name: "organization_users", Type: field.TypeUUID, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -609,20 +608,14 @@ var (
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "users_organizations_users",
-				Columns:    []*schema.Column{UsersColumns[15]},
-				RefColumns: []*schema.Column{OrganizationsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "users_business_units_business_unit",
-				Columns:    []*schema.Column{UsersColumns[16]},
+				Columns:    []*schema.Column{UsersColumns[15]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "users_organizations_organization",
-				Columns:    []*schema.Column{UsersColumns[17]},
+				Columns:    []*schema.Column{UsersColumns[16]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -632,6 +625,42 @@ var (
 				Name:    "user_username_email",
 				Unique:  true,
 				Columns: []*schema.Column{UsersColumns[5], UsersColumns[7]},
+			},
+		},
+	}
+	// UserFavoritesColumns holds the columns for the "user_favorites" table.
+	UserFavoritesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "page_link", Type: field.TypeString, Unique: true, Size: 255},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// UserFavoritesTable holds the schema information for the "user_favorites" table.
+	UserFavoritesTable = &schema.Table{
+		Name:       "user_favorites",
+		Columns:    UserFavoritesColumns,
+		PrimaryKey: []*schema.Column{UserFavoritesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_favorites_users_user_favorites",
+				Columns:    []*schema.Column{UserFavoritesColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "user_favorites_business_units_business_unit",
+				Columns:    []*schema.Column{UserFavoritesColumns[5]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_favorites_organizations_organization",
+				Columns:    []*schema.Column{UserFavoritesColumns[6]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -653,6 +682,7 @@ var (
 		TableChangeAlertsTable,
 		TagsTable,
 		UsersTable,
+		UserFavoritesTable,
 	}
 )
 
@@ -687,7 +717,9 @@ func init() {
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
-	UsersTable.ForeignKeys[0].RefTable = OrganizationsTable
-	UsersTable.ForeignKeys[1].RefTable = BusinessUnitsTable
-	UsersTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
+	UserFavoritesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UserFavoritesTable.ForeignKeys[2].RefTable = OrganizationsTable
 }

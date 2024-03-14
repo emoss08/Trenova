@@ -19,7 +19,6 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { timezoneChoices } from "@/lib/choices";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
@@ -70,16 +69,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
 
   return (
     <>
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-foreground text-2xl font-semibold">
-            {t("title")}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t("subTitle")}</p>
-        </div>
-        <Separator />
-      </div>
-      <div className="grid grid-cols-1 gap-8 pt-10 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="px-4 sm:px-0">
           <h2 className="text-foreground text-base font-semibold leading-7">
             {t("organizationDetails")}

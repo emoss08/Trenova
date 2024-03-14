@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetAuthenticatedUser returns the authenticated user
 func GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.ContextKeyUserID).(uuid.UUID)
 

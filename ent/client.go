@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/userfavorite"
 )
 
 // Client is the client that holds all ent builders.
@@ -71,6 +72,8 @@ type Client struct {
 	Tag *TagClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserFavorite is the client for interacting with the UserFavorite builders.
+	UserFavorite *UserFavoriteClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -98,6 +101,7 @@ func (c *Client) init() {
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
 	c.Tag = NewTagClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.UserFavorite = NewUserFavoriteClient(c.config)
 }
 
 type (
@@ -206,6 +210,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TableChangeAlert:       NewTableChangeAlertClient(cfg),
 		Tag:                    NewTagClient(cfg),
 		User:                   NewUserClient(cfg),
+		UserFavorite:           NewUserFavoriteClient(cfg),
 	}, nil
 }
 
@@ -241,6 +246,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TableChangeAlert:       NewTableChangeAlertClient(cfg),
 		Tag:                    NewTagClient(cfg),
 		User:                   NewUserClient(cfg),
+		UserFavorite:           NewUserFavoriteClient(cfg),
 	}, nil
 }
 
@@ -274,6 +280,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.DispatchControl, c.FeasibilityToolControl, c.GeneralLedgerAccount,
 		c.HazardousMaterial, c.InvoiceControl, c.Organization, c.RouteControl,
 		c.Session, c.ShipmentControl, c.TableChangeAlert, c.Tag, c.User,
+		c.UserFavorite,
 	} {
 		n.Use(hooks...)
 	}
@@ -287,6 +294,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.DispatchControl, c.FeasibilityToolControl, c.GeneralLedgerAccount,
 		c.HazardousMaterial, c.InvoiceControl, c.Organization, c.RouteControl,
 		c.Session, c.ShipmentControl, c.TableChangeAlert, c.Tag, c.User,
+		c.UserFavorite,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -327,6 +335,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Tag.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserFavoriteMutation:
+		return c.UserFavorite.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -2149,22 +2159,6 @@ func (c *OrganizationClient) QueryShipmentControl(o *Organization) *ShipmentCont
 	return query
 }
 
-// QueryUsers queries the users edge of a Organization.
-func (c *OrganizationClient) QueryUsers(o *Organization) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := o.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(organization.Table, organization.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, organization.UsersTable, organization.UsersColumn),
-		)
-		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
 func (c *OrganizationClient) Hooks() []Hook {
 	return c.hooks.Organization
@@ -3123,6 +3117,22 @@ func (c *UserClient) QueryOrganization(u *User) *OrganizationQuery {
 	return query
 }
 
+// QueryUserFavorites queries the user_favorites edge of a User.
+func (c *UserClient) QueryUserFavorites(u *User) *UserFavoriteQuery {
+	query := (&UserFavoriteClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(userfavorite.Table, userfavorite.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserFavoritesTable, user.UserFavoritesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -3148,18 +3158,199 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// UserFavoriteClient is a client for the UserFavorite schema.
+type UserFavoriteClient struct {
+	config
+}
+
+// NewUserFavoriteClient returns a client for the UserFavorite from the given config.
+func NewUserFavoriteClient(c config) *UserFavoriteClient {
+	return &UserFavoriteClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userfavorite.Hooks(f(g(h())))`.
+func (c *UserFavoriteClient) Use(hooks ...Hook) {
+	c.hooks.UserFavorite = append(c.hooks.UserFavorite, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userfavorite.Intercept(f(g(h())))`.
+func (c *UserFavoriteClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserFavorite = append(c.inters.UserFavorite, interceptors...)
+}
+
+// Create returns a builder for creating a UserFavorite entity.
+func (c *UserFavoriteClient) Create() *UserFavoriteCreate {
+	mutation := newUserFavoriteMutation(c.config, OpCreate)
+	return &UserFavoriteCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserFavorite entities.
+func (c *UserFavoriteClient) CreateBulk(builders ...*UserFavoriteCreate) *UserFavoriteCreateBulk {
+	return &UserFavoriteCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserFavoriteClient) MapCreateBulk(slice any, setFunc func(*UserFavoriteCreate, int)) *UserFavoriteCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserFavoriteCreateBulk{err: fmt.Errorf("calling to UserFavoriteClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserFavoriteCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserFavoriteCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserFavorite.
+func (c *UserFavoriteClient) Update() *UserFavoriteUpdate {
+	mutation := newUserFavoriteMutation(c.config, OpUpdate)
+	return &UserFavoriteUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserFavoriteClient) UpdateOne(uf *UserFavorite) *UserFavoriteUpdateOne {
+	mutation := newUserFavoriteMutation(c.config, OpUpdateOne, withUserFavorite(uf))
+	return &UserFavoriteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserFavoriteClient) UpdateOneID(id uuid.UUID) *UserFavoriteUpdateOne {
+	mutation := newUserFavoriteMutation(c.config, OpUpdateOne, withUserFavoriteID(id))
+	return &UserFavoriteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserFavorite.
+func (c *UserFavoriteClient) Delete() *UserFavoriteDelete {
+	mutation := newUserFavoriteMutation(c.config, OpDelete)
+	return &UserFavoriteDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserFavoriteClient) DeleteOne(uf *UserFavorite) *UserFavoriteDeleteOne {
+	return c.DeleteOneID(uf.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserFavoriteClient) DeleteOneID(id uuid.UUID) *UserFavoriteDeleteOne {
+	builder := c.Delete().Where(userfavorite.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserFavoriteDeleteOne{builder}
+}
+
+// Query returns a query builder for UserFavorite.
+func (c *UserFavoriteClient) Query() *UserFavoriteQuery {
+	return &UserFavoriteQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserFavorite},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserFavorite entity by its id.
+func (c *UserFavoriteClient) Get(ctx context.Context, id uuid.UUID) (*UserFavorite, error) {
+	return c.Query().Where(userfavorite.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserFavoriteClient) GetX(ctx context.Context, id uuid.UUID) *UserFavorite {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a UserFavorite.
+func (c *UserFavoriteClient) QueryBusinessUnit(uf *UserFavorite) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := uf.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userfavorite.Table, userfavorite.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userfavorite.BusinessUnitTable, userfavorite.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(uf.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a UserFavorite.
+func (c *UserFavoriteClient) QueryOrganization(uf *UserFavorite) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := uf.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userfavorite.Table, userfavorite.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userfavorite.OrganizationTable, userfavorite.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(uf.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a UserFavorite.
+func (c *UserFavoriteClient) QueryUser(uf *UserFavorite) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := uf.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userfavorite.Table, userfavorite.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userfavorite.UserTable, userfavorite.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(uf.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserFavoriteClient) Hooks() []Hook {
+	return c.hooks.UserFavorite
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserFavoriteClient) Interceptors() []Interceptor {
+	return c.inters.UserFavorite
+}
+
+func (c *UserFavoriteClient) mutate(ctx context.Context, m *UserFavoriteMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserFavoriteCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserFavoriteUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserFavoriteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserFavoriteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserFavorite mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		AccountingControl, BillingControl, BusinessUnit, Commodity, DispatchControl,
 		FeasibilityToolControl, GeneralLedgerAccount, HazardousMaterial,
 		InvoiceControl, Organization, RouteControl, Session, ShipmentControl,
-		TableChangeAlert, Tag, User []ent.Hook
+		TableChangeAlert, Tag, User, UserFavorite []ent.Hook
 	}
 	inters struct {
 		AccountingControl, BillingControl, BusinessUnit, Commodity, DispatchControl,
 		FeasibilityToolControl, GeneralLedgerAccount, HazardousMaterial,
 		InvoiceControl, Organization, RouteControl, Session, ShipmentControl,
-		TableChangeAlert, Tag, User []ent.Interceptor
+		TableChangeAlert, Tag, User, UserFavorite []ent.Interceptor
 	}
 )
