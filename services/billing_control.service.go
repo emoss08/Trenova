@@ -24,11 +24,12 @@ func NewBillingControlOps(ctx context.Context) *BillingControlOps {
 	}
 }
 
-// CreateBillingControl creates a new billing control settings for an organization
-func (r *BillingControlOps) GetBillingControlByOrgID(orgID uuid.UUID) (*ent.BillingControl, error) {
+// GetBillingControl gets the billing control settings for an organization
+func (r *BillingControlOps) GetBillingControl(orgID, buID uuid.UUID) (*ent.BillingControl, error) {
 	billingControl, err := r.client.BillingControl.Query().Where(
 		billingcontrol.HasOrganizationWith(
-			organization.ID(orgID),
+			organization.IDEQ(orgID),
+			organization.BusinessUnitIDEQ(buID),
 		),
 	).Only(r.ctx)
 	if err != nil {
@@ -49,6 +50,7 @@ func (r *BillingControlOps) UpdateBillingControl(bc ent.BillingControl) (*ent.Bi
 		SetValidateCustomerRates(bc.ValidateCustomerRates).
 		SetAutoBillCriteria(bc.AutoBillCriteria).
 		SetShipmentTransferCriteria(bc.ShipmentTransferCriteria).
+		SetEnforceCustomerBilling(bc.EnforceCustomerBilling).
 		Save(r.ctx)
 	if err != nil {
 		return nil, err

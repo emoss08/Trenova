@@ -36,6 +36,8 @@ type BillingControl struct {
 	AutoBillCriteria billingcontrol.AutoBillCriteria `json:"autoBillCriteria"`
 	// ShipmentTransferCriteria holds the value of the "shipment_transfer_criteria" field.
 	ShipmentTransferCriteria billingcontrol.ShipmentTransferCriteria `json:"shipmentTransferCriteria"`
+	// EnforceCustomerBilling holds the value of the "enforce_customer_billing" field.
+	EnforceCustomerBilling bool `json:"enforceCustomerBilling"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BillingControlQuery when eager-loading is set.
 	Edges            BillingControlEdges `json:"edges"`
@@ -82,7 +84,7 @@ func (*BillingControl) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case billingcontrol.FieldRemoveBillingHistory, billingcontrol.FieldAutoBillShipment, billingcontrol.FieldAutoMarkReadyToBill, billingcontrol.FieldValidateCustomerRates:
+		case billingcontrol.FieldRemoveBillingHistory, billingcontrol.FieldAutoBillShipment, billingcontrol.FieldAutoMarkReadyToBill, billingcontrol.FieldValidateCustomerRates, billingcontrol.FieldEnforceCustomerBilling:
 			values[i] = new(sql.NullBool)
 		case billingcontrol.FieldAutoBillCriteria, billingcontrol.FieldShipmentTransferCriteria:
 			values[i] = new(sql.NullString)
@@ -162,6 +164,12 @@ func (bc *BillingControl) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field shipment_transfer_criteria", values[i])
 			} else if value.Valid {
 				bc.ShipmentTransferCriteria = billingcontrol.ShipmentTransferCriteria(value.String)
+			}
+		case billingcontrol.FieldEnforceCustomerBilling:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field enforce_customer_billing", values[i])
+			} else if value.Valid {
+				bc.EnforceCustomerBilling = value.Bool
 			}
 		case billingcontrol.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -246,6 +254,9 @@ func (bc *BillingControl) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("shipment_transfer_criteria=")
 	builder.WriteString(fmt.Sprintf("%v", bc.ShipmentTransferCriteria))
+	builder.WriteString(", ")
+	builder.WriteString("enforce_customer_billing=")
+	builder.WriteString(fmt.Sprintf("%v", bc.EnforceCustomerBilling))
 	builder.WriteByte(')')
 	return builder.String()
 }

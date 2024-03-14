@@ -37,6 +37,9 @@ func (BillingControl) Fields() []ent.Field {
 			Values("ReadyAndCompleted", "Completed", "ReadyToBill").
 			Default("ReadyToBill").
 			StructTag(`json:"shipmentTransferCriteria"`),
+		field.Bool("enforce_customer_billing").
+			Default(false).
+			StructTag(`json:"enforceCustomerBilling"`),
 	}
 }
 
@@ -47,6 +50,7 @@ func (BillingControl) Mixin() []ent.Mixin {
 	}
 }
 
+// Annotations of the BillingControl.
 func (BillingControl) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entgql.QueryField(),

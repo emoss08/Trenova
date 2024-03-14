@@ -135,6 +135,20 @@ func (bcc *BillingControlCreate) SetNillableShipmentTransferCriteria(btc *billin
 	return bcc
 }
 
+// SetEnforceCustomerBilling sets the "enforce_customer_billing" field.
+func (bcc *BillingControlCreate) SetEnforceCustomerBilling(b bool) *BillingControlCreate {
+	bcc.mutation.SetEnforceCustomerBilling(b)
+	return bcc
+}
+
+// SetNillableEnforceCustomerBilling sets the "enforce_customer_billing" field if the given value is not nil.
+func (bcc *BillingControlCreate) SetNillableEnforceCustomerBilling(b *bool) *BillingControlCreate {
+	if b != nil {
+		bcc.SetEnforceCustomerBilling(*b)
+	}
+	return bcc
+}
+
 // SetID sets the "id" field.
 func (bcc *BillingControlCreate) SetID(u uuid.UUID) *BillingControlCreate {
 	bcc.mutation.SetID(u)
@@ -238,6 +252,10 @@ func (bcc *BillingControlCreate) defaults() {
 		v := billingcontrol.DefaultShipmentTransferCriteria
 		bcc.mutation.SetShipmentTransferCriteria(v)
 	}
+	if _, ok := bcc.mutation.EnforceCustomerBilling(); !ok {
+		v := billingcontrol.DefaultEnforceCustomerBilling
+		bcc.mutation.SetEnforceCustomerBilling(v)
+	}
 	if _, ok := bcc.mutation.ID(); !ok {
 		v := billingcontrol.DefaultID()
 		bcc.mutation.SetID(v)
@@ -279,6 +297,9 @@ func (bcc *BillingControlCreate) check() error {
 		if err := billingcontrol.ShipmentTransferCriteriaValidator(v); err != nil {
 			return &ValidationError{Name: "shipment_transfer_criteria", err: fmt.Errorf(`ent: validator failed for field "BillingControl.shipment_transfer_criteria": %w`, err)}
 		}
+	}
+	if _, ok := bcc.mutation.EnforceCustomerBilling(); !ok {
+		return &ValidationError{Name: "enforce_customer_billing", err: errors.New(`ent: missing required field "BillingControl.enforce_customer_billing"`)}
 	}
 	if _, ok := bcc.mutation.OrganizationID(); !ok {
 		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "BillingControl.organization"`)}
@@ -352,6 +373,10 @@ func (bcc *BillingControlCreate) createSpec() (*BillingControl, *sqlgraph.Create
 	if value, ok := bcc.mutation.ShipmentTransferCriteria(); ok {
 		_spec.SetField(billingcontrol.FieldShipmentTransferCriteria, field.TypeEnum, value)
 		_node.ShipmentTransferCriteria = value
+	}
+	if value, ok := bcc.mutation.EnforceCustomerBilling(); ok {
+		_spec.SetField(billingcontrol.FieldEnforceCustomerBilling, field.TypeBool, value)
+		_node.EnforceCustomerBilling = value
 	}
 	if nodes := bcc.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
