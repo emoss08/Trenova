@@ -30,7 +30,7 @@ export const fuelMethodChoices = [
 export type AutoBillingCriteriaChoicesProps =
   | "Delivered"
   | "TransferredToBilling"
-  | "MR";
+  | "MarkedReadyToBill";
 
 export const autoBillingCriteriaChoices = [
   { value: "Delivered", label: "Auto Bill when shipment is delivered" },
@@ -42,7 +42,7 @@ export const autoBillingCriteriaChoices = [
     value: "MarkedReadyToBill",
     label: "Auto Bill when order is marked ready to bill in Billing Queue",
   },
-] as ReadonlyArray<IChoiceProps<AutoBillingCriteriaChoicesProps>>;
+] satisfies ReadonlyArray<IChoiceProps<AutoBillingCriteriaChoicesProps>>;
 
 /** Type for order transfer criteria */
 export type ShipmentTransferCriteriaChoicesProps =
