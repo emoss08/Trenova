@@ -27,27 +27,33 @@ export const fuelMethodChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<FuelMethodChoicesProps>>;
 
 /** Type for Auto Billing Criteria Choices */
-export type AutoBillingCriteriaChoicesProps = "D" | "T" | "MR";
+export type AutoBillingCriteriaChoicesProps =
+  | "Delivered"
+  | "TransferredToBilling"
+  | "MR";
 
 export const autoBillingCriteriaChoices = [
-  { value: "D", label: "Auto Bill when shipment is delivered" },
+  { value: "Delivered", label: "Auto Bill when shipment is delivered" },
   {
-    value: "T",
+    value: "TransferredToBilling",
     label: "Auto Bill when order are transferred to billing",
   },
   {
-    value: "MR",
+    value: "MarkedReadyToBill",
     label: "Auto Bill when order is marked ready to bill in Billing Queue",
   },
 ] as ReadonlyArray<IChoiceProps<AutoBillingCriteriaChoicesProps>>;
 
 /** Type for order transfer criteria */
-export type ShipmentTransferCriteriaChoicesProps = "RC" | "C" | "RTB";
+export type ShipmentTransferCriteriaChoicesProps =
+  | "ReadyAndCompleted"
+  | "Completed"
+  | "ReadyToBill";
 
 export const shipmentTransferCriteriaChoices = [
-  { value: "RC", label: "Ready to bill & Completed" },
-  { value: "C", label: "Completed" },
-  { value: "RTB", label: "Ready to bill" },
+  { value: "ReadyAndCompleted", label: "Ready to bill & Completed" },
+  { value: "Completed", label: "Completed" },
+  { value: "ReadyToBill", label: "Ready to bill" },
 ] satisfies ReadonlyArray<IChoiceProps<ShipmentTransferCriteriaChoicesProps>>;
 
 /** Type for Bill Type choices */

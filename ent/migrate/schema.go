@@ -69,6 +69,7 @@ var (
 		{Name: "validate_customer_rates", Type: field.TypeBool, Default: false},
 		{Name: "auto_bill_criteria", Type: field.TypeEnum, Enums: []string{"Delivered", "TransferredToBilling", "MarkedReadyToBill"}, Default: "MarkedReadyToBill"},
 		{Name: "shipment_transfer_criteria", Type: field.TypeEnum, Enums: []string{"ReadyAndCompleted", "Completed", "ReadyToBill"}, Default: "ReadyToBill"},
+		{Name: "enforce_customer_billing", Type: field.TypeBool, Default: false},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 	}
@@ -80,13 +81,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "billing_controls_business_units_business_unit",
-				Columns:    []*schema.Column{BillingControlsColumns[9]},
+				Columns:    []*schema.Column{BillingControlsColumns[10]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "billing_controls_organizations_billing_control",
-				Columns:    []*schema.Column{BillingControlsColumns[10]},
+				Columns:    []*schema.Column{BillingControlsColumns[11]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

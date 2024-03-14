@@ -32,6 +32,8 @@ const (
 	FieldAutoBillCriteria = "auto_bill_criteria"
 	// FieldShipmentTransferCriteria holds the string denoting the shipment_transfer_criteria field in the database.
 	FieldShipmentTransferCriteria = "shipment_transfer_criteria"
+	// FieldEnforceCustomerBilling holds the string denoting the enforce_customer_billing field in the database.
+	FieldEnforceCustomerBilling = "enforce_customer_billing"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
@@ -65,6 +67,7 @@ var Columns = []string{
 	FieldValidateCustomerRates,
 	FieldAutoBillCriteria,
 	FieldShipmentTransferCriteria,
+	FieldEnforceCustomerBilling,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "billing_controls"
@@ -104,6 +107,8 @@ var (
 	DefaultAutoMarkReadyToBill bool
 	// DefaultValidateCustomerRates holds the default value on creation for the "validate_customer_rates" field.
 	DefaultValidateCustomerRates bool
+	// DefaultEnforceCustomerBilling holds the default value on creation for the "enforce_customer_billing" field.
+	DefaultEnforceCustomerBilling bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -208,6 +213,11 @@ func ByAutoBillCriteria(opts ...sql.OrderTermOption) OrderOption {
 // ByShipmentTransferCriteria orders the results by the shipment_transfer_criteria field.
 func ByShipmentTransferCriteria(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldShipmentTransferCriteria, opts...).ToFunc()
+}
+
+// ByEnforceCustomerBilling orders the results by the enforce_customer_billing field.
+func ByEnforceCustomerBilling(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEnforceCustomerBilling, opts...).ToFunc()
 }
 
 // ByOrganizationField orders the results by organization field.

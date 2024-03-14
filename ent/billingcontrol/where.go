@@ -86,6 +86,11 @@ func ValidateCustomerRates(v bool) predicate.BillingControl {
 	return predicate.BillingControl(sql.FieldEQ(FieldValidateCustomerRates, v))
 }
 
+// EnforceCustomerBilling applies equality check predicate on the "enforce_customer_billing" field. It's identical to EnforceCustomerBillingEQ.
+func EnforceCustomerBilling(v bool) predicate.BillingControl {
+	return predicate.BillingControl(sql.FieldEQ(FieldEnforceCustomerBilling, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.BillingControl {
 	return predicate.BillingControl(sql.FieldEQ(FieldCreatedAt, v))
@@ -244,6 +249,16 @@ func ShipmentTransferCriteriaIn(vs ...ShipmentTransferCriteria) predicate.Billin
 // ShipmentTransferCriteriaNotIn applies the NotIn predicate on the "shipment_transfer_criteria" field.
 func ShipmentTransferCriteriaNotIn(vs ...ShipmentTransferCriteria) predicate.BillingControl {
 	return predicate.BillingControl(sql.FieldNotIn(FieldShipmentTransferCriteria, vs...))
+}
+
+// EnforceCustomerBillingEQ applies the EQ predicate on the "enforce_customer_billing" field.
+func EnforceCustomerBillingEQ(v bool) predicate.BillingControl {
+	return predicate.BillingControl(sql.FieldEQ(FieldEnforceCustomerBilling, v))
+}
+
+// EnforceCustomerBillingNEQ applies the NEQ predicate on the "enforce_customer_billing" field.
+func EnforceCustomerBillingNEQ(v bool) predicate.BillingControl {
+	return predicate.BillingControl(sql.FieldNEQ(FieldEnforceCustomerBilling, v))
 }
 
 // HasOrganization applies the HasEdge predicate on the "organization" edge.
