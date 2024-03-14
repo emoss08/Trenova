@@ -12,6 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// -------------------------------------------------
+// Mixin definition
+
 // DefaultMixin implements the ent.Mixin for sharing time fields with package schemas.
 type DefaultMixin struct {
 	mixin.Schema
@@ -24,10 +27,12 @@ func (DefaultMixin) Fields() []ent.Field {
 			Default(uuid.New),
 		field.Time("created_at").
 			Immutable().
-			Default(time.Now()),
+			Default(time.Now()).
+			StructTag(`json:"createdAt"`),
 		field.Time("updated_at").
 			Default(time.Now()).
-			UpdateDefault(time.Now),
+			UpdateDefault(time.Now).
+			StructTag(`json:"updatedAt"`),
 	}
 }
 
@@ -49,13 +54,16 @@ func (BaseMixin) Fields() []ent.Field {
 			StructTag(`json:"organizationId"`),
 		field.Time("created_at").
 			Immutable().
-			Default(time.Now()),
+			Default(time.Now()).
+			StructTag(`json:"createdAt"`),
 		field.Time("updated_at").
 			Default(time.Now()).
-			UpdateDefault(time.Now),
+			UpdateDefault(time.Now).
+			StructTag(`json:"updatedAt"`),
 	}
 }
 
+// Edges of the BaseMixin.
 func (BaseMixin) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("business_unit", BusinessUnit.Type).
@@ -70,6 +78,9 @@ func (BaseMixin) Edges() []ent.Edge {
 			Unique(),
 	}
 }
+
+// -------------------------------------------------
+// Schema definition
 
 // BusinessUnit holds the schema definition for the BusinessUnit entity.
 type BusinessUnit struct {
@@ -102,37 +113,48 @@ func (BusinessUnit) Fields() []ent.Field {
 			Optional(),
 		field.String("city").
 			MaxLen(255).
+			Nillable().
 			Optional(),
 		field.String("state").
 			MaxLen(2).
+			Nillable().
 			Optional(),
 		field.String("country").
 			MaxLen(2).
+			Nillable().
 			Optional(),
 		field.String("postal_code").
 			MaxLen(10).
+			Nillable().
 			Optional().
 			StructTag(`json:"postalCode"`),
 		field.String("tax_id").
 			MaxLen(20).
+			Nillable().
 			Optional().
 			StructTag(`json:"taxId"`),
 		field.String("subscription_plan").
 			Optional().
+			Nillable().
 			StructTag(`json:"subscriptionPlan"`),
 		field.String("description").
+			Nillable().
 			Optional(),
 		field.String("legal_name").
 			Optional().
+			Nillable().
 			StructTag(`json:"legalName"`),
 		field.String("contact_name").
 			Optional().
+			Nillable().
 			StructTag(`json:"contactName"`),
 		field.String("contact_email").
 			Optional().
+			Nillable().
 			StructTag(`json:"contactEmail"`),
 		field.Time("paid_until").
 			Optional().
+			Nillable().
 			StructTag(`json:"-"`),
 		field.JSON("settings", map[string]interface{}{}).
 			Optional(),
@@ -161,6 +183,7 @@ func (BusinessUnit) Edges() []ent.Edge {
 	}
 }
 
+// Indexes of the BusinessUnit.
 func (BusinessUnit) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("name").

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/emoss08/trenova/models"
+	"github.com/emoss08/trenova/tools/types"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -50,18 +50,18 @@ func NewValidator() (*Validator, error) {
 func (v *Validator) Validate(payload interface{}) error {
 	err := v.validate.Struct(payload)
 	if err != nil {
-		var valError []models.ValidationErrorDetail
+		var valError []types.ValidationErrorDetail
 		var validationErrors validator.ValidationErrors
 		if errors.As(err, &validationErrors) {
 			for _, ve := range validationErrors {
 				fieldName := ve.Field()
-				valError = append(valError, models.ValidationErrorDetail{
+				valError = append(valError, types.ValidationErrorDetail{
 					Code:   "invalid",
 					Detail: ve.Translate(v.trans),
 					Attr:   fieldName,
 				})
 			}
-			verr := models.ValidationErrorResponse{
+			verr := types.ValidationErrorResponse{
 				Type:   "validationError",
 				Errors: valError,
 			}
@@ -115,12 +115,12 @@ func formatErrorResponse(s string) string {
 }
 
 // CreateDBErrorResponse formats a database error into a structured response.
-func CreateDBErrorResponse(err error) models.ValidationErrorResponse {
+func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 	formattedErr := formatErrorResponse(err.Error())
 
-	return models.ValidationErrorResponse{
+	return types.ValidationErrorResponse{
 		Type: "databaseError",
-		Errors: []models.ValidationErrorDetail{
+		Errors: []types.ValidationErrorDetail{
 			{
 				Code:   "databaseError",
 				Detail: formattedErr,

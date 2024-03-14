@@ -233,7 +233,7 @@ func (tc *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := tc.mutation.Description(); ok {
 		_spec.SetField(tag.FieldDescription, field.TypeString, value)
-		_node.Description = value
+		_node.Description = &value
 	}
 	if nodes := tc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

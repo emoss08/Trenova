@@ -96,11 +96,6 @@ func Email(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldEmail, v))
 }
 
-// DateJoined applies equality check predicate on the "date_joined" field. It's identical to DateJoinedEQ.
-func DateJoined(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldDateJoined, v))
-}
-
 // ProfilePicURL applies equality check predicate on the "profile_pic_url" field. It's identical to ProfilePicURLEQ.
 func ProfilePicURL(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldProfilePicURL, v))
@@ -124,6 +119,11 @@ func IsAdmin(v bool) predicate.User {
 // IsSuperAdmin applies equality check predicate on the "is_super_admin" field. It's identical to IsSuperAdminEQ.
 func IsSuperAdmin(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldIsSuperAdmin, v))
+}
+
+// LastLogin applies equality check predicate on the "last_login" field. It's identical to LastLoginEQ.
+func LastLogin(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastLogin, v))
 }
 
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
@@ -526,81 +526,6 @@ func EmailContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldEmail, v))
 }
 
-// DateJoinedEQ applies the EQ predicate on the "date_joined" field.
-func DateJoinedEQ(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldDateJoined, v))
-}
-
-// DateJoinedNEQ applies the NEQ predicate on the "date_joined" field.
-func DateJoinedNEQ(v string) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldDateJoined, v))
-}
-
-// DateJoinedIn applies the In predicate on the "date_joined" field.
-func DateJoinedIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldIn(FieldDateJoined, vs...))
-}
-
-// DateJoinedNotIn applies the NotIn predicate on the "date_joined" field.
-func DateJoinedNotIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldDateJoined, vs...))
-}
-
-// DateJoinedGT applies the GT predicate on the "date_joined" field.
-func DateJoinedGT(v string) predicate.User {
-	return predicate.User(sql.FieldGT(FieldDateJoined, v))
-}
-
-// DateJoinedGTE applies the GTE predicate on the "date_joined" field.
-func DateJoinedGTE(v string) predicate.User {
-	return predicate.User(sql.FieldGTE(FieldDateJoined, v))
-}
-
-// DateJoinedLT applies the LT predicate on the "date_joined" field.
-func DateJoinedLT(v string) predicate.User {
-	return predicate.User(sql.FieldLT(FieldDateJoined, v))
-}
-
-// DateJoinedLTE applies the LTE predicate on the "date_joined" field.
-func DateJoinedLTE(v string) predicate.User {
-	return predicate.User(sql.FieldLTE(FieldDateJoined, v))
-}
-
-// DateJoinedContains applies the Contains predicate on the "date_joined" field.
-func DateJoinedContains(v string) predicate.User {
-	return predicate.User(sql.FieldContains(FieldDateJoined, v))
-}
-
-// DateJoinedHasPrefix applies the HasPrefix predicate on the "date_joined" field.
-func DateJoinedHasPrefix(v string) predicate.User {
-	return predicate.User(sql.FieldHasPrefix(FieldDateJoined, v))
-}
-
-// DateJoinedHasSuffix applies the HasSuffix predicate on the "date_joined" field.
-func DateJoinedHasSuffix(v string) predicate.User {
-	return predicate.User(sql.FieldHasSuffix(FieldDateJoined, v))
-}
-
-// DateJoinedIsNil applies the IsNil predicate on the "date_joined" field.
-func DateJoinedIsNil() predicate.User {
-	return predicate.User(sql.FieldIsNull(FieldDateJoined))
-}
-
-// DateJoinedNotNil applies the NotNil predicate on the "date_joined" field.
-func DateJoinedNotNil() predicate.User {
-	return predicate.User(sql.FieldNotNull(FieldDateJoined))
-}
-
-// DateJoinedEqualFold applies the EqualFold predicate on the "date_joined" field.
-func DateJoinedEqualFold(v string) predicate.User {
-	return predicate.User(sql.FieldEqualFold(FieldDateJoined, v))
-}
-
-// DateJoinedContainsFold applies the ContainsFold predicate on the "date_joined" field.
-func DateJoinedContainsFold(v string) predicate.User {
-	return predicate.User(sql.FieldContainsFold(FieldDateJoined, v))
-}
-
 // TimezoneEQ applies the EQ predicate on the "timezone" field.
 func TimezoneEQ(v Timezone) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTimezone, v))
@@ -864,6 +789,56 @@ func IsSuperAdminEQ(v bool) predicate.User {
 // IsSuperAdminNEQ applies the NEQ predicate on the "is_super_admin" field.
 func IsSuperAdminNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldIsSuperAdmin, v))
+}
+
+// LastLoginEQ applies the EQ predicate on the "last_login" field.
+func LastLoginEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastLogin, v))
+}
+
+// LastLoginNEQ applies the NEQ predicate on the "last_login" field.
+func LastLoginNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLastLogin, v))
+}
+
+// LastLoginIn applies the In predicate on the "last_login" field.
+func LastLoginIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLastLogin, vs...))
+}
+
+// LastLoginNotIn applies the NotIn predicate on the "last_login" field.
+func LastLoginNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLastLogin, vs...))
+}
+
+// LastLoginGT applies the GT predicate on the "last_login" field.
+func LastLoginGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLastLogin, v))
+}
+
+// LastLoginGTE applies the GTE predicate on the "last_login" field.
+func LastLoginGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLastLogin, v))
+}
+
+// LastLoginLT applies the LT predicate on the "last_login" field.
+func LastLoginLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLastLogin, v))
+}
+
+// LastLoginLTE applies the LTE predicate on the "last_login" field.
+func LastLoginLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLastLogin, v))
+}
+
+// LastLoginIsNil applies the IsNil predicate on the "last_login" field.
+func LastLoginIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastLogin))
+}
+
+// LastLoginNotNil applies the NotNil predicate on the "last_login" field.
+func LastLoginNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastLogin))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

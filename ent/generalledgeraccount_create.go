@@ -459,23 +459,23 @@ func (glac *GeneralLedgerAccountCreate) createSpec() (*GeneralLedgerAccount, *sq
 	}
 	if value, ok := glac.mutation.CashFlowType(); ok {
 		_spec.SetField(generalledgeraccount.FieldCashFlowType, field.TypeEnum, value)
-		_node.CashFlowType = value
+		_node.CashFlowType = &value
 	}
 	if value, ok := glac.mutation.AccountSubType(); ok {
 		_spec.SetField(generalledgeraccount.FieldAccountSubType, field.TypeEnum, value)
-		_node.AccountSubType = value
+		_node.AccountSubType = &value
 	}
 	if value, ok := glac.mutation.AccountClass(); ok {
 		_spec.SetField(generalledgeraccount.FieldAccountClass, field.TypeEnum, value)
-		_node.AccountClass = value
+		_node.AccountClass = &value
 	}
 	if value, ok := glac.mutation.Balance(); ok {
 		_spec.SetField(generalledgeraccount.FieldBalance, field.TypeFloat64, value)
-		_node.Balance = value
+		_node.Balance = &value
 	}
 	if value, ok := glac.mutation.InterestRate(); ok {
 		_spec.SetField(generalledgeraccount.FieldInterestRate, field.TypeFloat64, value)
-		_node.InterestRate = value
+		_node.InterestRate = &value
 	}
 	if value, ok := glac.mutation.DateOpened(); ok {
 		_spec.SetField(generalledgeraccount.FieldDateOpened, field.TypeTime, value)
@@ -483,11 +483,11 @@ func (glac *GeneralLedgerAccountCreate) createSpec() (*GeneralLedgerAccount, *sq
 	}
 	if value, ok := glac.mutation.DateClosed(); ok {
 		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeTime, value)
-		_node.DateClosed = value
+		_node.DateClosed = &value
 	}
 	if value, ok := glac.mutation.Notes(); ok {
 		_spec.SetField(generalledgeraccount.FieldNotes, field.TypeString, value)
-		_node.Notes = value
+		_node.Notes = &value
 	}
 	if value, ok := glac.mutation.IsTaxRelevant(); ok {
 		_spec.SetField(generalledgeraccount.FieldIsTaxRelevant, field.TypeBool, value)

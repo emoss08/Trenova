@@ -143,6 +143,49 @@ var (
 			},
 		},
 	}
+	// CommoditiesColumns holds the columns for the "commodities" table.
+	CommoditiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "is_hazmat", Type: field.TypeBool, Default: false},
+		{Name: "unit_of_measure", Type: field.TypeEnum, Nullable: true, Enums: []string{"P", "T", "D", "C", "A", "B", "O", "L", "I", "S"}},
+		{Name: "min_temp", Type: field.TypeFloat64, Nullable: true},
+		{Name: "max_temp", Type: field.TypeFloat64, Nullable: true},
+		{Name: "set_point_temp", Type: field.TypeFloat64, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "hazardous_material_id", Type: field.TypeUUID},
+	}
+	// CommoditiesTable holds the schema information for the "commodities" table.
+	CommoditiesTable = &schema.Table{
+		Name:       "commodities",
+		Columns:    CommoditiesColumns,
+		PrimaryKey: []*schema.Column{CommoditiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "commodities_business_units_business_unit",
+				Columns:    []*schema.Column{CommoditiesColumns[11]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "commodities_organizations_organization",
+				Columns:    []*schema.Column{CommoditiesColumns[12]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "commodities_hazardous_materials_commodities",
+				Columns:    []*schema.Column{CommoditiesColumns[13]},
+				RefColumns: []*schema.Column{HazardousMaterialsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// DispatchControlsColumns holds the columns for the "dispatch_controls" table.
 	DispatchControlsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -267,6 +310,40 @@ var (
 			},
 		},
 	}
+	// HazardousMaterialsColumns holds the columns for the "hazardous_materials" table.
+	HazardousMaterialsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "hazard_class", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1"},
+		{Name: "erg_number", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "packing_group", Type: field.TypeEnum, Nullable: true, Enums: []string{"PackingGroupI", "PackingGroupII", "PackingGroupIII"}},
+		{Name: "proper_shipping_name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// HazardousMaterialsTable holds the schema information for the "hazardous_materials" table.
+	HazardousMaterialsTable = &schema.Table{
+		Name:       "hazardous_materials",
+		Columns:    HazardousMaterialsColumns,
+		PrimaryKey: []*schema.Column{HazardousMaterialsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "hazardous_materials_business_units_business_unit",
+				Columns:    []*schema.Column{HazardousMaterialsColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "hazardous_materials_organizations_organization",
+				Columns:    []*schema.Column{HazardousMaterialsColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// InvoiceControlsColumns holds the columns for the "invoice_controls" table.
 	InvoiceControlsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -332,13 +409,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "organization_business_unit_id_scac_code",
-				Unique:  true,
-				Columns: []*schema.Column{OrganizationsColumns[9], OrganizationsColumns[4]},
-			},
-		},
 	}
 	// RouteControlsColumns holds the columns for the "route_controls" table.
 	RouteControlsColumns = []*schema.Column{
@@ -370,6 +440,20 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
+	}
+	// SessionsColumns holds the columns for the "sessions" table.
+	SessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "data", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime},
+	}
+	// SessionsTable holds the schema information for the "sessions" table.
+	SessionsTable = &schema.Table{
+		Name:       "sessions",
+		Columns:    SessionsColumns,
+		PrimaryKey: []*schema.Column{SessionsColumns[0]},
 	}
 	// ShipmentControlsColumns holds the columns for the "shipment_controls" table.
 	ShipmentControlsColumns = []*schema.Column{
@@ -428,7 +512,6 @@ var (
 		{Name: "trigger_name", Type: field.TypeString, Nullable: true, Size: 50},
 		{Name: "listener_name", Type: field.TypeString, Nullable: true, Size: 50},
 		{Name: "email_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "conditional_logic", Type: field.TypeJSON, Nullable: true},
 		{Name: "effective_date", Type: field.TypeTime, Nullable: true},
 		{Name: "expiration_date", Type: field.TypeTime, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -442,13 +525,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "table_change_alerts_business_units_business_unit",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[17]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "table_change_alerts_organizations_organization",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[19]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -508,13 +591,14 @@ var (
 		{Name: "username", Type: field.TypeString, Size: 30},
 		{Name: "password", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString, Size: 255},
-		{Name: "date_joined", Type: field.TypeString, Nullable: true},
 		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
 		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
 		{Name: "is_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_super_admin", Type: field.TypeBool, Default: false},
+		{Name: "last_login", Type: field.TypeTime, Nullable: true},
+		{Name: "organization_users", Type: field.TypeUUID, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -525,16 +609,29 @@ var (
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "users_business_units_business_unit",
+				Symbol:     "users_organizations_users",
 				Columns:    []*schema.Column{UsersColumns[15]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "users_business_units_business_unit",
+				Columns:    []*schema.Column{UsersColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "users_organizations_organization",
-				Columns:    []*schema.Column{UsersColumns[16]},
+				Columns:    []*schema.Column{UsersColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_username_email",
+				Unique:  true,
+				Columns: []*schema.Column{UsersColumns[5], UsersColumns[7]},
 			},
 		},
 	}
@@ -543,12 +640,15 @@ var (
 		AccountingControlsTable,
 		BillingControlsTable,
 		BusinessUnitsTable,
+		CommoditiesTable,
 		DispatchControlsTable,
 		FeasibilityToolControlsTable,
 		GeneralLedgerAccountsTable,
+		HazardousMaterialsTable,
 		InvoiceControlsTable,
 		OrganizationsTable,
 		RouteControlsTable,
+		SessionsTable,
 		ShipmentControlsTable,
 		TableChangeAlertsTable,
 		TagsTable,
@@ -564,12 +664,17 @@ func init() {
 	BillingControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	BillingControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	CommoditiesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	CommoditiesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	CommoditiesTable.ForeignKeys[2].RefTable = HazardousMaterialsTable
 	DispatchControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DispatchControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FeasibilityToolControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FeasibilityToolControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	HazardousMaterialsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	HazardousMaterialsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	InvoiceControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -582,6 +687,7 @@ func init() {
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
-	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[0].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UsersTable.ForeignKeys[2].RefTable = OrganizationsTable
 }

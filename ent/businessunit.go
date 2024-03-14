@@ -20,9 +20,9 @@ type BusinessUnit struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// Status holds the value of the "status" field.
 	Status businessunit.Status `json:"status,omitempty"`
 	// Name holds the value of the "name" field.
@@ -34,27 +34,27 @@ type BusinessUnit struct {
 	// Address holds the value of the "address" field.
 	Address string `json:"address,omitempty"`
 	// City holds the value of the "city" field.
-	City string `json:"city,omitempty"`
+	City *string `json:"city,omitempty"`
 	// State holds the value of the "state" field.
-	State string `json:"state,omitempty"`
+	State *string `json:"state,omitempty"`
 	// Country holds the value of the "country" field.
-	Country string `json:"country,omitempty"`
+	Country *string `json:"country,omitempty"`
 	// PostalCode holds the value of the "postal_code" field.
-	PostalCode string `json:"postalCode"`
+	PostalCode *string `json:"postalCode"`
 	// TaxID holds the value of the "tax_id" field.
-	TaxID string `json:"taxId"`
+	TaxID *string `json:"taxId"`
 	// SubscriptionPlan holds the value of the "subscription_plan" field.
-	SubscriptionPlan string `json:"subscriptionPlan"`
+	SubscriptionPlan *string `json:"subscriptionPlan"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// LegalName holds the value of the "legal_name" field.
-	LegalName string `json:"legalName"`
+	LegalName *string `json:"legalName"`
 	// ContactName holds the value of the "contact_name" field.
-	ContactName string `json:"contactName"`
+	ContactName *string `json:"contactName"`
 	// ContactEmail holds the value of the "contact_email" field.
-	ContactEmail string `json:"contactEmail"`
+	ContactEmail *string `json:"contactEmail"`
 	// PaidUntil holds the value of the "paid_until" field.
-	PaidUntil time.Time `json:"-"`
+	PaidUntil *time.Time `json:"-"`
 	// Settings holds the value of the "settings" field.
 	Settings map[string]interface{} `json:"settings,omitempty"`
 	// FreeTrial holds the value of the "free_trial" field.
@@ -195,67 +195,78 @@ func (bu *BusinessUnit) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field city", values[i])
 			} else if value.Valid {
-				bu.City = value.String
+				bu.City = new(string)
+				*bu.City = value.String
 			}
 		case businessunit.FieldState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field state", values[i])
 			} else if value.Valid {
-				bu.State = value.String
+				bu.State = new(string)
+				*bu.State = value.String
 			}
 		case businessunit.FieldCountry:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field country", values[i])
 			} else if value.Valid {
-				bu.Country = value.String
+				bu.Country = new(string)
+				*bu.Country = value.String
 			}
 		case businessunit.FieldPostalCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field postal_code", values[i])
 			} else if value.Valid {
-				bu.PostalCode = value.String
+				bu.PostalCode = new(string)
+				*bu.PostalCode = value.String
 			}
 		case businessunit.FieldTaxID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field tax_id", values[i])
 			} else if value.Valid {
-				bu.TaxID = value.String
+				bu.TaxID = new(string)
+				*bu.TaxID = value.String
 			}
 		case businessunit.FieldSubscriptionPlan:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field subscription_plan", values[i])
 			} else if value.Valid {
-				bu.SubscriptionPlan = value.String
+				bu.SubscriptionPlan = new(string)
+				*bu.SubscriptionPlan = value.String
 			}
 		case businessunit.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				bu.Description = value.String
+				bu.Description = new(string)
+				*bu.Description = value.String
 			}
 		case businessunit.FieldLegalName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field legal_name", values[i])
 			} else if value.Valid {
-				bu.LegalName = value.String
+				bu.LegalName = new(string)
+				*bu.LegalName = value.String
 			}
 		case businessunit.FieldContactName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field contact_name", values[i])
 			} else if value.Valid {
-				bu.ContactName = value.String
+				bu.ContactName = new(string)
+				*bu.ContactName = value.String
 			}
 		case businessunit.FieldContactEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field contact_email", values[i])
 			} else if value.Valid {
-				bu.ContactEmail = value.String
+				bu.ContactEmail = new(string)
+				*bu.ContactEmail = value.String
 			}
 		case businessunit.FieldPaidUntil:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field paid_until", values[i])
 			} else if value.Valid {
-				bu.PaidUntil = value.Time
+				bu.PaidUntil = new(time.Time)
+				*bu.PaidUntil = value.Time
 			}
 		case businessunit.FieldSettings:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -350,38 +361,60 @@ func (bu *BusinessUnit) String() string {
 	builder.WriteString("address=")
 	builder.WriteString(bu.Address)
 	builder.WriteString(", ")
-	builder.WriteString("city=")
-	builder.WriteString(bu.City)
+	if v := bu.City; v != nil {
+		builder.WriteString("city=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("state=")
-	builder.WriteString(bu.State)
+	if v := bu.State; v != nil {
+		builder.WriteString("state=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("country=")
-	builder.WriteString(bu.Country)
+	if v := bu.Country; v != nil {
+		builder.WriteString("country=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("postal_code=")
-	builder.WriteString(bu.PostalCode)
+	if v := bu.PostalCode; v != nil {
+		builder.WriteString("postal_code=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("tax_id=")
-	builder.WriteString(bu.TaxID)
+	if v := bu.TaxID; v != nil {
+		builder.WriteString("tax_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("subscription_plan=")
-	builder.WriteString(bu.SubscriptionPlan)
+	if v := bu.SubscriptionPlan; v != nil {
+		builder.WriteString("subscription_plan=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(bu.Description)
+	if v := bu.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("legal_name=")
-	builder.WriteString(bu.LegalName)
+	if v := bu.LegalName; v != nil {
+		builder.WriteString("legal_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("contact_name=")
-	builder.WriteString(bu.ContactName)
+	if v := bu.ContactName; v != nil {
+		builder.WriteString("contact_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("contact_email=")
-	builder.WriteString(bu.ContactEmail)
+	if v := bu.ContactEmail; v != nil {
+		builder.WriteString("contact_email=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("paid_until=")
-	builder.WriteString(bu.PaidUntil.Format(time.ANSIC))
+	if v := bu.PaidUntil; v != nil {
+		builder.WriteString("paid_until=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("settings=")
 	builder.WriteString(fmt.Sprintf("%v", bu.Settings))

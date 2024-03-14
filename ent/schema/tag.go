@@ -17,6 +17,7 @@ func (Tag) Fields() []ent.Field {
 		field.String("name").
 			MaxLen(50),
 		field.Text("description").
+			Nillable().
 			Optional(),
 	}
 }

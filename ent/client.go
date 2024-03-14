@@ -19,12 +19,15 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/commodity"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -42,18 +45,24 @@ type Client struct {
 	BillingControl *BillingControlClient
 	// BusinessUnit is the client for interacting with the BusinessUnit builders.
 	BusinessUnit *BusinessUnitClient
+	// Commodity is the client for interacting with the Commodity builders.
+	Commodity *CommodityClient
 	// DispatchControl is the client for interacting with the DispatchControl builders.
 	DispatchControl *DispatchControlClient
 	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
 	FeasibilityToolControl *FeasibilityToolControlClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
+	HazardousMaterial *HazardousMaterialClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// RouteControl is the client for interacting with the RouteControl builders.
 	RouteControl *RouteControlClient
+	// Session is the client for interacting with the Session builders.
+	Session *SessionClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
 	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
@@ -76,12 +85,15 @@ func (c *Client) init() {
 	c.AccountingControl = NewAccountingControlClient(c.config)
 	c.BillingControl = NewBillingControlClient(c.config)
 	c.BusinessUnit = NewBusinessUnitClient(c.config)
+	c.Commodity = NewCommodityClient(c.config)
 	c.DispatchControl = NewDispatchControlClient(c.config)
 	c.FeasibilityToolControl = NewFeasibilityToolControlClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
+	c.HazardousMaterial = NewHazardousMaterialClient(c.config)
 	c.InvoiceControl = NewInvoiceControlClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.RouteControl = NewRouteControlClient(c.config)
+	c.Session = NewSessionClient(c.config)
 	c.ShipmentControl = NewShipmentControlClient(c.config)
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
 	c.Tag = NewTagClient(c.config)
@@ -181,12 +193,15 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AccountingControl:      NewAccountingControlClient(cfg),
 		BillingControl:         NewBillingControlClient(cfg),
 		BusinessUnit:           NewBusinessUnitClient(cfg),
+		Commodity:              NewCommodityClient(cfg),
 		DispatchControl:        NewDispatchControlClient(cfg),
 		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
 		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		HazardousMaterial:      NewHazardousMaterialClient(cfg),
 		InvoiceControl:         NewInvoiceControlClient(cfg),
 		Organization:           NewOrganizationClient(cfg),
 		RouteControl:           NewRouteControlClient(cfg),
+		Session:                NewSessionClient(cfg),
 		ShipmentControl:        NewShipmentControlClient(cfg),
 		TableChangeAlert:       NewTableChangeAlertClient(cfg),
 		Tag:                    NewTagClient(cfg),
@@ -213,12 +228,15 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AccountingControl:      NewAccountingControlClient(cfg),
 		BillingControl:         NewBillingControlClient(cfg),
 		BusinessUnit:           NewBusinessUnitClient(cfg),
+		Commodity:              NewCommodityClient(cfg),
 		DispatchControl:        NewDispatchControlClient(cfg),
 		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
 		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		HazardousMaterial:      NewHazardousMaterialClient(cfg),
 		InvoiceControl:         NewInvoiceControlClient(cfg),
 		Organization:           NewOrganizationClient(cfg),
 		RouteControl:           NewRouteControlClient(cfg),
+		Session:                NewSessionClient(cfg),
 		ShipmentControl:        NewShipmentControlClient(cfg),
 		TableChangeAlert:       NewTableChangeAlertClient(cfg),
 		Tag:                    NewTagClient(cfg),
@@ -252,10 +270,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
-		c.FeasibilityToolControl, c.GeneralLedgerAccount, c.InvoiceControl,
-		c.Organization, c.RouteControl, c.ShipmentControl, c.TableChangeAlert, c.Tag,
-		c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.Commodity,
+		c.DispatchControl, c.FeasibilityToolControl, c.GeneralLedgerAccount,
+		c.HazardousMaterial, c.InvoiceControl, c.Organization, c.RouteControl,
+		c.Session, c.ShipmentControl, c.TableChangeAlert, c.Tag, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -265,10 +283,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.DispatchControl,
-		c.FeasibilityToolControl, c.GeneralLedgerAccount, c.InvoiceControl,
-		c.Organization, c.RouteControl, c.ShipmentControl, c.TableChangeAlert, c.Tag,
-		c.User,
+		c.AccountingControl, c.BillingControl, c.BusinessUnit, c.Commodity,
+		c.DispatchControl, c.FeasibilityToolControl, c.GeneralLedgerAccount,
+		c.HazardousMaterial, c.InvoiceControl, c.Organization, c.RouteControl,
+		c.Session, c.ShipmentControl, c.TableChangeAlert, c.Tag, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -283,18 +301,24 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.BillingControl.mutate(ctx, m)
 	case *BusinessUnitMutation:
 		return c.BusinessUnit.mutate(ctx, m)
+	case *CommodityMutation:
+		return c.Commodity.mutate(ctx, m)
 	case *DispatchControlMutation:
 		return c.DispatchControl.mutate(ctx, m)
 	case *FeasibilityToolControlMutation:
 		return c.FeasibilityToolControl.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
 		return c.GeneralLedgerAccount.mutate(ctx, m)
+	case *HazardousMaterialMutation:
+		return c.HazardousMaterial.mutate(ctx, m)
 	case *InvoiceControlMutation:
 		return c.InvoiceControl.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *RouteControlMutation:
 		return c.RouteControl.mutate(ctx, m)
+	case *SessionMutation:
+		return c.Session.mutate(ctx, m)
 	case *ShipmentControlMutation:
 		return c.ShipmentControl.mutate(ctx, m)
 	case *TableChangeAlertMutation:
@@ -851,6 +875,187 @@ func (c *BusinessUnitClient) mutate(ctx context.Context, m *BusinessUnitMutation
 	}
 }
 
+// CommodityClient is a client for the Commodity schema.
+type CommodityClient struct {
+	config
+}
+
+// NewCommodityClient returns a client for the Commodity from the given config.
+func NewCommodityClient(c config) *CommodityClient {
+	return &CommodityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `commodity.Hooks(f(g(h())))`.
+func (c *CommodityClient) Use(hooks ...Hook) {
+	c.hooks.Commodity = append(c.hooks.Commodity, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `commodity.Intercept(f(g(h())))`.
+func (c *CommodityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Commodity = append(c.inters.Commodity, interceptors...)
+}
+
+// Create returns a builder for creating a Commodity entity.
+func (c *CommodityClient) Create() *CommodityCreate {
+	mutation := newCommodityMutation(c.config, OpCreate)
+	return &CommodityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Commodity entities.
+func (c *CommodityClient) CreateBulk(builders ...*CommodityCreate) *CommodityCreateBulk {
+	return &CommodityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CommodityClient) MapCreateBulk(slice any, setFunc func(*CommodityCreate, int)) *CommodityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CommodityCreateBulk{err: fmt.Errorf("calling to CommodityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CommodityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CommodityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Commodity.
+func (c *CommodityClient) Update() *CommodityUpdate {
+	mutation := newCommodityMutation(c.config, OpUpdate)
+	return &CommodityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CommodityClient) UpdateOne(co *Commodity) *CommodityUpdateOne {
+	mutation := newCommodityMutation(c.config, OpUpdateOne, withCommodity(co))
+	return &CommodityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CommodityClient) UpdateOneID(id uuid.UUID) *CommodityUpdateOne {
+	mutation := newCommodityMutation(c.config, OpUpdateOne, withCommodityID(id))
+	return &CommodityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Commodity.
+func (c *CommodityClient) Delete() *CommodityDelete {
+	mutation := newCommodityMutation(c.config, OpDelete)
+	return &CommodityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CommodityClient) DeleteOne(co *Commodity) *CommodityDeleteOne {
+	return c.DeleteOneID(co.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CommodityClient) DeleteOneID(id uuid.UUID) *CommodityDeleteOne {
+	builder := c.Delete().Where(commodity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CommodityDeleteOne{builder}
+}
+
+// Query returns a query builder for Commodity.
+func (c *CommodityClient) Query() *CommodityQuery {
+	return &CommodityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCommodity},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Commodity entity by its id.
+func (c *CommodityClient) Get(ctx context.Context, id uuid.UUID) (*Commodity, error) {
+	return c.Query().Where(commodity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CommodityClient) GetX(ctx context.Context, id uuid.UUID) *Commodity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Commodity.
+func (c *CommodityClient) QueryBusinessUnit(co *Commodity) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commodity.Table, commodity.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, commodity.BusinessUnitTable, commodity.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Commodity.
+func (c *CommodityClient) QueryOrganization(co *Commodity) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commodity.Table, commodity.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, commodity.OrganizationTable, commodity.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryHazardousMaterial queries the hazardous_material edge of a Commodity.
+func (c *CommodityClient) QueryHazardousMaterial(co *Commodity) *HazardousMaterialQuery {
+	query := (&HazardousMaterialClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commodity.Table, commodity.FieldID, id),
+			sqlgraph.To(hazardousmaterial.Table, hazardousmaterial.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, commodity.HazardousMaterialTable, commodity.HazardousMaterialColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CommodityClient) Hooks() []Hook {
+	return c.hooks.Commodity
+}
+
+// Interceptors returns the client interceptors.
+func (c *CommodityClient) Interceptors() []Interceptor {
+	return c.inters.Commodity
+}
+
+func (c *CommodityClient) mutate(ctx context.Context, m *CommodityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CommodityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CommodityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CommodityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CommodityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Commodity mutation op: %q", m.Op())
+	}
+}
+
 // DispatchControlClient is a client for the DispatchControl schema.
 type DispatchControlClient struct {
 	config
@@ -1362,6 +1567,187 @@ func (c *GeneralLedgerAccountClient) mutate(ctx context.Context, m *GeneralLedge
 	}
 }
 
+// HazardousMaterialClient is a client for the HazardousMaterial schema.
+type HazardousMaterialClient struct {
+	config
+}
+
+// NewHazardousMaterialClient returns a client for the HazardousMaterial from the given config.
+func NewHazardousMaterialClient(c config) *HazardousMaterialClient {
+	return &HazardousMaterialClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `hazardousmaterial.Hooks(f(g(h())))`.
+func (c *HazardousMaterialClient) Use(hooks ...Hook) {
+	c.hooks.HazardousMaterial = append(c.hooks.HazardousMaterial, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `hazardousmaterial.Intercept(f(g(h())))`.
+func (c *HazardousMaterialClient) Intercept(interceptors ...Interceptor) {
+	c.inters.HazardousMaterial = append(c.inters.HazardousMaterial, interceptors...)
+}
+
+// Create returns a builder for creating a HazardousMaterial entity.
+func (c *HazardousMaterialClient) Create() *HazardousMaterialCreate {
+	mutation := newHazardousMaterialMutation(c.config, OpCreate)
+	return &HazardousMaterialCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of HazardousMaterial entities.
+func (c *HazardousMaterialClient) CreateBulk(builders ...*HazardousMaterialCreate) *HazardousMaterialCreateBulk {
+	return &HazardousMaterialCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *HazardousMaterialClient) MapCreateBulk(slice any, setFunc func(*HazardousMaterialCreate, int)) *HazardousMaterialCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &HazardousMaterialCreateBulk{err: fmt.Errorf("calling to HazardousMaterialClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*HazardousMaterialCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &HazardousMaterialCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for HazardousMaterial.
+func (c *HazardousMaterialClient) Update() *HazardousMaterialUpdate {
+	mutation := newHazardousMaterialMutation(c.config, OpUpdate)
+	return &HazardousMaterialUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *HazardousMaterialClient) UpdateOne(hm *HazardousMaterial) *HazardousMaterialUpdateOne {
+	mutation := newHazardousMaterialMutation(c.config, OpUpdateOne, withHazardousMaterial(hm))
+	return &HazardousMaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *HazardousMaterialClient) UpdateOneID(id uuid.UUID) *HazardousMaterialUpdateOne {
+	mutation := newHazardousMaterialMutation(c.config, OpUpdateOne, withHazardousMaterialID(id))
+	return &HazardousMaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for HazardousMaterial.
+func (c *HazardousMaterialClient) Delete() *HazardousMaterialDelete {
+	mutation := newHazardousMaterialMutation(c.config, OpDelete)
+	return &HazardousMaterialDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *HazardousMaterialClient) DeleteOne(hm *HazardousMaterial) *HazardousMaterialDeleteOne {
+	return c.DeleteOneID(hm.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *HazardousMaterialClient) DeleteOneID(id uuid.UUID) *HazardousMaterialDeleteOne {
+	builder := c.Delete().Where(hazardousmaterial.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &HazardousMaterialDeleteOne{builder}
+}
+
+// Query returns a query builder for HazardousMaterial.
+func (c *HazardousMaterialClient) Query() *HazardousMaterialQuery {
+	return &HazardousMaterialQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeHazardousMaterial},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a HazardousMaterial entity by its id.
+func (c *HazardousMaterialClient) Get(ctx context.Context, id uuid.UUID) (*HazardousMaterial, error) {
+	return c.Query().Where(hazardousmaterial.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *HazardousMaterialClient) GetX(ctx context.Context, id uuid.UUID) *HazardousMaterial {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a HazardousMaterial.
+func (c *HazardousMaterialClient) QueryBusinessUnit(hm *HazardousMaterial) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := hm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hazardousmaterial.Table, hazardousmaterial.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, hazardousmaterial.BusinessUnitTable, hazardousmaterial.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(hm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a HazardousMaterial.
+func (c *HazardousMaterialClient) QueryOrganization(hm *HazardousMaterial) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := hm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hazardousmaterial.Table, hazardousmaterial.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, hazardousmaterial.OrganizationTable, hazardousmaterial.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(hm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommodities queries the commodities edge of a HazardousMaterial.
+func (c *HazardousMaterialClient) QueryCommodities(hm *HazardousMaterial) *CommodityQuery {
+	query := (&CommodityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := hm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hazardousmaterial.Table, hazardousmaterial.FieldID, id),
+			sqlgraph.To(commodity.Table, commodity.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, hazardousmaterial.CommoditiesTable, hazardousmaterial.CommoditiesColumn),
+		)
+		fromV = sqlgraph.Neighbors(hm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *HazardousMaterialClient) Hooks() []Hook {
+	return c.hooks.HazardousMaterial
+}
+
+// Interceptors returns the client interceptors.
+func (c *HazardousMaterialClient) Interceptors() []Interceptor {
+	return c.inters.HazardousMaterial
+}
+
+func (c *HazardousMaterialClient) mutate(ctx context.Context, m *HazardousMaterialMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&HazardousMaterialCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&HazardousMaterialUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&HazardousMaterialUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&HazardousMaterialDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown HazardousMaterial mutation op: %q", m.Op())
+	}
+}
+
 // InvoiceControlClient is a client for the InvoiceControl schema.
 type InvoiceControlClient struct {
 	config
@@ -1763,6 +2149,22 @@ func (c *OrganizationClient) QueryShipmentControl(o *Organization) *ShipmentCont
 	return query
 }
 
+// QueryUsers queries the users edge of a Organization.
+func (c *OrganizationClient) QueryUsers(o *Organization) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, organization.UsersTable, organization.UsersColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *OrganizationClient) Hooks() []Hook {
 	return c.hooks.Organization
@@ -1950,6 +2352,139 @@ func (c *RouteControlClient) mutate(ctx context.Context, m *RouteControlMutation
 		return (&RouteControlDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RouteControl mutation op: %q", m.Op())
+	}
+}
+
+// SessionClient is a client for the Session schema.
+type SessionClient struct {
+	config
+}
+
+// NewSessionClient returns a client for the Session from the given config.
+func NewSessionClient(c config) *SessionClient {
+	return &SessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `session.Hooks(f(g(h())))`.
+func (c *SessionClient) Use(hooks ...Hook) {
+	c.hooks.Session = append(c.hooks.Session, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `session.Intercept(f(g(h())))`.
+func (c *SessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Session = append(c.inters.Session, interceptors...)
+}
+
+// Create returns a builder for creating a Session entity.
+func (c *SessionClient) Create() *SessionCreate {
+	mutation := newSessionMutation(c.config, OpCreate)
+	return &SessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Session entities.
+func (c *SessionClient) CreateBulk(builders ...*SessionCreate) *SessionCreateBulk {
+	return &SessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SessionClient) MapCreateBulk(slice any, setFunc func(*SessionCreate, int)) *SessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SessionCreateBulk{err: fmt.Errorf("calling to SessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Session.
+func (c *SessionClient) Update() *SessionUpdate {
+	mutation := newSessionMutation(c.config, OpUpdate)
+	return &SessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SessionClient) UpdateOne(s *Session) *SessionUpdateOne {
+	mutation := newSessionMutation(c.config, OpUpdateOne, withSession(s))
+	return &SessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SessionClient) UpdateOneID(id string) *SessionUpdateOne {
+	mutation := newSessionMutation(c.config, OpUpdateOne, withSessionID(id))
+	return &SessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Session.
+func (c *SessionClient) Delete() *SessionDelete {
+	mutation := newSessionMutation(c.config, OpDelete)
+	return &SessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SessionClient) DeleteOne(s *Session) *SessionDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SessionClient) DeleteOneID(id string) *SessionDeleteOne {
+	builder := c.Delete().Where(session.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SessionDeleteOne{builder}
+}
+
+// Query returns a query builder for Session.
+func (c *SessionClient) Query() *SessionQuery {
+	return &SessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Session entity by its id.
+func (c *SessionClient) Get(ctx context.Context, id string) (*Session, error) {
+	return c.Query().Where(session.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SessionClient) GetX(ctx context.Context, id string) *Session {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SessionClient) Hooks() []Hook {
+	return c.hooks.Session
+}
+
+// Interceptors returns the client interceptors.
+func (c *SessionClient) Interceptors() []Interceptor {
+	return c.inters.Session
+}
+
+func (c *SessionClient) mutate(ctx context.Context, m *SessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Session mutation op: %q", m.Op())
 	}
 }
 
@@ -2616,13 +3151,15 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
-		FeasibilityToolControl, GeneralLedgerAccount, InvoiceControl, Organization,
-		RouteControl, ShipmentControl, TableChangeAlert, Tag, User []ent.Hook
+		AccountingControl, BillingControl, BusinessUnit, Commodity, DispatchControl,
+		FeasibilityToolControl, GeneralLedgerAccount, HazardousMaterial,
+		InvoiceControl, Organization, RouteControl, Session, ShipmentControl,
+		TableChangeAlert, Tag, User []ent.Hook
 	}
 	inters struct {
-		AccountingControl, BillingControl, BusinessUnit, DispatchControl,
-		FeasibilityToolControl, GeneralLedgerAccount, InvoiceControl, Organization,
-		RouteControl, ShipmentControl, TableChangeAlert, Tag, User []ent.Interceptor
+		AccountingControl, BillingControl, BusinessUnit, Commodity, DispatchControl,
+		FeasibilityToolControl, GeneralLedgerAccount, HazardousMaterial,
+		InvoiceControl, Organization, RouteControl, Session, ShipmentControl,
+		TableChangeAlert, Tag, User []ent.Interceptor
 	}
 )

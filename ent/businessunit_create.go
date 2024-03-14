@@ -541,47 +541,47 @@ func (buc *BusinessUnitCreate) createSpec() (*BusinessUnit, *sqlgraph.CreateSpec
 	}
 	if value, ok := buc.mutation.City(); ok {
 		_spec.SetField(businessunit.FieldCity, field.TypeString, value)
-		_node.City = value
+		_node.City = &value
 	}
 	if value, ok := buc.mutation.State(); ok {
 		_spec.SetField(businessunit.FieldState, field.TypeString, value)
-		_node.State = value
+		_node.State = &value
 	}
 	if value, ok := buc.mutation.Country(); ok {
 		_spec.SetField(businessunit.FieldCountry, field.TypeString, value)
-		_node.Country = value
+		_node.Country = &value
 	}
 	if value, ok := buc.mutation.PostalCode(); ok {
 		_spec.SetField(businessunit.FieldPostalCode, field.TypeString, value)
-		_node.PostalCode = value
+		_node.PostalCode = &value
 	}
 	if value, ok := buc.mutation.TaxID(); ok {
 		_spec.SetField(businessunit.FieldTaxID, field.TypeString, value)
-		_node.TaxID = value
+		_node.TaxID = &value
 	}
 	if value, ok := buc.mutation.SubscriptionPlan(); ok {
 		_spec.SetField(businessunit.FieldSubscriptionPlan, field.TypeString, value)
-		_node.SubscriptionPlan = value
+		_node.SubscriptionPlan = &value
 	}
 	if value, ok := buc.mutation.Description(); ok {
 		_spec.SetField(businessunit.FieldDescription, field.TypeString, value)
-		_node.Description = value
+		_node.Description = &value
 	}
 	if value, ok := buc.mutation.LegalName(); ok {
 		_spec.SetField(businessunit.FieldLegalName, field.TypeString, value)
-		_node.LegalName = value
+		_node.LegalName = &value
 	}
 	if value, ok := buc.mutation.ContactName(); ok {
 		_spec.SetField(businessunit.FieldContactName, field.TypeString, value)
-		_node.ContactName = value
+		_node.ContactName = &value
 	}
 	if value, ok := buc.mutation.ContactEmail(); ok {
 		_spec.SetField(businessunit.FieldContactEmail, field.TypeString, value)
-		_node.ContactEmail = value
+		_node.ContactEmail = &value
 	}
 	if value, ok := buc.mutation.PaidUntil(); ok {
 		_spec.SetField(businessunit.FieldPaidUntil, field.TypeTime, value)
-		_node.PaidUntil = value
+		_node.PaidUntil = &value
 	}
 	if value, ok := buc.mutation.Settings(); ok {
 		_spec.SetField(businessunit.FieldSettings, field.TypeJSON, value)

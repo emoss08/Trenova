@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/billingcontrol"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
 )
 
@@ -26,7 +27,9 @@ func NewBillingControlOps(ctx context.Context) *BillingControlOps {
 // CreateBillingControl creates a new billing control settings for an organization
 func (r *BillingControlOps) GetBillingControlByOrgID(orgID uuid.UUID) (*ent.BillingControl, error) {
 	billingControl, err := r.client.BillingControl.Query().Where(
-		billingcontrol.OrganizationID(orgID),
+		billingcontrol.HasOrganizationWith(
+			organization.ID(orgID),
+		),
 	).Only(r.ctx)
 	if err != nil {
 		return nil, err

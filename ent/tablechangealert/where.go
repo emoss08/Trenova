@@ -976,16 +976,6 @@ func EmailRecipientsContainsFold(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldEmailRecipients, v))
 }
 
-// ConditionalLogicIsNil applies the IsNil predicate on the "conditional_logic" field.
-func ConditionalLogicIsNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIsNull(FieldConditionalLogic))
-}
-
-// ConditionalLogicNotNil applies the NotNil predicate on the "conditional_logic" field.
-func ConditionalLogicNotNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotNull(FieldConditionalLogic))
-}
-
 // EffectiveDateEQ applies the EQ predicate on the "effective_date" field.
 func EffectiveDateEQ(v time.Time) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldEffectiveDate, v))

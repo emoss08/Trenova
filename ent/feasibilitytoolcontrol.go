@@ -21,9 +21,9 @@ type FeasibilityToolControl struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// OtpOperator holds the value of the "otp_operator" field.
 	OtpOperator feasibilitytoolcontrol.OtpOperator `json:"otpOperator"`
 	// OtpValue holds the value of the "otp_value" field.

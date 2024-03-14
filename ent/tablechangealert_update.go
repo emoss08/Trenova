@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
-	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/google/uuid"
 )
@@ -282,18 +281,6 @@ func (tcau *TableChangeAlertUpdate) ClearEmailRecipients() *TableChangeAlertUpda
 	return tcau
 }
 
-// SetConditionalLogic sets the "conditional_logic" field.
-func (tcau *TableChangeAlertUpdate) SetConditionalLogic(sl *schema.ConditionalLogic) *TableChangeAlertUpdate {
-	tcau.mutation.SetConditionalLogic(sl)
-	return tcau
-}
-
-// ClearConditionalLogic clears the value of the "conditional_logic" field.
-func (tcau *TableChangeAlertUpdate) ClearConditionalLogic() *TableChangeAlertUpdate {
-	tcau.mutation.ClearConditionalLogic()
-	return tcau
-}
-
 // SetEffectiveDate sets the "effective_date" field.
 func (tcau *TableChangeAlertUpdate) SetEffectiveDate(t time.Time) *TableChangeAlertUpdate {
 	tcau.mutation.SetEffectiveDate(t)
@@ -532,12 +519,6 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if tcau.mutation.EmailRecipientsCleared() {
 		_spec.ClearField(tablechangealert.FieldEmailRecipients, field.TypeString)
-	}
-	if value, ok := tcau.mutation.ConditionalLogic(); ok {
-		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
-	}
-	if tcau.mutation.ConditionalLogicCleared() {
-		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if value, ok := tcau.mutation.EffectiveDate(); ok {
 		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)
@@ -879,18 +860,6 @@ func (tcauo *TableChangeAlertUpdateOne) ClearEmailRecipients() *TableChangeAlert
 	return tcauo
 }
 
-// SetConditionalLogic sets the "conditional_logic" field.
-func (tcauo *TableChangeAlertUpdateOne) SetConditionalLogic(sl *schema.ConditionalLogic) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetConditionalLogic(sl)
-	return tcauo
-}
-
-// ClearConditionalLogic clears the value of the "conditional_logic" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearConditionalLogic() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearConditionalLogic()
-	return tcauo
-}
-
 // SetEffectiveDate sets the "effective_date" field.
 func (tcauo *TableChangeAlertUpdateOne) SetEffectiveDate(t time.Time) *TableChangeAlertUpdateOne {
 	tcauo.mutation.SetEffectiveDate(t)
@@ -1159,12 +1128,6 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.EmailRecipientsCleared() {
 		_spec.ClearField(tablechangealert.FieldEmailRecipients, field.TypeString)
-	}
-	if value, ok := tcauo.mutation.ConditionalLogic(); ok {
-		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
-	}
-	if tcauo.mutation.ConditionalLogicCleared() {
-		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if value, ok := tcauo.mutation.EffectiveDate(); ok {
 		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)

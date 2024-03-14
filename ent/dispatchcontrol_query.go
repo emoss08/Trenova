@@ -335,7 +335,7 @@ func (dcq *DispatchControlQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuer
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -358,7 +358,7 @@ func (dcq *DispatchControlQuery) GroupBy(field string, fields ...string) *Dispat
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.DispatchControl.Query().

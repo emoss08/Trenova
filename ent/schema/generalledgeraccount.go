@@ -29,9 +29,11 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountTypeRevenue",
 				"AccountTypeExpense"),
 		field.Enum("cash_flow_type").
+			Nillable().
 			Optional().
 			Values("CashFlowOperating", "CashFlowInvesting", "CashFlowFinancing"),
 		field.Enum("account_sub_type").
+			Nillable().
 			Optional().
 			Values("AccountSubTypeCurrentAsset",
 				"AccountSubTypeFixedAsset",
@@ -45,6 +47,7 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountSubTypeOtherIncome",
 				"AccountSubTypeOtherExpense"),
 		field.Enum("account_class").
+			Nillable().
 			Optional().
 			Values("AccountClassificationBank",
 				"AccountClassificationCash",
@@ -54,15 +57,19 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountClassificationOCA",
 				"AccountClassificationFA"),
 		field.Float("balance").
+			Nillable().
 			Optional(),
 		field.Float("interest_rate").
+			Nillable().
 			Optional(),
 		field.Time("date_opened").
 			Immutable().
 			Default(time.Now),
 		field.Time("date_closed").
+			Nillable().
 			Optional(),
 		field.String("notes").
+			Nillable().
 			Optional(),
 		field.Bool("is_tax_relevant").
 			Default(false),

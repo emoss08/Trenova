@@ -8,13 +8,16 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/commodity"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/schema"
+	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -189,6 +192,47 @@ func init() {
 	businessunitDescID := businessunitMixinFields0[0].Descriptor()
 	// businessunit.DefaultID holds the default value on creation for the id field.
 	businessunit.DefaultID = businessunitDescID.Default.(func() uuid.UUID)
+	commodityMixin := schema.Commodity{}.Mixin()
+	commodityMixinFields0 := commodityMixin[0].Fields()
+	_ = commodityMixinFields0
+	commodityFields := schema.Commodity{}.Fields()
+	_ = commodityFields
+	// commodityDescCreatedAt is the schema descriptor for created_at field.
+	commodityDescCreatedAt := commodityMixinFields0[3].Descriptor()
+	// commodity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	commodity.DefaultCreatedAt = commodityDescCreatedAt.Default.(time.Time)
+	// commodityDescUpdatedAt is the schema descriptor for updated_at field.
+	commodityDescUpdatedAt := commodityMixinFields0[4].Descriptor()
+	// commodity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	commodity.DefaultUpdatedAt = commodityDescUpdatedAt.Default.(time.Time)
+	// commodity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	commodity.UpdateDefaultUpdatedAt = commodityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// commodityDescName is the schema descriptor for name field.
+	commodityDescName := commodityFields[1].Descriptor()
+	// commodity.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	commodity.NameValidator = func() func(string) error {
+		validators := commodityDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// commodityDescIsHazmat is the schema descriptor for is_hazmat field.
+	commodityDescIsHazmat := commodityFields[2].Descriptor()
+	// commodity.DefaultIsHazmat holds the default value on creation for the is_hazmat field.
+	commodity.DefaultIsHazmat = commodityDescIsHazmat.Default.(bool)
+	// commodityDescID is the schema descriptor for id field.
+	commodityDescID := commodityMixinFields0[0].Descriptor()
+	// commodity.DefaultID holds the default value on creation for the id field.
+	commodity.DefaultID = commodityDescID.Default.(func() uuid.UUID)
 	dispatchcontrolMixin := schema.DispatchControl{}.Mixin()
 	dispatchcontrolMixinFields0 := dispatchcontrolMixin[0].Fields()
 	_ = dispatchcontrolMixinFields0
@@ -324,6 +368,47 @@ func init() {
 	generalledgeraccountDescID := generalledgeraccountMixinFields0[0].Descriptor()
 	// generalledgeraccount.DefaultID holds the default value on creation for the id field.
 	generalledgeraccount.DefaultID = generalledgeraccountDescID.Default.(func() uuid.UUID)
+	hazardousmaterialMixin := schema.HazardousMaterial{}.Mixin()
+	hazardousmaterialMixinFields0 := hazardousmaterialMixin[0].Fields()
+	_ = hazardousmaterialMixinFields0
+	hazardousmaterialFields := schema.HazardousMaterial{}.Fields()
+	_ = hazardousmaterialFields
+	// hazardousmaterialDescCreatedAt is the schema descriptor for created_at field.
+	hazardousmaterialDescCreatedAt := hazardousmaterialMixinFields0[3].Descriptor()
+	// hazardousmaterial.DefaultCreatedAt holds the default value on creation for the created_at field.
+	hazardousmaterial.DefaultCreatedAt = hazardousmaterialDescCreatedAt.Default.(time.Time)
+	// hazardousmaterialDescUpdatedAt is the schema descriptor for updated_at field.
+	hazardousmaterialDescUpdatedAt := hazardousmaterialMixinFields0[4].Descriptor()
+	// hazardousmaterial.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	hazardousmaterial.DefaultUpdatedAt = hazardousmaterialDescUpdatedAt.Default.(time.Time)
+	// hazardousmaterial.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	hazardousmaterial.UpdateDefaultUpdatedAt = hazardousmaterialDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// hazardousmaterialDescName is the schema descriptor for name field.
+	hazardousmaterialDescName := hazardousmaterialFields[0].Descriptor()
+	// hazardousmaterial.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	hazardousmaterial.NameValidator = func() func(string) error {
+		validators := hazardousmaterialDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// hazardousmaterialDescErgNumber is the schema descriptor for erg_number field.
+	hazardousmaterialDescErgNumber := hazardousmaterialFields[2].Descriptor()
+	// hazardousmaterial.ErgNumberValidator is a validator for the "erg_number" field. It is called by the builders before save.
+	hazardousmaterial.ErgNumberValidator = hazardousmaterialDescErgNumber.Validators[0].(func(string) error)
+	// hazardousmaterialDescID is the schema descriptor for id field.
+	hazardousmaterialDescID := hazardousmaterialMixinFields0[0].Descriptor()
+	// hazardousmaterial.DefaultID holds the default value on creation for the id field.
+	hazardousmaterial.DefaultID = hazardousmaterialDescID.Default.(func() uuid.UUID)
 	invoicecontrolMixin := schema.InvoiceControl{}.Mixin()
 	invoicecontrolMixinFields0 := invoicecontrolMixin[0].Fields()
 	_ = invoicecontrolMixinFields0
@@ -437,6 +522,12 @@ func init() {
 	routecontrolDescID := routecontrolMixinFields0[0].Descriptor()
 	// routecontrol.DefaultID holds the default value on creation for the id field.
 	routecontrol.DefaultID = routecontrolDescID.Default.(func() uuid.UUID)
+	sessionFields := schema.Session{}.Fields()
+	_ = sessionFields
+	// sessionDescData is the schema descriptor for data field.
+	sessionDescData := sessionFields[1].Descriptor()
+	// session.DataValidator is a validator for the "data" field. It is called by the builders before save.
+	session.DataValidator = sessionDescData.Validators[0].(func(string) error)
 	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
 	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
 	_ = shipmentcontrolMixinFields0
@@ -606,11 +697,11 @@ func init() {
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescIsAdmin is the schema descriptor for is_admin field.
-	userDescIsAdmin := userFields[10].Descriptor()
+	userDescIsAdmin := userFields[9].Descriptor()
 	// user.DefaultIsAdmin holds the default value on creation for the is_admin field.
 	user.DefaultIsAdmin = userDescIsAdmin.Default.(bool)
 	// userDescIsSuperAdmin is the schema descriptor for is_super_admin field.
-	userDescIsSuperAdmin := userFields[11].Descriptor()
+	userDescIsSuperAdmin := userFields[10].Descriptor()
 	// user.DefaultIsSuperAdmin holds the default value on creation for the is_super_admin field.
 	user.DefaultIsSuperAdmin = userDescIsSuperAdmin.Default.(bool)
 	// userDescID is the schema descriptor for id field.

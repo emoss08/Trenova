@@ -34,8 +34,6 @@ const (
 	FieldPassword = "password"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
-	// FieldDateJoined holds the string denoting the date_joined field in the database.
-	FieldDateJoined = "date_joined"
 	// FieldTimezone holds the string denoting the timezone field in the database.
 	FieldTimezone = "timezone"
 	// FieldProfilePicURL holds the string denoting the profile_pic_url field in the database.
@@ -48,6 +46,8 @@ const (
 	FieldIsAdmin = "is_admin"
 	// FieldIsSuperAdmin holds the string denoting the is_super_admin field in the database.
 	FieldIsSuperAdmin = "is_super_admin"
+	// FieldLastLogin holds the string denoting the last_login field in the database.
+	FieldLastLogin = "last_login"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -82,19 +82,30 @@ var Columns = []string{
 	FieldUsername,
 	FieldPassword,
 	FieldEmail,
-	FieldDateJoined,
 	FieldTimezone,
 	FieldProfilePicURL,
 	FieldThumbnailURL,
 	FieldPhoneNumber,
 	FieldIsAdmin,
 	FieldIsSuperAdmin,
+	FieldLastLogin,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "users"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"organization_users",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -231,11 +242,6 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByDateJoined orders the results by the date_joined field.
-func ByDateJoined(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDateJoined, opts...).ToFunc()
-}
-
 // ByTimezone orders the results by the timezone field.
 func ByTimezone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTimezone, opts...).ToFunc()
@@ -264,6 +270,11 @@ func ByIsAdmin(opts ...sql.OrderTermOption) OrderOption {
 // ByIsSuperAdmin orders the results by the is_super_admin field.
 func ByIsSuperAdmin(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsSuperAdmin, opts...).ToFunc()
+}
+
+// ByLastLogin orders the results by the last_login field.
+func ByLastLogin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLogin, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.
