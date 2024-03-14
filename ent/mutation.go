@@ -1314,6 +1314,7 @@ type BillingControlMutation struct {
 	validate_customer_rates    *bool
 	auto_bill_criteria         *billingcontrol.AutoBillCriteria
 	shipment_transfer_criteria *billingcontrol.ShipmentTransferCriteria
+	enforce_customer_billing   *bool
 	clearedFields              map[string]struct{}
 	organization               *uuid.UUID
 	clearedorganization        bool
@@ -1716,6 +1717,42 @@ func (m *BillingControlMutation) ResetShipmentTransferCriteria() {
 	m.shipment_transfer_criteria = nil
 }
 
+// SetEnforceCustomerBilling sets the "enforce_customer_billing" field.
+func (m *BillingControlMutation) SetEnforceCustomerBilling(b bool) {
+	m.enforce_customer_billing = &b
+}
+
+// EnforceCustomerBilling returns the value of the "enforce_customer_billing" field in the mutation.
+func (m *BillingControlMutation) EnforceCustomerBilling() (r bool, exists bool) {
+	v := m.enforce_customer_billing
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforceCustomerBilling returns the old "enforce_customer_billing" field's value of the BillingControl entity.
+// If the BillingControl object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BillingControlMutation) OldEnforceCustomerBilling(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforceCustomerBilling is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforceCustomerBilling requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforceCustomerBilling: %w", err)
+	}
+	return oldValue.EnforceCustomerBilling, nil
+}
+
+// ResetEnforceCustomerBilling resets all changes to the "enforce_customer_billing" field.
+func (m *BillingControlMutation) ResetEnforceCustomerBilling() {
+	m.enforce_customer_billing = nil
+}
+
 // SetOrganizationID sets the "organization" edge to the Organization entity by id.
 func (m *BillingControlMutation) SetOrganizationID(id uuid.UUID) {
 	m.organization = &id
@@ -1828,7 +1865,7 @@ func (m *BillingControlMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BillingControlMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, billingcontrol.FieldCreatedAt)
 	}
@@ -1852,6 +1889,9 @@ func (m *BillingControlMutation) Fields() []string {
 	}
 	if m.shipment_transfer_criteria != nil {
 		fields = append(fields, billingcontrol.FieldShipmentTransferCriteria)
+	}
+	if m.enforce_customer_billing != nil {
+		fields = append(fields, billingcontrol.FieldEnforceCustomerBilling)
 	}
 	return fields
 }
@@ -1877,6 +1917,8 @@ func (m *BillingControlMutation) Field(name string) (ent.Value, bool) {
 		return m.AutoBillCriteria()
 	case billingcontrol.FieldShipmentTransferCriteria:
 		return m.ShipmentTransferCriteria()
+	case billingcontrol.FieldEnforceCustomerBilling:
+		return m.EnforceCustomerBilling()
 	}
 	return nil, false
 }
@@ -1902,6 +1944,8 @@ func (m *BillingControlMutation) OldField(ctx context.Context, name string) (ent
 		return m.OldAutoBillCriteria(ctx)
 	case billingcontrol.FieldShipmentTransferCriteria:
 		return m.OldShipmentTransferCriteria(ctx)
+	case billingcontrol.FieldEnforceCustomerBilling:
+		return m.OldEnforceCustomerBilling(ctx)
 	}
 	return nil, fmt.Errorf("unknown BillingControl field %s", name)
 }
@@ -1966,6 +2010,13 @@ func (m *BillingControlMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetShipmentTransferCriteria(v)
+		return nil
+	case billingcontrol.FieldEnforceCustomerBilling:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforceCustomerBilling(v)
 		return nil
 	}
 	return fmt.Errorf("unknown BillingControl field %s", name)
@@ -2039,6 +2090,9 @@ func (m *BillingControlMutation) ResetField(name string) error {
 		return nil
 	case billingcontrol.FieldShipmentTransferCriteria:
 		m.ResetShipmentTransferCriteria()
+		return nil
+	case billingcontrol.FieldEnforceCustomerBilling:
+		m.ResetEnforceCustomerBilling()
 		return nil
 	}
 	return fmt.Errorf("unknown BillingControl field %s", name)

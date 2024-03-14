@@ -106,6 +106,10 @@ func init() {
 	billingcontrolDescValidateCustomerRates := billingcontrolFields[3].Descriptor()
 	// billingcontrol.DefaultValidateCustomerRates holds the default value on creation for the validate_customer_rates field.
 	billingcontrol.DefaultValidateCustomerRates = billingcontrolDescValidateCustomerRates.Default.(bool)
+	// billingcontrolDescEnforceCustomerBilling is the schema descriptor for enforce_customer_billing field.
+	billingcontrolDescEnforceCustomerBilling := billingcontrolFields[6].Descriptor()
+	// billingcontrol.DefaultEnforceCustomerBilling holds the default value on creation for the enforce_customer_billing field.
+	billingcontrol.DefaultEnforceCustomerBilling = billingcontrolDescEnforceCustomerBilling.Default.(bool)
 	// billingcontrolDescID is the schema descriptor for id field.
 	billingcontrolDescID := billingcontrolMixinFields0[0].Descriptor()
 	// billingcontrol.DefaultID holds the default value on creation for the id field.

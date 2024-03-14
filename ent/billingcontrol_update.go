@@ -121,6 +121,20 @@ func (bcu *BillingControlUpdate) SetNillableShipmentTransferCriteria(btc *billin
 	return bcu
 }
 
+// SetEnforceCustomerBilling sets the "enforce_customer_billing" field.
+func (bcu *BillingControlUpdate) SetEnforceCustomerBilling(b bool) *BillingControlUpdate {
+	bcu.mutation.SetEnforceCustomerBilling(b)
+	return bcu
+}
+
+// SetNillableEnforceCustomerBilling sets the "enforce_customer_billing" field if the given value is not nil.
+func (bcu *BillingControlUpdate) SetNillableEnforceCustomerBilling(b *bool) *BillingControlUpdate {
+	if b != nil {
+		bcu.SetEnforceCustomerBilling(*b)
+	}
+	return bcu
+}
+
 // SetOrganizationID sets the "organization" edge to the Organization entity by ID.
 func (bcu *BillingControlUpdate) SetOrganizationID(id uuid.UUID) *BillingControlUpdate {
 	bcu.mutation.SetOrganizationID(id)
@@ -249,6 +263,9 @@ func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 	}
 	if value, ok := bcu.mutation.ShipmentTransferCriteria(); ok {
 		_spec.SetField(billingcontrol.FieldShipmentTransferCriteria, field.TypeEnum, value)
+	}
+	if value, ok := bcu.mutation.EnforceCustomerBilling(); ok {
+		_spec.SetField(billingcontrol.FieldEnforceCustomerBilling, field.TypeBool, value)
 	}
 	if bcu.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -418,6 +435,20 @@ func (bcuo *BillingControlUpdateOne) SetNillableShipmentTransferCriteria(btc *bi
 	return bcuo
 }
 
+// SetEnforceCustomerBilling sets the "enforce_customer_billing" field.
+func (bcuo *BillingControlUpdateOne) SetEnforceCustomerBilling(b bool) *BillingControlUpdateOne {
+	bcuo.mutation.SetEnforceCustomerBilling(b)
+	return bcuo
+}
+
+// SetNillableEnforceCustomerBilling sets the "enforce_customer_billing" field if the given value is not nil.
+func (bcuo *BillingControlUpdateOne) SetNillableEnforceCustomerBilling(b *bool) *BillingControlUpdateOne {
+	if b != nil {
+		bcuo.SetEnforceCustomerBilling(*b)
+	}
+	return bcuo
+}
+
 // SetOrganizationID sets the "organization" edge to the Organization entity by ID.
 func (bcuo *BillingControlUpdateOne) SetOrganizationID(id uuid.UUID) *BillingControlUpdateOne {
 	bcuo.mutation.SetOrganizationID(id)
@@ -576,6 +607,9 @@ func (bcuo *BillingControlUpdateOne) sqlSave(ctx context.Context) (_node *Billin
 	}
 	if value, ok := bcuo.mutation.ShipmentTransferCriteria(); ok {
 		_spec.SetField(billingcontrol.FieldShipmentTransferCriteria, field.TypeEnum, value)
+	}
+	if value, ok := bcuo.mutation.EnforceCustomerBilling(); ok {
+		_spec.SetField(billingcontrol.FieldEnforceCustomerBilling, field.TypeBool, value)
 	}
 	if bcuo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
