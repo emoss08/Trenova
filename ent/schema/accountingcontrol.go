@@ -1,10 +1,8 @@
 package schema
 
 import (
-	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -42,13 +40,16 @@ func (AccountingControl) Fields() []ent.Field {
 			Default(false).
 			StructTag(`json:"haltOnPendingRec"`),
 		field.Text("critical_processes").
+			Nillable().
 			Optional().
 			StructTag(`json:"criticalProcesses"`),
 		field.UUID("default_rev_account_id", uuid.UUID{}).
 			Optional().
+			Nillable().
 			StructTag(`json:"defaultRevAccountId"`),
 		field.UUID("default_exp_account_id", uuid.UUID{}).
 			Optional().
+			Nillable().
 			StructTag(`json:"defaultExpAccountId"`),
 	}
 }
@@ -57,14 +58,6 @@ func (AccountingControl) Fields() []ent.Field {
 func (AccountingControl) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		DefaultMixin{},
-	}
-}
-
-// Annotations for the AccountingControl.
-func (AccountingControl) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

@@ -27,7 +27,7 @@ type GeneralLedgerAccount struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// Status holds the value of the "status" field.
 	Status generalledgeraccount.Status `json:"status,omitempty"`
 	// AccountNumber holds the value of the "account_number" field.
@@ -35,21 +35,21 @@ type GeneralLedgerAccount struct {
 	// AccountType holds the value of the "account_type" field.
 	AccountType generalledgeraccount.AccountType `json:"account_type,omitempty"`
 	// CashFlowType holds the value of the "cash_flow_type" field.
-	CashFlowType generalledgeraccount.CashFlowType `json:"cash_flow_type,omitempty"`
+	CashFlowType *generalledgeraccount.CashFlowType `json:"cash_flow_type,omitempty"`
 	// AccountSubType holds the value of the "account_sub_type" field.
-	AccountSubType generalledgeraccount.AccountSubType `json:"account_sub_type,omitempty"`
+	AccountSubType *generalledgeraccount.AccountSubType `json:"account_sub_type,omitempty"`
 	// AccountClass holds the value of the "account_class" field.
-	AccountClass generalledgeraccount.AccountClass `json:"account_class,omitempty"`
+	AccountClass *generalledgeraccount.AccountClass `json:"account_class,omitempty"`
 	// Balance holds the value of the "balance" field.
-	Balance float64 `json:"balance,omitempty"`
+	Balance *float64 `json:"balance,omitempty"`
 	// InterestRate holds the value of the "interest_rate" field.
-	InterestRate float64 `json:"interest_rate,omitempty"`
+	InterestRate *float64 `json:"interest_rate,omitempty"`
 	// DateOpened holds the value of the "date_opened" field.
 	DateOpened time.Time `json:"date_opened,omitempty"`
 	// DateClosed holds the value of the "date_closed" field.
-	DateClosed time.Time `json:"date_closed,omitempty"`
+	DateClosed *time.Time `json:"date_closed,omitempty"`
 	// Notes holds the value of the "notes" field.
-	Notes string `json:"notes,omitempty"`
+	Notes *string `json:"notes,omitempty"`
 	// IsTaxRelevant holds the value of the "is_tax_relevant" field.
 	IsTaxRelevant bool `json:"is_tax_relevant,omitempty"`
 	// IsReconciled holds the value of the "is_reconciled" field.
@@ -186,31 +186,36 @@ func (gla *GeneralLedgerAccount) assignValues(columns []string, values []any) er
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field cash_flow_type", values[i])
 			} else if value.Valid {
-				gla.CashFlowType = generalledgeraccount.CashFlowType(value.String)
+				gla.CashFlowType = new(generalledgeraccount.CashFlowType)
+				*gla.CashFlowType = generalledgeraccount.CashFlowType(value.String)
 			}
 		case generalledgeraccount.FieldAccountSubType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field account_sub_type", values[i])
 			} else if value.Valid {
-				gla.AccountSubType = generalledgeraccount.AccountSubType(value.String)
+				gla.AccountSubType = new(generalledgeraccount.AccountSubType)
+				*gla.AccountSubType = generalledgeraccount.AccountSubType(value.String)
 			}
 		case generalledgeraccount.FieldAccountClass:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field account_class", values[i])
 			} else if value.Valid {
-				gla.AccountClass = generalledgeraccount.AccountClass(value.String)
+				gla.AccountClass = new(generalledgeraccount.AccountClass)
+				*gla.AccountClass = generalledgeraccount.AccountClass(value.String)
 			}
 		case generalledgeraccount.FieldBalance:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field balance", values[i])
 			} else if value.Valid {
-				gla.Balance = value.Float64
+				gla.Balance = new(float64)
+				*gla.Balance = value.Float64
 			}
 		case generalledgeraccount.FieldInterestRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field interest_rate", values[i])
 			} else if value.Valid {
-				gla.InterestRate = value.Float64
+				gla.InterestRate = new(float64)
+				*gla.InterestRate = value.Float64
 			}
 		case generalledgeraccount.FieldDateOpened:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -222,13 +227,15 @@ func (gla *GeneralLedgerAccount) assignValues(columns []string, values []any) er
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field date_closed", values[i])
 			} else if value.Valid {
-				gla.DateClosed = value.Time
+				gla.DateClosed = new(time.Time)
+				*gla.DateClosed = value.Time
 			}
 		case generalledgeraccount.FieldNotes:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field notes", values[i])
 			} else if value.Valid {
-				gla.Notes = value.String
+				gla.Notes = new(string)
+				*gla.Notes = value.String
 			}
 		case generalledgeraccount.FieldIsTaxRelevant:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -314,29 +321,43 @@ func (gla *GeneralLedgerAccount) String() string {
 	builder.WriteString("account_type=")
 	builder.WriteString(fmt.Sprintf("%v", gla.AccountType))
 	builder.WriteString(", ")
-	builder.WriteString("cash_flow_type=")
-	builder.WriteString(fmt.Sprintf("%v", gla.CashFlowType))
+	if v := gla.CashFlowType; v != nil {
+		builder.WriteString("cash_flow_type=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("account_sub_type=")
-	builder.WriteString(fmt.Sprintf("%v", gla.AccountSubType))
+	if v := gla.AccountSubType; v != nil {
+		builder.WriteString("account_sub_type=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("account_class=")
-	builder.WriteString(fmt.Sprintf("%v", gla.AccountClass))
+	if v := gla.AccountClass; v != nil {
+		builder.WriteString("account_class=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("balance=")
-	builder.WriteString(fmt.Sprintf("%v", gla.Balance))
+	if v := gla.Balance; v != nil {
+		builder.WriteString("balance=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("interest_rate=")
-	builder.WriteString(fmt.Sprintf("%v", gla.InterestRate))
+	if v := gla.InterestRate; v != nil {
+		builder.WriteString("interest_rate=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("date_opened=")
 	builder.WriteString(gla.DateOpened.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("date_closed=")
-	builder.WriteString(gla.DateClosed.Format(time.ANSIC))
+	if v := gla.DateClosed; v != nil {
+		builder.WriteString("date_closed=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("notes=")
-	builder.WriteString(gla.Notes)
+	if v := gla.Notes; v != nil {
+		builder.WriteString("notes=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("is_tax_relevant=")
 	builder.WriteString(fmt.Sprintf("%v", gla.IsTaxRelevant))

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/schema"
+	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -521,6 +522,12 @@ func init() {
 	routecontrolDescID := routecontrolMixinFields0[0].Descriptor()
 	// routecontrol.DefaultID holds the default value on creation for the id field.
 	routecontrol.DefaultID = routecontrolDescID.Default.(func() uuid.UUID)
+	sessionFields := schema.Session{}.Fields()
+	_ = sessionFields
+	// sessionDescData is the schema descriptor for data field.
+	sessionDescData := sessionFields[1].Descriptor()
+	// session.DataValidator is a validator for the "data" field. It is called by the builders before save.
+	session.DataValidator = sessionDescData.Validators[0].(func(string) error)
 	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
 	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
 	_ = shipmentcontrolMixinFields0
@@ -690,11 +697,11 @@ func init() {
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescIsAdmin is the schema descriptor for is_admin field.
-	userDescIsAdmin := userFields[10].Descriptor()
+	userDescIsAdmin := userFields[9].Descriptor()
 	// user.DefaultIsAdmin holds the default value on creation for the is_admin field.
 	user.DefaultIsAdmin = userDescIsAdmin.Default.(bool)
 	// userDescIsSuperAdmin is the schema descriptor for is_super_admin field.
-	userDescIsSuperAdmin := userFields[11].Descriptor()
+	userDescIsSuperAdmin := userFields[10].Descriptor()
 	// user.DefaultIsSuperAdmin holds the default value on creation for the is_super_admin field.
 	user.DefaultIsSuperAdmin = userDescIsSuperAdmin.Default.(bool)
 	// userDescID is the schema descriptor for id field.

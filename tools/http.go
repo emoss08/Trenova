@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/emoss08/trenova/tools/session"
 	"github.com/emoss08/trenova/tools/types"
 	"github.com/goccy/go-json"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/wader/gormstore/v2"
 )
 
 type ValidationError struct {
@@ -84,7 +84,7 @@ func GetSystemSessionID() string {
 }
 
 // GetSessionDetails retrieves user ID, organization ID, and business unit ID from the session.
-func GetSessionDetails(r *http.Request, store *gormstore.Store) (uuid.UUID, uuid.UUID, uuid.UUID, bool) {
+func GetSessionDetails(r *http.Request, store *session.Store) (uuid.UUID, uuid.UUID, uuid.UUID, bool) {
 	if store == nil {
 		log.Println("Session store is not initialized")
 		return uuid.Nil, uuid.Nil, uuid.Nil, false

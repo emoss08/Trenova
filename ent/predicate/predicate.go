@@ -39,6 +39,9 @@ type Organization func(*sql.Selector)
 // RouteControl is the predicate function for routecontrol builders.
 type RouteControl func(*sql.Selector)
 
+// Session is the predicate function for session builders.
+type Session func(*sql.Selector)
+
 // ShipmentControl is the predicate function for shipmentcontrol builders.
 type ShipmentControl func(*sql.Selector)
 

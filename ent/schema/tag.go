@@ -1,9 +1,7 @@
 package schema
 
 import (
-	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -19,6 +17,7 @@ func (Tag) Fields() []ent.Field {
 		field.String("name").
 			MaxLen(50),
 		field.Text("description").
+			Nillable().
 			Optional(),
 	}
 }
@@ -32,13 +31,6 @@ func (Tag) Edges() []ent.Edge {
 func (Tag) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-func (Tag) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

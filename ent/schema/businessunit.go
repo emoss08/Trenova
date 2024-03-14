@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"entgo.io/contrib/entgql"
-	"entgo.io/ent/schema"
 	"time"
 
 	"entgo.io/ent"
@@ -61,7 +59,7 @@ func (BaseMixin) Fields() []ent.Field {
 		field.Time("updated_at").
 			Default(time.Now()).
 			UpdateDefault(time.Now).
-			StructTag(`json:"createdAt"`),
+			StructTag(`json:"updatedAt"`),
 	}
 }
 
@@ -115,37 +113,48 @@ func (BusinessUnit) Fields() []ent.Field {
 			Optional(),
 		field.String("city").
 			MaxLen(255).
+			Nillable().
 			Optional(),
 		field.String("state").
 			MaxLen(2).
+			Nillable().
 			Optional(),
 		field.String("country").
 			MaxLen(2).
+			Nillable().
 			Optional(),
 		field.String("postal_code").
 			MaxLen(10).
+			Nillable().
 			Optional().
 			StructTag(`json:"postalCode"`),
 		field.String("tax_id").
 			MaxLen(20).
+			Nillable().
 			Optional().
 			StructTag(`json:"taxId"`),
 		field.String("subscription_plan").
 			Optional().
+			Nillable().
 			StructTag(`json:"subscriptionPlan"`),
 		field.String("description").
+			Nillable().
 			Optional(),
 		field.String("legal_name").
 			Optional().
+			Nillable().
 			StructTag(`json:"legalName"`),
 		field.String("contact_name").
 			Optional().
+			Nillable().
 			StructTag(`json:"contactName"`),
 		field.String("contact_email").
 			Optional().
+			Nillable().
 			StructTag(`json:"contactEmail"`),
 		field.Time("paid_until").
 			Optional().
+			Nillable().
 			StructTag(`json:"-"`),
 		field.JSON("settings", map[string]interface{}{}).
 			Optional(),
@@ -174,13 +183,7 @@ func (BusinessUnit) Edges() []ent.Edge {
 	}
 }
 
-func (BusinessUnit) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate()),
-	}
-}
-
+// Indexes of the BusinessUnit.
 func (BusinessUnit) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("name").

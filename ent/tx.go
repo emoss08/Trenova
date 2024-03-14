@@ -34,6 +34,8 @@ type Tx struct {
 	Organization *OrganizationClient
 	// RouteControl is the client for interacting with the RouteControl builders.
 	RouteControl *RouteControlClient
+	// Session is the client for interacting with the Session builders.
+	Session *SessionClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
 	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
@@ -184,6 +186,7 @@ func (tx *Tx) init() {
 	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.RouteControl = NewRouteControlClient(tx.config)
+	tx.Session = NewSessionClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)

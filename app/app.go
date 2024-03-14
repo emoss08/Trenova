@@ -1,4 +1,4 @@
-package trenova
+package main
 
 import (
 	"log"
@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/server"
+	"github.com/emoss08/trenova/tools/redis"
+	"github.com/emoss08/trenova/tools/session"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -29,6 +31,24 @@ func main() {
 	// This will enable the client instance to be accessed anywhere through the accessor
 	// named GetClient
 	database.SetClient(client)
+
+	// Setup Session Store
+	sessionStore := session.New(client, []byte(os.Getenv("SESSION_KEY")))
+
+	// If the session store is not set, panic
+	if sessionStore == nil {
+		panic("Failed to create session store. Exiting...")
+	}
+
+	session.SetStore(sessionStore)
+
+	// Initialize the redis client
+	redisClient := redis.NewRedisClient(os.Getenv("REDIS_ADDR"))
+
+	// Set the redis client to variable defined in the redis package
+	// This will enable the client instance to be accessed anywhere through the accessor
+	// named GetClient
+	redis.SetClient(redisClient)
 
 	// Setup server
 	server.SetupAndRun()

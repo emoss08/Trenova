@@ -3,9 +3,7 @@ package schema
 import (
 	"time"
 
-	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -31,9 +29,11 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountTypeRevenue",
 				"AccountTypeExpense"),
 		field.Enum("cash_flow_type").
+			Nillable().
 			Optional().
 			Values("CashFlowOperating", "CashFlowInvesting", "CashFlowFinancing"),
 		field.Enum("account_sub_type").
+			Nillable().
 			Optional().
 			Values("AccountSubTypeCurrentAsset",
 				"AccountSubTypeFixedAsset",
@@ -47,6 +47,7 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountSubTypeOtherIncome",
 				"AccountSubTypeOtherExpense"),
 		field.Enum("account_class").
+			Nillable().
 			Optional().
 			Values("AccountClassificationBank",
 				"AccountClassificationCash",
@@ -56,15 +57,19 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"AccountClassificationOCA",
 				"AccountClassificationFA"),
 		field.Float("balance").
+			Nillable().
 			Optional(),
 		field.Float("interest_rate").
+			Nillable().
 			Optional(),
 		field.Time("date_opened").
 			Immutable().
 			Default(time.Now),
 		field.Time("date_closed").
+			Nillable().
 			Optional(),
 		field.String("notes").
+			Nillable().
 			Optional(),
 		field.Bool("is_tax_relevant").
 			Default(false),
@@ -84,13 +89,6 @@ func (GeneralLedgerAccount) Edges() []ent.Edge {
 func (GeneralLedgerAccount) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-func (GeneralLedgerAccount) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entgql.QueryField(),
-		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

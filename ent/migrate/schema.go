@@ -409,13 +409,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "organization_business_unit_id_scac_code",
-				Unique:  true,
-				Columns: []*schema.Column{OrganizationsColumns[9], OrganizationsColumns[4]},
-			},
-		},
 	}
 	// RouteControlsColumns holds the columns for the "route_controls" table.
 	RouteControlsColumns = []*schema.Column{
@@ -447,6 +440,20 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
+	}
+	// SessionsColumns holds the columns for the "sessions" table.
+	SessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Unique: true},
+		{Name: "data", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime},
+	}
+	// SessionsTable holds the schema information for the "sessions" table.
+	SessionsTable = &schema.Table{
+		Name:       "sessions",
+		Columns:    SessionsColumns,
+		PrimaryKey: []*schema.Column{SessionsColumns[0]},
 	}
 	// ShipmentControlsColumns holds the columns for the "shipment_controls" table.
 	ShipmentControlsColumns = []*schema.Column{
@@ -584,13 +591,14 @@ var (
 		{Name: "username", Type: field.TypeString, Size: 30},
 		{Name: "password", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString, Size: 255},
-		{Name: "date_joined", Type: field.TypeString, Nullable: true},
 		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"TimezoneAmericaLosAngeles", "TimezoneAmericaDenver", "TimezoneAmericaChicago", "TimezoneAmericaNewYork"}, Default: "TimezoneAmericaLosAngeles"},
 		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
 		{Name: "is_admin", Type: field.TypeBool, Default: false},
 		{Name: "is_super_admin", Type: field.TypeBool, Default: false},
+		{Name: "last_login", Type: field.TypeTime, Nullable: true},
+		{Name: "organization_users", Type: field.TypeUUID, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -601,16 +609,29 @@ var (
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "users_business_units_business_unit",
+				Symbol:     "users_organizations_users",
 				Columns:    []*schema.Column{UsersColumns[15]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "users_business_units_business_unit",
+				Columns:    []*schema.Column{UsersColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "users_organizations_organization",
-				Columns:    []*schema.Column{UsersColumns[16]},
+				Columns:    []*schema.Column{UsersColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_username_email",
+				Unique:  true,
+				Columns: []*schema.Column{UsersColumns[5], UsersColumns[7]},
 			},
 		},
 	}
@@ -627,6 +648,7 @@ var (
 		InvoiceControlsTable,
 		OrganizationsTable,
 		RouteControlsTable,
+		SessionsTable,
 		ShipmentControlsTable,
 		TableChangeAlertsTable,
 		TagsTable,
@@ -665,6 +687,7 @@ func init() {
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
-	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[0].RefTable = OrganizationsTable
+	UsersTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UsersTable.ForeignKeys[2].RefTable = OrganizationsTable
 }

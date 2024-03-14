@@ -40,11 +40,11 @@ type AccountingControl struct {
 	// HaltOnPendingRec holds the value of the "halt_on_pending_rec" field.
 	HaltOnPendingRec bool `json:"haltOnPendingRec"`
 	// CriticalProcesses holds the value of the "critical_processes" field.
-	CriticalProcesses string `json:"criticalProcesses"`
+	CriticalProcesses *string `json:"criticalProcesses"`
 	// DefaultRevAccountID holds the value of the "default_rev_account_id" field.
-	DefaultRevAccountID uuid.UUID `json:"defaultRevAccountId"`
+	DefaultRevAccountID *uuid.UUID `json:"defaultRevAccountId"`
 	// DefaultExpAccountID holds the value of the "default_exp_account_id" field.
-	DefaultExpAccountID uuid.UUID `json:"defaultExpAccountId"`
+	DefaultExpAccountID *uuid.UUID `json:"defaultExpAccountId"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountingControlQuery when eager-loading is set.
 	Edges            AccountingControlEdges `json:"edges"`
@@ -117,6 +117,8 @@ func (*AccountingControl) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case accountingcontrol.FieldDefaultRevAccountID, accountingcontrol.FieldDefaultExpAccountID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case accountingcontrol.FieldAutoCreateJournalEntries, accountingcontrol.FieldRestrictManualJournalEntries, accountingcontrol.FieldRequireJournalEntryApproval, accountingcontrol.FieldEnableRecNotifications, accountingcontrol.FieldHaltOnPendingRec:
 			values[i] = new(sql.NullBool)
 		case accountingcontrol.FieldRecThreshold:
@@ -125,7 +127,7 @@ func (*AccountingControl) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case accountingcontrol.FieldCreatedAt, accountingcontrol.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case accountingcontrol.FieldID, accountingcontrol.FieldDefaultRevAccountID, accountingcontrol.FieldDefaultExpAccountID:
+		case accountingcontrol.FieldID:
 			values[i] = new(uuid.UUID)
 		case accountingcontrol.ForeignKeys[0]: // business_unit_id
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -210,19 +212,22 @@ func (ac *AccountingControl) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field critical_processes", values[i])
 			} else if value.Valid {
-				ac.CriticalProcesses = value.String
+				ac.CriticalProcesses = new(string)
+				*ac.CriticalProcesses = value.String
 			}
 		case accountingcontrol.FieldDefaultRevAccountID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field default_rev_account_id", values[i])
-			} else if value != nil {
-				ac.DefaultRevAccountID = *value
+			} else if value.Valid {
+				ac.DefaultRevAccountID = new(uuid.UUID)
+				*ac.DefaultRevAccountID = *value.S.(*uuid.UUID)
 			}
 		case accountingcontrol.FieldDefaultExpAccountID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field default_exp_account_id", values[i])
-			} else if value != nil {
-				ac.DefaultExpAccountID = *value
+			} else if value.Valid {
+				ac.DefaultExpAccountID = new(uuid.UUID)
+				*ac.DefaultExpAccountID = *value.S.(*uuid.UUID)
 			}
 		case accountingcontrol.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -321,14 +326,20 @@ func (ac *AccountingControl) String() string {
 	builder.WriteString("halt_on_pending_rec=")
 	builder.WriteString(fmt.Sprintf("%v", ac.HaltOnPendingRec))
 	builder.WriteString(", ")
-	builder.WriteString("critical_processes=")
-	builder.WriteString(ac.CriticalProcesses)
+	if v := ac.CriticalProcesses; v != nil {
+		builder.WriteString("critical_processes=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("default_rev_account_id=")
-	builder.WriteString(fmt.Sprintf("%v", ac.DefaultRevAccountID))
+	if v := ac.DefaultRevAccountID; v != nil {
+		builder.WriteString("default_rev_account_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("default_exp_account_id=")
-	builder.WriteString(fmt.Sprintf("%v", ac.DefaultExpAccountID))
+	if v := ac.DefaultExpAccountID; v != nil {
+		builder.WriteString("default_exp_account_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

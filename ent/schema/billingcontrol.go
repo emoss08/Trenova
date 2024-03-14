@@ -20,9 +20,15 @@ func (BillingControl) Fields() []ent.Field {
 		field.Bool("remove_billing_history").
 			Default(false).
 			StructTag(`json:"removeBillingHistory"`),
-		field.Bool("auto_bill_shipment").Default(false).StructTag(`json:"autoBillShipment"`),
-		field.Bool("auto_mark_ready_to_bill").Default(false).StructTag(`json:"autoMarkReadyToBill"`),
-		field.Bool("validate_customer_rates").Default(false).StructTag(`json:"validateCustomerRates"`),
+		field.Bool("auto_bill_shipment").
+			Default(false).
+			StructTag(`json:"autoBillShipment"`),
+		field.Bool("auto_mark_ready_to_bill").
+			Default(false).
+			StructTag(`json:"autoMarkReadyToBill"`),
+		field.Bool("validate_customer_rates").
+			Default(false).
+			StructTag(`json:"validateCustomerRates"`),
 		field.Enum("auto_bill_criteria").
 			Values("Delivered", "TransferredToBilling", "MarkedReadyToBill").
 			Default("MarkedReadyToBill").

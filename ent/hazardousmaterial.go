@@ -27,7 +27,7 @@ type HazardousMaterial struct {
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name"`
 	// HazardClass holds the value of the "hazard_class" field.

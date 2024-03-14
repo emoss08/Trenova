@@ -605,7 +605,10 @@ func (acq *AccountingControlQuery) loadDefaultRevAccount(ctx context.Context, qu
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].DefaultRevAccountID
+		if nodes[i].DefaultRevAccountID == nil {
+			continue
+		}
+		fk := *nodes[i].DefaultRevAccountID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -634,7 +637,10 @@ func (acq *AccountingControlQuery) loadDefaultExpAccount(ctx context.Context, qu
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].DefaultExpAccountID
+		if nodes[i].DefaultExpAccountID == nil {
+			continue
+		}
+		fk := *nodes[i].DefaultExpAccountID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
