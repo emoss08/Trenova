@@ -31,7 +31,7 @@ export function useLogout() {
   ]);
   return () => {
     try {
-      axios.post("/auth/logout").then(() => {});
+      axios.post("/auth/logout/").then(() => {});
       const returnUrl = sessionStorage.getItem("returnUrl");
       if (returnUrl !== "/login" && returnUrl !== "/logout") {
         sessionStorage.removeItem("returnUrl");

@@ -68,11 +68,9 @@ type OrganizationEdges struct {
 	RouteControl *RouteControl `json:"route_control,omitempty"`
 	// ShipmentControl holds the value of the shipment_control edge.
 	ShipmentControl *ShipmentControl `json:"shipment_control,omitempty"`
-	// Users holds the value of the users edge.
-	Users []*User `json:"users,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [9]bool
+	loadedTypes [8]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -161,15 +159,6 @@ func (e OrganizationEdges) ShipmentControlOrErr() (*ShipmentControl, error) {
 		return nil, &NotFoundError{label: shipmentcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "shipment_control"}
-}
-
-// UsersOrErr returns the Users value or an error if the edge
-// was not loaded in eager-loading.
-func (e OrganizationEdges) UsersOrErr() ([]*User, error) {
-	if e.loadedTypes[8] {
-		return e.Users, nil
-	}
-	return nil, &NotLoadedError{edge: "users"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -310,11 +299,6 @@ func (o *Organization) QueryRouteControl() *RouteControlQuery {
 // QueryShipmentControl queries the "shipment_control" edge of the Organization entity.
 func (o *Organization) QueryShipmentControl() *ShipmentControlQuery {
 	return NewOrganizationClient(o.config).QueryShipmentControl(o)
-}
-
-// QueryUsers queries the "users" edge of the Organization entity.
-func (o *Organization) QueryUsers() *UserQuery {
-	return NewOrganizationClient(o.config).QueryUsers(o)
 }
 
 // Update returns a builder for updating this Organization.

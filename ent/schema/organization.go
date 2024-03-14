@@ -67,7 +67,6 @@ func (Organization) Edges() []ent.Edge {
 		edge.To("shipment_control", ShipmentControl.Type).
 			StorageKey(edge.Column("organization_id")).
 			Unique(),
-		edge.To("users", User.Type),
 	}
 }
 

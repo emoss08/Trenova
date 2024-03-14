@@ -11,11 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tablechangealert"
-	"github.com/google/uuid"
 )
 
 // TableChangeAlertUpdate is the builder for updating TableChangeAlert entities.
@@ -28,34 +25,6 @@ type TableChangeAlertUpdate struct {
 // Where appends a list predicates to the TableChangeAlertUpdate builder.
 func (tcau *TableChangeAlertUpdate) Where(ps ...predicate.TableChangeAlert) *TableChangeAlertUpdate {
 	tcau.mutation.Where(ps...)
-	return tcau
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (tcau *TableChangeAlertUpdate) SetBusinessUnitID(u uuid.UUID) *TableChangeAlertUpdate {
-	tcau.mutation.SetBusinessUnitID(u)
-	return tcau
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableBusinessUnitID(u *uuid.UUID) *TableChangeAlertUpdate {
-	if u != nil {
-		tcau.SetBusinessUnitID(*u)
-	}
-	return tcau
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (tcau *TableChangeAlertUpdate) SetOrganizationID(u uuid.UUID) *TableChangeAlertUpdate {
-	tcau.mutation.SetOrganizationID(u)
-	return tcau
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableOrganizationID(u *uuid.UUID) *TableChangeAlertUpdate {
-	if u != nil {
-		tcau.SetOrganizationID(*u)
-	}
 	return tcau
 }
 
@@ -321,31 +290,9 @@ func (tcau *TableChangeAlertUpdate) ClearExpirationDate() *TableChangeAlertUpdat
 	return tcau
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (tcau *TableChangeAlertUpdate) SetBusinessUnit(b *BusinessUnit) *TableChangeAlertUpdate {
-	return tcau.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (tcau *TableChangeAlertUpdate) SetOrganization(o *Organization) *TableChangeAlertUpdate {
-	return tcau.SetOrganizationID(o.ID)
-}
-
 // Mutation returns the TableChangeAlertMutation object of the builder.
 func (tcau *TableChangeAlertUpdate) Mutation() *TableChangeAlertMutation {
 	return tcau.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (tcau *TableChangeAlertUpdate) ClearBusinessUnit() *TableChangeAlertUpdate {
-	tcau.mutation.ClearBusinessUnit()
-	return tcau
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (tcau *TableChangeAlertUpdate) ClearOrganization() *TableChangeAlertUpdate {
-	tcau.mutation.ClearOrganization()
-	return tcau
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -532,64 +479,6 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	if tcau.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
 	}
-	if tcau.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.BusinessUnitTable,
-			Columns: []string{tablechangealert.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tcau.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.BusinessUnitTable,
-			Columns: []string{tablechangealert.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if tcau.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.OrganizationTable,
-			Columns: []string{tablechangealert.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tcau.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.OrganizationTable,
-			Columns: []string{tablechangealert.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tcau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tablechangealert.Label}
@@ -608,34 +497,6 @@ type TableChangeAlertUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TableChangeAlertMutation
-}
-
-// SetBusinessUnitID sets the "business_unit_id" field.
-func (tcauo *TableChangeAlertUpdateOne) SetBusinessUnitID(u uuid.UUID) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetBusinessUnitID(u)
-	return tcauo
-}
-
-// SetNillableBusinessUnitID sets the "business_unit_id" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableBusinessUnitID(u *uuid.UUID) *TableChangeAlertUpdateOne {
-	if u != nil {
-		tcauo.SetBusinessUnitID(*u)
-	}
-	return tcauo
-}
-
-// SetOrganizationID sets the "organization_id" field.
-func (tcauo *TableChangeAlertUpdateOne) SetOrganizationID(u uuid.UUID) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetOrganizationID(u)
-	return tcauo
-}
-
-// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *TableChangeAlertUpdateOne {
-	if u != nil {
-		tcauo.SetOrganizationID(*u)
-	}
-	return tcauo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -900,31 +761,9 @@ func (tcauo *TableChangeAlertUpdateOne) ClearExpirationDate() *TableChangeAlertU
 	return tcauo
 }
 
-// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
-func (tcauo *TableChangeAlertUpdateOne) SetBusinessUnit(b *BusinessUnit) *TableChangeAlertUpdateOne {
-	return tcauo.SetBusinessUnitID(b.ID)
-}
-
-// SetOrganization sets the "organization" edge to the Organization entity.
-func (tcauo *TableChangeAlertUpdateOne) SetOrganization(o *Organization) *TableChangeAlertUpdateOne {
-	return tcauo.SetOrganizationID(o.ID)
-}
-
 // Mutation returns the TableChangeAlertMutation object of the builder.
 func (tcauo *TableChangeAlertUpdateOne) Mutation() *TableChangeAlertMutation {
 	return tcauo.mutation
-}
-
-// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
-func (tcauo *TableChangeAlertUpdateOne) ClearBusinessUnit() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearBusinessUnit()
-	return tcauo
-}
-
-// ClearOrganization clears the "organization" edge to the Organization entity.
-func (tcauo *TableChangeAlertUpdateOne) ClearOrganization() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearOrganization()
-	return tcauo
 }
 
 // Where appends a list predicates to the TableChangeAlertUpdate builder.
@@ -1140,64 +979,6 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
-	}
-	if tcauo.mutation.BusinessUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.BusinessUnitTable,
-			Columns: []string{tablechangealert.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tcauo.mutation.BusinessUnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.BusinessUnitTable,
-			Columns: []string{tablechangealert.BusinessUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if tcauo.mutation.OrganizationCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.OrganizationTable,
-			Columns: []string{tablechangealert.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := tcauo.mutation.OrganizationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   tablechangealert.OrganizationTable,
-			Columns: []string{tablechangealert.OrganizationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &TableChangeAlert{config: tcauo.config}
 	_spec.Assign = _node.assignValues

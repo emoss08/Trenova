@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
-	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -274,21 +273,6 @@ func (oc *OrganizationCreate) SetNillableShipmentControlID(id *uuid.UUID) *Organ
 // SetShipmentControl sets the "shipment_control" edge to the ShipmentControl entity.
 func (oc *OrganizationCreate) SetShipmentControl(s *ShipmentControl) *OrganizationCreate {
 	return oc.SetShipmentControlID(s.ID)
-}
-
-// AddUserIDs adds the "users" edge to the User entity by IDs.
-func (oc *OrganizationCreate) AddUserIDs(ids ...uuid.UUID) *OrganizationCreate {
-	oc.mutation.AddUserIDs(ids...)
-	return oc
-}
-
-// AddUsers adds the "users" edges to the User entity.
-func (oc *OrganizationCreate) AddUsers(u ...*User) *OrganizationCreate {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return oc.AddUserIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -591,22 +575,6 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentcontrol.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := oc.mutation.UsersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   organization.UsersTable,
-			Columns: []string{organization.UsersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

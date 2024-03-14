@@ -50,8 +50,6 @@ const (
 	EdgeRouteControl = "route_control"
 	// EdgeShipmentControl holds the string denoting the shipment_control edge name in mutations.
 	EdgeShipmentControl = "shipment_control"
-	// EdgeUsers holds the string denoting the users edge name in mutations.
-	EdgeUsers = "users"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -110,13 +108,6 @@ const (
 	ShipmentControlInverseTable = "shipment_controls"
 	// ShipmentControlColumn is the table column denoting the shipment_control relation/edge.
 	ShipmentControlColumn = "organization_id"
-	// UsersTable is the table that holds the users relation/edge.
-	UsersTable = "users"
-	// UsersInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	UsersInverseTable = "users"
-	// UsersColumn is the table column denoting the users relation/edge.
-	UsersColumn = "organization_users"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -323,20 +314,6 @@ func ByShipmentControlField(field string, opts ...sql.OrderTermOption) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newShipmentControlStep(), sql.OrderByField(field, opts...))
 	}
 }
-
-// ByUsersCount orders the results by users count.
-func ByUsersCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newUsersStep(), opts...)
-	}
-}
-
-// ByUsers orders the results by users terms.
-func ByUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -391,12 +368,5 @@ func newShipmentControlStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ShipmentControlInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, ShipmentControlTable, ShipmentControlColumn),
-	)
-}
-func newUsersStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UsersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, UsersTable, UsersColumn),
 	)
 }

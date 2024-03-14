@@ -21,6 +21,7 @@ import {
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
   SourceChoicesProps,
+  TimezoneChoices,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 
@@ -30,7 +31,7 @@ export type Organization = {
   scacCode: string;
   dotNumber: string;
   orgType: string;
-  timezone: string;
+  timezone: TimezoneChoices;
   logoUrl?: string | null;
 };
 

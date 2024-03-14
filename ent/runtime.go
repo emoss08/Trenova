@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
 )
 
@@ -708,4 +709,27 @@ func init() {
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	userfavoriteMixin := schema.UserFavorite{}.Mixin()
+	userfavoriteMixinFields0 := userfavoriteMixin[0].Fields()
+	_ = userfavoriteMixinFields0
+	userfavoriteFields := schema.UserFavorite{}.Fields()
+	_ = userfavoriteFields
+	// userfavoriteDescCreatedAt is the schema descriptor for created_at field.
+	userfavoriteDescCreatedAt := userfavoriteMixinFields0[3].Descriptor()
+	// userfavorite.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userfavorite.DefaultCreatedAt = userfavoriteDescCreatedAt.Default.(time.Time)
+	// userfavoriteDescUpdatedAt is the schema descriptor for updated_at field.
+	userfavoriteDescUpdatedAt := userfavoriteMixinFields0[4].Descriptor()
+	// userfavorite.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	userfavorite.DefaultUpdatedAt = userfavoriteDescUpdatedAt.Default.(time.Time)
+	// userfavorite.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	userfavorite.UpdateDefaultUpdatedAt = userfavoriteDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userfavoriteDescPageLink is the schema descriptor for page_link field.
+	userfavoriteDescPageLink := userfavoriteFields[0].Descriptor()
+	// userfavorite.PageLinkValidator is a validator for the "page_link" field. It is called by the builders before save.
+	userfavorite.PageLinkValidator = userfavoriteDescPageLink.Validators[0].(func(string) error)
+	// userfavoriteDescID is the schema descriptor for id field.
+	userfavoriteDescID := userfavoriteMixinFields0[0].Descriptor()
+	// userfavorite.DefaultID holds the default value on creation for the id field.
+	userfavorite.DefaultID = userfavoriteDescID.Default.(func() uuid.UUID)
 }

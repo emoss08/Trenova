@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/userfavorite"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -104,6 +105,7 @@ func checkColumn(table, column string) error {
 			tablechangealert.Table:       tablechangealert.ValidColumn,
 			tag.Table:                    tag.ValidColumn,
 			user.Table:                   user.ValidColumn,
+			userfavorite.Table:           userfavorite.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

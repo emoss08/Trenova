@@ -23,6 +23,6 @@ import { UserFavorite } from "@/types/accounts";
  * @returns An array of user favorites from the server
  */
 export async function getUserFavorites(): Promise<UserFavorite> {
-  const response = await axios.get("/me/favorites/");
-  return response.data;
+  const response = await axios.get("/user-favorites/me/");
+  return response.data.results;
 }

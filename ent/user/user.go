@@ -52,6 +52,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
+	// EdgeUserFavorites holds the string denoting the user_favorites edge name in mutations.
+	EdgeUserFavorites = "user_favorites"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -68,6 +70,13 @@ const (
 	OrganizationInverseTable = "organizations"
 	// OrganizationColumn is the table column denoting the organization relation/edge.
 	OrganizationColumn = "organization_id"
+	// UserFavoritesTable is the table that holds the user_favorites relation/edge.
+	UserFavoritesTable = "user_favorites"
+	// UserFavoritesInverseTable is the table name for the UserFavorite entity.
+	// It exists in this package in order to avoid circular dependency with the "userfavorite" package.
+	UserFavoritesInverseTable = "user_favorites"
+	// UserFavoritesColumn is the table column denoting the user_favorites relation/edge.
+	UserFavoritesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -91,21 +100,10 @@ var Columns = []string{
 	FieldLastLogin,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "users"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"organization_users",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -164,15 +162,15 @@ func StatusValidator(s Status) error {
 // Timezone defines the type for the "timezone" enum field.
 type Timezone string
 
-// TimezoneTimezoneAmericaLosAngeles is the default value of the Timezone enum.
-const DefaultTimezone = TimezoneTimezoneAmericaLosAngeles
+// TimezoneAmericaLosAngeles is the default value of the Timezone enum.
+const DefaultTimezone = TimezoneAmericaLosAngeles
 
 // Timezone values.
 const (
-	TimezoneTimezoneAmericaLosAngeles Timezone = "TimezoneAmericaLosAngeles"
-	TimezoneTimezoneAmericaDenver     Timezone = "TimezoneAmericaDenver"
-	TimezoneTimezoneAmericaChicago    Timezone = "TimezoneAmericaChicago"
-	TimezoneTimezoneAmericaNewYork    Timezone = "TimezoneAmericaNewYork"
+	TimezoneAmericaLosAngeles Timezone = "AmericaLosAngeles"
+	TimezoneAmericaDenver     Timezone = "AmericaDenver"
+	TimezoneAmericaChicago    Timezone = "AmericaChicago"
+	TimezoneAmericaNewYork    Timezone = "AmericaNewYork"
 )
 
 func (t Timezone) String() string {
@@ -182,7 +180,7 @@ func (t Timezone) String() string {
 // TimezoneValidator is a validator for the "timezone" field enum values. It is called by the builders before save.
 func TimezoneValidator(t Timezone) error {
 	switch t {
-	case TimezoneTimezoneAmericaLosAngeles, TimezoneTimezoneAmericaDenver, TimezoneTimezoneAmericaChicago, TimezoneTimezoneAmericaNewYork:
+	case TimezoneAmericaLosAngeles, TimezoneAmericaDenver, TimezoneAmericaChicago, TimezoneAmericaNewYork:
 		return nil
 	default:
 		return fmt.Errorf("user: invalid enum value for timezone field: %q", t)
@@ -290,6 +288,20 @@ func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByUserFavoritesCount orders the results by user_favorites count.
+func ByUserFavoritesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUserFavoritesStep(), opts...)
+	}
+}
+
+// ByUserFavorites orders the results by user_favorites terms.
+func ByUserFavorites(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserFavoritesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -302,5 +314,12 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
+}
+func newUserFavoritesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserFavoritesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UserFavoritesTable, UserFavoritesColumn),
 	)
 }

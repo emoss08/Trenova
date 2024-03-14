@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/emoss08/trenova/middleware"
 
 	"github.com/gorilla/mux"
@@ -36,8 +38,8 @@ func InitializeRouter() *mux.Router {
 	protectedRouter.Use(middleware.IdempotencyMiddleware)
 	protectedRouter.Use(logger.Middleware)
 
-	// Reigster Business Unit Routes
-	registerBusinessUnitRouter(protectedRouter)
+	// Register Organization Routes
+	registerOrganizationRoutes(protectedRouter)
 
 	// Register Billing Control Routes
 	registerBillingControlRouter(protectedRouter)
@@ -47,6 +49,20 @@ func InitializeRouter() *mux.Router {
 
 	// Register User Routes
 	registerUserRoutes(protectedRouter)
+
+	// Register User Favorites Routes
+	registerUserFavoritesRoutes(protectedRouter)
+
+	// Walk the router and print out all of the available routes
+	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tpl, err1 := route.GetPathTemplate()
+		met, err2 := route.GetMethods()
+		fmt.Println(tpl, err1, met, err2)
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return r
 }

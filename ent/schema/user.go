@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -28,11 +29,11 @@ func (User) Fields() []ent.Field {
 			MaxLen(255),
 		field.Enum("timezone").
 			Values(
-				"TimezoneAmericaLosAngeles",
-				"TimezoneAmericaDenver",
-				"TimezoneAmericaChicago",
-				"TimezoneAmericaNewYork").
-			Default("TimezoneAmericaLosAngeles"),
+				"AmericaLosAngeles",
+				"AmericaDenver",
+				"AmericaChicago",
+				"AmericaNewYork").
+			Default("AmericaLosAngeles"),
 		field.String("profile_pic_url").
 			Nillable().
 			Optional().
@@ -58,7 +59,9 @@ func (User) Fields() []ent.Field {
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("user_favorites", UserFavorite.Type),
+	}
 }
 
 // Indexes of the User.

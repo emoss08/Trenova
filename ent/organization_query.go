@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
-	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -40,7 +39,6 @@ type OrganizationQuery struct {
 	withInvoiceControl         *InvoiceControlQuery
 	withRouteControl           *RouteControlQuery
 	withShipmentControl        *ShipmentControlQuery
-	withUsers                  *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -253,28 +251,6 @@ func (oq *OrganizationQuery) QueryShipmentControl() *ShipmentControlQuery {
 	return query
 }
 
-// QueryUsers chains the current query on the "users" edge.
-func (oq *OrganizationQuery) QueryUsers() *UserQuery {
-	query := (&UserClient{config: oq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := oq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := oq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(organization.Table, organization.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, organization.UsersTable, organization.UsersColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // First returns the first Organization entity from the query.
 // Returns a *NotFoundError when no Organization was found.
 func (oq *OrganizationQuery) First(ctx context.Context) (*Organization, error) {
@@ -475,7 +451,6 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		withInvoiceControl:         oq.withInvoiceControl.Clone(),
 		withRouteControl:           oq.withRouteControl.Clone(),
 		withShipmentControl:        oq.withShipmentControl.Clone(),
-		withUsers:                  oq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -570,17 +545,6 @@ func (oq *OrganizationQuery) WithShipmentControl(opts ...func(*ShipmentControlQu
 	return oq
 }
 
-// WithUsers tells the query-builder to eager-load the nodes that are connected to
-// the "users" edge. The optional arguments are used to configure the query builder of the edge.
-func (oq *OrganizationQuery) WithUsers(opts ...func(*UserQuery)) *OrganizationQuery {
-	query := (&UserClient{config: oq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	oq.withUsers = query
-	return oq
-}
-
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -659,7 +623,7 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*Organization{}
 		_spec       = oq.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [8]bool{
 			oq.withBusinessUnit != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
@@ -668,7 +632,6 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			oq.withInvoiceControl != nil,
 			oq.withRouteControl != nil,
 			oq.withShipmentControl != nil,
-			oq.withUsers != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -734,13 +697,6 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := oq.withShipmentControl; query != nil {
 		if err := oq.loadShipmentControl(ctx, query, nodes, nil,
 			func(n *Organization, e *ShipmentControl) { n.Edges.ShipmentControl = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := oq.withUsers; query != nil {
-		if err := oq.loadUsers(ctx, query, nodes,
-			func(n *Organization) { n.Edges.Users = []*User{} },
-			func(n *Organization, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -967,37 +923,6 @@ func (oq *OrganizationQuery) loadShipmentControl(ctx context.Context, query *Shi
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (oq *OrganizationQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *User)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Organization)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.User(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(organization.UsersColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.organization_users
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "organization_users" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "organization_users" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -20,6 +20,7 @@ import axios from "@/lib/axiosConfig";
 import { TOAST_STYLE } from "@/lib/constants";
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
+import { useUserStore } from "@/stores/AuthStore";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { UserFavorite } from "@/types/accounts";
 import { faStar } from "@fortawesome/pro-regular-svg-icons";
@@ -58,9 +59,12 @@ async function manageFavorite(
   pageId: string,
   queryClient: QueryClient,
 ): Promise<AxiosResponse> {
-  const endpoint = action === "add" ? "/me/favorites/" : "/me/favorites/";
+  const user = useUserStore.get("user");
+
+  const endpoint =
+    action === "add" ? "/user-favorites/me/" : "/user-favorites/me/";
   const method = action === "add" ? "post" : "delete";
-  const data = { pageLink: pageId };
+  const data = { pageLink: pageId, userId: user.id };
 
   const axiosConfig: AxiosRequestConfig = {
     method,
@@ -239,7 +243,7 @@ export function Breadcrumb() {
           />
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             {breadcrumbText}
           </a>
         </div>
