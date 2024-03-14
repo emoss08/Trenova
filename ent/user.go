@@ -25,9 +25,9 @@ type User struct {
 	// OrganizationID holds the value of the "organization_id" field.
 	OrganizationID uuid.UUID `json:"organizationId"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// Status holds the value of the "status" field.
 	Status user.Status `json:"status,omitempty"`
 	// Name holds the value of the "name" field.
@@ -38,24 +38,25 @@ type User struct {
 	Password string `json:"-"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
-	// DateJoined holds the value of the "date_joined" field.
-	DateJoined string `json:"date_joined,omitempty"`
 	// Timezone holds the value of the "timezone" field.
 	Timezone user.Timezone `json:"timezone,omitempty"`
 	// ProfilePicURL holds the value of the "profile_pic_url" field.
-	ProfilePicURL string `json:"profile_pic_url,omitempty"`
+	ProfilePicURL *string `json:"profilePicUrl"`
 	// ThumbnailURL holds the value of the "thumbnail_url" field.
-	ThumbnailURL string `json:"thumbnail_url,omitempty"`
+	ThumbnailURL string `json:"thumbnailUrl"`
 	// PhoneNumber holds the value of the "phone_number" field.
-	PhoneNumber string `json:"phone_number,omitempty"`
+	PhoneNumber string `json:"phoneNumber"`
 	// IsAdmin holds the value of the "is_admin" field.
-	IsAdmin bool `json:"is_admin,omitempty"`
+	IsAdmin bool `json:"isAdmin"`
 	// IsSuperAdmin holds the value of the "is_super_admin" field.
-	IsSuperAdmin bool `json:"is_super_admin,omitempty"`
+	IsSuperAdmin bool `json:"isSuperAdmin"`
+	// LastLogin holds the value of the "last_login" field.
+	LastLogin *time.Time `json:"lastLogin"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges        UserEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges              UserEdges `json:"edges"`
+	organization_users *uuid.UUID
+	selectValues       sql.SelectValues
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -98,12 +99,14 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldIsAdmin, user.FieldIsSuperAdmin:
 			values[i] = new(sql.NullBool)
-		case user.FieldStatus, user.FieldName, user.FieldUsername, user.FieldPassword, user.FieldEmail, user.FieldDateJoined, user.FieldTimezone, user.FieldProfilePicURL, user.FieldThumbnailURL, user.FieldPhoneNumber:
+		case user.FieldStatus, user.FieldName, user.FieldUsername, user.FieldPassword, user.FieldEmail, user.FieldTimezone, user.FieldProfilePicURL, user.FieldThumbnailURL, user.FieldPhoneNumber:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt, user.FieldUpdatedAt:
+		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldLastLogin:
 			values[i] = new(sql.NullTime)
 		case user.FieldID, user.FieldBusinessUnitID, user.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
+		case user.ForeignKeys[0]: // organization_users
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -179,12 +182,6 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Email = value.String
 			}
-		case user.FieldDateJoined:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field date_joined", values[i])
-			} else if value.Valid {
-				u.DateJoined = value.String
-			}
 		case user.FieldTimezone:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field timezone", values[i])
@@ -195,7 +192,8 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field profile_pic_url", values[i])
 			} else if value.Valid {
-				u.ProfilePicURL = value.String
+				u.ProfilePicURL = new(string)
+				*u.ProfilePicURL = value.String
 			}
 		case user.FieldThumbnailURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -220,6 +218,20 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field is_super_admin", values[i])
 			} else if value.Valid {
 				u.IsSuperAdmin = value.Bool
+			}
+		case user.FieldLastLogin:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_login", values[i])
+			} else if value.Valid {
+				u.LastLogin = new(time.Time)
+				*u.LastLogin = value.Time
+			}
+		case user.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_users", values[i])
+			} else if value.Valid {
+				u.organization_users = new(uuid.UUID)
+				*u.organization_users = *value.S.(*uuid.UUID)
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -293,14 +305,13 @@ func (u *User) String() string {
 	builder.WriteString("email=")
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
-	builder.WriteString("date_joined=")
-	builder.WriteString(u.DateJoined)
-	builder.WriteString(", ")
 	builder.WriteString("timezone=")
 	builder.WriteString(fmt.Sprintf("%v", u.Timezone))
 	builder.WriteString(", ")
-	builder.WriteString("profile_pic_url=")
-	builder.WriteString(u.ProfilePicURL)
+	if v := u.ProfilePicURL; v != nil {
+		builder.WriteString("profile_pic_url=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("thumbnail_url=")
 	builder.WriteString(u.ThumbnailURL)
@@ -313,6 +324,11 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_super_admin=")
 	builder.WriteString(fmt.Sprintf("%v", u.IsSuperAdmin))
+	builder.WriteString(", ")
+	if v := u.LastLogin; v != nil {
+		builder.WriteString("last_login=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

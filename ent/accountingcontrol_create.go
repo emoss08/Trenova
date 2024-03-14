@@ -433,7 +433,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 	}
 	if value, ok := acc.mutation.CriticalProcesses(); ok {
 		_spec.SetField(accountingcontrol.FieldCriticalProcesses, field.TypeString, value)
-		_node.CriticalProcesses = value
+		_node.CriticalProcesses = &value
 	}
 	if nodes := acc.mutation.OrganizationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -483,7 +483,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.DefaultRevAccountID = nodes[0]
+		_node.DefaultRevAccountID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := acc.mutation.DefaultExpAccountIDs(); len(nodes) > 0 {
@@ -500,7 +500,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.DefaultExpAccountID = nodes[0]
+		_node.DefaultExpAccountID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

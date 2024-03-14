@@ -1,0 +1,47 @@
+schema:
+  - ent.graphql
+
+exec:
+  filename: graph/generated.go
+  package: graph
+
+resolver:
+  layout: follow-schema
+  dir: .
+
+autobind:
+  - "github.com/emoss08/trenova/ent"
+  - "github.com/emoss08/trenova/ent/businessunit"
+  - "github.com/emoss08/trenova/ent/organization"
+  - "github.com/emoss08/trenova/ent/accountingcontrol"
+  - "github.com/emoss08/trenova/ent/dispatchcontrol"
+  - "github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+  - "github.com/emoss08/trenova/ent/invoicecontrol"
+  - "github.com/emoss08/trenova/ent/routecontrol"
+  - "github.com/emoss08/trenova/ent/shipmentcontrol"
+  - "github.com/emoss08/trenova/ent/generalledgeraccount"
+  - "github.com/emoss08/trenova/ent/hazardousmaterial"
+  - "github.com/emoss08/trenova/ent/user"
+  - "github.com/emoss08/trenova/ent/commodity"
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+      - github.com/99designs/gqlgen/graphql.String
+      - github.com/99designs/gqlgen/graphql.Float
+      - github.com/99designs/gqlgen/graphql.Boolean
+      - github.com/99designs/gqlgen/graphql.Time
+      - github.com/99designs/gqlgen/graphql.Map
+      - github.com/99designs/gqlgen/graphql.UUID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  Node:
+    model:
+      - github.com/emoss08/trenova/ent.Noder

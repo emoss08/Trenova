@@ -369,7 +369,7 @@ func (buq *BusinessUnitQuery) WithOrganizations(opts ...func(*OrganizationQuery)
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -392,7 +392,7 @@ func (buq *BusinessUnitQuery) GroupBy(field string, fields ...string) *BusinessU
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.BusinessUnit.Query().

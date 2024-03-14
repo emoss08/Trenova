@@ -406,7 +406,7 @@ func (acq *AccountingControlQuery) WithDefaultExpAccount(opts ...func(*GeneralLe
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -429,7 +429,7 @@ func (acq *AccountingControlQuery) GroupBy(field string, fields ...string) *Acco
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		CreatedAt time.Time `json:"createdAt"`
 //	}
 //
 //	client.AccountingControl.Query().
@@ -605,7 +605,10 @@ func (acq *AccountingControlQuery) loadDefaultRevAccount(ctx context.Context, qu
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].DefaultRevAccountID
+		if nodes[i].DefaultRevAccountID == nil {
+			continue
+		}
+		fk := *nodes[i].DefaultRevAccountID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -634,7 +637,10 @@ func (acq *AccountingControlQuery) loadDefaultExpAccount(ctx context.Context, qu
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*AccountingControl)
 	for i := range nodes {
-		fk := nodes[i].DefaultExpAccountID
+		if nodes[i].DefaultExpAccountID == nil {
+			continue
+		}
+		fk := *nodes[i].DefaultExpAccountID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}

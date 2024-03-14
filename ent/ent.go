@@ -15,12 +15,15 @@ import (
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/commodity"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -88,12 +91,15 @@ func checkColumn(table, column string) error {
 			accountingcontrol.Table:      accountingcontrol.ValidColumn,
 			billingcontrol.Table:         billingcontrol.ValidColumn,
 			businessunit.Table:           businessunit.ValidColumn,
+			commodity.Table:              commodity.ValidColumn,
 			dispatchcontrol.Table:        dispatchcontrol.ValidColumn,
 			feasibilitytoolcontrol.Table: feasibilitytoolcontrol.ValidColumn,
 			generalledgeraccount.Table:   generalledgeraccount.ValidColumn,
+			hazardousmaterial.Table:      hazardousmaterial.ValidColumn,
 			invoicecontrol.Table:         invoicecontrol.ValidColumn,
 			organization.Table:           organization.ValidColumn,
 			routecontrol.Table:           routecontrol.ValidColumn,
+			session.Table:                session.ValidColumn,
 			shipmentcontrol.Table:        shipmentcontrol.ValidColumn,
 			tablechangealert.Table:       tablechangealert.ValidColumn,
 			tag.Table:                    tag.ValidColumn,

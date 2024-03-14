@@ -1,12 +1,13 @@
 package services
 
 import (
-	"github.com/emoss08/trenova/tools"
 	"log"
 	"net/http"
 
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/types"
+
 	"github.com/emoss08/trenova/middleware"
-	"github.com/emoss08/trenova/models"
 	"github.com/google/uuid"
 )
 
@@ -83,7 +84,7 @@ func GetEntityByIDHandler[T any](service CRUDService[T]) http.HandlerFunc {
 
 		orgID, buID, ok := getOrgAndBuIDFromContext(r)
 		if !ok {
-			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+			tools.ResponseWithError(w, http.StatusBadRequest, types.ValidationErrorDetail{
 				Code:   "contextError",
 				Detail: "Organization ID or Business Unit ID not found in the request context",
 			})
@@ -108,7 +109,7 @@ func CreateEntityHandler[T any](service CRUDService[T], validator *tools.Validat
 
 		orgID, buID, ok := getOrgAndBuIDFromContext(r)
 		if !ok {
-			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+			tools.ResponseWithError(w, http.StatusBadRequest, types.ValidationErrorDetail{
 				Code:   "contextError",
 				Detail: "Organization ID or Business Unit ID not found in the request context",
 			})
@@ -147,7 +148,7 @@ func UpdateEntityHandler[T any](service CRUDService[T], validator *tools.Validat
 
 		orgID, buID, ok := getOrgAndBuIDFromContext(r)
 		if !ok {
-			tools.ResponseWithError(w, http.StatusBadRequest, models.ValidationErrorDetail{
+			tools.ResponseWithError(w, http.StatusBadRequest, types.ValidationErrorDetail{
 				Code:   "contextError",
 				Detail: "Organization ID or Business Unit ID not found in the request context",
 			})

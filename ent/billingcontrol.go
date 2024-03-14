@@ -21,9 +21,9 @@ type BillingControl struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt"`
 	// RemoveBillingHistory holds the value of the "remove_billing_history" field.
 	RemoveBillingHistory bool `json:"removeBillingHistory"`
 	// AutoBillShipment holds the value of the "auto_bill_shipment" field.

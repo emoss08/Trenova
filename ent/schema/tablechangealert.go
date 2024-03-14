@@ -5,21 +5,6 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-type Conditioion struct {
-	Id        int
-	Column    string
-	Operation string
-	Value     any
-	DataType  string
-}
-
-type ConditionalLogic struct {
-	Name        string
-	Description string
-	EntityName  string
-	Conditions  []Conditioion
-}
-
 // TableChangeAlert holds the schema definition for the TableChangeAlert entity.
 type TableChangeAlert struct {
 	ent.Schema
@@ -79,9 +64,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			StructTag(`json:"emailRecipients"`),
-		field.JSON("conditional_logic", &ConditionalLogic{}).
-			Optional().
-			StructTag(`json:"conditionalLogic"`),
 		field.Time("effective_date").
 			Optional().
 			Nillable().

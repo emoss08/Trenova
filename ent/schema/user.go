@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // User holds the schema definition for the User entity.
@@ -25,8 +26,6 @@ func (User) Fields() []ent.Field {
 			Sensitive(),
 		field.String("email").
 			MaxLen(255),
-		field.String("date_joined").
-			Optional(),
 		field.Enum("timezone").
 			Values(
 				"TimezoneAmericaLosAngeles",
@@ -35,15 +34,25 @@ func (User) Fields() []ent.Field {
 				"TimezoneAmericaNewYork").
 			Default("TimezoneAmericaLosAngeles"),
 		field.String("profile_pic_url").
-			Optional(),
+			Nillable().
+			Optional().
+			StructTag(`json:"profilePicUrl"`),
 		field.String("thumbnail_url").
-			Optional(),
+			Optional().
+			StructTag(`json:"thumbnailUrl"`),
 		field.String("phone_number").
-			Optional(),
+			Optional().
+			StructTag(`json:"phoneNumber"`),
 		field.Bool("is_admin").
-			Default(false),
+			Default(false).
+			StructTag(`json:"isAdmin"`),
 		field.Bool("is_super_admin").
-			Default(false),
+			Default(false).
+			StructTag(`json:"isSuperAdmin"`),
+		field.Time("last_login").
+			Optional().
+			Nillable().
+			StructTag(`json:"lastLogin"`),
 	}
 }
 
@@ -52,7 +61,15 @@ func (User) Edges() []ent.Edge {
 	return nil
 }
 
-// Mixin of the BusinessUnit.
+// Indexes of the User.
+func (User) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("username", "email").
+			Unique(),
+	}
+}
+
+// Mixin of the User.
 func (User) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},

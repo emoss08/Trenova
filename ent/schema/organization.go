@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
@@ -68,14 +67,7 @@ func (Organization) Edges() []ent.Edge {
 		edge.To("shipment_control", ShipmentControl.Type).
 			StorageKey(edge.Column("organization_id")).
 			Unique(),
-	}
-}
-
-func (Organization) Indexes() []ent.Index {
-	return []ent.Index{
-		// Each organization inside a business unit must have a unique ScacCode.
-		index.Fields("business_unit_id", "scac_code").
-			Unique(),
+		edge.To("users", User.Type),
 	}
 }
 

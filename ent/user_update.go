@@ -135,26 +135,6 @@ func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
 	return uu
 }
 
-// SetDateJoined sets the "date_joined" field.
-func (uu *UserUpdate) SetDateJoined(s string) *UserUpdate {
-	uu.mutation.SetDateJoined(s)
-	return uu
-}
-
-// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableDateJoined(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetDateJoined(*s)
-	}
-	return uu
-}
-
-// ClearDateJoined clears the value of the "date_joined" field.
-func (uu *UserUpdate) ClearDateJoined() *UserUpdate {
-	uu.mutation.ClearDateJoined()
-	return uu
-}
-
 // SetTimezone sets the "timezone" field.
 func (uu *UserUpdate) SetTimezone(u user.Timezone) *UserUpdate {
 	uu.mutation.SetTimezone(u)
@@ -254,6 +234,26 @@ func (uu *UserUpdate) SetNillableIsSuperAdmin(b *bool) *UserUpdate {
 	if b != nil {
 		uu.SetIsSuperAdmin(*b)
 	}
+	return uu
+}
+
+// SetLastLogin sets the "last_login" field.
+func (uu *UserUpdate) SetLastLogin(t time.Time) *UserUpdate {
+	uu.mutation.SetLastLogin(t)
+	return uu
+}
+
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableLastLogin(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetLastLogin(*t)
+	}
+	return uu
+}
+
+// ClearLastLogin clears the value of the "last_login" field.
+func (uu *UserUpdate) ClearLastLogin() *UserUpdate {
+	uu.mutation.ClearLastLogin()
 	return uu
 }
 
@@ -391,12 +391,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.DateJoined(); ok {
-		_spec.SetField(user.FieldDateJoined, field.TypeString, value)
-	}
-	if uu.mutation.DateJoinedCleared() {
-		_spec.ClearField(user.FieldDateJoined, field.TypeString)
-	}
 	if value, ok := uu.mutation.Timezone(); ok {
 		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
 	}
@@ -423,6 +417,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.IsSuperAdmin(); ok {
 		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
+	}
+	if value, ok := uu.mutation.LastLogin(); ok {
+		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
+	}
+	if uu.mutation.LastLoginCleared() {
+		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
 	}
 	if uu.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -606,26 +606,6 @@ func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetDateJoined sets the "date_joined" field.
-func (uuo *UserUpdateOne) SetDateJoined(s string) *UserUpdateOne {
-	uuo.mutation.SetDateJoined(s)
-	return uuo
-}
-
-// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableDateJoined(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetDateJoined(*s)
-	}
-	return uuo
-}
-
-// ClearDateJoined clears the value of the "date_joined" field.
-func (uuo *UserUpdateOne) ClearDateJoined() *UserUpdateOne {
-	uuo.mutation.ClearDateJoined()
-	return uuo
-}
-
 // SetTimezone sets the "timezone" field.
 func (uuo *UserUpdateOne) SetTimezone(u user.Timezone) *UserUpdateOne {
 	uuo.mutation.SetTimezone(u)
@@ -725,6 +705,26 @@ func (uuo *UserUpdateOne) SetNillableIsSuperAdmin(b *bool) *UserUpdateOne {
 	if b != nil {
 		uuo.SetIsSuperAdmin(*b)
 	}
+	return uuo
+}
+
+// SetLastLogin sets the "last_login" field.
+func (uuo *UserUpdateOne) SetLastLogin(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetLastLogin(t)
+	return uuo
+}
+
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableLastLogin(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetLastLogin(*t)
+	}
+	return uuo
+}
+
+// ClearLastLogin clears the value of the "last_login" field.
+func (uuo *UserUpdateOne) ClearLastLogin() *UserUpdateOne {
+	uuo.mutation.ClearLastLogin()
 	return uuo
 }
 
@@ -892,12 +892,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.DateJoined(); ok {
-		_spec.SetField(user.FieldDateJoined, field.TypeString, value)
-	}
-	if uuo.mutation.DateJoinedCleared() {
-		_spec.ClearField(user.FieldDateJoined, field.TypeString)
-	}
 	if value, ok := uuo.mutation.Timezone(); ok {
 		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
 	}
@@ -924,6 +918,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.IsSuperAdmin(); ok {
 		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
+	}
+	if value, ok := uuo.mutation.LastLogin(); ok {
+		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
+	}
+	if uuo.mutation.LastLoginCleared() {
+		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
 	}
 	if uuo.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{

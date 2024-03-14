@@ -48,8 +48,6 @@ const (
 	FieldListenerName = "listener_name"
 	// FieldEmailRecipients holds the string denoting the email_recipients field in the database.
 	FieldEmailRecipients = "email_recipients"
-	// FieldConditionalLogic holds the string denoting the conditional_logic field in the database.
-	FieldConditionalLogic = "conditional_logic"
 	// FieldEffectiveDate holds the string denoting the effective_date field in the database.
 	FieldEffectiveDate = "effective_date"
 	// FieldExpirationDate holds the string denoting the expiration_date field in the database.
@@ -95,7 +93,6 @@ var Columns = []string{
 	FieldTriggerName,
 	FieldListenerName,
 	FieldEmailRecipients,
-	FieldConditionalLogic,
 	FieldEffectiveDate,
 	FieldExpirationDate,
 }

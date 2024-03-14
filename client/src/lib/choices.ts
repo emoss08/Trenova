@@ -516,20 +516,20 @@ export const severityChoices = [
  * Type for timezone choices
  */
 export type TimezoneChoices =
-  | "America/Los_Angeles"
-  | "America/Denver"
-  | "America/Chicago"
-  | "America/New_York";
+  | "TimezoneAmericaLosAngeles"
+  | "TimezoneAmericaDenver"
+  | "TimezoneAmericaChicago"
+  | "TimezoneAmericaNewYork";
 
 /**
  * Returns timezone choices for a select input
  * @returns An array of timezone choices.
  */
 export const timezoneChoices: ReadonlyArray<IChoiceProps<TimezoneChoices>> = [
-  { value: "America/Los_Angeles", label: "America/Los_Angeles" },
-  { value: "America/Denver", label: "America/Denver" },
-  { value: "America/Chicago", label: "America/Chicago" },
-  { value: "America/New_York", label: "America/New_York" },
+  { value: "TimezoneAmericaLosAngeles", label: "America/Los_Angeles" },
+  { value: "TimezoneAmericaDenver", label: "America/Denver" },
+  { value: "TimezoneAmericaChicago", label: "America/Chicago" },
+  { value: "TimezoneAmericaNewYork", label: "America/New_York" },
 ];
 
 /**

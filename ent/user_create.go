@@ -101,20 +101,6 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	return uc
 }
 
-// SetDateJoined sets the "date_joined" field.
-func (uc *UserCreate) SetDateJoined(s string) *UserCreate {
-	uc.mutation.SetDateJoined(s)
-	return uc
-}
-
-// SetNillableDateJoined sets the "date_joined" field if the given value is not nil.
-func (uc *UserCreate) SetNillableDateJoined(s *string) *UserCreate {
-	if s != nil {
-		uc.SetDateJoined(*s)
-	}
-	return uc
-}
-
 // SetTimezone sets the "timezone" field.
 func (uc *UserCreate) SetTimezone(u user.Timezone) *UserCreate {
 	uc.mutation.SetTimezone(u)
@@ -195,6 +181,20 @@ func (uc *UserCreate) SetIsSuperAdmin(b bool) *UserCreate {
 func (uc *UserCreate) SetNillableIsSuperAdmin(b *bool) *UserCreate {
 	if b != nil {
 		uc.SetIsSuperAdmin(*b)
+	}
+	return uc
+}
+
+// SetLastLogin sets the "last_login" field.
+func (uc *UserCreate) SetLastLogin(t time.Time) *UserCreate {
+	uc.mutation.SetLastLogin(t)
+	return uc
+}
+
+// SetNillableLastLogin sets the "last_login" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLastLogin(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetLastLogin(*t)
 	}
 	return uc
 }
@@ -425,17 +425,13 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
-	if value, ok := uc.mutation.DateJoined(); ok {
-		_spec.SetField(user.FieldDateJoined, field.TypeString, value)
-		_node.DateJoined = value
-	}
 	if value, ok := uc.mutation.Timezone(); ok {
 		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
 		_node.Timezone = value
 	}
 	if value, ok := uc.mutation.ProfilePicURL(); ok {
 		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
-		_node.ProfilePicURL = value
+		_node.ProfilePicURL = &value
 	}
 	if value, ok := uc.mutation.ThumbnailURL(); ok {
 		_spec.SetField(user.FieldThumbnailURL, field.TypeString, value)
@@ -452,6 +448,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.IsSuperAdmin(); ok {
 		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
 		_node.IsSuperAdmin = value
+	}
+	if value, ok := uc.mutation.LastLogin(); ok {
+		_spec.SetField(user.FieldLastLogin, field.TypeTime, value)
+		_node.LastLogin = &value
 	}
 	if nodes := uc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

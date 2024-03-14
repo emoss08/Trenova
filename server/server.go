@@ -13,12 +13,10 @@ import (
 	"github.com/emoss08/trenova/tools"
 
 	"github.com/emoss08/trenova/routes"
+	"github.com/gorilla/handlers"
 	"github.com/rs/cors"
-	"github.com/wader/gormstore/v2"
 	"golang.org/x/net/context"
 )
-
-var store *gormstore.Store
 
 func SetupAndRun() {
 	var wait time.Duration
@@ -27,17 +25,6 @@ func SetupAndRun() {
 
 	// Initialize Gob
 	tools.RegisterGob()
-
-	// // Initialize session store
-	// store = gormstore.New(db, []byte(os.Getenv("SESSION_KEY")))
-	// quit := make(chan struct{})
-
-	// // Periodic cleanup of expired sessions
-	// go store.PeriodicCleanup(1*time.Hour, quit)
-
-	// if store == nil {
-	// 	log.Fatal("Session store could not be initialized")
-	// }
 
 	// Initialize router
 	r := routes.InitializeRouter()
@@ -62,7 +49,7 @@ func SetupAndRun() {
 
 	// Server Configuration
 	srv := &http.Server{
-		Handler:      handler,
+		Handler:      handlers.CompressHandler(handler),
 		Addr:         "127.0.0.1:3000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
