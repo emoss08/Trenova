@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
+	"entgo.io/ent/schema"
 	"time"
 
 	"entgo.io/ent"
@@ -169,6 +171,13 @@ func (BusinessUnit) Edges() []ent.Edge {
 			StructTag(`json:"parent_id"`),
 		edge.To("organizations", Organization.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+	}
+}
+
+func (BusinessUnit) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entgql.QueryField(),
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

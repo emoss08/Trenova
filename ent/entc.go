@@ -8,25 +8,16 @@ import (
 	"log"
 	"reflect"
 
-	"entgo.io/contrib/entgql"
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 )
 
 func main() {
-	ex, entqlErr := entgql.NewExtension(
-		entgql.WithSchemaGenerator(),
-		entgql.WithSchemaPath("ent.graphql"),
-	)
-	if entqlErr != nil {
-		log.Fatalf("creating entgql extension: %v", entqlErr)
-	}
-
 	if err := entc.Generate("./ent/schema", &gen.Config{
 		Hooks: []gen.Hook{
 			EnsureStructTag("json"),
 		},
-	}, entc.Extensions(ex)); err != nil {
+	}); err != nil {
 		log.Fatalf("running ent codegen: %v", err)
 	}
 

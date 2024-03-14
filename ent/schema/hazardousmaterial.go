@@ -1,7 +1,9 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
@@ -69,6 +71,13 @@ func (HazardousMaterial) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("commodities", Commodity.Type).
 			StorageKey(edge.Column("hazardous_material_id")),
+	}
+}
+
+func (HazardousMaterial) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entgql.QueryField(),
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

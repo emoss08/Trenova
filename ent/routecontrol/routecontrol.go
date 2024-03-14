@@ -4,8 +4,6 @@ package routecontrol
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -206,40 +204,4 @@ func newBusinessUnitStep() *sqlgraph.Step {
 		sqlgraph.To(BusinessUnitInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, BusinessUnitTable, BusinessUnitColumn),
 	)
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e DistanceMethod) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *DistanceMethod) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = DistanceMethod(str)
-	if err := DistanceMethodValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid DistanceMethod", str)
-	}
-	return nil
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e MileageUnit) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *MileageUnit) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = MileageUnit(str)
-	if err := MileageUnitValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid MileageUnit", str)
-	}
-	return nil
 }

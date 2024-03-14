@@ -1,8 +1,10 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
@@ -64,6 +66,13 @@ func (InvoiceControl) Fields() []ent.Field {
 func (InvoiceControl) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		DefaultMixin{},
+	}
+}
+
+func (InvoiceControl) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entgql.QueryField(),
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

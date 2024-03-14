@@ -1,7 +1,9 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -70,7 +72,12 @@ func (Organization) Edges() []ent.Edge {
 			Unique(),
 	}
 }
-
+func (Organization) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entgql.QueryField(),
+		entgql.Mutations(entgql.MutationCreate()),
+	}
+}
 func (Organization) Indexes() []ent.Index {
 	return []ent.Index{
 		// Each organization inside a business unit must have a unique ScacCode.

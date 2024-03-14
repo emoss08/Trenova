@@ -4,8 +4,6 @@ package hazardousmaterial
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -282,40 +280,4 @@ func newCommoditiesStep() *sqlgraph.Step {
 		sqlgraph.To(CommoditiesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CommoditiesTable, CommoditiesColumn),
 	)
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e HazardClass) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *HazardClass) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = HazardClass(str)
-	if err := HazardClassValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid HazardClass", str)
-	}
-	return nil
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e PackingGroup) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *PackingGroup) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = PackingGroup(str)
-	if err := PackingGroupValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid PackingGroup", str)
-	}
-	return nil
 }

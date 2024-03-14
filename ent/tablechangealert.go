@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
-	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/google/uuid"
 )
@@ -54,8 +52,6 @@ type TableChangeAlert struct {
 	ListenerName *string `json:"listenerName"`
 	// EmailRecipients holds the value of the "email_recipients" field.
 	EmailRecipients *string `json:"emailRecipients"`
-	// ConditionalLogic holds the value of the "conditional_logic" field.
-	ConditionalLogic *schema.ConditionalLogic `json:"conditionalLogic"`
 	// EffectiveDate holds the value of the "effective_date" field.
 	EffectiveDate *time.Time `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
@@ -75,8 +71,6 @@ type TableChangeAlertEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
-	// totalCount holds the count of the edges above.
-	totalCount [2]map[string]int
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -106,8 +100,6 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tablechangealert.FieldConditionalLogic:
-			values[i] = new([]byte)
 		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopic, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt, tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
@@ -239,14 +231,6 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				tca.EmailRecipients = new(string)
 				*tca.EmailRecipients = value.String
 			}
-		case tablechangealert.FieldConditionalLogic:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field conditional_logic", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &tca.ConditionalLogic); err != nil {
-					return fmt.Errorf("unmarshal field conditional_logic: %w", err)
-				}
-			}
 		case tablechangealert.FieldEffectiveDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field effective_date", values[i])
@@ -370,9 +354,6 @@ func (tca *TableChangeAlert) String() string {
 		builder.WriteString("email_recipients=")
 		builder.WriteString(*v)
 	}
-	builder.WriteString(", ")
-	builder.WriteString("conditional_logic=")
-	builder.WriteString(fmt.Sprintf("%v", tca.ConditionalLogic))
 	builder.WriteString(", ")
 	if v := tca.EffectiveDate; v != nil {
 		builder.WriteString("effective_date=")

@@ -27,8 +27,6 @@ type FeasibilityToolControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
-	modifiers        []func(*sql.Selector)
-	loadTotal        []func(context.Context, []*FeasibilityToolControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -430,9 +428,6 @@ func (ftcq *FeasibilityToolControlQuery) sqlAll(ctx context.Context, hooks ...qu
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
-	if len(ftcq.modifiers) > 0 {
-		_spec.Modifiers = ftcq.modifiers
-	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -451,11 +446,6 @@ func (ftcq *FeasibilityToolControlQuery) sqlAll(ctx context.Context, hooks ...qu
 	if query := ftcq.withBusinessUnit; query != nil {
 		if err := ftcq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *FeasibilityToolControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
-			return nil, err
-		}
-	}
-	for i := range ftcq.loadTotal {
-		if err := ftcq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -529,9 +519,6 @@ func (ftcq *FeasibilityToolControlQuery) loadBusinessUnit(ctx context.Context, q
 
 func (ftcq *FeasibilityToolControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := ftcq.querySpec()
-	if len(ftcq.modifiers) > 0 {
-		_spec.Modifiers = ftcq.modifiers
-	}
 	_spec.Node.Columns = ftcq.ctx.Fields
 	if len(ftcq.ctx.Fields) > 0 {
 		_spec.Unique = ftcq.ctx.Unique != nil && *ftcq.ctx.Unique

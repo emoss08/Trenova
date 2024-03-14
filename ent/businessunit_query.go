@@ -20,16 +20,13 @@ import (
 // BusinessUnitQuery is the builder for querying BusinessUnit entities.
 type BusinessUnitQuery struct {
 	config
-	ctx                    *QueryContext
-	order                  []businessunit.OrderOption
-	inters                 []Interceptor
-	predicates             []predicate.BusinessUnit
-	withPrev               *BusinessUnitQuery
-	withNext               *BusinessUnitQuery
-	withOrganizations      *OrganizationQuery
-	modifiers              []func(*sql.Selector)
-	loadTotal              []func(context.Context, []*BusinessUnit) error
-	withNamedOrganizations map[string]*OrganizationQuery
+	ctx               *QueryContext
+	order             []businessunit.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.BusinessUnit
+	withPrev          *BusinessUnitQuery
+	withNext          *BusinessUnitQuery
+	withOrganizations *OrganizationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -459,9 +456,6 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
-	if len(buq.modifiers) > 0 {
-		_spec.Modifiers = buq.modifiers
-	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -487,18 +481,6 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		if err := buq.loadOrganizations(ctx, query, nodes,
 			func(n *BusinessUnit) { n.Edges.Organizations = []*Organization{} },
 			func(n *BusinessUnit, e *Organization) { n.Edges.Organizations = append(n.Edges.Organizations, e) }); err != nil {
-			return nil, err
-		}
-	}
-	for name, query := range buq.withNamedOrganizations {
-		if err := buq.loadOrganizations(ctx, query, nodes,
-			func(n *BusinessUnit) { n.appendNamedOrganizations(name) },
-			func(n *BusinessUnit, e *Organization) { n.appendNamedOrganizations(name, e) }); err != nil {
-			return nil, err
-		}
-	}
-	for i := range buq.loadTotal {
-		if err := buq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -600,9 +582,6 @@ func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *Orga
 
 func (buq *BusinessUnitQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := buq.querySpec()
-	if len(buq.modifiers) > 0 {
-		_spec.Modifiers = buq.modifiers
-	}
 	_spec.Node.Columns = buq.ctx.Fields
 	if len(buq.ctx.Fields) > 0 {
 		_spec.Unique = buq.ctx.Unique != nil && *buq.ctx.Unique
@@ -683,20 +662,6 @@ func (buq *BusinessUnitQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
-}
-
-// WithNamedOrganizations tells the query-builder to eager-load the nodes that are connected to the "organizations"
-// edge with the given name. The optional arguments are used to configure the query builder of the edge.
-func (buq *BusinessUnitQuery) WithNamedOrganizations(name string, opts ...func(*OrganizationQuery)) *BusinessUnitQuery {
-	query := (&OrganizationClient{config: buq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	if buq.withNamedOrganizations == nil {
-		buq.withNamedOrganizations = make(map[string]*OrganizationQuery)
-	}
-	buq.withNamedOrganizations[name] = query
-	return buq
 }
 
 // BusinessUnitGroupBy is the group-by builder for BusinessUnit entities.

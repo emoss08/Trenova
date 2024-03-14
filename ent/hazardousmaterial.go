@@ -57,10 +57,6 @@ type HazardousMaterialEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
-	// totalCount holds the count of the edges above.
-	totalCount [3]map[string]int
-
-	namedCommodities map[string][]*Commodity
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -280,30 +276,6 @@ func (hm *HazardousMaterial) String() string {
 	}
 	builder.WriteByte(')')
 	return builder.String()
-}
-
-// NamedCommodities returns the Commodities named value or an error if the edge was not
-// loaded in eager-loading with this name.
-func (hm *HazardousMaterial) NamedCommodities(name string) ([]*Commodity, error) {
-	if hm.Edges.namedCommodities == nil {
-		return nil, &NotLoadedError{edge: name}
-	}
-	nodes, ok := hm.Edges.namedCommodities[name]
-	if !ok {
-		return nil, &NotLoadedError{edge: name}
-	}
-	return nodes, nil
-}
-
-func (hm *HazardousMaterial) appendNamedCommodities(name string, edges ...*Commodity) {
-	if hm.Edges.namedCommodities == nil {
-		hm.Edges.namedCommodities = make(map[string][]*Commodity)
-	}
-	if len(edges) == 0 {
-		hm.Edges.namedCommodities[name] = []*Commodity{}
-	} else {
-		hm.Edges.namedCommodities[name] = append(hm.Edges.namedCommodities[name], edges...)
-	}
 }
 
 // HazardousMaterials is a parsable slice of HazardousMaterial.

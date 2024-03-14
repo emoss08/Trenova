@@ -4,8 +4,6 @@ package accountingcontrol
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -294,22 +292,4 @@ func newDefaultExpAccountStep() *sqlgraph.Step {
 		sqlgraph.To(DefaultExpAccountInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, DefaultExpAccountTable, DefaultExpAccountColumn),
 	)
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e RecThresholdAction) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *RecThresholdAction) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = RecThresholdAction(str)
-	if err := RecThresholdActionValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid RecThresholdAction", str)
-	}
-	return nil
 }

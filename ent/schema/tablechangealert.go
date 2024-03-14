@@ -1,24 +1,11 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 )
-
-type Conditioion struct {
-	Id        int
-	Column    string
-	Operation string
-	Value     any
-	DataType  string
-}
-
-type ConditionalLogic struct {
-	Name        string
-	Description string
-	EntityName  string
-	Conditions  []Conditioion
-}
 
 // TableChangeAlert holds the schema definition for the TableChangeAlert entity.
 type TableChangeAlert struct {
@@ -79,9 +66,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			StructTag(`json:"emailRecipients"`),
-		field.JSON("conditional_logic", &ConditionalLogic{}).
-			Optional().
-			StructTag(`json:"conditionalLogic"`),
 		field.Time("effective_date").
 			Optional().
 			Nillable().
@@ -97,6 +81,13 @@ func (TableChangeAlert) Fields() []ent.Field {
 func (TableChangeAlert) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
+	}
+}
+
+func (TableChangeAlert) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entgql.QueryField(),
+		entgql.Mutations(entgql.MutationCreate()),
 	}
 }
 

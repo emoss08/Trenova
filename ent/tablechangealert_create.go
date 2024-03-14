@@ -12,7 +12,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
-	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/google/uuid"
 )
@@ -205,12 +204,6 @@ func (tcac *TableChangeAlertCreate) SetNillableEmailRecipients(s *string) *Table
 	if s != nil {
 		tcac.SetEmailRecipients(*s)
 	}
-	return tcac
-}
-
-// SetConditionalLogic sets the "conditional_logic" field.
-func (tcac *TableChangeAlertCreate) SetConditionalLogic(sl *schema.ConditionalLogic) *TableChangeAlertCreate {
-	tcac.mutation.SetConditionalLogic(sl)
 	return tcac
 }
 
@@ -491,10 +484,6 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)
 		_node.EmailRecipients = &value
-	}
-	if value, ok := tcac.mutation.ConditionalLogic(); ok {
-		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
-		_node.ConditionalLogic = value
 	}
 	if value, ok := tcac.mutation.EffectiveDate(); ok {
 		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)

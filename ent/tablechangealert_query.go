@@ -26,8 +26,6 @@ type TableChangeAlertQuery struct {
 	predicates       []predicate.TableChangeAlert
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
-	modifiers        []func(*sql.Selector)
-	loadTotal        []func(context.Context, []*TableChangeAlert) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -422,9 +420,6 @@ func (tcaq *TableChangeAlertQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
-	if len(tcaq.modifiers) > 0 {
-		_spec.Modifiers = tcaq.modifiers
-	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -443,11 +438,6 @@ func (tcaq *TableChangeAlertQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := tcaq.withOrganization; query != nil {
 		if err := tcaq.loadOrganization(ctx, query, nodes, nil,
 			func(n *TableChangeAlert, e *Organization) { n.Edges.Organization = e }); err != nil {
-			return nil, err
-		}
-	}
-	for i := range tcaq.loadTotal {
-		if err := tcaq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -515,9 +505,6 @@ func (tcaq *TableChangeAlertQuery) loadOrganization(ctx context.Context, query *
 
 func (tcaq *TableChangeAlertQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tcaq.querySpec()
-	if len(tcaq.modifiers) > 0 {
-		_spec.Modifiers = tcaq.modifiers
-	}
 	_spec.Node.Columns = tcaq.ctx.Fields
 	if len(tcaq.ctx.Fields) > 0 {
 		_spec.Unique = tcaq.ctx.Unique != nil && *tcaq.ctx.Unique

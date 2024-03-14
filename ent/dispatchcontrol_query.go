@@ -27,8 +27,6 @@ type DispatchControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
-	modifiers        []func(*sql.Selector)
-	loadTotal        []func(context.Context, []*DispatchControl) error
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -430,9 +428,6 @@ func (dcq *DispatchControlQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
-	if len(dcq.modifiers) > 0 {
-		_spec.Modifiers = dcq.modifiers
-	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -451,11 +446,6 @@ func (dcq *DispatchControlQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if query := dcq.withBusinessUnit; query != nil {
 		if err := dcq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *DispatchControl, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
-			return nil, err
-		}
-	}
-	for i := range dcq.loadTotal {
-		if err := dcq.loadTotal[i](ctx, nodes); err != nil {
 			return nil, err
 		}
 	}
@@ -529,9 +519,6 @@ func (dcq *DispatchControlQuery) loadBusinessUnit(ctx context.Context, query *Bu
 
 func (dcq *DispatchControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dcq.querySpec()
-	if len(dcq.modifiers) > 0 {
-		_spec.Modifiers = dcq.modifiers
-	}
 	_spec.Node.Columns = dcq.ctx.Fields
 	if len(dcq.ctx.Fields) > 0 {
 		_spec.Unique = dcq.ctx.Unique != nil && *dcq.ctx.Unique

@@ -4,8 +4,6 @@ package user
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -294,40 +292,4 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
 	)
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e Status) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *Status) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = Status(str)
-	if err := StatusValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid Status", str)
-	}
-	return nil
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e Timezone) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *Timezone) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = Timezone(str)
-	if err := TimezoneValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid Timezone", str)
-	}
-	return nil
 }

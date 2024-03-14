@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
-	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -14666,7 +14665,6 @@ type TableChangeAlertMutation struct {
 	trigger_name         *string
 	listener_name        *string
 	email_recipients     *string
-	conditional_logic    **schema.ConditionalLogic
 	effective_date       *time.Time
 	expiration_date      *time.Time
 	clearedFields        map[string]struct{}
@@ -15463,55 +15461,6 @@ func (m *TableChangeAlertMutation) ResetEmailRecipients() {
 	delete(m.clearedFields, tablechangealert.FieldEmailRecipients)
 }
 
-// SetConditionalLogic sets the "conditional_logic" field.
-func (m *TableChangeAlertMutation) SetConditionalLogic(sl *schema.ConditionalLogic) {
-	m.conditional_logic = &sl
-}
-
-// ConditionalLogic returns the value of the "conditional_logic" field in the mutation.
-func (m *TableChangeAlertMutation) ConditionalLogic() (r *schema.ConditionalLogic, exists bool) {
-	v := m.conditional_logic
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldConditionalLogic returns the old "conditional_logic" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldConditionalLogic(ctx context.Context) (v *schema.ConditionalLogic, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldConditionalLogic is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldConditionalLogic requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldConditionalLogic: %w", err)
-	}
-	return oldValue.ConditionalLogic, nil
-}
-
-// ClearConditionalLogic clears the value of the "conditional_logic" field.
-func (m *TableChangeAlertMutation) ClearConditionalLogic() {
-	m.conditional_logic = nil
-	m.clearedFields[tablechangealert.FieldConditionalLogic] = struct{}{}
-}
-
-// ConditionalLogicCleared returns if the "conditional_logic" field was cleared in this mutation.
-func (m *TableChangeAlertMutation) ConditionalLogicCleared() bool {
-	_, ok := m.clearedFields[tablechangealert.FieldConditionalLogic]
-	return ok
-}
-
-// ResetConditionalLogic resets all changes to the "conditional_logic" field.
-func (m *TableChangeAlertMutation) ResetConditionalLogic() {
-	m.conditional_logic = nil
-	delete(m.clearedFields, tablechangealert.FieldConditionalLogic)
-}
-
 // SetEffectiveDate sets the "effective_date" field.
 func (m *TableChangeAlertMutation) SetEffectiveDate(t time.Time) {
 	m.effective_date = &t
@@ -15698,7 +15647,7 @@ func (m *TableChangeAlertMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TableChangeAlertMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 18)
 	if m.business_unit != nil {
 		fields = append(fields, tablechangealert.FieldBusinessUnitID)
 	}
@@ -15747,9 +15696,6 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	if m.email_recipients != nil {
 		fields = append(fields, tablechangealert.FieldEmailRecipients)
 	}
-	if m.conditional_logic != nil {
-		fields = append(fields, tablechangealert.FieldConditionalLogic)
-	}
 	if m.effective_date != nil {
 		fields = append(fields, tablechangealert.FieldEffectiveDate)
 	}
@@ -15796,8 +15742,6 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.ListenerName()
 	case tablechangealert.FieldEmailRecipients:
 		return m.EmailRecipients()
-	case tablechangealert.FieldConditionalLogic:
-		return m.ConditionalLogic()
 	case tablechangealert.FieldEffectiveDate:
 		return m.EffectiveDate()
 	case tablechangealert.FieldExpirationDate:
@@ -15843,8 +15787,6 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldListenerName(ctx)
 	case tablechangealert.FieldEmailRecipients:
 		return m.OldEmailRecipients(ctx)
-	case tablechangealert.FieldConditionalLogic:
-		return m.OldConditionalLogic(ctx)
 	case tablechangealert.FieldEffectiveDate:
 		return m.OldEffectiveDate(ctx)
 	case tablechangealert.FieldExpirationDate:
@@ -15970,13 +15912,6 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetEmailRecipients(v)
 		return nil
-	case tablechangealert.FieldConditionalLogic:
-		v, ok := value.(*schema.ConditionalLogic)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetConditionalLogic(v)
-		return nil
 	case tablechangealert.FieldEffectiveDate:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -16045,9 +15980,6 @@ func (m *TableChangeAlertMutation) ClearedFields() []string {
 	if m.FieldCleared(tablechangealert.FieldEmailRecipients) {
 		fields = append(fields, tablechangealert.FieldEmailRecipients)
 	}
-	if m.FieldCleared(tablechangealert.FieldConditionalLogic) {
-		fields = append(fields, tablechangealert.FieldConditionalLogic)
-	}
 	if m.FieldCleared(tablechangealert.FieldEffectiveDate) {
 		fields = append(fields, tablechangealert.FieldEffectiveDate)
 	}
@@ -16091,9 +16023,6 @@ func (m *TableChangeAlertMutation) ClearField(name string) error {
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		m.ClearEmailRecipients()
-		return nil
-	case tablechangealert.FieldConditionalLogic:
-		m.ClearConditionalLogic()
 		return nil
 	case tablechangealert.FieldEffectiveDate:
 		m.ClearEffectiveDate()
@@ -16156,9 +16085,6 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		m.ResetEmailRecipients()
-		return nil
-	case tablechangealert.FieldConditionalLogic:
-		m.ResetConditionalLogic()
 		return nil
 	case tablechangealert.FieldEffectiveDate:
 		m.ResetEffectiveDate()

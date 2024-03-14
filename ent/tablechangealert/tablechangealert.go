@@ -4,8 +4,6 @@ package tablechangealert
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -50,8 +48,6 @@ const (
 	FieldListenerName = "listener_name"
 	// FieldEmailRecipients holds the string denoting the email_recipients field in the database.
 	FieldEmailRecipients = "email_recipients"
-	// FieldConditionalLogic holds the string denoting the conditional_logic field in the database.
-	FieldConditionalLogic = "conditional_logic"
 	// FieldEffectiveDate holds the string denoting the effective_date field in the database.
 	FieldEffectiveDate = "effective_date"
 	// FieldExpirationDate holds the string denoting the expiration_date field in the database.
@@ -97,7 +93,6 @@ var Columns = []string{
 	FieldTriggerName,
 	FieldListenerName,
 	FieldEmailRecipients,
-	FieldConditionalLogic,
 	FieldEffectiveDate,
 	FieldExpirationDate,
 }
@@ -335,58 +330,4 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
 	)
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e Status) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *Status) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = Status(str)
-	if err := StatusValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid Status", str)
-	}
-	return nil
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e DatabaseAction) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *DatabaseAction) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = DatabaseAction(str)
-	if err := DatabaseActionValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid DatabaseAction", str)
-	}
-	return nil
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (e Source) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(e.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (e *Source) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*e = Source(str)
-	if err := SourceValidator(*e); err != nil {
-		return fmt.Errorf("%s is not a valid Source", str)
-	}
-	return nil
 }
