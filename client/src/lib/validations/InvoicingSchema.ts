@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { InvoiceControlFormValues } from "@/types/invoicing";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { InvoiceControlFormValues } from "@/types/invoicing";
 import { DateFormatChoiceProps } from "../choices";
 
 const MAX_FILE_SIZE = 1024000; // 1MB

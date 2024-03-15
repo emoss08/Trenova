@@ -1,0 +1,423 @@
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2024 Trenova                                                                       -
+#                                                                                                  -
+#  This file is part of Trenova.                                                                   -
+#                                                                                                  -
+#  The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
+import random
+import string
+from datetime import timedelta
+from typing import Any
+
+from django.core.management import BaseCommand
+from django.core.management.base import CommandParser
+from django.db import transaction
+from django.utils import timezone
+from rich.progress import Progress
+
+from accounts.models import JobTitle, User
+from customer.models import Customer
+from equipment.models import EquipmentType
+from location.models import Location
+from movements import services
+from organization.models import Organization
+from shipment.models import ServiceType, Shipment, ShipmentType
+from shipment.selectors import get_shipment_first_movement
+from utils.helpers import get_or_create_business_unit
+
+DESCRIPTION = "GENERATED FROM CREATE TEST SHIPMENTS COMMAND"
+
+
+class Command(BaseCommand):
+    """
+    A Django management command to create a specified number of test shipments.
+
+    The `Command` class provides a set of helper methods to create the necessary objects for the shipments, including
+    organizations, users, locations, shipment types, customers, equipment types, and job titles. It then prompts the user
+    for the number of shipments to create, and creates that number of shipments using the created objects.
+
+    Attributes:
+        help: A string representing the command help message.
+
+    Methods:
+        add_arguments: Adds command line arguments to the command parser.
+        create_system_organization: Creates a system organization with the provided name.
+        create_user: Creates a new user associated with the provided organization.
+        create_location: Creates two locations associated with the provided organization.
+        create_shipment_type: Creates a new shipment type associated with the provided organization.
+        create_customer: Creates a new customer associated with the provided organization.
+        create_equipment_type: Creates a new equipment type associated with the provided organization.
+        create_system_job_title: Creates a new job title associated with the provided organization.
+        handle: The main method to be called when the command is run.
+
+    This class is a Django management command that creates a specified number of test shipments. It provides a set of
+    helper methods to create the necessary objects for the shipments, including organizations, users, locations, order
+    types, customers, equipment types, and job titles. It then prompts the user for the number of shipments to create, and
+    creates that number of shipments using the created objects.
+
+    The `Command` class expects no arguments. The `handle` method is the main method to be called when the command
+    is run. It prompts the user for the number of shipments to create, and creates that number of shipments using the
+    created objects. It then prints a success message to the console.
+
+    The `add_arguments` method adds a command line argument to the command parser. This argument is used to specify the
+    name of the system organization to be created.
+
+    The `create_system_organization` method creates a system organization with the provided name. It returns the new
+    `Organization` object.
+
+    The `create_user` method creates a new user associated with the provided organization. It returns the new `User`
+    object.
+
+    The `create_location` method creates two locations associated with the provided organization. It returns a tuple
+    containing the two new `Location` objects.
+
+    The `create_shipment_type` method creates a new shipment type associated with the provided organization. It returns the
+    new `ShipmentType` object.
+
+    The `create_customer` method creates a new customer associated with the provided organization. It returns the new
+    `Customer` object.
+
+    The `create_equipment_type` method creates a new equipment type associated with the provided organization. It
+    returns the new `EquipmentType` object.
+
+    The `create_system_job_title` method creates a new job title associated with the provided organization. It returns
+    the new `JobTitle` object.
+
+    The `handle` method is the main method to be called when the command is run. It prompts the user for the number of
+    shipments to create, and creates that number of shipments using the created objects. It then prints a success message to
+    the console.
+    """
+
+    help = "Create a number of test shipments."
+
+    def add_arguments(self, parser: CommandParser) -> None:
+        """
+        The add_arguments method is called when the command is run and is responsible for adding
+        arguments to the command that can be set by the user. In this case, it adds an argument that
+        allows the user to specify the name of the system organization to create shipments for.
+
+        Args:
+            parser (CommandParser): The CommandParser object representing the command parser to add the argument to.
+
+        Returns:
+            None: This function does not return anything.
+
+        This method adds a single argument to the command parser named --organization. The
+        argument takes a string value that represents the name of the system organization
+        to create orders for. If the argument is not provided, it defaults to the string value "sys".
+        """
+
+        parser.add_argument(
+            "--organization",
+            type=str,
+            help="Name of the system organization.",
+            default="Trenova Transportation",
+        )
+
+    @staticmethod
+    def create_system_organization(organization_name: str) -> Organization:
+        """
+        Creates a new `Organization` object with the specified name.
+
+        Args:
+            organization_name (str): A string representing the name of the new organization.
+
+        Returns:
+            Organization: The new `Organization` object.
+
+        This method creates a new `Organization` object with the specified name and a default `scac_code` based on the
+        first four characters of the organization name. If the organization already exists, it returns the existing
+        organization instead.
+        """
+        organization: Organization
+        created: bool
+        business_unit = get_or_create_business_unit(bs_name=organization_name)
+
+        defaults = {"scac_code": organization_name[:4], "business_unit": business_unit}
+        organization, created = Organization.objects.get_or_create(
+            name=organization_name, defaults=defaults
+        )
+        return organization
+
+    @staticmethod
+    def create_user(organization: Organization) -> User:
+        """
+        Creates a new `User` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new user with.
+
+        Returns:
+            User: The new `User` object.
+
+        This method creates a new `User` object associated with the specified organization. The new user is assigned a
+        default username, password, and email address based on the organization name. If the user already exists, it
+        returns the existing user instead.
+        """
+        random_string = "".join(random.choice(string.ascii_letters) for _ in range(10))
+
+        user, created = User.objects.get_or_create(
+            organization=organization,
+            business_unit=organization.business_unit,
+            username=f"walle-{random_string}",
+            password="0&7Wj4Htiqwv3HAF1!",
+            email=f"walle@{random_string}.com",
+        )
+        return user
+
+    @staticmethod
+    def create_location(organization: Organization) -> tuple[Location, Location]:
+        """
+        Creates two new `Location` objects associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new locations with.
+
+        Returns:
+            Tuple[Location, Location] A tuple containing the two new `Location` objects.
+
+        This method creates two new `Location` objects associated with the specified organization. The new locations
+        are assigned default values for their description, city, state, and zip code. If the locations already exist,
+        it returns the existing locations instead.
+        """
+        defaults = {
+            "description": DESCRIPTION,
+            "city": "New York",
+            "name": "Test Location",
+            "state": "NY",
+            "zip_code": "10001",
+            "business_unit": organization.business_unit,
+        }
+        location_1, created = Location.objects.get_or_create(
+            organization=organization,
+            code="test1",
+            address_line_1="123 Main St",
+            defaults=defaults,
+        )
+        location_2, created = Location.objects.get_or_create(
+            organization=organization,
+            code="test2",
+            address_line_1="456 Main St",
+            defaults=defaults,
+        )
+        return location_1, location_2
+
+    @staticmethod
+    def create_shipment_type(organization: Organization) -> ShipmentType:
+        """
+        Creates a new `ShipmentType` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new shipment type with.
+
+        Returns:
+            ShipmentType: The new `ShipmentType` object.
+
+        This method creates a new `ShipmentType` object associated with the specified organization. The new shipment type
+        is assigned a default description. If the shipment type already exists, it returns the existing shipment type
+        instead.
+        """
+        defaults = {
+            "description": DESCRIPTION,
+            "business_unit": organization.business_unit,
+        }
+        shipment_type, created = ShipmentType.objects.get_or_create(
+            organization=organization, code="TEST", defaults=defaults
+        )
+        return shipment_type
+
+    @staticmethod
+    def create_customer(organization: Organization) -> Customer:
+        """
+        Creates a new `Customer` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new customer with.
+
+        Returns:
+            Customer: The new `Customer` object.
+
+        This method creates a new `Customer` object associated with the specified organization. The new customer is
+        assigned default values for its name, address, city, state, and zip code. If the customer already exists, it
+        returns the existing customer instead.
+        """
+        defaults = {
+            "status": "A",
+            "name": "Test Customer",
+            "address_line_1": "123 Main St",
+            "city": "New York",
+            "state": "NY",
+            "zip_code": "10001",
+            "business_unit": organization.business_unit,
+        }
+        customer, created = Customer.objects.get_or_create(
+            organization=organization, code="test", defaults=defaults
+        )
+        return customer
+
+    @staticmethod
+    def create_equipment_type(organization: Organization) -> EquipmentType:
+        """
+        Creates a new `EquipmentType` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new equipment type with.
+
+        Returns:
+            The new `EquipmentType` object.
+
+        This method creates a new `EquipmentType` object associated with the specified organization. The new equipment
+        type is assigned a default description. If the equipment type already exists, it returns the existing
+        equipment type instead.
+        """
+        defaults = {
+            "description": DESCRIPTION,
+            "business_unit": organization.business_unit,
+            "equipment_class": "TRAILER",
+        }
+        equipment_type, created = EquipmentType.objects.get_or_create(
+            organization=organization, name="systemgen", defaults=defaults
+        )
+        return equipment_type
+
+    @staticmethod
+    def create_system_job_title(organization: Organization) -> JobTitle:
+        """
+        Creates a new `JobTitle` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new job title with.
+
+        Returns:
+            The new `JobTitle` object.
+
+        This method creates a new `JobTitle` object associated with the specified organization. The new job title is
+        assigned a default description and job function of "System Administrator". If the job title already exists, it
+        returns the existing job title instead.
+        """
+        defaults = {
+            "description": "System job title.",
+            "job_function": JobTitle.JobFunctionChoices.SYS_ADMIN,
+            "business_unit": organization.business_unit,
+        }
+        job_title, created = JobTitle.objects.get_or_create(
+            organization=organization, name="System", defaults=defaults
+        )
+        return job_title
+
+    @staticmethod
+    def create_system_service_type(organization: Organization) -> ServiceType:
+        """
+        Creates a new `ServiceType` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new service type with.
+
+        Returns:
+            The new `ServiceType` object.
+
+        This method creates a new `ServiceType` object associated with the specified organization. The new service type
+        is assigned a default description and job function of "System Administrator". If the service type already
+        exists, it returns the existing service type instead.
+        """
+        defaults = {
+            "description": "Test Service Type",
+            "business_unit": organization.business_unit,
+        }
+        service_type, _ = ServiceType.objects.get_or_create(
+            organization=organization, code="EXP", defaults=defaults
+        )
+        return service_type
+
+    @transaction.atomic
+    def handle(self, *args: Any, **options: Any) -> None:
+        """
+        The main method to be called when the command is run.
+
+        This method prompts the user for the number of orders to create, creates the necessary objects for the orders,
+        and creates that number of orders using the created objects. It then prints a success message to the console.
+
+        Args:
+            args (Any): Arguments
+            options: (Any): Options
+
+        Returns:
+            None: This function does not return anything.
+        """
+        shipment_count_answer = input("How many shipments would you like to create? ")
+        shipment_count = int(shipment_count_answer)
+        organization_name = options["organization"]
+
+        with Progress() as progress:
+            prerequisite_data_task = progress.add_task(
+                "[cyan]Creating prerequisite data...", total=6
+            )
+            organization = self.create_system_organization(organization_name)
+            progress.update(prerequisite_data_task, advance=1)
+            location_1, location_2 = self.create_location(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            shipment_type = self.create_shipment_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            customer = self.create_customer(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            equipment_type = self.create_equipment_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            user = self.create_user(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            service_type = self.create_system_service_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
+
+        with Progress() as progress:
+            shipment_creation_task = progress.add_task(
+                "[cyan]Creating shipments...", total=shipment_count
+            )
+
+            # TODO(Wolfred): This should be a bulk_create
+            for _ in range(shipment_count):
+                shipment = Shipment.objects.create(
+                    organization=organization,
+                    business_unit=organization.business_unit,
+                    shipment_type=shipment_type,
+                    customer=customer,
+                    origin_location=location_1,
+                    freight_charge_amount=100,
+                    destination_location=location_2,
+                    service_type=service_type,
+                    origin_appointment_window_start=timezone.now(),
+                    origin_appointment_window_end=timezone.now(),
+                    destination_appointment_window_start=timezone.now()
+                    + timedelta(days=2),
+                    destination_appointment_window_end=timezone.now()
+                    + timedelta(days=2),
+                    trailer_type=equipment_type,
+                    entered_by=user,
+                    bol_number="123456789",
+                    comment=DESCRIPTION,
+                )
+
+                first_movement = get_shipment_first_movement(shipment=shipment)
+                if first_movement:
+                    services.create_initial_stops(
+                        movement=first_movement, shipment=shipment
+                    )
+
+                self.style.ERROR(
+                    f"Unable to find initial movement for {shipment.pro_number}"
+                )
+                progress.update(shipment_creation_task, advance=1)
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully created {shipment_count} shipments for {organization_name}"
+            )
+        )

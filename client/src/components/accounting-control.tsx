@@ -88,7 +88,7 @@ function AccountingControlForm({
     control,
     {
       method: "PUT",
-      path: "/accounting-control/",
+      path: `/accounting-control/${accountingControl.id}/`,
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["accountingControl"],
       errorMessage: t("formErrorMessage"),

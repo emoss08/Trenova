@@ -18,7 +18,7 @@
 import {
   FeasibilityOperatorChoiceProps,
   RatingMethodChoiceProps,
-  ServiceIncidentControlChoiceProps,
+  ServiceIncidentControlEnum,
   SeverityChoiceProps,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
@@ -27,7 +27,7 @@ import { BaseModel } from "./organization";
 export type DispatchControl = {
   id: string;
   organizationId: string;
-  recordServiceIncident: ServiceIncidentControlChoiceProps;
+  recordServiceIncident: ServiceIncidentControlEnum;
   gracePeriod: number;
   deadheadTarget: number;
   maxShipmentWeightLimit: number;
@@ -36,7 +36,7 @@ export type DispatchControl = {
   trailerContinuity: boolean;
   dupeTrailerCheck: boolean;
   regulatoryCheck: boolean;
-  prevShipmentsOnHold: boolean;
+  prevShipmentOnHold: boolean;
   workerTimeAwayRestriction: boolean;
   tractorWorkerFleetConstraint: boolean;
 };
@@ -163,13 +163,13 @@ export type FeasibilityToolControl = {
   organization: string;
   businessUnit: string;
   mpwOperator: FeasibilityOperatorChoiceProps;
-  mpwCriteria: number;
+  mpwValue: number;
   mpdOperator: FeasibilityOperatorChoiceProps;
-  mpdCriteria: number;
+  mpdValue: number;
   mpgOperator: FeasibilityOperatorChoiceProps;
-  mpgCriteria: number;
+  mpgValue: number;
   otpOperator: FeasibilityOperatorChoiceProps;
-  otpCriteria: number;
+  otpValue: number;
   created: string;
   modified: string;
 };

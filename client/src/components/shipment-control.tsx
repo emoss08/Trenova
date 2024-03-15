@@ -23,8 +23,8 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { shipmentControlSchema } from "@/lib/validations/ShipmentSchema";
 import {
-  ShipmentControl as ShipmentControlType,
   ShipmentControlFormValues,
+  ShipmentControl as ShipmentControlType,
 } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -52,7 +52,6 @@ function ShipmentControlForm({
       autoShipmentTotal: shipmentControl.autoShipmentTotal,
       enforceOriginDestination: shipmentControl.enforceOriginDestination,
       checkForDuplicateBol: shipmentControl.checkForDuplicateBol,
-      removeShipment: shipmentControl.removeShipment,
       sendPlacardInfo: shipmentControl.sendPlacardInfo,
       enforceHazmatSegRules: shipmentControl.enforceHazmatSegRules,
     },
@@ -62,7 +61,7 @@ function ShipmentControlForm({
     control,
     {
       method: "PUT",
-      path: "/shipment-control/",
+      path: `/shipment-control/${shipmentControl.id}/`,
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["shipmentControl"],
       errorMessage: t("formErrorMessage"),
@@ -78,7 +77,7 @@ function ShipmentControlForm({
 
   return (
     <form
-      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+      className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -165,14 +164,6 @@ function ShipmentControlForm({
           </div>
           <div className="col-span-3">
             <CheckboxInput
-              name="removeShipment"
-              control={control}
-              label={t("fields.removeShipment.label")}
-              description={t("fields.removeShipment.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
               name="sendPlacardInfo"
               control={control}
               label={t("fields.sendPlacardInfo.label")}
@@ -189,7 +180,7 @@ function ShipmentControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -215,10 +206,10 @@ export default function ShipmentControl() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           Shipment Control
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           Revolutionize your shipment operations with our Shipment Management
           System. This module is built to streamline every aspect of shipment
           control, from routing to compliance enforcement, ensuring efficient
@@ -226,11 +217,11 @@ export default function ShipmentControl() {
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load shipment control." />
         </div>
       ) : (

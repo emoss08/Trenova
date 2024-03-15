@@ -134,29 +134,42 @@ export const DayOfWeekChoices = [
   { value: 6, label: "Sunday" },
 ] satisfies IChoiceProps<number>[];
 
-export type ServiceIncidentControlChoiceProps = "N" | "P" | "D" | "PD" | "AEP";
+export type ServiceIncidentControlChoiceProps =
+  | "Never"
+  | "Pickup"
+  | "Delivery"
+  | "PickupAndDelivery"
+  | "AllExceptShipper";
+
+export enum ServiceIncidentControlEnum {
+  Never = "Never",
+  Pickup = "Pickup",
+  Delivery = "Delivery",
+  PickupAndDelivery = "PickupAndDelivery",
+  AllExceptShipper = "AllExceptShipper",
+}
 
 export const serviceIncidentControlChoices = [
-  { value: "N", label: "Never" },
-  { value: "P", label: "Pickup" },
-  { value: "D", label: "Delivery" },
-  { value: "PD", label: "Pickup and Delivery" },
-  { value: "AEP", label: "All except shipper" },
+  { value: "Never", label: "Never" },
+  { value: "Pickup", label: "Pickup" },
+  { value: "Delivery", label: "Delivery" },
+  { value: "PickupAndDelivery", label: "Pickup and Delivery" },
+  { value: "AllExceptShipper", label: "All except shipper" },
 ] satisfies ReadonlyArray<IChoiceProps<ServiceIncidentControlChoiceProps>>;
 
 /** Type for Date Format Choices */
 export type DateFormatChoiceProps =
-  | "01/02/2006"
-  | "02/01/2006"
-  | "2006/02/01"
-  | "2006/01/02"
+  | "InvoiceDateFormatMDY"
+  | "InvoiceDateFormatDMY"
+  | "InvoiceDateFormatYMD"
+  | "InvoiceDateFormatYDM"
   | "";
 
 export const dateFormatChoices = [
-  { value: "01/02/2006", label: "01/02/2006" },
-  { value: "02/01/2006", label: "02/01/2006" },
-  { value: "2006/02/01", label: "2006/02/01" },
-  { value: "2006/01/02", label: "2006/01/02" },
+  { value: "InvoiceDateFormatMDY", label: "01/02/2006" },
+  { value: "InvoiceDateFormatDMY", label: "02/01/2006" },
+  { value: "InvoiceDateFormatYMD", label: "2006/02/01" },
+  { value: "InvoiceDateFormatYDM", label: "2006/01/02" },
 ] satisfies ReadonlyArray<IChoiceProps<DateFormatChoiceProps>>;
 
 /** Type for Route Avoidance Choices */
@@ -178,11 +191,11 @@ export const routeModelChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteModelChoiceProps>>;
 
 /** Type for Route Distance Unit Choices */
-export type RouteDistanceUnitProps = "metric" | "imperial";
+export type RouteDistanceUnitProps = "M" | "I";
 
 export const routeDistanceUnitChoices = [
-  { value: "metric", label: "Metric" },
-  { value: "imperial", label: "Imperial" },
+  { value: "M", label: "Metric" },
+  { value: "I", label: "Imperial" },
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
@@ -204,20 +217,20 @@ export const emailProtocolChoices = [
 
 /** Type for Feasibility Operator Choices */
 export type FeasibilityOperatorChoiceProps =
-  | "EQ"
-  | "NE"
-  | "GT"
-  | "GTE"
-  | "LT"
-  | "LTE";
+  | "Eq"
+  | "Ne"
+  | "Gt"
+  | "Gte"
+  | "Lt"
+  | "Lte";
 
 export const feasibilityOperatorChoices = [
-  { value: "EQ", label: "Equals" },
-  { value: "NE", label: "Not Equals" },
-  { value: "GT", label: "Greater Than" },
-  { value: "GTE", label: "Greater Than or Equal To" },
-  { value: "LT", label: "Less Than" },
-  { value: "LTE", label: "Less Than or Equal To" },
+  { value: "Eq", label: "Equals" },
+  { value: "Ne", label: "Not Equals" },
+  { value: "Gt", label: "Greater Than" },
+  { value: "Gte", label: "Greater Than or Equal To" },
+  { value: "Lt", label: "Less Than" },
+  { value: "Lte", label: "Less Than or Equal To" },
 ] satisfies ReadonlyArray<IChoiceProps<FeasibilityOperatorChoiceProps>>;
 
 /** Type for Equipment Class Choices */
@@ -367,22 +380,22 @@ export const thresholdActionChoices = [
 
 /** Automatic Journal Entry Choices */
 export type AutomaticJournalEntryChoiceType =
-  | "ON_SHIPMENT_BILL"
-  | "ON_RECEIPT_OF_PAYMENT"
-  | "ON_EXPENSE_RECOGNITION"
+  | "OnShipmentBill"
+  | "OnReceiptOfPayment"
+  | "OnExpenseRecognition"
   | "";
 
 export const automaticJournalEntryChoices = [
   {
-    value: "ON_SHIPMENT_BILL",
+    value: "OnShipmentBill",
     label: "Auto create entry when shipment is billed",
   },
   {
-    value: "ON_RECEIPT_OF_PAYMENT",
+    value: "OnReceiptOfPayment",
     label: "Auto create entry on receipt of payment",
   },
   {
-    value: "ON_EXPENSE_RECOGNITION",
+    value: "OnExpenseRecognition",
     label: "Auto create entry when an expense is recognized",
   },
 ] satisfies ReadonlyArray<IChoiceProps<AutomaticJournalEntryChoiceType>>;

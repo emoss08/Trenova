@@ -35,17 +35,16 @@ export interface ShipmentControl extends BaseModel {
   generateRoutes: boolean;
   enforceCommodity: boolean;
   autoSequenceStops: boolean;
-  autoShipmentTotal: boolean;
   enforceOriginDestination: boolean;
+  autoShipmentTotal: boolean;
   checkForDuplicateBol: boolean;
-  removeShipment: boolean;
   sendPlacardInfo: boolean;
   enforceHazmatSegRules: boolean;
 }
 
 export type ShipmentControlFormValues = Omit<
   ShipmentControl,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface ShipmentType extends BaseModel {
@@ -57,7 +56,7 @@ export interface ShipmentType extends BaseModel {
 
 export type ShipmentTypeFormValues = Omit<
   ShipmentType,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface ServiceType extends BaseModel {
@@ -69,7 +68,7 @@ export interface ServiceType extends BaseModel {
 
 export type ServiceTypeFormValues = Omit<
   ServiceType,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface ReasonCode extends BaseModel {
@@ -82,7 +81,7 @@ export interface ReasonCode extends BaseModel {
 
 export type ReasonCodeFormValues = Omit<
   ReasonCode,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 export interface Shipment extends BaseModel {
@@ -180,5 +179,5 @@ export interface HazardousMaterialSegregationRule extends BaseModel {
 
 export type HazardousMaterialSegregationRuleFormValues = Omit<
   HazardousMaterialSegregationRule,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
