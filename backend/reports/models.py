@@ -27,7 +27,6 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from organization.services.table_choices import TABLE_NAME_CHOICES
 from utils.models import GenericModel, Weekdays
 
 
@@ -118,7 +117,6 @@ class CustomReport(GenericModel):
         _("Table"),
         max_length=255,
         help_text=_("The table that the table change alert is for."),
-        choices=TABLE_NAME_CHOICES,
     )
 
     class Meta:

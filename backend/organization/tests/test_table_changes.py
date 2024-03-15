@@ -36,7 +36,7 @@ from organization.services.psql_triggers import (
     check_function_exists,
     check_trigger_exists,
 )
-from organization.services.table_choices import TABLE_NAME_CHOICES
+
 
 pytestmark = pytest.mark.django_db
 
@@ -54,7 +54,6 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
         name="Test",
         database_action="INSERT",
         email_recipients="admin@trenova.app",
-        table=TABLE_NAME_CHOICES[0][0],
     )
 
     assert table_charge.organization == organization
@@ -64,7 +63,6 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
         table_charge.database_action
         == models.TableChangeAlert.DatabaseActionChoices.INSERT
     )
-    assert table_charge.table == TABLE_NAME_CHOICES[0][0]
 
 
 def test_table_change_insert_database_action_save() -> None:
@@ -304,7 +302,6 @@ def test_cannot_save_delete_if_source_not_kafka(
     alert = TableChangeAlert(
         organization=organization,
         source=TableChangeAlert.SourceChoices.POSTGRES,
-        table=TABLE_NAME_CHOICES[0][0],
         database_action=TableChangeAlert.DatabaseActionChoices.DELETE,
     )
     with pytest.raises(ValidationError) as excinfo:
