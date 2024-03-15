@@ -18,7 +18,6 @@
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { FileField, InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { AutosizeTextareaField } from "@/components/common/fields/textarea";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +33,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { TextareaField } from "./common/fields/textarea";
 
 function InvoiceControlForm({
   invoiceControl,
@@ -64,7 +64,7 @@ function InvoiceControlForm({
     control,
     {
       method: "PUT",
-      path: "/invoice-control/",
+      path: `/invoice-control/${invoiceControl.id}/`,
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["invoiceControl"],
       errorMessage: t("formErrorMessage"),
@@ -173,7 +173,7 @@ function InvoiceControlForm({
             />
           </div>
           <div className="col-span-full">
-            <AutosizeTextareaField
+            <TextareaField
               name="invoiceTerms"
               control={control}
               label={t("fields.invoiceTerms.label")}
@@ -182,7 +182,7 @@ function InvoiceControlForm({
             />
           </div>
           <div className="col-span-full">
-            <AutosizeTextareaField
+            <TextareaField
               name="invoiceFooter"
               control={control}
               label={t("fields.invoiceFooter.label")}

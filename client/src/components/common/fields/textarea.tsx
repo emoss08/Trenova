@@ -86,7 +86,7 @@ export function TextareaField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>
@@ -229,7 +229,6 @@ export function AutosizeTextareaField<T extends FieldValues>({
                   "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
                 className,
               )}
-              {...props}
               {...field}
             />
           )}
@@ -238,7 +237,7 @@ export function AutosizeTextareaField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
     </>

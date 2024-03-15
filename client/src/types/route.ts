@@ -17,14 +17,14 @@
 
 import {
   DistanceMethodChoiceProps,
-  RouteModelChoiceProps,
+  RouteDistanceUnitProps,
 } from "@/lib/choices";
 
 export type RouteControl = {
   id: string;
   organization: string;
   distanceMethod: DistanceMethodChoiceProps;
-  mileageUnit: RouteModelChoiceProps;
+  mileageUnit: RouteDistanceUnitProps;
   generateRoutes: boolean;
 };
 

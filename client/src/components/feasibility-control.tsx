@@ -49,7 +49,7 @@ function FeasibilityControlForm({
     control,
     {
       method: "PUT",
-      path: "/feasibility-control/",
+      path: `/feasibility-tool-control/${feasibilityControl.id}/`,
       successMessage: "Feasibility Control updated successfully.",
       queryKeysToInvalidate: ["feasibilityControl"],
       errorMessage: "Failed to update feasibility control.",
@@ -84,13 +84,13 @@ function FeasibilityControlForm({
           </div>
           <div className="col-span-3">
             <InputField
-              name="mpwCriteria"
+              name="mpwValue"
               control={control}
               type="number"
-              label="Miles Per Week Criteria"
+              label="Miles Per Week Value"
               rules={{ required: true }}
-              placeholder="Miles Per Week Criteria"
-              description="Specify the mileage threshold for the miles per week criteria."
+              placeholder="Miles Per Week Value"
+              description="Specify the mileage threshold for the miles per week value."
             />
           </div>
           <div className="col-span-3">
@@ -106,13 +106,13 @@ function FeasibilityControlForm({
           </div>
           <div className="col-span-3">
             <InputField
-              name="mpdCriteria"
+              name="mpdValue"
               control={control}
               type="number"
-              label="Miles Per Day Criteria"
+              label="Miles Per Day Value"
               rules={{ required: true }}
-              placeholder="Miles Per Day Criteria"
-              description="Set the mileage limit for the miles per day criteria."
+              placeholder="Miles Per Day Value"
+              description="Set the mileage limit for the miles per day value."
             />
           </div>
           <div className="col-span-3">
@@ -128,13 +128,13 @@ function FeasibilityControlForm({
           </div>
           <div className="col-span-3">
             <InputField
-              name="mpgCriteria"
+              name="mpgValue"
               control={control}
               type="number"
-              label="Miles Per Gallon Criteria"
+              label="Miles Per Gallon Value"
               rules={{ required: true }}
-              placeholder="Miles Per Gallon Criteria"
-              description="Define the criteria for miles per gallon evaluations."
+              placeholder="Miles Per Gallon Value"
+              description="Define the value for miles per gallon evaluations."
             />
           </div>
           <div className="col-span-3">
@@ -150,12 +150,12 @@ function FeasibilityControlForm({
           </div>
           <div className="col-span-3">
             <InputField
-              name="otpCriteria"
+              name="otpValue"
               control={control}
               type="number"
-              label="On-Time Percentage Criteria"
+              label="On-Time Percentage Value"
               rules={{ required: true }}
-              placeholder="On-Time Percentage Criteria"
+              placeholder="On-Time Percentage Value"
               description="Establish the threshold for on-time percentage in worker assignments."
             />
           </div>

@@ -17,7 +17,7 @@
 
 import {
   FeasibilityOperatorChoiceProps,
-  ServiceIncidentControlChoiceProps,
+  ServiceIncidentControlEnum,
   SeverityChoiceProps,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
@@ -29,14 +29,14 @@ import {
   FleetCodeFormValues,
   RateBillingTableFormValues,
 } from "@/types/dispatch";
-import { ObjectSchema, boolean, number, object, string } from "yup";
+import { ObjectSchema, boolean, mixed, number, object, string } from "yup";
 import { validateDecimal } from "../utils";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   object().shape({
-    recordServiceIncident: string<ServiceIncidentControlChoiceProps>().required(
-      "Record Service Incident is required",
-    ),
+    recordServiceIncident: mixed<ServiceIncidentControlEnum>()
+      .required("Record Service Incident is required")
+      .oneOf(Object.values(ServiceIncidentControlEnum)),
     gracePeriod: number().required("Grace Period is required"),
     deadheadTarget: number().required("Deadhead Target is required"),
     enforceWorkerAssign: boolean().required("Worker Assign is required"),
@@ -49,7 +49,7 @@ export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
       "Max Load Weight Limit is required",
     ),
     regulatoryCheck: boolean().required("Regulatory Check is required"),
-    prevShipmentsOnHold: boolean().required(
+    prevShipmentOnHold: boolean().required(
       "Previous Shipments on Hold is required",
     ),
     workerTimeAwayRestriction: boolean().required(
@@ -65,27 +65,27 @@ export const feasibilityControlSchema: ObjectSchema<FeasibilityToolControlFormVa
     mpwOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per week operator is required.",
     ),
-    mpwCriteria: number()
-      .moreThan(0, "Miles per week criteria must be greater than 0.")
-      .required("Miles per week criteria is required."),
+    mpwValue: number()
+      .moreThan(0, "Miles per week Value must be greater than 0.")
+      .required("Miles per week Value is required."),
     mpdOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per day operator is required.",
     ),
-    mpdCriteria: number()
-      .moreThan(0, "Miles per day criteria must be greater than 0.")
-      .required("Miles per day criteria is required."),
+    mpdValue: number()
+      .moreThan(0, "Miles per day Value must be greater than 0.")
+      .required("Miles per day Value is required."),
     mpgOperator: string<FeasibilityOperatorChoiceProps>().required(
       "Miles per gallon operator is required.",
     ),
-    mpgCriteria: number()
-      .moreThan(0, "Miles per gallon criteria must be greater than 0.")
-      .required("Miles per gallon criteria is required."),
+    mpgValue: number()
+      .moreThan(0, "Miles per gallon Value must be greater than 0.")
+      .required("Miles per gallon Value is required."),
     otpOperator: string<FeasibilityOperatorChoiceProps>().required(
       "On-time performance operator is required.",
     ),
-    otpCriteria: number()
-      .moreThan(0, "On-time performance criteria must be greater than 0.")
-      .required("On-time performance criteria is required."),
+    otpValue: number()
+      .moreThan(0, "On-time performance Value must be greater than 0.")
+      .required("On-time performance Value is required."),
   });
 
 export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =

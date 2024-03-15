@@ -35,7 +35,7 @@ import type {
 } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
-import { array, boolean, number, object, ObjectSchema, string } from "yup";
+import { ObjectSchema, array, boolean, number, object, string } from "yup";
 import { stopSchema } from "./StopSchema";
 
 export const shipmentControlSchema: ObjectSchema<ShipmentControlFormValues> =
@@ -54,7 +54,6 @@ export const shipmentControlSchema: ObjectSchema<ShipmentControlFormValues> =
     checkForDuplicateBol: boolean().required(
       "Check for Duplicate BOL is required",
     ),
-    removeShipment: boolean().required("Remove Shipment is required"),
     sendPlacardInfo: boolean().required("Send Placard Info is required"),
     enforceHazmatSegRules: boolean().required(
       "Enforce Hazmat Seg Rules is required",

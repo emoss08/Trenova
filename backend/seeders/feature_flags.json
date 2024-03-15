@@ -1,0 +1,114 @@
+[
+{
+  "model": "organization.featureflag",
+  "pk": "271cbe50-8c93-4247-82ac-4842875aee56",
+  "fields": {
+    "created": "2024-02-15T19:47:05.765Z",
+    "modified": "2024-02-15T19:55:30.295Z",
+    "name": "Pricing Tool",
+    "code": "ENABLE_PRICING_TOOL",
+    "beta": true,
+    "paid_only": false,
+    "description": "<p>This feature flag enables the Worker Feasibility Tool, which allows users to manage their worker feasibility information. For more information, please refer to the <u><a href=\"#\">Worker Feasibility Tool documentation</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "28e0bf8c-5ea5-45ff-a6de-7283909f45fb",
+  "fields": {
+    "created": "2024-02-07T17:42:56.583Z",
+    "modified": "2024-02-15T19:54:08.682Z",
+    "name": "Beam",
+    "code": "ENABLE_BEAM",
+    "beta": true,
+    "paid_only": true,
+    "description": "<p>Activating this flag will enable the Beam feature, which allows users to utilize Trenova&#39;s very own LLM (Large Language Model). For more information, please refer to the <u><a href=\"#\">Beam documentation</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "3fd64e96-2c34-4608-a6b4-907df490eee3",
+  "fields": {
+    "created": "2024-02-07T17:42:24.135Z",
+    "modified": "2024-02-07T17:42:24.135Z",
+    "name": "Color Accessibility Options",
+    "code": "ENABLE_COLOR_BLIND_MODE",
+    "beta": true,
+    "paid_only": true,
+    "description": "<p>This flag enables Color Blind Mode, offering users a choice of color vision deficiency simulations to adapt the application&#39;s color scheme for better readability and visual comfort. Modes include Tritanopia, Protanopia, Deuteranopia, Deuteranomaly, and Protanomaly. This inclusivity-focused feature is designed to cater to users with various color vision impairments, ensuring a more accessible and user-friendly experience.</p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "5a8af671-98a2-4315-ab1c-901f3fb42f34",
+  "fields": {
+    "created": "2024-02-15T19:47:26.811Z",
+    "modified": "2024-02-15T19:55:01.083Z",
+    "name": "Document Studio",
+    "code": "ENABLE_DOC_STUDIO",
+    "beta": true,
+    "paid_only": true,
+    "description": "<p>This feature flag enables the Document Studio, which allows users to manage their document templates. For more information, please refer to the <u><a href=\"#\">Document Studio documentation</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "9f86891a-4c48-441a-8e9c-30e4f4a59a7e",
+  "fields": {
+    "created": "2024-02-15T19:46:16.418Z",
+    "modified": "2024-02-15T19:54:40.884Z",
+    "name": "Billing Client",
+    "code": "ENABLE_BILLING_CLIENT",
+    "beta": true,
+    "paid_only": true,
+    "description": "<p>This feature flag enables the Billing Client, which allows users to manage their billing information and payment methods. For more information, please refer to the <u><a href=\"#\">Billing Client documentation</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "a4a29306-891c-4641-8188-9d731a74cfc3",
+  "fields": {
+    "created": "2024-02-15T19:48:00.934Z",
+    "modified": "2024-02-15T19:55:47.523Z",
+    "name": "Shipment Map View",
+    "code": "ENABLE_SHIP_MAP_VIEW",
+    "beta": true,
+    "paid_only": false,
+    "description": "<p>Activating this flag introduces a novel shipment map view in the shipment management interface. It provides a visual representation of workers and orders, along with interactive functionalities like drag-and-drop assignment of workers to orders. This feature enhances the user&#39;s operational efficiency by offering a more intuitive and interactive way to manage shipments. <u><a href=\"#\">Further details</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "b7cc2810-9977-4051-b4b9-cb9ab354845f",
+  "fields": {
+    "created": "2024-02-15T19:46:46.000Z",
+    "modified": "2024-02-15T19:52:06.686Z",
+    "name": "Anomaly Detection",
+    "code": "ENABLE_ANAMOLY_DETECTION",
+    "beta": true,
+    "paid_only": true,
+    "description": "<p>This feature flag enables the Anomaly Detection feature, which allows organizations to detect anomalies in their data. For more information, please refer to the <u><a href=\"#\">Anomaly Detection Documentation</a></u></p>",
+    "preview_picture": ""
+  }
+},
+{
+  "model": "organization.featureflag",
+  "pk": "f7acb24c-ffea-4ec5-89fa-cfd0544b9b03",
+  "fields": {
+    "created": "2024-02-15T19:45:30.364Z",
+    "modified": "2024-02-15T19:55:17.013Z",
+    "name": "Equipment Maintenance Plans",
+    "code": "ENABLE_EQUIP_MAIN_PLAN",
+    "beta": true,
+    "paid_only": false,
+    "description": "<p>This feature flag brings in a new module for creating and managing equipment maintenance plans within the equipment management section. It aims to streamline the process of scheduling and tracking maintenance activities, thereby ensuring optimal equipment performance and longevity. <u><a href=\"#\">More information</a></u></p>",
+    "preview_picture": ""
+  }
+}
+]

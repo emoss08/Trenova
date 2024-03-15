@@ -37,7 +37,7 @@ export async function getNewRateNumber(): Promise<string> {
  * @returns A promise that resolves to a FeasibilityToolControl object.
  */
 export async function getFeasibilityControl(): Promise<FeasibilityToolControl> {
-  const response = await axios.get("/feasibility-control/");
+  const response = await axios.get("/feasibility-tool-control/");
   return response.data;
 }
 

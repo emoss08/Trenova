@@ -48,7 +48,7 @@ function RouteControlForm({
     control,
     {
       method: "PUT",
-      path: "/route-control/",
+      path: `/route-control/${routeControl.id}/`,
       successMessage: "Route Control updated successfully.",
       queryKeysToInvalidate: ["routeControl"],
       errorMessage: "Failed to update route control.",
@@ -145,7 +145,7 @@ export default function RouteControl() {
         </div>
       ) : isError ? (
         <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
-          <ErrorLoadingData message="Failed to load dispatch control." />
+          <ErrorLoadingData />
         </div>
       ) : (
         data && <RouteControlForm routeControl={data} />
