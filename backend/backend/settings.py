@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     "auditlog",
     "notifications",
     "channels",
-    "ckeditor",
     "graphene_django",
     # Trenova Apps
     "backend",
@@ -94,7 +93,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -171,9 +169,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
 )
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media Configurations
 MEDIA_DIR = os.path.join(BASE_DIR, "media")
@@ -495,18 +491,13 @@ GRAPHENE = {
 IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
 IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
 
-# System Check Configurations
-SILENCED_SYSTEM_CHECKS = [
-    "ckeditor.W001"  # TODO(wolfred): Remove this once we have a solution for the CKEditor warning
-]
-
 # Development Configurations
 if DEBUG:
     INSTALLED_APPS.insert(0, "admin_interface")
     INSTALLED_APPS.insert(1, "colorfield")
     INSTALLED_APPS += ["silk"]
     MIDDLEWARE += [
-        "silk.middleware.SilkyMiddleware",
+        "silk.middleware.SilkyMiddleware",  # This thing is slow as hell. Only use it for debugging.
         "pyinstrument.middleware.ProfilerMiddleware",
     ]
     X_FRAME_OPTIONS = "SAMEORIGIN"

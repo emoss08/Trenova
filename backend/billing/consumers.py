@@ -41,6 +41,9 @@ from utils.types import (
 channel_layer = get_channel_layer()
 
 
+# TODO(WOLFRED): This will need to get re written, we cannot call a selector from the consumer.
+
+
 class BillingClientConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__()

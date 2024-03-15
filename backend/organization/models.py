@@ -21,7 +21,6 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -39,7 +38,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from kafka.managers import KafkaManager
 
 from .exceptions import ConditionalStructureError
-from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
 kafka_manager = KafkaManager()
@@ -1155,7 +1153,6 @@ class TableChangeAlert(TimeStampedModel):
         _("Table"),
         max_length=255,
         help_text=_("The table that the table change alert is for."),
-        choices=TABLE_NAME_CHOICES,
         blank=True,
     )
     source = models.CharField(
@@ -1590,7 +1587,7 @@ class FeatureFlag(TimeStampedModel):
         default=False,
         help_text=_("Whether the feature flag is only available to paid users."),
     )
-    description = RichTextField(
+    description = models.TextField(
         _("Description"),
         blank=True,
         help_text=_("The description of the feature flag."),

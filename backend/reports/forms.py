@@ -33,10 +33,6 @@ class CustomReportForm(forms.ModelForm):
         fields (str): The fields to include in the form. "__all__" is used to include all fields.
     """
 
-    table_name = forms.ChoiceField(
-        choices=models.TABLE_NAME_CHOICES,
-    )
-
     class Meta:
         model = models.CustomReport
         fields = "__all__"
