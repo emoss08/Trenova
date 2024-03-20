@@ -1,4 +1,4 @@
-black==24.2.0
+black==24.3.0
 celery-types==0.22.0
 django-admin-interface==0.28.6
 djangorestframework-stubs[compatible-mypy]==3.14.5
