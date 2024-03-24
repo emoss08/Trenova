@@ -21,6 +21,7 @@ type SessionQuery struct {
 	order      []session.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Session
+	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -342,6 +343,9 @@ func (sq *SessionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sess
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
+	if len(sq.modifiers) > 0 {
+		_spec.Modifiers = sq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -356,6 +360,9 @@ func (sq *SessionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sess
 
 func (sq *SessionQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
+	if len(sq.modifiers) > 0 {
+		_spec.Modifiers = sq.modifiers
+	}
 	_spec.Node.Columns = sq.ctx.Fields
 	if len(sq.ctx.Fields) > 0 {
 		_spec.Unique = sq.ctx.Unique != nil && *sq.ctx.Unique
@@ -418,6 +425,9 @@ func (sq *SessionQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if sq.ctx.Unique != nil && *sq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range sq.modifiers {
+		m(selector)
+	}
 	for _, p := range sq.predicates {
 		p(selector)
 	}
@@ -433,6 +443,12 @@ func (sq *SessionQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (sq *SessionQuery) Modify(modifiers ...func(s *sql.Selector)) *SessionSelect {
+	sq.modifiers = append(sq.modifiers, modifiers...)
+	return sq.Select()
 }
 
 // SessionGroupBy is the group-by builder for Session entities.
@@ -523,4 +539,10 @@ func (ss *SessionSelect) sqlScan(ctx context.Context, root *SessionQuery, v any)
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ss *SessionSelect) Modify(modifiers ...func(s *sql.Selector)) *SessionSelect {
+	ss.modifiers = append(ss.modifiers, modifiers...)
+	return ss
 }

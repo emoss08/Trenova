@@ -27,6 +27,7 @@ type InvoiceControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +429,9 @@ func (icq *InvoiceControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(icq.modifiers) > 0 {
+		_spec.Modifiers = icq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -519,6 +523,9 @@ func (icq *InvoiceControlQuery) loadBusinessUnit(ctx context.Context, query *Bus
 
 func (icq *InvoiceControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := icq.querySpec()
+	if len(icq.modifiers) > 0 {
+		_spec.Modifiers = icq.modifiers
+	}
 	_spec.Node.Columns = icq.ctx.Fields
 	if len(icq.ctx.Fields) > 0 {
 		_spec.Unique = icq.ctx.Unique != nil && *icq.ctx.Unique
@@ -581,6 +588,9 @@ func (icq *InvoiceControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if icq.ctx.Unique != nil && *icq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range icq.modifiers {
+		m(selector)
+	}
 	for _, p := range icq.predicates {
 		p(selector)
 	}
@@ -596,6 +606,12 @@ func (icq *InvoiceControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (icq *InvoiceControlQuery) Modify(modifiers ...func(s *sql.Selector)) *InvoiceControlSelect {
+	icq.modifiers = append(icq.modifiers, modifiers...)
+	return icq.Select()
 }
 
 // InvoiceControlGroupBy is the group-by builder for InvoiceControl entities.
@@ -686,4 +702,10 @@ func (ics *InvoiceControlSelect) sqlScan(ctx context.Context, root *InvoiceContr
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ics *InvoiceControlSelect) Modify(modifiers ...func(s *sql.Selector)) *InvoiceControlSelect {
+	ics.modifiers = append(ics.modifiers, modifiers...)
+	return ics
 }

@@ -28,6 +28,7 @@ type UserFavoriteQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withUser         *UserQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -457,6 +458,9 @@ func (ufq *UserFavoriteQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(ufq.modifiers) > 0 {
+		_spec.Modifiers = ufq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -577,6 +581,9 @@ func (ufq *UserFavoriteQuery) loadUser(ctx context.Context, query *UserQuery, no
 
 func (ufq *UserFavoriteQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := ufq.querySpec()
+	if len(ufq.modifiers) > 0 {
+		_spec.Modifiers = ufq.modifiers
+	}
 	_spec.Node.Columns = ufq.ctx.Fields
 	if len(ufq.ctx.Fields) > 0 {
 		_spec.Unique = ufq.ctx.Unique != nil && *ufq.ctx.Unique
@@ -648,6 +655,9 @@ func (ufq *UserFavoriteQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if ufq.ctx.Unique != nil && *ufq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range ufq.modifiers {
+		m(selector)
+	}
 	for _, p := range ufq.predicates {
 		p(selector)
 	}
@@ -663,6 +673,12 @@ func (ufq *UserFavoriteQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ufq *UserFavoriteQuery) Modify(modifiers ...func(s *sql.Selector)) *UserFavoriteSelect {
+	ufq.modifiers = append(ufq.modifiers, modifiers...)
+	return ufq.Select()
 }
 
 // UserFavoriteGroupBy is the group-by builder for UserFavorite entities.
@@ -753,4 +769,10 @@ func (ufs *UserFavoriteSelect) sqlScan(ctx context.Context, root *UserFavoriteQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ufs *UserFavoriteSelect) Modify(modifiers ...func(s *sql.Selector)) *UserFavoriteSelect {
+	ufs.modifiers = append(ufs.modifiers, modifiers...)
+	return ufs
 }

@@ -18,8 +18,9 @@ import (
 // UserFavoriteUpdate is the builder for updating UserFavorite entities.
 type UserFavoriteUpdate struct {
 	config
-	hooks    []Hook
-	mutation *UserFavoriteMutation
+	hooks     []Hook
+	mutation  *UserFavoriteMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the UserFavoriteUpdate builder.
@@ -108,6 +109,12 @@ func (ufu *UserFavoriteUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ufu *UserFavoriteUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserFavoriteUpdate {
+	ufu.modifiers = append(ufu.modifiers, modifiers...)
+	return ufu
+}
+
 func (ufu *UserFavoriteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ufu.check(); err != nil {
 		return n, err
@@ -126,6 +133,7 @@ func (ufu *UserFavoriteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ufu.mutation.PageLink(); ok {
 		_spec.SetField(userfavorite.FieldPageLink, field.TypeString, value)
 	}
+	_spec.AddModifiers(ufu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ufu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{userfavorite.Label}
@@ -141,9 +149,10 @@ func (ufu *UserFavoriteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserFavoriteUpdateOne is the builder for updating a single UserFavorite entity.
 type UserFavoriteUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *UserFavoriteMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *UserFavoriteMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -239,6 +248,12 @@ func (ufuo *UserFavoriteUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ufuo *UserFavoriteUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserFavoriteUpdateOne {
+	ufuo.modifiers = append(ufuo.modifiers, modifiers...)
+	return ufuo
+}
+
 func (ufuo *UserFavoriteUpdateOne) sqlSave(ctx context.Context) (_node *UserFavorite, err error) {
 	if err := ufuo.check(); err != nil {
 		return _node, err
@@ -274,6 +289,7 @@ func (ufuo *UserFavoriteUpdateOne) sqlSave(ctx context.Context) (_node *UserFavo
 	if value, ok := ufuo.mutation.PageLink(); ok {
 		_spec.SetField(userfavorite.FieldPageLink, field.TypeString, value)
 	}
+	_spec.AddModifiers(ufuo.modifiers...)
 	_node = &UserFavorite{config: ufuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

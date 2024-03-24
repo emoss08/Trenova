@@ -21,8 +21,9 @@ import (
 // RouteControlUpdate is the builder for updating RouteControl entities.
 type RouteControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *RouteControlMutation
+	hooks     []Hook
+	mutation  *RouteControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the RouteControlUpdate builder.
@@ -175,6 +176,12 @@ func (rcu *RouteControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (rcu *RouteControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RouteControlUpdate {
+	rcu.modifiers = append(rcu.modifiers, modifiers...)
+	return rcu
+}
+
 func (rcu *RouteControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := rcu.check(); err != nil {
 		return n, err
@@ -257,6 +264,7 @@ func (rcu *RouteControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(rcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, rcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{routecontrol.Label}
@@ -272,9 +280,10 @@ func (rcu *RouteControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // RouteControlUpdateOne is the builder for updating a single RouteControl entity.
 type RouteControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *RouteControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *RouteControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -434,6 +443,12 @@ func (rcuo *RouteControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (rcuo *RouteControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RouteControlUpdateOne {
+	rcuo.modifiers = append(rcuo.modifiers, modifiers...)
+	return rcuo
+}
+
 func (rcuo *RouteControlUpdateOne) sqlSave(ctx context.Context) (_node *RouteControl, err error) {
 	if err := rcuo.check(); err != nil {
 		return _node, err
@@ -533,6 +548,7 @@ func (rcuo *RouteControlUpdateOne) sqlSave(ctx context.Context) (_node *RouteCon
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(rcuo.modifiers...)
 	_node = &RouteControl{config: rcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

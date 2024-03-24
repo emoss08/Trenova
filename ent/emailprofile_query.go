@@ -26,6 +26,7 @@ type EmailProfileQuery struct {
 	predicates       []predicate.EmailProfile
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (epq *EmailProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(epq.modifiers) > 0 {
+		_spec.Modifiers = epq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (epq *EmailProfileQuery) loadOrganization(ctx context.Context, query *Organ
 
 func (epq *EmailProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := epq.querySpec()
+	if len(epq.modifiers) > 0 {
+		_spec.Modifiers = epq.modifiers
+	}
 	_spec.Node.Columns = epq.ctx.Fields
 	if len(epq.ctx.Fields) > 0 {
 		_spec.Unique = epq.ctx.Unique != nil && *epq.ctx.Unique
@@ -573,6 +580,9 @@ func (epq *EmailProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if epq.ctx.Unique != nil && *epq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range epq.modifiers {
+		m(selector)
+	}
 	for _, p := range epq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (epq *EmailProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (epq *EmailProfileQuery) Modify(modifiers ...func(s *sql.Selector)) *EmailProfileSelect {
+	epq.modifiers = append(epq.modifiers, modifiers...)
+	return epq.Select()
 }
 
 // EmailProfileGroupBy is the group-by builder for EmailProfile entities.
@@ -678,4 +694,10 @@ func (eps *EmailProfileSelect) sqlScan(ctx context.Context, root *EmailProfileQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (eps *EmailProfileSelect) Modify(modifiers ...func(s *sql.Selector)) *EmailProfileSelect {
+	eps.modifiers = append(eps.modifiers, modifiers...)
+	return eps
 }

@@ -61,3 +61,5 @@ func (r *AccountingControlOps) UpdateAccountingControl(ac ent.AccountingControl)
 
 	return updatedAC, nil
 }
+
+

@@ -20,8 +20,9 @@ import (
 // CommodityUpdate is the builder for updating Commodity entities.
 type CommodityUpdate struct {
 	config
-	hooks    []Hook
-	mutation *CommodityMutation
+	hooks     []Hook
+	mutation  *CommodityMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the CommodityUpdate builder.
@@ -265,6 +266,12 @@ func (cu *CommodityUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (cu *CommodityUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CommodityUpdate {
+	cu.modifiers = append(cu.modifiers, modifiers...)
+	return cu
+}
+
 func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := cu.check(); err != nil {
 		return n, err
@@ -348,6 +355,7 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(cu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{commodity.Label}
@@ -363,9 +371,10 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // CommodityUpdateOne is the builder for updating a single Commodity entity.
 type CommodityUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *CommodityMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *CommodityMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -616,6 +625,12 @@ func (cuo *CommodityUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (cuo *CommodityUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CommodityUpdateOne {
+	cuo.modifiers = append(cuo.modifiers, modifiers...)
+	return cuo
+}
+
 func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, err error) {
 	if err := cuo.check(); err != nil {
 		return _node, err
@@ -716,6 +731,7 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(cuo.modifiers...)
 	_node = &Commodity{config: cuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

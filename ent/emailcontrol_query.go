@@ -30,6 +30,7 @@ type EmailControlQuery struct {
 	withBillingEmailProfile *EmailProfileQuery
 	withRateEmailProfile    *EmailProfileQuery
 	withFKs                 bool
+	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -501,6 +502,9 @@ func (ecq *EmailControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(ecq.modifiers) > 0 {
+		_spec.Modifiers = ecq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -668,6 +672,9 @@ func (ecq *EmailControlQuery) loadRateEmailProfile(ctx context.Context, query *E
 
 func (ecq *EmailControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := ecq.querySpec()
+	if len(ecq.modifiers) > 0 {
+		_spec.Modifiers = ecq.modifiers
+	}
 	_spec.Node.Columns = ecq.ctx.Fields
 	if len(ecq.ctx.Fields) > 0 {
 		_spec.Unique = ecq.ctx.Unique != nil && *ecq.ctx.Unique
@@ -736,6 +743,9 @@ func (ecq *EmailControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if ecq.ctx.Unique != nil && *ecq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range ecq.modifiers {
+		m(selector)
+	}
 	for _, p := range ecq.predicates {
 		p(selector)
 	}
@@ -751,6 +761,12 @@ func (ecq *EmailControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ecq *EmailControlQuery) Modify(modifiers ...func(s *sql.Selector)) *EmailControlSelect {
+	ecq.modifiers = append(ecq.modifiers, modifiers...)
+	return ecq.Select()
 }
 
 // EmailControlGroupBy is the group-by builder for EmailControl entities.
@@ -841,4 +857,10 @@ func (ecs *EmailControlSelect) sqlScan(ctx context.Context, root *EmailControlQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ecs *EmailControlSelect) Modify(modifiers ...func(s *sql.Selector)) *EmailControlSelect {
+	ecs.modifiers = append(ecs.modifiers, modifiers...)
+	return ecs
 }

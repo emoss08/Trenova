@@ -18,8 +18,9 @@ import (
 // UsStateUpdate is the builder for updating UsState entities.
 type UsStateUpdate struct {
 	config
-	hooks    []Hook
-	mutation *UsStateMutation
+	hooks     []Hook
+	mutation  *UsStateMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the UsStateUpdate builder.
@@ -156,6 +157,12 @@ func (usu *UsStateUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (usu *UsStateUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UsStateUpdate {
+	usu.modifiers = append(usu.modifiers, modifiers...)
+	return usu
+}
+
 func (usu *UsStateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := usu.check(); err != nil {
 		return n, err
@@ -183,6 +190,7 @@ func (usu *UsStateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := usu.mutation.CountryIso3(); ok {
 		_spec.SetField(usstate.FieldCountryIso3, field.TypeString, value)
 	}
+	_spec.AddModifiers(usu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, usu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{usstate.Label}
@@ -198,9 +206,10 @@ func (usu *UsStateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UsStateUpdateOne is the builder for updating a single UsState entity.
 type UsStateUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *UsStateMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *UsStateMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -344,6 +353,12 @@ func (usuo *UsStateUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (usuo *UsStateUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UsStateUpdateOne {
+	usuo.modifiers = append(usuo.modifiers, modifiers...)
+	return usuo
+}
+
 func (usuo *UsStateUpdateOne) sqlSave(ctx context.Context) (_node *UsState, err error) {
 	if err := usuo.check(); err != nil {
 		return _node, err
@@ -388,6 +403,7 @@ func (usuo *UsStateUpdateOne) sqlSave(ctx context.Context) (_node *UsState, err 
 	if value, ok := usuo.mutation.CountryIso3(); ok {
 		_spec.SetField(usstate.FieldCountryIso3, field.TypeString, value)
 	}
+	_spec.AddModifiers(usuo.modifiers...)
 	_node = &UsState{config: usuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

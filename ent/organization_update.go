@@ -28,8 +28,9 @@ import (
 // OrganizationUpdate is the builder for updating Organization entities.
 type OrganizationUpdate struct {
 	config
-	hooks    []Hook
-	mutation *OrganizationMutation
+	hooks     []Hook
+	mutation  *OrganizationMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the OrganizationUpdate builder.
@@ -433,6 +434,12 @@ func (ou *OrganizationUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ou *OrganizationUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *OrganizationUpdate {
+	ou.modifiers = append(ou.modifiers, modifiers...)
+	return ou
+}
+
 func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ou.check(); err != nil {
 		return n, err
@@ -730,6 +737,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ou.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{organization.Label}
@@ -745,9 +753,10 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // OrganizationUpdateOne is the builder for updating a single Organization entity.
 type OrganizationUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *OrganizationMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *OrganizationMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1158,6 +1167,12 @@ func (ouo *OrganizationUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ouo *OrganizationUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *OrganizationUpdateOne {
+	ouo.modifiers = append(ouo.modifiers, modifiers...)
+	return ouo
+}
+
 func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organization, err error) {
 	if err := ouo.check(); err != nil {
 		return _node, err
@@ -1472,6 +1487,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ouo.modifiers...)
 	_node = &Organization{config: ouo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

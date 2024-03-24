@@ -20,8 +20,9 @@ import (
 // DivisionCodeUpdate is the builder for updating DivisionCode entities.
 type DivisionCodeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *DivisionCodeMutation
+	hooks     []Hook
+	mutation  *DivisionCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the DivisionCodeUpdate builder.
@@ -238,6 +239,12 @@ func (dcu *DivisionCodeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcu *DivisionCodeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DivisionCodeUpdate {
+	dcu.modifiers = append(dcu.modifiers, modifiers...)
+	return dcu
+}
+
 func (dcu *DivisionCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := dcu.check(); err != nil {
 		return n, err
@@ -349,6 +356,7 @@ func (dcu *DivisionCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{divisioncode.Label}
@@ -364,9 +372,10 @@ func (dcu *DivisionCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // DivisionCodeUpdateOne is the builder for updating a single DivisionCode entity.
 type DivisionCodeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *DivisionCodeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *DivisionCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -590,6 +599,12 @@ func (dcuo *DivisionCodeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcuo *DivisionCodeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DivisionCodeUpdateOne {
+	dcuo.modifiers = append(dcuo.modifiers, modifiers...)
+	return dcuo
+}
+
 func (dcuo *DivisionCodeUpdateOne) sqlSave(ctx context.Context) (_node *DivisionCode, err error) {
 	if err := dcuo.check(); err != nil {
 		return _node, err
@@ -718,6 +733,7 @@ func (dcuo *DivisionCodeUpdateOne) sqlSave(ctx context.Context) (_node *Division
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DivisionCode{config: dcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

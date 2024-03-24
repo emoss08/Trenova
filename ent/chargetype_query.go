@@ -26,6 +26,7 @@ type ChargeTypeQuery struct {
 	predicates       []predicate.ChargeType
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (ctq *ChargeTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(ctq.modifiers) > 0 {
+		_spec.Modifiers = ctq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (ctq *ChargeTypeQuery) loadOrganization(ctx context.Context, query *Organiz
 
 func (ctq *ChargeTypeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := ctq.querySpec()
+	if len(ctq.modifiers) > 0 {
+		_spec.Modifiers = ctq.modifiers
+	}
 	_spec.Node.Columns = ctq.ctx.Fields
 	if len(ctq.ctx.Fields) > 0 {
 		_spec.Unique = ctq.ctx.Unique != nil && *ctq.ctx.Unique
@@ -573,6 +580,9 @@ func (ctq *ChargeTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if ctq.ctx.Unique != nil && *ctq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range ctq.modifiers {
+		m(selector)
+	}
 	for _, p := range ctq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (ctq *ChargeTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ctq *ChargeTypeQuery) Modify(modifiers ...func(s *sql.Selector)) *ChargeTypeSelect {
+	ctq.modifiers = append(ctq.modifiers, modifiers...)
+	return ctq.Select()
 }
 
 // ChargeTypeGroupBy is the group-by builder for ChargeType entities.
@@ -678,4 +694,10 @@ func (cts *ChargeTypeSelect) sqlScan(ctx context.Context, root *ChargeTypeQuery,
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (cts *ChargeTypeSelect) Modify(modifiers ...func(s *sql.Selector)) *ChargeTypeSelect {
+	cts.modifiers = append(cts.modifiers, modifiers...)
+	return cts
 }

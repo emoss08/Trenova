@@ -17,7 +17,7 @@ import (
 
 // TableChangeAlert is the model entity for the TableChangeAlert schema.
 type TableChangeAlert struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// BusinessUnitID holds the value of the "business_unit_id" field.
@@ -31,31 +31,31 @@ type TableChangeAlert struct {
 	// Status holds the value of the "status" field.
 	Status tablechangealert.Status `json:"status"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,max=50"`
 	// DatabaseAction holds the value of the "database_action" field.
-	DatabaseAction tablechangealert.DatabaseAction `json:"databaseAction"`
+	DatabaseAction tablechangealert.DatabaseAction `json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`
 	// Source holds the value of the "source" field.
-	Source tablechangealert.Source `json:"source"`
+	Source tablechangealert.Source `json:"source" validate:"required,oneof=Kafka Database"`
 	// TableName holds the value of the "table_name" field.
-	TableName *string `json:"tableName"`
+	TableName string `json:"tableName" validate:"max=255"`
 	// Topic holds the value of the "topic" field.
-	Topic *string `json:"topic"`
+	Topic string `json:"topic"`
 	// Description holds the value of the "description" field.
-	Description *string `json:"description"`
+	Description string `json:"description"`
 	// CustomSubject holds the value of the "custom_subject" field.
-	CustomSubject *string `json:"customSubject"`
+	CustomSubject string `json:"customSubject"`
 	// FunctionName holds the value of the "function_name" field.
-	FunctionName *string `json:"functionName"`
+	FunctionName string `json:"functionName"`
 	// TriggerName holds the value of the "trigger_name" field.
-	TriggerName *string `json:"triggerName"`
+	TriggerName string `json:"triggerName"`
 	// ListenerName holds the value of the "listener_name" field.
-	ListenerName *string `json:"listenerName"`
+	ListenerName string `json:"listenerName"`
 	// EmailRecipients holds the value of the "email_recipients" field.
-	EmailRecipients *string `json:"emailRecipients"`
+	EmailRecipients string `json:"emailRecipients"`
 	// EffectiveDate holds the value of the "effective_date" field.
-	EffectiveDate *time.Time `json:"effectiveDate"`
+	EffectiveDate time.Time `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
-	ExpirationDate *time.Time `json:"expirationDate"`
+	ExpirationDate time.Time `json:"expirationDate"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TableChangeAlertQuery when eager-loading is set.
 	Edges        TableChangeAlertEdges `json:"edges"`
@@ -179,71 +179,61 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field table_name", values[i])
 			} else if value.Valid {
-				tca.TableName = new(string)
-				*tca.TableName = value.String
+				tca.TableName = value.String
 			}
 		case tablechangealert.FieldTopic:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field topic", values[i])
 			} else if value.Valid {
-				tca.Topic = new(string)
-				*tca.Topic = value.String
+				tca.Topic = value.String
 			}
 		case tablechangealert.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				tca.Description = new(string)
-				*tca.Description = value.String
+				tca.Description = value.String
 			}
 		case tablechangealert.FieldCustomSubject:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field custom_subject", values[i])
 			} else if value.Valid {
-				tca.CustomSubject = new(string)
-				*tca.CustomSubject = value.String
+				tca.CustomSubject = value.String
 			}
 		case tablechangealert.FieldFunctionName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field function_name", values[i])
 			} else if value.Valid {
-				tca.FunctionName = new(string)
-				*tca.FunctionName = value.String
+				tca.FunctionName = value.String
 			}
 		case tablechangealert.FieldTriggerName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field trigger_name", values[i])
 			} else if value.Valid {
-				tca.TriggerName = new(string)
-				*tca.TriggerName = value.String
+				tca.TriggerName = value.String
 			}
 		case tablechangealert.FieldListenerName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field listener_name", values[i])
 			} else if value.Valid {
-				tca.ListenerName = new(string)
-				*tca.ListenerName = value.String
+				tca.ListenerName = value.String
 			}
 		case tablechangealert.FieldEmailRecipients:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email_recipients", values[i])
 			} else if value.Valid {
-				tca.EmailRecipients = new(string)
-				*tca.EmailRecipients = value.String
+				tca.EmailRecipients = value.String
 			}
 		case tablechangealert.FieldEffectiveDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field effective_date", values[i])
 			} else if value.Valid {
-				tca.EffectiveDate = new(time.Time)
-				*tca.EffectiveDate = value.Time
+				tca.EffectiveDate = value.Time
 			}
 		case tablechangealert.FieldExpirationDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field expiration_date", values[i])
 			} else if value.Valid {
-				tca.ExpirationDate = new(time.Time)
-				*tca.ExpirationDate = value.Time
+				tca.ExpirationDate = value.Time
 			}
 		default:
 			tca.selectValues.Set(columns[i], values[i])
@@ -315,55 +305,35 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString("source=")
 	builder.WriteString(fmt.Sprintf("%v", tca.Source))
 	builder.WriteString(", ")
-	if v := tca.TableName; v != nil {
-		builder.WriteString("table_name=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("table_name=")
+	builder.WriteString(tca.TableName)
 	builder.WriteString(", ")
-	if v := tca.Topic; v != nil {
-		builder.WriteString("topic=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("topic=")
+	builder.WriteString(tca.Topic)
 	builder.WriteString(", ")
-	if v := tca.Description; v != nil {
-		builder.WriteString("description=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("description=")
+	builder.WriteString(tca.Description)
 	builder.WriteString(", ")
-	if v := tca.CustomSubject; v != nil {
-		builder.WriteString("custom_subject=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("custom_subject=")
+	builder.WriteString(tca.CustomSubject)
 	builder.WriteString(", ")
-	if v := tca.FunctionName; v != nil {
-		builder.WriteString("function_name=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("function_name=")
+	builder.WriteString(tca.FunctionName)
 	builder.WriteString(", ")
-	if v := tca.TriggerName; v != nil {
-		builder.WriteString("trigger_name=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("trigger_name=")
+	builder.WriteString(tca.TriggerName)
 	builder.WriteString(", ")
-	if v := tca.ListenerName; v != nil {
-		builder.WriteString("listener_name=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("listener_name=")
+	builder.WriteString(tca.ListenerName)
 	builder.WriteString(", ")
-	if v := tca.EmailRecipients; v != nil {
-		builder.WriteString("email_recipients=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("email_recipients=")
+	builder.WriteString(tca.EmailRecipients)
 	builder.WriteString(", ")
-	if v := tca.EffectiveDate; v != nil {
-		builder.WriteString("effective_date=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
+	builder.WriteString("effective_date=")
+	builder.WriteString(tca.EffectiveDate.Format(time.ANSIC))
 	builder.WriteString(", ")
-	if v := tca.ExpirationDate; v != nil {
-		builder.WriteString("expiration_date=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
+	builder.WriteString("expiration_date=")
+	builder.WriteString(tca.ExpirationDate.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

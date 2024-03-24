@@ -20,8 +20,9 @@ import (
 // RevenueCodeUpdate is the builder for updating RevenueCode entities.
 type RevenueCodeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *RevenueCodeMutation
+	hooks     []Hook
+	mutation  *RevenueCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the RevenueCodeUpdate builder.
@@ -213,6 +214,12 @@ func (rcu *RevenueCodeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (rcu *RevenueCodeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RevenueCodeUpdate {
+	rcu.modifiers = append(rcu.modifiers, modifiers...)
+	return rcu
+}
+
 func (rcu *RevenueCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := rcu.check(); err != nil {
 		return n, err
@@ -295,6 +302,7 @@ func (rcu *RevenueCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(rcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, rcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{revenuecode.Label}
@@ -310,9 +318,10 @@ func (rcu *RevenueCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // RevenueCodeUpdateOne is the builder for updating a single RevenueCode entity.
 type RevenueCodeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *RevenueCodeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *RevenueCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -511,6 +520,12 @@ func (rcuo *RevenueCodeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (rcuo *RevenueCodeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RevenueCodeUpdateOne {
+	rcuo.modifiers = append(rcuo.modifiers, modifiers...)
+	return rcuo
+}
+
 func (rcuo *RevenueCodeUpdateOne) sqlSave(ctx context.Context) (_node *RevenueCode, err error) {
 	if err := rcuo.check(); err != nil {
 		return _node, err
@@ -610,6 +625,7 @@ func (rcuo *RevenueCodeUpdateOne) sqlSave(ctx context.Context) (_node *RevenueCo
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(rcuo.modifiers...)
 	_node = &RevenueCode{config: rcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

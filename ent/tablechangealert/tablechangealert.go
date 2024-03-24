@@ -188,8 +188,8 @@ type Source string
 
 // Source values.
 const (
-	SourceKafka Source = "Kafka"
-	SourceDb    Source = "Db"
+	SourceKafka    Source = "Kafka"
+	SourceDatabase Source = "Database"
 )
 
 func (s Source) String() string {
@@ -199,7 +199,7 @@ func (s Source) String() string {
 // SourceValidator is a validator for the "source" field enum values. It is called by the builders before save.
 func SourceValidator(s Source) error {
 	switch s {
-	case SourceKafka, SourceDb:
+	case SourceKafka, SourceDatabase:
 		return nil
 	default:
 		return fmt.Errorf("tablechangealert: invalid enum value for source field: %q", s)

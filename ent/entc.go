@@ -14,7 +14,7 @@ import (
 
 func main() {
 	opts := []entc.Option{
-		entc.FeatureNames("privacy", "schema/snapshot"),
+		entc.FeatureNames("privacy", "schema/snapshot", "entql", "sql/modifier"),
 	}
 
 	if err := entc.Generate("./ent/schema", &gen.Config{

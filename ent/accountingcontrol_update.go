@@ -22,8 +22,9 @@ import (
 // AccountingControlUpdate is the builder for updating AccountingControl entities.
 type AccountingControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *AccountingControlMutation
+	hooks     []Hook
+	mutation  *AccountingControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the AccountingControlUpdate builder.
@@ -340,6 +341,12 @@ func (acu *AccountingControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (acu *AccountingControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AccountingControlUpdate {
+	acu.modifiers = append(acu.modifiers, modifiers...)
+	return acu
+}
+
 func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := acu.check(); err != nil {
 		return n, err
@@ -504,6 +511,7 @@ func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(acu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, acu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{accountingcontrol.Label}
@@ -519,9 +527,10 @@ func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err err
 // AccountingControlUpdateOne is the builder for updating a single AccountingControl entity.
 type AccountingControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *AccountingControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *AccountingControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -845,6 +854,12 @@ func (acuo *AccountingControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (acuo *AccountingControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AccountingControlUpdateOne {
+	acuo.modifiers = append(acuo.modifiers, modifiers...)
+	return acuo
+}
+
 func (acuo *AccountingControlUpdateOne) sqlSave(ctx context.Context) (_node *AccountingControl, err error) {
 	if err := acuo.check(); err != nil {
 		return _node, err
@@ -1026,6 +1041,7 @@ func (acuo *AccountingControlUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(acuo.modifiers...)
 	_node = &AccountingControl{config: acuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

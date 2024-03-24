@@ -18,8 +18,9 @@ import (
 // HazardousMaterialUpdate is the builder for updating HazardousMaterial entities.
 type HazardousMaterialUpdate struct {
 	config
-	hooks    []Hook
-	mutation *HazardousMaterialMutation
+	hooks     []Hook
+	mutation  *HazardousMaterialMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the HazardousMaterialUpdate builder.
@@ -228,6 +229,12 @@ func (hmu *HazardousMaterialUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (hmu *HazardousMaterialUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *HazardousMaterialUpdate {
+	hmu.modifiers = append(hmu.modifiers, modifiers...)
+	return hmu
+}
+
 func (hmu *HazardousMaterialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := hmu.check(); err != nil {
 		return n, err
@@ -276,6 +283,7 @@ func (hmu *HazardousMaterialUpdate) sqlSave(ctx context.Context) (n int, err err
 	if hmu.mutation.ProperShippingNameCleared() {
 		_spec.ClearField(hazardousmaterial.FieldProperShippingName, field.TypeString)
 	}
+	_spec.AddModifiers(hmu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, hmu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{hazardousmaterial.Label}
@@ -291,9 +299,10 @@ func (hmu *HazardousMaterialUpdate) sqlSave(ctx context.Context) (n int, err err
 // HazardousMaterialUpdateOne is the builder for updating a single HazardousMaterial entity.
 type HazardousMaterialUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *HazardousMaterialMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *HazardousMaterialMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -509,6 +518,12 @@ func (hmuo *HazardousMaterialUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (hmuo *HazardousMaterialUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *HazardousMaterialUpdateOne {
+	hmuo.modifiers = append(hmuo.modifiers, modifiers...)
+	return hmuo
+}
+
 func (hmuo *HazardousMaterialUpdateOne) sqlSave(ctx context.Context) (_node *HazardousMaterial, err error) {
 	if err := hmuo.check(); err != nil {
 		return _node, err
@@ -574,6 +589,7 @@ func (hmuo *HazardousMaterialUpdateOne) sqlSave(ctx context.Context) (_node *Haz
 	if hmuo.mutation.ProperShippingNameCleared() {
 		_spec.ClearField(hazardousmaterial.FieldProperShippingName, field.TypeString)
 	}
+	_spec.AddModifiers(hmuo.modifiers...)
 	_node = &HazardousMaterial{config: hmuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

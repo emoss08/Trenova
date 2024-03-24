@@ -26,6 +26,7 @@ type LocationCategoryQuery struct {
 	predicates       []predicate.LocationCategory
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (lcq *LocationCategoryQuery) sqlAll(ctx context.Context, hooks ...queryHook
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(lcq.modifiers) > 0 {
+		_spec.Modifiers = lcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (lcq *LocationCategoryQuery) loadOrganization(ctx context.Context, query *O
 
 func (lcq *LocationCategoryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := lcq.querySpec()
+	if len(lcq.modifiers) > 0 {
+		_spec.Modifiers = lcq.modifiers
+	}
 	_spec.Node.Columns = lcq.ctx.Fields
 	if len(lcq.ctx.Fields) > 0 {
 		_spec.Unique = lcq.ctx.Unique != nil && *lcq.ctx.Unique
@@ -573,6 +580,9 @@ func (lcq *LocationCategoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if lcq.ctx.Unique != nil && *lcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range lcq.modifiers {
+		m(selector)
+	}
 	for _, p := range lcq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (lcq *LocationCategoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (lcq *LocationCategoryQuery) Modify(modifiers ...func(s *sql.Selector)) *LocationCategorySelect {
+	lcq.modifiers = append(lcq.modifiers, modifiers...)
+	return lcq.Select()
 }
 
 // LocationCategoryGroupBy is the group-by builder for LocationCategory entities.
@@ -678,4 +694,10 @@ func (lcs *LocationCategorySelect) sqlScan(ctx context.Context, root *LocationCa
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (lcs *LocationCategorySelect) Modify(modifiers ...func(s *sql.Selector)) *LocationCategorySelect {
+	lcs.modifiers = append(lcs.modifiers, modifiers...)
+	return lcs
 }

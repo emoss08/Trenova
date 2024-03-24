@@ -26,6 +26,7 @@ type EquipmentManufactuerQuery struct {
 	predicates       []predicate.EquipmentManufactuer
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (emq *EquipmentManufactuerQuery) sqlAll(ctx context.Context, hooks ...query
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(emq.modifiers) > 0 {
+		_spec.Modifiers = emq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (emq *EquipmentManufactuerQuery) loadOrganization(ctx context.Context, quer
 
 func (emq *EquipmentManufactuerQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := emq.querySpec()
+	if len(emq.modifiers) > 0 {
+		_spec.Modifiers = emq.modifiers
+	}
 	_spec.Node.Columns = emq.ctx.Fields
 	if len(emq.ctx.Fields) > 0 {
 		_spec.Unique = emq.ctx.Unique != nil && *emq.ctx.Unique
@@ -573,6 +580,9 @@ func (emq *EquipmentManufactuerQuery) sqlQuery(ctx context.Context) *sql.Selecto
 	if emq.ctx.Unique != nil && *emq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range emq.modifiers {
+		m(selector)
+	}
 	for _, p := range emq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (emq *EquipmentManufactuerQuery) sqlQuery(ctx context.Context) *sql.Selecto
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (emq *EquipmentManufactuerQuery) Modify(modifiers ...func(s *sql.Selector)) *EquipmentManufactuerSelect {
+	emq.modifiers = append(emq.modifiers, modifiers...)
+	return emq.Select()
 }
 
 // EquipmentManufactuerGroupBy is the group-by builder for EquipmentManufactuer entities.
@@ -678,4 +694,10 @@ func (ems *EquipmentManufactuerSelect) sqlScan(ctx context.Context, root *Equipm
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ems *EquipmentManufactuerSelect) Modify(modifiers ...func(s *sql.Selector)) *EquipmentManufactuerSelect {
+	ems.modifiers = append(ems.modifiers, modifiers...)
+	return ems
 }

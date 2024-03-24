@@ -27,6 +27,7 @@ type FeasibilityToolControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +429,9 @@ func (ftcq *FeasibilityToolControlQuery) sqlAll(ctx context.Context, hooks ...qu
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(ftcq.modifiers) > 0 {
+		_spec.Modifiers = ftcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -519,6 +523,9 @@ func (ftcq *FeasibilityToolControlQuery) loadBusinessUnit(ctx context.Context, q
 
 func (ftcq *FeasibilityToolControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := ftcq.querySpec()
+	if len(ftcq.modifiers) > 0 {
+		_spec.Modifiers = ftcq.modifiers
+	}
 	_spec.Node.Columns = ftcq.ctx.Fields
 	if len(ftcq.ctx.Fields) > 0 {
 		_spec.Unique = ftcq.ctx.Unique != nil && *ftcq.ctx.Unique
@@ -581,6 +588,9 @@ func (ftcq *FeasibilityToolControlQuery) sqlQuery(ctx context.Context) *sql.Sele
 	if ftcq.ctx.Unique != nil && *ftcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range ftcq.modifiers {
+		m(selector)
+	}
 	for _, p := range ftcq.predicates {
 		p(selector)
 	}
@@ -596,6 +606,12 @@ func (ftcq *FeasibilityToolControlQuery) sqlQuery(ctx context.Context) *sql.Sele
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ftcq *FeasibilityToolControlQuery) Modify(modifiers ...func(s *sql.Selector)) *FeasibilityToolControlSelect {
+	ftcq.modifiers = append(ftcq.modifiers, modifiers...)
+	return ftcq.Select()
 }
 
 // FeasibilityToolControlGroupBy is the group-by builder for FeasibilityToolControl entities.
@@ -686,4 +702,10 @@ func (ftcs *FeasibilityToolControlSelect) sqlScan(ctx context.Context, root *Fea
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ftcs *FeasibilityToolControlSelect) Modify(modifiers ...func(s *sql.Selector)) *FeasibilityToolControlSelect {
+	ftcs.modifiers = append(ftcs.modifiers, modifiers...)
+	return ftcs
 }

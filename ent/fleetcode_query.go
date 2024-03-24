@@ -28,6 +28,7 @@ type FleetCodeQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withManager      *UserQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -457,6 +458,9 @@ func (fcq *FleetCodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*F
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(fcq.modifiers) > 0 {
+		_spec.Modifiers = fcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -580,6 +584,9 @@ func (fcq *FleetCodeQuery) loadManager(ctx context.Context, query *UserQuery, no
 
 func (fcq *FleetCodeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := fcq.querySpec()
+	if len(fcq.modifiers) > 0 {
+		_spec.Modifiers = fcq.modifiers
+	}
 	_spec.Node.Columns = fcq.ctx.Fields
 	if len(fcq.ctx.Fields) > 0 {
 		_spec.Unique = fcq.ctx.Unique != nil && *fcq.ctx.Unique
@@ -651,6 +658,9 @@ func (fcq *FleetCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if fcq.ctx.Unique != nil && *fcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range fcq.modifiers {
+		m(selector)
+	}
 	for _, p := range fcq.predicates {
 		p(selector)
 	}
@@ -666,6 +676,12 @@ func (fcq *FleetCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (fcq *FleetCodeQuery) Modify(modifiers ...func(s *sql.Selector)) *FleetCodeSelect {
+	fcq.modifiers = append(fcq.modifiers, modifiers...)
+	return fcq.Select()
 }
 
 // FleetCodeGroupBy is the group-by builder for FleetCode entities.
@@ -756,4 +772,10 @@ func (fcs *FleetCodeSelect) sqlScan(ctx context.Context, root *FleetCodeQuery, v
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (fcs *FleetCodeSelect) Modify(modifiers ...func(s *sql.Selector)) *FleetCodeSelect {
+	fcs.modifiers = append(fcs.modifiers, modifiers...)
+	return fcs
 }

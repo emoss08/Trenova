@@ -21,8 +21,9 @@ import (
 // BillingControlUpdate is the builder for updating BillingControl entities.
 type BillingControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *BillingControlMutation
+	hooks     []Hook
+	mutation  *BillingControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the BillingControlUpdate builder.
@@ -231,6 +232,12 @@ func (bcu *BillingControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (bcu *BillingControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BillingControlUpdate {
+	bcu.modifiers = append(bcu.modifiers, modifiers...)
+	return bcu
+}
+
 func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := bcu.check(); err != nil {
 		return n, err
@@ -325,6 +332,7 @@ func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(bcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, bcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{billingcontrol.Label}
@@ -340,9 +348,10 @@ func (bcu *BillingControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 // BillingControlUpdateOne is the builder for updating a single BillingControl entity.
 type BillingControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *BillingControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *BillingControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -558,6 +567,12 @@ func (bcuo *BillingControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (bcuo *BillingControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BillingControlUpdateOne {
+	bcuo.modifiers = append(bcuo.modifiers, modifiers...)
+	return bcuo
+}
+
 func (bcuo *BillingControlUpdateOne) sqlSave(ctx context.Context) (_node *BillingControl, err error) {
 	if err := bcuo.check(); err != nil {
 		return _node, err
@@ -669,6 +684,7 @@ func (bcuo *BillingControlUpdateOne) sqlSave(ctx context.Context) (_node *Billin
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(bcuo.modifiers...)
 	_node = &BillingControl{config: bcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

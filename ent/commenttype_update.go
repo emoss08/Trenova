@@ -18,8 +18,9 @@ import (
 // CommentTypeUpdate is the builder for updating CommentType entities.
 type CommentTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *CommentTypeMutation
+	hooks     []Hook
+	mutation  *CommentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the CommentTypeUpdate builder.
@@ -163,6 +164,12 @@ func (ctu *CommentTypeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ctu *CommentTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CommentTypeUpdate {
+	ctu.modifiers = append(ctu.modifiers, modifiers...)
+	return ctu
+}
+
 func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ctu.check(); err != nil {
 		return n, err
@@ -193,6 +200,7 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if ctu.mutation.DescriptionCleared() {
 		_spec.ClearField(commenttype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(ctu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ctu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{commenttype.Label}
@@ -208,9 +216,10 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // CommentTypeUpdateOne is the builder for updating a single CommentType entity.
 type CommentTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *CommentTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *CommentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -361,6 +370,12 @@ func (ctuo *CommentTypeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ctuo *CommentTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CommentTypeUpdateOne {
+	ctuo.modifiers = append(ctuo.modifiers, modifiers...)
+	return ctuo
+}
+
 func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentType, err error) {
 	if err := ctuo.check(); err != nil {
 		return _node, err
@@ -408,6 +423,7 @@ func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentTy
 	if ctuo.mutation.DescriptionCleared() {
 		_spec.ClearField(commenttype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(ctuo.modifiers...)
 	_node = &CommentType{config: ctuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

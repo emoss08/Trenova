@@ -23,6 +23,8 @@ import {
   DataTableTooltipColumnHeader,
 } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { TableChangeAlertEditSheet } from "@/components/table-change-edit-sheet";
+import { TableChangeAlertSheet } from "@/components/table-change-sheet";
 import {
   databaseActionChoices,
   sourceChoices,
@@ -31,8 +33,6 @@ import {
 import { TableChangeAlert } from "@/types/organization";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { TableChangeAlertSheet } from "@/components/table-change-sheet";
-import { TableChangeAlertEditSheet } from "@/components/table-change-edit-sheet";
 
 const columns: ColumnDef<TableChangeAlert>[] = [
   {
@@ -134,7 +134,7 @@ export default function TableChangeAlerts() {
       <DataTable
         queryKey="table-change-alert-data"
         columns={columns}
-        link="/table_change_alerts/"
+        link="/table-change-alerts/"
         name="Table Change Alert"
         exportModelName="TableChangeAlert"
         filterColumn="name"

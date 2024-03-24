@@ -20,8 +20,9 @@ import (
 // BusinessUnitUpdate is the builder for updating BusinessUnit entities.
 type BusinessUnitUpdate struct {
 	config
-	hooks    []Hook
-	mutation *BusinessUnitMutation
+	hooks     []Hook
+	mutation  *BusinessUnitMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the BusinessUnitUpdate builder.
@@ -555,6 +556,12 @@ func (buu *BusinessUnitUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (buu *BusinessUnitUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BusinessUnitUpdate {
+	buu.modifiers = append(buu.modifiers, modifiers...)
+	return buu
+}
+
 func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := buu.check(); err != nil {
 		return n, err
@@ -766,6 +773,7 @@ func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(buu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, buu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{businessunit.Label}
@@ -781,9 +789,10 @@ func (buu *BusinessUnitUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // BusinessUnitUpdateOne is the builder for updating a single BusinessUnit entity.
 type BusinessUnitUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *BusinessUnitMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *BusinessUnitMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1324,6 +1333,12 @@ func (buuo *BusinessUnitUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (buuo *BusinessUnitUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *BusinessUnitUpdateOne {
+	buuo.modifiers = append(buuo.modifiers, modifiers...)
+	return buuo
+}
+
 func (buuo *BusinessUnitUpdateOne) sqlSave(ctx context.Context) (_node *BusinessUnit, err error) {
 	if err := buuo.check(); err != nil {
 		return _node, err
@@ -1552,6 +1567,7 @@ func (buuo *BusinessUnitUpdateOne) sqlSave(ctx context.Context) (_node *Business
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(buuo.modifiers...)
 	_node = &BusinessUnit{config: buuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

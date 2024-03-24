@@ -26,6 +26,7 @@ type ShipmentTypeQuery struct {
 	predicates       []predicate.ShipmentType
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (stq *ShipmentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(stq.modifiers) > 0 {
+		_spec.Modifiers = stq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (stq *ShipmentTypeQuery) loadOrganization(ctx context.Context, query *Organ
 
 func (stq *ShipmentTypeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := stq.querySpec()
+	if len(stq.modifiers) > 0 {
+		_spec.Modifiers = stq.modifiers
+	}
 	_spec.Node.Columns = stq.ctx.Fields
 	if len(stq.ctx.Fields) > 0 {
 		_spec.Unique = stq.ctx.Unique != nil && *stq.ctx.Unique
@@ -573,6 +580,9 @@ func (stq *ShipmentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if stq.ctx.Unique != nil && *stq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range stq.modifiers {
+		m(selector)
+	}
 	for _, p := range stq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (stq *ShipmentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (stq *ShipmentTypeQuery) Modify(modifiers ...func(s *sql.Selector)) *ShipmentTypeSelect {
+	stq.modifiers = append(stq.modifiers, modifiers...)
+	return stq.Select()
 }
 
 // ShipmentTypeGroupBy is the group-by builder for ShipmentType entities.
@@ -678,4 +694,10 @@ func (sts *ShipmentTypeSelect) sqlScan(ctx context.Context, root *ShipmentTypeQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (sts *ShipmentTypeSelect) Modify(modifiers ...func(s *sql.Selector)) *ShipmentTypeSelect {
+	sts.modifiers = append(sts.modifiers, modifiers...)
+	return sts
 }

@@ -18,8 +18,9 @@ import (
 // ServiceTypeUpdate is the builder for updating ServiceType entities.
 type ServiceTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ServiceTypeMutation
+	hooks     []Hook
+	mutation  *ServiceTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ServiceTypeUpdate builder.
@@ -144,6 +145,12 @@ func (stu *ServiceTypeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (stu *ServiceTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceTypeUpdate {
+	stu.modifiers = append(stu.modifiers, modifiers...)
+	return stu
+}
+
 func (stu *ServiceTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := stu.check(); err != nil {
 		return n, err
@@ -171,6 +178,7 @@ func (stu *ServiceTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if stu.mutation.DescriptionCleared() {
 		_spec.ClearField(servicetype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(stu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, stu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{servicetype.Label}
@@ -186,9 +194,10 @@ func (stu *ServiceTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ServiceTypeUpdateOne is the builder for updating a single ServiceType entity.
 type ServiceTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ServiceTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ServiceTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -320,6 +329,12 @@ func (stuo *ServiceTypeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (stuo *ServiceTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceTypeUpdateOne {
+	stuo.modifiers = append(stuo.modifiers, modifiers...)
+	return stuo
+}
+
 func (stuo *ServiceTypeUpdateOne) sqlSave(ctx context.Context) (_node *ServiceType, err error) {
 	if err := stuo.check(); err != nil {
 		return _node, err
@@ -364,6 +379,7 @@ func (stuo *ServiceTypeUpdateOne) sqlSave(ctx context.Context) (_node *ServiceTy
 	if stuo.mutation.DescriptionCleared() {
 		_spec.ClearField(servicetype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(stuo.modifiers...)
 	_node = &ServiceType{config: stuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -133,6 +133,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Qualifier Code Routes
 			registerQualifierCodeRouter(r)
+
+			// Register Table Change Alert Routes
+			registerTableChangeAlertRouter(r)
 		})
 	})
 

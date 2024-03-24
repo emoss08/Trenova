@@ -18,8 +18,9 @@ import (
 // TagUpdate is the builder for updating Tag entities.
 type TagUpdate struct {
 	config
-	hooks    []Hook
-	mutation *TagMutation
+	hooks     []Hook
+	mutation  *TagMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the TagUpdate builder.
@@ -125,6 +126,12 @@ func (tu *TagUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (tu *TagUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TagUpdate {
+	tu.modifiers = append(tu.modifiers, modifiers...)
+	return tu
+}
+
 func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := tu.check(); err != nil {
 		return n, err
@@ -149,6 +156,7 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(tu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tag.Label}
@@ -164,9 +172,10 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // TagUpdateOne is the builder for updating a single Tag entity.
 type TagUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *TagMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *TagMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -279,6 +288,12 @@ func (tuo *TagUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (tuo *TagUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TagUpdateOne {
+	tuo.modifiers = append(tuo.modifiers, modifiers...)
+	return tuo
+}
+
 func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	if err := tuo.check(); err != nil {
 		return _node, err
@@ -320,6 +335,7 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	if tuo.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(tuo.modifiers...)
 	_node = &Tag{config: tuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

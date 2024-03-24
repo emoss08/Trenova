@@ -21,8 +21,9 @@ import (
 // FeasibilityToolControlUpdate is the builder for updating FeasibilityToolControl entities.
 type FeasibilityToolControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *FeasibilityToolControlMutation
+	hooks     []Hook
+	mutation  *FeasibilityToolControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the FeasibilityToolControlUpdate builder.
@@ -283,6 +284,12 @@ func (ftcu *FeasibilityToolControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ftcu *FeasibilityToolControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FeasibilityToolControlUpdate {
+	ftcu.modifiers = append(ftcu.modifiers, modifiers...)
+	return ftcu
+}
+
 func (ftcu *FeasibilityToolControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ftcu.check(); err != nil {
 		return n, err
@@ -392,6 +399,7 @@ func (ftcu *FeasibilityToolControlUpdate) sqlSave(ctx context.Context) (n int, e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ftcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ftcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{feasibilitytoolcontrol.Label}
@@ -407,9 +415,10 @@ func (ftcu *FeasibilityToolControlUpdate) sqlSave(ctx context.Context) (n int, e
 // FeasibilityToolControlUpdateOne is the builder for updating a single FeasibilityToolControl entity.
 type FeasibilityToolControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *FeasibilityToolControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *FeasibilityToolControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -677,6 +686,12 @@ func (ftcuo *FeasibilityToolControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ftcuo *FeasibilityToolControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FeasibilityToolControlUpdateOne {
+	ftcuo.modifiers = append(ftcuo.modifiers, modifiers...)
+	return ftcuo
+}
+
 func (ftcuo *FeasibilityToolControlUpdateOne) sqlSave(ctx context.Context) (_node *FeasibilityToolControl, err error) {
 	if err := ftcuo.check(); err != nil {
 		return _node, err
@@ -803,6 +818,7 @@ func (ftcuo *FeasibilityToolControlUpdateOne) sqlSave(ctx context.Context) (_nod
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ftcuo.modifiers...)
 	_node = &FeasibilityToolControl{config: ftcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

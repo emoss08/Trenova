@@ -26,6 +26,7 @@ type AccessorialChargeQuery struct {
 	predicates       []predicate.AccessorialCharge
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (acq *AccessorialChargeQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (acq *AccessorialChargeQuery) loadOrganization(ctx context.Context, query *
 
 func (acq *AccessorialChargeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := acq.querySpec()
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	_spec.Node.Columns = acq.ctx.Fields
 	if len(acq.ctx.Fields) > 0 {
 		_spec.Unique = acq.ctx.Unique != nil && *acq.ctx.Unique
@@ -573,6 +580,9 @@ func (acq *AccessorialChargeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if acq.ctx.Unique != nil && *acq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range acq.modifiers {
+		m(selector)
+	}
 	for _, p := range acq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (acq *AccessorialChargeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (acq *AccessorialChargeQuery) Modify(modifiers ...func(s *sql.Selector)) *AccessorialChargeSelect {
+	acq.modifiers = append(acq.modifiers, modifiers...)
+	return acq.Select()
 }
 
 // AccessorialChargeGroupBy is the group-by builder for AccessorialCharge entities.
@@ -678,4 +694,10 @@ func (acs *AccessorialChargeSelect) sqlScan(ctx context.Context, root *Accessori
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (acs *AccessorialChargeSelect) Modify(modifiers ...func(s *sql.Selector)) *AccessorialChargeSelect {
+	acs.modifiers = append(acs.modifiers, modifiers...)
+	return acs
 }

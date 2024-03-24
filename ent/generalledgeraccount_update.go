@@ -20,8 +20,9 @@ import (
 // GeneralLedgerAccountUpdate is the builder for updating GeneralLedgerAccount entities.
 type GeneralLedgerAccountUpdate struct {
 	config
-	hooks    []Hook
-	mutation *GeneralLedgerAccountMutation
+	hooks     []Hook
+	mutation  *GeneralLedgerAccountMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the GeneralLedgerAccountUpdate builder.
@@ -363,6 +364,12 @@ func (glau *GeneralLedgerAccountUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (glau *GeneralLedgerAccountUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *GeneralLedgerAccountUpdate {
+	glau.modifiers = append(glau.modifiers, modifiers...)
+	return glau
+}
+
 func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := glau.check(); err != nil {
 		return n, err
@@ -486,6 +493,7 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(glau.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, glau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{generalledgeraccount.Label}
@@ -501,9 +509,10 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 // GeneralLedgerAccountUpdateOne is the builder for updating a single GeneralLedgerAccount entity.
 type GeneralLedgerAccountUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *GeneralLedgerAccountMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *GeneralLedgerAccountMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -852,6 +861,12 @@ func (glauo *GeneralLedgerAccountUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (glauo *GeneralLedgerAccountUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *GeneralLedgerAccountUpdateOne {
+	glauo.modifiers = append(glauo.modifiers, modifiers...)
+	return glauo
+}
+
 func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node *GeneralLedgerAccount, err error) {
 	if err := glauo.check(); err != nil {
 		return _node, err
@@ -992,6 +1007,7 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(glauo.modifiers...)
 	_node = &GeneralLedgerAccount{config: glauo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

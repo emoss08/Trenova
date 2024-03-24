@@ -18,8 +18,9 @@ import (
 // ShipmentTypeUpdate is the builder for updating ShipmentType entities.
 type ShipmentTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ShipmentTypeMutation
+	hooks     []Hook
+	mutation  *ShipmentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ShipmentTypeUpdate builder.
@@ -144,6 +145,12 @@ func (stu *ShipmentTypeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (stu *ShipmentTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ShipmentTypeUpdate {
+	stu.modifiers = append(stu.modifiers, modifiers...)
+	return stu
+}
+
 func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := stu.check(); err != nil {
 		return n, err
@@ -171,6 +178,7 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if stu.mutation.DescriptionCleared() {
 		_spec.ClearField(shipmenttype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(stu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, stu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{shipmenttype.Label}
@@ -186,9 +194,10 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ShipmentTypeUpdateOne is the builder for updating a single ShipmentType entity.
 type ShipmentTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ShipmentTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ShipmentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -320,6 +329,12 @@ func (stuo *ShipmentTypeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (stuo *ShipmentTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ShipmentTypeUpdateOne {
+	stuo.modifiers = append(stuo.modifiers, modifiers...)
+	return stuo
+}
+
 func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *ShipmentType, err error) {
 	if err := stuo.check(); err != nil {
 		return _node, err
@@ -364,6 +379,7 @@ func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 	if stuo.mutation.DescriptionCleared() {
 		_spec.ClearField(shipmenttype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(stuo.modifiers...)
 	_node = &ShipmentType{config: stuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -27,6 +27,7 @@ type BusinessUnitQuery struct {
 	withPrev          *BusinessUnitQuery
 	withNext          *BusinessUnitQuery
 	withOrganizations *OrganizationQuery
+	modifiers         []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -456,6 +457,9 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(buq.modifiers) > 0 {
+		_spec.Modifiers = buq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -582,6 +586,9 @@ func (buq *BusinessUnitQuery) loadOrganizations(ctx context.Context, query *Orga
 
 func (buq *BusinessUnitQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := buq.querySpec()
+	if len(buq.modifiers) > 0 {
+		_spec.Modifiers = buq.modifiers
+	}
 	_spec.Node.Columns = buq.ctx.Fields
 	if len(buq.ctx.Fields) > 0 {
 		_spec.Unique = buq.ctx.Unique != nil && *buq.ctx.Unique
@@ -647,6 +654,9 @@ func (buq *BusinessUnitQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if buq.ctx.Unique != nil && *buq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range buq.modifiers {
+		m(selector)
+	}
 	for _, p := range buq.predicates {
 		p(selector)
 	}
@@ -662,6 +672,12 @@ func (buq *BusinessUnitQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (buq *BusinessUnitQuery) Modify(modifiers ...func(s *sql.Selector)) *BusinessUnitSelect {
+	buq.modifiers = append(buq.modifiers, modifiers...)
+	return buq.Select()
 }
 
 // BusinessUnitGroupBy is the group-by builder for BusinessUnit entities.
@@ -752,4 +768,10 @@ func (bus *BusinessUnitSelect) sqlScan(ctx context.Context, root *BusinessUnitQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (bus *BusinessUnitSelect) Modify(modifiers ...func(s *sql.Selector)) *BusinessUnitSelect {
+	bus.modifiers = append(bus.modifiers, modifiers...)
+	return bus
 }

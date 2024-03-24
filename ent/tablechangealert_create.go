@@ -455,43 +455,43 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	}
 	if value, ok := tcac.mutation.TableName(); ok {
 		_spec.SetField(tablechangealert.FieldTableName, field.TypeString, value)
-		_node.TableName = &value
+		_node.TableName = value
 	}
 	if value, ok := tcac.mutation.Topic(); ok {
 		_spec.SetField(tablechangealert.FieldTopic, field.TypeString, value)
-		_node.Topic = &value
+		_node.Topic = value
 	}
 	if value, ok := tcac.mutation.Description(); ok {
 		_spec.SetField(tablechangealert.FieldDescription, field.TypeString, value)
-		_node.Description = &value
+		_node.Description = value
 	}
 	if value, ok := tcac.mutation.CustomSubject(); ok {
 		_spec.SetField(tablechangealert.FieldCustomSubject, field.TypeString, value)
-		_node.CustomSubject = &value
+		_node.CustomSubject = value
 	}
 	if value, ok := tcac.mutation.FunctionName(); ok {
 		_spec.SetField(tablechangealert.FieldFunctionName, field.TypeString, value)
-		_node.FunctionName = &value
+		_node.FunctionName = value
 	}
 	if value, ok := tcac.mutation.TriggerName(); ok {
 		_spec.SetField(tablechangealert.FieldTriggerName, field.TypeString, value)
-		_node.TriggerName = &value
+		_node.TriggerName = value
 	}
 	if value, ok := tcac.mutation.ListenerName(); ok {
 		_spec.SetField(tablechangealert.FieldListenerName, field.TypeString, value)
-		_node.ListenerName = &value
+		_node.ListenerName = value
 	}
 	if value, ok := tcac.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)
-		_node.EmailRecipients = &value
+		_node.EmailRecipients = value
 	}
 	if value, ok := tcac.mutation.EffectiveDate(); ok {
 		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)
-		_node.EffectiveDate = &value
+		_node.EffectiveDate = value
 	}
 	if value, ok := tcac.mutation.ExpirationDate(); ok {
 		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeTime, value)
-		_node.ExpirationDate = &value
+		_node.ExpirationDate = value
 	}
 	if nodes := tcac.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -33,7 +33,7 @@ import {
   sourceChoices,
   statusChoices,
 } from "@/lib/choices";
-import { cleanObject, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { TableChangeAlertFormValues as FormValues } from "@/types/organization";
 import { TableSheetProps } from "@/types/tables";
@@ -246,7 +246,7 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/table_change_alerts/",
+      path: "/table-change-alerts/",
       successMessage: t("formMessages.postSuccess"),
       queryKeysToInvalidate: ["table-change-alert-data"],
       closeModal: true,
@@ -256,9 +256,8 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     reset,
   );
   const onSubmit = (values: FormValues) => {
-    const cleanedValues = cleanObject(values);
     setIsSubmitting(true);
-    mutation.mutate(cleanedValues);
+    mutation.mutate(values);
   };
 
   return (
