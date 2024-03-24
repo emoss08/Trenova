@@ -115,7 +115,7 @@ export function Option({ ...props }: OptionProps) {
         <div className="flex flex-1 flex-col justify-center overflow-hidden">
           <span className="truncate">{label}</span>
           {data.description && (
-            <span className="text-foreground/70 mt-1 truncate text-xs">
+            <span className="text-foreground/70 truncate text-xs">
               {data.description}
             </span>
           )}

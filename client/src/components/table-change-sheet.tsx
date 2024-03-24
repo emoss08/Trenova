@@ -60,7 +60,7 @@ function SourceField({
     isLoading: isTopicsLoading,
   } = useTopics();
 
-  return sourceChoice === "KAFKA" ? (
+  return sourceChoice === "Kafka" ? (
     <FormControl>
       <SelectInput
         name="topic"
@@ -228,9 +228,9 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       status: "A",
       name: "",
-      databaseAction: "INSERT",
+      databaseAction: "Insert",
       table: "",
-      source: "POSTGRES",
+      source: "Database",
       topic: "",
       description: "",
       emailProfile: "",

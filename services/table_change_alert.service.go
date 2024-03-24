@@ -107,3 +107,60 @@ func (r *TableChangeAlertOps) UpdateTableChangeAlert(tableChangeAlert ent.TableC
 
 	return updateTableChangeAlert, nil
 }
+
+type TableName struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+func (r *TableChangeAlertOps) GetTableNames() ([]TableName, error) {
+	excludedTableNames := map[string]bool{
+		"table_change_alerts":       true,
+		"shipment_controls":         true,
+		"billing_controls":          true,
+		"sessions":                  true,
+		"organizations":             true,
+		"business_units":            true,
+		"feasibility_tool_controls": true,
+		"users":                     true,
+		"general_ledger_accounts":   true,
+		"user_favorites":            true,
+		"us_states":                 true,
+		"invoice_controls":          true,
+		"email_controls":            true,
+		"route_controls":            true,
+		"accounting_controls":       true,
+		"email_profiles":            true,
+	}
+
+	tx, err := r.client.Tx(r.ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.QueryContext(r.ctx, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tableNames []TableName
+	for rows.Next() {
+		var tableName string
+		if scanErr := rows.Scan(&tableName); scanErr != nil {
+			return nil, scanErr
+		}
+
+		// Skip the tables that are in the exclusion list
+		if _, excluded := excludedTableNames[tableName]; !excluded {
+			tableNames = append(tableNames, TableName{Value: tableName, Label: tableName})
+		}
+	}
+
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, rowErr
+	}
+
+	return tableNames, nil
+}

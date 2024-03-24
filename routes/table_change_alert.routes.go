@@ -10,5 +10,6 @@ func registerTableChangeAlertRouter(r chi.Router) {
 		r.Get("/", controllers.GetTableChangeAlerts)
 		r.Post("/", controllers.CreateTableChangeALert)
 		r.Put("/{tableChangeAlertID}", controllers.UpdateTableChangeAlert)
+		r.Get("/table-names", controllers.GetTableNames)
 	})
 }

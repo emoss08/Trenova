@@ -144,7 +144,7 @@ export async function getGoogleApiInformation(): Promise<GoogleAPI> {
 export async function getTableNames(): Promise<
   { value: string; label: string }[]
 > {
-  const response = await axios.get("/table_names/");
+  const response = await axios.get("/table-change-alerts/table-names/");
   return response.data.results;
 }
 
