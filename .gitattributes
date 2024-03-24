@@ -4,5 +4,3 @@
 # Language overrides
 *.ts linguist-language=TypeScript
 *.go linguist-language=Go
-
-ent/** linguist-generated=false
