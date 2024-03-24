@@ -21,7 +21,6 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
-    SpectacularRedocView,
     SpectacularSwaggerView,
 )
 from rest_framework import routers
@@ -62,20 +61,20 @@ router.register(
     basename="gl-accounts",
 )
 router.register(
-    r"revenue_codes", accounting_api.RevenueCodeViewSet, basename="revenue-codes"
+    r"revenue-codes", accounting_api.RevenueCodeViewSet, basename="revenue-codes"
 )
 router.register(
-    r"division_codes", accounting_api.DivisionCodeViewSet, basename="division-codes"
+    r"division-codes", accounting_api.DivisionCodeViewSet, basename="division-codes"
 )
 router.register(r"tags", accounting_api.TagViewSet, basename="tags")
 router.register(
-    r"finance_transactions", accounting_api.FinancialTransactionViewSet, basename="tags"
+    r"finance-transactions", accounting_api.FinancialTransactionViewSet, basename="tags"
 )
 router.register(
-    r"reconciliation_queue", accounting_api.ReconciliationQueueViewSet, basename="tags"
+    r"reconciliation-queue", accounting_api.ReconciliationQueueViewSet, basename="tags"
 )
 router.register(
-    r"accounting_control", accounting_api.AccountingControlViewSet, basename="tags"
+    r"accounting-control", accounting_api.AccountingControlViewSet, basename="tags"
 )
 
 
@@ -83,14 +82,14 @@ router.register(
 router.register(r"organizations", org_api.OrganizationViewSet, basename="organization")
 router.register(r"depots", org_api.DepotViewSet, basename="depots")
 
-router.register(r"email_control", org_api.EmailControlViewSet, basename="email-control")
+router.register(r"email-control", org_api.EmailControlViewSet, basename="email-control")
 router.register(
-    r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
+    r"email-profiles", org_api.EmailProfileViewSet, basename="email-profiles"
 )
-router.register(r"email_log", org_api.EmailLogViewSet, basename="email-log")
-router.register(r"tax_rates", org_api.TaxRateViewSet, basename="tax-rates")
+router.register(r"email-log", org_api.EmailLogViewSet, basename="email-log")
+router.register(r"tax-rates", org_api.TaxRateViewSet, basename="tax-rates")
 router.register(
-    r"table_change_alerts",
+    r"table-change-alerts",
     org_api.TableChangeAlertViewSet,
     basename="table-change-alerts",
 )
@@ -107,46 +106,37 @@ router.register(
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
-router.register(
-    r"worker_profiles", worker_api.WorkerProfileViewSet, basename="worker-profile"
-)
-router.register(
-    r"worker_comments", worker_api.WorkerCommentViewSet, basename="worker-comment"
-)
-router.register(
-    r"worker_contacts", worker_api.WorkerContactViewSet, basename="worker-contact"
-)
 
 # Billing Routing
 router.register(
-    r"billing_control", billing_api.BillingControlViewSet, basename="billing-control"
+    r"billing-control", billing_api.BillingControlViewSet, basename="billing-control"
 )
 router.register(
-    r"billing_queue", billing_api.BillingQueueViewSet, basename="billing-queue"
+    r"billing-queue", billing_api.BillingQueueViewSet, basename="billing-queue"
 )
 router.register(
-    r"billing_history", billing_api.BillingHistoryViewSet, basename="billing-history"
+    r"billing-history", billing_api.BillingHistoryViewSet, basename="billing-history"
 )
-router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
+router.register(r"charge-types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
-    r"accessorial_charges",
+    r"accessorial-charges",
     billing_api.AccessorialChargeViewSet,
     basename="accessorial-charges",
 )
 router.register(
-    r"document_classifications",
+    r"document-classifications",
     billing_api.DocumentClassificationViewSet,
     basename="document-classifications",
 )
 router.register(
-    r"billing_log_entry",
+    r"billing-log-entry",
     billing_api.BillingLogEntryViewSet,
     basename="billing-log-entry",
 )
 
 # Commodity Routing
 router.register(
-    r"hazardous_materials",
+    r"hazardous-materials",
     commodities_api.HazardousMaterialViewSet,
     basename="hazardous-materials",
 )
@@ -155,22 +145,22 @@ router.register(r"commodities", commodities_api.CommodityViewSet, basename="comm
 # Customer Routing
 router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
 router.register(
-    r"customer_fuel_tables",
+    r"customer-fuel-tables",
     customer_api.CustomerFuelTableViewSet,
     basename="customer-fuel-tables",
 )
 router.register(
-    r"customer_email_profiles",
+    r"customer-email-profiles",
     customer_api.CustomerEmailProfileViewSet,
     basename="customer-email-profiles",
 )
 router.register(
-    r"customer_rule_profiles",
+    r"customer-rule-profiles",
     customer_api.CustomerRuleProfileViewSet,
     basename="customer-rule-profiles",
 )
 router.register(
-    r"delivery_slots",
+    r"delivery-slots",
     customer_api.DeliverySlotViewSet,
     basename="delivery-slots",
 )
@@ -237,7 +227,7 @@ router.register(
 
 # Stops Routing
 router.register(
-    r"qualifier_codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
+    r"qualifier-codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
 )
 router.register(
     r"stop_comments", stops_api.StopCommentViewSet, basename="stop-comments"
@@ -297,12 +287,12 @@ router.register(r"movements", movement_api.MovementViewSet, basename="movements"
 
 # Invoicing Routing
 router.register(
-    r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control"
+    r"invoice-control", invoicing_api.InvoiceControlViewSet, basename="invoice_control"
 )
 
 # Reports Routing
 router.register(
-    r"custom_reports", reports_api.CustomReportViewSet, basename="custom_reports"
+    r"custom-reports", reports_api.CustomReportViewSet, basename="custom_reports"
 )
 router.register(r"user_reports", reports_api.UserReportViewSet, basename="user_reports")
 router.register(r"log_entries", reports_api.LogEntryViewSet, basename="log_entries")
@@ -318,32 +308,27 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path(
-        "api/change_password/",
+        "api/change-password/",
         accounts_api.UpdatePasswordView.as_view(),
         name="change-password",
     ),
     path(
-        "api/reset_password/",
+        "api/reset-password/",
         accounts_api.ResetPasswordView.as_view(),
         name="reset-password",
     ),
     path(
-        "api/change_email/",
+        "api/change-email/",
         accounts_api.UpdateEmailView.as_view(),
         name="change-email",
     ),
     path(
-        "api/schema/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
-        name="redoc",
-    ),
-    path(
-        "api/login/",
+        "api/auth/login/",
         accounts_api.TokenProvisionView.as_view(),
         name="provision-token",
     ),
     path(
-        "api/logout/",
+        "api/auth/logout/",
         accounts_api.UserLogoutView.as_view(),
         name="logout-user",
     ),
@@ -352,50 +337,30 @@ urlpatterns = [
         accounts_api.UserDetailView.as_view(),
         name="me",
     ),
-    path("api/system_health/", org_api.health_check, name="system-health"),
-    path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-shipment"),
-    path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
+    path("api/system-health/", org_api.health_check, name="system-health"),
+    path("api/bill-invoice/", billing_api.bill_invoice_view, name="bill-shipment"),
     path(
-        "api/mass_bill_shipments/",
-        billing_api.mass_shipments_bill,
-        name="bill-shipment",
-    ),
-    path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
-    path("api/active_threads/", org_api.active_threads, name="active-threads"),
-    path(
-        "api/table_columns/",
+        "api/table-columns/",
         reports_api.TableColumnsAPIView.as_view(),
         name="table-columns",
     ),
     path(
-        "api/transfer_to_billing/",
+        "api/transfer-to-billing/",
         billing_api.transfer_to_billing,
         name="transfer-to-billing",
     ),
-    path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
-    path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
     path(
-        "api/cache_manager/",
-        org_api.CacheManagerView.as_view(),
-        name="cache-manager",
-    ),
-    path(
-        "api/cache_manager/<str:model_path>/",
-        org_api.CacheManagerView.as_view(),
-        name="cache-manager-clear",
-    ),
-    path(
-        "api/untransfer_invoice/",
+        "api/untransfer-invoice/",
         billing_api.untransfer_shipment,
         name="untransfer-invoice",
     ),
     path(
-        "api/get_columns/",
+        "api/get-columns/",
         reports_api.get_model_columns_api,
         name="get-model-columns",
     ),
     path(
-        "api/generate_report/",
+        "api/generate-report/",
         reports_api.generate_report_api,
         name="generate-report",
     ),
@@ -405,12 +370,12 @@ urlpatterns = [
         name="user-notifications",
     ),
     path(
-        "api/location/auto_complete/",
+        "api/location/auto-complete/",
         integration_api.autocomplete_location,
         name="autocomplete-location",
     ),
     path(
-        "api/billing/shipments_ready/",
+        "api/billing/shipments-ready/",
         billing_api.get_shipments_ready,
         name="get-shipments-ready",
     ),
@@ -420,12 +385,12 @@ urlpatterns = [
         name="kick-user-session",
     ),
     path(
-        "api/organization_feature_flags/",
+        "api/organization-feature-flags/",
         org_api.OrganizationFeatureFlagView.as_view(),
         name="organization-feature-flags",
     ),
     path(
-        "api/me/organization/",
+        "api/organization/me/",
         org_api.UserOrganizationView.as_view(),
         name="user-organization",
     ),

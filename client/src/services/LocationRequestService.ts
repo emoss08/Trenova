@@ -88,7 +88,7 @@ export async function getUSStates(limit: number = 100): Promise<USStates[]> {
 export async function searchLocation(
   searchQuery: string,
 ): Promise<GoogleAutoCompleteResult> {
-  const response = await axios.get("/location/auto_complete/", {
+  const response = await axios.get("/location/auto-complete/", {
     params: {
       search: searchQuery,
     },

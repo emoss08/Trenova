@@ -32,7 +32,7 @@ export type Organization = {
   dotNumber: string;
   orgType: string;
   timezone: TimezoneChoices;
-  logoUrl?: string | null;
+  logo?: string | null;
 };
 
 export type OrganizationFormValues = Omit<Organization, "id">;

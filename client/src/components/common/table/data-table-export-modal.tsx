@@ -135,7 +135,7 @@ function TableExportModalBody({
     setLoading(true);
 
     try {
-      const response = await axios.post("generate_report/", {
+      const response = await axios.post("generate-report/", {
         modelName: modelName as string,
         fileFormat: values.fileFormat,
         columns: values.columns,

@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     "auditlog",
     "notifications",
     "channels",
-    "graphene_django",
+    # "graphene_django",
+    "minio_storage",
     # Trenova Apps
     "backend",
     "core",
@@ -490,6 +491,20 @@ GRAPHENE = {
 # Idempotency Configurations
 IDEMPOTENCY_LOCATION = env("IDEMPOTENCY_LOCATION")
 IDEMPOTENCY_CACHE_NAME = env("IDEMPOTENCY_CACHE_NAME")
+
+# Minio Configurations
+DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+MINIO_STORAGE_ENDPOINT = env("MINIO_STORAGE_ENDPOINT")
+MINIO_STORAGE_ACCESS_KEY = env("MINIO_STORAGE_ACCESS_KEY")
+MINIO_STORAGE_SECRET_KEY = env("MINIO_STORAGE_SECRET_KEY")
+MINIO_STORAGE_USE_HTTPS = env("MINIO_STORAGE_USE_HTTPS", cast=bool)
+MINIO_STORAGE_MEDIA_OBJECT_METADATA = {"Cache-Control": "max-age=1000"}
+MINIO_STORAGE_MEDIA_BUCKET_NAME = env("MINIO_STORAGE_MEDIA_BUCKET_NAME")
+MINIO_STORAGE_MEDIA_BACKUP_BUCKET = env("MINIO_STORAGE_MEDIA_BACKUP_BUCKET")
+MINIO_STORAGE_MEDIA_BACKUP_FORMAT = env("MINIO_STORAGE_MEDIA_BACKUP_FORMAT")
+MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = env(
+    "MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET", cast=bool
+)
 
 # Development Configurations
 if DEBUG:

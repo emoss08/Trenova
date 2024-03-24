@@ -23,7 +23,7 @@ import axios from "@/lib/axiosConfig";
  * @returns A promise that resolves to the columns of the model.
  */
 export async function getColumns(model_name: string): Promise<any> {
-  const response = await axios.get("/get_columns/", {
+  const response = await axios.get("/get-columns/", {
     params: {
       model_name: model_name,
     },

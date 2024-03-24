@@ -30,6 +30,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
 import { InternalLink } from "@/components/ui/link";
+import { HTTP_200_OK, HTTP_201_CREATED } from "@/types/server";
 import trenovaLogo from "../assets/images/logo.avif";
 
 type LoginFormValues = {
@@ -79,7 +80,7 @@ function UserAuthForm() {
         withCredentials: true,
       });
 
-      if (response.status === 200) {
+      if (response.status === HTTP_201_CREATED) {
         setUserDetails(response.data);
         setIsAuthenticated(true);
       }
@@ -96,7 +97,7 @@ function UserAuthForm() {
         password: values.password,
       });
 
-      if (response.status === 200) {
+      if (response.status === HTTP_200_OK) {
         await fetchUserDetails();
         setIsAuthenticated(true);
       }

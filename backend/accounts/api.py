@@ -306,10 +306,10 @@ class UserDetailView(views.APIView):
         user = request.user
 
         serializer = serializers.UserSerializer(user, context={"request": request})
-        data = serializer.data
+        user_data = serializer.data
 
         # cache.set(cache_key, data, timeout=YOUR_CACHE_TIMEOUT)  # Set cache with a suitable timeout
-        return response.Response({"results": data}, status=status.HTTP_200_OK)
+        return response.Response(user_data, status=status.HTTP_200_OK)
 
 
 class TokenProvisionView(ObtainAuthToken):
@@ -361,12 +361,7 @@ class TokenProvisionView(ObtainAuthToken):
             user.session_key = request.session.session_key
             user.save()
 
-        return response.Response(
-            {
-                "message": "Login successful",
-            },
-            status=status.HTTP_200_OK,
-        )
+        return response.Response(status=status.HTTP_201_CREATED)
 
 
 class UserLogoutView(views.APIView):

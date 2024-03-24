@@ -87,7 +87,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
             <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="col-span-full flex items-center gap-x-8">
                 <Avatar className="size-24 flex-none rounded-lg">
-                  <AvatarImage src={organization.logoUrl || ""} />
+                  <AvatarImage src={organization.logo || ""} />
                   <AvatarFallback className="size-24 flex-none rounded-lg">
                     {organization.scacCode}
                   </AvatarFallback>

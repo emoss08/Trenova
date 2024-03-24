@@ -34,6 +34,11 @@ export type MinimalUser = {
   email: string;
 };
 
+type UserProfile = {
+  profilePicture: string;
+  thumnail: string;
+};
+
 export type User = {
   id: string;
   businessUnitId: string;
@@ -46,10 +51,9 @@ export type User = {
   isAdmin: boolean;
   status: StatusChoiceProps;
   timezone: TimezoneChoices;
-  profilePicUrl?: string;
-  thumbnailUrl?: string;
   PhoneNumber?: string;
   userPermissions: string[];
+  profile: UserProfile;
 };
 
 export type UserFormValues = {

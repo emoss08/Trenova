@@ -91,7 +91,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
 
     // Determine the avatar image source
     const avatarSrc =
-      user?.thumbnailUrl || `https://avatar.vercel.sh/${user.email}`;
+      user.profile.profilePicture || `https://avatar.vercel.sh/${user.email}`;
 
     return (
       <div
