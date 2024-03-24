@@ -51,15 +51,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the session ID from the system
-	sessionID := tools.GetSystemSessionID()
-	session, sessionErr := store.Get(r, sessionID)
+	sessionName := tools.GetSystemSessionName()
+	session, sessionErr := store.Get(r, sessionName)
 	if sessionErr != nil {
 		tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorResponse{
 			Type: "severError",
 			Errors: []types.ValidationErrorDetail{
 				{
 					Code:   "sessionError",
-					Detail: "Failed to retrieve session",
+					Detail: sessionErr.Error(),
 					Attr:   "session",
 				},
 			},
@@ -102,8 +102,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID := tools.GetSystemSessionID()
-	session, sessionErr := store.Get(r, sessionID)
+	sessionName := tools.GetSystemSessionName()
+	session, sessionErr := store.Get(r, sessionName)
 
 	if sessionErr != nil {
 		tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorResponse{

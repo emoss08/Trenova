@@ -118,7 +118,7 @@ export function DataTableTooltipColumnHeader({
             />
           </TooltipTrigger>
           <TooltipContent>
-            <span>{tooltip}</span>
+            <span className="font-normal">{tooltip}</span>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
