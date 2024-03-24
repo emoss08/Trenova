@@ -2,7 +2,7 @@
 * text=auto
 
 # Detect the ent directory for linguist.
-ent* -linguist-detectable
+ent* linguist-detectable
 
 *.ts linguist-language=TypeScript
 *.go linguist-language=Go
