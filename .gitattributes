@@ -1,8 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# Detect the ent directory for linguist.
-ent* linguist-detectable
-
+# Language overrides
 *.ts linguist-language=TypeScript
 *.go linguist-language=Go
