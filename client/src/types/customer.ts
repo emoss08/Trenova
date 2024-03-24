@@ -48,9 +48,9 @@ export interface Customer extends BaseModel {
 export type CustomerFormValues = Omit<
   Customer,
   | "id"
-  | "organization"
-  | "created"
-  | "modified"
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
   | "advocateFullName"
   | "lastBillDate"
   | "lastShipDate"

@@ -15,9 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ExternalLinkIcon } from "@radix-ui/react-icons";
-import React from "react";
-import { Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +26,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { ExternalLinkIcon } from "@radix-ui/react-icons";
+import React from "react";
+import { Link } from "react-router-dom";
 
 function ExternalLinkDialog({
   open,
@@ -97,15 +97,19 @@ export function ExternalLink({
 export const InternalLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<typeof Link>
->((props, ref) => (
-  <Link
-    ref={ref}
-    className={cn(
-      "inline-flex items-center font-semibold text-blue-600 hover:underline",
-      props.className,
-    )}
-    {...props}
-  >
-    {props.children}
-  </Link>
-));
+>((props, ref) => {
+  const { to, children, className } = props;
+
+  return (
+    <Link
+      to={to}
+      ref={ref}
+      className={cn(
+        "inline-flex items-center text-primary hover:underline",
+        className,
+      )}
+    >
+      {children}
+    </Link>
+  );
+});

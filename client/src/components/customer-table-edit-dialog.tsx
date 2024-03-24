@@ -141,7 +141,7 @@ export function CustomerTableEditSheet({
         <SheetHeader>
           <SheetTitle>{customer && customer.name}</SheetTitle>
           <SheetDescription>
-            Last updated on {customer && formatDate(customer.modified)}
+            Last updated on {customer && formatDate(customer.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {customer && (

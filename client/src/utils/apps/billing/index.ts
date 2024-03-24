@@ -18,12 +18,12 @@
 import { IChoiceProps, TChoiceProps } from "@/types";
 
 /** Type for fuel method choices */
-export type FuelMethodChoicesProps = "D" | "F" | "P";
+export type FuelMethodChoicesProps = "Distance" | "Flat" | "Percentage";
 
 export const fuelMethodChoices = [
-  { value: "D", label: "Distance" },
-  { value: "F", label: "Flat" },
-  { value: "P", label: "Percentage" },
+  { value: "Distance", label: "Distance" },
+  { value: "Flat", label: "Flat" },
+  { value: "Percentage", label: "Percentage" },
 ] satisfies ReadonlyArray<IChoiceProps<FuelMethodChoicesProps>>;
 
 /** Type for Auto Billing Criteria Choices */

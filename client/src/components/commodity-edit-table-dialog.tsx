@@ -49,13 +49,12 @@ function CommodityEditForm({
       defaultValues: {
         status: commodity.status,
         name: commodity.name,
-        description: commodity?.description || "",
-        minTemp: commodity?.minTemp || "",
-        maxTemp: commodity?.maxTemp || "",
-        setPointTemp: commodity?.setPointTemp,
+        description: commodity?.description,
+        minTemp: commodity?.minTemp,
+        maxTemp: commodity?.maxTemp,
         unitOfMeasure: commodity?.unitOfMeasure,
-        hazardousMaterial: commodity.hazardousMaterial || "",
-        isHazmat: commodity?.isHazmat || "",
+        hazardousMaterialId: commodity.hazardousMaterialId,
+        isHazmat: commodity?.isHazmat,
       },
     });
 
@@ -80,10 +79,10 @@ function CommodityEditForm({
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
-      if (name === "hazardousMaterial" && value.hazardousMaterial) {
-        setValue("isHazmat", "Y");
-      } else if (name === "hazardousMaterial" && !value.hazardousMaterial) {
-        setValue("isHazmat", "N");
+      if (name === "hazardousMaterialId" && value.hazardousMaterialId) {
+        setValue("isHazmat", true);
+      } else if (name === "hazardousMaterialId" && !value.hazardousMaterialId) {
+        setValue("isHazmat", false);
       }
     });
 

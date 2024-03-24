@@ -37,12 +37,13 @@ import { fuelMethodChoices } from "@/utils/apps/billing";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function ACForm({ control }: { control: Control<FormValues> }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -53,8 +54,8 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
             description="Status of the Accesorial Charge"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -66,19 +67,19 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
             placeholder="Code"
             description="Code for the Accesorial Charge"
           />
-        </div>
-      </div>
-      <div className="my-2">
-        <TextareaField
-          name="description"
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the accessorial charge"
-        />
-      </div>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the accessorial charge"
+          />
+        </FormControl>
+      </FormGroup>
+      <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="method"
             rules={{ required: true }}
@@ -89,30 +90,28 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
             description="Method for calculating the Accesorial Charge"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
-            name="chargeAmount"
+            name="amount"
             label="Charge Amount"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
+            type="number"
             placeholder="Charge Amount"
             description="Charge amount for the Accesorial Charge"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <CheckboxInput
             control={control}
             label="Is Detention"
             name="isDetention"
             description="Is this a detention charge?"
           />
-        </div>
-      </div>
-    </div>
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -126,8 +125,8 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
       code: "",
       description: "",
       isDetention: false,
-      method: "D",
-      chargeAmount: "",
+      method: "Distance",
+      amount: undefined,
     },
   });
 
@@ -135,7 +134,7 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/accessorial_charges/",
+      path: "/accessorial-charges/",
       successMessage: "Accesorial Charge created successfully.",
       queryKeysToInvalidate: ["accessorial-charges-table-data"],
       closeModal: true,
@@ -149,6 +148,8 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
     setIsSubmitting(true);
     mutation.mutate(values);
   };
+
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

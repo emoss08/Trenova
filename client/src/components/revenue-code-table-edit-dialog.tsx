@@ -48,15 +48,12 @@ function RCEditForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
-  const { handleSubmit, control, reset } = useForm<FormValues>({
+  const { handleSubmit, control, reset, watch } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
-    defaultValues: {
-      code: revenueCode.code,
-      description: revenueCode?.description || "",
-      expenseAccount: revenueCode?.expenseAccount || "",
-      revenueAccount: revenueCode?.revenueAccount || "",
-    },
+    defaultValues: revenueCode,
   });
+
+  console.log("Watching the entire form", watch());
 
   const mutation = useCustomMutation<FormValues>(
     control,
@@ -74,6 +71,7 @@ function RCEditForm({
   );
 
   const onSubmit = (values: FormValues) => {
+    console.info("Submitting", values);
     setIsSubmitting(true);
     mutation.mutate(values);
   };

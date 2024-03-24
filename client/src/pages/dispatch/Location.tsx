@@ -27,12 +27,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { tableStatusChoices } from "@/lib/choices";
 import { truncateText, upperFirst } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { lazy, Suspense } from "react";
-import { tableStatusChoices } from "@/lib/choices";
+import { Suspense, lazy } from "react";
 
 const LocationChart = lazy(
   () => import("../../components/location/chart/table-chart"),
@@ -59,7 +59,7 @@ function LocationColor({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: color }}

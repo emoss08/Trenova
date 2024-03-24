@@ -123,7 +123,7 @@ export const shipmentTypeSchema: ObjectSchema<ShipmentTypeFormValues> =
   });
 
 export function useShipmentForm({ user }: { user: User }) {
-  const { shipmentControlData, isLoading: isShipmentControlLoading } =
+  const { data: shipmentControlData, isLoading: isShipmentControlLoading } =
     useShipmentControl();
 
   // Shipment Form validation schema

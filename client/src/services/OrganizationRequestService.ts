@@ -86,7 +86,7 @@ export async function getShipmentControl(): Promise<ShipmentControl> {
  * @note This should only return one result.
  */
 export async function getEmailProfiles(): Promise<EmailProfile[]> {
-  const response = await axios.get("/email_profiles/");
+  const response = await axios.get("/email-profiles/");
   return response.data.results;
 }
 
@@ -95,9 +95,9 @@ export async function getEmailProfiles(): Promise<EmailProfile[]> {
  * @returns A promise that resolves to an array of email control.
  * @note This should only return one result.
  */
-export async function getEmailControl(): Promise<EmailControl[]> {
-  const response = await axios.get("/email_control/");
-  return response.data.results;
+export async function getEmailControl(): Promise<EmailControl> {
+  const response = await axios.get("/email-control/");
+  return response.data;
 }
 
 /**

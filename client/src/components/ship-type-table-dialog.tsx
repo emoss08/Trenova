@@ -35,6 +35,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function ShipmentTypeForm({
   control,
@@ -42,9 +43,9 @@ export function ShipmentTypeForm({
   control: Control<FormValues>;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -55,8 +56,8 @@ export function ShipmentTypeForm({
             description="Status of the Shipment Type"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -70,18 +71,18 @@ export function ShipmentTypeForm({
             autoComplete="code"
             description="Code for the Shipment Type"
           />
-        </div>
-      </div>
-      <div className="my-2">
-        <TextareaField
-          name="description"
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Shipment Type"
-        />
-      </div>
-    </div>
+        </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Shipment Type"
+          />
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -101,7 +102,7 @@ export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/shipment_types/",
+      path: "/shipment-types/",
       successMessage: "Shipment Type created successfully.",
       queryKeysToInvalidate: ["shipment-type-table-data"],
       closeModal: true,

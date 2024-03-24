@@ -71,7 +71,7 @@ function EquipTypeEditForm({
     control,
     {
       method: "PUT",
-      path: `/equipment_types/${equipType.id}/`,
+      path: `/equipment-types/${equipType.id}/`,
       successMessage: "Equipment Type updated successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
       closeModal: true,
@@ -109,7 +109,7 @@ function EquipTypeEditForm({
 }
 
 export function EquipTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
-  const [equipType] = useTableStore.use("currentRecord");
+  const [equipType] = useTableStore.use("currentRecord") as EquipmentType[];
 
   if (!equipType) return null;
 
@@ -119,7 +119,7 @@ export function EquipTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{equipType && equipType.name}</SheetTitle>
           <SheetDescription>
-            Last updated on {equipType && formatDate(equipType.modified)}
+            Last updated on {equipType && formatDate(equipType.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {equipType && (

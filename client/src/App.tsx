@@ -26,7 +26,7 @@ import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "non.geist";
-import { memo, Suspense } from "react";
+import { Suspense, memo } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { BrowserRouter } from "react-router-dom";
 

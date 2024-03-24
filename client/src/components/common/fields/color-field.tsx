@@ -26,12 +26,12 @@ import {
 import { cn } from "@/lib/utils";
 import { faPaintBrush } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import * as React from "react";
 import {
   FieldValues,
-  useController,
   UseControllerProps,
+  useController,
 } from "react-hook-form";
+import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 
 export function GradientPicker<TFieldValues extends FieldValues>({
@@ -54,6 +54,7 @@ export function GradientPicker<TFieldValues extends FieldValues>({
     "#70e2ff",
     "#cd93ff",
     "#09203f",
+    "#ff7575",
   ];
 
   // Handler to update the field value
@@ -101,7 +102,7 @@ export function GradientPicker<TFieldValues extends FieldValues>({
               <FieldErrorMessage formError={fieldState.error?.message} />
             )}
             {props.description && !fieldState.invalid && (
-              <p className="text-xs text-foreground/70">{props.description}</p>
+              <FieldDescription description={props.description} />
             )}
           </Button>
         </div>

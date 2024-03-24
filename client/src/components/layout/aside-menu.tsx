@@ -14,8 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { OrganizationNameLogo } from "@/components/layout/logo";
-import TeamSwitcher from "@/components/layout/team-switcher";
+import { OrganizationLogo } from "@/components/layout/logo";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -279,7 +278,7 @@ export function AsideMenuSheet() {
         <Button
           size="icon"
           variant="outline"
-          className="border-muted-foreground/40 hover:border-muted-foreground/80 flex size-9 md:hidden"
+          className="border-muted-foreground/40 hover:border-muted-foreground/80 flex size-9"
         >
           <FontAwesomeIcon icon={faBars} className="size-5" />
         </Button>
@@ -287,9 +286,8 @@ export function AsideMenuSheet() {
       <SheetContent className="w-[400px] overflow-auto" side="left">
         <SheetHeader>
           <SheetTitle>
-            <OrganizationNameLogo />
+            <OrganizationLogo />
             <div className="border-muted-foreground/40 mt-2 border-b" />
-            <TeamSwitcher className="mt-2" />
           </SheetTitle>
         </SheetHeader>
         <AsideMenu menuItems={menuItems} onLinkClick={toggleMenu} />

@@ -15,8 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import { StatusChoiceProps } from "@/types";
 import {
   AccessorialChargeFormValues,
   BillingControlFormValues,
@@ -28,29 +27,18 @@ import {
   FuelMethodChoicesProps,
   ShipmentTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
-import { StatusChoiceProps } from "@/types";
-import { validateDecimal } from "@/lib/utils";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 
 export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string()
-      .max(10, "Code must be less than 10 characters.")
+      .max(4, "Code must be less than 4 characters.")
       .required("Code is required"),
-    description: Yup.string().notRequired(),
+    description: Yup.string(),
     isDetention: Yup.boolean().required("Detention is required"),
-    chargeAmount: Yup.string()
-      .test(
-        "is-decimal",
-        "Charge Amount cannot be more than four decimal places",
-        (value) => {
-          if (value !== "" && value !== undefined) {
-            return validateDecimal(value, 4);
-          }
-          return true;
-        },
-      )
-      .required(),
+    amount: Yup.number().required(),
     method: Yup.string<FuelMethodChoicesProps>().required("Method is required"),
   });
 

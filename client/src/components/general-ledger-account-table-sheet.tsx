@@ -34,7 +34,7 @@ import {
   cashFlowTypeChoices,
   statusChoices,
 } from "@/lib/choices";
-import { cleanObject, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { GLAccountFormValues } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
@@ -170,6 +170,7 @@ export function GLForm({
             name="cashFlowType"
             label="Cash Flow Type"
             options={cashFlowTypeChoices}
+            isClearable
             placeholder="Select Cash Flow Type"
             description="The Cash Flow Type of the GL Account"
           />
@@ -180,6 +181,7 @@ export function GLForm({
             control={control}
             label="Account Sub Type"
             options={accountSubTypeChoices}
+            isClearable
             placeholder="Select Account Sub Type"
             description="The Account Sub Type of the GL Account"
           />
@@ -189,6 +191,7 @@ export function GLForm({
             name="accountClassification"
             control={control}
             label="Account Classification"
+            isClearable
             options={accountClassificationChoices}
             placeholder="Select Account Classification"
             description="The Account Classification of the GL Account"
@@ -202,6 +205,7 @@ export function GLForm({
             options={selectGLAccounts}
             isLoading={isGLAccountsLoading}
             isFetchError={isGLAccountsError}
+            isClearable
             placeholder="Select Parent Account"
             description="Parent account for hierarchical accounting"
           />
@@ -222,6 +226,7 @@ export function GLForm({
             options={selectUsersData}
             isLoading={isUsersLoading}
             isFetchError={isUsersError}
+            isClearable
             placeholder="Select Owner"
             description="User responsible for the account"
           />
@@ -248,6 +253,7 @@ export function GLForm({
             onCreate={createNewTag}
             placeholder="Select Tags"
             options={tagOptions}
+            isClearable
             isLoading={isTagsUpdating}
             isFetchError={isTagsError}
             isMulti
@@ -293,13 +299,13 @@ export function GeneralLedgerAccountTableSheet({
       defaultValues: {
         status: "A",
         accountNumber: "",
-        accountType: "",
-        cashFlowType: "",
-        accountSubType: "",
-        accountClassification: "",
-        parentAccount: "",
+        accountType: "Asset",
+        cashFlowType: undefined,
+        accountSubType: undefined,
+        accountClassification: undefined,
+        parentAccount: null,
         attachment: null,
-        owner: "",
+        owner: null,
         interestRate: null,
         isReconciled: false,
         isTaxRelevant: false,
@@ -312,7 +318,7 @@ export function GeneralLedgerAccountTableSheet({
     control,
     {
       method: "POST",
-      path: "/gl_accounts/",
+      path: "/general-ledger-accounts/",
       successMessage: "General Ledger Account created successfully.",
       queryKeysToInvalidate: ["gl-account-table-data"],
       additionalInvalidateQueries: ["glAccounts"],
@@ -324,10 +330,8 @@ export function GeneralLedgerAccountTableSheet({
   );
 
   const onSubmit = (values: GLAccountFormValues) => {
-    const cleanedValues = cleanObject(values);
-
     setIsSubmitting(true);
-    mutation.mutate(cleanedValues);
+    mutation.mutate(values);
   };
 
   return (

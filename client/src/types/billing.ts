@@ -37,7 +37,7 @@ export interface BillingControl extends BaseModel {
 
 export type BillingControlFormValues = Omit<
   BillingControl,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 /** Types for Charge Type */
@@ -50,7 +50,7 @@ export interface ChargeType extends BaseModel {
 
 export type ChargeTypeFormValues = Omit<
   ChargeType,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 /** Types for Accessorial Charge */
@@ -58,15 +58,15 @@ export interface AccessorialCharge extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   code: string;
-  description?: string | null;
+  description?: string;
   isDetention: boolean;
-  chargeAmount: string;
+  amount: number;
   method: FuelMethodChoicesProps;
 }
 
 export type AccessorialChargeFormValues = Omit<
   AccessorialCharge,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;
 
 /** Types for Orders Ready to Bill */
@@ -112,7 +112,7 @@ export interface BillingQueue extends BaseModel {
 /** Types for Billing History */
 export interface BillingHistory extends BaseModel {
   id: string;
-  organization: string;
+  organizationId: string;
   orderType: string;
   order: string;
   revenueCode: string;
@@ -149,5 +149,5 @@ export interface DocumentClassification extends BaseModel {
 /** Types for Document Classification */
 export type DocumentClassificationFormValues = Omit<
   DocumentClassification,
-  "id" | "organization" | "created" | "modified"
+  "id" | "organizationId" | "createdAt" | "updatedAt"
 >;

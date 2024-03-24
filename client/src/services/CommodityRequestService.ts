@@ -23,7 +23,7 @@ import { Commodity, HazardousMaterial } from "@/types/commodities";
  * @returns A promise that resolves to an array of hazardous material.
  */
 export async function getHazardousMaterials(): Promise<HazardousMaterial[]> {
-  const response = await axios.get("/hazardous_materials/");
+  const response = await axios.get("/hazardous-materials/");
   return response.data.results;
 }
 

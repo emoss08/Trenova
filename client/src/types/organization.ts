@@ -68,7 +68,7 @@ export interface EmailProfile extends BaseModel {
   port?: number | null;
   username?: string | null;
   password?: string | null;
-  defaultProfile: boolean;
+  isDefault: boolean;
 }
 
 export type EmailProfileFormValues = Omit<
@@ -85,17 +85,16 @@ export type Department = {
 };
 
 /** Types for EmailControl */
-export type EmailControl = {
+export interface EmailControl extends BaseModel {
   id: string;
-  organization: string;
-  billingEmailProfile?: string | null;
-  rateExpirationEmailProfile?: string | null;
-};
+  billingEmailProfileId?: string | null;
+  rateExpirtationEmailProfileId?: string | null;
+}
 
-export type EmailControlFormValues = {
-  billingEmailProfile?: string | null;
-  rateExpirationEmailProfile?: string | null;
-};
+export type EmailControlFormValues = Omit<
+  EmailControl,
+  "id" | "organizationId" | "createdAt" | "updatedAt"
+>;
 
 export type Depot = BaseModel & {
   id: string;

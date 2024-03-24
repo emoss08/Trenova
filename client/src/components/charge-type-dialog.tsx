@@ -18,6 +18,7 @@
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -34,13 +35,13 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -51,8 +52,8 @@ export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
             description="Status of the Charge Type"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -65,8 +66,8 @@ export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
             autoComplete="name"
             description="Unique name for the Charge Type"
           />
-        </div>
-      </div>
+        </FormControl>
+      </FormGroup>
       <div className="my-2">
         <TextareaField
           name="description"
@@ -76,7 +77,7 @@ export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
           description="Description of the Charge Type"
         />
       </div>
-    </div>
+    </Form>
   );
 }
 
@@ -96,7 +97,7 @@ export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/charge_types/",
+      path: "/charge-types/",
       successMessage: "Charge Type created successfully.",
       queryKeysToInvalidate: ["charge-type-table-data"],
       closeModal: true,

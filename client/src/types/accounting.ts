@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { StatusChoiceProps } from "@/types/index";
-import { BaseModel } from "@/types/organization";
 import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
@@ -25,6 +23,8 @@ import {
   CashFlowTypeChoiceProps,
   ThresholdActionChoiceType,
 } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 
 /** Types for Division Codes */
 export interface DivisionCode extends BaseModel {
@@ -58,10 +58,10 @@ export interface GeneralLedgerAccount extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   accountNumber: string;
-  accountType: AccountTypeChoiceProps | "";
-  cashFlowType?: CashFlowTypeChoiceProps | "" | null;
-  accountSubType?: AccountSubTypeChoiceProps | "" | null;
-  accountClassification?: AccountClassificationChoiceProps | "" | null;
+  accountType: AccountTypeChoiceProps;
+  cashFlowType?: CashFlowTypeChoiceProps;
+  accountSubType?: AccountSubTypeChoiceProps;
+  accountClassification?: AccountClassificationChoiceProps;
   balance: number;
   openingBalance: number;
   closingBalance: number;
@@ -74,7 +74,7 @@ export interface GeneralLedgerAccount extends BaseModel {
   isTaxRelevant?: boolean;
   attachment?: any | null;
   interestRate?: number | null;
-  tags?: string[] | null | "";
+  tags?: string[] | null;
 }
 
 export type GLAccountFormValues = Omit<
@@ -93,22 +93,20 @@ export type GLAccountFormValues = Omit<
 /** Types for Revenue Codes */
 export interface RevenueCode extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   code: string;
   description: string;
-  expenseAccount?: string;
-  revenueAccount?: string;
-  revAccountNum?: string;
-  expAccountNum?: string;
+  expenseAccountId?: string | null;
+  revenueAccountId?: string | null;
+  edges?: {
+    expenseAccount?: GeneralLedgerAccount;
+    revenueAccount?: GeneralLedgerAccount;
+  };
 }
 
 export type RevenueCodeFormValues = Omit<
   RevenueCode,
-  | "id"
-  | "organizationId"
-  | "createdAt"
-  | "updatedAt"
-  | "revAccountNum"
-  | "expAccountNum"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "edges"
 >;
 
 /** Types for Accounting Control */

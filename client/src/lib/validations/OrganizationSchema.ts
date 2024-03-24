@@ -34,6 +34,8 @@ import {
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 
+// TODO(Wolfred): Remove import * as Yup and just import what is needed from yup.
+
 export const organizationSchema: ObjectSchema<OrganizationFormValues> =
   Yup.object().shape({
     name: Yup.string().required("Name is required."),
@@ -83,8 +85,8 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
   Yup.object().shape({
-    billingEmailProfile: Yup.string().notRequired(),
-    rateExpirationEmailProfile: Yup.string().notRequired(),
+    billingEmailProfileId: Yup.string().notRequired(),
+    rateExpirtationEmailProfileId: Yup.string().notRequired(),
   });
 
 export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
@@ -96,7 +98,7 @@ export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
     port: Yup.number().notRequired(),
     username: Yup.string().notRequired(),
     password: Yup.string().notRequired(),
-    defaultProfile: Yup.boolean().required("Default Profile is required."),
+    isDefault: Yup.boolean().required("Default Profile is required."),
   });
 
 export const googleAPISchema: ObjectSchema<GoogleAPIFormValues> =

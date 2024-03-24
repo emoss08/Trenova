@@ -46,31 +46,35 @@ export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
     name: Yup.string()
       .required("Name is required")
       .max(50, "Name cannot be more than 50 characters"),
-    description: Yup.string().notRequired(),
-    costPerMile: Yup.string()
-      .decimal("Cost per mile must be a decimal")
-      .notRequired(),
+    description: Yup.string(),
+    costPerMile: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
     equipmentClass: Yup.string<EquipmentClassChoiceProps>().required(
       "Equipment class is required",
     ),
     exemptFromTolls: Yup.boolean().required("Exempt from tolls is required"),
-    fixedCost: Yup.string()
-      .decimal("Fixed Cost must be a decimal")
-      .nullable()
-      .notRequired(),
-    height: Yup.string()
-      .decimal("Height must be a decimal")
-      .nullable()
-      .notRequired(),
-    length: Yup.string().decimal("Length must be a decimal").notRequired(),
-    idlingFuelUsage: Yup.string()
-      .decimal("Idling fuel usage must be a decimal")
-      .notRequired(),
-    weight: Yup.string().decimal("Weight must be a decimal").notRequired(),
-    variableCost: Yup.string()
-      .decimal("Variable Cost must be a decimal")
-      .notRequired(),
-    width: Yup.string().decimal("Width must be a decimal").notRequired(),
+    fixedCost: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    height: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    length: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    idlingFuelUsage: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    weight: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    variableCost: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
+    width: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
+    ),
   });
 
 export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValues> =

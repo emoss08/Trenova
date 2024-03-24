@@ -20,6 +20,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
 
+import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,7 +38,6 @@ import {
   CommentTypeFormValues as FormValues,
 } from "@/types/dispatch";
 import { TableSheetProps } from "@/types/tables";
-import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -55,7 +55,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
     control,
     {
       method: "PUT",
-      path: `/comment_types/${commentType.id}/`,
+      path: `/comment-types/${commentType.id}/`,
       successMessage: "Comment Type updated successfully.",
       queryKeysToInvalidate: ["comment-types-table-data"],
       closeModal: true,
@@ -83,7 +83,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
 }
 
 export function CommentTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
-  const [commentType] = useTableStore.use("currentRecord");
+  const [commentType] = useTableStore.use("currentRecord") as CommentType[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,7 +92,7 @@ export function CommentTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
           <DialogTitle>{commentType && commentType.name}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on {commentType && formatDate(commentType.modified)}
+          Last updated on {commentType && formatDate(commentType.updatedAt)}
         </DialogDescription>
         {commentType && <CommentTypeEditForm commentType={commentType} />}
       </DialogContent>

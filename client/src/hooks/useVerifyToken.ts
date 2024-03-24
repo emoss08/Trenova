@@ -26,15 +26,30 @@ import { useEffect, useState } from "react";
  * verify the token. Depending on the result of the request, it updates the authentication status and
  * clears the session storage if necessary. It also manages loading states during the verification process.
  */
-
 export const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
-  const [, setUser] = useUserStore.use("user");
+  const [user, setUser] = useUserStore.use("user");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isInitializationComplete, setInitializationComplete] = useState(false);
 
   useEffect(() => {
+    // Attempt to retrieve the user ID from localStorage
+    const userId = localStorage.getItem("trenova-user-id");
+
+    if (!user.id && userId) {
+      // If there's a user ID in localStorage but not in state, verify the user
+      setUser({ ...user, id: userId });
+    }
+
+    if (!user.id && !userId) {
+      console.error("No user id found. Skipping token verification.");
+      setInitializationComplete(true);
+      setIsAuthenticated(false);
+      setLoading(false);
+      return;
+    }
+
     const verifyToken = async () => {
       setIsVerifying(true);
       setLoading(true);
@@ -45,22 +60,25 @@ export const useVerifyToken = () => {
         });
         if (response.status === 200) {
           setUser(response.data);
+          localStorage.setItem("trenova-user-id", response.data.id); // Persist user ID to localStorage
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
+          localStorage.removeItem("trenova-user-id"); // Clear user ID from localStorage
         }
       } catch (error) {
         console.error("Error verifying token:", error);
         setIsAuthenticated(false);
+        localStorage.removeItem("trenova-user-id"); // Clear user ID from localStorage
       } finally {
-        setLoading(false);
         setIsVerifying(false);
-        setInitializationComplete(true); // Mark initialization as complete
+        setInitializationComplete(true);
+        setLoading(false);
       }
     };
 
     verifyToken();
-  }, [setIsAuthenticated, setLoading, setUser]);
+  }, [setIsAuthenticated, setLoading, setUser, user.id]);
 
   return { isVerifying, isInitializationComplete };
 };

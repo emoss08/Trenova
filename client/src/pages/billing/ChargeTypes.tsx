@@ -15,16 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { ChargeType } from "@/types/billing";
-import { StatusBadge } from "@/components/common/table/data-table-components";
-import { tableStatusChoices } from "@/lib/choices";
 import { ChargeTypeDialog } from "@/components/charge-type-dialog";
 import { ChargeTypeEditSheet } from "@/components/charge-type-edit-dialog";
+import { Checkbox } from "@/components/common/fields/checkbox";
+import { DataTable } from "@/components/common/table/data-table";
+import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { tableStatusChoices } from "@/lib/choices";
+import { ChargeType } from "@/types/billing";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<ChargeType>[] = [
   {
@@ -83,7 +83,7 @@ export default function ChargeTypes() {
     <DataTable
       queryKey="charge-type-table-data"
       columns={columns}
-      link="/charge_types/"
+      link="/charge-types/"
       name="Charge Type"
       exportModelName="ChargeType"
       filterColumn="name"

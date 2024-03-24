@@ -36,7 +36,7 @@ export function ProtectedRoutes() {
   }, [isAuthenticated, location.pathname, location.search]);
 
   const getElement = (route: RouteObjectWithPermission): React.ReactNode => {
-    if (!route.isPublic && !isAuthenticated) {
+    if (!isAuthenticated && !route.isPublic) {
       return <Navigate to="/login" replace />;
     }
     if (route.permission && !userHasPermission(route.permission)) {

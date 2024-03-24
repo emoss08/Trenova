@@ -32,12 +32,10 @@ import { locationCategorySchema as formSchema } from "@/lib/validations/Location
 import { LocationCategoryFormValues as FormValues } from "@/types/location";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React, { useState } from "react";
+import React from "react";
 import { Control, useForm } from "react-hook-form";
 
 export function LCForm({ control }: { control: Control<FormValues> }) {
-  const [background, setBackground] = useState("#70e2ff");
-
   return (
     <div className="flex items-center justify-center">
       <div className="mb-2 grid min-w-full content-stretch justify-items-center gap-2">
@@ -46,12 +44,12 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
             control={control}
             rules={{ required: true }}
             name="name"
-            label="Name"
+            label="Cateogry Name"
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
             placeholder="Name"
-            description="Name for Location Category"
+            description="Official Name for Location Category"
           />
         </div>
         <div className="grid w-full max-w-md">
@@ -60,20 +58,10 @@ export function LCForm({ control }: { control: Control<FormValues> }) {
             control={control}
             label="Description"
             placeholder="Description"
-            description="Description of the Location Category"
+            description="Detailed Description of the Location Category"
           />
         </div>
         <div className="grid w-full max-w-md">
-          {/* <ColorField
-            name="color"
-            label="Color"
-            control={control}
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder="Color (Hex)"
-            description="Color Code of the Location Category"
-          /> */}
           <GradientPicker
             name="color"
             label="Color"
@@ -104,7 +92,7 @@ export function LocationCategoryTableSheet({
     control,
     {
       method: "POST",
-      path: "/location_categories/",
+      path: "/location-categories/",
       successMessage: "Location Category created successfully.",
       queryKeysToInvalidate: ["location-categories-table-data"],
       additionalInvalidateQueries: ["locationCategories"],

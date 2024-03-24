@@ -17,7 +17,9 @@
 
 import { Button } from "@/components/ui/button";
 import { cn, PopoutWindow } from "@/lib/utils";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import React from "react";
@@ -36,8 +38,6 @@ import {
   SingleValueProps,
   ValueContainerProps,
 } from "react-select";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
 
 /**
  * Option type for the SelectInput component.
@@ -115,7 +115,7 @@ export function Option({ ...props }: OptionProps) {
         <div className="flex flex-1 flex-col justify-center overflow-hidden">
           <span className="truncate">{label}</span>
           {data.description && (
-            <span className="mt-1 truncate text-xs text-foreground/70">
+            <span className="text-foreground/70 mt-1 truncate text-xs">
               {data.description}
             </span>
           )}
@@ -203,16 +203,6 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
 }
 
 /**
- * Description component for the SelectInput component.
- * @param description {string}
- * @constructor SelectDescription
- * @example <SelectDescription description="This is a description" />
- */
-export function SelectDescription({ description }: { description: string }) {
-  return <p className="text-xs text-foreground/70">{description}</p>;
-}
-
-/**
  * MenuList component for the SelectInput component.
  * @param children {React.ReactNode}
  * @param props {MenuListProps}
@@ -269,7 +259,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
     <components.LoadingMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-xs text-accent-foreground">
+        <p className="text-accent-foreground text-xs">
           {children || "Loading..."}
         </p>
       </div>
@@ -300,7 +290,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="p-2 text-xs text-accent-foreground">{children}</p>
+        <p className="text-accent-foreground p-2 text-xs">{children}</p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
             label={props.selectProps?.popoutLinkLabel as string}
@@ -468,7 +458,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
+      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal shadow-none"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

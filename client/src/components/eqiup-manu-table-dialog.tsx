@@ -98,7 +98,7 @@ export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/equipment_manufacturers/",
+      path: "/equipment-manufacturers/",
       successMessage: "Equip. Manufacturer created successfully.",
       queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
       closeModal: true,

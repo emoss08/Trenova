@@ -58,7 +58,7 @@ function EquipManuEditForm({
     control,
     {
       method: "PUT",
-      path: `/equipment_manufacturers/${equipManufacturer.id}/`,
+      path: `/equipment-manufacturers/${equipManufacturer.id}/`,
       successMessage: "Equip. Manufacturer updated successfully.",
       queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
       closeModal: true,
@@ -86,7 +86,9 @@ function EquipManuEditForm({
 }
 
 export function EquipMenuEditDialog({ onOpenChange, open }: TableSheetProps) {
-  const [equipManufacturer] = useTableStore.use("currentRecord");
+  const [equipManufacturer] = useTableStore.use(
+    "currentRecord",
+  ) as EquipmentManufacturer[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +100,7 @@ export function EquipMenuEditDialog({ onOpenChange, open }: TableSheetProps) {
         </DialogHeader>
         <DialogDescription>
           Last updated on{" "}
-          {equipManufacturer && formatDate(equipManufacturer.modified)}
+          {equipManufacturer && formatDate(equipManufacturer.updatedAt)}
         </DialogDescription>
         {equipManufacturer && (
           <EquipManuEditForm equipManufacturer={equipManufacturer} />

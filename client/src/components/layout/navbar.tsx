@@ -31,10 +31,10 @@ import {
   shipmentNavLinks,
 } from "@/lib/nav-links";
 import {
-  calculatePosition,
-  hasPermission,
   MenuData,
   NavigationMenuItemProps,
+  calculatePosition,
+  hasPermission,
   userHasAccessToContent,
 } from "@/lib/navmenu";
 import { cn, isBrowser } from "@/lib/utils";
@@ -229,8 +229,6 @@ export function NavMenu() {
 
   return (
     <div ref={navMenuRef}>
-      {/* Hamburger Menu (visible on small screens) */}
-      {/* Navigation Menu */}
       <NavigationMenu
         value={menuOpen}
         onValueChange={(newValue) => newValue && setMenuOpen(newValue)}

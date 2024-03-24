@@ -76,7 +76,7 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import type { QueryKeyWithParams, QueryKeys } from "@/types";
 import type {
   GeneralLedgerAccount,
   RevenueCode,
@@ -99,7 +99,6 @@ import type {
 import type { Location, LocationCategory, USStates } from "@/types/location";
 import type {
   Depot,
-  EmailControl,
   EmailProfile,
   TableName,
   Topic,
@@ -107,10 +106,11 @@ import type {
 import type {
   FormulaTemplate,
   ServiceType,
+  ShipmentControl,
   ShipmentType,
 } from "@/types/shipment";
 import type { Worker } from "@/types/worker";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
  * Get Tags for select options
@@ -237,9 +237,15 @@ export function useDispatchControl() {
  * Use ShipmentControl hook to get Shipment Control Details
  */
 export function useShipmentControl() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["shipmentControl"] as QueryKeys,
     queryFn: async () => getShipmentControl(),
+    initialData: () =>
+      queryClient.getQueryData([
+        "shipmentControl",
+      ] as QueryKeys) as ShipmentControl,
   });
 
   return { data, isLoading, isError, isFetched, isFetching };
@@ -635,9 +641,7 @@ export function useEmailControl() {
     queryFn: async () => getEmailControl(),
   });
 
-  const emailControlData = (data as EmailControl[])?.[0];
-
-  return { emailControlData, isLoading, isFetched, isError, isFetching };
+  return { data, isLoading, isFetched, isError, isFetching };
 }
 
 /**

@@ -39,19 +39,14 @@ function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
 
   const { control, reset, handleSubmit } = useForm<DelayCodeFormValues>({
     resolver: yupResolver(delayCodeSchema),
-    defaultValues: {
-      status: delayCode.status,
-      code: delayCode.code,
-      description: delayCode.description,
-      fCarrierOrDriver: delayCode.fCarrierOrDriver,
-    },
+    defaultValues: delayCode,
   });
 
   const mutation = useCustomMutation<DelayCodeFormValues>(
     control,
     {
       method: "PUT",
-      path: `/delay_codes/${delayCode.id}/`,
+      path: `/delay-codes/${delayCode.id}/`,
       successMessage: "Delay Code updated successfully.",
       queryKeysToInvalidate: ["delay-code-table-data"],
       closeModal: true,
@@ -85,7 +80,7 @@ export function DelayCodeEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [delayCode] = useTableStore.use("currentRecord");
+  const [delayCode] = useTableStore.use("currentRecord") as DelayCode[];
 
   if (!delayCode) return null;
 
@@ -97,7 +92,7 @@ export function DelayCodeEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {delayCode && formatDate(delayCode.modified)}
+          {delayCode && formatDate(delayCode.updatedAt)}
         </DialogDescription>
         {delayCode && <DelayCodeEditForm delayCode={delayCode} />}
       </DialogContent>

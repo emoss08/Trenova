@@ -20,6 +20,8 @@ import { TOAST_STYLE } from "@/lib/constants";
 import { useTableStore } from "@/stores/TableStore";
 import type { QueryKeys, QueryKeyWithParams } from "@/types";
 import { type APIError } from "@/types/server";
+import { faX } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   QueryClient,
   useMutation,
@@ -135,11 +137,18 @@ async function handleSuccess<T extends FieldValues>(
   const notifySuccess = () => {
     toast.success(
       () => (
-        <div className="flex flex-col space-y-1">
-          <span className="font-semibold">
-            Great! Changes saved successfully.
-          </span>
-          <span className="text-xs">{options.successMessage}</span>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col space-y-1">
+            <span className="font-semibold">Success!</span>
+            <span className="text-xs">{options.successMessage}</span>
+          </div>
+          <button
+            onClick={() => toast.dismiss("notification-toast")}
+            aria-label="Close"
+            className="-mt-2 ml-4"
+          >
+            <FontAwesomeIcon icon={faX} className="size-2.5" />
+          </button>
         </div>
       ),
       {

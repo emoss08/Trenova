@@ -64,7 +64,7 @@ export function DCEditForm({
     control,
     {
       method: "PUT",
-      path: `/division_codes/${divisionCode.id}/`,
+      path: `/division-codes/${divisionCode.id}/`,
       successMessage: "Division Code updated successfully.",
       queryKeysToInvalidate: ["division-code-table-data"],
       closeModal: true,
@@ -114,7 +114,7 @@ export function DivisionCodeTableEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {divisionCode && formatDate(divisionCode.modified)}
+          {divisionCode && formatDate(divisionCode.updatedAt)}
         </DialogDescription>
         {divisionCode && <DCEditForm divisionCode={divisionCode} open={open} />}
       </DialogContent>

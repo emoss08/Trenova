@@ -20,7 +20,7 @@ import {
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
-import { StatusChoiceProps, YesNoChoiceProps } from "@/types/index";
+import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
 export interface HazardousMaterial extends BaseModel {
@@ -47,10 +47,9 @@ export interface Commodity extends BaseModel {
   description?: string;
   minTemp?: number;
   maxTemp?: number;
-  setPointTemp?: number;
   unitOfMeasure?: UnitOfMeasureChoiceProps;
-  hazardousMaterial?: string;
-  isHazmat: YesNoChoiceProps;
+  hazardousMaterialId?: string | null;
+  isHazmat: boolean;
 }
 
 export type CommodityFormValues = Omit<

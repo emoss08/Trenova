@@ -55,7 +55,7 @@ export function LCEditForm({
     control,
     {
       method: "PUT",
-      path: `/location_categories/${locationCategory.id}/`,
+      path: `/location-categories/${locationCategory.id}/`,
       successMessage: "Location Category updated successfully.",
       queryKeysToInvalidate: ["location-categories-table-data"],
       additionalInvalidateQueries: ["locationCategories"],
@@ -90,7 +90,9 @@ export function LCTableEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [locationCategory] = useTableStore.use("currentRecord");
+  const [locationCategory] = useTableStore.use(
+    "currentRecord",
+  ) as LocationCategory[];
 
   if (!locationCategory) return null;
 
@@ -102,7 +104,7 @@ export function LCTableEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {locationCategory && formatDate(locationCategory.modified)}
+          {locationCategory && formatDate(locationCategory.updatedAt)}
         </DialogDescription>
         {locationCategory && <LCEditForm locationCategory={locationCategory} />}
       </DialogContent>

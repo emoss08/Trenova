@@ -14,12 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { faEye, faEyeSlash } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -30,6 +26,7 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 import { Label } from "./label";
 
@@ -68,19 +65,14 @@ export function InputField<T extends FieldValues>({
 }: ExtendedInputProps & UseControllerProps<T>) {
   const { fieldState } = useController(props);
 
+  const { rules, label, name, control, className, description } = props;
+
   return (
     <>
-      {props.label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-          htmlFor={props.id}
-        >
-          {props.label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         {icon && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -88,8 +80,8 @@ export function InputField<T extends FieldValues>({
           </div>
         )}
         <Controller
-          name={props.name}
-          control={props.control}
+          name={name}
+          control={control}
           render={({ field }) => (
             <Input
               {...field}
@@ -97,7 +89,7 @@ export function InputField<T extends FieldValues>({
                 icon && "pl-10",
                 fieldState.invalid &&
                   "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
-                props.className,
+                className,
               )}
               {...props}
             />
@@ -106,8 +98,8 @@ export function InputField<T extends FieldValues>({
         {fieldState.invalid && (
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
-        {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+        {description && !fieldState.invalid && (
+          <FieldDescription description={description} />
         )}
       </div>
     </>
@@ -152,7 +144,7 @@ export function FileField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>
@@ -192,7 +184,7 @@ export function TimeField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>
@@ -242,35 +234,26 @@ export function PasswordField<T extends FieldValues>({
             {...props}
           />
           {field.value && !fieldState.invalid && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-sm leading-5"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? (
-                      <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
-                    ) : (
-                      <FontAwesomeIcon icon={faEye} className="size-4" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>
-                    {showPassword ? "Hide" : "Show"} {props.label}
-                  </span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="absolute right-1 top-1/2 size-6 -translate-y-1/2 rounded-md"
+              onClick={togglePasswordVisibility}
+            >
+              {showPassword ? (
+                <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
+              ) : (
+                <FontAwesomeIcon icon={faEye} className="size-4" />
+              )}
+            </Button>
           )}
         </div>
         {fieldState.invalid && (
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>

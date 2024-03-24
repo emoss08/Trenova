@@ -1,0 +1,4 @@
+-- Create "location_categories" table
+CREATE TABLE "location_categories" ("id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "status" character varying NOT NULL DEFAULT 'A', "name" character varying NOT NULL, "description" text NULL, "color" character varying NULL, "business_unit_id" uuid NOT NULL, "organization_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "location_categories_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "location_categories_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
+-- Create index "locationcategory_name_organization_id" to table: "location_categories"
+CREATE UNIQUE INDEX "locationcategory_name_organization_id" ON "location_categories" ("name", "organization_id");

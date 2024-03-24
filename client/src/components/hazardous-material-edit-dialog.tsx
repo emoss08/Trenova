@@ -29,8 +29,8 @@ import { formatDate } from "@/lib/date";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  HazardousMaterial,
   HazardousMaterialFormValues as FormValues,
+  HazardousMaterial,
   HazardousMaterialFormValues,
 } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -54,7 +54,7 @@ function HazardousMaterialEditForm({
     control,
     {
       method: "PUT",
-      path: `/hazardous_materials/${hazardousMaterial.id}/`,
+      path: `/hazardous-materials/${hazardousMaterial.id}/`,
       successMessage: "Hazardous Material updated successfully.",
       queryKeysToInvalidate: ["hazardous-material-table-data"],
       closeModal: true,
@@ -104,7 +104,7 @@ export function HazardousMaterialEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {hazardousMaterial && formatDate(hazardousMaterial.modified)}
+          {hazardousMaterial && formatDate(hazardousMaterial.updatedAt)}
         </DialogDescription>
         {hazardousMaterial && (
           <HazardousMaterialEditForm hazardousMaterial={hazardousMaterial} />

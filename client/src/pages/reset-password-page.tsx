@@ -136,12 +136,7 @@ function ResetPasswordPage() {
             </h2>
             <span className="flex justify-center space-y-5 text-sm">
               Remember your password?&nbsp;
-              <InternalLink
-                to="/login"
-                className="font-medium text-primary underline underline-offset-4 hover:decoration-blue-500"
-              >
-                Login instead
-              </InternalLink>
+              <InternalLink to="/login">Login instead</InternalLink>
             </span>
             <ResetPasswordForm />
           </CardContent>

@@ -29,7 +29,7 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { GeneralLedgerAccount, GLAccountFormValues } from "@/types/accounting";
+import { GLAccountFormValues, GeneralLedgerAccount } from "@/types/accounting";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -54,7 +54,7 @@ function GLEditForm({
         status: glAccount.status,
         accountNumber: glAccount.accountNumber,
         accountType: glAccount.accountType,
-        cashFlowType: glAccount.cashFlowType,
+        cashFlowType: glAccount.cashFlowType || "",
         accountSubType: glAccount.accountSubType,
         accountClassification: glAccount.accountClassification,
         parentAccount: glAccount.parentAccount,
@@ -72,7 +72,7 @@ function GLEditForm({
     control,
     {
       method: "PUT",
-      path: `/gl_accounts/${glAccount.id}/`,
+      path: `/general-ledger-accounts/${glAccount.id}/`,
       successMessage: "General Ledger Account updated successfully.",
       queryKeysToInvalidate: ["gl-account-table-data"],
       additionalInvalidateQueries: ["glAccounts"],
@@ -119,7 +119,9 @@ export function GeneralLedgerAccountTableEditSheet({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const [glAccount] = useTableStore.use("currentRecord");
+  const [glAccount] = useTableStore.use(
+    "currentRecord",
+  ) as GeneralLedgerAccount[];
 
   if (!glAccount) return null;
 
@@ -129,7 +131,7 @@ export function GeneralLedgerAccountTableEditSheet({
         <SheetHeader>
           <SheetTitle>{glAccount && glAccount.accountNumber}</SheetTitle>
           <SheetDescription>
-            Last updated on {glAccount && formatDate(glAccount.modified)}
+            Last updated on {glAccount && formatDate(glAccount.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {glAccount && (

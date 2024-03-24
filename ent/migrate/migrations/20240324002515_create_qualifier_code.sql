@@ -1,0 +1,4 @@
+-- Create "qualifier_codes" table
+CREATE TABLE "qualifier_codes" ("id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "status" character varying NOT NULL DEFAULT 'A', "code" character varying NOT NULL, "description" text NULL, "business_unit_id" uuid NOT NULL, "organization_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "qualifier_codes_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "qualifier_codes_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
+-- Create index "qualifiercode_code_organization_id" to table: "qualifier_codes"
+CREATE UNIQUE INDEX "qualifiercode_code_organization_id" ON "qualifier_codes" ("code", "organization_id");

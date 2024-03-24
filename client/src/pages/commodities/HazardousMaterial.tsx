@@ -19,13 +19,13 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { HazardousMaterialDialog } from "@/components/hazardous-material-dialog";
+import { HazardousMaterialEditDialog } from "@/components/hazardous-material-edit-dialog";
+import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
 import { HazardousMaterial } from "@/types/commodities";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { tableStatusChoices } from "@/lib/choices";
-import { HazardousMaterialDialog } from "@/components/hazardous-material-dialog";
-import { HazardousMaterialEditDialog } from "@/components/hazardous-material-edit-dialog";
 
 const columns: ColumnDef<HazardousMaterial>[] = [
   {
@@ -92,7 +92,7 @@ export default function HazardousMaterials() {
     <DataTable
       queryKey="hazardous-material-table-data"
       columns={columns}
-      link="/hazardous_materials/"
+      link="/hazardous-materials/"
       name="Hazardous Material"
       exportModelName="HazardousMaterial"
       filterColumn="name"

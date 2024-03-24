@@ -20,7 +20,7 @@ import { useUserOrganization } from "@/hooks/useQueries";
 import { Image } from "@unpic/react";
 import { Link } from "react-router-dom";
 
-export function Logo() {
+export function OrganizationLogo() {
   const { userOrganizationData, userOrganizationLoading } =
     useUserOrganization();
 
@@ -28,8 +28,10 @@ export function Logo() {
     return <Skeleton className="h-10 w-40" />;
   }
 
-  if (userOrganizationData && userOrganizationData.logo) {
-    return <LogoLink src={userOrganizationData.logo} alt="Organization Logo" />;
+  if (userOrganizationData && userOrganizationData.logoUrl) {
+    return (
+      <LogoLink src={userOrganizationData.logoUrl} alt="Organization Logo" />
+    );
   }
 
   return (

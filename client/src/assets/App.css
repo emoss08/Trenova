@@ -44,16 +44,8 @@
         appearance: textfield;
     }
 
-    /* Set different font for password input */
-    input[type="password"] {
-        font-family: 'Geist Variable Mono', sans-serif;
-      }
-    input[type="password"]::placeholder {
-        font-family: 'Geist Variable', sans-serif;
-      }
-
     :root {
-        --background: 0 0% 100%;
+        --background: 0 0% 98.82%;
         --foreground: 240 10% 3.9%;
         --card: 0 0% 100%;
         --card-foreground: 240 10% 3.9%;
@@ -98,25 +90,25 @@
     }
 
     .dark {
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 240 10% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 240 10% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 240 5.9% 10%;
-        --secondary: 240 3.7% 15.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 240 3.7% 15.9%;
-        --muted-foreground: 240 5% 64.9%;
-        --accent: 240 3.7% 15.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 50.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 240 3.7% 15.9%;
-        --input: 240 3.7% 15.9%;
-        --ring: 240 4.9% 83.9%;
+        --background: 240 10% 3.92%;
+        --foreground: 0 0% 98.04%;
+        --card: 240 10% 3.92%;
+        --card-foreground: 0 0% 98.04%;
+        --popover: 240 10% 3.92%;
+        --popover-foreground: 0 0% 98.04%;
+        --primary: 0 0% 98.04%;
+        --primary-foreground: 240 5.88% 10%;
+        --secondary: 240 3.7% 15.88%;
+        --secondary-foreground: 0 0% 98.04%;
+        --muted: 240 3.7% 15.88%;
+        --muted-foreground: 240 5.03% 64.9%;
+        --accent: 240 3.7% 15.88%;
+        --accent-foreground: 0 0% 98.04%;
+        --destructive: 0 62.03% 30.98%;
+        --destructive-foreground: 0 0% 98.04%;
+        --border: 240 3.7% 15.88%;
+        --input: 240 3.7% 15.88%;
+        --ring: 240 4.88% 83.92%;
     }
 
     .required:after {

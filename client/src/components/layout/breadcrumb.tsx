@@ -61,14 +61,12 @@ async function manageFavorite(
 ): Promise<AxiosResponse> {
   const user = useUserStore.get("user");
 
-  const endpoint =
-    action === "add" ? "/user-favorites/me/" : "/user-favorites/me/";
   const method = action === "add" ? "post" : "delete";
   const data = { pageLink: pageId, userId: user.id };
 
   const axiosConfig: AxiosRequestConfig = {
     method,
-    url: endpoint,
+    url: "/user-favorites/",
     data,
   };
 

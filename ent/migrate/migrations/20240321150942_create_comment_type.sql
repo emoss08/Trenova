@@ -1,0 +1,4 @@
+-- Create "comment_types" table
+CREATE TABLE "comment_types" ("id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "status" character varying NOT NULL DEFAULT 'A', "name" character varying NOT NULL, "severity" character varying NOT NULL DEFAULT 'Low', "description" text NULL, "business_unit_id" uuid NOT NULL, "organization_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "comment_types_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "comment_types_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
+-- Create index "commenttype_name_organization_id" to table: "comment_types"
+CREATE UNIQUE INDEX "commenttype_name_organization_id" ON "comment_types" ("name", "organization_id");

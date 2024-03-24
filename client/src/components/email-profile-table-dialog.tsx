@@ -50,7 +50,7 @@ export function EmailProfileForm({
       <FormGroup className="lg:grid-cols-2">
         <FormControl>
           <CheckboxInput
-            name="defaultProfile"
+            name="isDefault"
             control={control}
             className="mt-4"
             rules={{
@@ -155,7 +155,7 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
       port: undefined,
       username: "",
       password: "",
-      defaultProfile: false,
+      isDefault: false,
     },
   });
 
