@@ -113,7 +113,7 @@ type TableName struct {
 	Label string `json:"label"`
 }
 
-func (r *TableChangeAlertOps) GetTableNames() ([]TableName, error) {
+func (r *TableChangeAlertOps) GetTableNames() ([]TableName, int, error) {
 	excludedTableNames := map[string]bool{
 		"table_change_alerts":       true,
 		"shipment_controls":         true,
@@ -135,13 +135,13 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, error) {
 
 	tx, err := r.client.Tx(r.ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback()
 
 	rows, err := tx.QueryContext(r.ctx, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -149,7 +149,7 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, error) {
 	for rows.Next() {
 		var tableName string
 		if scanErr := rows.Scan(&tableName); scanErr != nil {
-			return nil, scanErr
+			return nil, 0, scanErr
 		}
 
 		// Skip the tables that are in the exclusion list
@@ -159,8 +159,21 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, error) {
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		return nil, rowErr
+		return nil, 0, rowErr
 	}
 
-	return tableNames, nil
+	// Get the count of tables
+	count, countErr := tx.QueryContext(r.ctx, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
+	if countErr != nil {
+		return nil, 0, countErr
+	}
+
+	var tableCount int
+	if count.Next() {
+		if scanErr := count.Scan(&tableCount); scanErr != nil {
+			return nil, 0, scanErr
+		}
+	}
+
+	return tableNames, tableCount, nil
 }

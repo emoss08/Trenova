@@ -135,7 +135,7 @@ func UpdateTableChangeAlert(w http.ResponseWriter, r *http.Request) {
 
 // GetTableNames gets the table names for an organization.
 func GetTableNames(w http.ResponseWriter, r *http.Request) {
-	tableChangeAlerts, err := services.NewTableChangeAlertOps(r.Context()).GetTableNames()
+	tableChangeAlerts, count, err := services.NewTableChangeAlertOps(r.Context()).GetTableNames()
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -145,7 +145,7 @@ func GetTableNames(w http.ResponseWriter, r *http.Request) {
 
 	tools.ResponseWithJSON(w, http.StatusOK, types.HTTPResponse{
 		Results:  tableChangeAlerts,
-		Count:    0,
+		Count:    count,
 		Next:     "",
 		Previous: "",
 	})
