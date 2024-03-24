@@ -137,42 +137,40 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit() // if Commit returns error update err with commit err
+		}
+	}()
 
-	rows, err := tx.QueryContext(r.ctx, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
+	query := "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
+	rows, err := tx.QueryContext(r.ctx, query)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var tableNames []TableName
+	var tableCount int
 	for rows.Next() {
 		var tableName string
 		if scanErr := rows.Scan(&tableName); scanErr != nil {
 			return nil, 0, scanErr
 		}
 
-		// Skip the tables that are in the exclusion list
 		if _, excluded := excludedTableNames[tableName]; !excluded {
 			tableNames = append(tableNames, TableName{Value: tableName, Label: tableName})
+			tableCount++
 		}
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
 		return nil, 0, rowErr
-	}
-
-	// Get the count of tables
-	count, countErr := tx.QueryContext(r.ctx, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")
-	if countErr != nil {
-		return nil, 0, countErr
-	}
-
-	var tableCount int
-	if count.Next() {
-		if scanErr := count.Scan(&tableCount); scanErr != nil {
-			return nil, 0, scanErr
-		}
 	}
 
 	return tableNames, tableCount, nil
