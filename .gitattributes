@@ -5,5 +5,4 @@
 *.ts linguist-language=TypeScript
 *.go linguist-language=Go
 
-# Mark files in the ent directory as not generated, even if they have generated code markers
 ent/** linguist-generated=false
