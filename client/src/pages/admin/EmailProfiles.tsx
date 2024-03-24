@@ -18,7 +18,10 @@
 import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import {
+  DataTableColumnHeader,
+  DataTableTooltipColumnHeader,
+} from "@/components/common/table/data-table-column-header";
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 import { EmailProfileDialog } from "@/components/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile-table-edit-dialog";
@@ -49,7 +52,12 @@ const columns: ColumnDef<EmailProfile>[] = [
   },
   {
     accessorKey: "isDefault",
-    header: "Default Profile",
+    header: () => (
+      <DataTableTooltipColumnHeader
+        title="Default"
+        tooltip="Is this the default email profile for the organization?"
+      />
+    ),
     cell: ({ row }) => <BoolStatusBadge status={row.getValue("isDefault")} />,
   },
   {

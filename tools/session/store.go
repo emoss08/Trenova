@@ -87,10 +87,7 @@ func (st *Store) New(r *http.Request, name string) (*sessions.Session, error) {
 
 	st.MaxAge(st.SessionOpts.MaxAge)
 
-	s, sessionErr := st.getSessionFromCookie(r.Context(), r, session.Name())
-	if sessionErr != nil {
-		return session, sessionErr // Continue with a new session if error
-	}
+	s := st.getSessionFromCookie(r.Context(), r, session.Name())
 
 	if s != nil {
 		if err := securecookie.DecodeMulti(session.Name(), s.Data, &session.Values, st.Codecs...); err != nil {
@@ -105,18 +102,17 @@ func (st *Store) New(r *http.Request, name string) (*sessions.Session, error) {
 
 // Save session and set cookie header.
 func (st *Store) Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-	s, err := st.getSessionFromCookie(r.Context(), r, session.Name())
-	if err != nil {
-		return err
-	}
-
-	if session.Options.MaxAge < 0 {
-		if s != nil {
-			if sessionErr := st.client.Session.DeleteOneID(s.ID).Exec(r.Context()); sessionErr != nil {
-				return sessionErr
-			}
+	s := st.getSessionFromCookie(r.Context(), r, session.Name())
+	if session.Options.MaxAge < 0 && s == nil {
+		if sessionErr := st.client.Session.DeleteOneID(s.ID).Exec(r.Context()); sessionErr != nil {
+			return sessionErr
 		}
-		http.SetCookie(w, sessions.NewCookie(session.Name(), "", session.Options))
+		http.SetCookie(w, sessions.NewCookie(session.Name(), "", &sessions.Options{
+			Path:     defaultPath,
+			MaxAge:   -1,
+			Secure:   false,
+			HttpOnly: false,
+		}))
 		return nil
 	}
 
@@ -169,22 +165,23 @@ func (st *Store) Save(r *http.Request, w http.ResponseWriter, session *sessions.
 }
 
 // getSessionFromCookie looks for an existing EntSession from a session ID stored inside a cookie.
-func (st *Store) getSessionFromCookie(ctx context.Context, r *http.Request, name string) (*ent.Session, error) {
+func (st *Store) getSessionFromCookie(ctx context.Context, r *http.Request, name string) *ent.Session {
 	if cookie, err := r.Cookie(name); err == nil {
 		sessionID := ""
 		if decodeErr := securecookie.DecodeMulti(name, cookie.Value, &sessionID, st.Codecs...); decodeErr != nil {
-			return nil, decodeErr
+			return nil
 		}
 		session, queryErr := st.client.Session.
 			Query().
 			Where(session.IDEQ(sessionID), session.ExpiresAtGT(time.Now())).
 			Only(ctx)
 		if queryErr != nil {
-			return nil, queryErr
+			log.Printf("failed to get session from cookie: %v", queryErr)
+			return nil
 		}
-		return session, nil
+		return session
 	}
-	return nil, errors.New("session not found")
+	return nil
 }
 
 // MaxAge sets the maximum age for the store and the underlying cookie implementation.

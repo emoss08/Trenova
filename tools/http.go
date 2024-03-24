@@ -61,10 +61,10 @@ func RegisterGob() {
 	gob.Register(uuid.UUID{})
 }
 
-func GetSystemSessionID() string {
-	key := os.Getenv("SESSION_ID")
+func GetSystemSessionName() string {
+	key := os.Getenv("SESSION_NAME")
 	if key == "" {
-		log.Fatal("SESSION_ID not found in environment")
+		log.Fatal("SESSION_NAME not found in environment")
 	}
 
 	return key
@@ -77,8 +77,8 @@ func GetSessionDetails(r *http.Request, store *session.Store) (uuid.UUID, uuid.U
 		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}
 
-	sessionID := GetSystemSessionID()
-	session, err := store.Get(r, sessionID)
+	sessionName := GetSystemSessionName()
+	session, err := store.Get(r, sessionName)
 	if err != nil {
 		log.Printf("Error retrieving session: %v", err)
 		return uuid.Nil, uuid.Nil, uuid.Nil, false
