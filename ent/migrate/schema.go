@@ -1182,7 +1182,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 50},
 		{Name: "database_action", Type: field.TypeEnum, Enums: []string{"Insert", "Update", "Delete", "All"}},
-		{Name: "source", Type: field.TypeEnum, Enums: []string{"Kafka", "Db"}},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"Kafka", "Database"}},
 		{Name: "table_name", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "topic", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},

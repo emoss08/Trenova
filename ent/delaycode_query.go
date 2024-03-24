@@ -26,6 +26,7 @@ type DelayCodeQuery struct {
 	predicates       []predicate.DelayCode
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (dcq *DelayCodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*D
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(dcq.modifiers) > 0 {
+		_spec.Modifiers = dcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (dcq *DelayCodeQuery) loadOrganization(ctx context.Context, query *Organiza
 
 func (dcq *DelayCodeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dcq.querySpec()
+	if len(dcq.modifiers) > 0 {
+		_spec.Modifiers = dcq.modifiers
+	}
 	_spec.Node.Columns = dcq.ctx.Fields
 	if len(dcq.ctx.Fields) > 0 {
 		_spec.Unique = dcq.ctx.Unique != nil && *dcq.ctx.Unique
@@ -573,6 +580,9 @@ func (dcq *DelayCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if dcq.ctx.Unique != nil && *dcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range dcq.modifiers {
+		m(selector)
+	}
 	for _, p := range dcq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (dcq *DelayCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (dcq *DelayCodeQuery) Modify(modifiers ...func(s *sql.Selector)) *DelayCodeSelect {
+	dcq.modifiers = append(dcq.modifiers, modifiers...)
+	return dcq.Select()
 }
 
 // DelayCodeGroupBy is the group-by builder for DelayCode entities.
@@ -678,4 +694,10 @@ func (dcs *DelayCodeSelect) sqlScan(ctx context.Context, root *DelayCodeQuery, v
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (dcs *DelayCodeSelect) Modify(modifiers ...func(s *sql.Selector)) *DelayCodeSelect {
+	dcs.modifiers = append(dcs.modifiers, modifiers...)
+	return dcs
 }

@@ -18,8 +18,9 @@ import (
 // EmailProfileUpdate is the builder for updating EmailProfile entities.
 type EmailProfileUpdate struct {
 	config
-	hooks    []Hook
-	mutation *EmailProfileMutation
+	hooks     []Hook
+	mutation  *EmailProfileMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the EmailProfileUpdate builder.
@@ -271,6 +272,12 @@ func (epu *EmailProfileUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (epu *EmailProfileUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailProfileUpdate {
+	epu.modifiers = append(epu.modifiers, modifiers...)
+	return epu
+}
+
 func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := epu.check(); err != nil {
 		return n, err
@@ -328,6 +335,7 @@ func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := epu.mutation.IsDefault(); ok {
 		_spec.SetField(emailprofile.FieldIsDefault, field.TypeBool, value)
 	}
+	_spec.AddModifiers(epu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, epu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{emailprofile.Label}
@@ -343,9 +351,10 @@ func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // EmailProfileUpdateOne is the builder for updating a single EmailProfile entity.
 type EmailProfileUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *EmailProfileMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *EmailProfileMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -604,6 +613,12 @@ func (epuo *EmailProfileUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (epuo *EmailProfileUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailProfileUpdateOne {
+	epuo.modifiers = append(epuo.modifiers, modifiers...)
+	return epuo
+}
+
 func (epuo *EmailProfileUpdateOne) sqlSave(ctx context.Context) (_node *EmailProfile, err error) {
 	if err := epuo.check(); err != nil {
 		return _node, err
@@ -678,6 +693,7 @@ func (epuo *EmailProfileUpdateOne) sqlSave(ctx context.Context) (_node *EmailPro
 	if value, ok := epuo.mutation.IsDefault(); ok {
 		_spec.SetField(emailprofile.FieldIsDefault, field.TypeBool, value)
 	}
+	_spec.AddModifiers(epuo.modifiers...)
 	_node = &EmailProfile{config: epuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -27,6 +27,7 @@ type TagQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -425,6 +426,9 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -510,6 +514,9 @@ func (tq *TagQuery) loadOrganization(ctx context.Context, query *OrganizationQue
 
 func (tq *TagQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	_spec.Node.Columns = tq.ctx.Fields
 	if len(tq.ctx.Fields) > 0 {
 		_spec.Unique = tq.ctx.Unique != nil && *tq.ctx.Unique
@@ -578,6 +585,9 @@ func (tq *TagQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if tq.ctx.Unique != nil && *tq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range tq.modifiers {
+		m(selector)
+	}
 	for _, p := range tq.predicates {
 		p(selector)
 	}
@@ -593,6 +603,12 @@ func (tq *TagQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (tq *TagQuery) Modify(modifiers ...func(s *sql.Selector)) *TagSelect {
+	tq.modifiers = append(tq.modifiers, modifiers...)
+	return tq.Select()
 }
 
 // TagGroupBy is the group-by builder for Tag entities.
@@ -683,4 +699,10 @@ func (ts *TagSelect) sqlScan(ctx context.Context, root *TagQuery, v any) error {
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ts *TagSelect) Modify(modifiers ...func(s *sql.Selector)) *TagSelect {
+	ts.modifiers = append(ts.modifiers, modifiers...)
+	return ts
 }

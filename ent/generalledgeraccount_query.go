@@ -29,6 +29,7 @@ type GeneralLedgerAccountQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withTags         *TagQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -458,6 +459,9 @@ func (glaq *GeneralLedgerAccountQuery) sqlAll(ctx context.Context, hooks ...quer
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(glaq.modifiers) > 0 {
+		_spec.Modifiers = glaq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -581,6 +585,9 @@ func (glaq *GeneralLedgerAccountQuery) loadTags(ctx context.Context, query *TagQ
 
 func (glaq *GeneralLedgerAccountQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := glaq.querySpec()
+	if len(glaq.modifiers) > 0 {
+		_spec.Modifiers = glaq.modifiers
+	}
 	_spec.Node.Columns = glaq.ctx.Fields
 	if len(glaq.ctx.Fields) > 0 {
 		_spec.Unique = glaq.ctx.Unique != nil && *glaq.ctx.Unique
@@ -649,6 +656,9 @@ func (glaq *GeneralLedgerAccountQuery) sqlQuery(ctx context.Context) *sql.Select
 	if glaq.ctx.Unique != nil && *glaq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range glaq.modifiers {
+		m(selector)
+	}
 	for _, p := range glaq.predicates {
 		p(selector)
 	}
@@ -664,6 +674,12 @@ func (glaq *GeneralLedgerAccountQuery) sqlQuery(ctx context.Context) *sql.Select
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (glaq *GeneralLedgerAccountQuery) Modify(modifiers ...func(s *sql.Selector)) *GeneralLedgerAccountSelect {
+	glaq.modifiers = append(glaq.modifiers, modifiers...)
+	return glaq.Select()
 }
 
 // GeneralLedgerAccountGroupBy is the group-by builder for GeneralLedgerAccount entities.
@@ -754,4 +770,10 @@ func (glas *GeneralLedgerAccountSelect) sqlScan(ctx context.Context, root *Gener
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (glas *GeneralLedgerAccountSelect) Modify(modifiers ...func(s *sql.Selector)) *GeneralLedgerAccountSelect {
+	glas.modifiers = append(glas.modifiers, modifiers...)
+	return glas
 }

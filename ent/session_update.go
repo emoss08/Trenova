@@ -18,8 +18,9 @@ import (
 // SessionUpdate is the builder for updating Session entities.
 type SessionUpdate struct {
 	config
-	hooks    []Hook
-	mutation *SessionMutation
+	hooks     []Hook
+	mutation  *SessionMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the SessionUpdate builder.
@@ -126,6 +127,12 @@ func (su *SessionUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (su *SessionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SessionUpdate {
+	su.modifiers = append(su.modifiers, modifiers...)
+	return su
+}
+
 func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := su.check(); err != nil {
 		return n, err
@@ -150,6 +157,7 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.ExpiresAt(); ok {
 		_spec.SetField(session.FieldExpiresAt, field.TypeTime, value)
 	}
+	_spec.AddModifiers(su.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{session.Label}
@@ -165,9 +173,10 @@ func (su *SessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // SessionUpdateOne is the builder for updating a single Session entity.
 type SessionUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *SessionMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *SessionMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetData sets the "data" field.
@@ -281,6 +290,12 @@ func (suo *SessionUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (suo *SessionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SessionUpdateOne {
+	suo.modifiers = append(suo.modifiers, modifiers...)
+	return suo
+}
+
 func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err error) {
 	if err := suo.check(); err != nil {
 		return _node, err
@@ -322,6 +337,7 @@ func (suo *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err e
 	if value, ok := suo.mutation.ExpiresAt(); ok {
 		_spec.SetField(session.FieldExpiresAt, field.TypeTime, value)
 	}
+	_spec.AddModifiers(suo.modifiers...)
 	_node = &Session{config: suo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

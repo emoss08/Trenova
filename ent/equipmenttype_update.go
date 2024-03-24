@@ -18,8 +18,9 @@ import (
 // EquipmentTypeUpdate is the builder for updating EquipmentType entities.
 type EquipmentTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *EquipmentTypeMutation
+	hooks     []Hook
+	mutation  *EquipmentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the EquipmentTypeUpdate builder.
@@ -393,6 +394,12 @@ func (etu *EquipmentTypeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (etu *EquipmentTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EquipmentTypeUpdate {
+	etu.modifiers = append(etu.modifiers, modifiers...)
+	return etu
+}
+
 func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := etu.check(); err != nil {
 		return n, err
@@ -498,6 +505,7 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := etu.mutation.ExemptFromTolls(); ok {
 		_spec.SetField(equipmenttype.FieldExemptFromTolls, field.TypeBool, value)
 	}
+	_spec.AddModifiers(etu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, etu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{equipmenttype.Label}
@@ -513,9 +521,10 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 // EquipmentTypeUpdateOne is the builder for updating a single EquipmentType entity.
 type EquipmentTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *EquipmentTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *EquipmentTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -896,6 +905,12 @@ func (etuo *EquipmentTypeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (etuo *EquipmentTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EquipmentTypeUpdateOne {
+	etuo.modifiers = append(etuo.modifiers, modifiers...)
+	return etuo
+}
+
 func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *EquipmentType, err error) {
 	if err := etuo.check(); err != nil {
 		return _node, err
@@ -1018,6 +1033,7 @@ func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Equipme
 	if value, ok := etuo.mutation.ExemptFromTolls(); ok {
 		_spec.SetField(equipmenttype.FieldExemptFromTolls, field.TypeBool, value)
 	}
+	_spec.AddModifiers(etuo.modifiers...)
 	_node = &EquipmentType{config: etuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -26,6 +26,7 @@ type QualifierCodeQuery struct {
 	predicates       []predicate.QualifierCode
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (qcq *QualifierCodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(qcq.modifiers) > 0 {
+		_spec.Modifiers = qcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (qcq *QualifierCodeQuery) loadOrganization(ctx context.Context, query *Orga
 
 func (qcq *QualifierCodeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := qcq.querySpec()
+	if len(qcq.modifiers) > 0 {
+		_spec.Modifiers = qcq.modifiers
+	}
 	_spec.Node.Columns = qcq.ctx.Fields
 	if len(qcq.ctx.Fields) > 0 {
 		_spec.Unique = qcq.ctx.Unique != nil && *qcq.ctx.Unique
@@ -573,6 +580,9 @@ func (qcq *QualifierCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if qcq.ctx.Unique != nil && *qcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range qcq.modifiers {
+		m(selector)
+	}
 	for _, p := range qcq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (qcq *QualifierCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (qcq *QualifierCodeQuery) Modify(modifiers ...func(s *sql.Selector)) *QualifierCodeSelect {
+	qcq.modifiers = append(qcq.modifiers, modifiers...)
+	return qcq.Select()
 }
 
 // QualifierCodeGroupBy is the group-by builder for QualifierCode entities.
@@ -678,4 +694,10 @@ func (qcs *QualifierCodeSelect) sqlScan(ctx context.Context, root *QualifierCode
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (qcs *QualifierCodeSelect) Modify(modifiers ...func(s *sql.Selector)) *QualifierCodeSelect {
+	qcs.modifiers = append(qcs.modifiers, modifiers...)
+	return qcs
 }

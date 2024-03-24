@@ -22,8 +22,9 @@ import (
 // EmailControlUpdate is the builder for updating EmailControl entities.
 type EmailControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *EmailControlMutation
+	hooks     []Hook
+	mutation  *EmailControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the EmailControlUpdate builder.
@@ -200,6 +201,12 @@ func (ecu *EmailControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ecu *EmailControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailControlUpdate {
+	ecu.modifiers = append(ecu.modifiers, modifiers...)
+	return ecu
+}
+
 func (ecu *EmailControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ecu.check(); err != nil {
 		return n, err
@@ -331,6 +338,7 @@ func (ecu *EmailControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ecu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ecu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{emailcontrol.Label}
@@ -346,9 +354,10 @@ func (ecu *EmailControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // EmailControlUpdateOne is the builder for updating a single EmailControl entity.
 type EmailControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *EmailControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *EmailControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -532,6 +541,12 @@ func (ecuo *EmailControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ecuo *EmailControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EmailControlUpdateOne {
+	ecuo.modifiers = append(ecuo.modifiers, modifiers...)
+	return ecuo
+}
+
 func (ecuo *EmailControlUpdateOne) sqlSave(ctx context.Context) (_node *EmailControl, err error) {
 	if err := ecuo.check(); err != nil {
 		return _node, err
@@ -680,6 +695,7 @@ func (ecuo *EmailControlUpdateOne) sqlSave(ctx context.Context) (_node *EmailCon
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(ecuo.modifiers...)
 	_node = &EmailControl{config: ecuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

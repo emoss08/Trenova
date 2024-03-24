@@ -73,7 +73,7 @@ function TableChangeEditForm({
     control,
     {
       method: "PUT",
-      path: `/table_change_alerts/${tableChangeAlert.id}/`,
+      path: `/table-change-alerts/${tableChangeAlert.id}/`,
       successMessage: "Table Change Alert updated successfully.",
       queryKeysToInvalidate: ["table-change-alert-data"],
       closeModal: true,
@@ -128,7 +128,7 @@ export function TableChangeAlertEditSheet({
           <SheetTitle>{tableChangeAlert && tableChangeAlert.name}</SheetTitle>
           <SheetDescription>
             Last updated on{" "}
-            {tableChangeAlert && formatDate(tableChangeAlert.modified)}
+            {tableChangeAlert && formatDate(tableChangeAlert.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {tableChangeAlert && (

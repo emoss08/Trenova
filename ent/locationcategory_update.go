@@ -18,8 +18,9 @@ import (
 // LocationCategoryUpdate is the builder for updating LocationCategory entities.
 type LocationCategoryUpdate struct {
 	config
-	hooks    []Hook
-	mutation *LocationCategoryMutation
+	hooks     []Hook
+	mutation  *LocationCategoryMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the LocationCategoryUpdate builder.
@@ -145,6 +146,12 @@ func (lcu *LocationCategoryUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (lcu *LocationCategoryUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *LocationCategoryUpdate {
+	lcu.modifiers = append(lcu.modifiers, modifiers...)
+	return lcu
+}
+
 func (lcu *LocationCategoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := lcu.check(); err != nil {
 		return n, err
@@ -175,6 +182,7 @@ func (lcu *LocationCategoryUpdate) sqlSave(ctx context.Context) (n int, err erro
 	if lcu.mutation.ColorCleared() {
 		_spec.ClearField(locationcategory.FieldColor, field.TypeString)
 	}
+	_spec.AddModifiers(lcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, lcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{locationcategory.Label}
@@ -190,9 +198,10 @@ func (lcu *LocationCategoryUpdate) sqlSave(ctx context.Context) (n int, err erro
 // LocationCategoryUpdateOne is the builder for updating a single LocationCategory entity.
 type LocationCategoryUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *LocationCategoryMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *LocationCategoryMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -325,6 +334,12 @@ func (lcuo *LocationCategoryUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (lcuo *LocationCategoryUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *LocationCategoryUpdateOne {
+	lcuo.modifiers = append(lcuo.modifiers, modifiers...)
+	return lcuo
+}
+
 func (lcuo *LocationCategoryUpdateOne) sqlSave(ctx context.Context) (_node *LocationCategory, err error) {
 	if err := lcuo.check(); err != nil {
 		return _node, err
@@ -372,6 +387,7 @@ func (lcuo *LocationCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Loca
 	if lcuo.mutation.ColorCleared() {
 		_spec.ClearField(locationcategory.FieldColor, field.TypeString)
 	}
+	_spec.AddModifiers(lcuo.modifiers...)
 	_node = &LocationCategory{config: lcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

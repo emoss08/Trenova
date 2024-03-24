@@ -26,6 +26,7 @@ type EquipmentTypeQuery struct {
 	predicates       []predicate.EquipmentType
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (etq *EquipmentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(etq.modifiers) > 0 {
+		_spec.Modifiers = etq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (etq *EquipmentTypeQuery) loadOrganization(ctx context.Context, query *Orga
 
 func (etq *EquipmentTypeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := etq.querySpec()
+	if len(etq.modifiers) > 0 {
+		_spec.Modifiers = etq.modifiers
+	}
 	_spec.Node.Columns = etq.ctx.Fields
 	if len(etq.ctx.Fields) > 0 {
 		_spec.Unique = etq.ctx.Unique != nil && *etq.ctx.Unique
@@ -573,6 +580,9 @@ func (etq *EquipmentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if etq.ctx.Unique != nil && *etq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range etq.modifiers {
+		m(selector)
+	}
 	for _, p := range etq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (etq *EquipmentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (etq *EquipmentTypeQuery) Modify(modifiers ...func(s *sql.Selector)) *EquipmentTypeSelect {
+	etq.modifiers = append(etq.modifiers, modifiers...)
+	return etq.Select()
 }
 
 // EquipmentTypeGroupBy is the group-by builder for EquipmentType entities.
@@ -678,4 +694,10 @@ func (ets *EquipmentTypeSelect) sqlScan(ctx context.Context, root *EquipmentType
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (ets *EquipmentTypeSelect) Modify(modifiers ...func(s *sql.Selector)) *EquipmentTypeSelect {
+	ets.modifiers = append(ets.modifiers, modifiers...)
+	return ets
 }

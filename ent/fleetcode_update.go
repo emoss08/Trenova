@@ -20,8 +20,9 @@ import (
 // FleetCodeUpdate is the builder for updating FleetCode entities.
 type FleetCodeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *FleetCodeMutation
+	hooks     []Hook
+	mutation  *FleetCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the FleetCodeUpdate builder.
@@ -258,6 +259,12 @@ func (fcu *FleetCodeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (fcu *FleetCodeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FleetCodeUpdate {
+	fcu.modifiers = append(fcu.modifiers, modifiers...)
+	return fcu
+}
+
 func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := fcu.check(); err != nil {
 		return n, err
@@ -341,6 +348,7 @@ func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(fcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, fcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{fleetcode.Label}
@@ -356,9 +364,10 @@ func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // FleetCodeUpdateOne is the builder for updating a single FleetCode entity.
 type FleetCodeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *FleetCodeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *FleetCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -602,6 +611,12 @@ func (fcuo *FleetCodeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (fcuo *FleetCodeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FleetCodeUpdateOne {
+	fcuo.modifiers = append(fcuo.modifiers, modifiers...)
+	return fcuo
+}
+
 func (fcuo *FleetCodeUpdateOne) sqlSave(ctx context.Context) (_node *FleetCode, err error) {
 	if err := fcuo.check(); err != nil {
 		return _node, err
@@ -702,6 +717,7 @@ func (fcuo *FleetCodeUpdateOne) sqlSave(ctx context.Context) (_node *FleetCode, 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(fcuo.modifiers...)
 	_node = &FleetCode{config: fcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

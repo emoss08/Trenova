@@ -18,8 +18,9 @@ import (
 // AccessorialChargeUpdate is the builder for updating AccessorialCharge entities.
 type AccessorialChargeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *AccessorialChargeMutation
+	hooks     []Hook
+	mutation  *AccessorialChargeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the AccessorialChargeUpdate builder.
@@ -203,6 +204,12 @@ func (acu *AccessorialChargeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (acu *AccessorialChargeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AccessorialChargeUpdate {
+	acu.modifiers = append(acu.modifiers, modifiers...)
+	return acu
+}
+
 func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := acu.check(); err != nil {
 		return n, err
@@ -242,6 +249,7 @@ func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := acu.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
 	}
+	_spec.AddModifiers(acu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, acu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{accessorialcharge.Label}
@@ -257,9 +265,10 @@ func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err err
 // AccessorialChargeUpdateOne is the builder for updating a single AccessorialCharge entity.
 type AccessorialChargeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *AccessorialChargeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *AccessorialChargeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -450,6 +459,12 @@ func (acuo *AccessorialChargeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (acuo *AccessorialChargeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AccessorialChargeUpdateOne {
+	acuo.modifiers = append(acuo.modifiers, modifiers...)
+	return acuo
+}
+
 func (acuo *AccessorialChargeUpdateOne) sqlSave(ctx context.Context) (_node *AccessorialCharge, err error) {
 	if err := acuo.check(); err != nil {
 		return _node, err
@@ -506,6 +521,7 @@ func (acuo *AccessorialChargeUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	if value, ok := acuo.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
 	}
+	_spec.AddModifiers(acuo.modifiers...)
 	_node = &AccessorialCharge{config: acuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

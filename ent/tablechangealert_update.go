@@ -18,8 +18,9 @@ import (
 // TableChangeAlertUpdate is the builder for updating TableChangeAlert entities.
 type TableChangeAlertUpdate struct {
 	config
-	hooks    []Hook
-	mutation *TableChangeAlertMutation
+	hooks     []Hook
+	mutation  *TableChangeAlertMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the TableChangeAlertUpdate builder.
@@ -392,6 +393,12 @@ func (tcau *TableChangeAlertUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (tcau *TableChangeAlertUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TableChangeAlertUpdate {
+	tcau.modifiers = append(tcau.modifiers, modifiers...)
+	return tcau
+}
+
 func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := tcau.check(); err != nil {
 		return n, err
@@ -479,6 +486,7 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	if tcau.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
 	}
+	_spec.AddModifiers(tcau.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, tcau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tablechangealert.Label}
@@ -494,9 +502,10 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 // TableChangeAlertUpdateOne is the builder for updating a single TableChangeAlert entity.
 type TableChangeAlertUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *TableChangeAlertMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *TableChangeAlertMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -876,6 +885,12 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (tcauo *TableChangeAlertUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TableChangeAlertUpdateOne {
+	tcauo.modifiers = append(tcauo.modifiers, modifiers...)
+	return tcauo
+}
+
 func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *TableChangeAlert, err error) {
 	if err := tcauo.check(); err != nil {
 		return _node, err
@@ -980,6 +995,7 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	if tcauo.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
 	}
+	_spec.AddModifiers(tcauo.modifiers...)
 	_node = &TableChangeAlert{config: tcauo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

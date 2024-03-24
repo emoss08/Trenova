@@ -31193,7 +31193,7 @@ func (m *TableChangeAlertMutation) TableName() (r string, exists bool) {
 // OldTableName returns the old "table_name" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldTableName(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldTableName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTableName is only allowed on UpdateOne operations")
 	}
@@ -31242,7 +31242,7 @@ func (m *TableChangeAlertMutation) Topic() (r string, exists bool) {
 // OldTopic returns the old "topic" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldTopic(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldTopic(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTopic is only allowed on UpdateOne operations")
 	}
@@ -31291,7 +31291,7 @@ func (m *TableChangeAlertMutation) Description() (r string, exists bool) {
 // OldDescription returns the old "description" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldDescription(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldDescription(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
 	}
@@ -31340,7 +31340,7 @@ func (m *TableChangeAlertMutation) CustomSubject() (r string, exists bool) {
 // OldCustomSubject returns the old "custom_subject" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldCustomSubject(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldCustomSubject(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCustomSubject is only allowed on UpdateOne operations")
 	}
@@ -31389,7 +31389,7 @@ func (m *TableChangeAlertMutation) FunctionName() (r string, exists bool) {
 // OldFunctionName returns the old "function_name" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldFunctionName(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldFunctionName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFunctionName is only allowed on UpdateOne operations")
 	}
@@ -31438,7 +31438,7 @@ func (m *TableChangeAlertMutation) TriggerName() (r string, exists bool) {
 // OldTriggerName returns the old "trigger_name" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldTriggerName(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldTriggerName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTriggerName is only allowed on UpdateOne operations")
 	}
@@ -31487,7 +31487,7 @@ func (m *TableChangeAlertMutation) ListenerName() (r string, exists bool) {
 // OldListenerName returns the old "listener_name" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldListenerName(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldListenerName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldListenerName is only allowed on UpdateOne operations")
 	}
@@ -31536,7 +31536,7 @@ func (m *TableChangeAlertMutation) EmailRecipients() (r string, exists bool) {
 // OldEmailRecipients returns the old "email_recipients" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldEmailRecipients(ctx context.Context) (v *string, err error) {
+func (m *TableChangeAlertMutation) OldEmailRecipients(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEmailRecipients is only allowed on UpdateOne operations")
 	}
@@ -31585,7 +31585,7 @@ func (m *TableChangeAlertMutation) EffectiveDate() (r time.Time, exists bool) {
 // OldEffectiveDate returns the old "effective_date" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldEffectiveDate(ctx context.Context) (v *time.Time, err error) {
+func (m *TableChangeAlertMutation) OldEffectiveDate(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEffectiveDate is only allowed on UpdateOne operations")
 	}
@@ -31634,7 +31634,7 @@ func (m *TableChangeAlertMutation) ExpirationDate() (r time.Time, exists bool) {
 // OldExpirationDate returns the old "expiration_date" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldExpirationDate(ctx context.Context) (v *time.Time, err error) {
+func (m *TableChangeAlertMutation) OldExpirationDate(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldExpirationDate is only allowed on UpdateOne operations")
 	}

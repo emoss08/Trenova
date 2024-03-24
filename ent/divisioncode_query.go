@@ -30,6 +30,7 @@ type DivisionCodeQuery struct {
 	withCashAccount    *GeneralLedgerAccountQuery
 	withApAccount      *GeneralLedgerAccountQuery
 	withExpenseAccount *GeneralLedgerAccountQuery
+	modifiers          []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -529,6 +530,9 @@ func (dcq *DivisionCodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(dcq.modifiers) > 0 {
+		_spec.Modifiers = dcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -728,6 +732,9 @@ func (dcq *DivisionCodeQuery) loadExpenseAccount(ctx context.Context, query *Gen
 
 func (dcq *DivisionCodeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dcq.querySpec()
+	if len(dcq.modifiers) > 0 {
+		_spec.Modifiers = dcq.modifiers
+	}
 	_spec.Node.Columns = dcq.ctx.Fields
 	if len(dcq.ctx.Fields) > 0 {
 		_spec.Unique = dcq.ctx.Unique != nil && *dcq.ctx.Unique
@@ -805,6 +812,9 @@ func (dcq *DivisionCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if dcq.ctx.Unique != nil && *dcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range dcq.modifiers {
+		m(selector)
+	}
 	for _, p := range dcq.predicates {
 		p(selector)
 	}
@@ -820,6 +830,12 @@ func (dcq *DivisionCodeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (dcq *DivisionCodeQuery) Modify(modifiers ...func(s *sql.Selector)) *DivisionCodeSelect {
+	dcq.modifiers = append(dcq.modifiers, modifiers...)
+	return dcq.Select()
 }
 
 // DivisionCodeGroupBy is the group-by builder for DivisionCode entities.
@@ -910,4 +926,10 @@ func (dcs *DivisionCodeSelect) sqlScan(ctx context.Context, root *DivisionCodeQu
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (dcs *DivisionCodeSelect) Modify(modifiers ...func(s *sql.Selector)) *DivisionCodeSelect {
+	dcs.modifiers = append(dcs.modifiers, modifiers...)
+	return dcs
 }

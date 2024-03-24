@@ -18,8 +18,9 @@ import (
 // ChargeTypeUpdate is the builder for updating ChargeType entities.
 type ChargeTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ChargeTypeMutation
+	hooks     []Hook
+	mutation  *ChargeTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ChargeTypeUpdate builder.
@@ -144,6 +145,12 @@ func (ctu *ChargeTypeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ctu *ChargeTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ChargeTypeUpdate {
+	ctu.modifiers = append(ctu.modifiers, modifiers...)
+	return ctu
+}
+
 func (ctu *ChargeTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ctu.check(); err != nil {
 		return n, err
@@ -171,6 +178,7 @@ func (ctu *ChargeTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if ctu.mutation.DescriptionCleared() {
 		_spec.ClearField(chargetype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(ctu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ctu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chargetype.Label}
@@ -186,9 +194,10 @@ func (ctu *ChargeTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ChargeTypeUpdateOne is the builder for updating a single ChargeType entity.
 type ChargeTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ChargeTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ChargeTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -320,6 +329,12 @@ func (ctuo *ChargeTypeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (ctuo *ChargeTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ChargeTypeUpdateOne {
+	ctuo.modifiers = append(ctuo.modifiers, modifiers...)
+	return ctuo
+}
+
 func (ctuo *ChargeTypeUpdateOne) sqlSave(ctx context.Context) (_node *ChargeType, err error) {
 	if err := ctuo.check(); err != nil {
 		return _node, err
@@ -364,6 +379,7 @@ func (ctuo *ChargeTypeUpdateOne) sqlSave(ctx context.Context) (_node *ChargeType
 	if ctuo.mutation.DescriptionCleared() {
 		_spec.ClearField(chargetype.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(ctuo.modifiers...)
 	_node = &ChargeType{config: ctuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

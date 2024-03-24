@@ -19,58 +19,49 @@ func (TableChangeAlert) Fields() []ent.Field {
 			StructTag(`json:"status"`),
 		field.String("name").
 			MaxLen(50).
-			StructTag(`json:"name"`),
+			StructTag(`json:"name" validate:"required,max=50"`),
 		field.Enum("database_action").
 			Values("Insert", "Update", "Delete", "All").
-			StructTag(`json:"databaseAction"`),
+			StructTag(`json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`),
 		field.Enum("source").
-			Values("Kafka", "Db").
-			StructTag(`json:"source"`),
+			Values("Kafka", "Database").
+			StructTag(`json:"source" validate:"required,oneof=Kafka Database"`),
 		field.String("table_name").
 			Optional().
-			Nillable().
 			MaxLen(255).
-			StructTag(`json:"tableName"`),
+			StructTag(`json:"tableName" validate:"max=255"`),
 		field.String("topic").
-			Nillable().
 			Optional().
 			MaxLen(255).
 			StructTag(`json:"topic"`),
 		field.Text("description").
 			Optional().
-			Nillable().
 			StructTag(`json:"description"`),
 		field.String("custom_subject").
 			Optional().
-			Nillable().
 			MaxLen(255).
 			StructTag(`json:"customSubject"`),
 		field.String("function_name").
 			Optional().
-			Nillable().
 			MaxLen(50).
 			StructTag(`json:"functionName"`),
 		field.String("trigger_name").
 			Optional().
-			Nillable().
 			MaxLen(50).
 			StructTag(`json:"triggerName"`),
 		field.String("listener_name").
 			Optional().
-			Nillable().
 			MaxLen(50).
 			StructTag(`json:"listenerName"`),
+		// TODO(Wolfred): turn `email_receipients` into a relationship with the User entity
 		field.Text("email_recipients").
 			Optional().
-			Nillable().
 			StructTag(`json:"emailRecipients"`),
 		field.Time("effective_date").
 			Optional().
-			Nillable().
 			StructTag(`json:"effectiveDate"`),
 		field.Time("expiration_date").
 			Optional().
-			Nillable().
 			StructTag(`json:"expirationDate"`),
 	}
 }

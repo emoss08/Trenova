@@ -30,6 +30,7 @@ type AccountingControlQuery struct {
 	withDefaultRevAccount *GeneralLedgerAccountQuery
 	withDefaultExpAccount *GeneralLedgerAccountQuery
 	withFKs               bool
+	modifiers             []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -501,6 +502,9 @@ func (acq *AccountingControlQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -668,6 +672,9 @@ func (acq *AccountingControlQuery) loadDefaultExpAccount(ctx context.Context, qu
 
 func (acq *AccountingControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := acq.querySpec()
+	if len(acq.modifiers) > 0 {
+		_spec.Modifiers = acq.modifiers
+	}
 	_spec.Node.Columns = acq.ctx.Fields
 	if len(acq.ctx.Fields) > 0 {
 		_spec.Unique = acq.ctx.Unique != nil && *acq.ctx.Unique
@@ -736,6 +743,9 @@ func (acq *AccountingControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if acq.ctx.Unique != nil && *acq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range acq.modifiers {
+		m(selector)
+	}
 	for _, p := range acq.predicates {
 		p(selector)
 	}
@@ -751,6 +761,12 @@ func (acq *AccountingControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (acq *AccountingControlQuery) Modify(modifiers ...func(s *sql.Selector)) *AccountingControlSelect {
+	acq.modifiers = append(acq.modifiers, modifiers...)
+	return acq.Select()
 }
 
 // AccountingControlGroupBy is the group-by builder for AccountingControl entities.
@@ -841,4 +857,10 @@ func (acs *AccountingControlSelect) sqlScan(ctx context.Context, root *Accountin
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (acs *AccountingControlSelect) Modify(modifiers ...func(s *sql.Selector)) *AccountingControlSelect {
+	acs.modifiers = append(acs.modifiers, modifiers...)
+	return acs
 }

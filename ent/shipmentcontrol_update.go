@@ -21,8 +21,9 @@ import (
 // ShipmentControlUpdate is the builder for updating ShipmentControl entities.
 type ShipmentControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ShipmentControlMutation
+	hooks     []Hook
+	mutation  *ShipmentControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ShipmentControlUpdate builder.
@@ -291,6 +292,12 @@ func (scu *ShipmentControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (scu *ShipmentControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ShipmentControlUpdate {
+	scu.modifiers = append(scu.modifiers, modifiers...)
+	return scu
+}
+
 func (scu *ShipmentControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := scu.check(); err != nil {
 		return n, err
@@ -400,6 +407,7 @@ func (scu *ShipmentControlUpdate) sqlSave(ctx context.Context) (n int, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(scu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, scu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{shipmentcontrol.Label}
@@ -415,9 +423,10 @@ func (scu *ShipmentControlUpdate) sqlSave(ctx context.Context) (n int, err error
 // ShipmentControlUpdateOne is the builder for updating a single ShipmentControl entity.
 type ShipmentControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ShipmentControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ShipmentControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -693,6 +702,12 @@ func (scuo *ShipmentControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (scuo *ShipmentControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ShipmentControlUpdateOne {
+	scuo.modifiers = append(scuo.modifiers, modifiers...)
+	return scuo
+}
+
 func (scuo *ShipmentControlUpdateOne) sqlSave(ctx context.Context) (_node *ShipmentControl, err error) {
 	if err := scuo.check(); err != nil {
 		return _node, err
@@ -819,6 +834,7 @@ func (scuo *ShipmentControlUpdateOne) sqlSave(ctx context.Context) (_node *Shipm
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(scuo.modifiers...)
 	_node = &ShipmentControl{config: scuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

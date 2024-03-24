@@ -21,8 +21,9 @@ import (
 // InvoiceControlUpdate is the builder for updating InvoiceControl entities.
 type InvoiceControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *InvoiceControlMutation
+	hooks     []Hook
+	mutation  *InvoiceControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the InvoiceControlUpdate builder.
@@ -339,6 +340,12 @@ func (icu *InvoiceControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (icu *InvoiceControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *InvoiceControlUpdate {
+	icu.modifiers = append(icu.modifiers, modifiers...)
+	return icu
+}
+
 func (icu *InvoiceControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := icu.check(); err != nil {
 		return n, err
@@ -460,6 +467,7 @@ func (icu *InvoiceControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(icu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, icu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{invoicecontrol.Label}
@@ -475,9 +483,10 @@ func (icu *InvoiceControlUpdate) sqlSave(ctx context.Context) (n int, err error)
 // InvoiceControlUpdateOne is the builder for updating a single InvoiceControl entity.
 type InvoiceControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *InvoiceControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *InvoiceControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -801,6 +810,12 @@ func (icuo *InvoiceControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (icuo *InvoiceControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *InvoiceControlUpdateOne {
+	icuo.modifiers = append(icuo.modifiers, modifiers...)
+	return icuo
+}
+
 func (icuo *InvoiceControlUpdateOne) sqlSave(ctx context.Context) (_node *InvoiceControl, err error) {
 	if err := icuo.check(); err != nil {
 		return _node, err
@@ -939,6 +954,7 @@ func (icuo *InvoiceControlUpdateOne) sqlSave(ctx context.Context) (_node *Invoic
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(icuo.modifiers...)
 	_node = &InvoiceControl{config: icuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

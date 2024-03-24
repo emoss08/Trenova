@@ -28,6 +28,7 @@ type CommodityQuery struct {
 	withBusinessUnit      *BusinessUnitQuery
 	withOrganization      *OrganizationQuery
 	withHazardousMaterial *HazardousMaterialQuery
+	modifiers             []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -457,6 +458,9 @@ func (cq *CommodityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Co
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(cq.modifiers) > 0 {
+		_spec.Modifiers = cq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -580,6 +584,9 @@ func (cq *CommodityQuery) loadHazardousMaterial(ctx context.Context, query *Haza
 
 func (cq *CommodityQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
+	if len(cq.modifiers) > 0 {
+		_spec.Modifiers = cq.modifiers
+	}
 	_spec.Node.Columns = cq.ctx.Fields
 	if len(cq.ctx.Fields) > 0 {
 		_spec.Unique = cq.ctx.Unique != nil && *cq.ctx.Unique
@@ -651,6 +658,9 @@ func (cq *CommodityQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if cq.ctx.Unique != nil && *cq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range cq.modifiers {
+		m(selector)
+	}
 	for _, p := range cq.predicates {
 		p(selector)
 	}
@@ -666,6 +676,12 @@ func (cq *CommodityQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (cq *CommodityQuery) Modify(modifiers ...func(s *sql.Selector)) *CommoditySelect {
+	cq.modifiers = append(cq.modifiers, modifiers...)
+	return cq.Select()
 }
 
 // CommodityGroupBy is the group-by builder for Commodity entities.
@@ -756,4 +772,10 @@ func (cs *CommoditySelect) sqlScan(ctx context.Context, root *CommodityQuery, v 
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (cs *CommoditySelect) Modify(modifiers ...func(s *sql.Selector)) *CommoditySelect {
+	cs.modifiers = append(cs.modifiers, modifiers...)
+	return cs
 }

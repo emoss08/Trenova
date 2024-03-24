@@ -18,8 +18,9 @@ import (
 // QualifierCodeUpdate is the builder for updating QualifierCode entities.
 type QualifierCodeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *QualifierCodeMutation
+	hooks     []Hook
+	mutation  *QualifierCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the QualifierCodeUpdate builder.
@@ -143,6 +144,12 @@ func (qcu *QualifierCodeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (qcu *QualifierCodeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *QualifierCodeUpdate {
+	qcu.modifiers = append(qcu.modifiers, modifiers...)
+	return qcu
+}
+
 func (qcu *QualifierCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := qcu.check(); err != nil {
 		return n, err
@@ -167,6 +174,7 @@ func (qcu *QualifierCodeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := qcu.mutation.Description(); ok {
 		_spec.SetField(qualifiercode.FieldDescription, field.TypeString, value)
 	}
+	_spec.AddModifiers(qcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, qcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{qualifiercode.Label}
@@ -182,9 +190,10 @@ func (qcu *QualifierCodeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 // QualifierCodeUpdateOne is the builder for updating a single QualifierCode entity.
 type QualifierCodeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *QualifierCodeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *QualifierCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -315,6 +324,12 @@ func (qcuo *QualifierCodeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (qcuo *QualifierCodeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *QualifierCodeUpdateOne {
+	qcuo.modifiers = append(qcuo.modifiers, modifiers...)
+	return qcuo
+}
+
 func (qcuo *QualifierCodeUpdateOne) sqlSave(ctx context.Context) (_node *QualifierCode, err error) {
 	if err := qcuo.check(); err != nil {
 		return _node, err
@@ -356,6 +371,7 @@ func (qcuo *QualifierCodeUpdateOne) sqlSave(ctx context.Context) (_node *Qualifi
 	if value, ok := qcuo.mutation.Description(); ok {
 		_spec.SetField(qualifiercode.FieldDescription, field.TypeString, value)
 	}
+	_spec.AddModifiers(qcuo.modifiers...)
 	_node = &QualifierCode{config: qcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

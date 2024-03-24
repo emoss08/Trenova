@@ -26,6 +26,7 @@ type TableChangeAlertQuery struct {
 	predicates       []predicate.TableChangeAlert
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +421,9 @@ func (tcaq *TableChangeAlertQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(tcaq.modifiers) > 0 {
+		_spec.Modifiers = tcaq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -505,6 +509,9 @@ func (tcaq *TableChangeAlertQuery) loadOrganization(ctx context.Context, query *
 
 func (tcaq *TableChangeAlertQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tcaq.querySpec()
+	if len(tcaq.modifiers) > 0 {
+		_spec.Modifiers = tcaq.modifiers
+	}
 	_spec.Node.Columns = tcaq.ctx.Fields
 	if len(tcaq.ctx.Fields) > 0 {
 		_spec.Unique = tcaq.ctx.Unique != nil && *tcaq.ctx.Unique
@@ -573,6 +580,9 @@ func (tcaq *TableChangeAlertQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if tcaq.ctx.Unique != nil && *tcaq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range tcaq.modifiers {
+		m(selector)
+	}
 	for _, p := range tcaq.predicates {
 		p(selector)
 	}
@@ -588,6 +598,12 @@ func (tcaq *TableChangeAlertQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (tcaq *TableChangeAlertQuery) Modify(modifiers ...func(s *sql.Selector)) *TableChangeAlertSelect {
+	tcaq.modifiers = append(tcaq.modifiers, modifiers...)
+	return tcaq.Select()
 }
 
 // TableChangeAlertGroupBy is the group-by builder for TableChangeAlert entities.
@@ -678,4 +694,10 @@ func (tcas *TableChangeAlertSelect) sqlScan(ctx context.Context, root *TableChan
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (tcas *TableChangeAlertSelect) Modify(modifiers ...func(s *sql.Selector)) *TableChangeAlertSelect {
+	tcas.modifiers = append(tcas.modifiers, modifiers...)
+	return tcas
 }

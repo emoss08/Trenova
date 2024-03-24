@@ -18,8 +18,9 @@ import (
 // DelayCodeUpdate is the builder for updating DelayCode entities.
 type DelayCodeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *DelayCodeMutation
+	hooks     []Hook
+	mutation  *DelayCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the DelayCodeUpdate builder.
@@ -164,6 +165,12 @@ func (dcu *DelayCodeUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcu *DelayCodeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DelayCodeUpdate {
+	dcu.modifiers = append(dcu.modifiers, modifiers...)
+	return dcu
+}
+
 func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := dcu.check(); err != nil {
 		return n, err
@@ -197,6 +204,7 @@ func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if dcu.mutation.FCarrierOrDriverCleared() {
 		_spec.ClearField(delaycode.FieldFCarrierOrDriver, field.TypeBool)
 	}
+	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{delaycode.Label}
@@ -212,9 +220,10 @@ func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // DelayCodeUpdateOne is the builder for updating a single DelayCode entity.
 type DelayCodeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *DelayCodeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *DelayCodeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -366,6 +375,12 @@ func (dcuo *DelayCodeUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcuo *DelayCodeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DelayCodeUpdateOne {
+	dcuo.modifiers = append(dcuo.modifiers, modifiers...)
+	return dcuo
+}
+
 func (dcuo *DelayCodeUpdateOne) sqlSave(ctx context.Context) (_node *DelayCode, err error) {
 	if err := dcuo.check(); err != nil {
 		return _node, err
@@ -416,6 +431,7 @@ func (dcuo *DelayCodeUpdateOne) sqlSave(ctx context.Context) (_node *DelayCode, 
 	if dcuo.mutation.FCarrierOrDriverCleared() {
 		_spec.ClearField(delaycode.FieldFCarrierOrDriver, field.TypeBool)
 	}
+	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DelayCode{config: dcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

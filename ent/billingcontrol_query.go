@@ -27,6 +27,7 @@ type BillingControlQuery struct {
 	withOrganization *OrganizationQuery
 	withBusinessUnit *BusinessUnitQuery
 	withFKs          bool
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -428,6 +429,9 @@ func (bcq *BillingControlQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(bcq.modifiers) > 0 {
+		_spec.Modifiers = bcq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -519,6 +523,9 @@ func (bcq *BillingControlQuery) loadBusinessUnit(ctx context.Context, query *Bus
 
 func (bcq *BillingControlQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := bcq.querySpec()
+	if len(bcq.modifiers) > 0 {
+		_spec.Modifiers = bcq.modifiers
+	}
 	_spec.Node.Columns = bcq.ctx.Fields
 	if len(bcq.ctx.Fields) > 0 {
 		_spec.Unique = bcq.ctx.Unique != nil && *bcq.ctx.Unique
@@ -581,6 +588,9 @@ func (bcq *BillingControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if bcq.ctx.Unique != nil && *bcq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range bcq.modifiers {
+		m(selector)
+	}
 	for _, p := range bcq.predicates {
 		p(selector)
 	}
@@ -596,6 +606,12 @@ func (bcq *BillingControlQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (bcq *BillingControlQuery) Modify(modifiers ...func(s *sql.Selector)) *BillingControlSelect {
+	bcq.modifiers = append(bcq.modifiers, modifiers...)
+	return bcq.Select()
 }
 
 // BillingControlGroupBy is the group-by builder for BillingControl entities.
@@ -686,4 +702,10 @@ func (bcs *BillingControlSelect) sqlScan(ctx context.Context, root *BillingContr
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (bcs *BillingControlSelect) Modify(modifiers ...func(s *sql.Selector)) *BillingControlSelect {
+	bcs.modifiers = append(bcs.modifiers, modifiers...)
+	return bcs
 }

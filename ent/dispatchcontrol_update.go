@@ -21,8 +21,9 @@ import (
 // DispatchControlUpdate is the builder for updating DispatchControl entities.
 type DispatchControlUpdate struct {
 	config
-	hooks    []Hook
-	mutation *DispatchControlMutation
+	hooks     []Hook
+	mutation  *DispatchControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the DispatchControlUpdate builder.
@@ -322,6 +323,12 @@ func (dcu *DispatchControlUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcu *DispatchControlUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DispatchControlUpdate {
+	dcu.modifiers = append(dcu.modifiers, modifiers...)
+	return dcu
+}
+
 func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := dcu.check(); err != nil {
 		return n, err
@@ -440,6 +447,7 @@ func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{dispatchcontrol.Label}
@@ -455,9 +463,10 @@ func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error
 // DispatchControlUpdateOne is the builder for updating a single DispatchControl entity.
 type DispatchControlUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *DispatchControlMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *DispatchControlMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -764,6 +773,12 @@ func (dcuo *DispatchControlUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (dcuo *DispatchControlUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DispatchControlUpdateOne {
+	dcuo.modifiers = append(dcuo.modifiers, modifiers...)
+	return dcuo
+}
+
 func (dcuo *DispatchControlUpdateOne) sqlSave(ctx context.Context) (_node *DispatchControl, err error) {
 	if err := dcuo.check(); err != nil {
 		return _node, err
@@ -899,6 +914,7 @@ func (dcuo *DispatchControlUpdateOne) sqlSave(ctx context.Context) (_node *Dispa
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DispatchControl{config: dcuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/ent"
 
+	"entgo.io/ent/entql"
 	"entgo.io/ent/privacy"
 )
 
@@ -924,4 +925,187 @@ func (f UserFavoriteMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.UserFavoriteMutation", m)
+}
+
+type (
+	// Filter is the interface that wraps the Where function
+	// for filtering nodes in queries and mutations.
+	Filter interface {
+		// Where applies a filter on the executed query/mutation.
+		Where(entql.P)
+	}
+
+	// The FilterFunc type is an adapter that allows the use of ordinary
+	// functions as filters for query and mutation types.
+	FilterFunc func(context.Context, Filter) error
+)
+
+// EvalQuery calls f(ctx, q) if the query implements the Filter interface, otherwise it is denied.
+func (f FilterFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	fr, err := queryFilter(q)
+	if err != nil {
+		return err
+	}
+	return f(ctx, fr)
+}
+
+// EvalMutation calls f(ctx, q) if the mutation implements the Filter interface, otherwise it is denied.
+func (f FilterFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	fr, err := mutationFilter(m)
+	if err != nil {
+		return err
+	}
+	return f(ctx, fr)
+}
+
+var _ QueryMutationRule = FilterFunc(nil)
+
+func queryFilter(q ent.Query) (Filter, error) {
+	switch q := q.(type) {
+	case *ent.AccessorialChargeQuery:
+		return q.Filter(), nil
+	case *ent.AccountingControlQuery:
+		return q.Filter(), nil
+	case *ent.BillingControlQuery:
+		return q.Filter(), nil
+	case *ent.BusinessUnitQuery:
+		return q.Filter(), nil
+	case *ent.ChargeTypeQuery:
+		return q.Filter(), nil
+	case *ent.CommentTypeQuery:
+		return q.Filter(), nil
+	case *ent.CommodityQuery:
+		return q.Filter(), nil
+	case *ent.CustomerQuery:
+		return q.Filter(), nil
+	case *ent.DelayCodeQuery:
+		return q.Filter(), nil
+	case *ent.DispatchControlQuery:
+		return q.Filter(), nil
+	case *ent.DivisionCodeQuery:
+		return q.Filter(), nil
+	case *ent.EmailControlQuery:
+		return q.Filter(), nil
+	case *ent.EmailProfileQuery:
+		return q.Filter(), nil
+	case *ent.EquipmentManufactuerQuery:
+		return q.Filter(), nil
+	case *ent.EquipmentTypeQuery:
+		return q.Filter(), nil
+	case *ent.FeasibilityToolControlQuery:
+		return q.Filter(), nil
+	case *ent.FleetCodeQuery:
+		return q.Filter(), nil
+	case *ent.GeneralLedgerAccountQuery:
+		return q.Filter(), nil
+	case *ent.HazardousMaterialQuery:
+		return q.Filter(), nil
+	case *ent.InvoiceControlQuery:
+		return q.Filter(), nil
+	case *ent.LocationCategoryQuery:
+		return q.Filter(), nil
+	case *ent.OrganizationQuery:
+		return q.Filter(), nil
+	case *ent.QualifierCodeQuery:
+		return q.Filter(), nil
+	case *ent.RevenueCodeQuery:
+		return q.Filter(), nil
+	case *ent.RouteControlQuery:
+		return q.Filter(), nil
+	case *ent.ServiceTypeQuery:
+		return q.Filter(), nil
+	case *ent.SessionQuery:
+		return q.Filter(), nil
+	case *ent.ShipmentControlQuery:
+		return q.Filter(), nil
+	case *ent.ShipmentTypeQuery:
+		return q.Filter(), nil
+	case *ent.TableChangeAlertQuery:
+		return q.Filter(), nil
+	case *ent.TagQuery:
+		return q.Filter(), nil
+	case *ent.UsStateQuery:
+		return q.Filter(), nil
+	case *ent.UserQuery:
+		return q.Filter(), nil
+	case *ent.UserFavoriteQuery:
+		return q.Filter(), nil
+	default:
+		return nil, Denyf("ent/privacy: unexpected query type %T for query filter", q)
+	}
+}
+
+func mutationFilter(m ent.Mutation) (Filter, error) {
+	switch m := m.(type) {
+	case *ent.AccessorialChargeMutation:
+		return m.Filter(), nil
+	case *ent.AccountingControlMutation:
+		return m.Filter(), nil
+	case *ent.BillingControlMutation:
+		return m.Filter(), nil
+	case *ent.BusinessUnitMutation:
+		return m.Filter(), nil
+	case *ent.ChargeTypeMutation:
+		return m.Filter(), nil
+	case *ent.CommentTypeMutation:
+		return m.Filter(), nil
+	case *ent.CommodityMutation:
+		return m.Filter(), nil
+	case *ent.CustomerMutation:
+		return m.Filter(), nil
+	case *ent.DelayCodeMutation:
+		return m.Filter(), nil
+	case *ent.DispatchControlMutation:
+		return m.Filter(), nil
+	case *ent.DivisionCodeMutation:
+		return m.Filter(), nil
+	case *ent.EmailControlMutation:
+		return m.Filter(), nil
+	case *ent.EmailProfileMutation:
+		return m.Filter(), nil
+	case *ent.EquipmentManufactuerMutation:
+		return m.Filter(), nil
+	case *ent.EquipmentTypeMutation:
+		return m.Filter(), nil
+	case *ent.FeasibilityToolControlMutation:
+		return m.Filter(), nil
+	case *ent.FleetCodeMutation:
+		return m.Filter(), nil
+	case *ent.GeneralLedgerAccountMutation:
+		return m.Filter(), nil
+	case *ent.HazardousMaterialMutation:
+		return m.Filter(), nil
+	case *ent.InvoiceControlMutation:
+		return m.Filter(), nil
+	case *ent.LocationCategoryMutation:
+		return m.Filter(), nil
+	case *ent.OrganizationMutation:
+		return m.Filter(), nil
+	case *ent.QualifierCodeMutation:
+		return m.Filter(), nil
+	case *ent.RevenueCodeMutation:
+		return m.Filter(), nil
+	case *ent.RouteControlMutation:
+		return m.Filter(), nil
+	case *ent.ServiceTypeMutation:
+		return m.Filter(), nil
+	case *ent.SessionMutation:
+		return m.Filter(), nil
+	case *ent.ShipmentControlMutation:
+		return m.Filter(), nil
+	case *ent.ShipmentTypeMutation:
+		return m.Filter(), nil
+	case *ent.TableChangeAlertMutation:
+		return m.Filter(), nil
+	case *ent.TagMutation:
+		return m.Filter(), nil
+	case *ent.UsStateMutation:
+		return m.Filter(), nil
+	case *ent.UserMutation:
+		return m.Filter(), nil
+	case *ent.UserFavoriteMutation:
+		return m.Filter(), nil
+	default:
+		return nil, Denyf("ent/privacy: unexpected mutation type %T for mutation filter", m)
+	}
 }

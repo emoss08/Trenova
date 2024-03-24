@@ -18,8 +18,9 @@ import (
 // EquipmentManufactuerUpdate is the builder for updating EquipmentManufactuer entities.
 type EquipmentManufactuerUpdate struct {
 	config
-	hooks    []Hook
-	mutation *EquipmentManufactuerMutation
+	hooks     []Hook
+	mutation  *EquipmentManufactuerMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the EquipmentManufactuerUpdate builder.
@@ -144,6 +145,12 @@ func (emu *EquipmentManufactuerUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (emu *EquipmentManufactuerUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EquipmentManufactuerUpdate {
+	emu.modifiers = append(emu.modifiers, modifiers...)
+	return emu
+}
+
 func (emu *EquipmentManufactuerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := emu.check(); err != nil {
 		return n, err
@@ -171,6 +178,7 @@ func (emu *EquipmentManufactuerUpdate) sqlSave(ctx context.Context) (n int, err 
 	if emu.mutation.DescriptionCleared() {
 		_spec.ClearField(equipmentmanufactuer.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(emu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, emu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{equipmentmanufactuer.Label}
@@ -186,9 +194,10 @@ func (emu *EquipmentManufactuerUpdate) sqlSave(ctx context.Context) (n int, err 
 // EquipmentManufactuerUpdateOne is the builder for updating a single EquipmentManufactuer entity.
 type EquipmentManufactuerUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *EquipmentManufactuerMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *EquipmentManufactuerMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -320,6 +329,12 @@ func (emuo *EquipmentManufactuerUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (emuo *EquipmentManufactuerUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *EquipmentManufactuerUpdateOne {
+	emuo.modifiers = append(emuo.modifiers, modifiers...)
+	return emuo
+}
+
 func (emuo *EquipmentManufactuerUpdateOne) sqlSave(ctx context.Context) (_node *EquipmentManufactuer, err error) {
 	if err := emuo.check(); err != nil {
 		return _node, err
@@ -364,6 +379,7 @@ func (emuo *EquipmentManufactuerUpdateOne) sqlSave(ctx context.Context) (_node *
 	if emuo.mutation.DescriptionCleared() {
 		_spec.ClearField(equipmentmanufactuer.FieldDescription, field.TypeString)
 	}
+	_spec.AddModifiers(emuo.modifiers...)
 	_node = &EquipmentManufactuer{config: emuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
