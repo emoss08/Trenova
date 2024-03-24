@@ -482,25 +482,41 @@ export const booleanStatusChoices: ReadonlyArray<IChoiceProps<boolean>> = [
 ];
 
 /* Type for Database Actions */
-export type DatabaseActionChoicesProps =
-  | "INSERT"
-  | "UPDATE"
-  | "DELETE"
-  | "BOTH";
+export type DatabaseActionChoicesProps = "Insert" | "Update" | "Delete" | "All";
 
 export const databaseActionChoices = [
-  { value: "INSERT", label: "Insert" },
-  { value: "UPDATE", label: "Update" },
-  { value: "DELETE", label: "Delete" },
-  { value: "BOTH", label: "Both" },
+  {
+    value: "Insert",
+    label: "Insert",
+    color: "#15803d",
+    description: "Only receive alerts for new records.",
+  },
+  {
+    value: "Update",
+    label: "Update",
+    color: "#2563eb",
+    description: "Only receive alerts for updated records.",
+  },
+  {
+    value: "Delete",
+    label: "Delete",
+    color: "#b91c1c",
+    description: "Only receive alerts for deleted records.",
+  },
+  {
+    value: "All",
+    label: "All",
+    color: "#000",
+    description: "Receive alerts for all actions.",
+  },
 ] satisfies ReadonlyArray<IChoiceProps<DatabaseActionChoicesProps>>;
 
 /* Type for Table Change Alert Source */
-export type SourceChoicesProps = "KAFKA" | "POSTGRES";
+export type SourceChoicesProps = "Kafka" | "Database";
 
 export const sourceChoices = [
-  { value: "KAFKA", label: "Kafka" },
-  { value: "POSTGRES", label: "Postgres" },
+  { value: "Kafka", label: "Kafka" },
+  { value: "Database", label: "Database" },
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
 
 /** Type for RatingMethodW for Shipment */
