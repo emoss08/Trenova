@@ -35,12 +35,13 @@ import {
 
 export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string()
       .max(4, "Code cannot be longer than 4 characters.")
       .required("Code is required"),
     description: Yup.string().required("Description is required"),
-    expenseAccount: Yup.string().notRequired().nonNullable(),
-    revenueAccount: Yup.string().notRequired().nonNullable(),
+    expenseAccountId: Yup.string().notRequired().nullable(),
+    revenueAccountId: Yup.string().notRequired().nullable(),
   });
 
 export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
@@ -63,10 +64,10 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
     accountType: Yup.string<AccountTypeChoiceProps>().required(
       "Account type is required",
     ),
-    cashFlowType: Yup.string<CashFlowTypeChoiceProps>().notRequired(),
-    accountSubType: Yup.string<AccountSubTypeChoiceProps>().notRequired(),
+    cashFlowType: Yup.string<CashFlowTypeChoiceProps>().optional(),
+    accountSubType: Yup.string<AccountSubTypeChoiceProps>().optional(),
     accountClassification:
-      Yup.string<AccountClassificationChoiceProps>().notRequired(),
+      Yup.string<AccountClassificationChoiceProps>().optional(),
     parentAccount: Yup.string().notRequired(),
     isReconciled: Yup.boolean(),
     notes: Yup.string().notRequired(),

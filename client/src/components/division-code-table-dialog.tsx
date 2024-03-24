@@ -37,6 +37,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function DCForm({
   control,
@@ -50,9 +51,9 @@ export function DCForm({
   isError: boolean;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -63,8 +64,8 @@ export function DCForm({
             description="Status of the Division Code"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -76,8 +77,8 @@ export function DCForm({
             placeholder="Code"
             description="Code for the Division Code"
           />
-        </div>
-      </div>
+        </FormControl>
+      </FormGroup>
       <div className="my-2">
         <TextareaField
           name="description"
@@ -88,8 +89,8 @@ export function DCForm({
           description="Description of the Division Code"
         />
       </div>
-      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="cashAccount"
             control={control}
@@ -104,8 +105,8 @@ export function DCForm({
             popoutLink="/accounting/gl-accounts"
             popoutLinkLabel="GL Account"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <SelectInput
             name="apAccount"
             control={control}
@@ -120,8 +121,8 @@ export function DCForm({
             popoutLink="/accounting/gl-accounts"
             popoutLinkLabel="GL Account"
           />
-        </div>
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <SelectInput
             name="expenseAccount"
             control={control}
@@ -136,9 +137,9 @@ export function DCForm({
             popoutLink="/accounting/gl-accounts"
             popoutLinkLabel="GL Account"
           />
-        </div>
-      </div>
-    </div>
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -160,7 +161,7 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/division_codes/",
+      path: "/division-codes/",
       successMessage: "Division Code created successfully.",
       queryKeysToInvalidate: ["division-code-table-data"],
       closeModal: true,

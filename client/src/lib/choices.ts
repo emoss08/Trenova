@@ -21,18 +21,18 @@ import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 /** Type for Account Type Choices */
 export type AccountTypeChoiceProps =
-  | "ASSET"
-  | "LIABILITY"
-  | "EQUITY"
-  | "REVENUE"
-  | "EXPENSE";
+  | "Asset"
+  | "Liability"
+  | "Equity"
+  | "Revenue"
+  | "Expense";
 
 export const accountTypeChoices = [
-  { value: "ASSET", label: "Asset" },
-  { value: "LIABILITY", label: "Liability" },
-  { value: "EQUITY", label: "Equity" },
-  { value: "REVENUE", label: "Revenue" },
-  { value: "EXPENSE", label: "Expense" },
+  { value: "Asset", label: "Asset" },
+  { value: "Liability", label: "Liability" },
+  { value: "Equity", label: "Equity" },
+  { value: "Revenue", label: "Revenue" },
+  { value: "Expense", label: "Expense" },
 ] satisfies ReadonlyArray<IChoiceProps<AccountTypeChoiceProps>>;
 
 export const tableAccountTypeChoices = [
@@ -44,60 +44,64 @@ export const tableAccountTypeChoices = [
 ] satisfies TableOptionProps[];
 
 /** Type for Cash Flow Type Choices */
-export type CashFlowTypeChoiceProps = "OPERATING" | "INVESTING" | "FINANCING";
+export type CashFlowTypeChoiceProps =
+  | "Operating"
+  | "Investing"
+  | "Financing"
+  | "";
 
 export const cashFlowTypeChoices = [
-  { value: "OPERATING", label: "Operating" },
-  { value: "INVESTING", label: "Investing" },
-  { value: "FINANCING", label: "Financing" },
+  { value: "Operating", label: "Operating" },
+  { value: "Investing", label: "Investing" },
+  { value: "Financing", label: "Financing" },
 ] satisfies ReadonlyArray<IChoiceProps<CashFlowTypeChoiceProps>>;
 
 /** Type for Account Sub Type Choices */
 export type AccountSubTypeChoiceProps =
-  | "CURRENT_ASSET"
-  | "FIXED_ASSET"
-  | "OTHER_ASSET"
-  | "CURRENT_LIABILITY"
-  | "LONG_TERM_LIABILITY"
-  | "EQUITY"
-  | "REVENUE"
-  | "COST_OF_GOODS_SOLD"
-  | "EXPENSE"
-  | "OTHER_INCOME"
-  | "OTHER_EXPENSE";
+  | "CurrentAsset"
+  | "FixedAsset"
+  | "OtherAsset"
+  | "CurrentLiability"
+  | "LongTermLiability"
+  | "Equity"
+  | "Revenue"
+  | "CostOfGoodsSold"
+  | "Expense"
+  | "OtherIncome"
+  | "OtherExpense";
 
 export const accountSubTypeChoices = [
-  { value: "CURRENT_ASSET", label: "Current Asset" },
-  { value: "FIXED_ASSET", label: "Fixed Asset" },
-  { value: "OTHER_ASSET", label: "Other Asset" },
-  { value: "CURRENT_LIABILITY", label: "Current Liability" },
-  { value: "LONG_TERM_LIABILITY", label: "Long Term Liability" },
-  { value: "EQUITY", label: "Equity" },
-  { value: "REVENUE", label: "Revenue" },
-  { value: "COST_OF_GOODS_SOLD", label: "Cost of Goods Sold" },
-  { value: "EXPENSE", label: "Expense" },
-  { value: "OTHER_INCOME", label: "Other Income" },
-  { value: "OTHER_EXPENSE", label: "Other Expense" },
+  { value: "CurrentAsset", label: "Current Asset" },
+  { value: "FixedAsset", label: "Fixed Asset" },
+  { value: "OtherAsset", label: "Other Asset" },
+  { value: "CurrentLiability", label: "Current Liability" },
+  { value: "LongTermLiability", label: "Long Term Liability" },
+  { value: "Equity", label: "Equity" },
+  { value: "Revenue", label: "Revenue" },
+  { value: "CostOfGoodsSold", label: "Cost of Goods Sold" },
+  { value: "Expense", label: "Expense" },
+  { value: "OtherIncome", label: "Other Income" },
+  { value: "OtherExpense", label: "Other Expense" },
 ] satisfies ReadonlyArray<IChoiceProps<AccountSubTypeChoiceProps>>;
 
 /** Type for Account Classification Choices */
 export type AccountClassificationChoiceProps =
-  | "BANK"
-  | "CASH"
-  | "ACCOUNTS_RECEIVABLE"
-  | "ACCOUNTS_PAYABLE"
-  | "INVENTORY"
-  | "OTHER_CURRENT_ASSET"
-  | "FIXED_ASSET";
+  | "AccountClassificationBank"
+  | "AccountClassificationCash"
+  | "AccountClassificationAR"
+  | "AccountClassificationAP"
+  | "AccountClassificationINV"
+  | "AccountClassificationOCA"
+  | "AccountClassificationFA";
 
 export const accountClassificationChoices = [
-  { value: "BANK", label: "Bank" },
-  { value: "CASH", label: "Cash" },
-  { value: "ACCOUNTS_RECEIVABLE", label: "Accounts Receivable" },
-  { value: "ACCOUNTS_PAYABLE", label: "Accounts Payable" },
-  { value: "INVENTORY", label: "Inventory" },
-  { value: "OTHER_CURRENT_ASSET", label: "Other Current Asset" },
-  { value: "FIXED_ASSET", label: "Fixed Asset" },
+  { value: "AccountClassificationBank", label: "Bank" },
+  { value: "AccountClassificationCash", label: "Cash" },
+  { value: "AccountClassificationAR", label: "Accounts Receivable" },
+  { value: "AccountClassificationAP", label: "Accounts Payable" },
+  { value: "AccountClassificationINV", label: "Inventory" },
+  { value: "AccountClassificationOCA", label: "Other Current Asset" },
+  { value: "AccountClassificationFA", label: "Fixed Asset" },
 ] satisfies ReadonlyArray<IChoiceProps<AccountClassificationChoiceProps>>;
 
 /** Types for Job Function Choices */
@@ -235,52 +239,56 @@ export const feasibilityOperatorChoices = [
 
 /** Type for Equipment Class Choices */
 export type EquipmentClassChoiceProps =
-  | "UNDEFINED"
-  | "CAR"
-  | "VAN"
-  | "PICKUP"
-  | "WALK_IN"
-  | "STRAIGHT"
-  | "TRACTOR"
-  | "TRAILER";
+  | "Undefined"
+  | "Car"
+  | "Van"
+  | "Pickup"
+  | "Straight"
+  | "Tractor"
+  | "Trailer"
+  | "Container"
+  | "Chassis"
+  | "Other";
 
 export const equipmentClassChoices = [
-  { value: "UNDEFINED", label: "Undefined" },
-  { value: "CAR", label: "Car" },
-  { value: "VAN", label: "Van" },
-  { value: "PICKUP", label: "Pickup" },
-  { value: "WALK_IN", label: "Walk In" },
-  { value: "STRAIGHT", label: "Straight" },
-  { value: "TRACTOR", label: "Tractor" },
-  { value: "TRAILER", label: "Trailer" },
+  { value: "Undefined", label: "Undefined" },
+  { value: "Car", label: "Car" },
+  { value: "Van", label: "Van" },
+  { value: "Pickup", label: "Pickup" },
+  { value: "Straight", label: "Straight" },
+  { value: "Tractor", label: "Tractor" },
+  { value: "Trailer", label: "Trailer" },
+  { value: "Container", label: "Container" },
+  { value: "Chassis", label: "Chassis" },
+  { value: "Other", label: "Other" },
 ] satisfies ReadonlyArray<IChoiceProps<EquipmentClassChoiceProps>>;
 
 /** Type for Unit of Measure Choices */
 export type UnitOfMeasureChoiceProps =
-  | "PALLET"
-  | "TOTE"
-  | "DRUM"
-  | "CYLINDER"
-  | "CASE"
-  | "AMPULE"
-  | "BAG"
-  | "BOTTLE"
-  | "PAIL"
-  | "PIECES"
-  | "ISO_TANK";
+  | "Pallet"
+  | "Tote"
+  | "Drum"
+  | "Cylinder"
+  | "Case"
+  | "Ampule"
+  | "Bag"
+  | "Bottle"
+  | "Pail"
+  | "Pieces"
+  | "IsoTank";
 
 export const UnitOfMeasureChoices = [
-  { value: "PALLET", label: "Pallet" },
-  { value: "TOTE", label: "Tote" },
-  { value: "DRUM", label: "Drum" },
-  { value: "CYLINDER", label: "Cylinder" },
-  { value: "CASE", label: "Case" },
-  { value: "AMPULE", label: "Ampule" },
-  { value: "BAG", label: "Bag" },
-  { value: "BOTTLE", label: "Bottle" },
-  { value: "PAIL", label: "Pail" },
-  { value: "PIECES", label: "Pieces" },
-  { value: "ISO_TANK", label: "ISO Tank" },
+  { value: "Pallet", label: "Pallet" },
+  { value: "Tote", label: "Tote" },
+  { value: "Drum", label: "Drum" },
+  { value: "Cylinder", label: "Cylinder" },
+  { value: "Case", label: "Case" },
+  { value: "Ampule", label: "Ampule" },
+  { value: "Bag", label: "Bag" },
+  { value: "Bottle", label: "Bottle" },
+  { value: "Pail", label: "Pail" },
+  { value: "Pieces", label: "Pieces" },
+  { value: "IsoTank", label: "ISO Tank" },
 ] satisfies ReadonlyArray<IChoiceProps<UnitOfMeasureChoiceProps>>;
 
 /** Type for Hazardous Class Choices */
@@ -294,58 +302,61 @@ export const packingGroupChoices = [
 
 /** Type for Hazardous Class Choices */
 export type HazardousClassChoiceProps =
-  | "1.1"
-  | "1.2"
-  | "1.3"
-  | "1.4"
-  | "1.5"
-  | "1.6"
-  | "2.1"
-  | "2.2"
-  | "2.3"
-  | "3"
-  | "4.1"
-  | "4.2"
-  | "4.3"
-  | "5.1"
-  | "5.2"
-  | "6.1"
-  | "6.2"
-  | "7"
-  | "8"
-  | "9";
+  | "HazardClass1And1"
+  | "HazardClass1And2"
+  | "HazardClass1And3"
+  | "HazardClass1And4"
+  | "HazardClass1And5"
+  | "HazardClass1And6"
+  | "HazardClass2And1"
+  | "HazardClass2And2"
+  | "HazardClass2And3"
+  | "HazardClass3"
+  | "HazardClass4And1"
+  | "HazardClass4And2"
+  | "HazardClass4And3"
+  | "HazardClass5And1"
+  | "HazardClass5And2"
+  | "HazardClass6And1"
+  | "HazardClass6And2"
+  | "HazardClass7"
+  | "HazardClass8"
+  | "HazardClass9";
 
 export const hazardousClassChoices = [
-  { value: "1.1", label: "Division 1.1: Mass Explosive Hazard" },
-  { value: "1.2", label: "Division 1.2: Projection Hazard" },
+  { value: "HazardClass1And1", label: "Division 1.1: Mass Explosive Hazard" },
+  { value: "HazardClass1And2", label: "Division 1.2: Projection Hazard" },
   {
-    value: "1.3",
+    value: "HazardClass1And3",
     label: "Division 1.3: Fire and/or Minor Blast/Minor Projection Hazard",
   },
-  { value: "1.4", label: "Division 1.4: Minor Explosion Hazard" },
+  { value: "HazardClass1And4", label: "Division 1.4: Minor Explosion Hazard" },
   {
-    value: "1.5",
+    value: "HazardClass1And5",
     label: "Division 1.5: Very Insensitive With Mass Explosion Hazard",
   },
   {
-    value: "1.6",
+    value: "HazardClass1And6",
     label: "Division 1.6: Extremely Insensitive; No Mass Explosion Hazard",
   },
-  { value: "2.1", label: "Division 2.1: Flammable Gases" },
-  { value: "2.2", label: "Division 2.2: Non-Flammable Gases" },
-  { value: "2.3", label: "Division 2.3: Poisonous Gases" },
-  { value: "3", label: "Division 3: Flammable Liquids" },
-  { value: "4.1", label: "Division 4.1: Flammable Solids" },
-  { value: "4.2", label: "Division 4.2: Spontaneously Combustible Solids" },
-  { value: "4.3", label: "Division 4.3: Dangerous When Wet" },
-  { value: "5.1", label: "Division 5.1: Oxidizing Substances" },
-  { value: "5.2", label: "Division 5.2: Organic Peroxides" },
-  { value: "6.1", label: "Division 6.1: Toxic Substances" },
-  { value: "6.2", label: "Division 6.2: Infectious Substances" },
-  { value: "7", label: "Division 7: Radioactive Material" },
-  { value: "8", label: "Division 8: Corrosive Substances" },
+  { value: "HazardClass2And1", label: "Division 2.1: Flammable Gases" },
+  { value: "HazardClass2And2", label: "Division 2.2: Non-Flammable Gases" },
+  { value: "HazardClass2And3", label: "Division 2.3: Poisonous Gases" },
+  { value: "HazardClass3", label: "Division 3: Flammable Liquids" },
+  { value: "HazardClass4And1", label: "Division 4.1: Flammable Solids" },
   {
-    value: "9",
+    value: "HazardClass4And2",
+    label: "Division 4.2: Spontaneously Combustible Solids",
+  },
+  { value: "HazardClass4And3", label: "Division 4.3: Dangerous When Wet" },
+  { value: "HazardClass5And1", label: "Division 5.1: Oxidizing Substances" },
+  { value: "HazardClass5And2", label: "Division 5.2: Organic Peroxides" },
+  { value: "HazardClass6And1", label: "Division 6.1: Toxic Substances" },
+  { value: "HazardClass6And2", label: "Division 6.2: Infectious Substances" },
+  { value: "HazardClass7", label: "Division 7: Radioactive Material" },
+  { value: "HazardClass8", label: "Division 8: Corrosive Substances" },
+  {
+    value: "HazardClass9",
     label: "Division 9: Miscellaneous Hazardous Substances and Articles",
   },
 ] satisfies ReadonlyArray<IChoiceProps<HazardousClassChoiceProps>>;
@@ -516,13 +527,13 @@ export const shipmentStopChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<ShipmentStopChoices>>;
 
 /** Type for Comment Type Severity */
-export type SeverityChoiceProps = "H" | "M" | "L";
+export type SeverityChoiceProps = "High" | "Medium" | "Low";
 
 /** Returns comment type severity choices for a select input. */
 export const severityChoices = [
-  { value: "H", label: "High", color: "#dc2626" },
-  { value: "M", label: "Medium", color: "#2563eb" },
-  { value: "L", label: "Low", color: "#15803d" },
+  { value: "High", label: "High", color: "#dc2626" },
+  { value: "Medium", label: "Medium", color: "#2563eb" },
+  { value: "Low", label: "Low", color: "#15803d" },
 ] satisfies ReadonlyArray<IChoiceProps<SeverityChoiceProps>>;
 
 /**
@@ -569,6 +580,15 @@ export const tableStatusChoices = [
 export const yesAndNoChoices = [
   { value: "Y", label: "Yes" },
   { value: "N", label: "No" },
+];
+
+/**
+ * Returns yes and no choices as boolean for a select input
+ * @returns An array of yes and no choices as boolean.
+ */
+export const yesAndNoBooleanChoices = [
+  { value: true, label: "Yes" },
+  { value: false, label: "No" },
 ];
 
 export type SegregationTypeChoiceProps = "O" | "X";

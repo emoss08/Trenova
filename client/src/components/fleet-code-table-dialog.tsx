@@ -51,7 +51,7 @@ export function FleetCodeForm({
 
   return (
     <Form>
-      <FormGroup className="md:grid-cols-1 lg:grid-cols-2">
+      <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
         <FormControl>
           <SelectInput
             name="status"
@@ -77,24 +77,21 @@ export function FleetCodeForm({
             maxLength={10}
           />
         </FormControl>
-      </FormGroup>
-      <div>
-        <TextareaField
-          name="description"
-          rules={{ required: true }}
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Fleet Code"
-        />
-      </div>
-      <FormGroup className="md:grid-cols-1 lg:grid-cols-2">
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            rules={{ required: true }}
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Fleet Code"
+          />
+        </FormControl>
         <FormControl>
           <DecimalField
             control={control}
             name="revenueGoal"
             label="Revenue Goal"
-            type="text"
             placeholder="Revenue Goal"
             description="Revenue Goal for the Fleet Code"
           />
@@ -104,7 +101,6 @@ export function FleetCodeForm({
             control={control}
             name="deadheadGoal"
             label="Deadhead Goal"
-            type="text"
             placeholder="Deadhead Goal"
             description="Deadhead Goal for the Fleet Code"
           />
@@ -114,14 +110,13 @@ export function FleetCodeForm({
             control={control}
             name="mileageGoal"
             label="Mileage Goal"
-            type="text"
             placeholder="Mileage Goal"
             description="Mileage Goal for the Fleet Code"
           />
         </FormControl>
         <FormControl className="grid w-full max-w-sm items-center gap-0.5">
           <SelectInput
-            name="manager"
+            name="managerId"
             control={control}
             label="Manager"
             options={selectUsersData}
@@ -131,7 +126,7 @@ export function FleetCodeForm({
             description="User who manages the Fleet Code"
             isClearable
             hasPopoutWindow
-            popoutLink="#" // TODO: Change once Document Classification is added.
+            popoutLink="#" // TODO: Change once Users is added.
             popoutLinkLabel="User"
           />
         </FormControl>
@@ -148,10 +143,10 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
       status: "A",
       code: "",
       description: "",
-      revenueGoal: "",
-      deadheadGoal: "",
-      mileageGoal: "",
-      manager: "",
+      revenueGoal: undefined,
+      deadheadGoal: undefined,
+      mileageGoal: undefined,
+      managerId: "",
     },
   });
 
@@ -159,7 +154,7 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/fleet_codes/",
+      path: "/fleet-codes/",
       successMessage: "Fleet Code created successfully.",
       queryKeysToInvalidate: ["fleet-code-table-data"],
       closeModal: true,
@@ -178,7 +173,7 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create New Fleet Code</DialogTitle>
         </DialogHeader>

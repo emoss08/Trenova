@@ -52,7 +52,7 @@ export async function getDivisionCodeDetail(id: string): Promise<DivisionCode> {
  * @returns A promise that resolves to an array of general ledger accounts.
  */
 export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
-  const response = await axios.get("/gl_accounts/", {
+  const response = await axios.get("/general-ledger-accounts/", {
     params: {
       status: "A",
     },

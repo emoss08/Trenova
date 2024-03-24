@@ -165,16 +165,16 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             description="Indicates if the equipment type is exempt from tolls"
           />
         </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Equipment Type"
+          />
+        </FormControl>
       </FormGroup>
-      <div className="my-2">
-        <TextareaField
-          name="description"
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Equipment Type"
-        />
-      </div>
     </Form>
   );
 }
@@ -187,16 +187,16 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
       status: "A",
       name: "",
       description: "",
-      costPerMile: "",
-      equipmentClass: "UNDEFINED",
+      costPerMile: undefined,
+      equipmentClass: "Undefined",
       exemptFromTolls: false,
-      fixedCost: "",
-      height: "",
-      length: "",
-      idlingFuelUsage: "",
-      weight: "",
-      variableCost: "",
-      width: "",
+      fixedCost: undefined,
+      height: undefined,
+      length: undefined,
+      idlingFuelUsage: undefined,
+      weight: undefined,
+      variableCost: undefined,
+      width: undefined,
     },
   });
 
@@ -204,7 +204,7 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/equipment_types/",
+      path: "/equipment-types/",
       successMessage: "Equipment Type created successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
       closeModal: true,

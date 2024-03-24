@@ -27,9 +27,10 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Image } from "@unpic/react";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { InternalLink } from "@/components/ui/link";
+import { HTTP_200_OK } from "@/types/server";
 import trenovaLogo from "../assets/images/logo.avif";
 
 type LoginFormValues = {
@@ -79,7 +80,8 @@ function UserAuthForm() {
         withCredentials: true,
       });
 
-      if (response.status === 200) {
+      if (response.status === HTTP_200_OK) {
+        localStorage.setItem("trenova-user-id", response.data.id); // Persist user ID to localStorage
         setUserDetails(response.data);
         setIsAuthenticated(true);
       }
@@ -96,7 +98,7 @@ function UserAuthForm() {
         password: values.password,
       });
 
-      if (response.status === 200) {
+      if (response.status === HTTP_200_OK) {
         await fetchUserDetails();
         setIsAuthenticated(true);
       }
@@ -104,6 +106,7 @@ function UserAuthForm() {
       if (error.response) {
         const { data } = error.response;
         data.errors.forEach((error: any) => {
+          console.log("ERROR", error);
           setError(error.attr, {
             type: error.code,
             message: error.detail,
@@ -150,9 +153,9 @@ function UserAuthForm() {
             </div>
           </div>
           <div>
-            <Link to="/reset-password" className="text-sm hover:underline">
+            <InternalLink className="text-sm" to="/reset-password">
               Forgot Password?
-            </Link>
+            </InternalLink>
           </div>
         </div>
         <Button
@@ -202,12 +205,7 @@ export default function LoginPage() {
             </h2>
             <span className="flex justify-center space-y-5 text-sm">
               Do not have an account yet?&nbsp;
-              <a
-                href="#"
-                className="text-primary text-sm font-semibold underline underline-offset-4 hover:decoration-blue-500"
-              >
-                Create an Account
-              </a>
+              <InternalLink to="#">Create an Account</InternalLink>
             </span>
             <UserAuthForm />
           </CardContent>

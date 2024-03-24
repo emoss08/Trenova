@@ -36,9 +36,8 @@ export function useLogout() {
       if (returnUrl !== "/login" && returnUrl !== "/logout") {
         sessionStorage.removeItem("returnUrl");
       }
-      // You can also add the setIsAuthenticated here if it is needed
       setIsAuthenticated(false);
-
+      localStorage.removeItem("trenova-user-id"); // Clear user ID from localStorage
       navigate("/login");
 
       webSocketManager.disconnectFromAll();

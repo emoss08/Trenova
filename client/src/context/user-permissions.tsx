@@ -36,7 +36,7 @@ export const UserPermissionsProvider: React.FC<{
   const user = useUserStore.get("user");
 
   // User is admin or is super admin
-  const isAdmin = user?.isAdmin || user?.isSuperuser;
+  const isAdmin = user?.isAdmin || user?.isSuperAdmin;
   const permissions = user?.userPermissions || [];
 
   const userHasPermission = useMemo(

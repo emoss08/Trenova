@@ -20,10 +20,10 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
-import { EmailProfile } from "@/types/organization";
-import { ColumnDef } from "@tanstack/react-table";
 import { EmailProfileDialog } from "@/components/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile-table-edit-dialog";
+import { EmailProfile } from "@/types/organization";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<EmailProfile>[] = [
   {
@@ -48,11 +48,9 @@ const columns: ColumnDef<EmailProfile>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "defaultProfile",
+    accessorKey: "isDefault",
     header: "Default Profile",
-    cell: ({ row }) => (
-      <BoolStatusBadge status={row.getValue("defaultProfile")} />
-    ),
+    cell: ({ row }) => <BoolStatusBadge status={row.getValue("isDefault")} />,
   },
   {
     accessorKey: "name",

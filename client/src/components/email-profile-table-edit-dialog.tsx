@@ -54,7 +54,7 @@ function EmailProfileEditForm({
       username: emailProfile.username,
       password: emailProfile.password,
       protocol: emailProfile.protocol,
-      defaultProfile: emailProfile.defaultProfile,
+      isDefault: emailProfile.isDefault,
     },
   });
 

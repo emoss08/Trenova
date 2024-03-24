@@ -42,14 +42,13 @@ export type User = {
   name: string;
   email: string;
   dateJoined: string;
-  isSuperuser: boolean;
+  isSuperAdmin: boolean;
   isAdmin: boolean;
   status: StatusChoiceProps;
   timezone: TimezoneChoices;
-  profilePicUrl?: string;
-  thumbnailUrl?: string;
   PhoneNumber?: string;
-  userPermissions: string[];
+  userPermissions?: string[];
+  profilePicUrl: string;
 };
 
 export type UserFormValues = {
@@ -57,7 +56,7 @@ export type UserFormValues = {
   username: string;
   department?: string;
   email: string;
-  isSuperuser: boolean;
+  isSuperAdmin: boolean;
 };
 
 export type JobTitle = {

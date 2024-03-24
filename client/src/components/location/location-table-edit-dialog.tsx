@@ -139,7 +139,7 @@ export function LocationTableEditSheet({
         <SheetHeader>
           <SheetTitle>{location && location.name}</SheetTitle>
           <SheetDescription>
-            Last updated on {location && formatDate(location.modified)}
+            Last updated on {location && formatDate(location.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {location && (

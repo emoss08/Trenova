@@ -18,11 +18,11 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { LCTableEditDialog } from "@/components/location-category-table-edit-sheet";
+import { LocationCategoryTableSheet } from "@/components/location-category-table-sheet";
 import { truncateText } from "@/lib/utils";
 import { LocationCategory } from "@/types/location";
 import { ColumnDef } from "@tanstack/react-table";
-import { LocationCategoryTableSheet } from "@/components/location-category-table-sheet";
-import { LCTableEditDialog } from "@/components/location-category-table-edit-sheet";
 
 const columns: ColumnDef<LocationCategory>[] = [
   {
@@ -54,7 +54,7 @@ const columns: ColumnDef<LocationCategory>[] = [
     cell: ({ row }) => {
       if (row.original.color) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: row.original.color }}
@@ -79,7 +79,7 @@ export default function LocationCategories() {
     <DataTable
       queryKey="location-categories-table-data"
       columns={columns}
-      link="/location_categories/"
+      link="/location-categories/"
       name="Location Category"
       exportModelName="LocationCategory"
       filterColumn="name"

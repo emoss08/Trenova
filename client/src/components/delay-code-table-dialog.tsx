@@ -36,6 +36,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function DelayCodeForm({
   control,
@@ -43,9 +44,9 @@ export function DelayCodeForm({
   control: Control<DelayCodeFormValues>;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -56,8 +57,8 @@ export function DelayCodeForm({
             description="Status of the Delay code"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -70,27 +71,27 @@ export function DelayCodeForm({
             description="Unique Code for the Delay Code"
             maxLength={4}
           />
-        </div>
-      </div>
-      <div className="my-5 grid w-full items-center gap-0.5">
-        <TextareaField
-          name="description"
-          rules={{ required: true }}
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Delay Code"
-        />
-      </div>
-      <div className="w-full max-w-sm items-center gap-0.5">
-        <CheckboxInput
-          control={control}
-          label="Fault of Carrier or Driver?"
-          name="fCarrierOrDriver"
-          description="Indicates if the delay is the fault of the carrier or driver."
-        />
-      </div>
-    </div>
+        </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            rules={{ required: true }}
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Delay Code"
+          />
+        </FormControl>
+        <FormControl className="col-span-full">
+          <CheckboxInput
+            control={control}
+            label="Fault of Carrier or Driver?"
+            name="fCarrierOrDriver"
+            description="Indicates if the delay is the fault of the carrier or driver."
+          />
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -111,7 +112,7 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/delay_codes/",
+      path: "/delay-codes/",
       successMessage: "Delay Code created successfully.",
       queryKeysToInvalidate: ["delay-code-table-data"],
       closeModal: true,

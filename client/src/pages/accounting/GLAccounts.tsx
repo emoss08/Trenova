@@ -19,13 +19,13 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
+import { GeneralLedgerAccountTableEditSheet } from "@/components/general-ledger-account-table-edit-sheet";
+import { GeneralLedgerAccountTableSheet } from "@/components/general-ledger-account-table-sheet";
 import { GLAccountTableSub } from "@/components/general-ledger-account-table-sub";
 import { tableAccountTypeChoices, tableStatusChoices } from "@/lib/choices";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { GeneralLedgerAccountTableSheet } from "@/components/general-ledger-account-table-sheet";
-import { GeneralLedgerAccountTableEditSheet } from "@/components/general-ledger-account-table-edit-sheet";
 
 const renderSubComponent = () => {
   // const original = row.original;
@@ -92,7 +92,7 @@ export default function GLAccounts() {
     <DataTable
       queryKey="gl-account-table-data"
       columns={columns}
-      link="/gl_accounts/"
+      link="/general-ledger-accounts/"
       name="Gl Account"
       exportModelName="GeneralLedgerAccount"
       filterColumn="accountNumber"

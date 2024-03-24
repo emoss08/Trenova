@@ -58,7 +58,7 @@ function ShipmentTypeEditForm({
     control,
     {
       method: "PUT",
-      path: `/shipment_types/${shipmentType.id}/`,
+      path: `/shipment-types/${shipmentType.id}/`,
       successMessage: "Shipment Type updated successfully.",
       queryKeysToInvalidate: ["shipment-type-table-data"],
       closeModal: true,
@@ -103,7 +103,7 @@ export function ShipmentTypeEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {shipmentType && formatDate(shipmentType.modified)}
+          {shipmentType && formatDate(shipmentType.updatedAt)}
         </DialogDescription>
         {shipmentType && <ShipmentTypeEditForm shipmentType={shipmentType} />}
       </DialogContent>

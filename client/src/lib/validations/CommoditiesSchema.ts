@@ -20,7 +20,7 @@ import {
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
 } from "@/lib/choices";
-import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
+import { StatusChoiceProps } from "@/types";
 import {
   CommodityFormValues,
   HazardousMaterialFormValues,
@@ -49,13 +49,16 @@ export const commoditySchema: ObjectSchema<CommodityFormValues> =
       .max(100, "Name cannot be longer than 100 characters long.")
       .required("Name is required"),
     description: Yup.string(),
-    minTemp: Yup.number().max(
-      Yup.ref("maxTemp"),
-      "Minimum temperature must be less than maximum temperature.",
+    minTemp: Yup.number()
+      .max(
+        Yup.ref("maxTemp"),
+        "Minimum temperature must be less than maximum temperature.",
+      )
+      .transform((value) => (Number.isNaN(value) ? undefined : value)),
+    maxTemp: Yup.number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
     ),
-    maxTemp: Yup.number(),
-    setPointTemp: Yup.number(),
     unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>(),
-    hazardousMaterial: Yup.string(),
-    isHazmat: Yup.string<YesNoChoiceProps>().required("Is Hazmat is required"),
+    hazardousMaterialId: Yup.string().nullable(),
+    isHazmat: Yup.boolean().required("Is Hazmat is required"),
   });

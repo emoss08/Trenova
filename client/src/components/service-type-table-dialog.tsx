@@ -97,7 +97,7 @@ export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/service_types/",
+      path: "/service-types/",
       successMessage: "Service Type created successfully.",
       queryKeysToInvalidate: ["service-type-table-data"],
       closeModal: true,

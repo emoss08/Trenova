@@ -15,39 +15,26 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ACDialog } from "@/components/accessorial-charge-table-dialog";
+import { AccessorialChargeTableEditDialog } from "@/components/accessorial-charge-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { Badge } from "@/components/ui/badge";
-import { truncateText, USDollarFormatString } from "@/lib/utils";
+import { tableStatusChoices } from "@/lib/choices";
+import { truncateText, USDollarFormat } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
 import { FilterConfig } from "@/types/tables";
-import {
-  fuelMethodChoices,
-  FuelMethodChoicesProps,
-} from "@/utils/apps/billing";
+import { fuelMethodChoices } from "@/utils/apps/billing";
 import { ColumnDef } from "@tanstack/react-table";
-import { tableStatusChoices } from "@/lib/choices";
-import { ACDialog } from "@/components/accessorial-charge-table-dialog";
-import { AccessorialChargeTableEditDialog } from "@/components/accessorial-charge-table-edit-dialog";
 
 function DetentionBadge({ isDetention }: { isDetention: boolean }) {
   return (
-    <Badge variant={isDetention ? "default" : "inactive"}>
+    <Badge variant={isDetention ? "active" : "inactive"}>
       {isDetention ? "Yes" : "No"}
     </Badge>
   );
-}
-
-function methodText(fuelMethod: FuelMethodChoicesProps) {
-  return fuelMethod === "P"
-    ? "Percentage"
-    : fuelMethod === "D"
-    ? "Distance"
-    : fuelMethod === "F"
-    ? "Fuel"
-    : "N/A";
 }
 
 const columns: ColumnDef<AccessorialCharge>[] = [
@@ -93,7 +80,6 @@ const columns: ColumnDef<AccessorialCharge>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Method" />
     ),
-    cell: ({ row }) => methodText(row.original.method),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -116,11 +102,11 @@ const columns: ColumnDef<AccessorialCharge>[] = [
     cell: ({ row }) => truncateText(row.original.description as string, 25),
   },
   {
-    accessorKey: "chargeAmount",
+    accessorKey: "amount",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Charge Amount" />
     ),
-    cell: ({ row }) => USDollarFormatString(row.original.chargeAmount),
+    cell: ({ row }) => USDollarFormat(row.original.amount),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -149,7 +135,7 @@ export default function AccessorialCharges() {
     <DataTable
       queryKey="accessorial-charges-table-data"
       columns={columns}
-      link="/accessorial_charges/"
+      link="/accessorial-charges/"
       name="Accessorial Charge"
       exportModelName="AccessorialCharge"
       filterColumn="code"

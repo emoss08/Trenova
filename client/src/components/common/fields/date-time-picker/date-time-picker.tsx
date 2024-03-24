@@ -37,6 +37,7 @@ import {
   useController,
 } from "react-hook-form";
 import { DatePickerStateOptions, useDatePickerState } from "react-stately";
+import { FieldDescription } from "../components";
 import { ErrorMessage } from "../error-message";
 import { Label } from "../label";
 import { Calendar } from "./calendar";
@@ -131,7 +132,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
-              <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-[1px]" />
+              <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-px" />
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -167,7 +168,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         </Popover>
       </div>
       {props.description && !fieldState.invalid && (
-        <p className="text-foreground/70 text-xs">{props.description}</p>
+        <FieldDescription description={props.description as string} />
       )}
       {fieldState.invalid && (
         <ErrorMessage formError={fieldState.error?.message} />

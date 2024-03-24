@@ -174,7 +174,7 @@ export function HazardousMaterialDialog({
     control,
     {
       method: "POST",
-      path: "/hazardous_materials/",
+      path: "/hazardous-materials/",
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["hazardous-material-table-data"],
       closeModal: true,

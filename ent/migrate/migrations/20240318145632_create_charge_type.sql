@@ -1,0 +1,4 @@
+-- Modify "charge_types" table
+ALTER TABLE "charge_types" ADD COLUMN "created_at" timestamptz NOT NULL, ADD COLUMN "updated_at" timestamptz NOT NULL, ADD COLUMN "name" character varying NOT NULL, ADD COLUMN "description" character varying NULL, ADD COLUMN "business_unit_id" uuid NOT NULL, ADD COLUMN "organization_id" uuid NOT NULL, ADD CONSTRAINT "charge_types_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, ADD CONSTRAINT "charge_types_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE;
+-- Create index "chargetype_name_organization_id" to table: "charge_types"
+CREATE UNIQUE INDEX "chargetype_name_organization_id" ON "charge_types" ("name", "organization_id");

@@ -28,6 +28,7 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 import {
   Select,
@@ -61,7 +62,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
   const [date] = useState<Date | undefined>(props.initialDate);
   const popoverRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [stringDate, setStringDate] = React.useState(
+  const [, setStringDate] = React.useState(
     props.initialDate ? format(props.initialDate, "yyyy-MM-dd") : "",
   );
 
@@ -135,12 +136,12 @@ export function DatepickerField<TFieldValues extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
         {isOpen && (
           <div
             ref={popoverRef}
-            className="z-1000 absolute bottom-full mb-2 rounded-sm border border-muted bg-background shadow-md"
+            className="z-1000 border-muted bg-background absolute bottom-full mb-2 rounded-sm border shadow-md"
           >
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select

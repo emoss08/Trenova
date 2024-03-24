@@ -18,6 +18,7 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { RevenueCodeDialog } from "@/components/revenue-code-table-dialog";
 import { RevenueCodeTableEditDialog } from "@/components/revenue-code-table-edit-dialog";
 import { truncateText } from "@/lib/utils";
@@ -47,6 +48,16 @@ const columns: ColumnDef<RevenueCode>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
     accessorKey: "code",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Code" />
@@ -58,14 +69,14 @@ const columns: ColumnDef<RevenueCode>[] = [
     cell: ({ row }) => truncateText(row.original.description as string, 25),
   },
   {
-    accessorKey: "expAccountNum",
+    accessorFn: (row) =>
+      `${row.edges?.expenseAccount?.accountNumber || "No Expense Account"}`,
     header: "Expense Account",
-    cell: ({ row }) => row.original.expAccountNum || "No Expense Account",
   },
   {
-    accessorKey: "revAccountNum",
+    accessorFn: (row) =>
+      `${row.edges?.revenueAccount?.accountNumber || "No Revenue Account"}`,
     header: "Revenue Account",
-    cell: ({ row }) => row.original.revAccountNum || "No Revenue Account",
   },
 ];
 

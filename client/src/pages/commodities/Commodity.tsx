@@ -28,10 +28,10 @@ import { Commodity } from "@/types/commodities";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
-function HazmatBadge({ isHazmat }: { isHazmat: string }) {
+function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
   return (
-    <Badge variant={isHazmat === "Y" ? "active" : "inactive"}>
-      {isHazmat === "Y" ? "Yes" : "No"}
+    <Badge variant={isHazmat ? "active" : "inactive"}>
+      {isHazmat ? "Yes" : "No"}
     </Badge>
   );
 }

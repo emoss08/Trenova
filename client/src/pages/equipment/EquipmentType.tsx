@@ -18,14 +18,14 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { EquipTypeEditSheet } from "@/components/equip-type-edit-table-dialog";
+import { EquipTypeDialog } from "@/components/equip-type-table-dialog";
 import { equipmentClassChoices, tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
 import { EquipmentType } from "@/types/equipment";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/common/table/data-table-components";
-import { EquipTypeDialog } from "@/components/equip-type-table-dialog";
-import { EquipTypeEditSheet } from "@/components/equip-type-edit-table-dialog";
 
 const columns: ColumnDef<EquipmentType>[] = [
   {
@@ -102,7 +102,7 @@ export default function EquipmentTypes() {
     <DataTable
       queryKey="equipment-type-table-data"
       columns={columns}
-      link="/equipment_types/"
+      link="/equipment-types/"
       name="Equip. Types"
       exportModelName="EquipmentType"
       filterColumn="name"

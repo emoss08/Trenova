@@ -35,6 +35,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function QualifierCodeForm({
   control,
@@ -42,9 +43,9 @@ export function QualifierCodeForm({
   control: Control<FormValues>;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full max-w-sm items-center gap-0.5">
+    <Form className="flex-1 overflow-y-visible">
+      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FormControl>
           <SelectInput
             name="status"
             rules={{ required: true }}
@@ -55,8 +56,8 @@ export function QualifierCodeForm({
             description="Status of the Qualifier Code"
             isClearable={false}
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -70,19 +71,19 @@ export function QualifierCodeForm({
             autoComplete="code"
             description="Code for the Qualifier Code"
           />
-        </div>
-      </div>
-      <div className="my-2">
-        <TextareaField
-          name="description"
-          rules={{ required: true }}
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Qualifier Code"
-        />
-      </div>
-    </div>
+        </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            rules={{ required: true }}
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Qualifier Code"
+          />
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 

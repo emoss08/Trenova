@@ -48,7 +48,7 @@ function EmailControlForm({
     control,
     {
       method: "PUT",
-      path: `/email_control/${emailControl.id}/`,
+      path: `/email-control/${emailControl.id}/`,
       successMessage: "Email Control updated successfully.",
       queryKeysToInvalidate: ["emailControl"],
       errorMessage: "Failed to update email control.",
@@ -72,7 +72,7 @@ function EmailControlForm({
         <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           <div className="col-span-3">
             <SelectInput
-              name="billingEmailProfile"
+              name="billingEmailProfileId"
               control={control}
               options={selectEmailProfile}
               isLoading={isLoading}
@@ -88,7 +88,7 @@ function EmailControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="rateExpirationEmailProfile"
+              name="rateExpirtationEmailProfileId"
               control={control}
               options={selectEmailProfile}
               isLoading={isLoading}
@@ -125,7 +125,7 @@ function EmailControlForm({
 }
 
 export default function EmailControl() {
-  const { emailControlData, isError, isLoading } = useEmailControl();
+  const { data, isError, isLoading } = useEmailControl();
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
@@ -145,10 +145,10 @@ export default function EmailControl() {
         </div>
       ) : isError ? (
         <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
-          <ErrorLoadingData message="Failed to load dispatch control." />
+          <ErrorLoadingData />
         </div>
       ) : (
-        emailControlData && <EmailControlForm emailControl={emailControlData} />
+        data && <EmailControlForm emailControl={data} />
       )}
     </div>
   );

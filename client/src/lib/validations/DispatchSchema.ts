@@ -30,7 +30,6 @@ import {
   RateBillingTableFormValues,
 } from "@/types/dispatch";
 import { ObjectSchema, boolean, mixed, number, object, string } from "yup";
-import { validateDecimal } from "../utils";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   object().shape({
@@ -106,40 +105,17 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
     code: string()
       .required("Name is required")
       .max(10, "Code cannot be more than 10 characters"),
-    revenueGoal: string().test(
-      "is-decimal",
-      "Revenue Goal must be a decimal with no more than two decimal places",
-      (value) => {
-        if (value === undefined || value === null || value === "") {
-          return true; // Passes validation for null, undefined, or empty string
-        }
-        return validateDecimal(value, 2);
-      },
+    description: string().required("Description is required"),
+    revenueGoal: number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
     ),
-    deadheadGoal: string().test(
-      "is-decimal",
-      "Deadhead Goal must be a decimal with no more than two decimal places",
-      (value) => {
-        if (value === undefined || value === null || value === "") {
-          return true; // Passes validation for null, undefined, or empty string
-        }
-        return validateDecimal(value, 2);
-      },
+    deadheadGoal: number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
     ),
-    mileageGoal: string().test(
-      "is-decimal",
-      "Mileage Goal must be a decimal with no more than two decimal places",
-      (value) => {
-        if (value === undefined || value === null || value === "") {
-          return true; // Passes validation for null, undefined, or empty string
-        }
-        return validateDecimal(value, 2);
-      },
+    mileageGoal: number().transform((value) =>
+      Number.isNaN(value) ? undefined : value,
     ),
-    description: string()
-      .required("Description is required")
-      .max(100, "Description cannot be more than 100 characters"),
-    manager: string(),
+    managerId: string().nullable(),
   });
 
 export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =

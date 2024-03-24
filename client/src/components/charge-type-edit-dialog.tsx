@@ -15,6 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
@@ -27,16 +36,7 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ChargeTypeForm } from "./charge-type-dialog";
-import { Button } from "@/components/ui/button";
 
 function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -53,7 +53,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
     control,
     {
       method: "PUT",
-      path: `/charge_types/${chargeType.id}/`,
+      path: `/charge-types/${chargeType.id}/`,
       successMessage: "Charge Type updated successfully.",
       queryKeysToInvalidate: ["charge-type-table-data"],
       closeModal: true,
@@ -81,7 +81,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
 }
 
 export function ChargeTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
-  const [chargeType] = useTableStore.use("currentRecord");
+  const [chargeType] = useTableStore.use("currentRecord") as ChargeType[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +90,7 @@ export function ChargeTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
           <DialogTitle>{chargeType && chargeType.name}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on {chargeType && formatDate(chargeType.modified)}
+          Last updated on {chargeType && formatDate(chargeType.updatedAt)}
         </DialogDescription>
         {chargeType && <ChargeTypeEditForm chargeType={chargeType} />}
       </DialogContent>

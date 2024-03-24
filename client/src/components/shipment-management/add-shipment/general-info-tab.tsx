@@ -17,7 +17,7 @@
 
 import { ComponentLoader } from "@/components/ui/component-loader";
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
-import { lazy, Suspense } from "react";
+import { Suspense, lazy } from "react";
 
 const GeneralInfoCard = lazy(() => import("./cards/general-info"));
 const LocationInformation = lazy(() => import("./cards/location-info"));
@@ -25,8 +25,7 @@ const EquipmentInformation = lazy(() => import("./cards/equipment-info"));
 const DispatchInformation = lazy(() => import("./cards/dispatch-detail"));
 
 export default function GeneralInfoTab() {
-  const { shipmentControlData, isLoading: isShipmentControlLoading } =
-    useShipmentControl();
+  const { data, isLoading: isShipmentControlLoading } = useShipmentControl();
   const { proNumber, isProNumberLoading } = useNextProNumber();
 
   return (
@@ -35,16 +34,16 @@ export default function GeneralInfoTab() {
         <GeneralInfoCard
           proNumber={proNumber as string}
           isProNumberLoading={isProNumberLoading}
-          shipmentControlData={shipmentControlData}
+          shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
         <LocationInformation
-          shipmentControlData={shipmentControlData}
+          shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
         <EquipmentInformation />
         <DispatchInformation
-          shipmentControlData={shipmentControlData}
+          shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
       </Suspense>

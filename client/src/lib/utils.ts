@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 import { clsx, type ClassValue } from "clsx";
-import { RefObject, useEffect } from "react";
+import React, { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 import { v4 as uuidv4 } from "uuid";
 
@@ -274,3 +274,20 @@ export function isBrowser(browser: Browser): boolean {
       return false;
   }
 }
+
+/**
+ * Typeguard function that checks if the given element is a
+ * React element with a children prop.
+ *
+ * @param element
+ * @returns Whether the element is a React element with a children prop.
+ */
+export const isElementWithChildren = (
+  element: React.ReactNode,
+): element is React.ReactElement<{ children?: React.ReactNode }> => {
+  return (
+    React.isValidElement(element) &&
+    typeof (element as React.ReactElement<{ children?: React.ReactNode }>).props
+      .children !== "undefined"
+  );
+};

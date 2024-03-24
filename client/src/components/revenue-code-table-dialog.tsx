@@ -17,7 +17,6 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
+import { statusChoices } from "@/lib/choices";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { TChoiceProps } from "@/types";
 import { RevenueCodeFormValues as FormValues } from "@/types/accounting";
@@ -36,6 +36,8 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { TextareaField } from "./common/fields/textarea";
+import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function RCForm({
   control,
@@ -49,9 +51,21 @@ export function RCForm({
   isError: boolean;
 }) {
   return (
-    <div className="flex-1 overflow-y-visible">
-      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-1">
-        <div className="grid w-full items-center gap-0.5">
+    <Form>
+      <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+        <FormControl>
+          <SelectInput
+            name="status"
+            rules={{ required: true }}
+            control={control}
+            label="Status"
+            options={statusChoices}
+            placeholder="Select Status"
+            description="Operational status of the Revenue Code"
+            isClearable={false}
+          />
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
@@ -63,8 +77,8 @@ export function RCForm({
             placeholder="Code"
             description="Code for the Revenue Code"
           />
-        </div>
-        <div className="mb-2 grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl className="col-span-full">
           <TextareaField
             name="description"
             rules={{ required: true }}
@@ -73,12 +87,10 @@ export function RCForm({
             placeholder="Description"
             description="Description of the Revenue Code"
           />
-        </div>
-      </div>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <SelectInput
-            name="expenseAccount"
+            name="expenseAccountId"
             control={control}
             label="Expense Account"
             options={glAccounts}
@@ -91,10 +103,10 @@ export function RCForm({
             popoutLink="/accounting/gl-accounts"
             popoutLinkLabel="GL Account"
           />
-        </div>
-        <div className="grid w-full items-center gap-0.5">
+        </FormControl>
+        <FormControl>
           <SelectInput
-            name="revenueAccount"
+            name="revenueAccountId"
             control={control}
             label="Revenue Account"
             options={glAccounts}
@@ -108,9 +120,9 @@ export function RCForm({
             popoutLink="/accounting/gl-accounts"
             popoutLinkLabel="GL Account"
           />
-        </div>
-      </div>
-    </div>
+        </FormControl>
+      </FormGroup>
+    </Form>
   );
 }
 
@@ -120,10 +132,11 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
     defaultValues: {
+      status: "A",
       code: "",
       description: "",
-      expenseAccount: "",
-      revenueAccount: "",
+      expenseAccountId: null,
+      revenueAccountId: null,
     },
   });
 

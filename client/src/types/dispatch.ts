@@ -24,7 +24,7 @@ import {
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "./organization";
 
-export type DispatchControl = {
+export interface DispatchControl extends BaseModel {
   id: string;
   organizationId: string;
   recordServiceIncident: ServiceIncidentControlEnum;
@@ -39,11 +39,11 @@ export type DispatchControl = {
   prevShipmentOnHold: boolean;
   workerTimeAwayRestriction: boolean;
   tractorWorkerFleetConstraint: boolean;
-};
+}
 
 export type DispatchControlFormValues = Omit<
   DispatchControl,
-  "id" | "organizationId"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface DelayCode extends BaseModel {
@@ -56,7 +56,7 @@ export interface DelayCode extends BaseModel {
 
 export type DelayCodeFormValues = Omit<
   DelayCode,
-  "id" | "organization" | "businessUnit" | "created" | "modified"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface FleetCode extends BaseModel {
@@ -64,15 +64,15 @@ export interface FleetCode extends BaseModel {
   status: StatusChoiceProps;
   code: string;
   description: string;
-  revenueGoal?: string;
-  deadheadGoal?: string;
-  mileageGoal?: string;
-  manager?: string;
+  revenueGoal?: number;
+  deadheadGoal?: number;
+  mileageGoal?: number;
+  managerId?: string | null;
 }
 
 export type FleetCodeFormValues = Omit<
   FleetCode,
-  "id" | "organization" | "businessUnit" | "created" | "modified"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface CommentType extends BaseModel {
@@ -81,13 +81,11 @@ export interface CommentType extends BaseModel {
   status: StatusChoiceProps;
   description: string;
   severity: SeverityChoiceProps;
-  created: string;
-  modified: string;
 }
 
 export type CommentTypeFormValues = Omit<
   CommentType,
-  "organization" | "businessUnit" | "created" | "modified" | "id"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface Rate extends BaseModel {
@@ -127,23 +125,25 @@ export const rateFields: ReadonlyArray<keyof RateFormValues> = [
   "comments",
 ];
 
-export type RateBillingTable = {
-  organization: string;
-  businessUnit: string;
+export interface RateBillingTable extends BaseModel {
   id: string;
   rate: string;
-  accessorialCharge: string;
+  accessorialChargeId: string;
   description?: string;
   unit: number;
   chargeAmount: number;
   subTotal: number;
-  created: string;
-  modified: string;
-};
+}
 
 export type RateBillingTableFormValues = Omit<
   RateBillingTable,
-  "id" | "rate" | "organization" | "businessUnit" | "created" | "modified"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "rate"
+  | "accessorialChargeId"
 >;
 
 export type RateFormValues = Omit<
@@ -160,8 +160,6 @@ export type RateFormValues = Omit<
 
 export type FeasibilityToolControl = {
   id: string;
-  organization: string;
-  businessUnit: string;
   mpwOperator: FeasibilityOperatorChoiceProps;
   mpwValue: number;
   mpdOperator: FeasibilityOperatorChoiceProps;
@@ -170,11 +168,9 @@ export type FeasibilityToolControl = {
   mpgValue: number;
   otpOperator: FeasibilityOperatorChoiceProps;
   otpValue: number;
-  created: string;
-  modified: string;
 };
 
 export type FeasibilityToolControlFormValues = Omit<
   FeasibilityToolControl,
-  "id" | "organization" | "businessUnit" | "created" | "modified"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;

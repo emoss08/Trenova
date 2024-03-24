@@ -97,7 +97,7 @@ export function ReasonCodeEditDialog({ onOpenChange, open }: TableSheetProps) {
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {reasonCode && formatDate(reasonCode.modified)}
+          {reasonCode && formatDate(reasonCode.updatedAt)}
         </DialogDescription>
         {reasonCode && <ReasonCodeEditForm reasonCode={reasonCode} />}
       </DialogContent>

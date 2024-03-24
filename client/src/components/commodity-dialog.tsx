@@ -32,7 +32,7 @@ import { useHazardousMaterial } from "@/hooks/useQueries";
 import {
   UnitOfMeasureChoices,
   statusChoices,
-  yesAndNoChoices,
+  yesAndNoBooleanChoices,
 } from "@/lib/choices";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { CommodityFormValues as FormValues } from "@/types/commodities";
@@ -96,7 +96,6 @@ export function CommodityForm({
             name="minTemp"
             control={control}
             label="Min. Temp"
-            type="number"
             placeholder="Min. Temp"
             description="Minimum Temperature of the Commodity"
           />
@@ -106,14 +105,13 @@ export function CommodityForm({
             control={control}
             name="maxTemp"
             label="Max. Temp"
-            type="number"
             placeholder="Max. Temp"
             description="Maximum Temperature of the Commodity"
           />
         </FormControl>
         <FormControl>
           <SelectInput
-            name="hazardousMaterial"
+            name="hazardousMaterialId"
             control={control}
             label="Hazardous Material"
             options={selectHazardousMaterials}
@@ -132,7 +130,7 @@ export function CommodityForm({
             name="isHazmat"
             control={control}
             label="Is Hazmat"
-            options={yesAndNoChoices}
+            options={yesAndNoBooleanChoices}
             placeholder="Is Hazmat"
             description="Is the Commodity a Hazardous Material?"
             isClearable
@@ -166,20 +164,19 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
         description: undefined,
         minTemp: undefined,
         maxTemp: undefined,
-        setPointTemp: undefined,
         unitOfMeasure: undefined,
-        hazardousMaterial: undefined,
-        isHazmat: "N",
+        hazardousMaterialId: null,
+        isHazmat: false,
       },
     },
   );
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
-      if (name === "hazardousMaterial" && value.hazardousMaterial) {
-        setValue("isHazmat", "Y");
-      } else if (name === "hazardousMaterial" && !value.hazardousMaterial) {
-        setValue("isHazmat", "N");
+      if (name === "hazardousMaterialId" && value.hazardousMaterialId) {
+        setValue("isHazmat", true);
+      } else if (name === "hazardousMaterialId" && !value.hazardousMaterialId) {
+        setValue("isHazmat", false);
       }
     });
 

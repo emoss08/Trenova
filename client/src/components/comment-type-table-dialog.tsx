@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { severityChoices, statusChoices } from "@/lib/choices";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
@@ -35,7 +36,6 @@ import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
 
 export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -80,17 +80,17 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
             description="Unique name for the Comment Type"
           />
         </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            rules={{ required: true }}
+            control={control}
+            label="Description"
+            placeholder="Description"
+            description="Description of the Comment Type"
+          />
+        </FormControl>
       </FormGroup>
-      <FormControl className="col-span-full">
-        <TextareaField
-          name="description"
-          rules={{ required: true }}
-          control={control}
-          label="Description"
-          placeholder="Description"
-          description="Description of the Comment Type"
-        />
-      </FormControl>
     </Form>
   );
 }
@@ -103,7 +103,7 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       status: "A",
       name: "",
-      severity: "L",
+      severity: "Low",
       description: "",
     },
   });
@@ -112,7 +112,7 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/comment_types/",
+      path: "/comment-types/",
       successMessage: "Comment Type created successfully.",
       queryKeysToInvalidate: ["comment-types-table-data"],
       closeModal: true,

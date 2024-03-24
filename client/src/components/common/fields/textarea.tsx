@@ -23,6 +23,7 @@ import {
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 import { Label } from "./label";
 
@@ -57,20 +58,13 @@ export function TextareaField<T extends FieldValues>({
   ...props
 }: ExtendedTextareaProps & UseControllerProps<T>) {
   const { field, fieldState } = useController(props);
-  const { label, id, className } = props;
+  const { label, rules, className } = props;
   return (
     <>
-      {label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-          htmlFor={id}
-        >
-          {label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         <Textarea
           className={cn(
@@ -86,7 +80,7 @@ export function TextareaField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>
@@ -237,7 +231,7 @@ export function AutosizeTextareaField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>

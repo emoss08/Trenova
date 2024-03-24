@@ -85,9 +85,11 @@ type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
 >;
 
-interface TeamSwitcherProps extends PopoverTriggerProps {}
+interface OrganizationSwitcherProps extends PopoverTriggerProps {}
 
-export default function TeamSwitcher({ className }: TeamSwitcherProps) {
+export default function OrganizationSwitcher({
+  className,
+}: OrganizationSwitcherProps) {
   const [open, setOpen] = React.useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
   const [selectedTeam, setSelectedTeam] = React.useState<Team>(
@@ -104,7 +106,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
             aria-expanded={open}
             aria-label="Select a team"
             className={cn(
-              "w-[200px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-8 hidden md:flex",
+              "w-[230px] justify-between border-muted-foreground/40 hover:border-muted-foreground/80 h-8 hidden md:flex",
               className,
             )}
           >
@@ -117,7 +119,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
               <AvatarFallback>SC</AvatarFallback>
             </Avatar>
             <span className="truncate">{selectedTeam.label}</span>
-            <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
+            <CaretSortIcon className="ml-auto size-4 shrink-0" />
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-[250px] p-0">

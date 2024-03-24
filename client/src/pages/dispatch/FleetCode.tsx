@@ -15,15 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { FleetCode } from "@/types/dispatch";
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
-import { truncateText } from "@/lib/utils";
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { FleetCodeDialog } from "@/components/fleet-code-table-dialog";
 import { FleetCodeEditDialog } from "@/components/fleet-code-table-edit-dialog";
+import { truncateText } from "@/lib/utils";
+import { FleetCode } from "@/types/dispatch";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<FleetCode>[] = [
   {
@@ -76,7 +76,7 @@ export default function FleetCodes() {
       addPermissionName="add_fleetcode"
       queryKey="fleet-code-table-data"
       columns={columns}
-      link="/fleet_codes/"
+      link="/fleet-codes/"
       name="Fleet Codes"
       exportModelName="FleetCode"
       filterColumn="code"

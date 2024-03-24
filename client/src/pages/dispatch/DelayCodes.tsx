@@ -113,7 +113,7 @@ export default function DelayCodes() {
     <DataTable
       queryKey="delay-code-table-data"
       columns={columns}
-      link="/delay_codes/"
+      link="/delay-codes/"
       name="Delay Code"
       exportModelName="DelayCode"
       filterColumn="code"

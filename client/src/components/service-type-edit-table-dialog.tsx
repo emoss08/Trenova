@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ServiceTypeForm } from "@/components/service-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,14 +30,13 @@ import { formatDate } from "@/lib/date";
 import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ServiceType,
   ServiceTypeFormValues as FormValues,
+  ServiceType,
 } from "@/types/shipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { ServiceTypeForm } from "@/components/service-type-table-dialog";
 
 function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -54,7 +54,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
     control,
     {
       method: "PUT",
-      path: `/service_types/${serviceType.id}/`,
+      path: `/service-types/${serviceType.id}/`,
       successMessage: "Service Type updated successfully.",
       queryKeysToInvalidate: ["service-type-table-data"],
       closeModal: true,
@@ -96,7 +96,7 @@ export function ServiceTypeEditDialog({ onOpenChange, open }: TableSheetProps) {
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {serviceType && formatDate(serviceType.modified)}
+          {serviceType && formatDate(serviceType.updatedAt)}
         </DialogDescription>
         {serviceType && <ServiceTypeEditForm serviceType={serviceType} />}
       </DialogContent>

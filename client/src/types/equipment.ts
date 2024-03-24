@@ -17,36 +17,35 @@
 
 import { EquipmentClassChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
-import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 import { BaseModel } from "./organization";
 
 export interface EquipmentType extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
-  description?: string | null;
-  costPerMile?: string | null;
+  description?: string;
+  costPerMile?: number;
   equipmentClass: EquipmentClassChoiceProps;
-  fixedCost?: string | null;
-  variableCost?: string | null;
-  height?: string | null;
-  length?: string | null;
-  width?: string | null;
-  weight?: string | null;
-  idlingFuelUsage?: string | null;
+  fixedCost?: number;
+  variableCost?: number;
+  height?: number;
+  length?: number;
+  width?: number;
+  weight?: number;
+  idlingFuelUsage?: number;
   exemptFromTolls: boolean;
 }
 
 export type EquipmentTypeFormValues = Omit<
   EquipmentType,
-  "organization" | "businessUnit" | "created" | "modified" | "id"
+  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface EquipmentManufacturer extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
-  description?: string | null;
+  description?: string;
 }
 
 export type EquipmentManufacturerFormValues = Pick<
@@ -89,19 +88,19 @@ export interface Trailer extends BaseModel {
   code: string;
   status: EquipmentStatus;
   equipmentType: string;
-  manufacturer?: string | null;
-  make?: string | null;
-  model?: string | null;
-  year?: number | null;
-  vinNumber?: string | null;
-  fleetCode?: string | null;
-  state?: string | null;
-  licensePlateNumber?: string | null;
-  licensePlateState?: string | null;
-  lastInspection?: string | null;
-  registrationNumber?: string | null;
-  registrationState?: string | null;
-  registrationExpiration?: string | null;
+  manufacturer?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  vinNumber?: string;
+  fleetCode?: string;
+  state?: string;
+  licensePlateNumber?: string;
+  licensePlateState?: string;
+  lastInspection?: string;
+  registrationNumber?: string;
+  registrationState?: string;
+  registrationExpiration?: string;
   isLeased: boolean;
   timesUsed: number;
   equipTypeName: string;
@@ -123,19 +122,19 @@ export interface Tractor extends BaseModel {
   code: string;
   equipmentType: string;
   status: string;
-  licensePlateNumber?: string | null;
-  vinNumber?: string | null;
-  manufacturer?: string | null;
-  model?: string | null;
-  year?: number | null;
-  state?: string | null;
+  licensePlateNumber?: string;
+  vinNumber?: string;
+  manufacturer?: string;
+  model?: string;
+  year?: number;
+  state?: string;
   leased: boolean;
-  leasedDate?: string | null;
-  primaryWorker?: string | null;
-  secondaryWorker?: string | null;
+  leasedDate?: string;
+  primaryWorker?: string;
+  secondaryWorker?: string;
   hosExempt: boolean;
   ownerOperated: boolean;
-  fleetCode?: string | null;
+  fleetCode?: string;
 }
 
 export type TractorFormValues = Omit<

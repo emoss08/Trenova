@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ACForm } from "@/components/accessorial-charge-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +36,6 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { ACForm } from "@/components/accessorial-charge-table-dialog";
 
 function ACEditForm({
   accessorialCharge,
@@ -52,7 +52,7 @@ function ACEditForm({
       description: accessorialCharge.description,
       isDetention: accessorialCharge.isDetention,
       method: accessorialCharge.method,
-      chargeAmount: accessorialCharge.chargeAmount,
+      amount: accessorialCharge.amount,
     },
   });
 
@@ -60,7 +60,7 @@ function ACEditForm({
     control,
     {
       method: "PUT",
-      path: `/accessorial_charges/${accessorialCharge.id}/`,
+      path: `/accessorial-charges/${accessorialCharge.id}/`,
       successMessage: "Accesorial Charge updated successfully.",
       queryKeysToInvalidate: ["accessorial-charges-table-data"],
       closeModal: true,
@@ -94,7 +94,9 @@ export function AccessorialChargeTableEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [accessorialCharge] = useTableStore.use("currentRecord");
+  const [accessorialCharge] = useTableStore.use(
+    "currentRecord",
+  ) as AccessorialCharge[];
 
   if (!accessorialCharge) return null;
 
@@ -106,7 +108,7 @@ export function AccessorialChargeTableEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {accessorialCharge && formatDate(accessorialCharge.modified)}
+          {accessorialCharge && formatDate(accessorialCharge.updatedAt)}
         </DialogDescription>
         {accessorialCharge && (
           <ACEditForm accessorialCharge={accessorialCharge} />

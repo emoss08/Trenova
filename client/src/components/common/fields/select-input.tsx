@@ -19,11 +19,12 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { debounce } from "lodash-es";
 import { useCallback, useState } from "react";
-import { Controller, useController, UseControllerProps } from "react-hook-form";
+import { Controller, UseControllerProps, useController } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 import AsyncSelect, { AsyncProps } from "react-select/async";
 
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
+import { FieldDescription } from "./components";
 import { Label } from "./label";
 import {
   ClearIndicator,
@@ -35,7 +36,6 @@ import {
   MenuList,
   NoOptionsMessage,
   Option,
-  SelectDescription,
   SelectOption,
   SingleValueComponent,
   ValueContainer,
@@ -80,6 +80,7 @@ export function SelectInput<T extends Record<string, unknown>>(
     description,
     isFetchError,
     isLoading,
+    rules,
     isClearable,
     isMulti,
     placeholder,
@@ -91,32 +92,29 @@ export function SelectInput<T extends Record<string, unknown>>(
     hasPopoutWindow = false,
     popoutLink,
     popoutLinkLabel,
+    isReadOnly,
+    name,
+    menuIsOpen,
+    isDisabled,
+    control,
     ...controllerProps
   } = props;
 
-  const dataLoading = props.isLoading || props.isDisabled;
-  const errorOccurred = props.isFetchError || fieldState.invalid;
+  const dataLoading = isLoading || isDisabled;
+  const errorOccurred = isFetchError || fieldState.invalid;
   const processedValue = ValueProcessor(field.value, options, isMulti);
-
-  const menuIsOpen = props.isReadOnly ? false : props.menuIsOpen;
+  const menuOpen = isReadOnly ? false : menuIsOpen;
 
   return (
     <>
-      {label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            controllerProps.rules?.required && "required",
-          )}
-          htmlFor={controllerProps.id}
-        >
-          {label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         <Controller
-          name={props.name}
-          control={props.control}
+          name={name}
+          control={control}
           render={({ field }) => (
             <Select
               unstyled
@@ -141,7 +139,7 @@ export function SelectInput<T extends Record<string, unknown>>(
               maxMenuHeight={200}
               menuPlacement={menuPlacement}
               menuPosition={menuPosition}
-              menuIsOpen={menuIsOpen}
+              menuIsOpen={menuOpen}
               styles={{
                 input: (base) => ({
                   ...base,
@@ -181,9 +179,9 @@ export function SelectInput<T extends Record<string, unknown>>(
                   ),
                 input: () => "pl-1 py-0.5",
                 container: () =>
-                  cn(props.isReadOnly && "cursor-not-allowed opacity-50"),
+                  cn(isReadOnly && "cursor-not-allowed opacity-50"),
                 valueContainer: () =>
-                  cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
+                  cn("p-1 gap-1", isReadOnly && "cursor-not-allowed"),
                 singleValue: () => "leading-7 ml-1",
                 multiValue: () =>
                   "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
@@ -191,7 +189,7 @@ export function SelectInput<T extends Record<string, unknown>>(
                 multiValueRemove: () =>
                   "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
                 indicatorsContainer: () =>
-                  cn("p-1 gap-1", props.isReadOnly && "cursor-not-allowed"),
+                  cn("p-1 gap-1", isReadOnly && "cursor-not-allowed"),
                 clearIndicator: () =>
                   "text-foreground/50 p-1 hover:text-foreground",
                 dropdownIndicator: () =>
@@ -205,13 +203,14 @@ export function SelectInput<T extends Record<string, unknown>>(
               value={processedValue}
               onChange={(selected) => {
                 if (isMulti) {
-                  const values = (selected as SelectOption[]).map(
-                    (opt) => opt.value,
+                  field.onChange(
+                    selected
+                      ? (selected as SelectOption[]).map((opt) => opt.value)
+                      : [],
                   );
-                  field.onChange(values);
                 } else {
                   field.onChange(
-                    selected ? (selected as SelectOption).value : undefined,
+                    selected ? (selected as SelectOption).value : null,
                   );
                 }
               }}
@@ -224,7 +223,7 @@ export function SelectInput<T extends Record<string, unknown>>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <SelectDescription description={description!} />
+          <FieldDescription description={description!} />
         )}
       </div>
     </>
@@ -397,7 +396,7 @@ export function CreatableSelectField<T extends Record<string, unknown>, K>(
             formError={fieldState.error?.message}
           />
         ) : (
-          <SelectDescription description={description!} />
+          <FieldDescription description={description!} />
         )}
       </div>
     </>
@@ -598,7 +597,7 @@ export function AsyncSelectInput<T extends Record<string, unknown>>(
         {fieldState.invalid ? (
           <ErrorMessage formError={fieldState.error?.message} />
         ) : (
-          <SelectDescription description={description!} />
+          <FieldDescription description={description!} />
         )}
       </div>
     </>

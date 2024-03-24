@@ -44,22 +44,14 @@ function FleetCodeEditForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(fleetCodeSchema),
-    defaultValues: {
-      status: fleetCode.status,
-      code: fleetCode.code,
-      description: fleetCode?.description || "",
-      revenueGoal: fleetCode?.revenueGoal || "",
-      deadheadGoal: fleetCode?.deadheadGoal || "",
-      mileageGoal: fleetCode?.mileageGoal || "",
-      manager: fleetCode?.manager || "",
-    },
+    defaultValues: fleetCode,
   });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     {
       method: "PUT",
-      path: `/fleet_codes/${fleetCode.id}/`,
+      path: `/fleet-codes/${fleetCode.id}/`,
       successMessage: "Fleet Code updated successfully.",
       queryKeysToInvalidate: ["fleet-code-table-data"],
       closeModal: true,
@@ -93,19 +85,19 @@ export function FleetCodeEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [fleetCode] = useTableStore.use("currentRecord");
+  const [fleetCode] = useTableStore.use("currentRecord") as FleetCode[];
 
   if (!fleetCode) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{fleetCode && fleetCode.code}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {fleetCode && formatDate(fleetCode.modified)}
+          {fleetCode && formatDate(fleetCode.updatedAt)}
         </DialogDescription>
         {fleetCode && <FleetCodeEditForm fleetCode={fleetCode} open={open} />}
       </DialogContent>

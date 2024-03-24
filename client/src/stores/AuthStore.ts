@@ -86,10 +86,11 @@ export const useUserStore = createGlobalStore<UserStoreState>({
     isAdmin: false,
     status: "I",
     userPermissions: [],
-    timezone: "America/New_York",
+    timezone: "AmericaNewYork",
     dateJoined: "",
     businessUnitId: "",
     name: "",
-    isSuperuser: false,
+    profilePicUrl: "",
+    isSuperAdmin: false,
   },
 });

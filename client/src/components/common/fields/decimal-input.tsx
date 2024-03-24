@@ -23,6 +23,7 @@ import {
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 
 const controlKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
@@ -67,21 +68,17 @@ export function DecimalField<T extends FieldValues>({
     [field, precision],
   );
 
+  const { label, rules } = props;
+
   return (
     <>
-      {props.label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-        >
-          {props.label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         <Input
-          type="text"
+          type="number"
           className={cn(
             "pr-10",
             fieldState.invalid &&
@@ -96,7 +93,7 @@ export function DecimalField<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <FieldDescription description={props.description} />
         )}
       </div>
     </>

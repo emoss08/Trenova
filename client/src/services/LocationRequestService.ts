@@ -72,7 +72,7 @@ export async function getLocationCategories(): Promise<LocationCategory[]> {
  * @returns A promise that resolves to an array of US states.
  */
 export async function getUSStates(limit: number = 100): Promise<USStates[]> {
-  const response = await axios.get("/states/", {
+  const response = await axios.get("/us-states/", {
     params: {
       limit: limit,
     },
