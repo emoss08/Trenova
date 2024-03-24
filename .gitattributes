@@ -5,4 +5,4 @@
 *.ts linguist-language=TypeScript
 *.go linguist-language=Go
 
-client/** linguist-generated=true
+ent/** linguist-detectable
