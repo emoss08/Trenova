@@ -24,10 +24,7 @@ func main() {
 	}
 
 	// Initialize the database
-	client, err := database.NewEntClient(os.Getenv("DB_DSN"))
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
+	client := database.NewEntClient(os.Getenv("DB_DSN"))
 
 	defer client.Close()
 
