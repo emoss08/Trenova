@@ -1184,7 +1184,7 @@ var (
 		{Name: "database_action", Type: field.TypeEnum, Enums: []string{"Insert", "Update", "Delete", "All"}},
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"Kafka", "Database"}},
 		{Name: "table_name", Type: field.TypeString, Nullable: true, Size: 255},
-		{Name: "topic", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "topic_name", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "custom_subject", Type: field.TypeString, Nullable: true, Size: 255},
 		{Name: "function_name", Type: field.TypeString, Nullable: true, Size: 50},

@@ -42,14 +42,14 @@ export interface TableChangeAlert extends BaseModel {
   status: StatusChoiceProps;
   name: string;
   databaseAction: DatabaseActionChoicesProps;
-  table?: string | null;
+  tableName?: string;
   source: SourceChoicesProps;
-  topic?: string | null;
-  description?: string | null;
-  emailProfile?: string | null;
+  topicName?: string;
+  description?: string;
+  emailProfile?: string;
   emailRecipients: string;
-  conditionalLogic?: object | null;
-  customSubject?: string | null;
+  conditionalLogic?: object;
+  customSubject?: string;
   effectiveDate?: string | null;
   expirationDate?: string | null;
 }

@@ -111,23 +111,23 @@ func (tcau *TableChangeAlertUpdate) ClearTableName() *TableChangeAlertUpdate {
 	return tcau
 }
 
-// SetTopic sets the "topic" field.
-func (tcau *TableChangeAlertUpdate) SetTopic(s string) *TableChangeAlertUpdate {
-	tcau.mutation.SetTopic(s)
+// SetTopicName sets the "topic_name" field.
+func (tcau *TableChangeAlertUpdate) SetTopicName(s string) *TableChangeAlertUpdate {
+	tcau.mutation.SetTopicName(s)
 	return tcau
 }
 
-// SetNillableTopic sets the "topic" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableTopic(s *string) *TableChangeAlertUpdate {
+// SetNillableTopicName sets the "topic_name" field if the given value is not nil.
+func (tcau *TableChangeAlertUpdate) SetNillableTopicName(s *string) *TableChangeAlertUpdate {
 	if s != nil {
-		tcau.SetTopic(*s)
+		tcau.SetTopicName(*s)
 	}
 	return tcau
 }
 
-// ClearTopic clears the value of the "topic" field.
-func (tcau *TableChangeAlertUpdate) ClearTopic() *TableChangeAlertUpdate {
-	tcau.mutation.ClearTopic()
+// ClearTopicName clears the value of the "topic_name" field.
+func (tcau *TableChangeAlertUpdate) ClearTopicName() *TableChangeAlertUpdate {
+	tcau.mutation.ClearTopicName()
 	return tcau
 }
 
@@ -298,7 +298,9 @@ func (tcau *TableChangeAlertUpdate) Mutation() *TableChangeAlertMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (tcau *TableChangeAlertUpdate) Save(ctx context.Context) (int, error) {
-	tcau.defaults()
+	if err := tcau.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, tcau.sqlSave, tcau.mutation, tcau.hooks)
 }
 
@@ -325,11 +327,15 @@ func (tcau *TableChangeAlertUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tcau *TableChangeAlertUpdate) defaults() {
+func (tcau *TableChangeAlertUpdate) defaults() error {
 	if _, ok := tcau.mutation.UpdatedAt(); !ok {
+		if tablechangealert.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tablechangealert.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tablechangealert.UpdateDefaultUpdatedAt()
 		tcau.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -359,9 +365,9 @@ func (tcau *TableChangeAlertUpdate) check() error {
 			return &ValidationError{Name: "table_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.table_name": %w`, err)}
 		}
 	}
-	if v, ok := tcau.mutation.Topic(); ok {
-		if err := tablechangealert.TopicValidator(v); err != nil {
-			return &ValidationError{Name: "topic", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic": %w`, err)}
+	if v, ok := tcau.mutation.TopicName(); ok {
+		if err := tablechangealert.TopicNameValidator(v); err != nil {
+			return &ValidationError{Name: "topic_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic_name": %w`, err)}
 		}
 	}
 	if v, ok := tcau.mutation.CustomSubject(); ok {
@@ -432,11 +438,11 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	if tcau.mutation.TableNameCleared() {
 		_spec.ClearField(tablechangealert.FieldTableName, field.TypeString)
 	}
-	if value, ok := tcau.mutation.Topic(); ok {
-		_spec.SetField(tablechangealert.FieldTopic, field.TypeString, value)
+	if value, ok := tcau.mutation.TopicName(); ok {
+		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
 	}
-	if tcau.mutation.TopicCleared() {
-		_spec.ClearField(tablechangealert.FieldTopic, field.TypeString)
+	if tcau.mutation.TopicNameCleared() {
+		_spec.ClearField(tablechangealert.FieldTopicName, field.TypeString)
 	}
 	if value, ok := tcau.mutation.Description(); ok {
 		_spec.SetField(tablechangealert.FieldDescription, field.TypeString, value)
@@ -590,23 +596,23 @@ func (tcauo *TableChangeAlertUpdateOne) ClearTableName() *TableChangeAlertUpdate
 	return tcauo
 }
 
-// SetTopic sets the "topic" field.
-func (tcauo *TableChangeAlertUpdateOne) SetTopic(s string) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetTopic(s)
+// SetTopicName sets the "topic_name" field.
+func (tcauo *TableChangeAlertUpdateOne) SetTopicName(s string) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetTopicName(s)
 	return tcauo
 }
 
-// SetNillableTopic sets the "topic" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableTopic(s *string) *TableChangeAlertUpdateOne {
+// SetNillableTopicName sets the "topic_name" field if the given value is not nil.
+func (tcauo *TableChangeAlertUpdateOne) SetNillableTopicName(s *string) *TableChangeAlertUpdateOne {
 	if s != nil {
-		tcauo.SetTopic(*s)
+		tcauo.SetTopicName(*s)
 	}
 	return tcauo
 }
 
-// ClearTopic clears the value of the "topic" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearTopic() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearTopic()
+// ClearTopicName clears the value of the "topic_name" field.
+func (tcauo *TableChangeAlertUpdateOne) ClearTopicName() *TableChangeAlertUpdateOne {
+	tcauo.mutation.ClearTopicName()
 	return tcauo
 }
 
@@ -790,7 +796,9 @@ func (tcauo *TableChangeAlertUpdateOne) Select(field string, fields ...string) *
 
 // Save executes the query and returns the updated TableChangeAlert entity.
 func (tcauo *TableChangeAlertUpdateOne) Save(ctx context.Context) (*TableChangeAlert, error) {
-	tcauo.defaults()
+	if err := tcauo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, tcauo.sqlSave, tcauo.mutation, tcauo.hooks)
 }
 
@@ -817,11 +825,15 @@ func (tcauo *TableChangeAlertUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tcauo *TableChangeAlertUpdateOne) defaults() {
+func (tcauo *TableChangeAlertUpdateOne) defaults() error {
 	if _, ok := tcauo.mutation.UpdatedAt(); !ok {
+		if tablechangealert.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tablechangealert.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tablechangealert.UpdateDefaultUpdatedAt()
 		tcauo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -851,9 +863,9 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 			return &ValidationError{Name: "table_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.table_name": %w`, err)}
 		}
 	}
-	if v, ok := tcauo.mutation.Topic(); ok {
-		if err := tablechangealert.TopicValidator(v); err != nil {
-			return &ValidationError{Name: "topic", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic": %w`, err)}
+	if v, ok := tcauo.mutation.TopicName(); ok {
+		if err := tablechangealert.TopicNameValidator(v); err != nil {
+			return &ValidationError{Name: "topic_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic_name": %w`, err)}
 		}
 	}
 	if v, ok := tcauo.mutation.CustomSubject(); ok {
@@ -941,11 +953,11 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	if tcauo.mutation.TableNameCleared() {
 		_spec.ClearField(tablechangealert.FieldTableName, field.TypeString)
 	}
-	if value, ok := tcauo.mutation.Topic(); ok {
-		_spec.SetField(tablechangealert.FieldTopic, field.TypeString, value)
+	if value, ok := tcauo.mutation.TopicName(); ok {
+		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
 	}
-	if tcauo.mutation.TopicCleared() {
-		_spec.ClearField(tablechangealert.FieldTopic, field.TypeString)
+	if tcauo.mutation.TopicNameCleared() {
+		_spec.ClearField(tablechangealert.FieldTopicName, field.TypeString)
 	}
 	if value, ok := tcauo.mutation.Description(); ok {
 		_spec.SetField(tablechangealert.FieldDescription, field.TypeString, value)

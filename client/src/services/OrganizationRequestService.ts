@@ -153,6 +153,6 @@ export async function getTableNames(): Promise<
  * @returns A promise that resolves to an array of Table Names.
  */
 export async function getTopicNames(): Promise<Topic[]> {
-  const response = await axios.get("/topic_names/");
+  const response = await axios.get("/table-change-alerts/topic-names/");
   return response.data.results;
 }

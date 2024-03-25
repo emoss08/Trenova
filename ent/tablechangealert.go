@@ -37,9 +37,9 @@ type TableChangeAlert struct {
 	// Source holds the value of the "source" field.
 	Source tablechangealert.Source `json:"source" validate:"required,oneof=Kafka Database"`
 	// TableName holds the value of the "table_name" field.
-	TableName string `json:"tableName" validate:"max=255"`
-	// Topic holds the value of the "topic" field.
-	Topic string `json:"topic"`
+	TableName string `json:"tableName" validate:"max=255,required_if=source Database"`
+	// TopicName holds the value of the "topic_name" field.
+	TopicName string `json:"topicName" validate:"max=255,required_if=source Kafka"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description"`
 	// CustomSubject holds the value of the "custom_subject" field.
@@ -53,9 +53,9 @@ type TableChangeAlert struct {
 	// EmailRecipients holds the value of the "email_recipients" field.
 	EmailRecipients string `json:"emailRecipients"`
 	// EffectiveDate holds the value of the "effective_date" field.
-	EffectiveDate time.Time `json:"effectiveDate"`
+	EffectiveDate *time.Time `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
-	ExpirationDate time.Time `json:"expirationDate"`
+	ExpirationDate *time.Time `json:"expirationDate"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TableChangeAlertQuery when eager-loading is set.
 	Edges        TableChangeAlertEdges `json:"edges"`
@@ -100,7 +100,7 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopic, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt, tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
 			values[i] = new(sql.NullTime)
@@ -181,11 +181,11 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 			} else if value.Valid {
 				tca.TableName = value.String
 			}
-		case tablechangealert.FieldTopic:
+		case tablechangealert.FieldTopicName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field topic", values[i])
+				return fmt.Errorf("unexpected type %T for field topic_name", values[i])
 			} else if value.Valid {
-				tca.Topic = value.String
+				tca.TopicName = value.String
 			}
 		case tablechangealert.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -227,13 +227,15 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field effective_date", values[i])
 			} else if value.Valid {
-				tca.EffectiveDate = value.Time
+				tca.EffectiveDate = new(time.Time)
+				*tca.EffectiveDate = value.Time
 			}
 		case tablechangealert.FieldExpirationDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field expiration_date", values[i])
 			} else if value.Valid {
-				tca.ExpirationDate = value.Time
+				tca.ExpirationDate = new(time.Time)
+				*tca.ExpirationDate = value.Time
 			}
 		default:
 			tca.selectValues.Set(columns[i], values[i])
@@ -308,8 +310,8 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString("table_name=")
 	builder.WriteString(tca.TableName)
 	builder.WriteString(", ")
-	builder.WriteString("topic=")
-	builder.WriteString(tca.Topic)
+	builder.WriteString("topic_name=")
+	builder.WriteString(tca.TopicName)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(tca.Description)
@@ -329,11 +331,15 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString("email_recipients=")
 	builder.WriteString(tca.EmailRecipients)
 	builder.WriteString(", ")
-	builder.WriteString("effective_date=")
-	builder.WriteString(tca.EffectiveDate.Format(time.ANSIC))
+	if v := tca.EffectiveDate; v != nil {
+		builder.WriteString("effective_date=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("expiration_date=")
-	builder.WriteString(tca.ExpirationDate.Format(time.ANSIC))
+	if v := tca.ExpirationDate; v != nil {
+		builder.WriteString("expiration_date=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

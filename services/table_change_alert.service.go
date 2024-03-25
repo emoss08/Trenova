@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/tablechangealert"
+	"github.com/emoss08/trenova/tools/kafka"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -63,15 +64,15 @@ func (r *TableChangeAlertOps) CreateTableChangeAlert(newTableChangeAlert ent.Tab
 		SetDatabaseAction(newTableChangeAlert.DatabaseAction).
 		SetSource(newTableChangeAlert.Source).
 		SetTableName(newTableChangeAlert.TableName).
-		SetTopic(newTableChangeAlert.Topic).
+		SetTopicName(newTableChangeAlert.TopicName).
 		SetDescription(newTableChangeAlert.Description).
 		SetCustomSubject(newTableChangeAlert.CustomSubject).
 		SetFunctionName(newTableChangeAlert.FunctionName).
 		SetTriggerName(newTableChangeAlert.TriggerName).
 		SetListenerName(newTableChangeAlert.ListenerName).
 		SetEmailRecipients(newTableChangeAlert.EmailRecipients).
-		SetEffectiveDate(newTableChangeAlert.EffectiveDate).
-		SetExpirationDate(newTableChangeAlert.ExpirationDate).
+		SetNillableEffectiveDate(newTableChangeAlert.EffectiveDate).
+		SetNillableExpirationDate(newTableChangeAlert.ExpirationDate).
 		Save(r.ctx)
 	if err != nil {
 		return nil, err
@@ -89,15 +90,15 @@ func (r *TableChangeAlertOps) UpdateTableChangeAlert(tableChangeAlert ent.TableC
 		SetDatabaseAction(tableChangeAlert.DatabaseAction).
 		SetSource(tableChangeAlert.Source).
 		SetTableName(tableChangeAlert.TableName).
-		SetTopic(tableChangeAlert.Topic).
+		SetTopicName(tableChangeAlert.TopicName).
 		SetDescription(tableChangeAlert.Description).
 		SetCustomSubject(tableChangeAlert.CustomSubject).
 		SetFunctionName(tableChangeAlert.FunctionName).
 		SetTriggerName(tableChangeAlert.TriggerName).
 		SetListenerName(tableChangeAlert.ListenerName).
 		SetEmailRecipients(tableChangeAlert.EmailRecipients).
-		SetEffectiveDate(tableChangeAlert.EffectiveDate).
-		SetExpirationDate(tableChangeAlert.ExpirationDate)
+		SetNillableEffectiveDate(tableChangeAlert.EffectiveDate).
+		SetNillableExpirationDate(tableChangeAlert.ExpirationDate)
 
 	// Execute the update operation
 	updateTableChangeAlert, err := updateOp.Save(r.ctx)
@@ -174,4 +175,26 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, int, error) {
 	}
 
 	return tableNames, tableCount, nil
+}
+
+type TopicName struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+func (r *TableChangeAlertOps) GetTopicNames() ([]TopicName, int, error) {
+	topics, err := kafka.GetKafkaTopics()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	topicNames := make([]TopicName, 0, len(topics))
+	for _, topic := range topics {
+		topicNames = append(topicNames, TopicName{
+			Value: topic,
+			Label: topic,
+		})
+	}
+
+	return topicNames, len(topicNames), nil
 }

@@ -742,7 +742,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldDatabaseAction:  {Type: field.TypeEnum, Column: tablechangealert.FieldDatabaseAction},
 			tablechangealert.FieldSource:          {Type: field.TypeEnum, Column: tablechangealert.FieldSource},
 			tablechangealert.FieldTableName:       {Type: field.TypeString, Column: tablechangealert.FieldTableName},
-			tablechangealert.FieldTopic:           {Type: field.TypeString, Column: tablechangealert.FieldTopic},
+			tablechangealert.FieldTopicName:       {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
 			tablechangealert.FieldDescription:     {Type: field.TypeString, Column: tablechangealert.FieldDescription},
 			tablechangealert.FieldCustomSubject:   {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
 			tablechangealert.FieldFunctionName:    {Type: field.TypeString, Column: tablechangealert.FieldFunctionName},
@@ -5674,9 +5674,9 @@ func (f *TableChangeAlertFilter) WhereTableName(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldTableName))
 }
 
-// WhereTopic applies the entql string predicate on the topic field.
-func (f *TableChangeAlertFilter) WhereTopic(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldTopic))
+// WhereTopicName applies the entql string predicate on the topic_name field.
+func (f *TableChangeAlertFilter) WhereTopicName(p entql.StringP) {
+	f.Where(p.Field(tablechangealert.FieldTopicName))
 }
 
 // WhereDescription applies the entql string predicate on the description field.

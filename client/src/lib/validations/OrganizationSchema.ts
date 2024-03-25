@@ -54,16 +54,17 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
       "Database Action is required.",
     ),
     source: Yup.string<SourceChoicesProps>().required("Source is required."),
-    table: Yup.string().notRequired(),
-    topic: Yup.string().notRequired(),
-    description: Yup.string().notRequired(),
-    emailProfile: Yup.string().notRequired(),
+    table: Yup.string(),
+    topic: Yup.string(),
+    description: Yup.string(),
+    emailProfile: Yup.string(),
     emailRecipients: Yup.string().required("Email Recipients is required."),
-    conditionalLogic: Yup.object().notRequired(),
-    customSubject: Yup.string().notRequired(),
-    effectiveDate: Yup.string().notRequired(),
+    conditionalLogic: Yup.object(),
+    customSubject: Yup.string(),
+    effectiveDate: Yup.string().nullable().notRequired(),
     expirationDate: Yup.string()
       .notRequired()
+      .nullable()
       .when("effectiveDate", {
         is: (val: string) => val,
         then: (schema) =>
