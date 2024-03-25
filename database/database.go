@@ -1,7 +1,14 @@
 package database
 
 import (
+	"database/sql"
+	"log"
+	"time"
+
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent"
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
 )
 
 var client *ent.Client
@@ -14,11 +21,22 @@ func SetClient(newClient *ent.Client) {
 	client = newClient
 }
 
-func NewEntClient(dsn string) (*ent.Client, error) {
-	entClient, err := ent.Open("postgres", dsn)
+func NewEntClient(dsn string) *ent.Client {
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	return entClient, nil
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
+	db.SetConnMaxLifetime(time.Hour)
+
+	drv := entsql.OpenDB(dialect.Postgres, db)
+	return ent.NewClient(ent.Driver(drv))
+}
+
+func Close() {
+	if err := client.Close(); err != nil {
+		log.Fatalf("failed closing client: %v", err)
+	}
 }
