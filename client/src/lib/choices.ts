@@ -506,7 +506,7 @@ export const databaseActionChoices = [
   {
     value: "All",
     label: "All",
-    color: "#000",
+    color: "#9c25eb",
     description: "Receive alerts for all actions.",
   },
 ] satisfies ReadonlyArray<IChoiceProps<DatabaseActionChoicesProps>>;

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -34,8 +35,8 @@ const (
 	FieldSource = "source"
 	// FieldTableName holds the string denoting the table_name field in the database.
 	FieldTableName = "table_name"
-	// FieldTopic holds the string denoting the topic field in the database.
-	FieldTopic = "topic"
+	// FieldTopicName holds the string denoting the topic_name field in the database.
+	FieldTopicName = "topic_name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldCustomSubject holds the string denoting the custom_subject field in the database.
@@ -86,7 +87,7 @@ var Columns = []string{
 	FieldDatabaseAction,
 	FieldSource,
 	FieldTableName,
-	FieldTopic,
+	FieldTopicName,
 	FieldDescription,
 	FieldCustomSubject,
 	FieldFunctionName,
@@ -107,7 +108,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/emoss08/trenova/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -118,8 +125,8 @@ var (
 	NameValidator func(string) error
 	// TableNameValidator is a validator for the "table_name" field. It is called by the builders before save.
 	TableNameValidator func(string) error
-	// TopicValidator is a validator for the "topic" field. It is called by the builders before save.
-	TopicValidator func(string) error
+	// TopicNameValidator is a validator for the "topic_name" field. It is called by the builders before save.
+	TopicNameValidator func(string) error
 	// CustomSubjectValidator is a validator for the "custom_subject" field. It is called by the builders before save.
 	CustomSubjectValidator func(string) error
 	// FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
@@ -259,9 +266,9 @@ func ByTableName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTableName, opts...).ToFunc()
 }
 
-// ByTopic orders the results by the topic field.
-func ByTopic(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTopic, opts...).ToFunc()
+// ByTopicName orders the results by the topic_name field.
+func ByTopicName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTopicName, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

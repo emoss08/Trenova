@@ -52,21 +52,7 @@ function TableChangeEditForm({
   const { handleSubmit, control, reset, watch } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
-      defaultValues: {
-        status: tableChangeAlert.status,
-        name: tableChangeAlert.name,
-        source: tableChangeAlert.source,
-        databaseAction: tableChangeAlert.databaseAction,
-        description: tableChangeAlert.description,
-        table: tableChangeAlert?.table || "",
-        topic: tableChangeAlert.topic || "",
-        emailProfile: tableChangeAlert.emailProfile,
-        emailRecipients: tableChangeAlert.emailRecipients,
-        conditionalLogic: tableChangeAlert.conditionalLogic,
-        customSubject: tableChangeAlert.customSubject,
-        effectiveDate: tableChangeAlert.effectiveDate,
-        expirationDate: tableChangeAlert.expirationDate,
-      },
+      defaultValues: tableChangeAlert,
     });
 
   const mutation = useCustomMutation<TableChangeAlertFormValues>(
@@ -80,12 +66,12 @@ function TableChangeEditForm({
       errorMessage: "Failed to update table change alert.",
     },
     () => setIsSubmitting(false),
-    reset,
   );
 
   const onSubmit = (values: TableChangeAlertFormValues) => {
     setIsSubmitting(true);
     mutation.mutate(values);
+    reset(values);
   };
 
   return (
@@ -123,7 +109,7 @@ export function TableChangeAlertEditSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={cn("w-full xl:w-1/2")}>
+      <SheetContent className={cn("w-full xl:w-[700px]")}>
         <SheetHeader>
           <SheetTitle>{tableChangeAlert && tableChangeAlert.name}</SheetTitle>
           <SheetDescription>

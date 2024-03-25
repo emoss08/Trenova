@@ -4,12 +4,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/server"
+	trenova_kafka "github.com/emoss08/trenova/tools/kafka"
 	"github.com/emoss08/trenova/tools/minio"
 	"github.com/emoss08/trenova/tools/redis"
 	"github.com/emoss08/trenova/tools/session"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -61,6 +64,23 @@ func main() {
 	// This will enable the client instance to be accessed anywhere through the accessor
 	// named GetClient
 	minio.SetClient(minioClient)
+
+	// Initialize the Kafka Client Configuration
+	kafkaConfig := &kafka.ConfigMap{
+		"bootstrap.servers": os.Getenv("KAFKA_BROKER"),
+	}
+
+	// Initialize the Kafka Admin Client
+	kafkaAdminClient, err := trenova_kafka.NewKafkaClient(kafkaConfig)
+	if err != nil {
+		log.Panicf("Failed to connect to kafka: %v", err)
+	}
+	defer trenova_kafka.CloseKafkaClient()
+
+	// Set the kafka admin client to variable defined in the kafka package
+	// This will enable the client instance to be accessed anywhere through the accessor
+	// named GetKafkaClient
+	trenova_kafka.SetKafkaClient(kafkaAdminClient)
 
 	// Create media bucket
 	err = minio.CreateMediaBucket("trenova-media", "us-east-1")

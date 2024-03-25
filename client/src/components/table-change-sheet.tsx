@@ -63,7 +63,7 @@ function SourceField({
   return sourceChoice === "Kafka" ? (
     <FormControl>
       <SelectInput
-        name="topic"
+        name="topicName"
         rules={{ required: true }}
         options={selectTopics}
         isLoading={isTopicsLoading}
@@ -77,7 +77,7 @@ function SourceField({
   ) : (
     <FormControl>
       <SelectInput
-        name="table"
+        name="tableName"
         rules={{ required: true }}
         options={selectTableNames}
         isLoading={isLoading}
@@ -229,16 +229,16 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
       status: "A",
       name: "",
       databaseAction: "Insert",
-      table: "",
+      tableName: "",
       source: "Database",
-      topic: "",
+      topicName: "",
       description: "",
       emailProfile: "",
       emailRecipients: "",
       conditionalLogic: {},
       customSubject: "",
-      effectiveDate: "",
-      expirationDate: "",
+      effectiveDate: null,
+      expirationDate: null,
     },
   });
 
@@ -253,11 +253,12 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
       errorMessage: t("formMessages.postError"),
     },
     () => setIsSubmitting(false),
-    reset,
   );
+
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     mutation.mutate(values);
+    reset(values);
   };
 
   return (

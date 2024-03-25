@@ -150,3 +150,21 @@ func GetTableNames(w http.ResponseWriter, r *http.Request) {
 		Previous: "",
 	})
 }
+
+// GetTopicNames get the topic names for an organization.
+func GetTopicNames(w http.ResponseWriter, r *http.Request) {
+	topicNames, count, err := services.NewTableChangeAlertOps(r.Context()).GetTopicNames()
+	if err != nil {
+		errorResponse := tools.CreateDBErrorResponse(err)
+		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
+
+		return
+	}
+
+	tools.ResponseWithJSON(w, http.StatusOK, types.HTTPResponse{
+		Results:  topicNames,
+		Count:    count,
+		Next:     "",
+		Previous: "",
+	})
+}

@@ -1,4 +1,4 @@
-h1:xAY8QYHOij6IEwfqO6Vyrg6e6E61g/lcWTzOyfkH82Q=
+h1:mNcrOAN0RRSQcnQQBU9kqDbrsPaNzorC10Hg4kr3E1M=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -64,3 +64,4 @@ h1:xAY8QYHOij6IEwfqO6Vyrg6e6E61g/lcWTzOyfkH82Q=
 20240324001350_create_service_type.sql h1:cJwgWq0BFRxpLWm+kE76a5YRKlolRTzjnReOQ7P4YBc=
 20240324002515_create_qualifier_code.sql h1:wQDEXXmytWuV/zJxyUVwQC1HC7YTegoO+EriiwUFebQ=
 20240324002612_alter_qualifier_code.sql h1:6tecVHmso8Usn0aM/0VJoCpJiRoB07w1k9I7o45whaY=
+20240325002759_alter_table_change_alert.sql h1:mCw70qGUEV/vadpkKTFHg/cutPQzw6dcV4jZpn+mJIw=

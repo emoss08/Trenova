@@ -3,10 +3,11 @@ import { DayPicker } from "react-day-picker";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 import {
   faChevronLeft,
   faChevronRight,
-} from "@fortawesome/pro-duotone-svg-icons";
+} from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
@@ -74,4 +75,3 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
-

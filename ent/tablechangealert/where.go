@@ -86,9 +86,9 @@ func TableName(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldTableName, v))
 }
 
-// Topic applies equality check predicate on the "topic" field. It's identical to TopicEQ.
-func Topic(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEQ(FieldTopic, v))
+// TopicName applies equality check predicate on the "topic_name" field. It's identical to TopicNameEQ.
+func TopicName(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldEQ(FieldTopicName, v))
 }
 
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
@@ -451,79 +451,79 @@ func TableNameContainsFold(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldTableName, v))
 }
 
-// TopicEQ applies the EQ predicate on the "topic" field.
-func TopicEQ(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEQ(FieldTopic, v))
+// TopicNameEQ applies the EQ predicate on the "topic_name" field.
+func TopicNameEQ(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldEQ(FieldTopicName, v))
 }
 
-// TopicNEQ applies the NEQ predicate on the "topic" field.
-func TopicNEQ(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNEQ(FieldTopic, v))
+// TopicNameNEQ applies the NEQ predicate on the "topic_name" field.
+func TopicNameNEQ(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNEQ(FieldTopicName, v))
 }
 
-// TopicIn applies the In predicate on the "topic" field.
-func TopicIn(vs ...string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIn(FieldTopic, vs...))
+// TopicNameIn applies the In predicate on the "topic_name" field.
+func TopicNameIn(vs ...string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldIn(FieldTopicName, vs...))
 }
 
-// TopicNotIn applies the NotIn predicate on the "topic" field.
-func TopicNotIn(vs ...string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotIn(FieldTopic, vs...))
+// TopicNameNotIn applies the NotIn predicate on the "topic_name" field.
+func TopicNameNotIn(vs ...string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNotIn(FieldTopicName, vs...))
 }
 
-// TopicGT applies the GT predicate on the "topic" field.
-func TopicGT(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldGT(FieldTopic, v))
+// TopicNameGT applies the GT predicate on the "topic_name" field.
+func TopicNameGT(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldGT(FieldTopicName, v))
 }
 
-// TopicGTE applies the GTE predicate on the "topic" field.
-func TopicGTE(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldGTE(FieldTopic, v))
+// TopicNameGTE applies the GTE predicate on the "topic_name" field.
+func TopicNameGTE(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldGTE(FieldTopicName, v))
 }
 
-// TopicLT applies the LT predicate on the "topic" field.
-func TopicLT(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldLT(FieldTopic, v))
+// TopicNameLT applies the LT predicate on the "topic_name" field.
+func TopicNameLT(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldLT(FieldTopicName, v))
 }
 
-// TopicLTE applies the LTE predicate on the "topic" field.
-func TopicLTE(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldLTE(FieldTopic, v))
+// TopicNameLTE applies the LTE predicate on the "topic_name" field.
+func TopicNameLTE(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldLTE(FieldTopicName, v))
 }
 
-// TopicContains applies the Contains predicate on the "topic" field.
-func TopicContains(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldContains(FieldTopic, v))
+// TopicNameContains applies the Contains predicate on the "topic_name" field.
+func TopicNameContains(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldContains(FieldTopicName, v))
 }
 
-// TopicHasPrefix applies the HasPrefix predicate on the "topic" field.
-func TopicHasPrefix(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldHasPrefix(FieldTopic, v))
+// TopicNameHasPrefix applies the HasPrefix predicate on the "topic_name" field.
+func TopicNameHasPrefix(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldHasPrefix(FieldTopicName, v))
 }
 
-// TopicHasSuffix applies the HasSuffix predicate on the "topic" field.
-func TopicHasSuffix(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldHasSuffix(FieldTopic, v))
+// TopicNameHasSuffix applies the HasSuffix predicate on the "topic_name" field.
+func TopicNameHasSuffix(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldHasSuffix(FieldTopicName, v))
 }
 
-// TopicIsNil applies the IsNil predicate on the "topic" field.
-func TopicIsNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIsNull(FieldTopic))
+// TopicNameIsNil applies the IsNil predicate on the "topic_name" field.
+func TopicNameIsNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldIsNull(FieldTopicName))
 }
 
-// TopicNotNil applies the NotNil predicate on the "topic" field.
-func TopicNotNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotNull(FieldTopic))
+// TopicNameNotNil applies the NotNil predicate on the "topic_name" field.
+func TopicNameNotNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNotNull(FieldTopicName))
 }
 
-// TopicEqualFold applies the EqualFold predicate on the "topic" field.
-func TopicEqualFold(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEqualFold(FieldTopic, v))
+// TopicNameEqualFold applies the EqualFold predicate on the "topic_name" field.
+func TopicNameEqualFold(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldEqualFold(FieldTopicName, v))
 }
 
-// TopicContainsFold applies the ContainsFold predicate on the "topic" field.
-func TopicContainsFold(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldTopic, v))
+// TopicNameContainsFold applies the ContainsFold predicate on the "topic_name" field.
+func TopicNameContainsFold(v string) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldTopicName, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

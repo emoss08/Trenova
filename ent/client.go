@@ -5704,7 +5704,8 @@ func (c *TableChangeAlertClient) QueryOrganization(tca *TableChangeAlert) *Organ
 
 // Hooks returns the client hooks.
 func (c *TableChangeAlertClient) Hooks() []Hook {
-	return c.hooks.TableChangeAlert
+	hooks := c.hooks.TableChangeAlert
+	return append(hooks[:len(hooks):len(hooks)], tablechangealert.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

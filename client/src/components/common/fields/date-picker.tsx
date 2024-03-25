@@ -68,7 +68,18 @@ export function DatepickerField<TFieldValues extends FieldValues>({
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      const formattedDate = format(date, "yyyy-MM-dd");
+      // Create a date object with the local time set to midnight.
+      const localMidnightDate = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
+
+      // Format the date to ISO string without converting it to UTC
+      const formattedDate = format(
+        localMidnightDate,
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+      );
       field.onChange(formattedDate);
     } else {
       field.onChange(""); // Clear the value if the date is removed
@@ -172,21 +183,3 @@ export function DatepickerField<TFieldValues extends FieldValues>({
     </>
   );
 }
-
-// interface DateTimePickerFieldProps
-//   extends React.InputHTMLAttributes<HTMLInputElement> {
-//   label: string;
-//   description?: string;
-//   placeholder?: string;
-//   initialDate?: Date;
-//   initialTime?: string;
-// }
-
-// const TIME_PRESET_VALUES = [
-//   { value: "00:00", label: "Midnight" },
-//   { value: "06:00", label: "Morning" },
-//   { value: "12:00", label: "Noon" },
-//   { value: "18:00", label: "Evening" },
-//   { value: "23:59", label: "Midnight" },
-//   { value: "now", label: "Now" },
-// ];

@@ -109,16 +109,16 @@ func (tcac *TableChangeAlertCreate) SetNillableTableName(s *string) *TableChange
 	return tcac
 }
 
-// SetTopic sets the "topic" field.
-func (tcac *TableChangeAlertCreate) SetTopic(s string) *TableChangeAlertCreate {
-	tcac.mutation.SetTopic(s)
+// SetTopicName sets the "topic_name" field.
+func (tcac *TableChangeAlertCreate) SetTopicName(s string) *TableChangeAlertCreate {
+	tcac.mutation.SetTopicName(s)
 	return tcac
 }
 
-// SetNillableTopic sets the "topic" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableTopic(s *string) *TableChangeAlertCreate {
+// SetNillableTopicName sets the "topic_name" field if the given value is not nil.
+func (tcac *TableChangeAlertCreate) SetNillableTopicName(s *string) *TableChangeAlertCreate {
 	if s != nil {
-		tcac.SetTopic(*s)
+		tcac.SetTopicName(*s)
 	}
 	return tcac
 }
@@ -266,7 +266,9 @@ func (tcac *TableChangeAlertCreate) Mutation() *TableChangeAlertMutation {
 
 // Save creates the TableChangeAlert in the database.
 func (tcac *TableChangeAlertCreate) Save(ctx context.Context) (*TableChangeAlert, error) {
-	tcac.defaults()
+	if err := tcac.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, tcac.sqlSave, tcac.mutation, tcac.hooks)
 }
 
@@ -293,12 +295,18 @@ func (tcac *TableChangeAlertCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tcac *TableChangeAlertCreate) defaults() {
+func (tcac *TableChangeAlertCreate) defaults() error {
 	if _, ok := tcac.mutation.CreatedAt(); !ok {
+		if tablechangealert.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tablechangealert.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := tablechangealert.DefaultCreatedAt()
 		tcac.mutation.SetCreatedAt(v)
 	}
 	if _, ok := tcac.mutation.UpdatedAt(); !ok {
+		if tablechangealert.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tablechangealert.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tablechangealert.DefaultUpdatedAt()
 		tcac.mutation.SetUpdatedAt(v)
 	}
@@ -307,9 +315,13 @@ func (tcac *TableChangeAlertCreate) defaults() {
 		tcac.mutation.SetStatus(v)
 	}
 	if _, ok := tcac.mutation.ID(); !ok {
+		if tablechangealert.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized tablechangealert.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := tablechangealert.DefaultID()
 		tcac.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -363,9 +375,9 @@ func (tcac *TableChangeAlertCreate) check() error {
 			return &ValidationError{Name: "table_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.table_name": %w`, err)}
 		}
 	}
-	if v, ok := tcac.mutation.Topic(); ok {
-		if err := tablechangealert.TopicValidator(v); err != nil {
-			return &ValidationError{Name: "topic", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic": %w`, err)}
+	if v, ok := tcac.mutation.TopicName(); ok {
+		if err := tablechangealert.TopicNameValidator(v); err != nil {
+			return &ValidationError{Name: "topic_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic_name": %w`, err)}
 		}
 	}
 	if v, ok := tcac.mutation.CustomSubject(); ok {
@@ -457,9 +469,9 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 		_spec.SetField(tablechangealert.FieldTableName, field.TypeString, value)
 		_node.TableName = value
 	}
-	if value, ok := tcac.mutation.Topic(); ok {
-		_spec.SetField(tablechangealert.FieldTopic, field.TypeString, value)
-		_node.Topic = value
+	if value, ok := tcac.mutation.TopicName(); ok {
+		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
+		_node.TopicName = value
 	}
 	if value, ok := tcac.mutation.Description(); ok {
 		_spec.SetField(tablechangealert.FieldDescription, field.TypeString, value)
@@ -487,11 +499,11 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	}
 	if value, ok := tcac.mutation.EffectiveDate(); ok {
 		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)
-		_node.EffectiveDate = value
+		_node.EffectiveDate = &value
 	}
 	if value, ok := tcac.mutation.ExpirationDate(); ok {
 		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeTime, value)
-		_node.ExpirationDate = value
+		_node.ExpirationDate = &value
 	}
 	if nodes := tcac.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -1335,6 +1335,8 @@ func init() {
 	// shipmenttype.DefaultID holds the default value on creation for the id field.
 	shipmenttype.DefaultID = shipmenttypeDescID.Default.(func() uuid.UUID)
 	tablechangealertMixin := schema.TableChangeAlert{}.Mixin()
+	tablechangealertHooks := schema.TableChangeAlert{}.Hooks()
+	tablechangealert.Hooks[0] = tablechangealertHooks[0]
 	tablechangealertMixinFields0 := tablechangealertMixin[0].Fields()
 	_ = tablechangealertMixinFields0
 	tablechangealertFields := schema.TableChangeAlert{}.Fields()
@@ -1357,10 +1359,10 @@ func init() {
 	tablechangealertDescTableName := tablechangealertFields[4].Descriptor()
 	// tablechangealert.TableNameValidator is a validator for the "table_name" field. It is called by the builders before save.
 	tablechangealert.TableNameValidator = tablechangealertDescTableName.Validators[0].(func(string) error)
-	// tablechangealertDescTopic is the schema descriptor for topic field.
-	tablechangealertDescTopic := tablechangealertFields[5].Descriptor()
-	// tablechangealert.TopicValidator is a validator for the "topic" field. It is called by the builders before save.
-	tablechangealert.TopicValidator = tablechangealertDescTopic.Validators[0].(func(string) error)
+	// tablechangealertDescTopicName is the schema descriptor for topic_name field.
+	tablechangealertDescTopicName := tablechangealertFields[5].Descriptor()
+	// tablechangealert.TopicNameValidator is a validator for the "topic_name" field. It is called by the builders before save.
+	tablechangealert.TopicNameValidator = tablechangealertDescTopicName.Validators[0].(func(string) error)
 	// tablechangealertDescCustomSubject is the schema descriptor for custom_subject field.
 	tablechangealertDescCustomSubject := tablechangealertFields[7].Descriptor()
 	// tablechangealert.CustomSubjectValidator is a validator for the "custom_subject" field. It is called by the builders before save.

@@ -34,6 +34,19 @@ import { TableChangeAlert } from "@/types/organization";
 import { FilterConfig } from "@/types/tables";
 import { ColumnDef } from "@tanstack/react-table";
 
+const actionColor = (color: string) => {
+  switch (color) {
+    case "Insert":
+      return "#15803d";
+    case "Update":
+      return "#2563eb";
+    case "Delete":
+      return "#b91c1c";
+    default:
+      return "#9c25eb";
+  }
+};
+
 const columns: ColumnDef<TableChangeAlert>[] = [
   {
     id: "select",
@@ -81,6 +94,19 @@ const columns: ColumnDef<TableChangeAlert>[] = [
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
+    cell: ({ row }) => {
+      return (
+        <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+          <div
+            className={"mx-2 size-2 rounded-xl"}
+            style={{
+              backgroundColor: actionColor(row.original.databaseAction),
+            }}
+          />
+          {row.original.databaseAction}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "source",
@@ -90,19 +116,19 @@ const columns: ColumnDef<TableChangeAlert>[] = [
     },
   },
   {
-    accessorKey: "table",
+    accessorKey: "tableName",
     header: () => (
       <DataTableTooltipColumnHeader
-        title="Table"
+        title="Table Name"
         tooltip="Table is the name of the table that will be monitored for changes."
       />
     ),
   },
   {
-    accessorKey: "topic",
+    accessorKey: "topicName",
     header: () => (
       <DataTableTooltipColumnHeader
-        title="Topic"
+        title="Topic Name"
         tooltip="Topic is the name of the Kafka topic that will be used to publish the message."
       />
     ),
