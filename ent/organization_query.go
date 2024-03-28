@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -41,6 +42,7 @@ type OrganizationQuery struct {
 	withRouteControl           *RouteControlQuery
 	withShipmentControl        *ShipmentControlQuery
 	withEmailControl           *EmailControlQuery
+	withGoogleAPI              *GoogleApiQuery
 	modifiers                  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -276,6 +278,28 @@ func (oq *OrganizationQuery) QueryEmailControl() *EmailControlQuery {
 	return query
 }
 
+// QueryGoogleAPI chains the current query on the "google_api" edge.
+func (oq *OrganizationQuery) QueryGoogleAPI() *GoogleApiQuery {
+	query := (&GoogleApiClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(googleapi.Table, googleapi.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.GoogleAPITable, organization.GoogleAPIColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Organization entity from the query.
 // Returns a *NotFoundError when no Organization was found.
 func (oq *OrganizationQuery) First(ctx context.Context) (*Organization, error) {
@@ -477,6 +501,7 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		withRouteControl:           oq.withRouteControl.Clone(),
 		withShipmentControl:        oq.withShipmentControl.Clone(),
 		withEmailControl:           oq.withEmailControl.Clone(),
+		withGoogleAPI:              oq.withGoogleAPI.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -582,6 +607,17 @@ func (oq *OrganizationQuery) WithEmailControl(opts ...func(*EmailControlQuery)) 
 	return oq
 }
 
+// WithGoogleAPI tells the query-builder to eager-load the nodes that are connected to
+// the "google_api" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithGoogleAPI(opts ...func(*GoogleApiQuery)) *OrganizationQuery {
+	query := (&GoogleApiClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withGoogleAPI = query
+	return oq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -660,7 +696,7 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*Organization{}
 		_spec       = oq.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [10]bool{
 			oq.withBusinessUnit != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
@@ -670,6 +706,7 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			oq.withRouteControl != nil,
 			oq.withShipmentControl != nil,
 			oq.withEmailControl != nil,
+			oq.withGoogleAPI != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -744,6 +781,12 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := oq.withEmailControl; query != nil {
 		if err := oq.loadEmailControl(ctx, query, nodes, nil,
 			func(n *Organization, e *EmailControl) { n.Edges.EmailControl = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withGoogleAPI; query != nil {
+		if err := oq.loadGoogleAPI(ctx, query, nodes, nil,
+			func(n *Organization, e *GoogleApi) { n.Edges.GoogleAPI = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -985,6 +1028,34 @@ func (oq *OrganizationQuery) loadEmailControl(ctx context.Context, query *EmailC
 	query.withFKs = true
 	query.Where(predicate.EmailControl(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(organization.EmailControlColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.organization_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "organization_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadGoogleAPI(ctx context.Context, query *GoogleApiQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *GoogleApi)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.GoogleApi(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.GoogleAPIColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

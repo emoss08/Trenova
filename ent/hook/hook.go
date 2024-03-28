@@ -141,6 +141,18 @@ func (f DivisionCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DivisionCodeMutation", m)
 }
 
+// The DocumentClassificationFunc type is an adapter to allow the use of ordinary
+// function as DocumentClassification mutator.
+type DocumentClassificationFunc func(context.Context, *ent.DocumentClassificationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DocumentClassificationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DocumentClassificationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DocumentClassificationMutation", m)
+}
+
 // The EmailControlFunc type is an adapter to allow the use of ordinary
 // function as EmailControl mutator.
 type EmailControlFunc func(context.Context, *ent.EmailControlMutation) (ent.Value, error)
@@ -223,6 +235,18 @@ func (f GeneralLedgerAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GeneralLedgerAccountMutation", m)
+}
+
+// The GoogleApiFunc type is an adapter to allow the use of ordinary
+// function as GoogleApi mutator.
+type GoogleApiFunc func(context.Context, *ent.GoogleApiMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GoogleApiFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GoogleApiMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GoogleApiMutation", m)
 }
 
 // The HazardousMaterialFunc type is an adapter to allow the use of ordinary

@@ -375,6 +375,30 @@ func (f DivisionCodeMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.DivisionCodeMutation", m)
 }
 
+// The DocumentClassificationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type DocumentClassificationQueryRuleFunc func(context.Context, *ent.DocumentClassificationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f DocumentClassificationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.DocumentClassificationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.DocumentClassificationQuery", q)
+}
+
+// The DocumentClassificationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type DocumentClassificationMutationRuleFunc func(context.Context, *ent.DocumentClassificationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f DocumentClassificationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.DocumentClassificationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.DocumentClassificationMutation", m)
+}
+
 // The EmailControlQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type EmailControlQueryRuleFunc func(context.Context, *ent.EmailControlQuery) error
@@ -541,6 +565,30 @@ func (f GeneralLedgerAccountMutationRuleFunc) EvalMutation(ctx context.Context, 
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.GeneralLedgerAccountMutation", m)
+}
+
+// The GoogleApiQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type GoogleApiQueryRuleFunc func(context.Context, *ent.GoogleApiQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f GoogleApiQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.GoogleApiQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.GoogleApiQuery", q)
+}
+
+// The GoogleApiMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type GoogleApiMutationRuleFunc func(context.Context, *ent.GoogleApiMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f GoogleApiMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.GoogleApiMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.GoogleApiMutation", m)
 }
 
 // The HazardousMaterialQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -984,6 +1032,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.DivisionCodeQuery:
 		return q.Filter(), nil
+	case *ent.DocumentClassificationQuery:
+		return q.Filter(), nil
 	case *ent.EmailControlQuery:
 		return q.Filter(), nil
 	case *ent.EmailProfileQuery:
@@ -997,6 +1047,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 	case *ent.FleetCodeQuery:
 		return q.Filter(), nil
 	case *ent.GeneralLedgerAccountQuery:
+		return q.Filter(), nil
+	case *ent.GoogleApiQuery:
 		return q.Filter(), nil
 	case *ent.HazardousMaterialQuery:
 		return q.Filter(), nil
@@ -1059,6 +1111,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.DivisionCodeMutation:
 		return m.Filter(), nil
+	case *ent.DocumentClassificationMutation:
+		return m.Filter(), nil
 	case *ent.EmailControlMutation:
 		return m.Filter(), nil
 	case *ent.EmailProfileMutation:
@@ -1072,6 +1126,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.FleetCodeMutation:
 		return m.Filter(), nil
 	case *ent.GeneralLedgerAccountMutation:
+		return m.Filter(), nil
+	case *ent.GoogleApiMutation:
 		return m.Filter(), nil
 	case *ent.HazardousMaterialMutation:
 		return m.Filter(), nil

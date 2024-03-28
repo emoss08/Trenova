@@ -52,6 +52,8 @@ const (
 	EdgeShipmentControl = "shipment_control"
 	// EdgeEmailControl holds the string denoting the email_control edge name in mutations.
 	EdgeEmailControl = "email_control"
+	// EdgeGoogleAPI holds the string denoting the google_api edge name in mutations.
+	EdgeGoogleAPI = "google_api"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -117,6 +119,13 @@ const (
 	EmailControlInverseTable = "email_controls"
 	// EmailControlColumn is the table column denoting the email_control relation/edge.
 	EmailControlColumn = "organization_id"
+	// GoogleAPITable is the table that holds the google_api relation/edge.
+	GoogleAPITable = "google_apis"
+	// GoogleAPIInverseTable is the table name for the GoogleApi entity.
+	// It exists in this package in order to avoid circular dependency with the "googleapi" package.
+	GoogleAPIInverseTable = "google_apis"
+	// GoogleAPIColumn is the table column denoting the google_api relation/edge.
+	GoogleAPIColumn = "organization_id"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -330,6 +339,13 @@ func ByEmailControlField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newEmailControlStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByGoogleAPIField orders the results by google_api field.
+func ByGoogleAPIField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGoogleAPIStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -391,5 +407,12 @@ func newEmailControlStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailControlInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, EmailControlTable, EmailControlColumn),
+	)
+}
+func newGoogleAPIStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GoogleAPIInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, GoogleAPITable, GoogleAPIColumn),
 	)
 }

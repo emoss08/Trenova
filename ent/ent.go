@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/ent/delaycode"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/divisioncode"
+	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/emailprofile"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
@@ -117,6 +119,7 @@ func checkColumn(table, column string) error {
 			delaycode.Table:              delaycode.ValidColumn,
 			dispatchcontrol.Table:        dispatchcontrol.ValidColumn,
 			divisioncode.Table:           divisioncode.ValidColumn,
+			documentclassification.Table: documentclassification.ValidColumn,
 			emailcontrol.Table:           emailcontrol.ValidColumn,
 			emailprofile.Table:           emailprofile.ValidColumn,
 			equipmentmanufactuer.Table:   equipmentmanufactuer.ValidColumn,
@@ -124,6 +127,7 @@ func checkColumn(table, column string) error {
 			feasibilitytoolcontrol.Table: feasibilitytoolcontrol.ValidColumn,
 			fleetcode.Table:              fleetcode.ValidColumn,
 			generalledgeraccount.Table:   generalledgeraccount.ValidColumn,
+			googleapi.Table:              googleapi.ValidColumn,
 			hazardousmaterial.Table:      hazardousmaterial.ValidColumn,
 			invoicecontrol.Table:         invoicecontrol.ValidColumn,
 			locationcategory.Table:       locationcategory.ValidColumn,

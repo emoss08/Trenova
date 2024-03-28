@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/ent/delaycode"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/divisioncode"
+	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/emailprofile"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
@@ -69,6 +71,7 @@ const (
 	TypeDelayCode              = "DelayCode"
 	TypeDispatchControl        = "DispatchControl"
 	TypeDivisionCode           = "DivisionCode"
+	TypeDocumentClassification = "DocumentClassification"
 	TypeEmailControl           = "EmailControl"
 	TypeEmailProfile           = "EmailProfile"
 	TypeEquipmentManufactuer   = "EquipmentManufactuer"
@@ -76,6 +79,7 @@ const (
 	TypeFeasibilityToolControl = "FeasibilityToolControl"
 	TypeFleetCode              = "FleetCode"
 	TypeGeneralLedgerAccount   = "GeneralLedgerAccount"
+	TypeGoogleApi              = "GoogleApi"
 	TypeHazardousMaterial      = "HazardousMaterial"
 	TypeInvoiceControl         = "InvoiceControl"
 	TypeLocationCategory       = "LocationCategory"
@@ -12382,6 +12386,730 @@ func (m *DivisionCodeMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown DivisionCode edge %s", name)
 }
 
+// DocumentClassificationMutation represents an operation that mutates the DocumentClassification nodes in the graph.
+type DocumentClassificationMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	name                 *string
+	description          *string
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	done                 bool
+	oldValue             func(context.Context) (*DocumentClassification, error)
+	predicates           []predicate.DocumentClassification
+}
+
+var _ ent.Mutation = (*DocumentClassificationMutation)(nil)
+
+// documentclassificationOption allows management of the mutation configuration using functional options.
+type documentclassificationOption func(*DocumentClassificationMutation)
+
+// newDocumentClassificationMutation creates new mutation for the DocumentClassification entity.
+func newDocumentClassificationMutation(c config, op Op, opts ...documentclassificationOption) *DocumentClassificationMutation {
+	m := &DocumentClassificationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDocumentClassification,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDocumentClassificationID sets the ID field of the mutation.
+func withDocumentClassificationID(id uuid.UUID) documentclassificationOption {
+	return func(m *DocumentClassificationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DocumentClassification
+		)
+		m.oldValue = func(ctx context.Context) (*DocumentClassification, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DocumentClassification.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDocumentClassification sets the old DocumentClassification of the mutation.
+func withDocumentClassification(node *DocumentClassification) documentclassificationOption {
+	return func(m *DocumentClassificationMutation) {
+		m.oldValue = func(context.Context) (*DocumentClassification, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DocumentClassificationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DocumentClassificationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DocumentClassification entities.
+func (m *DocumentClassificationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DocumentClassificationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DocumentClassificationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DocumentClassification.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *DocumentClassificationMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *DocumentClassificationMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *DocumentClassificationMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *DocumentClassificationMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *DocumentClassificationMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *DocumentClassificationMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DocumentClassificationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DocumentClassificationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DocumentClassificationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *DocumentClassificationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *DocumentClassificationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *DocumentClassificationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *DocumentClassificationMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *DocumentClassificationMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *DocumentClassificationMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *DocumentClassificationMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *DocumentClassificationMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *DocumentClassificationMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[documentclassification.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *DocumentClassificationMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[documentclassification.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *DocumentClassificationMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, documentclassification.FieldDescription)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *DocumentClassificationMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[documentclassification.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *DocumentClassificationMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *DocumentClassificationMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *DocumentClassificationMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *DocumentClassificationMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[documentclassification.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *DocumentClassificationMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *DocumentClassificationMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *DocumentClassificationMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// Where appends a list predicates to the DocumentClassificationMutation builder.
+func (m *DocumentClassificationMutation) Where(ps ...predicate.DocumentClassification) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DocumentClassificationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DocumentClassificationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DocumentClassification, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DocumentClassificationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DocumentClassificationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DocumentClassification).
+func (m *DocumentClassificationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DocumentClassificationMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.business_unit != nil {
+		fields = append(fields, documentclassification.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, documentclassification.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, documentclassification.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, documentclassification.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, documentclassification.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, documentclassification.FieldDescription)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DocumentClassificationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case documentclassification.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case documentclassification.FieldOrganizationID:
+		return m.OrganizationID()
+	case documentclassification.FieldCreatedAt:
+		return m.CreatedAt()
+	case documentclassification.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case documentclassification.FieldName:
+		return m.Name()
+	case documentclassification.FieldDescription:
+		return m.Description()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DocumentClassificationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case documentclassification.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case documentclassification.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case documentclassification.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case documentclassification.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case documentclassification.FieldName:
+		return m.OldName(ctx)
+	case documentclassification.FieldDescription:
+		return m.OldDescription(ctx)
+	}
+	return nil, fmt.Errorf("unknown DocumentClassification field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case documentclassification.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case documentclassification.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case documentclassification.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case documentclassification.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case documentclassification.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case documentclassification.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentClassification field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DocumentClassificationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DocumentClassificationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentClassificationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown DocumentClassification numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DocumentClassificationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(documentclassification.FieldDescription) {
+		fields = append(fields, documentclassification.FieldDescription)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DocumentClassificationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DocumentClassificationMutation) ClearField(name string) error {
+	switch name {
+	case documentclassification.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentClassification nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DocumentClassificationMutation) ResetField(name string) error {
+	switch name {
+	case documentclassification.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case documentclassification.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case documentclassification.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case documentclassification.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case documentclassification.FieldName:
+		m.ResetName()
+		return nil
+	case documentclassification.FieldDescription:
+		m.ResetDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentClassification field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DocumentClassificationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.business_unit != nil {
+		edges = append(edges, documentclassification.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, documentclassification.EdgeOrganization)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DocumentClassificationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case documentclassification.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case documentclassification.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DocumentClassificationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DocumentClassificationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DocumentClassificationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedbusiness_unit {
+		edges = append(edges, documentclassification.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, documentclassification.EdgeOrganization)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DocumentClassificationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case documentclassification.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case documentclassification.EdgeOrganization:
+		return m.clearedorganization
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DocumentClassificationMutation) ClearEdge(name string) error {
+	switch name {
+	case documentclassification.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case documentclassification.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentClassification unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DocumentClassificationMutation) ResetEdge(name string) error {
+	switch name {
+	case documentclassification.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case documentclassification.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentClassification edge %s", name)
+}
+
 // EmailControlMutation represents an operation that mutates the EmailControl nodes in the graph.
 type EmailControlMutation struct {
 	config
@@ -20720,6 +21448,842 @@ func (m *GeneralLedgerAccountMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GeneralLedgerAccount edge %s", name)
 }
 
+// GoogleApiMutation represents an operation that mutates the GoogleApi nodes in the graph.
+type GoogleApiMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *uuid.UUID
+	created_at            *time.Time
+	updated_at            *time.Time
+	api_key               *string
+	mileage_unit          *googleapi.MileageUnit
+	add_customer_location *bool
+	auto_geocode          *bool
+	add_location          *bool
+	traffic_model         *googleapi.TrafficModel
+	clearedFields         map[string]struct{}
+	organization          *uuid.UUID
+	clearedorganization   bool
+	business_unit         *uuid.UUID
+	clearedbusiness_unit  bool
+	done                  bool
+	oldValue              func(context.Context) (*GoogleApi, error)
+	predicates            []predicate.GoogleApi
+}
+
+var _ ent.Mutation = (*GoogleApiMutation)(nil)
+
+// googleapiOption allows management of the mutation configuration using functional options.
+type googleapiOption func(*GoogleApiMutation)
+
+// newGoogleApiMutation creates new mutation for the GoogleApi entity.
+func newGoogleApiMutation(c config, op Op, opts ...googleapiOption) *GoogleApiMutation {
+	m := &GoogleApiMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeGoogleApi,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withGoogleApiID sets the ID field of the mutation.
+func withGoogleApiID(id uuid.UUID) googleapiOption {
+	return func(m *GoogleApiMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *GoogleApi
+		)
+		m.oldValue = func(ctx context.Context) (*GoogleApi, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().GoogleApi.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withGoogleApi sets the old GoogleApi of the mutation.
+func withGoogleApi(node *GoogleApi) googleapiOption {
+	return func(m *GoogleApiMutation) {
+		m.oldValue = func(context.Context) (*GoogleApi, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m GoogleApiMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m GoogleApiMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of GoogleApi entities.
+func (m *GoogleApiMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *GoogleApiMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *GoogleApiMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().GoogleApi.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *GoogleApiMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *GoogleApiMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *GoogleApiMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *GoogleApiMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *GoogleApiMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *GoogleApiMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAPIKey sets the "api_key" field.
+func (m *GoogleApiMutation) SetAPIKey(s string) {
+	m.api_key = &s
+}
+
+// APIKey returns the value of the "api_key" field in the mutation.
+func (m *GoogleApiMutation) APIKey() (r string, exists bool) {
+	v := m.api_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAPIKey returns the old "api_key" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldAPIKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAPIKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAPIKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAPIKey: %w", err)
+	}
+	return oldValue.APIKey, nil
+}
+
+// ResetAPIKey resets all changes to the "api_key" field.
+func (m *GoogleApiMutation) ResetAPIKey() {
+	m.api_key = nil
+}
+
+// SetMileageUnit sets the "mileage_unit" field.
+func (m *GoogleApiMutation) SetMileageUnit(gu googleapi.MileageUnit) {
+	m.mileage_unit = &gu
+}
+
+// MileageUnit returns the value of the "mileage_unit" field in the mutation.
+func (m *GoogleApiMutation) MileageUnit() (r googleapi.MileageUnit, exists bool) {
+	v := m.mileage_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMileageUnit returns the old "mileage_unit" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldMileageUnit(ctx context.Context) (v googleapi.MileageUnit, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMileageUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMileageUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMileageUnit: %w", err)
+	}
+	return oldValue.MileageUnit, nil
+}
+
+// ResetMileageUnit resets all changes to the "mileage_unit" field.
+func (m *GoogleApiMutation) ResetMileageUnit() {
+	m.mileage_unit = nil
+}
+
+// SetAddCustomerLocation sets the "add_customer_location" field.
+func (m *GoogleApiMutation) SetAddCustomerLocation(b bool) {
+	m.add_customer_location = &b
+}
+
+// AddCustomerLocation returns the value of the "add_customer_location" field in the mutation.
+func (m *GoogleApiMutation) AddCustomerLocation() (r bool, exists bool) {
+	v := m.add_customer_location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddCustomerLocation returns the old "add_customer_location" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldAddCustomerLocation(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddCustomerLocation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddCustomerLocation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddCustomerLocation: %w", err)
+	}
+	return oldValue.AddCustomerLocation, nil
+}
+
+// ResetAddCustomerLocation resets all changes to the "add_customer_location" field.
+func (m *GoogleApiMutation) ResetAddCustomerLocation() {
+	m.add_customer_location = nil
+}
+
+// SetAutoGeocode sets the "auto_geocode" field.
+func (m *GoogleApiMutation) SetAutoGeocode(b bool) {
+	m.auto_geocode = &b
+}
+
+// AutoGeocode returns the value of the "auto_geocode" field in the mutation.
+func (m *GoogleApiMutation) AutoGeocode() (r bool, exists bool) {
+	v := m.auto_geocode
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoGeocode returns the old "auto_geocode" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldAutoGeocode(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoGeocode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoGeocode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoGeocode: %w", err)
+	}
+	return oldValue.AutoGeocode, nil
+}
+
+// ResetAutoGeocode resets all changes to the "auto_geocode" field.
+func (m *GoogleApiMutation) ResetAutoGeocode() {
+	m.auto_geocode = nil
+}
+
+// SetAddLocation sets the "add_location" field.
+func (m *GoogleApiMutation) SetAddLocation(b bool) {
+	m.add_location = &b
+}
+
+// AddLocation returns the value of the "add_location" field in the mutation.
+func (m *GoogleApiMutation) AddLocation() (r bool, exists bool) {
+	v := m.add_location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddLocation returns the old "add_location" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldAddLocation(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddLocation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddLocation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddLocation: %w", err)
+	}
+	return oldValue.AddLocation, nil
+}
+
+// ResetAddLocation resets all changes to the "add_location" field.
+func (m *GoogleApiMutation) ResetAddLocation() {
+	m.add_location = nil
+}
+
+// SetTrafficModel sets the "traffic_model" field.
+func (m *GoogleApiMutation) SetTrafficModel(gm googleapi.TrafficModel) {
+	m.traffic_model = &gm
+}
+
+// TrafficModel returns the value of the "traffic_model" field in the mutation.
+func (m *GoogleApiMutation) TrafficModel() (r googleapi.TrafficModel, exists bool) {
+	v := m.traffic_model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrafficModel returns the old "traffic_model" field's value of the GoogleApi entity.
+// If the GoogleApi object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleApiMutation) OldTrafficModel(ctx context.Context) (v googleapi.TrafficModel, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrafficModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrafficModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrafficModel: %w", err)
+	}
+	return oldValue.TrafficModel, nil
+}
+
+// ResetTrafficModel resets all changes to the "traffic_model" field.
+func (m *GoogleApiMutation) ResetTrafficModel() {
+	m.traffic_model = nil
+}
+
+// SetOrganizationID sets the "organization" edge to the Organization entity by id.
+func (m *GoogleApiMutation) SetOrganizationID(id uuid.UUID) {
+	m.organization = &id
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *GoogleApiMutation) ClearOrganization() {
+	m.clearedorganization = true
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *GoogleApiMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationID returns the "organization" edge ID in the mutation.
+func (m *GoogleApiMutation) OrganizationID() (id uuid.UUID, exists bool) {
+	if m.organization != nil {
+		return *m.organization, true
+	}
+	return
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *GoogleApiMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *GoogleApiMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// SetBusinessUnitID sets the "business_unit" edge to the BusinessUnit entity by id.
+func (m *GoogleApiMutation) SetBusinessUnitID(id uuid.UUID) {
+	m.business_unit = &id
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *GoogleApiMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *GoogleApiMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitID returns the "business_unit" edge ID in the mutation.
+func (m *GoogleApiMutation) BusinessUnitID() (id uuid.UUID, exists bool) {
+	if m.business_unit != nil {
+		return *m.business_unit, true
+	}
+	return
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *GoogleApiMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *GoogleApiMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// Where appends a list predicates to the GoogleApiMutation builder.
+func (m *GoogleApiMutation) Where(ps ...predicate.GoogleApi) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the GoogleApiMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *GoogleApiMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.GoogleApi, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *GoogleApiMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *GoogleApiMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (GoogleApi).
+func (m *GoogleApiMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *GoogleApiMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.created_at != nil {
+		fields = append(fields, googleapi.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, googleapi.FieldUpdatedAt)
+	}
+	if m.api_key != nil {
+		fields = append(fields, googleapi.FieldAPIKey)
+	}
+	if m.mileage_unit != nil {
+		fields = append(fields, googleapi.FieldMileageUnit)
+	}
+	if m.add_customer_location != nil {
+		fields = append(fields, googleapi.FieldAddCustomerLocation)
+	}
+	if m.auto_geocode != nil {
+		fields = append(fields, googleapi.FieldAutoGeocode)
+	}
+	if m.add_location != nil {
+		fields = append(fields, googleapi.FieldAddLocation)
+	}
+	if m.traffic_model != nil {
+		fields = append(fields, googleapi.FieldTrafficModel)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *GoogleApiMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case googleapi.FieldCreatedAt:
+		return m.CreatedAt()
+	case googleapi.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case googleapi.FieldAPIKey:
+		return m.APIKey()
+	case googleapi.FieldMileageUnit:
+		return m.MileageUnit()
+	case googleapi.FieldAddCustomerLocation:
+		return m.AddCustomerLocation()
+	case googleapi.FieldAutoGeocode:
+		return m.AutoGeocode()
+	case googleapi.FieldAddLocation:
+		return m.AddLocation()
+	case googleapi.FieldTrafficModel:
+		return m.TrafficModel()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *GoogleApiMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case googleapi.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case googleapi.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case googleapi.FieldAPIKey:
+		return m.OldAPIKey(ctx)
+	case googleapi.FieldMileageUnit:
+		return m.OldMileageUnit(ctx)
+	case googleapi.FieldAddCustomerLocation:
+		return m.OldAddCustomerLocation(ctx)
+	case googleapi.FieldAutoGeocode:
+		return m.OldAutoGeocode(ctx)
+	case googleapi.FieldAddLocation:
+		return m.OldAddLocation(ctx)
+	case googleapi.FieldTrafficModel:
+		return m.OldTrafficModel(ctx)
+	}
+	return nil, fmt.Errorf("unknown GoogleApi field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GoogleApiMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case googleapi.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case googleapi.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case googleapi.FieldAPIKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAPIKey(v)
+		return nil
+	case googleapi.FieldMileageUnit:
+		v, ok := value.(googleapi.MileageUnit)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMileageUnit(v)
+		return nil
+	case googleapi.FieldAddCustomerLocation:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddCustomerLocation(v)
+		return nil
+	case googleapi.FieldAutoGeocode:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoGeocode(v)
+		return nil
+	case googleapi.FieldAddLocation:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddLocation(v)
+		return nil
+	case googleapi.FieldTrafficModel:
+		v, ok := value.(googleapi.TrafficModel)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrafficModel(v)
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleApi field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *GoogleApiMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *GoogleApiMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GoogleApiMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown GoogleApi numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *GoogleApiMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *GoogleApiMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *GoogleApiMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown GoogleApi nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *GoogleApiMutation) ResetField(name string) error {
+	switch name {
+	case googleapi.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case googleapi.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case googleapi.FieldAPIKey:
+		m.ResetAPIKey()
+		return nil
+	case googleapi.FieldMileageUnit:
+		m.ResetMileageUnit()
+		return nil
+	case googleapi.FieldAddCustomerLocation:
+		m.ResetAddCustomerLocation()
+		return nil
+	case googleapi.FieldAutoGeocode:
+		m.ResetAutoGeocode()
+		return nil
+	case googleapi.FieldAddLocation:
+		m.ResetAddLocation()
+		return nil
+	case googleapi.FieldTrafficModel:
+		m.ResetTrafficModel()
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleApi field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *GoogleApiMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.organization != nil {
+		edges = append(edges, googleapi.EdgeOrganization)
+	}
+	if m.business_unit != nil {
+		edges = append(edges, googleapi.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *GoogleApiMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case googleapi.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case googleapi.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *GoogleApiMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *GoogleApiMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *GoogleApiMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedorganization {
+		edges = append(edges, googleapi.EdgeOrganization)
+	}
+	if m.clearedbusiness_unit {
+		edges = append(edges, googleapi.EdgeBusinessUnit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *GoogleApiMutation) EdgeCleared(name string) bool {
+	switch name {
+	case googleapi.EdgeOrganization:
+		return m.clearedorganization
+	case googleapi.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *GoogleApiMutation) ClearEdge(name string) error {
+	switch name {
+	case googleapi.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case googleapi.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleApi unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *GoogleApiMutation) ResetEdge(name string) error {
+	switch name {
+	case googleapi.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case googleapi.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleApi edge %s", name)
+}
+
 // HazardousMaterialMutation represents an operation that mutates the HazardousMaterial nodes in the graph.
 type HazardousMaterialMutation struct {
 	config
@@ -23836,6 +25400,8 @@ type OrganizationMutation struct {
 	clearedshipment_control         bool
 	email_control                   *uuid.UUID
 	clearedemail_control            bool
+	google_api                      *uuid.UUID
+	clearedgoogle_api               bool
 	done                            bool
 	oldValue                        func(context.Context) (*Organization, error)
 	predicates                      []predicate.Organization
@@ -24621,6 +26187,45 @@ func (m *OrganizationMutation) ResetEmailControl() {
 	m.clearedemail_control = false
 }
 
+// SetGoogleAPIID sets the "google_api" edge to the GoogleApi entity by id.
+func (m *OrganizationMutation) SetGoogleAPIID(id uuid.UUID) {
+	m.google_api = &id
+}
+
+// ClearGoogleAPI clears the "google_api" edge to the GoogleApi entity.
+func (m *OrganizationMutation) ClearGoogleAPI() {
+	m.clearedgoogle_api = true
+}
+
+// GoogleAPICleared reports if the "google_api" edge to the GoogleApi entity was cleared.
+func (m *OrganizationMutation) GoogleAPICleared() bool {
+	return m.clearedgoogle_api
+}
+
+// GoogleAPIID returns the "google_api" edge ID in the mutation.
+func (m *OrganizationMutation) GoogleAPIID() (id uuid.UUID, exists bool) {
+	if m.google_api != nil {
+		return *m.google_api, true
+	}
+	return
+}
+
+// GoogleAPIIDs returns the "google_api" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GoogleAPIID instead. It exists only for internal usage by the builders.
+func (m *OrganizationMutation) GoogleAPIIDs() (ids []uuid.UUID) {
+	if id := m.google_api; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGoogleAPI resets all changes to the "google_api" edge.
+func (m *OrganizationMutation) ResetGoogleAPI() {
+	m.google_api = nil
+	m.clearedgoogle_api = false
+}
+
 // Where appends a list predicates to the OrganizationMutation builder.
 func (m *OrganizationMutation) Where(ps ...predicate.Organization) {
 	m.predicates = append(m.predicates, ps...)
@@ -24899,7 +26504,7 @@ func (m *OrganizationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -24926,6 +26531,9 @@ func (m *OrganizationMutation) AddedEdges() []string {
 	}
 	if m.email_control != nil {
 		edges = append(edges, organization.EdgeEmailControl)
+	}
+	if m.google_api != nil {
+		edges = append(edges, organization.EdgeGoogleAPI)
 	}
 	return edges
 }
@@ -24970,13 +26578,17 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 		if id := m.email_control; id != nil {
 			return []ent.Value{*id}
 		}
+	case organization.EdgeGoogleAPI:
+		if id := m.google_api; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	return edges
 }
 
@@ -24988,7 +26600,7 @@ func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
@@ -25016,6 +26628,9 @@ func (m *OrganizationMutation) ClearedEdges() []string {
 	if m.clearedemail_control {
 		edges = append(edges, organization.EdgeEmailControl)
 	}
+	if m.clearedgoogle_api {
+		edges = append(edges, organization.EdgeGoogleAPI)
+	}
 	return edges
 }
 
@@ -25041,6 +26656,8 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 		return m.clearedshipment_control
 	case organization.EdgeEmailControl:
 		return m.clearedemail_control
+	case organization.EdgeGoogleAPI:
+		return m.clearedgoogle_api
 	}
 	return false
 }
@@ -25076,6 +26693,9 @@ func (m *OrganizationMutation) ClearEdge(name string) error {
 	case organization.EdgeEmailControl:
 		m.ClearEmailControl()
 		return nil
+	case organization.EdgeGoogleAPI:
+		m.ClearGoogleAPI()
+		return nil
 	}
 	return fmt.Errorf("unknown Organization unique edge %s", name)
 }
@@ -25110,6 +26730,9 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 		return nil
 	case organization.EdgeEmailControl:
 		m.ResetEmailControl()
+		return nil
+	case organization.EdgeGoogleAPI:
+		m.ResetGoogleAPI()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization edge %s", name)

@@ -133,8 +133,8 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
  * @returns A promise that resolves to an array of Google api information.
  */
 export async function getGoogleApiInformation(): Promise<GoogleAPI> {
-  const response = await axios.get("/organization/google_api_details/");
-  return response.data.results;
+  const response = await axios.get("/google-api/");
+  return response.data;
 }
 
 /**

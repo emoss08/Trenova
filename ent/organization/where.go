@@ -708,6 +708,29 @@ func HasEmailControlWith(preds ...predicate.EmailControl) predicate.Organization
 	})
 }
 
+// HasGoogleAPI applies the HasEdge predicate on the "google_api" edge.
+func HasGoogleAPI() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, GoogleAPITable, GoogleAPIColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGoogleAPIWith applies the HasEdge predicate on the "google_api" edge with a given conditions (other predicates).
+func HasGoogleAPIWith(preds ...predicate.GoogleApi) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newGoogleAPIStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Organization) predicate.Organization {
 	return predicate.Organization(sql.AndPredicates(predicates...))

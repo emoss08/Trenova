@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -212,6 +213,28 @@ func main() {
 		}
 	}
 
+	// CHeck if the Organization already has Google API
+	gaExists, err := org.QueryGoogleAPI().Exist(ctx)
+	if err != nil {
+		log.Panicf("Failed querying google api: %v", err)
+	}
+
+	// If not, create the Google API
+	if !gaExists {
+		err = client.GoogleApi.Create().
+			SetOrganization(org).
+			SetBusinessUnit(bu).
+			SetAPIKey("API_KEY").
+			SetMileageUnit("Imperial").
+			SetTrafficModel("BestGuess").
+			SetAddCustomerLocation(false).
+			SetAutoGeocode(false).
+			Exec(ctx)
+		if err != nil {
+			log.Panicf("Failed creating google api: %v", err)
+		}
+	}
+
 	// Check if the organization has no revenue codes
 	rcCount, err := client.RevenueCode.Query().Where(revenuecode.HasOrganizationWith(organization.ID(org.ID))).Count(ctx)
 
@@ -223,8 +246,8 @@ func main() {
 			_, err = client.RevenueCode.Create().
 				SetOrganization(org).
 				SetBusinessUnit(bu).
-				SetCode("RC" + fmt.Sprint(i)).
-				SetDescription("Revenue Code " + fmt.Sprint(i)).
+				SetCode("RC" + strconv.Itoa(i)).
+				SetDescription("Revenue Code " + strconv.Itoa(i)).
 				Save(ctx)
 			if err != nil {
 				log.Panicf("Failed creating revenue code: %v", err)
@@ -242,7 +265,6 @@ func main() {
 
 		// Account number must be in the format 1000-00, 1100-00, ..., 1000-01, etc.
 		for i := 0; i < 2; i++ {
-
 			// Increment the first part by 100 each iteration, starting from 1000
 			firstPart := 1000 + (i/10)*100
 
