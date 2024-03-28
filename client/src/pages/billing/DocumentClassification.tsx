@@ -62,7 +62,7 @@ export default function DocumentClassificationPage() {
     <DataTable
       queryKey="document-classification-table-data"
       columns={columns}
-      link="/document_classifications/"
+      link="/document-classifications/"
       name="Document Class."
       exportModelName="DocumentClassification"
       filterColumn="name"

@@ -87,7 +87,7 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/document_classifications/",
+      path: "/document-classifications/",
       successMessage: "Document Classification created successfully.",
       queryKeysToInvalidate: ["document-classification-table-data"],
       closeModal: true,

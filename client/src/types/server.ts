@@ -67,7 +67,7 @@ export type API_ENDPOINTS =
   | "/billing_history/"
   | "/charge-types/"
   | "/accessorial-charges/"
-  | "/document_classifications/"
+  | "/document-classifications/"
   | "/hazardous-materials/"
   | "/commodities/"
   | "/customers/"
