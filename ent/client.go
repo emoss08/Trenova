@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
+	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/servicetype"
@@ -111,6 +112,8 @@ type Client struct {
 	Organization *OrganizationClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
+	// ReasonCode is the client for interacting with the ReasonCode builders.
+	ReasonCode *ReasonCodeClient
 	// RevenueCode is the client for interacting with the RevenueCode builders.
 	RevenueCode *RevenueCodeClient
 	// RouteControl is the client for interacting with the RouteControl builders.
@@ -169,6 +172,7 @@ func (c *Client) init() {
 	c.LocationCategory = NewLocationCategoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.QualifierCode = NewQualifierCodeClient(c.config)
+	c.ReasonCode = NewReasonCodeClient(c.config)
 	c.RevenueCode = NewRevenueCodeClient(c.config)
 	c.RouteControl = NewRouteControlClient(c.config)
 	c.ServiceType = NewServiceTypeClient(c.config)
@@ -297,6 +301,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		LocationCategory:       NewLocationCategoryClient(cfg),
 		Organization:           NewOrganizationClient(cfg),
 		QualifierCode:          NewQualifierCodeClient(cfg),
+		ReasonCode:             NewReasonCodeClient(cfg),
 		RevenueCode:            NewRevenueCodeClient(cfg),
 		RouteControl:           NewRouteControlClient(cfg),
 		ServiceType:            NewServiceTypeClient(cfg),
@@ -352,6 +357,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		LocationCategory:       NewLocationCategoryClient(cfg),
 		Organization:           NewOrganizationClient(cfg),
 		QualifierCode:          NewQualifierCodeClient(cfg),
+		ReasonCode:             NewReasonCodeClient(cfg),
 		RevenueCode:            NewRevenueCodeClient(cfg),
 		RouteControl:           NewRouteControlClient(cfg),
 		ServiceType:            NewServiceTypeClient(cfg),
@@ -398,9 +404,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
 		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
-		c.QualifierCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
-		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.UsState,
-		c.User, c.UserFavorite,
+		c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType,
+		c.Session, c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag,
+		c.UsState, c.User, c.UserFavorite,
 	} {
 		n.Use(hooks...)
 	}
@@ -416,9 +422,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
 		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
-		c.QualifierCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
-		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.UsState,
-		c.User, c.UserFavorite,
+		c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType,
+		c.Session, c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag,
+		c.UsState, c.User, c.UserFavorite,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -477,6 +483,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Organization.mutate(ctx, m)
 	case *QualifierCodeMutation:
 		return c.QualifierCode.mutate(ctx, m)
+	case *ReasonCodeMutation:
+		return c.ReasonCode.mutate(ctx, m)
 	case *RevenueCodeMutation:
 		return c.RevenueCode.mutate(ctx, m)
 	case *RouteControlMutation:
@@ -4935,6 +4943,171 @@ func (c *QualifierCodeClient) mutate(ctx context.Context, m *QualifierCodeMutati
 	}
 }
 
+// ReasonCodeClient is a client for the ReasonCode schema.
+type ReasonCodeClient struct {
+	config
+}
+
+// NewReasonCodeClient returns a client for the ReasonCode from the given config.
+func NewReasonCodeClient(c config) *ReasonCodeClient {
+	return &ReasonCodeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `reasoncode.Hooks(f(g(h())))`.
+func (c *ReasonCodeClient) Use(hooks ...Hook) {
+	c.hooks.ReasonCode = append(c.hooks.ReasonCode, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `reasoncode.Intercept(f(g(h())))`.
+func (c *ReasonCodeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ReasonCode = append(c.inters.ReasonCode, interceptors...)
+}
+
+// Create returns a builder for creating a ReasonCode entity.
+func (c *ReasonCodeClient) Create() *ReasonCodeCreate {
+	mutation := newReasonCodeMutation(c.config, OpCreate)
+	return &ReasonCodeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ReasonCode entities.
+func (c *ReasonCodeClient) CreateBulk(builders ...*ReasonCodeCreate) *ReasonCodeCreateBulk {
+	return &ReasonCodeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReasonCodeClient) MapCreateBulk(slice any, setFunc func(*ReasonCodeCreate, int)) *ReasonCodeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReasonCodeCreateBulk{err: fmt.Errorf("calling to ReasonCodeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReasonCodeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReasonCodeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ReasonCode.
+func (c *ReasonCodeClient) Update() *ReasonCodeUpdate {
+	mutation := newReasonCodeMutation(c.config, OpUpdate)
+	return &ReasonCodeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReasonCodeClient) UpdateOne(rc *ReasonCode) *ReasonCodeUpdateOne {
+	mutation := newReasonCodeMutation(c.config, OpUpdateOne, withReasonCode(rc))
+	return &ReasonCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReasonCodeClient) UpdateOneID(id uuid.UUID) *ReasonCodeUpdateOne {
+	mutation := newReasonCodeMutation(c.config, OpUpdateOne, withReasonCodeID(id))
+	return &ReasonCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ReasonCode.
+func (c *ReasonCodeClient) Delete() *ReasonCodeDelete {
+	mutation := newReasonCodeMutation(c.config, OpDelete)
+	return &ReasonCodeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReasonCodeClient) DeleteOne(rc *ReasonCode) *ReasonCodeDeleteOne {
+	return c.DeleteOneID(rc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReasonCodeClient) DeleteOneID(id uuid.UUID) *ReasonCodeDeleteOne {
+	builder := c.Delete().Where(reasoncode.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReasonCodeDeleteOne{builder}
+}
+
+// Query returns a query builder for ReasonCode.
+func (c *ReasonCodeClient) Query() *ReasonCodeQuery {
+	return &ReasonCodeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReasonCode},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ReasonCode entity by its id.
+func (c *ReasonCodeClient) Get(ctx context.Context, id uuid.UUID) (*ReasonCode, error) {
+	return c.Query().Where(reasoncode.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReasonCodeClient) GetX(ctx context.Context, id uuid.UUID) *ReasonCode {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a ReasonCode.
+func (c *ReasonCodeClient) QueryBusinessUnit(rc *ReasonCode) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reasoncode.Table, reasoncode.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, reasoncode.BusinessUnitTable, reasoncode.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(rc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a ReasonCode.
+func (c *ReasonCodeClient) QueryOrganization(rc *ReasonCode) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reasoncode.Table, reasoncode.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, reasoncode.OrganizationTable, reasoncode.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(rc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReasonCodeClient) Hooks() []Hook {
+	return c.hooks.ReasonCode
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReasonCodeClient) Interceptors() []Interceptor {
+	return c.inters.ReasonCode
+}
+
+func (c *ReasonCodeClient) mutate(ctx context.Context, m *ReasonCodeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReasonCodeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReasonCodeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReasonCodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReasonCodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ReasonCode mutation op: %q", m.Op())
+	}
+}
+
 // RevenueCodeClient is a client for the RevenueCode schema.
 type RevenueCodeClient struct {
 	config
@@ -6760,7 +6933,7 @@ type (
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
 		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
-		QualifierCode, RevenueCode, RouteControl, ServiceType, Session,
+		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
 		UserFavorite []ent.Hook
 	}
@@ -6770,7 +6943,7 @@ type (
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
 		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
-		QualifierCode, RevenueCode, RouteControl, ServiceType, Session,
+		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
 		UserFavorite []ent.Interceptor
 	}

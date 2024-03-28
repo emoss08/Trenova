@@ -142,6 +142,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Document Classification Routes
 			registerDocumentClassificationRouter(r)
+
+			// Register Reason Code Routes
+			registerReasonCodeRouter(r)
 		})
 	})
 

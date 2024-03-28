@@ -25,9 +25,9 @@ import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { Toaster } from "react-hot-toast";
 import { useLocation } from "react-router-dom";
-import { AsideMenuSheet } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { OrganizationLogo } from "./logo";
+import { NavMenu } from "./navbar";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -49,11 +49,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <OrganizationLogo />
-              <AsideMenuSheet />
               <div className="border-muted-foreground/40 h-7 border-l" />
               <OrganizationSwitcher />
             </div>
-            {/* <NavMenu /> */}
+            <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
               {/* <NotificationMenu /> */}

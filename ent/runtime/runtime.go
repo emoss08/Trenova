@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
+	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/schema"
@@ -1180,6 +1181,29 @@ func init() {
 	qualifiercodeDescID := qualifiercodeMixinFields0[0].Descriptor()
 	// qualifiercode.DefaultID holds the default value on creation for the id field.
 	qualifiercode.DefaultID = qualifiercodeDescID.Default.(func() uuid.UUID)
+	reasoncodeMixin := schema.ReasonCode{}.Mixin()
+	reasoncodeMixinFields0 := reasoncodeMixin[0].Fields()
+	_ = reasoncodeMixinFields0
+	reasoncodeFields := schema.ReasonCode{}.Fields()
+	_ = reasoncodeFields
+	// reasoncodeDescCreatedAt is the schema descriptor for created_at field.
+	reasoncodeDescCreatedAt := reasoncodeMixinFields0[3].Descriptor()
+	// reasoncode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	reasoncode.DefaultCreatedAt = reasoncodeDescCreatedAt.Default.(func() time.Time)
+	// reasoncodeDescUpdatedAt is the schema descriptor for updated_at field.
+	reasoncodeDescUpdatedAt := reasoncodeMixinFields0[4].Descriptor()
+	// reasoncode.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	reasoncode.DefaultUpdatedAt = reasoncodeDescUpdatedAt.Default.(func() time.Time)
+	// reasoncode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	reasoncode.UpdateDefaultUpdatedAt = reasoncodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// reasoncodeDescCode is the schema descriptor for code field.
+	reasoncodeDescCode := reasoncodeFields[1].Descriptor()
+	// reasoncode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	reasoncode.CodeValidator = reasoncodeDescCode.Validators[0].(func(string) error)
+	// reasoncodeDescID is the schema descriptor for id field.
+	reasoncodeDescID := reasoncodeMixinFields0[0].Descriptor()
+	// reasoncode.DefaultID holds the default value on creation for the id field.
+	reasoncode.DefaultID = reasoncodeDescID.Default.(func() uuid.UUID)
 	revenuecodeMixin := schema.RevenueCode{}.Mixin()
 	revenuecodeHooks := schema.RevenueCode{}.Hooks()
 	revenuecode.Hooks[0] = revenuecodeHooks[0]

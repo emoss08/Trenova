@@ -81,6 +81,9 @@ type Organization func(*sql.Selector)
 // QualifierCode is the predicate function for qualifiercode builders.
 type QualifierCode func(*sql.Selector)
 
+// ReasonCode is the predicate function for reasoncode builders.
+type ReasonCode func(*sql.Selector)
+
 // RevenueCode is the predicate function for revenuecode builders.
 type RevenueCode func(*sql.Selector)
 

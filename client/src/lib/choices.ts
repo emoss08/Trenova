@@ -186,20 +186,20 @@ export const routeAvoidanceChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteAvoidanceChoiceProps>>;
 
 /** Type for Route Model Choices */
-export type RouteModelChoiceProps = "best_guess" | "optimistic" | "pessimistic";
+export type RouteModelChoiceProps = "BestGuess" | "Optimistic" | "Pessimistic";
 
 export const routeModelChoices = [
-  { value: "best_guess", label: "Best Guess" },
-  { value: "optimistic", label: "Optimistic" },
-  { value: "pessimistic", label: "Pessimistic" },
+  { value: "BestGuess", label: "Best Guess" },
+  { value: "Optimistic", label: "Optimistic" },
+  { value: "Pessimistic", label: "Pessimistic" },
 ] satisfies ReadonlyArray<IChoiceProps<RouteModelChoiceProps>>;
 
 /** Type for Route Distance Unit Choices */
-export type RouteDistanceUnitProps = "M" | "I";
+export type RouteDistanceUnitProps = "Metric" | "Imperial";
 
 export const routeDistanceUnitChoices = [
-  { value: "M", label: "Metric" },
-  { value: "I", label: "Imperial" },
+  { value: "Metric", label: "Metric" },
+  { value: "Imperial", label: "Imperial" },
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
@@ -461,15 +461,15 @@ export const shipmentSourceChoices = [
 /**
  * Returns code type choices for a select input.
  */
-export type CodeTypeProps = "VOIDED" | "CANCELLED";
+export type CodeTypeProps = "Voided" | "Cancelled";
 
 /**
  * Returns code type choices for a select input.
  * @returns An array of code type choices.
  */
 export const codeTypeChoices = [
-  { value: "VOIDED", label: "Voided" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: "Voided", label: "Voided" },
+  { value: "Cancelled", label: "Cancelled" },
 ] satisfies ReadonlyArray<IChoiceProps<CodeTypeProps>>;
 
 /**

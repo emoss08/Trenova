@@ -20,7 +20,7 @@ func (TableChangeAlert) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
-			StructTag(`json:"status"`),
+			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("name").
 			MaxLen(50).
 			StructTag(`json:"name" validate:"required,max=50"`),

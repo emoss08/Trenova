@@ -1025,6 +1025,45 @@ var (
 			},
 		},
 	}
+	// ReasonCodesColumns holds the columns for the "reason_codes" table.
+	ReasonCodesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "code", Type: field.TypeString, Size: 10},
+		{Name: "code_type", Type: field.TypeEnum, Enums: []string{"Voided", "Cancelled"}},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// ReasonCodesTable holds the schema information for the "reason_codes" table.
+	ReasonCodesTable = &schema.Table{
+		Name:       "reason_codes",
+		Columns:    ReasonCodesColumns,
+		PrimaryKey: []*schema.Column{ReasonCodesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "reason_codes_business_units_business_unit",
+				Columns:    []*schema.Column{ReasonCodesColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "reason_codes_organizations_organization",
+				Columns:    []*schema.Column{ReasonCodesColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "reasoncode_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{ReasonCodesColumns[4], ReasonCodesColumns[8]},
+			},
+		},
+	}
 	// RevenueCodesColumns holds the columns for the "revenue_codes" table.
 	RevenueCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1450,6 +1489,7 @@ var (
 		LocationCategoriesTable,
 		OrganizationsTable,
 		QualifierCodesTable,
+		ReasonCodesTable,
 		RevenueCodesTable,
 		RouteControlsTable,
 		ServiceTypesTable,
@@ -1522,6 +1562,8 @@ func init() {
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	ReasonCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	ReasonCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	RevenueCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	RevenueCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	RevenueCodesTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
