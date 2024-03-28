@@ -64,6 +64,8 @@ type Tx struct {
 	Organization *OrganizationClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
+	// ReasonCode is the client for interacting with the ReasonCode builders.
+	ReasonCode *ReasonCodeClient
 	// RevenueCode is the client for interacting with the RevenueCode builders.
 	RevenueCode *RevenueCodeClient
 	// RouteControl is the client for interacting with the RouteControl builders.
@@ -242,6 +244,7 @@ func (tx *Tx) init() {
 	tx.LocationCategory = NewLocationCategoryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.QualifierCode = NewQualifierCodeClient(tx.config)
+	tx.ReasonCode = NewReasonCodeClient(tx.config)
 	tx.RevenueCode = NewRevenueCodeClient(tx.config)
 	tx.RouteControl = NewRouteControlClient(tx.config)
 	tx.ServiceType = NewServiceTypeClient(tx.config)

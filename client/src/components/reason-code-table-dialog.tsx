@@ -102,7 +102,7 @@ export function ReasonCodeDialog({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       status: "A",
       code: "",
-      codeType: "VOIDED",
+      codeType: "Voided",
       description: "",
     },
   });
@@ -111,7 +111,7 @@ export function ReasonCodeDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/reason_codes/",
+      path: "/reason-codes/",
       successMessage: "Reason Codes created successfully.",
       queryKeysToInvalidate: ["reason-code-table-data"],
       closeModal: true,

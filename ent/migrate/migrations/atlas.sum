@@ -1,4 +1,4 @@
-h1:ow+WCWro70zIjZdP73q1SV3Rwcu1SUQqcDrY6fJWUC8=
+h1:QiNc88NUXSuUA+1ktnZOQt2Gw2stxYRC3HdTUrws3Dc=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -68,3 +68,4 @@ h1:ow+WCWro70zIjZdP73q1SV3Rwcu1SUQqcDrY6fJWUC8=
 20240328024739_create_google_api.sql h1:2DIGyGHpZK/G7SLrVvqwwJ7omL8CmNgcGcoQcBXPjzI=
 20240328030317_alter_google_api.sql h1:/PwMHTAvhvJWOT4i79TPBCy3OPc4YA3OtLxWfLO18tg=
 20240328031731_create_document_classification.sql h1:pWt5/GgBeyySoA64Vx9hKLmRJFiQS1qMMJOB0NOr3qM=
+20240328035757_create_reason_code.sql h1:yYXxsVAAiruBCpcmJbNNrEl/DV+RdcXpkgkMphDVQHo=

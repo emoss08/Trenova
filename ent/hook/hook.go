@@ -309,6 +309,18 @@ func (f QualifierCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QualifierCodeMutation", m)
 }
 
+// The ReasonCodeFunc type is an adapter to allow the use of ordinary
+// function as ReasonCode mutator.
+type ReasonCodeFunc func(context.Context, *ent.ReasonCodeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReasonCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ReasonCodeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReasonCodeMutation", m)
+}
+
 // The RevenueCodeFunc type is an adapter to allow the use of ordinary
 // function as RevenueCode mutator.
 type RevenueCodeFunc func(context.Context, *ent.RevenueCodeMutation) (ent.Value, error)

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MinimalUser } from "@/types/accounts";
+import { User } from "@/types/accounts";
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
@@ -37,14 +37,14 @@ export interface LocationComment extends BaseModel {
   commentType: string;
   commentTypeName: string;
   comment: string;
-  enteredBy: MinimalUser;
+  enteredBy: User;
 }
 
 export type LocationCommentFormValues = Omit<
   LocationComment,
-  | "organization"
-  | "created"
-  | "modified"
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
   | "id"
   | "location"
   | "enteredBy"
@@ -63,7 +63,7 @@ export interface LocationContact extends BaseModel {
 
 export type LocationContactFormValues = Omit<
   LocationContact,
-  "organization" | "created" | "modified" | "id" | "location"
+  "organizationId" | "createdAt" | "updatedAt" | "id" | "location"
 >;
 
 export interface Location extends BaseModel {
@@ -93,7 +93,7 @@ export interface Location extends BaseModel {
 
 export type LocationFormValues = Omit<
   Location,
-  | "organization"
+  | "organizationId"
   | "id"
   | "longitude"
   | "latitude"
@@ -105,8 +105,8 @@ export type LocationFormValues = Omit<
   | "locationComments"
   | "isGeocoded"
   | "placeId"
-  | "created"
-  | "modified"
+  | "createdAt"
+  | "updatedAt"
 > & {
   locationComments?: LocationCommentFormValues[] | null;
   locationContacts?: LocationContactFormValues[] | null;

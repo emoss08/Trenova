@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { HazmatSegRulesForm } from "@/components/hazmat-seg-rules-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,15 +27,14 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
+import { useHazmatSegRulesForm } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
+import type {
+  HazardousMaterialSegregationRuleFormValues as FormValues,
+  HazardousMaterialSegregationRule,
+} from "@/types/shipment";
 import React from "react";
 import { FormProvider } from "react-hook-form";
-import type {
-  HazardousMaterialSegregationRule,
-  HazardousMaterialSegregationRuleFormValues as FormValues,
-} from "@/types/shipment";
-import { useHazmatSegRulesForm } from "@/lib/validations/ShipmentSchema";
-import { HazmatSegRulesForm } from "@/components/hazmat-seg-rules-table-dialog";
 
 function HazmatRuleEditForm({
   hazmatRule,
@@ -97,7 +97,7 @@ export function HazardousMaterialEditDialog({
         </DialogHeader>
         <DialogDescription>
           Last updated on&nbsp;
-          {formatDate(hazmatRule.modified)}
+          {formatDate(hazmatRule.updatedAt)}
         </DialogDescription>
         <HazmatRuleEditForm hazmatRule={hazmatRule} />
       </DialogContent>

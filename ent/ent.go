@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
+	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/servicetype"
@@ -133,6 +134,7 @@ func checkColumn(table, column string) error {
 			locationcategory.Table:       locationcategory.ValidColumn,
 			organization.Table:           organization.ValidColumn,
 			qualifiercode.Table:          qualifiercode.ValidColumn,
+			reasoncode.Table:             reasoncode.ValidColumn,
 			revenuecode.Table:            revenuecode.ValidColumn,
 			routecontrol.Table:           routecontrol.ValidColumn,
 			servicetype.Table:            servicetype.ValidColumn,

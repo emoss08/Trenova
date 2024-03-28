@@ -43,19 +43,14 @@ function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
 
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(reasonCodeSchema),
-    defaultValues: {
-      status: reasonCode.status,
-      code: reasonCode.code,
-      codeType: reasonCode.codeType,
-      description: reasonCode.description,
-    },
+    defaultValues: reasonCode,
   });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     {
       method: "PUT",
-      path: `/reason_codes/${reasonCode.id}/`,
+      path: `/reason-codes/${reasonCode.id}/`,
       successMessage: "Reason Codes updated successfully.",
       queryKeysToInvalidate: ["reason-code-table-data"],
       closeModal: true,

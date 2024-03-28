@@ -29,7 +29,7 @@ type TableChangeAlert struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
 	// Status holds the value of the "status" field.
-	Status tablechangealert.Status `json:"status"`
+	Status tablechangealert.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required,max=50"`
 	// DatabaseAction holds the value of the "database_action" field.

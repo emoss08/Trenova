@@ -14,17 +14,17 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { Checkbox } from "@/components/common/fields/checkbox";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { ReasonCodeEditDialog } from "@/components/reason-code-edit-dialog";
+import { ReasonCodeDialog } from "@/components/reason-code-table-dialog";
+import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
 import { ReasonCode } from "@/types/shipment";
-import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ReasonCodeDialog } from "@/components/reason-code-table-dialog";
-import { ReasonCodeEditDialog } from "@/components/reason-code-edit-dialog";
-import { tableStatusChoices } from "@/lib/choices";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<ReasonCode>[] = [
   {
@@ -87,7 +87,7 @@ export default function ReasonCodes() {
     <DataTable
       queryKey="reason-code-table-data"
       columns={columns}
-      link="/reason_codes/"
+      link="/reason-codes/"
       name="Reason Codes"
       exportModelName="ReasonCode"
       filterColumn="code"

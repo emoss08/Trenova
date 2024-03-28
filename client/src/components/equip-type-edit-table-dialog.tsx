@@ -50,21 +50,7 @@ function EquipTypeEditForm({
 
   const { handleSubmit, control } = useForm<FormValues>({
     resolver: yupResolver(equipmentTypeSchema),
-    defaultValues: {
-      status: equipType.status,
-      name: equipType.name,
-      description: equipType?.description || "",
-      costPerMile: equipType?.costPerMile || "",
-      equipmentClass: equipType.equipmentClass,
-      exemptFromTolls: equipType.exemptFromTolls,
-      fixedCost: equipType?.fixedCost || "",
-      height: equipType?.height || "",
-      length: equipType?.length || "",
-      idlingFuelUsage: equipType?.idlingFuelUsage || "",
-      weight: equipType?.weight || "",
-      variableCost: equipType?.variableCost || "",
-      width: equipType?.width || "",
-    },
+    defaultValues: equipType,
   });
 
   const mutation = useCustomMutation<FormValues>(

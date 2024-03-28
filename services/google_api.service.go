@@ -47,6 +47,7 @@ func (r *GoogleAPIOps) UpdateGoogleAPI(googleAPI ent.GoogleApi) (*ent.GoogleApi,
 		SetMileageUnit(googleAPI.MileageUnit).
 		SetAddCustomerLocation(googleAPI.AddCustomerLocation).
 		SetAutoGeocode(googleAPI.AutoGeocode).
+		SetAddLocation(googleAPI.AddLocation).
 		SetTrafficModel(googleAPI.TrafficModel).
 		Save(r.ctx)
 	if err != nil {

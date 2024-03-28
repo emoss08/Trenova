@@ -21,10 +21,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDateToHumanReadable } from "@/lib/date";
 import { upperFirst } from "@/lib/utils";
 import { getLocationPickupData } from "@/services/LocationRequestService";
-import { MinimalUser } from "@/types/accounts";
+import { User } from "@/types/accounts";
 import { Location, LocationComment } from "@/types/location";
-import { faLoader } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Row } from "@tanstack/react-table";
@@ -37,30 +35,16 @@ function classNames(...classes: (string | boolean)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-function SkeletonLoader() {
-  return (
-    <div className="mt-20 flex flex-col items-center justify-center">
-      <FontAwesomeIcon icon={faLoader} spin className="mr-2 size-4" />
-      <p className="text-accent-foreground mt-2 font-semibold">
-        Loading Chart...
-      </p>
-      <p className="text-muted-foreground mt-2">
-        If this takes longer than 10 seconds, please refresh the page.
-      </p>
-    </div>
-  );
-}
-
-function UserAvatar({ user }: { user: MinimalUser }) {
+function UserAvatar({ user }: { user: User }) {
   // Determine the initials for the fallback avatar
-  const initials = user.profile
-    ? user.profile.firstName.charAt(0) + user.profile.lastName.charAt(0)
-    : "";
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
 
   // Determine the avatar image source
-  const avatarSrc = user.profile?.thumbnail
-    ? user.profile.thumbnail
-    : `https://avatar.vercel.sh/${user.email}`;
+  const avatarSrc =
+    user.profilePicUrl ?? `https://avatar.vercel.sh/${user.email}`;
 
   return (
     <Avatar className="relative mt-3 size-6 flex-none rounded-full">
@@ -75,10 +59,6 @@ function UserAvatar({ user }: { user: MinimalUser }) {
 }
 
 export function CommentList({ comments }: { comments: LocationComment[] }) {
-  const userFullName = (comment: LocationComment) => {
-    return `${comment.enteredBy.profile?.firstName} ${comment.enteredBy.profile?.lastName}`;
-  };
-
   return comments.length > 0 ? (
     <ul role="list" className="space-y-6">
       {comments.map((comment, commentIdx) => (
@@ -97,7 +77,7 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
               <div className="flex justify-between gap-x-4">
                 <div className="text-foreground py-0.5 text-xs leading-5">
                   <span className="text-accent-foreground font-medium">
-                    {upperFirst(userFullName(comment))}
+                    {upperFirst(comment.enteredBy.name)}
                   </span>
                   {" posted a "}
                   <span className="font-medium">
@@ -105,10 +85,10 @@ export function CommentList({ comments }: { comments: LocationComment[] }) {
                   </span>
                 </div>
                 <time
-                  dateTime={comment.created}
+                  dateTime={comment.createdAt}
                   className="text-muted-foreground flex-none py-0.5 text-xs leading-5"
                 >
-                  {formatDateToHumanReadable(comment.created)}
+                  {formatDateToHumanReadable(comment.createdAt)}
                 </time>
               </div>
               <p className="text-muted-foreground text-sm leading-6">

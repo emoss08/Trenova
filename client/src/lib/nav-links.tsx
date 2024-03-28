@@ -93,6 +93,14 @@ export const billingNavLinks = [
             description:
               "Manage customer-related data and categorize billing information. Essential for personalized billing management and maintaining accurate customer financial records.",
           },
+          {
+            key: "documentClassifications",
+            label: "Document Classifications",
+            link: "/billing/document-classes/",
+            permission: "view_document_classification",
+            description:
+              "Optimize billing management by categorizing essential documents like Proof of Delivery and Bills of Lading, ensuring accurate and efficient customer financial record keeping.",
+          },
         ],
       },
     ],
