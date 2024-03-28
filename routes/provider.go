@@ -139,6 +139,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Google API Routes
 			registerGoogleAPIRouter(r)
+
+			// Register Document Classification Routes
+			registerDocumentClassificationRouter(r)
 		})
 	})
 

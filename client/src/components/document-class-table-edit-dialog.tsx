@@ -57,7 +57,7 @@ function DocumentClassEditForm({
     control,
     {
       method: "PUT",
-      path: `/document_classifications/${documentClass.id}/`,
+      path: `/document-classifications/${documentClass.id}/`,
       successMessage: "Document Classification updated successfully.",
       queryKeysToInvalidate: ["document-classification-table-data"],
       closeModal: true,
@@ -99,7 +99,7 @@ export function DocumentClassEditDialog({
           <DialogTitle>{documentClass && documentClass.name}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on {documentClass && formatDate(documentClass.modified)}
+          Last updated on {documentClass && formatDate(documentClass.updatedAt)}
         </DialogDescription>
         {documentClass && (
           <DocumentClassEditForm documentClass={documentClass} />
