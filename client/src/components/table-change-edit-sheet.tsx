@@ -35,7 +35,7 @@ import {
 } from "@/types/organization";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { TableChangeAlertForm } from "./table-change-sheet";
 function TableChangeEditForm({
@@ -49,11 +49,26 @@ function TableChangeEditForm({
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const { handleSubmit, control, reset, watch } =
+  const { handleSubmit, control, reset, watch, setValue } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
       defaultValues: tableChangeAlert,
     });
+
+  console.info("tableName value", watch("tableName"));
+  console.info("topicName value", watch("topicName"));
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "source" && value.source === "Database") {
+        setValue("topicName", undefined);
+      } else if (name === "source" && value.source === "Kafka") {
+        setValue("tableName", undefined);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const mutation = useCustomMutation<TableChangeAlertFormValues>(
     control,

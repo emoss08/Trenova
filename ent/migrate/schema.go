@@ -488,6 +488,36 @@ var (
 			},
 		},
 	}
+	// DocumentClassificationsColumns holds the columns for the "document_classifications" table.
+	DocumentClassificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Size: 10},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// DocumentClassificationsTable holds the schema information for the "document_classifications" table.
+	DocumentClassificationsTable = &schema.Table{
+		Name:       "document_classifications",
+		Columns:    DocumentClassificationsColumns,
+		PrimaryKey: []*schema.Column{DocumentClassificationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "document_classifications_business_units_business_unit",
+				Columns:    []*schema.Column{DocumentClassificationsColumns[5]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "document_classifications_organizations_organization",
+				Columns:    []*schema.Column{DocumentClassificationsColumns[6]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// EmailControlsColumns holds the columns for the "email_controls" table.
 	EmailControlsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -781,6 +811,40 @@ var (
 				Name:    "generalledgeraccount_account_number_organization_id",
 				Unique:  true,
 				Columns: []*schema.Column{GeneralLedgerAccountsColumns[4], GeneralLedgerAccountsColumns[17]},
+			},
+		},
+	}
+	// GoogleApisColumns holds the columns for the "google_apis" table.
+	GoogleApisColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "api_key", Type: field.TypeString, Unique: true},
+		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"Imperial", "Metric"}, Default: "Imperial"},
+		{Name: "add_customer_location", Type: field.TypeBool, Default: false},
+		{Name: "auto_geocode", Type: field.TypeBool, Default: false},
+		{Name: "add_location", Type: field.TypeBool, Default: false},
+		{Name: "traffic_model", Type: field.TypeEnum, Enums: []string{"BestGuess", "Optimistic", "Pessimistic"}, Default: "BestGuess"},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
+	}
+	// GoogleApisTable holds the schema information for the "google_apis" table.
+	GoogleApisTable = &schema.Table{
+		Name:       "google_apis",
+		Columns:    GoogleApisColumns,
+		PrimaryKey: []*schema.Column{GoogleApisColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "google_apis_business_units_business_unit",
+				Columns:    []*schema.Column{GoogleApisColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "google_apis_organizations_google_api",
+				Columns:    []*schema.Column{GoogleApisColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -1372,6 +1436,7 @@ var (
 		DelayCodesTable,
 		DispatchControlsTable,
 		DivisionCodesTable,
+		DocumentClassificationsTable,
 		EmailControlsTable,
 		EmailProfilesTable,
 		EquipmentManufactuersTable,
@@ -1379,6 +1444,7 @@ var (
 		FeasibilityToolControlsTable,
 		FleetCodesTable,
 		GeneralLedgerAccountsTable,
+		GoogleApisTable,
 		HazardousMaterialsTable,
 		InvoiceControlsTable,
 		LocationCategoriesTable,
@@ -1426,6 +1492,8 @@ func init() {
 	DivisionCodesTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[4].RefTable = GeneralLedgerAccountsTable
+	DocumentClassificationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	DocumentClassificationsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	EmailControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EmailControlsTable.ForeignKeys[1].RefTable = EmailProfilesTable
 	EmailControlsTable.ForeignKeys[2].RefTable = EmailProfilesTable
@@ -1443,6 +1511,8 @@ func init() {
 	FleetCodesTable.ForeignKeys[2].RefTable = UsersTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	GoogleApisTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	GoogleApisTable.ForeignKeys[1].RefTable = OrganizationsTable
 	HazardousMaterialsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	HazardousMaterialsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable

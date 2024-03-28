@@ -96,7 +96,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
     control,
     {
       method: "PUT",
-      path: "/organization/google_api_details/", // Does not require an ID
+      path: `/google-api/${googleApi.id}`, // Does not require an ID
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["googleAPI"],
       errorMessage: t("formErrorMessage"),

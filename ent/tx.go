@@ -36,6 +36,8 @@ type Tx struct {
 	DispatchControl *DispatchControlClient
 	// DivisionCode is the client for interacting with the DivisionCode builders.
 	DivisionCode *DivisionCodeClient
+	// DocumentClassification is the client for interacting with the DocumentClassification builders.
+	DocumentClassification *DocumentClassificationClient
 	// EmailControl is the client for interacting with the EmailControl builders.
 	EmailControl *EmailControlClient
 	// EmailProfile is the client for interacting with the EmailProfile builders.
@@ -50,6 +52,8 @@ type Tx struct {
 	FleetCode *FleetCodeClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// GoogleApi is the client for interacting with the GoogleApi builders.
+	GoogleApi *GoogleApiClient
 	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
 	HazardousMaterial *HazardousMaterialClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
@@ -224,6 +228,7 @@ func (tx *Tx) init() {
 	tx.DelayCode = NewDelayCodeClient(tx.config)
 	tx.DispatchControl = NewDispatchControlClient(tx.config)
 	tx.DivisionCode = NewDivisionCodeClient(tx.config)
+	tx.DocumentClassification = NewDocumentClassificationClient(tx.config)
 	tx.EmailControl = NewEmailControlClient(tx.config)
 	tx.EmailProfile = NewEmailProfileClient(tx.config)
 	tx.EquipmentManufactuer = NewEquipmentManufactuerClient(tx.config)
@@ -231,6 +236,7 @@ func (tx *Tx) init() {
 	tx.FeasibilityToolControl = NewFeasibilityToolControlClient(tx.config)
 	tx.FleetCode = NewFleetCodeClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
+	tx.GoogleApi = NewGoogleApiClient(tx.config)
 	tx.HazardousMaterial = NewHazardousMaterialClient(tx.config)
 	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
 	tx.LocationCategory = NewLocationCategoryClient(tx.config)

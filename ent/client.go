@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/ent/delaycode"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/divisioncode"
+	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/emailprofile"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
@@ -34,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
@@ -81,6 +83,8 @@ type Client struct {
 	DispatchControl *DispatchControlClient
 	// DivisionCode is the client for interacting with the DivisionCode builders.
 	DivisionCode *DivisionCodeClient
+	// DocumentClassification is the client for interacting with the DocumentClassification builders.
+	DocumentClassification *DocumentClassificationClient
 	// EmailControl is the client for interacting with the EmailControl builders.
 	EmailControl *EmailControlClient
 	// EmailProfile is the client for interacting with the EmailProfile builders.
@@ -95,6 +99,8 @@ type Client struct {
 	FleetCode *FleetCodeClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
+	// GoogleApi is the client for interacting with the GoogleApi builders.
+	GoogleApi *GoogleApiClient
 	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
 	HazardousMaterial *HazardousMaterialClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
@@ -149,6 +155,7 @@ func (c *Client) init() {
 	c.DelayCode = NewDelayCodeClient(c.config)
 	c.DispatchControl = NewDispatchControlClient(c.config)
 	c.DivisionCode = NewDivisionCodeClient(c.config)
+	c.DocumentClassification = NewDocumentClassificationClient(c.config)
 	c.EmailControl = NewEmailControlClient(c.config)
 	c.EmailProfile = NewEmailProfileClient(c.config)
 	c.EquipmentManufactuer = NewEquipmentManufactuerClient(c.config)
@@ -156,6 +163,7 @@ func (c *Client) init() {
 	c.FeasibilityToolControl = NewFeasibilityToolControlClient(c.config)
 	c.FleetCode = NewFleetCodeClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
+	c.GoogleApi = NewGoogleApiClient(c.config)
 	c.HazardousMaterial = NewHazardousMaterialClient(c.config)
 	c.InvoiceControl = NewInvoiceControlClient(c.config)
 	c.LocationCategory = NewLocationCategoryClient(c.config)
@@ -275,6 +283,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DelayCode:              NewDelayCodeClient(cfg),
 		DispatchControl:        NewDispatchControlClient(cfg),
 		DivisionCode:           NewDivisionCodeClient(cfg),
+		DocumentClassification: NewDocumentClassificationClient(cfg),
 		EmailControl:           NewEmailControlClient(cfg),
 		EmailProfile:           NewEmailProfileClient(cfg),
 		EquipmentManufactuer:   NewEquipmentManufactuerClient(cfg),
@@ -282,6 +291,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
 		FleetCode:              NewFleetCodeClient(cfg),
 		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		GoogleApi:              NewGoogleApiClient(cfg),
 		HazardousMaterial:      NewHazardousMaterialClient(cfg),
 		InvoiceControl:         NewInvoiceControlClient(cfg),
 		LocationCategory:       NewLocationCategoryClient(cfg),
@@ -328,6 +338,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DelayCode:              NewDelayCodeClient(cfg),
 		DispatchControl:        NewDispatchControlClient(cfg),
 		DivisionCode:           NewDivisionCodeClient(cfg),
+		DocumentClassification: NewDocumentClassificationClient(cfg),
 		EmailControl:           NewEmailControlClient(cfg),
 		EmailProfile:           NewEmailProfileClient(cfg),
 		EquipmentManufactuer:   NewEquipmentManufactuerClient(cfg),
@@ -335,6 +346,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
 		FleetCode:              NewFleetCodeClient(cfg),
 		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
+		GoogleApi:              NewGoogleApiClient(cfg),
 		HazardousMaterial:      NewHazardousMaterialClient(cfg),
 		InvoiceControl:         NewInvoiceControlClient(cfg),
 		LocationCategory:       NewLocationCategoryClient(cfg),
@@ -382,12 +394,13 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AccessorialCharge, c.AccountingControl, c.BillingControl, c.BusinessUnit,
 		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
-		c.DispatchControl, c.DivisionCode, c.EmailControl, c.EmailProfile,
-		c.EquipmentManufactuer, c.EquipmentType, c.FeasibilityToolControl, c.FleetCode,
-		c.GeneralLedgerAccount, c.HazardousMaterial, c.InvoiceControl,
-		c.LocationCategory, c.Organization, c.QualifierCode, c.RevenueCode,
-		c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
-		c.TableChangeAlert, c.Tag, c.UsState, c.User, c.UserFavorite,
+		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
+		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
+		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
+		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
+		c.QualifierCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
+		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.UsState,
+		c.User, c.UserFavorite,
 	} {
 		n.Use(hooks...)
 	}
@@ -399,12 +412,13 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AccessorialCharge, c.AccountingControl, c.BillingControl, c.BusinessUnit,
 		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
-		c.DispatchControl, c.DivisionCode, c.EmailControl, c.EmailProfile,
-		c.EquipmentManufactuer, c.EquipmentType, c.FeasibilityToolControl, c.FleetCode,
-		c.GeneralLedgerAccount, c.HazardousMaterial, c.InvoiceControl,
-		c.LocationCategory, c.Organization, c.QualifierCode, c.RevenueCode,
-		c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
-		c.TableChangeAlert, c.Tag, c.UsState, c.User, c.UserFavorite,
+		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
+		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
+		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
+		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
+		c.QualifierCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
+		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.UsState,
+		c.User, c.UserFavorite,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -435,6 +449,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DispatchControl.mutate(ctx, m)
 	case *DivisionCodeMutation:
 		return c.DivisionCode.mutate(ctx, m)
+	case *DocumentClassificationMutation:
+		return c.DocumentClassification.mutate(ctx, m)
 	case *EmailControlMutation:
 		return c.EmailControl.mutate(ctx, m)
 	case *EmailProfileMutation:
@@ -449,6 +465,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.FleetCode.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
 		return c.GeneralLedgerAccount.mutate(ctx, m)
+	case *GoogleApiMutation:
+		return c.GoogleApi.mutate(ctx, m)
 	case *HazardousMaterialMutation:
 		return c.HazardousMaterial.mutate(ctx, m)
 	case *InvoiceControlMutation:
@@ -2414,6 +2432,171 @@ func (c *DivisionCodeClient) mutate(ctx context.Context, m *DivisionCodeMutation
 	}
 }
 
+// DocumentClassificationClient is a client for the DocumentClassification schema.
+type DocumentClassificationClient struct {
+	config
+}
+
+// NewDocumentClassificationClient returns a client for the DocumentClassification from the given config.
+func NewDocumentClassificationClient(c config) *DocumentClassificationClient {
+	return &DocumentClassificationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `documentclassification.Hooks(f(g(h())))`.
+func (c *DocumentClassificationClient) Use(hooks ...Hook) {
+	c.hooks.DocumentClassification = append(c.hooks.DocumentClassification, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `documentclassification.Intercept(f(g(h())))`.
+func (c *DocumentClassificationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DocumentClassification = append(c.inters.DocumentClassification, interceptors...)
+}
+
+// Create returns a builder for creating a DocumentClassification entity.
+func (c *DocumentClassificationClient) Create() *DocumentClassificationCreate {
+	mutation := newDocumentClassificationMutation(c.config, OpCreate)
+	return &DocumentClassificationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DocumentClassification entities.
+func (c *DocumentClassificationClient) CreateBulk(builders ...*DocumentClassificationCreate) *DocumentClassificationCreateBulk {
+	return &DocumentClassificationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DocumentClassificationClient) MapCreateBulk(slice any, setFunc func(*DocumentClassificationCreate, int)) *DocumentClassificationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DocumentClassificationCreateBulk{err: fmt.Errorf("calling to DocumentClassificationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DocumentClassificationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DocumentClassificationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DocumentClassification.
+func (c *DocumentClassificationClient) Update() *DocumentClassificationUpdate {
+	mutation := newDocumentClassificationMutation(c.config, OpUpdate)
+	return &DocumentClassificationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DocumentClassificationClient) UpdateOne(dc *DocumentClassification) *DocumentClassificationUpdateOne {
+	mutation := newDocumentClassificationMutation(c.config, OpUpdateOne, withDocumentClassification(dc))
+	return &DocumentClassificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DocumentClassificationClient) UpdateOneID(id uuid.UUID) *DocumentClassificationUpdateOne {
+	mutation := newDocumentClassificationMutation(c.config, OpUpdateOne, withDocumentClassificationID(id))
+	return &DocumentClassificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DocumentClassification.
+func (c *DocumentClassificationClient) Delete() *DocumentClassificationDelete {
+	mutation := newDocumentClassificationMutation(c.config, OpDelete)
+	return &DocumentClassificationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DocumentClassificationClient) DeleteOne(dc *DocumentClassification) *DocumentClassificationDeleteOne {
+	return c.DeleteOneID(dc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DocumentClassificationClient) DeleteOneID(id uuid.UUID) *DocumentClassificationDeleteOne {
+	builder := c.Delete().Where(documentclassification.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DocumentClassificationDeleteOne{builder}
+}
+
+// Query returns a query builder for DocumentClassification.
+func (c *DocumentClassificationClient) Query() *DocumentClassificationQuery {
+	return &DocumentClassificationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDocumentClassification},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DocumentClassification entity by its id.
+func (c *DocumentClassificationClient) Get(ctx context.Context, id uuid.UUID) (*DocumentClassification, error) {
+	return c.Query().Where(documentclassification.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DocumentClassificationClient) GetX(ctx context.Context, id uuid.UUID) *DocumentClassification {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a DocumentClassification.
+func (c *DocumentClassificationClient) QueryBusinessUnit(dc *DocumentClassification) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := dc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, documentclassification.BusinessUnitTable, documentclassification.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a DocumentClassification.
+func (c *DocumentClassificationClient) QueryOrganization(dc *DocumentClassification) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := dc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, documentclassification.OrganizationTable, documentclassification.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DocumentClassificationClient) Hooks() []Hook {
+	return c.hooks.DocumentClassification
+}
+
+// Interceptors returns the client interceptors.
+func (c *DocumentClassificationClient) Interceptors() []Interceptor {
+	return c.inters.DocumentClassification
+}
+
+func (c *DocumentClassificationClient) mutate(ctx context.Context, m *DocumentClassificationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DocumentClassificationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DocumentClassificationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DocumentClassificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DocumentClassificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DocumentClassification mutation op: %q", m.Op())
+	}
+}
+
 // EmailControlClient is a client for the EmailControl schema.
 type EmailControlClient struct {
 	config
@@ -3634,6 +3817,171 @@ func (c *GeneralLedgerAccountClient) mutate(ctx context.Context, m *GeneralLedge
 	}
 }
 
+// GoogleApiClient is a client for the GoogleApi schema.
+type GoogleApiClient struct {
+	config
+}
+
+// NewGoogleApiClient returns a client for the GoogleApi from the given config.
+func NewGoogleApiClient(c config) *GoogleApiClient {
+	return &GoogleApiClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `googleapi.Hooks(f(g(h())))`.
+func (c *GoogleApiClient) Use(hooks ...Hook) {
+	c.hooks.GoogleApi = append(c.hooks.GoogleApi, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `googleapi.Intercept(f(g(h())))`.
+func (c *GoogleApiClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GoogleApi = append(c.inters.GoogleApi, interceptors...)
+}
+
+// Create returns a builder for creating a GoogleApi entity.
+func (c *GoogleApiClient) Create() *GoogleApiCreate {
+	mutation := newGoogleApiMutation(c.config, OpCreate)
+	return &GoogleApiCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GoogleApi entities.
+func (c *GoogleApiClient) CreateBulk(builders ...*GoogleApiCreate) *GoogleApiCreateBulk {
+	return &GoogleApiCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GoogleApiClient) MapCreateBulk(slice any, setFunc func(*GoogleApiCreate, int)) *GoogleApiCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GoogleApiCreateBulk{err: fmt.Errorf("calling to GoogleApiClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GoogleApiCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GoogleApiCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GoogleApi.
+func (c *GoogleApiClient) Update() *GoogleApiUpdate {
+	mutation := newGoogleApiMutation(c.config, OpUpdate)
+	return &GoogleApiUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GoogleApiClient) UpdateOne(ga *GoogleApi) *GoogleApiUpdateOne {
+	mutation := newGoogleApiMutation(c.config, OpUpdateOne, withGoogleApi(ga))
+	return &GoogleApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GoogleApiClient) UpdateOneID(id uuid.UUID) *GoogleApiUpdateOne {
+	mutation := newGoogleApiMutation(c.config, OpUpdateOne, withGoogleApiID(id))
+	return &GoogleApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GoogleApi.
+func (c *GoogleApiClient) Delete() *GoogleApiDelete {
+	mutation := newGoogleApiMutation(c.config, OpDelete)
+	return &GoogleApiDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GoogleApiClient) DeleteOne(ga *GoogleApi) *GoogleApiDeleteOne {
+	return c.DeleteOneID(ga.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GoogleApiClient) DeleteOneID(id uuid.UUID) *GoogleApiDeleteOne {
+	builder := c.Delete().Where(googleapi.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GoogleApiDeleteOne{builder}
+}
+
+// Query returns a query builder for GoogleApi.
+func (c *GoogleApiClient) Query() *GoogleApiQuery {
+	return &GoogleApiQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGoogleApi},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GoogleApi entity by its id.
+func (c *GoogleApiClient) Get(ctx context.Context, id uuid.UUID) (*GoogleApi, error) {
+	return c.Query().Where(googleapi.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GoogleApiClient) GetX(ctx context.Context, id uuid.UUID) *GoogleApi {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganization queries the organization edge of a GoogleApi.
+func (c *GoogleApiClient) QueryOrganization(ga *GoogleApi) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(googleapi.Table, googleapi.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, googleapi.OrganizationTable, googleapi.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBusinessUnit queries the business_unit edge of a GoogleApi.
+func (c *GoogleApiClient) QueryBusinessUnit(ga *GoogleApi) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(googleapi.Table, googleapi.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, googleapi.BusinessUnitTable, googleapi.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GoogleApiClient) Hooks() []Hook {
+	return c.hooks.GoogleApi
+}
+
+// Interceptors returns the client interceptors.
+func (c *GoogleApiClient) Interceptors() []Interceptor {
+	return c.inters.GoogleApi
+}
+
+func (c *GoogleApiClient) mutate(ctx context.Context, m *GoogleApiMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GoogleApiCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GoogleApiUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GoogleApiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GoogleApiDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GoogleApi mutation op: %q", m.Op())
+	}
+}
+
 // HazardousMaterialClient is a client for the HazardousMaterial schema.
 type HazardousMaterialClient struct {
 	config
@@ -4374,6 +4722,22 @@ func (c *OrganizationClient) QueryEmailControl(o *Organization) *EmailControlQue
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(emailcontrol.Table, emailcontrol.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, organization.EmailControlTable, organization.EmailControlColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGoogleAPI queries the google_api edge of a Organization.
+func (c *OrganizationClient) QueryGoogleAPI(o *Organization) *GoogleApiQuery {
+	query := (&GoogleApiClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(googleapi.Table, googleapi.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, organization.GoogleAPITable, organization.GoogleAPIColumn),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil
@@ -6393,20 +6757,22 @@ type (
 	hooks struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
-		EmailControl, EmailProfile, EquipmentManufactuer, EquipmentType,
-		FeasibilityToolControl, FleetCode, GeneralLedgerAccount, HazardousMaterial,
-		InvoiceControl, LocationCategory, Organization, QualifierCode, RevenueCode,
-		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, UsState, User, UserFavorite []ent.Hook
+		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
+		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
+		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
+		QualifierCode, RevenueCode, RouteControl, ServiceType, Session,
+		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
+		UserFavorite []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
-		EmailControl, EmailProfile, EquipmentManufactuer, EquipmentType,
-		FeasibilityToolControl, FleetCode, GeneralLedgerAccount, HazardousMaterial,
-		InvoiceControl, LocationCategory, Organization, QualifierCode, RevenueCode,
-		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, UsState, User, UserFavorite []ent.Interceptor
+		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
+		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
+		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
+		QualifierCode, RevenueCode, RouteControl, ServiceType, Session,
+		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
+		UserFavorite []ent.Interceptor
 	}
 )
 

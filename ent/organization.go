@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
@@ -71,9 +72,11 @@ type OrganizationEdges struct {
 	ShipmentControl *ShipmentControl `json:"shipment_control,omitempty"`
 	// EmailControl holds the value of the email_control edge.
 	EmailControl *EmailControl `json:"email_control,omitempty"`
+	// GoogleAPI holds the value of the google_api edge.
+	GoogleAPI *GoogleApi `json:"google_api,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [9]bool
+	loadedTypes [10]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -173,6 +176,17 @@ func (e OrganizationEdges) EmailControlOrErr() (*EmailControl, error) {
 		return nil, &NotFoundError{label: emailcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "email_control"}
+}
+
+// GoogleAPIOrErr returns the GoogleAPI value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e OrganizationEdges) GoogleAPIOrErr() (*GoogleApi, error) {
+	if e.GoogleAPI != nil {
+		return e.GoogleAPI, nil
+	} else if e.loadedTypes[9] {
+		return nil, &NotFoundError{label: googleapi.Label}
+	}
+	return nil, &NotLoadedError{edge: "google_api"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -318,6 +332,11 @@ func (o *Organization) QueryShipmentControl() *ShipmentControlQuery {
 // QueryEmailControl queries the "email_control" edge of the Organization entity.
 func (o *Organization) QueryEmailControl() *EmailControlQuery {
 	return NewOrganizationClient(o.config).QueryEmailControl(o)
+}
+
+// QueryGoogleAPI queries the "google_api" edge of the Organization entity.
+func (o *Organization) QueryGoogleAPI() *GoogleApiQuery {
+	return NewOrganizationClient(o.config).QueryGoogleAPI(o)
 }
 
 // Update returns a builder for updating this Organization.

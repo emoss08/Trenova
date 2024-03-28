@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/ent/delaycode"
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/divisioncode"
+	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/emailprofile"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
@@ -662,6 +664,29 @@ func init() {
 	divisioncodeDescID := divisioncodeMixinFields0[0].Descriptor()
 	// divisioncode.DefaultID holds the default value on creation for the id field.
 	divisioncode.DefaultID = divisioncodeDescID.Default.(func() uuid.UUID)
+	documentclassificationMixin := schema.DocumentClassification{}.Mixin()
+	documentclassificationMixinFields0 := documentclassificationMixin[0].Fields()
+	_ = documentclassificationMixinFields0
+	documentclassificationFields := schema.DocumentClassification{}.Fields()
+	_ = documentclassificationFields
+	// documentclassificationDescCreatedAt is the schema descriptor for created_at field.
+	documentclassificationDescCreatedAt := documentclassificationMixinFields0[3].Descriptor()
+	// documentclassification.DefaultCreatedAt holds the default value on creation for the created_at field.
+	documentclassification.DefaultCreatedAt = documentclassificationDescCreatedAt.Default.(func() time.Time)
+	// documentclassificationDescUpdatedAt is the schema descriptor for updated_at field.
+	documentclassificationDescUpdatedAt := documentclassificationMixinFields0[4].Descriptor()
+	// documentclassification.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	documentclassification.DefaultUpdatedAt = documentclassificationDescUpdatedAt.Default.(func() time.Time)
+	// documentclassification.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	documentclassification.UpdateDefaultUpdatedAt = documentclassificationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// documentclassificationDescName is the schema descriptor for name field.
+	documentclassificationDescName := documentclassificationFields[0].Descriptor()
+	// documentclassification.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	documentclassification.NameValidator = documentclassificationDescName.Validators[0].(func(string) error)
+	// documentclassificationDescID is the schema descriptor for id field.
+	documentclassificationDescID := documentclassificationMixinFields0[0].Descriptor()
+	// documentclassification.DefaultID holds the default value on creation for the id field.
+	documentclassification.DefaultID = documentclassificationDescID.Default.(func() uuid.UUID)
 	emailcontrolMixin := schema.EmailControl{}.Mixin()
 	emailcontrolMixinFields0 := emailcontrolMixin[0].Fields()
 	_ = emailcontrolMixinFields0
@@ -911,6 +936,41 @@ func init() {
 	generalledgeraccountDescID := generalledgeraccountMixinFields0[0].Descriptor()
 	// generalledgeraccount.DefaultID holds the default value on creation for the id field.
 	generalledgeraccount.DefaultID = generalledgeraccountDescID.Default.(func() uuid.UUID)
+	googleapiMixin := schema.GoogleApi{}.Mixin()
+	googleapiMixinFields0 := googleapiMixin[0].Fields()
+	_ = googleapiMixinFields0
+	googleapiFields := schema.GoogleApi{}.Fields()
+	_ = googleapiFields
+	// googleapiDescCreatedAt is the schema descriptor for created_at field.
+	googleapiDescCreatedAt := googleapiMixinFields0[1].Descriptor()
+	// googleapi.DefaultCreatedAt holds the default value on creation for the created_at field.
+	googleapi.DefaultCreatedAt = googleapiDescCreatedAt.Default.(func() time.Time)
+	// googleapiDescUpdatedAt is the schema descriptor for updated_at field.
+	googleapiDescUpdatedAt := googleapiMixinFields0[2].Descriptor()
+	// googleapi.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	googleapi.DefaultUpdatedAt = googleapiDescUpdatedAt.Default.(func() time.Time)
+	// googleapi.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	googleapi.UpdateDefaultUpdatedAt = googleapiDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// googleapiDescAPIKey is the schema descriptor for api_key field.
+	googleapiDescAPIKey := googleapiFields[0].Descriptor()
+	// googleapi.APIKeyValidator is a validator for the "api_key" field. It is called by the builders before save.
+	googleapi.APIKeyValidator = googleapiDescAPIKey.Validators[0].(func(string) error)
+	// googleapiDescAddCustomerLocation is the schema descriptor for add_customer_location field.
+	googleapiDescAddCustomerLocation := googleapiFields[2].Descriptor()
+	// googleapi.DefaultAddCustomerLocation holds the default value on creation for the add_customer_location field.
+	googleapi.DefaultAddCustomerLocation = googleapiDescAddCustomerLocation.Default.(bool)
+	// googleapiDescAutoGeocode is the schema descriptor for auto_geocode field.
+	googleapiDescAutoGeocode := googleapiFields[3].Descriptor()
+	// googleapi.DefaultAutoGeocode holds the default value on creation for the auto_geocode field.
+	googleapi.DefaultAutoGeocode = googleapiDescAutoGeocode.Default.(bool)
+	// googleapiDescAddLocation is the schema descriptor for add_location field.
+	googleapiDescAddLocation := googleapiFields[4].Descriptor()
+	// googleapi.DefaultAddLocation holds the default value on creation for the add_location field.
+	googleapi.DefaultAddLocation = googleapiDescAddLocation.Default.(bool)
+	// googleapiDescID is the schema descriptor for id field.
+	googleapiDescID := googleapiMixinFields0[0].Descriptor()
+	// googleapi.DefaultID holds the default value on creation for the id field.
+	googleapi.DefaultID = googleapiDescID.Default.(func() uuid.UUID)
 	hazardousmaterialMixin := schema.HazardousMaterial{}.Mixin()
 	hazardousmaterialMixinFields0 := hazardousmaterialMixin[0].Fields()
 	_ = hazardousmaterialMixinFields0

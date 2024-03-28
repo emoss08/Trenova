@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/routecontrol"
@@ -293,6 +294,25 @@ func (oc *OrganizationCreate) SetNillableEmailControlID(id *uuid.UUID) *Organiza
 // SetEmailControl sets the "email_control" edge to the EmailControl entity.
 func (oc *OrganizationCreate) SetEmailControl(e *EmailControl) *OrganizationCreate {
 	return oc.SetEmailControlID(e.ID)
+}
+
+// SetGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID.
+func (oc *OrganizationCreate) SetGoogleAPIID(id uuid.UUID) *OrganizationCreate {
+	oc.mutation.SetGoogleAPIID(id)
+	return oc
+}
+
+// SetNillableGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID if the given value is not nil.
+func (oc *OrganizationCreate) SetNillableGoogleAPIID(id *uuid.UUID) *OrganizationCreate {
+	if id != nil {
+		oc = oc.SetGoogleAPIID(*id)
+	}
+	return oc
+}
+
+// SetGoogleAPI sets the "google_api" edge to the GoogleApi entity.
+func (oc *OrganizationCreate) SetGoogleAPI(g *GoogleApi) *OrganizationCreate {
+	return oc.SetGoogleAPIID(g.ID)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -611,6 +631,22 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.GoogleAPIIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.GoogleAPITable,
+			Columns: []string{organization.GoogleAPIColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(googleapi.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

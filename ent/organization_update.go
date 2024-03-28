@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/ent/emailcontrol"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
@@ -306,6 +307,25 @@ func (ou *OrganizationUpdate) SetEmailControl(e *EmailControl) *OrganizationUpda
 	return ou.SetEmailControlID(e.ID)
 }
 
+// SetGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID.
+func (ou *OrganizationUpdate) SetGoogleAPIID(id uuid.UUID) *OrganizationUpdate {
+	ou.mutation.SetGoogleAPIID(id)
+	return ou
+}
+
+// SetNillableGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID if the given value is not nil.
+func (ou *OrganizationUpdate) SetNillableGoogleAPIID(id *uuid.UUID) *OrganizationUpdate {
+	if id != nil {
+		ou = ou.SetGoogleAPIID(*id)
+	}
+	return ou
+}
+
+// SetGoogleAPI sets the "google_api" edge to the GoogleApi entity.
+func (ou *OrganizationUpdate) SetGoogleAPI(g *GoogleApi) *OrganizationUpdate {
+	return ou.SetGoogleAPIID(g.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ou *OrganizationUpdate) Mutation() *OrganizationMutation {
 	return ou.mutation
@@ -362,6 +382,12 @@ func (ou *OrganizationUpdate) ClearShipmentControl() *OrganizationUpdate {
 // ClearEmailControl clears the "email_control" edge to the EmailControl entity.
 func (ou *OrganizationUpdate) ClearEmailControl() *OrganizationUpdate {
 	ou.mutation.ClearEmailControl()
+	return ou
+}
+
+// ClearGoogleAPI clears the "google_api" edge to the GoogleApi entity.
+func (ou *OrganizationUpdate) ClearGoogleAPI() *OrganizationUpdate {
+	ou.mutation.ClearGoogleAPI()
 	return ou
 }
 
@@ -737,6 +763,35 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ou.mutation.GoogleAPICleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.GoogleAPITable,
+			Columns: []string{organization.GoogleAPIColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(googleapi.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.GoogleAPIIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.GoogleAPITable,
+			Columns: []string{organization.GoogleAPIColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(googleapi.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(ou.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1026,6 +1081,25 @@ func (ouo *OrganizationUpdateOne) SetEmailControl(e *EmailControl) *Organization
 	return ouo.SetEmailControlID(e.ID)
 }
 
+// SetGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID.
+func (ouo *OrganizationUpdateOne) SetGoogleAPIID(id uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.SetGoogleAPIID(id)
+	return ouo
+}
+
+// SetNillableGoogleAPIID sets the "google_api" edge to the GoogleApi entity by ID if the given value is not nil.
+func (ouo *OrganizationUpdateOne) SetNillableGoogleAPIID(id *uuid.UUID) *OrganizationUpdateOne {
+	if id != nil {
+		ouo = ouo.SetGoogleAPIID(*id)
+	}
+	return ouo
+}
+
+// SetGoogleAPI sets the "google_api" edge to the GoogleApi entity.
+func (ouo *OrganizationUpdateOne) SetGoogleAPI(g *GoogleApi) *OrganizationUpdateOne {
+	return ouo.SetGoogleAPIID(g.ID)
+}
+
 // Mutation returns the OrganizationMutation object of the builder.
 func (ouo *OrganizationUpdateOne) Mutation() *OrganizationMutation {
 	return ouo.mutation
@@ -1082,6 +1156,12 @@ func (ouo *OrganizationUpdateOne) ClearShipmentControl() *OrganizationUpdateOne 
 // ClearEmailControl clears the "email_control" edge to the EmailControl entity.
 func (ouo *OrganizationUpdateOne) ClearEmailControl() *OrganizationUpdateOne {
 	ouo.mutation.ClearEmailControl()
+	return ouo
+}
+
+// ClearGoogleAPI clears the "google_api" edge to the GoogleApi entity.
+func (ouo *OrganizationUpdateOne) ClearGoogleAPI() *OrganizationUpdateOne {
+	ouo.mutation.ClearGoogleAPI()
 	return ouo
 }
 
@@ -1480,6 +1560,35 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailcontrol.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.GoogleAPICleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.GoogleAPITable,
+			Columns: []string{organization.GoogleAPIColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(googleapi.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.GoogleAPIIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   organization.GoogleAPITable,
+			Columns: []string{organization.GoogleAPIColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(googleapi.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

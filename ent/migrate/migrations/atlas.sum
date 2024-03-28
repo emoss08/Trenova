@@ -1,4 +1,4 @@
-h1:mNcrOAN0RRSQcnQQBU9kqDbrsPaNzorC10Hg4kr3E1M=
+h1:ow+WCWro70zIjZdP73q1SV3Rwcu1SUQqcDrY6fJWUC8=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -65,3 +65,6 @@ h1:mNcrOAN0RRSQcnQQBU9kqDbrsPaNzorC10Hg4kr3E1M=
 20240324002515_create_qualifier_code.sql h1:wQDEXXmytWuV/zJxyUVwQC1HC7YTegoO+EriiwUFebQ=
 20240324002612_alter_qualifier_code.sql h1:6tecVHmso8Usn0aM/0VJoCpJiRoB07w1k9I7o45whaY=
 20240325002759_alter_table_change_alert.sql h1:mCw70qGUEV/vadpkKTFHg/cutPQzw6dcV4jZpn+mJIw=
+20240328024739_create_google_api.sql h1:2DIGyGHpZK/G7SLrVvqwwJ7omL8CmNgcGcoQcBXPjzI=
+20240328030317_alter_google_api.sql h1:/PwMHTAvhvJWOT4i79TPBCy3OPc4YA3OtLxWfLO18tg=
+20240328031731_create_document_classification.sql h1:pWt5/GgBeyySoA64Vx9hKLmRJFiQS1qMMJOB0NOr3qM=

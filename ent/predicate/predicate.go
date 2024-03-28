@@ -39,6 +39,9 @@ type DispatchControl func(*sql.Selector)
 // DivisionCode is the predicate function for divisioncode builders.
 type DivisionCode func(*sql.Selector)
 
+// DocumentClassification is the predicate function for documentclassification builders.
+type DocumentClassification func(*sql.Selector)
+
 // EmailControl is the predicate function for emailcontrol builders.
 type EmailControl func(*sql.Selector)
 
@@ -59,6 +62,9 @@ type FleetCode func(*sql.Selector)
 
 // GeneralLedgerAccount is the predicate function for generalledgeraccount builders.
 type GeneralLedgerAccount func(*sql.Selector)
+
+// GoogleApi is the predicate function for googleapi builders.
+type GoogleApi func(*sql.Selector)
 
 // HazardousMaterial is the predicate function for hazardousmaterial builders.
 type HazardousMaterial func(*sql.Selector)

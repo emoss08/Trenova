@@ -1,5 +1,5 @@
-package schema
 
+package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"

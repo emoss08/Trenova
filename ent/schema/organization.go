@@ -70,6 +70,9 @@ func (Organization) Edges() []ent.Edge {
 		edge.To("email_control", EmailControl.Type).
 			StorageKey(edge.Column("organization_id")).
 			Unique(),
+		edge.To("google_api", GoogleApi.Type).
+			StorageKey(edge.Column("organization_id")).
+			Unique(),
 	}
 }
 

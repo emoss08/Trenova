@@ -136,6 +136,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Table Change Alert Routes
 			registerTableChangeAlertRouter(r)
+
+			// Register Google API Routes
+			registerGoogleAPIRouter(r)
 		})
 	})
 
