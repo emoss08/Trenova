@@ -49,7 +49,7 @@ function HazmatRuleEditForm({
     hazmatSegRulesForm.control,
     {
       method: "PUT",
-      path: `/hazardous_material_segregation/${hazmatRule.id}/`,
+      path: `/hazardous-material-segregations/${hazmatRule.id}/`,
       successMessage: "Hazardous Material updated successfully.",
       queryKeysToInvalidate: ["hazardous-material-table-data"],
       closeModal: true,

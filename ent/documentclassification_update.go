@@ -35,6 +35,20 @@ func (dcu *DocumentClassificationUpdate) SetUpdatedAt(t time.Time) *DocumentClas
 	return dcu
 }
 
+// SetStatus sets the "status" field.
+func (dcu *DocumentClassificationUpdate) SetStatus(d documentclassification.Status) *DocumentClassificationUpdate {
+	dcu.mutation.SetStatus(d)
+	return dcu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (dcu *DocumentClassificationUpdate) SetNillableStatus(d *documentclassification.Status) *DocumentClassificationUpdate {
+	if d != nil {
+		dcu.SetStatus(*d)
+	}
+	return dcu
+}
+
 // SetName sets the "name" field.
 func (dcu *DocumentClassificationUpdate) SetName(s string) *DocumentClassificationUpdate {
 	dcu.mutation.SetName(s)
@@ -112,6 +126,11 @@ func (dcu *DocumentClassificationUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (dcu *DocumentClassificationUpdate) check() error {
+	if v, ok := dcu.mutation.Status(); ok {
+		if err := documentclassification.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
+		}
+	}
 	if v, ok := dcu.mutation.Name(); ok {
 		if err := documentclassification.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.name": %w`, err)}
@@ -147,6 +166,9 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 	if value, ok := dcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := dcu.mutation.Status(); ok {
+		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
+	}
 	if value, ok := dcu.mutation.Name(); ok {
 		_spec.SetField(documentclassification.FieldName, field.TypeString, value)
 	}
@@ -181,6 +203,20 @@ type DocumentClassificationUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (dcuo *DocumentClassificationUpdateOne) SetUpdatedAt(t time.Time) *DocumentClassificationUpdateOne {
 	dcuo.mutation.SetUpdatedAt(t)
+	return dcuo
+}
+
+// SetStatus sets the "status" field.
+func (dcuo *DocumentClassificationUpdateOne) SetStatus(d documentclassification.Status) *DocumentClassificationUpdateOne {
+	dcuo.mutation.SetStatus(d)
+	return dcuo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (dcuo *DocumentClassificationUpdateOne) SetNillableStatus(d *documentclassification.Status) *DocumentClassificationUpdateOne {
+	if d != nil {
+		dcuo.SetStatus(*d)
+	}
 	return dcuo
 }
 
@@ -274,6 +310,11 @@ func (dcuo *DocumentClassificationUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (dcuo *DocumentClassificationUpdateOne) check() error {
+	if v, ok := dcuo.mutation.Status(); ok {
+		if err := documentclassification.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
+		}
+	}
 	if v, ok := dcuo.mutation.Name(); ok {
 		if err := documentclassification.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.name": %w`, err)}
@@ -325,6 +366,9 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 	}
 	if value, ok := dcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := dcuo.mutation.Status(); ok {
+		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := dcuo.mutation.Name(); ok {
 		_spec.SetField(documentclassification.FieldName, field.TypeString, value)

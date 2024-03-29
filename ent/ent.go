@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
@@ -46,9 +47,11 @@ import (
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
+	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
+	"github.com/emoss08/trenova/ent/worker"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -109,43 +112,46 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			accessorialcharge.Table:      accessorialcharge.ValidColumn,
-			accountingcontrol.Table:      accountingcontrol.ValidColumn,
-			billingcontrol.Table:         billingcontrol.ValidColumn,
-			businessunit.Table:           businessunit.ValidColumn,
-			chargetype.Table:             chargetype.ValidColumn,
-			commenttype.Table:            commenttype.ValidColumn,
-			commodity.Table:              commodity.ValidColumn,
-			customer.Table:               customer.ValidColumn,
-			delaycode.Table:              delaycode.ValidColumn,
-			dispatchcontrol.Table:        dispatchcontrol.ValidColumn,
-			divisioncode.Table:           divisioncode.ValidColumn,
-			documentclassification.Table: documentclassification.ValidColumn,
-			emailcontrol.Table:           emailcontrol.ValidColumn,
-			emailprofile.Table:           emailprofile.ValidColumn,
-			equipmentmanufactuer.Table:   equipmentmanufactuer.ValidColumn,
-			equipmenttype.Table:          equipmenttype.ValidColumn,
-			feasibilitytoolcontrol.Table: feasibilitytoolcontrol.ValidColumn,
-			fleetcode.Table:              fleetcode.ValidColumn,
-			generalledgeraccount.Table:   generalledgeraccount.ValidColumn,
-			googleapi.Table:              googleapi.ValidColumn,
-			hazardousmaterial.Table:      hazardousmaterial.ValidColumn,
-			invoicecontrol.Table:         invoicecontrol.ValidColumn,
-			locationcategory.Table:       locationcategory.ValidColumn,
-			organization.Table:           organization.ValidColumn,
-			qualifiercode.Table:          qualifiercode.ValidColumn,
-			reasoncode.Table:             reasoncode.ValidColumn,
-			revenuecode.Table:            revenuecode.ValidColumn,
-			routecontrol.Table:           routecontrol.ValidColumn,
-			servicetype.Table:            servicetype.ValidColumn,
-			session.Table:                session.ValidColumn,
-			shipmentcontrol.Table:        shipmentcontrol.ValidColumn,
-			shipmenttype.Table:           shipmenttype.ValidColumn,
-			tablechangealert.Table:       tablechangealert.ValidColumn,
-			tag.Table:                    tag.ValidColumn,
-			usstate.Table:                usstate.ValidColumn,
-			user.Table:                   user.ValidColumn,
-			userfavorite.Table:           userfavorite.ValidColumn,
+			accessorialcharge.Table:            accessorialcharge.ValidColumn,
+			accountingcontrol.Table:            accountingcontrol.ValidColumn,
+			billingcontrol.Table:               billingcontrol.ValidColumn,
+			businessunit.Table:                 businessunit.ValidColumn,
+			chargetype.Table:                   chargetype.ValidColumn,
+			commenttype.Table:                  commenttype.ValidColumn,
+			commodity.Table:                    commodity.ValidColumn,
+			customer.Table:                     customer.ValidColumn,
+			delaycode.Table:                    delaycode.ValidColumn,
+			dispatchcontrol.Table:              dispatchcontrol.ValidColumn,
+			divisioncode.Table:                 divisioncode.ValidColumn,
+			documentclassification.Table:       documentclassification.ValidColumn,
+			emailcontrol.Table:                 emailcontrol.ValidColumn,
+			emailprofile.Table:                 emailprofile.ValidColumn,
+			equipmentmanufactuer.Table:         equipmentmanufactuer.ValidColumn,
+			equipmenttype.Table:                equipmenttype.ValidColumn,
+			feasibilitytoolcontrol.Table:       feasibilitytoolcontrol.ValidColumn,
+			fleetcode.Table:                    fleetcode.ValidColumn,
+			generalledgeraccount.Table:         generalledgeraccount.ValidColumn,
+			googleapi.Table:                    googleapi.ValidColumn,
+			hazardousmaterial.Table:            hazardousmaterial.ValidColumn,
+			hazardousmaterialsegregation.Table: hazardousmaterialsegregation.ValidColumn,
+			invoicecontrol.Table:               invoicecontrol.ValidColumn,
+			locationcategory.Table:             locationcategory.ValidColumn,
+			organization.Table:                 organization.ValidColumn,
+			qualifiercode.Table:                qualifiercode.ValidColumn,
+			reasoncode.Table:                   reasoncode.ValidColumn,
+			revenuecode.Table:                  revenuecode.ValidColumn,
+			routecontrol.Table:                 routecontrol.ValidColumn,
+			servicetype.Table:                  servicetype.ValidColumn,
+			session.Table:                      session.ValidColumn,
+			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
+			shipmenttype.Table:                 shipmenttype.ValidColumn,
+			tablechangealert.Table:             tablechangealert.ValidColumn,
+			tag.Table:                          tag.ValidColumn,
+			tractor.Table:                      tractor.ValidColumn,
+			usstate.Table:                      usstate.ValidColumn,
+			user.Table:                         user.ValidColumn,
+			userfavorite.Table:                 userfavorite.ValidColumn,
+			worker.Table:                       worker.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

@@ -145,6 +145,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Reason Code Routes
 			registerReasonCodeRouter(r)
+
+			// Register Hazardous Material Segregation Rule Routes
+			registerHazmatSegRuleRouter(r)
 		})
 	})
 

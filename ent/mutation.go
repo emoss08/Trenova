@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
@@ -46,9 +47,11 @@ import (
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
+	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
+	"github.com/emoss08/trenova/ent/worker"
 	"github.com/google/uuid"
 )
 
@@ -61,43 +64,46 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAccessorialCharge      = "AccessorialCharge"
-	TypeAccountingControl      = "AccountingControl"
-	TypeBillingControl         = "BillingControl"
-	TypeBusinessUnit           = "BusinessUnit"
-	TypeChargeType             = "ChargeType"
-	TypeCommentType            = "CommentType"
-	TypeCommodity              = "Commodity"
-	TypeCustomer               = "Customer"
-	TypeDelayCode              = "DelayCode"
-	TypeDispatchControl        = "DispatchControl"
-	TypeDivisionCode           = "DivisionCode"
-	TypeDocumentClassification = "DocumentClassification"
-	TypeEmailControl           = "EmailControl"
-	TypeEmailProfile           = "EmailProfile"
-	TypeEquipmentManufactuer   = "EquipmentManufactuer"
-	TypeEquipmentType          = "EquipmentType"
-	TypeFeasibilityToolControl = "FeasibilityToolControl"
-	TypeFleetCode              = "FleetCode"
-	TypeGeneralLedgerAccount   = "GeneralLedgerAccount"
-	TypeGoogleApi              = "GoogleApi"
-	TypeHazardousMaterial      = "HazardousMaterial"
-	TypeInvoiceControl         = "InvoiceControl"
-	TypeLocationCategory       = "LocationCategory"
-	TypeOrganization           = "Organization"
-	TypeQualifierCode          = "QualifierCode"
-	TypeReasonCode             = "ReasonCode"
-	TypeRevenueCode            = "RevenueCode"
-	TypeRouteControl           = "RouteControl"
-	TypeServiceType            = "ServiceType"
-	TypeSession                = "Session"
-	TypeShipmentControl        = "ShipmentControl"
-	TypeShipmentType           = "ShipmentType"
-	TypeTableChangeAlert       = "TableChangeAlert"
-	TypeTag                    = "Tag"
-	TypeUsState                = "UsState"
-	TypeUser                   = "User"
-	TypeUserFavorite           = "UserFavorite"
+	TypeAccessorialCharge            = "AccessorialCharge"
+	TypeAccountingControl            = "AccountingControl"
+	TypeBillingControl               = "BillingControl"
+	TypeBusinessUnit                 = "BusinessUnit"
+	TypeChargeType                   = "ChargeType"
+	TypeCommentType                  = "CommentType"
+	TypeCommodity                    = "Commodity"
+	TypeCustomer                     = "Customer"
+	TypeDelayCode                    = "DelayCode"
+	TypeDispatchControl              = "DispatchControl"
+	TypeDivisionCode                 = "DivisionCode"
+	TypeDocumentClassification       = "DocumentClassification"
+	TypeEmailControl                 = "EmailControl"
+	TypeEmailProfile                 = "EmailProfile"
+	TypeEquipmentManufactuer         = "EquipmentManufactuer"
+	TypeEquipmentType                = "EquipmentType"
+	TypeFeasibilityToolControl       = "FeasibilityToolControl"
+	TypeFleetCode                    = "FleetCode"
+	TypeGeneralLedgerAccount         = "GeneralLedgerAccount"
+	TypeGoogleApi                    = "GoogleApi"
+	TypeHazardousMaterial            = "HazardousMaterial"
+	TypeHazardousMaterialSegregation = "HazardousMaterialSegregation"
+	TypeInvoiceControl               = "InvoiceControl"
+	TypeLocationCategory             = "LocationCategory"
+	TypeOrganization                 = "Organization"
+	TypeQualifierCode                = "QualifierCode"
+	TypeReasonCode                   = "ReasonCode"
+	TypeRevenueCode                  = "RevenueCode"
+	TypeRouteControl                 = "RouteControl"
+	TypeServiceType                  = "ServiceType"
+	TypeSession                      = "Session"
+	TypeShipmentControl              = "ShipmentControl"
+	TypeShipmentType                 = "ShipmentType"
+	TypeTableChangeAlert             = "TableChangeAlert"
+	TypeTag                          = "Tag"
+	TypeTractor                      = "Tractor"
+	TypeUsState                      = "UsState"
+	TypeUser                         = "User"
+	TypeUserFavorite                 = "UserFavorite"
+	TypeWorker                       = "Worker"
 )
 
 // AccessorialChargeMutation represents an operation that mutates the AccessorialCharge nodes in the graph.
@@ -12396,6 +12402,7 @@ type DocumentClassificationMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	status               *documentclassification.Status
 	name                 *string
 	description          *string
 	clearedFields        map[string]struct{}
@@ -12656,6 +12663,42 @@ func (m *DocumentClassificationMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetStatus sets the "status" field.
+func (m *DocumentClassificationMutation) SetStatus(d documentclassification.Status) {
+	m.status = &d
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *DocumentClassificationMutation) Status() (r documentclassification.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldStatus(ctx context.Context) (v documentclassification.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *DocumentClassificationMutation) ResetStatus() {
+	m.status = nil
+}
+
 // SetName sets the "name" field.
 func (m *DocumentClassificationMutation) SetName(s string) {
 	m.name = &s
@@ -12829,7 +12872,7 @@ func (m *DocumentClassificationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DocumentClassificationMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.business_unit != nil {
 		fields = append(fields, documentclassification.FieldBusinessUnitID)
 	}
@@ -12841,6 +12884,9 @@ func (m *DocumentClassificationMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, documentclassification.FieldUpdatedAt)
+	}
+	if m.status != nil {
+		fields = append(fields, documentclassification.FieldStatus)
 	}
 	if m.name != nil {
 		fields = append(fields, documentclassification.FieldName)
@@ -12864,6 +12910,8 @@ func (m *DocumentClassificationMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case documentclassification.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case documentclassification.FieldStatus:
+		return m.Status()
 	case documentclassification.FieldName:
 		return m.Name()
 	case documentclassification.FieldDescription:
@@ -12885,6 +12933,8 @@ func (m *DocumentClassificationMutation) OldField(ctx context.Context, name stri
 		return m.OldCreatedAt(ctx)
 	case documentclassification.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case documentclassification.FieldStatus:
+		return m.OldStatus(ctx)
 	case documentclassification.FieldName:
 		return m.OldName(ctx)
 	case documentclassification.FieldDescription:
@@ -12925,6 +12975,13 @@ func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case documentclassification.FieldStatus:
+		v, ok := value.(documentclassification.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
 		return nil
 	case documentclassification.FieldName:
 		v, ok := value.(string)
@@ -13009,6 +13066,9 @@ func (m *DocumentClassificationMutation) ResetField(name string) error {
 		return nil
 	case documentclassification.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case documentclassification.FieldStatus:
+		m.ResetStatus()
 		return nil
 	case documentclassification.FieldName:
 		m.ResetName()
@@ -23335,6 +23395,762 @@ func (m *HazardousMaterialMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown HazardousMaterial edge %s", name)
+}
+
+// HazardousMaterialSegregationMutation represents an operation that mutates the HazardousMaterialSegregation nodes in the graph.
+type HazardousMaterialSegregationMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	class_a              *hazardousmaterialsegregation.ClassA
+	class_b              *hazardousmaterialsegregation.ClassB
+	segregation_type     *hazardousmaterialsegregation.SegregationType
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	done                 bool
+	oldValue             func(context.Context) (*HazardousMaterialSegregation, error)
+	predicates           []predicate.HazardousMaterialSegregation
+}
+
+var _ ent.Mutation = (*HazardousMaterialSegregationMutation)(nil)
+
+// hazardousmaterialsegregationOption allows management of the mutation configuration using functional options.
+type hazardousmaterialsegregationOption func(*HazardousMaterialSegregationMutation)
+
+// newHazardousMaterialSegregationMutation creates new mutation for the HazardousMaterialSegregation entity.
+func newHazardousMaterialSegregationMutation(c config, op Op, opts ...hazardousmaterialsegregationOption) *HazardousMaterialSegregationMutation {
+	m := &HazardousMaterialSegregationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeHazardousMaterialSegregation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withHazardousMaterialSegregationID sets the ID field of the mutation.
+func withHazardousMaterialSegregationID(id uuid.UUID) hazardousmaterialsegregationOption {
+	return func(m *HazardousMaterialSegregationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *HazardousMaterialSegregation
+		)
+		m.oldValue = func(ctx context.Context) (*HazardousMaterialSegregation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().HazardousMaterialSegregation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withHazardousMaterialSegregation sets the old HazardousMaterialSegregation of the mutation.
+func withHazardousMaterialSegregation(node *HazardousMaterialSegregation) hazardousmaterialsegregationOption {
+	return func(m *HazardousMaterialSegregationMutation) {
+		m.oldValue = func(context.Context) (*HazardousMaterialSegregation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m HazardousMaterialSegregationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m HazardousMaterialSegregationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of HazardousMaterialSegregation entities.
+func (m *HazardousMaterialSegregationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *HazardousMaterialSegregationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *HazardousMaterialSegregationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().HazardousMaterialSegregation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *HazardousMaterialSegregationMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *HazardousMaterialSegregationMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *HazardousMaterialSegregationMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *HazardousMaterialSegregationMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *HazardousMaterialSegregationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *HazardousMaterialSegregationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *HazardousMaterialSegregationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *HazardousMaterialSegregationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetClassA sets the "class_a" field.
+func (m *HazardousMaterialSegregationMutation) SetClassA(h hazardousmaterialsegregation.ClassA) {
+	m.class_a = &h
+}
+
+// ClassA returns the value of the "class_a" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) ClassA() (r hazardousmaterialsegregation.ClassA, exists bool) {
+	v := m.class_a
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClassA returns the old "class_a" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldClassA(ctx context.Context) (v hazardousmaterialsegregation.ClassA, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClassA is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClassA requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClassA: %w", err)
+	}
+	return oldValue.ClassA, nil
+}
+
+// ResetClassA resets all changes to the "class_a" field.
+func (m *HazardousMaterialSegregationMutation) ResetClassA() {
+	m.class_a = nil
+}
+
+// SetClassB sets the "class_b" field.
+func (m *HazardousMaterialSegregationMutation) SetClassB(h hazardousmaterialsegregation.ClassB) {
+	m.class_b = &h
+}
+
+// ClassB returns the value of the "class_b" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) ClassB() (r hazardousmaterialsegregation.ClassB, exists bool) {
+	v := m.class_b
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClassB returns the old "class_b" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldClassB(ctx context.Context) (v hazardousmaterialsegregation.ClassB, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClassB is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClassB requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClassB: %w", err)
+	}
+	return oldValue.ClassB, nil
+}
+
+// ResetClassB resets all changes to the "class_b" field.
+func (m *HazardousMaterialSegregationMutation) ResetClassB() {
+	m.class_b = nil
+}
+
+// SetSegregationType sets the "segregation_type" field.
+func (m *HazardousMaterialSegregationMutation) SetSegregationType(ht hazardousmaterialsegregation.SegregationType) {
+	m.segregation_type = &ht
+}
+
+// SegregationType returns the value of the "segregation_type" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) SegregationType() (r hazardousmaterialsegregation.SegregationType, exists bool) {
+	v := m.segregation_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSegregationType returns the old "segregation_type" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldSegregationType(ctx context.Context) (v hazardousmaterialsegregation.SegregationType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSegregationType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSegregationType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSegregationType: %w", err)
+	}
+	return oldValue.SegregationType, nil
+}
+
+// ResetSegregationType resets all changes to the "segregation_type" field.
+func (m *HazardousMaterialSegregationMutation) ResetSegregationType() {
+	m.segregation_type = nil
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *HazardousMaterialSegregationMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[hazardousmaterialsegregation.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *HazardousMaterialSegregationMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *HazardousMaterialSegregationMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *HazardousMaterialSegregationMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *HazardousMaterialSegregationMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[hazardousmaterialsegregation.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *HazardousMaterialSegregationMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *HazardousMaterialSegregationMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *HazardousMaterialSegregationMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// Where appends a list predicates to the HazardousMaterialSegregationMutation builder.
+func (m *HazardousMaterialSegregationMutation) Where(ps ...predicate.HazardousMaterialSegregation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the HazardousMaterialSegregationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *HazardousMaterialSegregationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.HazardousMaterialSegregation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *HazardousMaterialSegregationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *HazardousMaterialSegregationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (HazardousMaterialSegregation).
+func (m *HazardousMaterialSegregationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *HazardousMaterialSegregationMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.business_unit != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldUpdatedAt)
+	}
+	if m.class_a != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldClassA)
+	}
+	if m.class_b != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldClassB)
+	}
+	if m.segregation_type != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldSegregationType)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *HazardousMaterialSegregationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case hazardousmaterialsegregation.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case hazardousmaterialsegregation.FieldOrganizationID:
+		return m.OrganizationID()
+	case hazardousmaterialsegregation.FieldCreatedAt:
+		return m.CreatedAt()
+	case hazardousmaterialsegregation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case hazardousmaterialsegregation.FieldClassA:
+		return m.ClassA()
+	case hazardousmaterialsegregation.FieldClassB:
+		return m.ClassB()
+	case hazardousmaterialsegregation.FieldSegregationType:
+		return m.SegregationType()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *HazardousMaterialSegregationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case hazardousmaterialsegregation.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case hazardousmaterialsegregation.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case hazardousmaterialsegregation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case hazardousmaterialsegregation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case hazardousmaterialsegregation.FieldClassA:
+		return m.OldClassA(ctx)
+	case hazardousmaterialsegregation.FieldClassB:
+		return m.OldClassB(ctx)
+	case hazardousmaterialsegregation.FieldSegregationType:
+		return m.OldSegregationType(ctx)
+	}
+	return nil, fmt.Errorf("unknown HazardousMaterialSegregation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HazardousMaterialSegregationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case hazardousmaterialsegregation.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case hazardousmaterialsegregation.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case hazardousmaterialsegregation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case hazardousmaterialsegregation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case hazardousmaterialsegregation.FieldClassA:
+		v, ok := value.(hazardousmaterialsegregation.ClassA)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClassA(v)
+		return nil
+	case hazardousmaterialsegregation.FieldClassB:
+		v, ok := value.(hazardousmaterialsegregation.ClassB)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClassB(v)
+		return nil
+	case hazardousmaterialsegregation.FieldSegregationType:
+		v, ok := value.(hazardousmaterialsegregation.SegregationType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSegregationType(v)
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterialSegregation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *HazardousMaterialSegregationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *HazardousMaterialSegregationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HazardousMaterialSegregationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown HazardousMaterialSegregation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *HazardousMaterialSegregationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *HazardousMaterialSegregationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *HazardousMaterialSegregationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown HazardousMaterialSegregation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *HazardousMaterialSegregationMutation) ResetField(name string) error {
+	switch name {
+	case hazardousmaterialsegregation.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case hazardousmaterialsegregation.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case hazardousmaterialsegregation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case hazardousmaterialsegregation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case hazardousmaterialsegregation.FieldClassA:
+		m.ResetClassA()
+		return nil
+	case hazardousmaterialsegregation.FieldClassB:
+		m.ResetClassB()
+		return nil
+	case hazardousmaterialsegregation.FieldSegregationType:
+		m.ResetSegregationType()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterialSegregation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *HazardousMaterialSegregationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.business_unit != nil {
+		edges = append(edges, hazardousmaterialsegregation.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, hazardousmaterialsegregation.EdgeOrganization)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *HazardousMaterialSegregationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case hazardousmaterialsegregation.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case hazardousmaterialsegregation.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *HazardousMaterialSegregationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *HazardousMaterialSegregationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *HazardousMaterialSegregationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedbusiness_unit {
+		edges = append(edges, hazardousmaterialsegregation.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, hazardousmaterialsegregation.EdgeOrganization)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *HazardousMaterialSegregationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case hazardousmaterialsegregation.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case hazardousmaterialsegregation.EdgeOrganization:
+		return m.clearedorganization
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *HazardousMaterialSegregationMutation) ClearEdge(name string) error {
+	switch name {
+	case hazardousmaterialsegregation.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case hazardousmaterialsegregation.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterialSegregation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *HazardousMaterialSegregationMutation) ResetEdge(name string) error {
+	switch name {
+	case hazardousmaterialsegregation.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case hazardousmaterialsegregation.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown HazardousMaterialSegregation edge %s", name)
 }
 
 // InvoiceControlMutation represents an operation that mutates the InvoiceControl nodes in the graph.
@@ -35476,6 +36292,1762 @@ func (m *TagMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Tag edge %s", name)
 }
 
+// TractorMutation represents an operation that mutates the Tractor nodes in the graph.
+type TractorMutation struct {
+	config
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	code                          *string
+	status                        *tractor.Status
+	license_plate_number          *string
+	vin                           *string
+	model                         *string
+	year                          *int
+	addyear                       *int
+	leased                        *bool
+	leased_date                   *time.Time
+	clearedFields                 map[string]struct{}
+	business_unit                 *uuid.UUID
+	clearedbusiness_unit          bool
+	organization                  *uuid.UUID
+	clearedorganization           bool
+	equipment_type                *uuid.UUID
+	clearedequipment_type         bool
+	equipment_manufacturer        *uuid.UUID
+	clearedequipment_manufacturer bool
+	state                         *uuid.UUID
+	clearedstate                  bool
+	primary_worker                *uuid.UUID
+	clearedprimary_worker         bool
+	secondary_worker              *uuid.UUID
+	clearedsecondary_worker       bool
+	done                          bool
+	oldValue                      func(context.Context) (*Tractor, error)
+	predicates                    []predicate.Tractor
+}
+
+var _ ent.Mutation = (*TractorMutation)(nil)
+
+// tractorOption allows management of the mutation configuration using functional options.
+type tractorOption func(*TractorMutation)
+
+// newTractorMutation creates new mutation for the Tractor entity.
+func newTractorMutation(c config, op Op, opts ...tractorOption) *TractorMutation {
+	m := &TractorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTractor,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTractorID sets the ID field of the mutation.
+func withTractorID(id uuid.UUID) tractorOption {
+	return func(m *TractorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Tractor
+		)
+		m.oldValue = func(ctx context.Context) (*Tractor, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Tractor.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTractor sets the old Tractor of the mutation.
+func withTractor(node *Tractor) tractorOption {
+	return func(m *TractorMutation) {
+		m.oldValue = func(context.Context) (*Tractor, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TractorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TractorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Tractor entities.
+func (m *TractorMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TractorMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TractorMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Tractor.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *TractorMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *TractorMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *TractorMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *TractorMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *TractorMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *TractorMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TractorMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TractorMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TractorMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TractorMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TractorMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TractorMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCode sets the "code" field.
+func (m *TractorMutation) SetCode(s string) {
+	m.code = &s
+}
+
+// Code returns the value of the "code" field in the mutation.
+func (m *TractorMutation) Code() (r string, exists bool) {
+	v := m.code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCode returns the old "code" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
+	}
+	return oldValue.Code, nil
+}
+
+// ResetCode resets all changes to the "code" field.
+func (m *TractorMutation) ResetCode() {
+	m.code = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *TractorMutation) SetStatus(t tractor.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TractorMutation) Status() (r tractor.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldStatus(ctx context.Context) (v tractor.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TractorMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetEquipmentTypeID sets the "equipment_type_id" field.
+func (m *TractorMutation) SetEquipmentTypeID(u uuid.UUID) {
+	m.equipment_type = &u
+}
+
+// EquipmentTypeID returns the value of the "equipment_type_id" field in the mutation.
+func (m *TractorMutation) EquipmentTypeID() (r uuid.UUID, exists bool) {
+	v := m.equipment_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEquipmentTypeID returns the old "equipment_type_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldEquipmentTypeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEquipmentTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEquipmentTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEquipmentTypeID: %w", err)
+	}
+	return oldValue.EquipmentTypeID, nil
+}
+
+// ClearEquipmentTypeID clears the value of the "equipment_type_id" field.
+func (m *TractorMutation) ClearEquipmentTypeID() {
+	m.equipment_type = nil
+	m.clearedFields[tractor.FieldEquipmentTypeID] = struct{}{}
+}
+
+// EquipmentTypeIDCleared returns if the "equipment_type_id" field was cleared in this mutation.
+func (m *TractorMutation) EquipmentTypeIDCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldEquipmentTypeID]
+	return ok
+}
+
+// ResetEquipmentTypeID resets all changes to the "equipment_type_id" field.
+func (m *TractorMutation) ResetEquipmentTypeID() {
+	m.equipment_type = nil
+	delete(m.clearedFields, tractor.FieldEquipmentTypeID)
+}
+
+// SetLicensePlateNumber sets the "license_plate_number" field.
+func (m *TractorMutation) SetLicensePlateNumber(s string) {
+	m.license_plate_number = &s
+}
+
+// LicensePlateNumber returns the value of the "license_plate_number" field in the mutation.
+func (m *TractorMutation) LicensePlateNumber() (r string, exists bool) {
+	v := m.license_plate_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicensePlateNumber returns the old "license_plate_number" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldLicensePlateNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicensePlateNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicensePlateNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicensePlateNumber: %w", err)
+	}
+	return oldValue.LicensePlateNumber, nil
+}
+
+// ClearLicensePlateNumber clears the value of the "license_plate_number" field.
+func (m *TractorMutation) ClearLicensePlateNumber() {
+	m.license_plate_number = nil
+	m.clearedFields[tractor.FieldLicensePlateNumber] = struct{}{}
+}
+
+// LicensePlateNumberCleared returns if the "license_plate_number" field was cleared in this mutation.
+func (m *TractorMutation) LicensePlateNumberCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldLicensePlateNumber]
+	return ok
+}
+
+// ResetLicensePlateNumber resets all changes to the "license_plate_number" field.
+func (m *TractorMutation) ResetLicensePlateNumber() {
+	m.license_plate_number = nil
+	delete(m.clearedFields, tractor.FieldLicensePlateNumber)
+}
+
+// SetVin sets the "vin" field.
+func (m *TractorMutation) SetVin(s string) {
+	m.vin = &s
+}
+
+// Vin returns the value of the "vin" field in the mutation.
+func (m *TractorMutation) Vin() (r string, exists bool) {
+	v := m.vin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVin returns the old "vin" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldVin(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVin: %w", err)
+	}
+	return oldValue.Vin, nil
+}
+
+// ClearVin clears the value of the "vin" field.
+func (m *TractorMutation) ClearVin() {
+	m.vin = nil
+	m.clearedFields[tractor.FieldVin] = struct{}{}
+}
+
+// VinCleared returns if the "vin" field was cleared in this mutation.
+func (m *TractorMutation) VinCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldVin]
+	return ok
+}
+
+// ResetVin resets all changes to the "vin" field.
+func (m *TractorMutation) ResetVin() {
+	m.vin = nil
+	delete(m.clearedFields, tractor.FieldVin)
+}
+
+// SetEquipmentManufacturerID sets the "equipment_manufacturer_id" field.
+func (m *TractorMutation) SetEquipmentManufacturerID(u uuid.UUID) {
+	m.equipment_manufacturer = &u
+}
+
+// EquipmentManufacturerID returns the value of the "equipment_manufacturer_id" field in the mutation.
+func (m *TractorMutation) EquipmentManufacturerID() (r uuid.UUID, exists bool) {
+	v := m.equipment_manufacturer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEquipmentManufacturerID returns the old "equipment_manufacturer_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldEquipmentManufacturerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEquipmentManufacturerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEquipmentManufacturerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEquipmentManufacturerID: %w", err)
+	}
+	return oldValue.EquipmentManufacturerID, nil
+}
+
+// ClearEquipmentManufacturerID clears the value of the "equipment_manufacturer_id" field.
+func (m *TractorMutation) ClearEquipmentManufacturerID() {
+	m.equipment_manufacturer = nil
+	m.clearedFields[tractor.FieldEquipmentManufacturerID] = struct{}{}
+}
+
+// EquipmentManufacturerIDCleared returns if the "equipment_manufacturer_id" field was cleared in this mutation.
+func (m *TractorMutation) EquipmentManufacturerIDCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldEquipmentManufacturerID]
+	return ok
+}
+
+// ResetEquipmentManufacturerID resets all changes to the "equipment_manufacturer_id" field.
+func (m *TractorMutation) ResetEquipmentManufacturerID() {
+	m.equipment_manufacturer = nil
+	delete(m.clearedFields, tractor.FieldEquipmentManufacturerID)
+}
+
+// SetModel sets the "model" field.
+func (m *TractorMutation) SetModel(s string) {
+	m.model = &s
+}
+
+// Model returns the value of the "model" field in the mutation.
+func (m *TractorMutation) Model() (r string, exists bool) {
+	v := m.model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModel returns the old "model" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldModel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModel: %w", err)
+	}
+	return oldValue.Model, nil
+}
+
+// ClearModel clears the value of the "model" field.
+func (m *TractorMutation) ClearModel() {
+	m.model = nil
+	m.clearedFields[tractor.FieldModel] = struct{}{}
+}
+
+// ModelCleared returns if the "model" field was cleared in this mutation.
+func (m *TractorMutation) ModelCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldModel]
+	return ok
+}
+
+// ResetModel resets all changes to the "model" field.
+func (m *TractorMutation) ResetModel() {
+	m.model = nil
+	delete(m.clearedFields, tractor.FieldModel)
+}
+
+// SetYear sets the "year" field.
+func (m *TractorMutation) SetYear(i int) {
+	m.year = &i
+	m.addyear = nil
+}
+
+// Year returns the value of the "year" field in the mutation.
+func (m *TractorMutation) Year() (r int, exists bool) {
+	v := m.year
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldYear returns the old "year" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldYear(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldYear is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldYear requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldYear: %w", err)
+	}
+	return oldValue.Year, nil
+}
+
+// AddYear adds i to the "year" field.
+func (m *TractorMutation) AddYear(i int) {
+	if m.addyear != nil {
+		*m.addyear += i
+	} else {
+		m.addyear = &i
+	}
+}
+
+// AddedYear returns the value that was added to the "year" field in this mutation.
+func (m *TractorMutation) AddedYear() (r int, exists bool) {
+	v := m.addyear
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearYear clears the value of the "year" field.
+func (m *TractorMutation) ClearYear() {
+	m.year = nil
+	m.addyear = nil
+	m.clearedFields[tractor.FieldYear] = struct{}{}
+}
+
+// YearCleared returns if the "year" field was cleared in this mutation.
+func (m *TractorMutation) YearCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldYear]
+	return ok
+}
+
+// ResetYear resets all changes to the "year" field.
+func (m *TractorMutation) ResetYear() {
+	m.year = nil
+	m.addyear = nil
+	delete(m.clearedFields, tractor.FieldYear)
+}
+
+// SetStateID sets the "state_id" field.
+func (m *TractorMutation) SetStateID(u uuid.UUID) {
+	m.state = &u
+}
+
+// StateID returns the value of the "state_id" field in the mutation.
+func (m *TractorMutation) StateID() (r uuid.UUID, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStateID returns the old "state_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldStateID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStateID: %w", err)
+	}
+	return oldValue.StateID, nil
+}
+
+// ClearStateID clears the value of the "state_id" field.
+func (m *TractorMutation) ClearStateID() {
+	m.state = nil
+	m.clearedFields[tractor.FieldStateID] = struct{}{}
+}
+
+// StateIDCleared returns if the "state_id" field was cleared in this mutation.
+func (m *TractorMutation) StateIDCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldStateID]
+	return ok
+}
+
+// ResetStateID resets all changes to the "state_id" field.
+func (m *TractorMutation) ResetStateID() {
+	m.state = nil
+	delete(m.clearedFields, tractor.FieldStateID)
+}
+
+// SetLeased sets the "leased" field.
+func (m *TractorMutation) SetLeased(b bool) {
+	m.leased = &b
+}
+
+// Leased returns the value of the "leased" field in the mutation.
+func (m *TractorMutation) Leased() (r bool, exists bool) {
+	v := m.leased
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeased returns the old "leased" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldLeased(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeased is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeased requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeased: %w", err)
+	}
+	return oldValue.Leased, nil
+}
+
+// ResetLeased resets all changes to the "leased" field.
+func (m *TractorMutation) ResetLeased() {
+	m.leased = nil
+}
+
+// SetLeasedDate sets the "leased_date" field.
+func (m *TractorMutation) SetLeasedDate(t time.Time) {
+	m.leased_date = &t
+}
+
+// LeasedDate returns the value of the "leased_date" field in the mutation.
+func (m *TractorMutation) LeasedDate() (r time.Time, exists bool) {
+	v := m.leased_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeasedDate returns the old "leased_date" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldLeasedDate(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeasedDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeasedDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeasedDate: %w", err)
+	}
+	return oldValue.LeasedDate, nil
+}
+
+// ClearLeasedDate clears the value of the "leased_date" field.
+func (m *TractorMutation) ClearLeasedDate() {
+	m.leased_date = nil
+	m.clearedFields[tractor.FieldLeasedDate] = struct{}{}
+}
+
+// LeasedDateCleared returns if the "leased_date" field was cleared in this mutation.
+func (m *TractorMutation) LeasedDateCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldLeasedDate]
+	return ok
+}
+
+// ResetLeasedDate resets all changes to the "leased_date" field.
+func (m *TractorMutation) ResetLeasedDate() {
+	m.leased_date = nil
+	delete(m.clearedFields, tractor.FieldLeasedDate)
+}
+
+// SetPrimaryWorkerID sets the "primary_worker_id" field.
+func (m *TractorMutation) SetPrimaryWorkerID(u uuid.UUID) {
+	m.primary_worker = &u
+}
+
+// PrimaryWorkerID returns the value of the "primary_worker_id" field in the mutation.
+func (m *TractorMutation) PrimaryWorkerID() (r uuid.UUID, exists bool) {
+	v := m.primary_worker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPrimaryWorkerID returns the old "primary_worker_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldPrimaryWorkerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPrimaryWorkerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPrimaryWorkerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPrimaryWorkerID: %w", err)
+	}
+	return oldValue.PrimaryWorkerID, nil
+}
+
+// ClearPrimaryWorkerID clears the value of the "primary_worker_id" field.
+func (m *TractorMutation) ClearPrimaryWorkerID() {
+	m.primary_worker = nil
+	m.clearedFields[tractor.FieldPrimaryWorkerID] = struct{}{}
+}
+
+// PrimaryWorkerIDCleared returns if the "primary_worker_id" field was cleared in this mutation.
+func (m *TractorMutation) PrimaryWorkerIDCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldPrimaryWorkerID]
+	return ok
+}
+
+// ResetPrimaryWorkerID resets all changes to the "primary_worker_id" field.
+func (m *TractorMutation) ResetPrimaryWorkerID() {
+	m.primary_worker = nil
+	delete(m.clearedFields, tractor.FieldPrimaryWorkerID)
+}
+
+// SetSecondaryWorkerID sets the "secondary_worker_id" field.
+func (m *TractorMutation) SetSecondaryWorkerID(u uuid.UUID) {
+	m.secondary_worker = &u
+}
+
+// SecondaryWorkerID returns the value of the "secondary_worker_id" field in the mutation.
+func (m *TractorMutation) SecondaryWorkerID() (r uuid.UUID, exists bool) {
+	v := m.secondary_worker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecondaryWorkerID returns the old "secondary_worker_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldSecondaryWorkerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecondaryWorkerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecondaryWorkerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecondaryWorkerID: %w", err)
+	}
+	return oldValue.SecondaryWorkerID, nil
+}
+
+// ClearSecondaryWorkerID clears the value of the "secondary_worker_id" field.
+func (m *TractorMutation) ClearSecondaryWorkerID() {
+	m.secondary_worker = nil
+	m.clearedFields[tractor.FieldSecondaryWorkerID] = struct{}{}
+}
+
+// SecondaryWorkerIDCleared returns if the "secondary_worker_id" field was cleared in this mutation.
+func (m *TractorMutation) SecondaryWorkerIDCleared() bool {
+	_, ok := m.clearedFields[tractor.FieldSecondaryWorkerID]
+	return ok
+}
+
+// ResetSecondaryWorkerID resets all changes to the "secondary_worker_id" field.
+func (m *TractorMutation) ResetSecondaryWorkerID() {
+	m.secondary_worker = nil
+	delete(m.clearedFields, tractor.FieldSecondaryWorkerID)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *TractorMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[tractor.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *TractorMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *TractorMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *TractorMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[tractor.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *TractorMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *TractorMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
+func (m *TractorMutation) ClearEquipmentType() {
+	m.clearedequipment_type = true
+	m.clearedFields[tractor.FieldEquipmentTypeID] = struct{}{}
+}
+
+// EquipmentTypeCleared reports if the "equipment_type" edge to the EquipmentType entity was cleared.
+func (m *TractorMutation) EquipmentTypeCleared() bool {
+	return m.EquipmentTypeIDCleared() || m.clearedequipment_type
+}
+
+// EquipmentTypeIDs returns the "equipment_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EquipmentTypeID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) EquipmentTypeIDs() (ids []uuid.UUID) {
+	if id := m.equipment_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEquipmentType resets all changes to the "equipment_type" edge.
+func (m *TractorMutation) ResetEquipmentType() {
+	m.equipment_type = nil
+	m.clearedequipment_type = false
+}
+
+// ClearEquipmentManufacturer clears the "equipment_manufacturer" edge to the EquipmentManufactuer entity.
+func (m *TractorMutation) ClearEquipmentManufacturer() {
+	m.clearedequipment_manufacturer = true
+	m.clearedFields[tractor.FieldEquipmentManufacturerID] = struct{}{}
+}
+
+// EquipmentManufacturerCleared reports if the "equipment_manufacturer" edge to the EquipmentManufactuer entity was cleared.
+func (m *TractorMutation) EquipmentManufacturerCleared() bool {
+	return m.EquipmentManufacturerIDCleared() || m.clearedequipment_manufacturer
+}
+
+// EquipmentManufacturerIDs returns the "equipment_manufacturer" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EquipmentManufacturerID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) EquipmentManufacturerIDs() (ids []uuid.UUID) {
+	if id := m.equipment_manufacturer; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEquipmentManufacturer resets all changes to the "equipment_manufacturer" edge.
+func (m *TractorMutation) ResetEquipmentManufacturer() {
+	m.equipment_manufacturer = nil
+	m.clearedequipment_manufacturer = false
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (m *TractorMutation) ClearState() {
+	m.clearedstate = true
+	m.clearedFields[tractor.FieldStateID] = struct{}{}
+}
+
+// StateCleared reports if the "state" edge to the UsState entity was cleared.
+func (m *TractorMutation) StateCleared() bool {
+	return m.StateIDCleared() || m.clearedstate
+}
+
+// StateIDs returns the "state" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StateID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) StateIDs() (ids []uuid.UUID) {
+	if id := m.state; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetState resets all changes to the "state" edge.
+func (m *TractorMutation) ResetState() {
+	m.state = nil
+	m.clearedstate = false
+}
+
+// ClearPrimaryWorker clears the "primary_worker" edge to the Worker entity.
+func (m *TractorMutation) ClearPrimaryWorker() {
+	m.clearedprimary_worker = true
+	m.clearedFields[tractor.FieldPrimaryWorkerID] = struct{}{}
+}
+
+// PrimaryWorkerCleared reports if the "primary_worker" edge to the Worker entity was cleared.
+func (m *TractorMutation) PrimaryWorkerCleared() bool {
+	return m.PrimaryWorkerIDCleared() || m.clearedprimary_worker
+}
+
+// PrimaryWorkerIDs returns the "primary_worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PrimaryWorkerID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) PrimaryWorkerIDs() (ids []uuid.UUID) {
+	if id := m.primary_worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPrimaryWorker resets all changes to the "primary_worker" edge.
+func (m *TractorMutation) ResetPrimaryWorker() {
+	m.primary_worker = nil
+	m.clearedprimary_worker = false
+}
+
+// ClearSecondaryWorker clears the "secondary_worker" edge to the Worker entity.
+func (m *TractorMutation) ClearSecondaryWorker() {
+	m.clearedsecondary_worker = true
+	m.clearedFields[tractor.FieldSecondaryWorkerID] = struct{}{}
+}
+
+// SecondaryWorkerCleared reports if the "secondary_worker" edge to the Worker entity was cleared.
+func (m *TractorMutation) SecondaryWorkerCleared() bool {
+	return m.SecondaryWorkerIDCleared() || m.clearedsecondary_worker
+}
+
+// SecondaryWorkerIDs returns the "secondary_worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SecondaryWorkerID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) SecondaryWorkerIDs() (ids []uuid.UUID) {
+	if id := m.secondary_worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSecondaryWorker resets all changes to the "secondary_worker" edge.
+func (m *TractorMutation) ResetSecondaryWorker() {
+	m.secondary_worker = nil
+	m.clearedsecondary_worker = false
+}
+
+// Where appends a list predicates to the TractorMutation builder.
+func (m *TractorMutation) Where(ps ...predicate.Tractor) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TractorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TractorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Tractor, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TractorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TractorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Tractor).
+func (m *TractorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TractorMutation) Fields() []string {
+	fields := make([]string, 0, 17)
+	if m.business_unit != nil {
+		fields = append(fields, tractor.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, tractor.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, tractor.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, tractor.FieldUpdatedAt)
+	}
+	if m.code != nil {
+		fields = append(fields, tractor.FieldCode)
+	}
+	if m.status != nil {
+		fields = append(fields, tractor.FieldStatus)
+	}
+	if m.equipment_type != nil {
+		fields = append(fields, tractor.FieldEquipmentTypeID)
+	}
+	if m.license_plate_number != nil {
+		fields = append(fields, tractor.FieldLicensePlateNumber)
+	}
+	if m.vin != nil {
+		fields = append(fields, tractor.FieldVin)
+	}
+	if m.equipment_manufacturer != nil {
+		fields = append(fields, tractor.FieldEquipmentManufacturerID)
+	}
+	if m.model != nil {
+		fields = append(fields, tractor.FieldModel)
+	}
+	if m.year != nil {
+		fields = append(fields, tractor.FieldYear)
+	}
+	if m.state != nil {
+		fields = append(fields, tractor.FieldStateID)
+	}
+	if m.leased != nil {
+		fields = append(fields, tractor.FieldLeased)
+	}
+	if m.leased_date != nil {
+		fields = append(fields, tractor.FieldLeasedDate)
+	}
+	if m.primary_worker != nil {
+		fields = append(fields, tractor.FieldPrimaryWorkerID)
+	}
+	if m.secondary_worker != nil {
+		fields = append(fields, tractor.FieldSecondaryWorkerID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TractorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case tractor.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case tractor.FieldOrganizationID:
+		return m.OrganizationID()
+	case tractor.FieldCreatedAt:
+		return m.CreatedAt()
+	case tractor.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case tractor.FieldCode:
+		return m.Code()
+	case tractor.FieldStatus:
+		return m.Status()
+	case tractor.FieldEquipmentTypeID:
+		return m.EquipmentTypeID()
+	case tractor.FieldLicensePlateNumber:
+		return m.LicensePlateNumber()
+	case tractor.FieldVin:
+		return m.Vin()
+	case tractor.FieldEquipmentManufacturerID:
+		return m.EquipmentManufacturerID()
+	case tractor.FieldModel:
+		return m.Model()
+	case tractor.FieldYear:
+		return m.Year()
+	case tractor.FieldStateID:
+		return m.StateID()
+	case tractor.FieldLeased:
+		return m.Leased()
+	case tractor.FieldLeasedDate:
+		return m.LeasedDate()
+	case tractor.FieldPrimaryWorkerID:
+		return m.PrimaryWorkerID()
+	case tractor.FieldSecondaryWorkerID:
+		return m.SecondaryWorkerID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TractorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case tractor.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case tractor.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case tractor.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case tractor.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case tractor.FieldCode:
+		return m.OldCode(ctx)
+	case tractor.FieldStatus:
+		return m.OldStatus(ctx)
+	case tractor.FieldEquipmentTypeID:
+		return m.OldEquipmentTypeID(ctx)
+	case tractor.FieldLicensePlateNumber:
+		return m.OldLicensePlateNumber(ctx)
+	case tractor.FieldVin:
+		return m.OldVin(ctx)
+	case tractor.FieldEquipmentManufacturerID:
+		return m.OldEquipmentManufacturerID(ctx)
+	case tractor.FieldModel:
+		return m.OldModel(ctx)
+	case tractor.FieldYear:
+		return m.OldYear(ctx)
+	case tractor.FieldStateID:
+		return m.OldStateID(ctx)
+	case tractor.FieldLeased:
+		return m.OldLeased(ctx)
+	case tractor.FieldLeasedDate:
+		return m.OldLeasedDate(ctx)
+	case tractor.FieldPrimaryWorkerID:
+		return m.OldPrimaryWorkerID(ctx)
+	case tractor.FieldSecondaryWorkerID:
+		return m.OldSecondaryWorkerID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Tractor field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TractorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case tractor.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case tractor.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case tractor.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case tractor.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case tractor.FieldCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCode(v)
+		return nil
+	case tractor.FieldStatus:
+		v, ok := value.(tractor.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case tractor.FieldEquipmentTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEquipmentTypeID(v)
+		return nil
+	case tractor.FieldLicensePlateNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicensePlateNumber(v)
+		return nil
+	case tractor.FieldVin:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVin(v)
+		return nil
+	case tractor.FieldEquipmentManufacturerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEquipmentManufacturerID(v)
+		return nil
+	case tractor.FieldModel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModel(v)
+		return nil
+	case tractor.FieldYear:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetYear(v)
+		return nil
+	case tractor.FieldStateID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStateID(v)
+		return nil
+	case tractor.FieldLeased:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeased(v)
+		return nil
+	case tractor.FieldLeasedDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeasedDate(v)
+		return nil
+	case tractor.FieldPrimaryWorkerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPrimaryWorkerID(v)
+		return nil
+	case tractor.FieldSecondaryWorkerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecondaryWorkerID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TractorMutation) AddedFields() []string {
+	var fields []string
+	if m.addyear != nil {
+		fields = append(fields, tractor.FieldYear)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TractorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case tractor.FieldYear:
+		return m.AddedYear()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TractorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case tractor.FieldYear:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddYear(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TractorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(tractor.FieldEquipmentTypeID) {
+		fields = append(fields, tractor.FieldEquipmentTypeID)
+	}
+	if m.FieldCleared(tractor.FieldLicensePlateNumber) {
+		fields = append(fields, tractor.FieldLicensePlateNumber)
+	}
+	if m.FieldCleared(tractor.FieldVin) {
+		fields = append(fields, tractor.FieldVin)
+	}
+	if m.FieldCleared(tractor.FieldEquipmentManufacturerID) {
+		fields = append(fields, tractor.FieldEquipmentManufacturerID)
+	}
+	if m.FieldCleared(tractor.FieldModel) {
+		fields = append(fields, tractor.FieldModel)
+	}
+	if m.FieldCleared(tractor.FieldYear) {
+		fields = append(fields, tractor.FieldYear)
+	}
+	if m.FieldCleared(tractor.FieldStateID) {
+		fields = append(fields, tractor.FieldStateID)
+	}
+	if m.FieldCleared(tractor.FieldLeasedDate) {
+		fields = append(fields, tractor.FieldLeasedDate)
+	}
+	if m.FieldCleared(tractor.FieldPrimaryWorkerID) {
+		fields = append(fields, tractor.FieldPrimaryWorkerID)
+	}
+	if m.FieldCleared(tractor.FieldSecondaryWorkerID) {
+		fields = append(fields, tractor.FieldSecondaryWorkerID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TractorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TractorMutation) ClearField(name string) error {
+	switch name {
+	case tractor.FieldEquipmentTypeID:
+		m.ClearEquipmentTypeID()
+		return nil
+	case tractor.FieldLicensePlateNumber:
+		m.ClearLicensePlateNumber()
+		return nil
+	case tractor.FieldVin:
+		m.ClearVin()
+		return nil
+	case tractor.FieldEquipmentManufacturerID:
+		m.ClearEquipmentManufacturerID()
+		return nil
+	case tractor.FieldModel:
+		m.ClearModel()
+		return nil
+	case tractor.FieldYear:
+		m.ClearYear()
+		return nil
+	case tractor.FieldStateID:
+		m.ClearStateID()
+		return nil
+	case tractor.FieldLeasedDate:
+		m.ClearLeasedDate()
+		return nil
+	case tractor.FieldPrimaryWorkerID:
+		m.ClearPrimaryWorkerID()
+		return nil
+	case tractor.FieldSecondaryWorkerID:
+		m.ClearSecondaryWorkerID()
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TractorMutation) ResetField(name string) error {
+	switch name {
+	case tractor.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case tractor.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case tractor.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case tractor.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case tractor.FieldCode:
+		m.ResetCode()
+		return nil
+	case tractor.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case tractor.FieldEquipmentTypeID:
+		m.ResetEquipmentTypeID()
+		return nil
+	case tractor.FieldLicensePlateNumber:
+		m.ResetLicensePlateNumber()
+		return nil
+	case tractor.FieldVin:
+		m.ResetVin()
+		return nil
+	case tractor.FieldEquipmentManufacturerID:
+		m.ResetEquipmentManufacturerID()
+		return nil
+	case tractor.FieldModel:
+		m.ResetModel()
+		return nil
+	case tractor.FieldYear:
+		m.ResetYear()
+		return nil
+	case tractor.FieldStateID:
+		m.ResetStateID()
+		return nil
+	case tractor.FieldLeased:
+		m.ResetLeased()
+		return nil
+	case tractor.FieldLeasedDate:
+		m.ResetLeasedDate()
+		return nil
+	case tractor.FieldPrimaryWorkerID:
+		m.ResetPrimaryWorkerID()
+		return nil
+	case tractor.FieldSecondaryWorkerID:
+		m.ResetSecondaryWorkerID()
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TractorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.business_unit != nil {
+		edges = append(edges, tractor.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, tractor.EdgeOrganization)
+	}
+	if m.equipment_type != nil {
+		edges = append(edges, tractor.EdgeEquipmentType)
+	}
+	if m.equipment_manufacturer != nil {
+		edges = append(edges, tractor.EdgeEquipmentManufacturer)
+	}
+	if m.state != nil {
+		edges = append(edges, tractor.EdgeState)
+	}
+	if m.primary_worker != nil {
+		edges = append(edges, tractor.EdgePrimaryWorker)
+	}
+	if m.secondary_worker != nil {
+		edges = append(edges, tractor.EdgeSecondaryWorker)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TractorMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tractor.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgeEquipmentType:
+		if id := m.equipment_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgeEquipmentManufacturer:
+		if id := m.equipment_manufacturer; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgeState:
+		if id := m.state; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgePrimaryWorker:
+		if id := m.primary_worker; id != nil {
+			return []ent.Value{*id}
+		}
+	case tractor.EdgeSecondaryWorker:
+		if id := m.secondary_worker; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TractorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 7)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TractorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TractorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.clearedbusiness_unit {
+		edges = append(edges, tractor.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, tractor.EdgeOrganization)
+	}
+	if m.clearedequipment_type {
+		edges = append(edges, tractor.EdgeEquipmentType)
+	}
+	if m.clearedequipment_manufacturer {
+		edges = append(edges, tractor.EdgeEquipmentManufacturer)
+	}
+	if m.clearedstate {
+		edges = append(edges, tractor.EdgeState)
+	}
+	if m.clearedprimary_worker {
+		edges = append(edges, tractor.EdgePrimaryWorker)
+	}
+	if m.clearedsecondary_worker {
+		edges = append(edges, tractor.EdgeSecondaryWorker)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TractorMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tractor.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case tractor.EdgeOrganization:
+		return m.clearedorganization
+	case tractor.EdgeEquipmentType:
+		return m.clearedequipment_type
+	case tractor.EdgeEquipmentManufacturer:
+		return m.clearedequipment_manufacturer
+	case tractor.EdgeState:
+		return m.clearedstate
+	case tractor.EdgePrimaryWorker:
+		return m.clearedprimary_worker
+	case tractor.EdgeSecondaryWorker:
+		return m.clearedsecondary_worker
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TractorMutation) ClearEdge(name string) error {
+	switch name {
+	case tractor.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case tractor.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case tractor.EdgeEquipmentType:
+		m.ClearEquipmentType()
+		return nil
+	case tractor.EdgeEquipmentManufacturer:
+		m.ClearEquipmentManufacturer()
+		return nil
+	case tractor.EdgeState:
+		m.ClearState()
+		return nil
+	case tractor.EdgePrimaryWorker:
+		m.ClearPrimaryWorker()
+		return nil
+	case tractor.EdgeSecondaryWorker:
+		m.ClearSecondaryWorker()
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TractorMutation) ResetEdge(name string) error {
+	switch name {
+	case tractor.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case tractor.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case tractor.EdgeEquipmentType:
+		m.ResetEquipmentType()
+		return nil
+	case tractor.EdgeEquipmentManufacturer:
+		m.ResetEquipmentManufacturer()
+		return nil
+	case tractor.EdgeState:
+		m.ResetState()
+		return nil
+	case tractor.EdgePrimaryWorker:
+		m.ResetPrimaryWorker()
+		return nil
+	case tractor.EdgeSecondaryWorker:
+		m.ResetSecondaryWorker()
+		return nil
+	}
+	return fmt.Errorf("unknown Tractor edge %s", name)
+}
+
 // UsStateMutation represents an operation that mutates the UsState nodes in the graph.
 type UsStateMutation struct {
 	config
@@ -38230,4 +40802,1615 @@ func (m *UserFavoriteMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown UserFavorite edge %s", name)
+}
+
+// WorkerMutation represents an operation that mutates the Worker nodes in the graph.
+type WorkerMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	created_at               *time.Time
+	updated_at               *time.Time
+	status                   *worker.Status
+	code                     *string
+	profile_picture_url      *string
+	worker_type              *worker.WorkerType
+	first_name               *string
+	last_name                *string
+	city                     *string
+	postal_code              *string
+	clearedFields            map[string]struct{}
+	business_unit            *uuid.UUID
+	clearedbusiness_unit     bool
+	organization             *uuid.UUID
+	clearedorganization      bool
+	state                    *uuid.UUID
+	clearedstate             bool
+	fleet_code               *uuid.UUID
+	clearedfleet_code        bool
+	manager                  *uuid.UUID
+	clearedmanager           bool
+	tractor                  map[uuid.UUID]struct{}
+	removedtractor           map[uuid.UUID]struct{}
+	clearedtractor           bool
+	secondary_tractor        map[uuid.UUID]struct{}
+	removedsecondary_tractor map[uuid.UUID]struct{}
+	clearedsecondary_tractor bool
+	done                     bool
+	oldValue                 func(context.Context) (*Worker, error)
+	predicates               []predicate.Worker
+}
+
+var _ ent.Mutation = (*WorkerMutation)(nil)
+
+// workerOption allows management of the mutation configuration using functional options.
+type workerOption func(*WorkerMutation)
+
+// newWorkerMutation creates new mutation for the Worker entity.
+func newWorkerMutation(c config, op Op, opts ...workerOption) *WorkerMutation {
+	m := &WorkerMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorker,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkerID sets the ID field of the mutation.
+func withWorkerID(id uuid.UUID) workerOption {
+	return func(m *WorkerMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Worker
+		)
+		m.oldValue = func(ctx context.Context) (*Worker, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Worker.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorker sets the old Worker of the mutation.
+func withWorker(node *Worker) workerOption {
+	return func(m *WorkerMutation) {
+		m.oldValue = func(context.Context) (*Worker, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkerMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkerMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Worker entities.
+func (m *WorkerMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkerMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Worker.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *WorkerMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *WorkerMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *WorkerMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *WorkerMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *WorkerMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *WorkerMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkerMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkerMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkerMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkerMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkerMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkerMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *WorkerMutation) SetStatus(w worker.Status) {
+	m.status = &w
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *WorkerMutation) Status() (r worker.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldStatus(ctx context.Context) (v worker.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *WorkerMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetCode sets the "code" field.
+func (m *WorkerMutation) SetCode(s string) {
+	m.code = &s
+}
+
+// Code returns the value of the "code" field in the mutation.
+func (m *WorkerMutation) Code() (r string, exists bool) {
+	v := m.code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCode returns the old "code" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
+	}
+	return oldValue.Code, nil
+}
+
+// ResetCode resets all changes to the "code" field.
+func (m *WorkerMutation) ResetCode() {
+	m.code = nil
+}
+
+// SetProfilePictureURL sets the "profile_picture_url" field.
+func (m *WorkerMutation) SetProfilePictureURL(s string) {
+	m.profile_picture_url = &s
+}
+
+// ProfilePictureURL returns the value of the "profile_picture_url" field in the mutation.
+func (m *WorkerMutation) ProfilePictureURL() (r string, exists bool) {
+	v := m.profile_picture_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfilePictureURL returns the old "profile_picture_url" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldProfilePictureURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfilePictureURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfilePictureURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfilePictureURL: %w", err)
+	}
+	return oldValue.ProfilePictureURL, nil
+}
+
+// ClearProfilePictureURL clears the value of the "profile_picture_url" field.
+func (m *WorkerMutation) ClearProfilePictureURL() {
+	m.profile_picture_url = nil
+	m.clearedFields[worker.FieldProfilePictureURL] = struct{}{}
+}
+
+// ProfilePictureURLCleared returns if the "profile_picture_url" field was cleared in this mutation.
+func (m *WorkerMutation) ProfilePictureURLCleared() bool {
+	_, ok := m.clearedFields[worker.FieldProfilePictureURL]
+	return ok
+}
+
+// ResetProfilePictureURL resets all changes to the "profile_picture_url" field.
+func (m *WorkerMutation) ResetProfilePictureURL() {
+	m.profile_picture_url = nil
+	delete(m.clearedFields, worker.FieldProfilePictureURL)
+}
+
+// SetWorkerType sets the "worker_type" field.
+func (m *WorkerMutation) SetWorkerType(wt worker.WorkerType) {
+	m.worker_type = &wt
+}
+
+// WorkerType returns the value of the "worker_type" field in the mutation.
+func (m *WorkerMutation) WorkerType() (r worker.WorkerType, exists bool) {
+	v := m.worker_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkerType returns the old "worker_type" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldWorkerType(ctx context.Context) (v worker.WorkerType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkerType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkerType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkerType: %w", err)
+	}
+	return oldValue.WorkerType, nil
+}
+
+// ResetWorkerType resets all changes to the "worker_type" field.
+func (m *WorkerMutation) ResetWorkerType() {
+	m.worker_type = nil
+}
+
+// SetFirstName sets the "first_name" field.
+func (m *WorkerMutation) SetFirstName(s string) {
+	m.first_name = &s
+}
+
+// FirstName returns the value of the "first_name" field in the mutation.
+func (m *WorkerMutation) FirstName() (r string, exists bool) {
+	v := m.first_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstName returns the old "first_name" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldFirstName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstName: %w", err)
+	}
+	return oldValue.FirstName, nil
+}
+
+// ResetFirstName resets all changes to the "first_name" field.
+func (m *WorkerMutation) ResetFirstName() {
+	m.first_name = nil
+}
+
+// SetLastName sets the "last_name" field.
+func (m *WorkerMutation) SetLastName(s string) {
+	m.last_name = &s
+}
+
+// LastName returns the value of the "last_name" field in the mutation.
+func (m *WorkerMutation) LastName() (r string, exists bool) {
+	v := m.last_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastName returns the old "last_name" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldLastName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastName: %w", err)
+	}
+	return oldValue.LastName, nil
+}
+
+// ResetLastName resets all changes to the "last_name" field.
+func (m *WorkerMutation) ResetLastName() {
+	m.last_name = nil
+}
+
+// SetCity sets the "city" field.
+func (m *WorkerMutation) SetCity(s string) {
+	m.city = &s
+}
+
+// City returns the value of the "city" field in the mutation.
+func (m *WorkerMutation) City() (r string, exists bool) {
+	v := m.city
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCity returns the old "city" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldCity(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCity: %w", err)
+	}
+	return oldValue.City, nil
+}
+
+// ClearCity clears the value of the "city" field.
+func (m *WorkerMutation) ClearCity() {
+	m.city = nil
+	m.clearedFields[worker.FieldCity] = struct{}{}
+}
+
+// CityCleared returns if the "city" field was cleared in this mutation.
+func (m *WorkerMutation) CityCleared() bool {
+	_, ok := m.clearedFields[worker.FieldCity]
+	return ok
+}
+
+// ResetCity resets all changes to the "city" field.
+func (m *WorkerMutation) ResetCity() {
+	m.city = nil
+	delete(m.clearedFields, worker.FieldCity)
+}
+
+// SetPostalCode sets the "postal_code" field.
+func (m *WorkerMutation) SetPostalCode(s string) {
+	m.postal_code = &s
+}
+
+// PostalCode returns the value of the "postal_code" field in the mutation.
+func (m *WorkerMutation) PostalCode() (r string, exists bool) {
+	v := m.postal_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPostalCode returns the old "postal_code" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldPostalCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPostalCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPostalCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPostalCode: %w", err)
+	}
+	return oldValue.PostalCode, nil
+}
+
+// ClearPostalCode clears the value of the "postal_code" field.
+func (m *WorkerMutation) ClearPostalCode() {
+	m.postal_code = nil
+	m.clearedFields[worker.FieldPostalCode] = struct{}{}
+}
+
+// PostalCodeCleared returns if the "postal_code" field was cleared in this mutation.
+func (m *WorkerMutation) PostalCodeCleared() bool {
+	_, ok := m.clearedFields[worker.FieldPostalCode]
+	return ok
+}
+
+// ResetPostalCode resets all changes to the "postal_code" field.
+func (m *WorkerMutation) ResetPostalCode() {
+	m.postal_code = nil
+	delete(m.clearedFields, worker.FieldPostalCode)
+}
+
+// SetStateID sets the "state_id" field.
+func (m *WorkerMutation) SetStateID(u uuid.UUID) {
+	m.state = &u
+}
+
+// StateID returns the value of the "state_id" field in the mutation.
+func (m *WorkerMutation) StateID() (r uuid.UUID, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStateID returns the old "state_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldStateID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStateID: %w", err)
+	}
+	return oldValue.StateID, nil
+}
+
+// ClearStateID clears the value of the "state_id" field.
+func (m *WorkerMutation) ClearStateID() {
+	m.state = nil
+	m.clearedFields[worker.FieldStateID] = struct{}{}
+}
+
+// StateIDCleared returns if the "state_id" field was cleared in this mutation.
+func (m *WorkerMutation) StateIDCleared() bool {
+	_, ok := m.clearedFields[worker.FieldStateID]
+	return ok
+}
+
+// ResetStateID resets all changes to the "state_id" field.
+func (m *WorkerMutation) ResetStateID() {
+	m.state = nil
+	delete(m.clearedFields, worker.FieldStateID)
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (m *WorkerMutation) SetFleetCodeID(u uuid.UUID) {
+	m.fleet_code = &u
+}
+
+// FleetCodeID returns the value of the "fleet_code_id" field in the mutation.
+func (m *WorkerMutation) FleetCodeID() (r uuid.UUID, exists bool) {
+	v := m.fleet_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFleetCodeID returns the old "fleet_code_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldFleetCodeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFleetCodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFleetCodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFleetCodeID: %w", err)
+	}
+	return oldValue.FleetCodeID, nil
+}
+
+// ClearFleetCodeID clears the value of the "fleet_code_id" field.
+func (m *WorkerMutation) ClearFleetCodeID() {
+	m.fleet_code = nil
+	m.clearedFields[worker.FieldFleetCodeID] = struct{}{}
+}
+
+// FleetCodeIDCleared returns if the "fleet_code_id" field was cleared in this mutation.
+func (m *WorkerMutation) FleetCodeIDCleared() bool {
+	_, ok := m.clearedFields[worker.FieldFleetCodeID]
+	return ok
+}
+
+// ResetFleetCodeID resets all changes to the "fleet_code_id" field.
+func (m *WorkerMutation) ResetFleetCodeID() {
+	m.fleet_code = nil
+	delete(m.clearedFields, worker.FieldFleetCodeID)
+}
+
+// SetManagerID sets the "manager_id" field.
+func (m *WorkerMutation) SetManagerID(u uuid.UUID) {
+	m.manager = &u
+}
+
+// ManagerID returns the value of the "manager_id" field in the mutation.
+func (m *WorkerMutation) ManagerID() (r uuid.UUID, exists bool) {
+	v := m.manager
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldManagerID returns the old "manager_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldManagerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldManagerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldManagerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldManagerID: %w", err)
+	}
+	return oldValue.ManagerID, nil
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (m *WorkerMutation) ClearManagerID() {
+	m.manager = nil
+	m.clearedFields[worker.FieldManagerID] = struct{}{}
+}
+
+// ManagerIDCleared returns if the "manager_id" field was cleared in this mutation.
+func (m *WorkerMutation) ManagerIDCleared() bool {
+	_, ok := m.clearedFields[worker.FieldManagerID]
+	return ok
+}
+
+// ResetManagerID resets all changes to the "manager_id" field.
+func (m *WorkerMutation) ResetManagerID() {
+	m.manager = nil
+	delete(m.clearedFields, worker.FieldManagerID)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *WorkerMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[worker.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *WorkerMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *WorkerMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *WorkerMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[worker.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *WorkerMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *WorkerMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (m *WorkerMutation) ClearState() {
+	m.clearedstate = true
+	m.clearedFields[worker.FieldStateID] = struct{}{}
+}
+
+// StateCleared reports if the "state" edge to the UsState entity was cleared.
+func (m *WorkerMutation) StateCleared() bool {
+	return m.StateIDCleared() || m.clearedstate
+}
+
+// StateIDs returns the "state" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StateID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) StateIDs() (ids []uuid.UUID) {
+	if id := m.state; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetState resets all changes to the "state" edge.
+func (m *WorkerMutation) ResetState() {
+	m.state = nil
+	m.clearedstate = false
+}
+
+// ClearFleetCode clears the "fleet_code" edge to the FleetCode entity.
+func (m *WorkerMutation) ClearFleetCode() {
+	m.clearedfleet_code = true
+	m.clearedFields[worker.FieldFleetCodeID] = struct{}{}
+}
+
+// FleetCodeCleared reports if the "fleet_code" edge to the FleetCode entity was cleared.
+func (m *WorkerMutation) FleetCodeCleared() bool {
+	return m.FleetCodeIDCleared() || m.clearedfleet_code
+}
+
+// FleetCodeIDs returns the "fleet_code" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FleetCodeID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) FleetCodeIDs() (ids []uuid.UUID) {
+	if id := m.fleet_code; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFleetCode resets all changes to the "fleet_code" edge.
+func (m *WorkerMutation) ResetFleetCode() {
+	m.fleet_code = nil
+	m.clearedfleet_code = false
+}
+
+// ClearManager clears the "manager" edge to the User entity.
+func (m *WorkerMutation) ClearManager() {
+	m.clearedmanager = true
+	m.clearedFields[worker.FieldManagerID] = struct{}{}
+}
+
+// ManagerCleared reports if the "manager" edge to the User entity was cleared.
+func (m *WorkerMutation) ManagerCleared() bool {
+	return m.ManagerIDCleared() || m.clearedmanager
+}
+
+// ManagerIDs returns the "manager" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ManagerID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) ManagerIDs() (ids []uuid.UUID) {
+	if id := m.manager; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetManager resets all changes to the "manager" edge.
+func (m *WorkerMutation) ResetManager() {
+	m.manager = nil
+	m.clearedmanager = false
+}
+
+// AddTractorIDs adds the "tractor" edge to the Tractor entity by ids.
+func (m *WorkerMutation) AddTractorIDs(ids ...uuid.UUID) {
+	if m.tractor == nil {
+		m.tractor = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.tractor[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTractor clears the "tractor" edge to the Tractor entity.
+func (m *WorkerMutation) ClearTractor() {
+	m.clearedtractor = true
+}
+
+// TractorCleared reports if the "tractor" edge to the Tractor entity was cleared.
+func (m *WorkerMutation) TractorCleared() bool {
+	return m.clearedtractor
+}
+
+// RemoveTractorIDs removes the "tractor" edge to the Tractor entity by IDs.
+func (m *WorkerMutation) RemoveTractorIDs(ids ...uuid.UUID) {
+	if m.removedtractor == nil {
+		m.removedtractor = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.tractor, ids[i])
+		m.removedtractor[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTractor returns the removed IDs of the "tractor" edge to the Tractor entity.
+func (m *WorkerMutation) RemovedTractorIDs() (ids []uuid.UUID) {
+	for id := range m.removedtractor {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TractorIDs returns the "tractor" edge IDs in the mutation.
+func (m *WorkerMutation) TractorIDs() (ids []uuid.UUID) {
+	for id := range m.tractor {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTractor resets all changes to the "tractor" edge.
+func (m *WorkerMutation) ResetTractor() {
+	m.tractor = nil
+	m.clearedtractor = false
+	m.removedtractor = nil
+}
+
+// AddSecondaryTractorIDs adds the "secondary_tractor" edge to the Tractor entity by ids.
+func (m *WorkerMutation) AddSecondaryTractorIDs(ids ...uuid.UUID) {
+	if m.secondary_tractor == nil {
+		m.secondary_tractor = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.secondary_tractor[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSecondaryTractor clears the "secondary_tractor" edge to the Tractor entity.
+func (m *WorkerMutation) ClearSecondaryTractor() {
+	m.clearedsecondary_tractor = true
+}
+
+// SecondaryTractorCleared reports if the "secondary_tractor" edge to the Tractor entity was cleared.
+func (m *WorkerMutation) SecondaryTractorCleared() bool {
+	return m.clearedsecondary_tractor
+}
+
+// RemoveSecondaryTractorIDs removes the "secondary_tractor" edge to the Tractor entity by IDs.
+func (m *WorkerMutation) RemoveSecondaryTractorIDs(ids ...uuid.UUID) {
+	if m.removedsecondary_tractor == nil {
+		m.removedsecondary_tractor = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.secondary_tractor, ids[i])
+		m.removedsecondary_tractor[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSecondaryTractor returns the removed IDs of the "secondary_tractor" edge to the Tractor entity.
+func (m *WorkerMutation) RemovedSecondaryTractorIDs() (ids []uuid.UUID) {
+	for id := range m.removedsecondary_tractor {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SecondaryTractorIDs returns the "secondary_tractor" edge IDs in the mutation.
+func (m *WorkerMutation) SecondaryTractorIDs() (ids []uuid.UUID) {
+	for id := range m.secondary_tractor {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSecondaryTractor resets all changes to the "secondary_tractor" edge.
+func (m *WorkerMutation) ResetSecondaryTractor() {
+	m.secondary_tractor = nil
+	m.clearedsecondary_tractor = false
+	m.removedsecondary_tractor = nil
+}
+
+// Where appends a list predicates to the WorkerMutation builder.
+func (m *WorkerMutation) Where(ps ...predicate.Worker) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkerMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Worker, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkerMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkerMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Worker).
+func (m *WorkerMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkerMutation) Fields() []string {
+	fields := make([]string, 0, 15)
+	if m.business_unit != nil {
+		fields = append(fields, worker.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, worker.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, worker.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, worker.FieldUpdatedAt)
+	}
+	if m.status != nil {
+		fields = append(fields, worker.FieldStatus)
+	}
+	if m.code != nil {
+		fields = append(fields, worker.FieldCode)
+	}
+	if m.profile_picture_url != nil {
+		fields = append(fields, worker.FieldProfilePictureURL)
+	}
+	if m.worker_type != nil {
+		fields = append(fields, worker.FieldWorkerType)
+	}
+	if m.first_name != nil {
+		fields = append(fields, worker.FieldFirstName)
+	}
+	if m.last_name != nil {
+		fields = append(fields, worker.FieldLastName)
+	}
+	if m.city != nil {
+		fields = append(fields, worker.FieldCity)
+	}
+	if m.postal_code != nil {
+		fields = append(fields, worker.FieldPostalCode)
+	}
+	if m.state != nil {
+		fields = append(fields, worker.FieldStateID)
+	}
+	if m.fleet_code != nil {
+		fields = append(fields, worker.FieldFleetCodeID)
+	}
+	if m.manager != nil {
+		fields = append(fields, worker.FieldManagerID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkerMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case worker.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case worker.FieldOrganizationID:
+		return m.OrganizationID()
+	case worker.FieldCreatedAt:
+		return m.CreatedAt()
+	case worker.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case worker.FieldStatus:
+		return m.Status()
+	case worker.FieldCode:
+		return m.Code()
+	case worker.FieldProfilePictureURL:
+		return m.ProfilePictureURL()
+	case worker.FieldWorkerType:
+		return m.WorkerType()
+	case worker.FieldFirstName:
+		return m.FirstName()
+	case worker.FieldLastName:
+		return m.LastName()
+	case worker.FieldCity:
+		return m.City()
+	case worker.FieldPostalCode:
+		return m.PostalCode()
+	case worker.FieldStateID:
+		return m.StateID()
+	case worker.FieldFleetCodeID:
+		return m.FleetCodeID()
+	case worker.FieldManagerID:
+		return m.ManagerID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case worker.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case worker.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case worker.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case worker.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case worker.FieldStatus:
+		return m.OldStatus(ctx)
+	case worker.FieldCode:
+		return m.OldCode(ctx)
+	case worker.FieldProfilePictureURL:
+		return m.OldProfilePictureURL(ctx)
+	case worker.FieldWorkerType:
+		return m.OldWorkerType(ctx)
+	case worker.FieldFirstName:
+		return m.OldFirstName(ctx)
+	case worker.FieldLastName:
+		return m.OldLastName(ctx)
+	case worker.FieldCity:
+		return m.OldCity(ctx)
+	case worker.FieldPostalCode:
+		return m.OldPostalCode(ctx)
+	case worker.FieldStateID:
+		return m.OldStateID(ctx)
+	case worker.FieldFleetCodeID:
+		return m.OldFleetCodeID(ctx)
+	case worker.FieldManagerID:
+		return m.OldManagerID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Worker field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case worker.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case worker.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case worker.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case worker.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case worker.FieldStatus:
+		v, ok := value.(worker.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case worker.FieldCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCode(v)
+		return nil
+	case worker.FieldProfilePictureURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfilePictureURL(v)
+		return nil
+	case worker.FieldWorkerType:
+		v, ok := value.(worker.WorkerType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkerType(v)
+		return nil
+	case worker.FieldFirstName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstName(v)
+		return nil
+	case worker.FieldLastName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastName(v)
+		return nil
+	case worker.FieldCity:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCity(v)
+		return nil
+	case worker.FieldPostalCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPostalCode(v)
+		return nil
+	case worker.FieldStateID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStateID(v)
+		return nil
+	case worker.FieldFleetCodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFleetCodeID(v)
+		return nil
+	case worker.FieldManagerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetManagerID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Worker field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkerMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkerMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Worker numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkerMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(worker.FieldProfilePictureURL) {
+		fields = append(fields, worker.FieldProfilePictureURL)
+	}
+	if m.FieldCleared(worker.FieldCity) {
+		fields = append(fields, worker.FieldCity)
+	}
+	if m.FieldCleared(worker.FieldPostalCode) {
+		fields = append(fields, worker.FieldPostalCode)
+	}
+	if m.FieldCleared(worker.FieldStateID) {
+		fields = append(fields, worker.FieldStateID)
+	}
+	if m.FieldCleared(worker.FieldFleetCodeID) {
+		fields = append(fields, worker.FieldFleetCodeID)
+	}
+	if m.FieldCleared(worker.FieldManagerID) {
+		fields = append(fields, worker.FieldManagerID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkerMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkerMutation) ClearField(name string) error {
+	switch name {
+	case worker.FieldProfilePictureURL:
+		m.ClearProfilePictureURL()
+		return nil
+	case worker.FieldCity:
+		m.ClearCity()
+		return nil
+	case worker.FieldPostalCode:
+		m.ClearPostalCode()
+		return nil
+	case worker.FieldStateID:
+		m.ClearStateID()
+		return nil
+	case worker.FieldFleetCodeID:
+		m.ClearFleetCodeID()
+		return nil
+	case worker.FieldManagerID:
+		m.ClearManagerID()
+		return nil
+	}
+	return fmt.Errorf("unknown Worker nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkerMutation) ResetField(name string) error {
+	switch name {
+	case worker.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case worker.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case worker.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case worker.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case worker.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case worker.FieldCode:
+		m.ResetCode()
+		return nil
+	case worker.FieldProfilePictureURL:
+		m.ResetProfilePictureURL()
+		return nil
+	case worker.FieldWorkerType:
+		m.ResetWorkerType()
+		return nil
+	case worker.FieldFirstName:
+		m.ResetFirstName()
+		return nil
+	case worker.FieldLastName:
+		m.ResetLastName()
+		return nil
+	case worker.FieldCity:
+		m.ResetCity()
+		return nil
+	case worker.FieldPostalCode:
+		m.ResetPostalCode()
+		return nil
+	case worker.FieldStateID:
+		m.ResetStateID()
+		return nil
+	case worker.FieldFleetCodeID:
+		m.ResetFleetCodeID()
+		return nil
+	case worker.FieldManagerID:
+		m.ResetManagerID()
+		return nil
+	}
+	return fmt.Errorf("unknown Worker field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkerMutation) AddedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.business_unit != nil {
+		edges = append(edges, worker.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, worker.EdgeOrganization)
+	}
+	if m.state != nil {
+		edges = append(edges, worker.EdgeState)
+	}
+	if m.fleet_code != nil {
+		edges = append(edges, worker.EdgeFleetCode)
+	}
+	if m.manager != nil {
+		edges = append(edges, worker.EdgeManager)
+	}
+	if m.tractor != nil {
+		edges = append(edges, worker.EdgeTractor)
+	}
+	if m.secondary_tractor != nil {
+		edges = append(edges, worker.EdgeSecondaryTractor)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkerMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case worker.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case worker.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case worker.EdgeState:
+		if id := m.state; id != nil {
+			return []ent.Value{*id}
+		}
+	case worker.EdgeFleetCode:
+		if id := m.fleet_code; id != nil {
+			return []ent.Value{*id}
+		}
+	case worker.EdgeManager:
+		if id := m.manager; id != nil {
+			return []ent.Value{*id}
+		}
+	case worker.EdgeTractor:
+		ids := make([]ent.Value, 0, len(m.tractor))
+		for id := range m.tractor {
+			ids = append(ids, id)
+		}
+		return ids
+	case worker.EdgeSecondaryTractor:
+		ids := make([]ent.Value, 0, len(m.secondary_tractor))
+		for id := range m.secondary_tractor {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkerMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.removedtractor != nil {
+		edges = append(edges, worker.EdgeTractor)
+	}
+	if m.removedsecondary_tractor != nil {
+		edges = append(edges, worker.EdgeSecondaryTractor)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkerMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case worker.EdgeTractor:
+		ids := make([]ent.Value, 0, len(m.removedtractor))
+		for id := range m.removedtractor {
+			ids = append(ids, id)
+		}
+		return ids
+	case worker.EdgeSecondaryTractor:
+		ids := make([]ent.Value, 0, len(m.removedsecondary_tractor))
+		for id := range m.removedsecondary_tractor {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkerMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.clearedbusiness_unit {
+		edges = append(edges, worker.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, worker.EdgeOrganization)
+	}
+	if m.clearedstate {
+		edges = append(edges, worker.EdgeState)
+	}
+	if m.clearedfleet_code {
+		edges = append(edges, worker.EdgeFleetCode)
+	}
+	if m.clearedmanager {
+		edges = append(edges, worker.EdgeManager)
+	}
+	if m.clearedtractor {
+		edges = append(edges, worker.EdgeTractor)
+	}
+	if m.clearedsecondary_tractor {
+		edges = append(edges, worker.EdgeSecondaryTractor)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkerMutation) EdgeCleared(name string) bool {
+	switch name {
+	case worker.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case worker.EdgeOrganization:
+		return m.clearedorganization
+	case worker.EdgeState:
+		return m.clearedstate
+	case worker.EdgeFleetCode:
+		return m.clearedfleet_code
+	case worker.EdgeManager:
+		return m.clearedmanager
+	case worker.EdgeTractor:
+		return m.clearedtractor
+	case worker.EdgeSecondaryTractor:
+		return m.clearedsecondary_tractor
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkerMutation) ClearEdge(name string) error {
+	switch name {
+	case worker.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case worker.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case worker.EdgeState:
+		m.ClearState()
+		return nil
+	case worker.EdgeFleetCode:
+		m.ClearFleetCode()
+		return nil
+	case worker.EdgeManager:
+		m.ClearManager()
+		return nil
+	}
+	return fmt.Errorf("unknown Worker unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkerMutation) ResetEdge(name string) error {
+	switch name {
+	case worker.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case worker.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case worker.EdgeState:
+		m.ResetState()
+		return nil
+	case worker.EdgeFleetCode:
+		m.ResetFleetCode()
+		return nil
+	case worker.EdgeManager:
+		m.ResetManager()
+		return nil
+	case worker.EdgeTractor:
+		m.ResetTractor()
+		return nil
+	case worker.EdgeSecondaryTractor:
+		m.ResetSecondaryTractor()
+		return nil
+	}
+	return fmt.Errorf("unknown Worker edge %s", name)
 }

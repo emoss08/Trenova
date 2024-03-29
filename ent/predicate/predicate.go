@@ -69,6 +69,9 @@ type GoogleApi func(*sql.Selector)
 // HazardousMaterial is the predicate function for hazardousmaterial builders.
 type HazardousMaterial func(*sql.Selector)
 
+// HazardousMaterialSegregation is the predicate function for hazardousmaterialsegregation builders.
+type HazardousMaterialSegregation func(*sql.Selector)
+
 // InvoiceControl is the predicate function for invoicecontrol builders.
 type InvoiceControl func(*sql.Selector)
 
@@ -108,6 +111,9 @@ type TableChangeAlert func(*sql.Selector)
 // Tag is the predicate function for tag builders.
 type Tag func(*sql.Selector)
 
+// Tractor is the predicate function for tractor builders.
+type Tractor func(*sql.Selector)
+
 // UsState is the predicate function for usstate builders.
 type UsState func(*sql.Selector)
 
@@ -116,3 +122,6 @@ type User func(*sql.Selector)
 
 // UserFavorite is the predicate function for userfavorite builders.
 type UserFavorite func(*sql.Selector)
+
+// Worker is the predicate function for worker builders.
+type Worker func(*sql.Selector)

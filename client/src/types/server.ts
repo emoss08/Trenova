@@ -114,7 +114,7 @@ export type API_ENDPOINTS =
   | "/users/notifications/"
   | "/billing/shipments-ready/"
   | "/tags/"
-  | "/hazardous-material-segregation/"
+  | "/hazardous-material-segregations/"
   | "/finance-transactions/"
   | "/reconciliation-queue/"
   | "/organization/me/"
