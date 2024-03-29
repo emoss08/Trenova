@@ -493,6 +493,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 10},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -506,13 +507,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "document_classifications_business_units_business_unit",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[5]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[6]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "document_classifications_organizations_organization",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[6]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[7]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -880,6 +881,44 @@ var (
 				Columns:    []*schema.Column{HazardousMaterialsColumns[11]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// HazardousMaterialSegregationsColumns holds the columns for the "hazardous_material_segregations" table.
+	HazardousMaterialSegregationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "class_a", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1"},
+		{Name: "class_b", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1"},
+		{Name: "segregation_type", Type: field.TypeEnum, Enums: []string{"NotAllowed", "AllowedWithConditions"}, Default: "NotAllowed"},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// HazardousMaterialSegregationsTable holds the schema information for the "hazardous_material_segregations" table.
+	HazardousMaterialSegregationsTable = &schema.Table{
+		Name:       "hazardous_material_segregations",
+		Columns:    HazardousMaterialSegregationsColumns,
+		PrimaryKey: []*schema.Column{HazardousMaterialSegregationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "hazardous_material_segregations_business_units_business_unit",
+				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[6]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "hazardous_material_segregations_organizations_organization",
+				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[7]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "hazardousmaterialsegregation_class_a_class_b_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{HazardousMaterialSegregationsColumns[3], HazardousMaterialSegregationsColumns[4], HazardousMaterialSegregationsColumns[7]},
 			},
 		},
 	}
@@ -1363,6 +1402,84 @@ var (
 			},
 		},
 	}
+	// TractorsColumns holds the columns for the "tractors" table.
+	TractorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "code", Type: field.TypeString, Size: 50},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available"},
+		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "vin", Type: field.TypeString, Nullable: true, Size: 17},
+		{Name: "model", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "year", Type: field.TypeInt, Nullable: true},
+		{Name: "leased", Type: field.TypeBool, Default: false},
+		{Name: "leased_date", Type: field.TypeTime, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "equipment_type_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "equipment_manufacturer_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "primary_worker_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "secondary_worker_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// TractorsTable holds the schema information for the "tractors" table.
+	TractorsTable = &schema.Table{
+		Name:       "tractors",
+		Columns:    TractorsColumns,
+		PrimaryKey: []*schema.Column{TractorsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tractors_business_units_business_unit",
+				Columns:    []*schema.Column{TractorsColumns[11]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_organizations_organization",
+				Columns:    []*schema.Column{TractorsColumns[12]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_equipment_types_equipment_type",
+				Columns:    []*schema.Column{TractorsColumns[13]},
+				RefColumns: []*schema.Column{EquipmentTypesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_equipment_manufactuers_equipment_manufacturer",
+				Columns:    []*schema.Column{TractorsColumns[14]},
+				RefColumns: []*schema.Column{EquipmentManufactuersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_us_states_state",
+				Columns:    []*schema.Column{TractorsColumns[15]},
+				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_workers_primary_worker",
+				Columns:    []*schema.Column{TractorsColumns[16]},
+				RefColumns: []*schema.Column{WorkersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_workers_secondary_worker",
+				Columns:    []*schema.Column{TractorsColumns[17]},
+				RefColumns: []*schema.Column{WorkersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tractor_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{TractorsColumns[3], TractorsColumns[12]},
+			},
+		},
+	}
 	// UsStatesColumns holds the columns for the "us_states" table.
 	UsStatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1462,6 +1579,75 @@ var (
 			},
 		},
 	}
+	// WorkersColumns holds the columns for the "workers" table.
+	WorkersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "code", Type: field.TypeString, Size: 10},
+		{Name: "profile_picture_url", Type: field.TypeString, Nullable: true},
+		{Name: "worker_type", Type: field.TypeEnum, Enums: []string{"Employee", "Contractor"}, Default: "Employee"},
+		{Name: "first_name", Type: field.TypeString, Size: 255},
+		{Name: "last_name", Type: field.TypeString, Size: 255},
+		{Name: "city", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "postal_code", Type: field.TypeString, Nullable: true, Size: 10},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "fleet_code_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "manager_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// WorkersTable holds the schema information for the "workers" table.
+	WorkersTable = &schema.Table{
+		Name:       "workers",
+		Columns:    WorkersColumns,
+		PrimaryKey: []*schema.Column{WorkersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "workers_business_units_business_unit",
+				Columns:    []*schema.Column{WorkersColumns[11]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "workers_organizations_organization",
+				Columns:    []*schema.Column{WorkersColumns[12]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "workers_us_states_state",
+				Columns:    []*schema.Column{WorkersColumns[13]},
+				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "workers_fleet_codes_fleet_code",
+				Columns:    []*schema.Column{WorkersColumns[14]},
+				RefColumns: []*schema.Column{FleetCodesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "workers_users_manager",
+				Columns:    []*schema.Column{WorkersColumns[15]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "worker_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkersColumns[4], WorkersColumns[12]},
+			},
+			{
+				Name:    "worker_first_name_last_name",
+				Unique:  false,
+				Columns: []*schema.Column{WorkersColumns[7], WorkersColumns[8]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccessorialChargesTable,
@@ -1485,6 +1671,7 @@ var (
 		GeneralLedgerAccountsTable,
 		GoogleApisTable,
 		HazardousMaterialsTable,
+		HazardousMaterialSegregationsTable,
 		InvoiceControlsTable,
 		LocationCategoriesTable,
 		OrganizationsTable,
@@ -1498,9 +1685,11 @@ var (
 		ShipmentTypesTable,
 		TableChangeAlertsTable,
 		TagsTable,
+		TractorsTable,
 		UsStatesTable,
 		UsersTable,
 		UserFavoritesTable,
+		WorkersTable,
 	}
 )
 
@@ -1555,6 +1744,8 @@ func init() {
 	GoogleApisTable.ForeignKeys[1].RefTable = OrganizationsTable
 	HazardousMaterialsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	HazardousMaterialsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	HazardousMaterialSegregationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	HazardousMaterialSegregationsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	InvoiceControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	LocationCategoriesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -1581,9 +1772,21 @@ func init() {
 	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	TractorsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	TractorsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	TractorsTable.ForeignKeys[2].RefTable = EquipmentTypesTable
+	TractorsTable.ForeignKeys[3].RefTable = EquipmentManufactuersTable
+	TractorsTable.ForeignKeys[4].RefTable = UsStatesTable
+	TractorsTable.ForeignKeys[5].RefTable = WorkersTable
+	TractorsTable.ForeignKeys[6].RefTable = WorkersTable
 	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
 	UserFavoritesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	UserFavoritesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	WorkersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	WorkersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	WorkersTable.ForeignKeys[2].RefTable = UsStatesTable
+	WorkersTable.ForeignKeys[3].RefTable = FleetCodesTable
+	WorkersTable.ForeignKeys[4].RefTable = UsersTable
 }

@@ -29,7 +29,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 
 const readableSegType = (type: string) => {
   switch (type) {
-    case "X":
+    case "NotAllowed":
       return <Badge variant="inactive">Not Allowed</Badge>;
     default:
       return <Badge variant="active">Allowed With Conditions</Badge>;
@@ -102,7 +102,7 @@ export default function HazardousMaterialSegregation() {
       <DataTable
         queryKey="hazardous-material-segregation-table-data"
         columns={columns}
-        link="/hazardous_material_segregation/"
+        link="/hazardous-material-segregations/"
         name="Hazmat Seg. Rules"
         exportModelName="HazardousMaterialSegregation"
         filterColumn="classA"

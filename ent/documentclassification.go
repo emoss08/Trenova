@@ -28,6 +28,8 @@ type DocumentClassification struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Status holds the value of the "status" field.
+	Status documentclassification.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required,max=10"`
 	// Description holds the value of the "description" field.
@@ -76,7 +78,7 @@ func (*DocumentClassification) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case documentclassification.FieldName, documentclassification.FieldDescription:
+		case documentclassification.FieldStatus, documentclassification.FieldName, documentclassification.FieldDescription:
 			values[i] = new(sql.NullString)
 		case documentclassification.FieldCreatedAt, documentclassification.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -126,6 +128,12 @@ func (dc *DocumentClassification) assignValues(columns []string, values []any) e
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				dc.UpdatedAt = value.Time
+			}
+		case documentclassification.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				dc.Status = documentclassification.Status(value.String)
 			}
 		case documentclassification.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -196,6 +204,9 @@ func (dc *DocumentClassification) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(dc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", dc.Status))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(dc.Name)

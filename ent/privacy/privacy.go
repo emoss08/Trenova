@@ -615,6 +615,30 @@ func (f HazardousMaterialMutationRuleFunc) EvalMutation(ctx context.Context, m e
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.HazardousMaterialMutation", m)
 }
 
+// The HazardousMaterialSegregationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type HazardousMaterialSegregationQueryRuleFunc func(context.Context, *ent.HazardousMaterialSegregationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f HazardousMaterialSegregationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.HazardousMaterialSegregationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.HazardousMaterialSegregationQuery", q)
+}
+
+// The HazardousMaterialSegregationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type HazardousMaterialSegregationMutationRuleFunc func(context.Context, *ent.HazardousMaterialSegregationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f HazardousMaterialSegregationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.HazardousMaterialSegregationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.HazardousMaterialSegregationMutation", m)
+}
+
 // The InvoiceControlQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type InvoiceControlQueryRuleFunc func(context.Context, *ent.InvoiceControlQuery) error
@@ -927,6 +951,30 @@ func (f TagMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) e
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.TagMutation", m)
 }
 
+// The TractorQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type TractorQueryRuleFunc func(context.Context, *ent.TractorQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f TractorQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.TractorQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.TractorQuery", q)
+}
+
+// The TractorMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type TractorMutationRuleFunc func(context.Context, *ent.TractorMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f TractorMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.TractorMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.TractorMutation", m)
+}
+
 // The UsStateQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type UsStateQueryRuleFunc func(context.Context, *ent.UsStateQuery) error
@@ -997,6 +1045,30 @@ func (f UserFavoriteMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.UserFavoriteMutation", m)
+}
+
+// The WorkerQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type WorkerQueryRuleFunc func(context.Context, *ent.WorkerQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f WorkerQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.WorkerQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.WorkerQuery", q)
+}
+
+// The WorkerMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type WorkerMutationRuleFunc func(context.Context, *ent.WorkerMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f WorkerMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.WorkerMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerMutation", m)
 }
 
 type (
@@ -1076,6 +1148,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.HazardousMaterialQuery:
 		return q.Filter(), nil
+	case *ent.HazardousMaterialSegregationQuery:
+		return q.Filter(), nil
 	case *ent.InvoiceControlQuery:
 		return q.Filter(), nil
 	case *ent.LocationCategoryQuery:
@@ -1102,11 +1176,15 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.TagQuery:
 		return q.Filter(), nil
+	case *ent.TractorQuery:
+		return q.Filter(), nil
 	case *ent.UsStateQuery:
 		return q.Filter(), nil
 	case *ent.UserQuery:
 		return q.Filter(), nil
 	case *ent.UserFavoriteQuery:
+		return q.Filter(), nil
+	case *ent.WorkerQuery:
 		return q.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected query type %T for query filter", q)
@@ -1157,6 +1235,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.HazardousMaterialMutation:
 		return m.Filter(), nil
+	case *ent.HazardousMaterialSegregationMutation:
+		return m.Filter(), nil
 	case *ent.InvoiceControlMutation:
 		return m.Filter(), nil
 	case *ent.LocationCategoryMutation:
@@ -1183,11 +1263,15 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.TagMutation:
 		return m.Filter(), nil
+	case *ent.TractorMutation:
+		return m.Filter(), nil
 	case *ent.UsStateMutation:
 		return m.Filter(), nil
 	case *ent.UserMutation:
 		return m.Filter(), nil
 	case *ent.UserFavoriteMutation:
+		return m.Filter(), nil
+	case *ent.WorkerMutation:
 		return m.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected mutation type %T for mutation filter", m)

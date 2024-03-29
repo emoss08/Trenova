@@ -58,6 +58,14 @@ Atlas is a powerful tool for managing database schemas and migrations. Here's ho
            -w
    ```
 
+7. **Create custom migration**:
+   Create a custom migration file.
+   ```bash
+   atlas migrate new migration_name \
+         --dir "file://ent/migrate/migrations"
+   ```
+   *Note: Replace `migration_name` with the name you wish to give your migration.*
+
 ### Entity Framework (Entgo) Commands
 
 Entgo is an entity framework for Go, simplifying the process of working with entities and schemas.

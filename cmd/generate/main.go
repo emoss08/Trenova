@@ -38,10 +38,9 @@ func parseStructFields(fileName, structName string) ([]*ast.Field, error) {
 }
 
 type FieldData struct {
-	Name string
-	Type string
+	Name            string
+	IncludeInUpdate bool
 }
-
 type ServiceData struct {
 	EntityName      string
 	EntityNameLower string
@@ -49,7 +48,7 @@ type ServiceData struct {
 }
 
 func main() {
-	fields, err := parseStructFields("ent/qualifiercode.go", "QualifierCode")
+	fields, err := parseStructFields("ent/hazardousmaterialsegregation.go", "HazardousMaterialSegregation")
 	if err != nil {
 		log.Fatalf("Error parsing struct: %v", err)
 	}
@@ -58,14 +57,15 @@ func main() {
 	for _, field := range fields {
 		if len(field.Names) > 0 {
 			fieldName := field.Names[0].Name
-			// Exclude common fields like ID, CreatedAt, etc.
-			if fieldName != "ID" && fieldName != "CreatedAt" && fieldName != "UpdatedAt" {
-				fieldData = append(fieldData, FieldData{Name: fieldName})
+			// Exclude common fields like ID, CreatedAt, etc., and specific fields in updates.
+			includeInUpdate := fieldName != "OrganizationID" && fieldName != "BusinessUnitID"
+			if fieldName != "ID" && fieldName != "CreatedAt" && fieldName != "UpdatedAt" && fieldName != "Edges" && fieldName != "selectValues" {
+				fieldData = append(fieldData, FieldData{Name: fieldName, IncludeInUpdate: includeInUpdate})
 			}
 		}
 	}
 
-	entityName := "QualifierCode"
+	entityName := "HazardousMaterialSegregation"
 	data := ServiceData{
 		EntityName:      entityName,
 		EntityNameLower: strings.ToLower(entityName),
@@ -102,7 +102,7 @@ func New{{.EntityName}}Ops(ctx context.Context) *{{.EntityName}}Ops {
 
 // Get{{.EntityName}}s retrieves entities for an organization and business unit.
 func (ops *{{.EntityName}}Ops) Get{{.EntityName}}s(limit, offset int, orgID, buID uuid.UUID) ([]*ent.{{.EntityName}}, int, error) {
-	count, err := ops.client.{{.EntityName}}.Query().
+	count, countErr := ops.client.{{.EntityName}}.Query().
 		Where({{.EntityNameLower}}.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
@@ -138,13 +138,22 @@ func (ops *{{.EntityName}}Ops) Create{{.EntityName}}(item *ent.{{.EntityName}}) 
 		Save(ops.ctx)
 }
 
-// Update{{.EntityName}} updates the entity.
+// Update{{.EntityName}} updates a {{.EntityName}} entity.
 func (ops *{{.EntityName}}Ops) Update{{.EntityName}}(item *ent.{{.EntityName}}) (*ent.{{.EntityName}}, error) {
-	updater := ops.client.{{.EntityName}}.UpdateOneID(item.ID)
+	// Start building the update operation
+	updateOp := ops.client.{{.EntityName}}.UpdateOneID(item.ID).
 	{{- range .Fields}}
-	updater = updater.Set{{.Name}}(item.{{.Name}})
+	{{- if .IncludeInUpdate}}
+	Set{{.Name}}(item.{{.Name}}).
 	{{- end}}
-	return updater.Save(ops.ctx)
+	{{- end}}
+
+	updatedEntity, err := updateOp.Save(ops.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedEntity, nil
 }
 `
 

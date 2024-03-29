@@ -82,12 +82,3 @@ func (Organization) Mixin() []ent.Mixin {
 		DefaultMixin{},
 	}
 }
-
-// // Policy defines the privacy policy of the Organization.
-// func (Organization) Policy() ent.Policy {
-// 	return privacy.Policy{
-// 		Mutation: privacy.MutationPolicy{
-// 			rule.AllowIfAdmin(),
-// 		},
-// 	}
-// }

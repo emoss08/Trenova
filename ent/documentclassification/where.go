@@ -206,6 +206,26 @@ func UpdatedAtLTE(v time.Time) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v Status) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEQ(FieldStatus, v))
+}
+
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v Status) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNEQ(FieldStatus, v))
+}
+
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...Status) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldIn(FieldStatus, vs...))
+}
+
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...Status) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNotIn(FieldStatus, vs...))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldEQ(FieldName, v))

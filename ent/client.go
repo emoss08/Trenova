@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
@@ -50,9 +51,11 @@ import (
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
+	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
+	"github.com/emoss08/trenova/ent/worker"
 
 	stdsql "database/sql"
 )
@@ -104,6 +107,8 @@ type Client struct {
 	GoogleApi *GoogleApiClient
 	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
 	HazardousMaterial *HazardousMaterialClient
+	// HazardousMaterialSegregation is the client for interacting with the HazardousMaterialSegregation builders.
+	HazardousMaterialSegregation *HazardousMaterialSegregationClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
 	// LocationCategory is the client for interacting with the LocationCategory builders.
@@ -130,12 +135,16 @@ type Client struct {
 	TableChangeAlert *TableChangeAlertClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
+	// Tractor is the client for interacting with the Tractor builders.
+	Tractor *TractorClient
 	// UsState is the client for interacting with the UsState builders.
 	UsState *UsStateClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// Worker is the client for interacting with the Worker builders.
+	Worker *WorkerClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -168,6 +177,7 @@ func (c *Client) init() {
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
 	c.GoogleApi = NewGoogleApiClient(c.config)
 	c.HazardousMaterial = NewHazardousMaterialClient(c.config)
+	c.HazardousMaterialSegregation = NewHazardousMaterialSegregationClient(c.config)
 	c.InvoiceControl = NewInvoiceControlClient(c.config)
 	c.LocationCategory = NewLocationCategoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
@@ -181,9 +191,11 @@ func (c *Client) init() {
 	c.ShipmentType = NewShipmentTypeClient(c.config)
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
 	c.Tag = NewTagClient(c.config)
+	c.Tractor = NewTractorClient(c.config)
 	c.UsState = NewUsStateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserFavorite = NewUserFavoriteClient(c.config)
+	c.Worker = NewWorkerClient(c.config)
 }
 
 type (
@@ -274,45 +286,48 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                    ctx,
-		config:                 cfg,
-		AccessorialCharge:      NewAccessorialChargeClient(cfg),
-		AccountingControl:      NewAccountingControlClient(cfg),
-		BillingControl:         NewBillingControlClient(cfg),
-		BusinessUnit:           NewBusinessUnitClient(cfg),
-		ChargeType:             NewChargeTypeClient(cfg),
-		CommentType:            NewCommentTypeClient(cfg),
-		Commodity:              NewCommodityClient(cfg),
-		Customer:               NewCustomerClient(cfg),
-		DelayCode:              NewDelayCodeClient(cfg),
-		DispatchControl:        NewDispatchControlClient(cfg),
-		DivisionCode:           NewDivisionCodeClient(cfg),
-		DocumentClassification: NewDocumentClassificationClient(cfg),
-		EmailControl:           NewEmailControlClient(cfg),
-		EmailProfile:           NewEmailProfileClient(cfg),
-		EquipmentManufactuer:   NewEquipmentManufactuerClient(cfg),
-		EquipmentType:          NewEquipmentTypeClient(cfg),
-		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
-		FleetCode:              NewFleetCodeClient(cfg),
-		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
-		GoogleApi:              NewGoogleApiClient(cfg),
-		HazardousMaterial:      NewHazardousMaterialClient(cfg),
-		InvoiceControl:         NewInvoiceControlClient(cfg),
-		LocationCategory:       NewLocationCategoryClient(cfg),
-		Organization:           NewOrganizationClient(cfg),
-		QualifierCode:          NewQualifierCodeClient(cfg),
-		ReasonCode:             NewReasonCodeClient(cfg),
-		RevenueCode:            NewRevenueCodeClient(cfg),
-		RouteControl:           NewRouteControlClient(cfg),
-		ServiceType:            NewServiceTypeClient(cfg),
-		Session:                NewSessionClient(cfg),
-		ShipmentControl:        NewShipmentControlClient(cfg),
-		ShipmentType:           NewShipmentTypeClient(cfg),
-		TableChangeAlert:       NewTableChangeAlertClient(cfg),
-		Tag:                    NewTagClient(cfg),
-		UsState:                NewUsStateClient(cfg),
-		User:                   NewUserClient(cfg),
-		UserFavorite:           NewUserFavoriteClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		AccessorialCharge:            NewAccessorialChargeClient(cfg),
+		AccountingControl:            NewAccountingControlClient(cfg),
+		BillingControl:               NewBillingControlClient(cfg),
+		BusinessUnit:                 NewBusinessUnitClient(cfg),
+		ChargeType:                   NewChargeTypeClient(cfg),
+		CommentType:                  NewCommentTypeClient(cfg),
+		Commodity:                    NewCommodityClient(cfg),
+		Customer:                     NewCustomerClient(cfg),
+		DelayCode:                    NewDelayCodeClient(cfg),
+		DispatchControl:              NewDispatchControlClient(cfg),
+		DivisionCode:                 NewDivisionCodeClient(cfg),
+		DocumentClassification:       NewDocumentClassificationClient(cfg),
+		EmailControl:                 NewEmailControlClient(cfg),
+		EmailProfile:                 NewEmailProfileClient(cfg),
+		EquipmentManufactuer:         NewEquipmentManufactuerClient(cfg),
+		EquipmentType:                NewEquipmentTypeClient(cfg),
+		FeasibilityToolControl:       NewFeasibilityToolControlClient(cfg),
+		FleetCode:                    NewFleetCodeClient(cfg),
+		GeneralLedgerAccount:         NewGeneralLedgerAccountClient(cfg),
+		GoogleApi:                    NewGoogleApiClient(cfg),
+		HazardousMaterial:            NewHazardousMaterialClient(cfg),
+		HazardousMaterialSegregation: NewHazardousMaterialSegregationClient(cfg),
+		InvoiceControl:               NewInvoiceControlClient(cfg),
+		LocationCategory:             NewLocationCategoryClient(cfg),
+		Organization:                 NewOrganizationClient(cfg),
+		QualifierCode:                NewQualifierCodeClient(cfg),
+		ReasonCode:                   NewReasonCodeClient(cfg),
+		RevenueCode:                  NewRevenueCodeClient(cfg),
+		RouteControl:                 NewRouteControlClient(cfg),
+		ServiceType:                  NewServiceTypeClient(cfg),
+		Session:                      NewSessionClient(cfg),
+		ShipmentControl:              NewShipmentControlClient(cfg),
+		ShipmentType:                 NewShipmentTypeClient(cfg),
+		TableChangeAlert:             NewTableChangeAlertClient(cfg),
+		Tag:                          NewTagClient(cfg),
+		Tractor:                      NewTractorClient(cfg),
+		UsState:                      NewUsStateClient(cfg),
+		User:                         NewUserClient(cfg),
+		UserFavorite:                 NewUserFavoriteClient(cfg),
+		Worker:                       NewWorkerClient(cfg),
 	}, nil
 }
 
@@ -330,45 +345,48 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                    ctx,
-		config:                 cfg,
-		AccessorialCharge:      NewAccessorialChargeClient(cfg),
-		AccountingControl:      NewAccountingControlClient(cfg),
-		BillingControl:         NewBillingControlClient(cfg),
-		BusinessUnit:           NewBusinessUnitClient(cfg),
-		ChargeType:             NewChargeTypeClient(cfg),
-		CommentType:            NewCommentTypeClient(cfg),
-		Commodity:              NewCommodityClient(cfg),
-		Customer:               NewCustomerClient(cfg),
-		DelayCode:              NewDelayCodeClient(cfg),
-		DispatchControl:        NewDispatchControlClient(cfg),
-		DivisionCode:           NewDivisionCodeClient(cfg),
-		DocumentClassification: NewDocumentClassificationClient(cfg),
-		EmailControl:           NewEmailControlClient(cfg),
-		EmailProfile:           NewEmailProfileClient(cfg),
-		EquipmentManufactuer:   NewEquipmentManufactuerClient(cfg),
-		EquipmentType:          NewEquipmentTypeClient(cfg),
-		FeasibilityToolControl: NewFeasibilityToolControlClient(cfg),
-		FleetCode:              NewFleetCodeClient(cfg),
-		GeneralLedgerAccount:   NewGeneralLedgerAccountClient(cfg),
-		GoogleApi:              NewGoogleApiClient(cfg),
-		HazardousMaterial:      NewHazardousMaterialClient(cfg),
-		InvoiceControl:         NewInvoiceControlClient(cfg),
-		LocationCategory:       NewLocationCategoryClient(cfg),
-		Organization:           NewOrganizationClient(cfg),
-		QualifierCode:          NewQualifierCodeClient(cfg),
-		ReasonCode:             NewReasonCodeClient(cfg),
-		RevenueCode:            NewRevenueCodeClient(cfg),
-		RouteControl:           NewRouteControlClient(cfg),
-		ServiceType:            NewServiceTypeClient(cfg),
-		Session:                NewSessionClient(cfg),
-		ShipmentControl:        NewShipmentControlClient(cfg),
-		ShipmentType:           NewShipmentTypeClient(cfg),
-		TableChangeAlert:       NewTableChangeAlertClient(cfg),
-		Tag:                    NewTagClient(cfg),
-		UsState:                NewUsStateClient(cfg),
-		User:                   NewUserClient(cfg),
-		UserFavorite:           NewUserFavoriteClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		AccessorialCharge:            NewAccessorialChargeClient(cfg),
+		AccountingControl:            NewAccountingControlClient(cfg),
+		BillingControl:               NewBillingControlClient(cfg),
+		BusinessUnit:                 NewBusinessUnitClient(cfg),
+		ChargeType:                   NewChargeTypeClient(cfg),
+		CommentType:                  NewCommentTypeClient(cfg),
+		Commodity:                    NewCommodityClient(cfg),
+		Customer:                     NewCustomerClient(cfg),
+		DelayCode:                    NewDelayCodeClient(cfg),
+		DispatchControl:              NewDispatchControlClient(cfg),
+		DivisionCode:                 NewDivisionCodeClient(cfg),
+		DocumentClassification:       NewDocumentClassificationClient(cfg),
+		EmailControl:                 NewEmailControlClient(cfg),
+		EmailProfile:                 NewEmailProfileClient(cfg),
+		EquipmentManufactuer:         NewEquipmentManufactuerClient(cfg),
+		EquipmentType:                NewEquipmentTypeClient(cfg),
+		FeasibilityToolControl:       NewFeasibilityToolControlClient(cfg),
+		FleetCode:                    NewFleetCodeClient(cfg),
+		GeneralLedgerAccount:         NewGeneralLedgerAccountClient(cfg),
+		GoogleApi:                    NewGoogleApiClient(cfg),
+		HazardousMaterial:            NewHazardousMaterialClient(cfg),
+		HazardousMaterialSegregation: NewHazardousMaterialSegregationClient(cfg),
+		InvoiceControl:               NewInvoiceControlClient(cfg),
+		LocationCategory:             NewLocationCategoryClient(cfg),
+		Organization:                 NewOrganizationClient(cfg),
+		QualifierCode:                NewQualifierCodeClient(cfg),
+		ReasonCode:                   NewReasonCodeClient(cfg),
+		RevenueCode:                  NewRevenueCodeClient(cfg),
+		RouteControl:                 NewRouteControlClient(cfg),
+		ServiceType:                  NewServiceTypeClient(cfg),
+		Session:                      NewSessionClient(cfg),
+		ShipmentControl:              NewShipmentControlClient(cfg),
+		ShipmentType:                 NewShipmentTypeClient(cfg),
+		TableChangeAlert:             NewTableChangeAlertClient(cfg),
+		Tag:                          NewTagClient(cfg),
+		Tractor:                      NewTractorClient(cfg),
+		UsState:                      NewUsStateClient(cfg),
+		User:                         NewUserClient(cfg),
+		UserFavorite:                 NewUserFavoriteClient(cfg),
+		Worker:                       NewWorkerClient(cfg),
 	}, nil
 }
 
@@ -403,10 +421,11 @@ func (c *Client) Use(hooks ...Hook) {
 		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
-		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
-		c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType,
-		c.Session, c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag,
-		c.UsState, c.User, c.UserFavorite,
+		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
+		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
+		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
+		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
+		c.UserFavorite, c.Worker,
 	} {
 		n.Use(hooks...)
 	}
@@ -421,10 +440,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
-		c.HazardousMaterial, c.InvoiceControl, c.LocationCategory, c.Organization,
-		c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType,
-		c.Session, c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag,
-		c.UsState, c.User, c.UserFavorite,
+		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
+		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
+		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
+		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
+		c.UserFavorite, c.Worker,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -475,6 +495,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GoogleApi.mutate(ctx, m)
 	case *HazardousMaterialMutation:
 		return c.HazardousMaterial.mutate(ctx, m)
+	case *HazardousMaterialSegregationMutation:
+		return c.HazardousMaterialSegregation.mutate(ctx, m)
 	case *InvoiceControlMutation:
 		return c.InvoiceControl.mutate(ctx, m)
 	case *LocationCategoryMutation:
@@ -501,12 +523,16 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TableChangeAlert.mutate(ctx, m)
 	case *TagMutation:
 		return c.Tag.mutate(ctx, m)
+	case *TractorMutation:
+		return c.Tractor.mutate(ctx, m)
 	case *UsStateMutation:
 		return c.UsState.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserFavoriteMutation:
 		return c.UserFavorite.mutate(ctx, m)
+	case *WorkerMutation:
+		return c.Worker.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -4155,6 +4181,171 @@ func (c *HazardousMaterialClient) mutate(ctx context.Context, m *HazardousMateri
 	}
 }
 
+// HazardousMaterialSegregationClient is a client for the HazardousMaterialSegregation schema.
+type HazardousMaterialSegregationClient struct {
+	config
+}
+
+// NewHazardousMaterialSegregationClient returns a client for the HazardousMaterialSegregation from the given config.
+func NewHazardousMaterialSegregationClient(c config) *HazardousMaterialSegregationClient {
+	return &HazardousMaterialSegregationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `hazardousmaterialsegregation.Hooks(f(g(h())))`.
+func (c *HazardousMaterialSegregationClient) Use(hooks ...Hook) {
+	c.hooks.HazardousMaterialSegregation = append(c.hooks.HazardousMaterialSegregation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `hazardousmaterialsegregation.Intercept(f(g(h())))`.
+func (c *HazardousMaterialSegregationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.HazardousMaterialSegregation = append(c.inters.HazardousMaterialSegregation, interceptors...)
+}
+
+// Create returns a builder for creating a HazardousMaterialSegregation entity.
+func (c *HazardousMaterialSegregationClient) Create() *HazardousMaterialSegregationCreate {
+	mutation := newHazardousMaterialSegregationMutation(c.config, OpCreate)
+	return &HazardousMaterialSegregationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of HazardousMaterialSegregation entities.
+func (c *HazardousMaterialSegregationClient) CreateBulk(builders ...*HazardousMaterialSegregationCreate) *HazardousMaterialSegregationCreateBulk {
+	return &HazardousMaterialSegregationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *HazardousMaterialSegregationClient) MapCreateBulk(slice any, setFunc func(*HazardousMaterialSegregationCreate, int)) *HazardousMaterialSegregationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &HazardousMaterialSegregationCreateBulk{err: fmt.Errorf("calling to HazardousMaterialSegregationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*HazardousMaterialSegregationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &HazardousMaterialSegregationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for HazardousMaterialSegregation.
+func (c *HazardousMaterialSegregationClient) Update() *HazardousMaterialSegregationUpdate {
+	mutation := newHazardousMaterialSegregationMutation(c.config, OpUpdate)
+	return &HazardousMaterialSegregationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *HazardousMaterialSegregationClient) UpdateOne(hms *HazardousMaterialSegregation) *HazardousMaterialSegregationUpdateOne {
+	mutation := newHazardousMaterialSegregationMutation(c.config, OpUpdateOne, withHazardousMaterialSegregation(hms))
+	return &HazardousMaterialSegregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *HazardousMaterialSegregationClient) UpdateOneID(id uuid.UUID) *HazardousMaterialSegregationUpdateOne {
+	mutation := newHazardousMaterialSegregationMutation(c.config, OpUpdateOne, withHazardousMaterialSegregationID(id))
+	return &HazardousMaterialSegregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for HazardousMaterialSegregation.
+func (c *HazardousMaterialSegregationClient) Delete() *HazardousMaterialSegregationDelete {
+	mutation := newHazardousMaterialSegregationMutation(c.config, OpDelete)
+	return &HazardousMaterialSegregationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *HazardousMaterialSegregationClient) DeleteOne(hms *HazardousMaterialSegregation) *HazardousMaterialSegregationDeleteOne {
+	return c.DeleteOneID(hms.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *HazardousMaterialSegregationClient) DeleteOneID(id uuid.UUID) *HazardousMaterialSegregationDeleteOne {
+	builder := c.Delete().Where(hazardousmaterialsegregation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &HazardousMaterialSegregationDeleteOne{builder}
+}
+
+// Query returns a query builder for HazardousMaterialSegregation.
+func (c *HazardousMaterialSegregationClient) Query() *HazardousMaterialSegregationQuery {
+	return &HazardousMaterialSegregationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeHazardousMaterialSegregation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a HazardousMaterialSegregation entity by its id.
+func (c *HazardousMaterialSegregationClient) Get(ctx context.Context, id uuid.UUID) (*HazardousMaterialSegregation, error) {
+	return c.Query().Where(hazardousmaterialsegregation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *HazardousMaterialSegregationClient) GetX(ctx context.Context, id uuid.UUID) *HazardousMaterialSegregation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a HazardousMaterialSegregation.
+func (c *HazardousMaterialSegregationClient) QueryBusinessUnit(hms *HazardousMaterialSegregation) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := hms.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hazardousmaterialsegregation.Table, hazardousmaterialsegregation.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, hazardousmaterialsegregation.BusinessUnitTable, hazardousmaterialsegregation.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(hms.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a HazardousMaterialSegregation.
+func (c *HazardousMaterialSegregationClient) QueryOrganization(hms *HazardousMaterialSegregation) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := hms.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hazardousmaterialsegregation.Table, hazardousmaterialsegregation.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, hazardousmaterialsegregation.OrganizationTable, hazardousmaterialsegregation.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(hms.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *HazardousMaterialSegregationClient) Hooks() []Hook {
+	return c.hooks.HazardousMaterialSegregation
+}
+
+// Interceptors returns the client interceptors.
+func (c *HazardousMaterialSegregationClient) Interceptors() []Interceptor {
+	return c.inters.HazardousMaterialSegregation
+}
+
+func (c *HazardousMaterialSegregationClient) mutate(ctx context.Context, m *HazardousMaterialSegregationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&HazardousMaterialSegregationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&HazardousMaterialSegregationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&HazardousMaterialSegregationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&HazardousMaterialSegregationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown HazardousMaterialSegregation mutation op: %q", m.Op())
+	}
+}
+
 // InvoiceControlClient is a client for the InvoiceControl schema.
 type InvoiceControlClient struct {
 	config
@@ -6430,6 +6621,251 @@ func (c *TagClient) mutate(ctx context.Context, m *TagMutation) (Value, error) {
 	}
 }
 
+// TractorClient is a client for the Tractor schema.
+type TractorClient struct {
+	config
+}
+
+// NewTractorClient returns a client for the Tractor from the given config.
+func NewTractorClient(c config) *TractorClient {
+	return &TractorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tractor.Hooks(f(g(h())))`.
+func (c *TractorClient) Use(hooks ...Hook) {
+	c.hooks.Tractor = append(c.hooks.Tractor, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tractor.Intercept(f(g(h())))`.
+func (c *TractorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Tractor = append(c.inters.Tractor, interceptors...)
+}
+
+// Create returns a builder for creating a Tractor entity.
+func (c *TractorClient) Create() *TractorCreate {
+	mutation := newTractorMutation(c.config, OpCreate)
+	return &TractorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Tractor entities.
+func (c *TractorClient) CreateBulk(builders ...*TractorCreate) *TractorCreateBulk {
+	return &TractorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TractorClient) MapCreateBulk(slice any, setFunc func(*TractorCreate, int)) *TractorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TractorCreateBulk{err: fmt.Errorf("calling to TractorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TractorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TractorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Tractor.
+func (c *TractorClient) Update() *TractorUpdate {
+	mutation := newTractorMutation(c.config, OpUpdate)
+	return &TractorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TractorClient) UpdateOne(t *Tractor) *TractorUpdateOne {
+	mutation := newTractorMutation(c.config, OpUpdateOne, withTractor(t))
+	return &TractorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TractorClient) UpdateOneID(id uuid.UUID) *TractorUpdateOne {
+	mutation := newTractorMutation(c.config, OpUpdateOne, withTractorID(id))
+	return &TractorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Tractor.
+func (c *TractorClient) Delete() *TractorDelete {
+	mutation := newTractorMutation(c.config, OpDelete)
+	return &TractorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TractorClient) DeleteOne(t *Tractor) *TractorDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TractorClient) DeleteOneID(id uuid.UUID) *TractorDeleteOne {
+	builder := c.Delete().Where(tractor.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TractorDeleteOne{builder}
+}
+
+// Query returns a query builder for Tractor.
+func (c *TractorClient) Query() *TractorQuery {
+	return &TractorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTractor},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Tractor entity by its id.
+func (c *TractorClient) Get(ctx context.Context, id uuid.UUID) (*Tractor, error) {
+	return c.Query().Where(tractor.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TractorClient) GetX(ctx context.Context, id uuid.UUID) *Tractor {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Tractor.
+func (c *TractorClient) QueryBusinessUnit(t *Tractor) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.BusinessUnitTable, tractor.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Tractor.
+func (c *TractorClient) QueryOrganization(t *Tractor) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.OrganizationTable, tractor.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEquipmentType queries the equipment_type edge of a Tractor.
+func (c *TractorClient) QueryEquipmentType(t *Tractor) *EquipmentTypeQuery {
+	query := (&EquipmentTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(equipmenttype.Table, equipmenttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.EquipmentTypeTable, tractor.EquipmentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEquipmentManufacturer queries the equipment_manufacturer edge of a Tractor.
+func (c *TractorClient) QueryEquipmentManufacturer(t *Tractor) *EquipmentManufactuerQuery {
+	query := (&EquipmentManufactuerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(equipmentmanufactuer.Table, equipmentmanufactuer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.EquipmentManufacturerTable, tractor.EquipmentManufacturerColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryState queries the state edge of a Tractor.
+func (c *TractorClient) QueryState(t *Tractor) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.StateTable, tractor.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPrimaryWorker queries the primary_worker edge of a Tractor.
+func (c *TractorClient) QueryPrimaryWorker(t *Tractor) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.PrimaryWorkerTable, tractor.PrimaryWorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySecondaryWorker queries the secondary_worker edge of a Tractor.
+func (c *TractorClient) QuerySecondaryWorker(t *Tractor) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.SecondaryWorkerTable, tractor.SecondaryWorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TractorClient) Hooks() []Hook {
+	return c.hooks.Tractor
+}
+
+// Interceptors returns the client interceptors.
+func (c *TractorClient) Interceptors() []Interceptor {
+	return c.inters.Tractor
+}
+
+func (c *TractorClient) mutate(ctx context.Context, m *TractorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TractorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TractorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TractorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TractorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Tractor mutation op: %q", m.Op())
+	}
+}
+
 // UsStateClient is a client for the UsState schema.
 type UsStateClient struct {
 	config
@@ -6925,6 +7361,251 @@ func (c *UserFavoriteClient) mutate(ctx context.Context, m *UserFavoriteMutation
 	}
 }
 
+// WorkerClient is a client for the Worker schema.
+type WorkerClient struct {
+	config
+}
+
+// NewWorkerClient returns a client for the Worker from the given config.
+func NewWorkerClient(c config) *WorkerClient {
+	return &WorkerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `worker.Hooks(f(g(h())))`.
+func (c *WorkerClient) Use(hooks ...Hook) {
+	c.hooks.Worker = append(c.hooks.Worker, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worker.Intercept(f(g(h())))`.
+func (c *WorkerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Worker = append(c.inters.Worker, interceptors...)
+}
+
+// Create returns a builder for creating a Worker entity.
+func (c *WorkerClient) Create() *WorkerCreate {
+	mutation := newWorkerMutation(c.config, OpCreate)
+	return &WorkerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Worker entities.
+func (c *WorkerClient) CreateBulk(builders ...*WorkerCreate) *WorkerCreateBulk {
+	return &WorkerCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkerClient) MapCreateBulk(slice any, setFunc func(*WorkerCreate, int)) *WorkerCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkerCreateBulk{err: fmt.Errorf("calling to WorkerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkerCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Worker.
+func (c *WorkerClient) Update() *WorkerUpdate {
+	mutation := newWorkerMutation(c.config, OpUpdate)
+	return &WorkerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkerClient) UpdateOne(w *Worker) *WorkerUpdateOne {
+	mutation := newWorkerMutation(c.config, OpUpdateOne, withWorker(w))
+	return &WorkerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkerClient) UpdateOneID(id uuid.UUID) *WorkerUpdateOne {
+	mutation := newWorkerMutation(c.config, OpUpdateOne, withWorkerID(id))
+	return &WorkerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Worker.
+func (c *WorkerClient) Delete() *WorkerDelete {
+	mutation := newWorkerMutation(c.config, OpDelete)
+	return &WorkerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkerClient) DeleteOne(w *Worker) *WorkerDeleteOne {
+	return c.DeleteOneID(w.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkerClient) DeleteOneID(id uuid.UUID) *WorkerDeleteOne {
+	builder := c.Delete().Where(worker.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkerDeleteOne{builder}
+}
+
+// Query returns a query builder for Worker.
+func (c *WorkerClient) Query() *WorkerQuery {
+	return &WorkerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorker},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Worker entity by its id.
+func (c *WorkerClient) Get(ctx context.Context, id uuid.UUID) (*Worker, error) {
+	return c.Query().Where(worker.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkerClient) GetX(ctx context.Context, id uuid.UUID) *Worker {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Worker.
+func (c *WorkerClient) QueryBusinessUnit(w *Worker) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, worker.BusinessUnitTable, worker.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Worker.
+func (c *WorkerClient) QueryOrganization(w *Worker) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, worker.OrganizationTable, worker.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryState queries the state edge of a Worker.
+func (c *WorkerClient) QueryState(w *Worker) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, worker.StateTable, worker.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFleetCode queries the fleet_code edge of a Worker.
+func (c *WorkerClient) QueryFleetCode(w *Worker) *FleetCodeQuery {
+	query := (&FleetCodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(fleetcode.Table, fleetcode.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, worker.FleetCodeTable, worker.FleetCodeColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryManager queries the manager edge of a Worker.
+func (c *WorkerClient) QueryManager(w *Worker) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, worker.ManagerTable, worker.ManagerColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTractor queries the tractor edge of a Worker.
+func (c *WorkerClient) QueryTractor(w *Worker) *TractorQuery {
+	query := (&TractorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(tractor.Table, tractor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, worker.TractorTable, worker.TractorColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySecondaryTractor queries the secondary_tractor edge of a Worker.
+func (c *WorkerClient) QuerySecondaryTractor(w *Worker) *TractorQuery {
+	query := (&TractorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(tractor.Table, tractor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, worker.SecondaryTractorTable, worker.SecondaryTractorColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkerClient) Hooks() []Hook {
+	return c.hooks.Worker
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkerClient) Interceptors() []Interceptor {
+	return c.inters.Worker
+}
+
+func (c *WorkerClient) mutate(ctx context.Context, m *WorkerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Worker mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
@@ -6932,20 +7613,21 @@ type (
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
-		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
-		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
-		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
-		UserFavorite []ent.Hook
+		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
+		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
+		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
+		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite, Worker []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
-		GoogleApi, HazardousMaterial, InvoiceControl, LocationCategory, Organization,
-		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
-		ShipmentControl, ShipmentType, TableChangeAlert, Tag, UsState, User,
-		UserFavorite []ent.Interceptor
+		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
+		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
+		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
+		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite,
+		Worker []ent.Interceptor
 	}
 )
 

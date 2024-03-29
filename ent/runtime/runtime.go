@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/locationcategory"
 	"github.com/emoss08/trenova/ent/organization"
@@ -40,9 +41,11 @@ import (
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
+	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
+	"github.com/emoss08/trenova/ent/worker"
 	"github.com/google/uuid"
 )
 
@@ -681,7 +684,7 @@ func init() {
 	// documentclassification.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	documentclassification.UpdateDefaultUpdatedAt = documentclassificationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// documentclassificationDescName is the schema descriptor for name field.
-	documentclassificationDescName := documentclassificationFields[0].Descriptor()
+	documentclassificationDescName := documentclassificationFields[1].Descriptor()
 	// documentclassification.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	documentclassification.NameValidator = documentclassificationDescName.Validators[0].(func(string) error)
 	// documentclassificationDescID is the schema descriptor for id field.
@@ -1013,6 +1016,25 @@ func init() {
 	hazardousmaterialDescID := hazardousmaterialMixinFields0[0].Descriptor()
 	// hazardousmaterial.DefaultID holds the default value on creation for the id field.
 	hazardousmaterial.DefaultID = hazardousmaterialDescID.Default.(func() uuid.UUID)
+	hazardousmaterialsegregationMixin := schema.HazardousMaterialSegregation{}.Mixin()
+	hazardousmaterialsegregationMixinFields0 := hazardousmaterialsegregationMixin[0].Fields()
+	_ = hazardousmaterialsegregationMixinFields0
+	hazardousmaterialsegregationFields := schema.HazardousMaterialSegregation{}.Fields()
+	_ = hazardousmaterialsegregationFields
+	// hazardousmaterialsegregationDescCreatedAt is the schema descriptor for created_at field.
+	hazardousmaterialsegregationDescCreatedAt := hazardousmaterialsegregationMixinFields0[3].Descriptor()
+	// hazardousmaterialsegregation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	hazardousmaterialsegregation.DefaultCreatedAt = hazardousmaterialsegregationDescCreatedAt.Default.(func() time.Time)
+	// hazardousmaterialsegregationDescUpdatedAt is the schema descriptor for updated_at field.
+	hazardousmaterialsegregationDescUpdatedAt := hazardousmaterialsegregationMixinFields0[4].Descriptor()
+	// hazardousmaterialsegregation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	hazardousmaterialsegregation.DefaultUpdatedAt = hazardousmaterialsegregationDescUpdatedAt.Default.(func() time.Time)
+	// hazardousmaterialsegregation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	hazardousmaterialsegregation.UpdateDefaultUpdatedAt = hazardousmaterialsegregationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// hazardousmaterialsegregationDescID is the schema descriptor for id field.
+	hazardousmaterialsegregationDescID := hazardousmaterialsegregationMixinFields0[0].Descriptor()
+	// hazardousmaterialsegregation.DefaultID holds the default value on creation for the id field.
+	hazardousmaterialsegregation.DefaultID = hazardousmaterialsegregationDescID.Default.(func() uuid.UUID)
 	invoicecontrolMixin := schema.InvoiceControl{}.Mixin()
 	invoicecontrolMixinFields0 := invoicecontrolMixin[0].Fields()
 	_ = invoicecontrolMixinFields0
@@ -1490,6 +1512,77 @@ func init() {
 	tagDescID := tagMixinFields0[0].Descriptor()
 	// tag.DefaultID holds the default value on creation for the id field.
 	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
+	tractorMixin := schema.Tractor{}.Mixin()
+	tractorMixinFields0 := tractorMixin[0].Fields()
+	_ = tractorMixinFields0
+	tractorFields := schema.Tractor{}.Fields()
+	_ = tractorFields
+	// tractorDescCreatedAt is the schema descriptor for created_at field.
+	tractorDescCreatedAt := tractorMixinFields0[3].Descriptor()
+	// tractor.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tractor.DefaultCreatedAt = tractorDescCreatedAt.Default.(func() time.Time)
+	// tractorDescUpdatedAt is the schema descriptor for updated_at field.
+	tractorDescUpdatedAt := tractorMixinFields0[4].Descriptor()
+	// tractor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tractor.DefaultUpdatedAt = tractorDescUpdatedAt.Default.(func() time.Time)
+	// tractor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tractor.UpdateDefaultUpdatedAt = tractorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tractorDescCode is the schema descriptor for code field.
+	tractorDescCode := tractorFields[0].Descriptor()
+	// tractor.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	tractor.CodeValidator = func() func(string) error {
+		validators := tractorDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tractorDescLicensePlateNumber is the schema descriptor for license_plate_number field.
+	tractorDescLicensePlateNumber := tractorFields[3].Descriptor()
+	// tractor.LicensePlateNumberValidator is a validator for the "license_plate_number" field. It is called by the builders before save.
+	tractor.LicensePlateNumberValidator = tractorDescLicensePlateNumber.Validators[0].(func(string) error)
+	// tractorDescVin is the schema descriptor for vin field.
+	tractorDescVin := tractorFields[4].Descriptor()
+	// tractor.VinValidator is a validator for the "vin" field. It is called by the builders before save.
+	tractor.VinValidator = func() func(string) error {
+		validators := tractorDescVin.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(vin string) error {
+			for _, fn := range fns {
+				if err := fn(vin); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tractorDescModel is the schema descriptor for model field.
+	tractorDescModel := tractorFields[6].Descriptor()
+	// tractor.ModelValidator is a validator for the "model" field. It is called by the builders before save.
+	tractor.ModelValidator = tractorDescModel.Validators[0].(func(string) error)
+	// tractorDescYear is the schema descriptor for year field.
+	tractorDescYear := tractorFields[7].Descriptor()
+	// tractor.YearValidator is a validator for the "year" field. It is called by the builders before save.
+	tractor.YearValidator = tractorDescYear.Validators[0].(func(int) error)
+	// tractorDescLeased is the schema descriptor for leased field.
+	tractorDescLeased := tractorFields[9].Descriptor()
+	// tractor.DefaultLeased holds the default value on creation for the leased field.
+	tractor.DefaultLeased = tractorDescLeased.Default.(bool)
+	// tractorDescID is the schema descriptor for id field.
+	tractorDescID := tractorMixinFields0[0].Descriptor()
+	// tractor.DefaultID holds the default value on creation for the id field.
+	tractor.DefaultID = tractorDescID.Default.(func() uuid.UUID)
 	usstateMixin := schema.UsState{}.Mixin()
 	usstateMixinFields0 := usstateMixin[0].Fields()
 	_ = usstateMixinFields0
@@ -1595,6 +1688,87 @@ func init() {
 	userfavoriteDescID := userfavoriteMixinFields0[0].Descriptor()
 	// userfavorite.DefaultID holds the default value on creation for the id field.
 	userfavorite.DefaultID = userfavoriteDescID.Default.(func() uuid.UUID)
+	workerMixin := schema.Worker{}.Mixin()
+	workerMixinFields0 := workerMixin[0].Fields()
+	_ = workerMixinFields0
+	workerFields := schema.Worker{}.Fields()
+	_ = workerFields
+	// workerDescCreatedAt is the schema descriptor for created_at field.
+	workerDescCreatedAt := workerMixinFields0[3].Descriptor()
+	// worker.DefaultCreatedAt holds the default value on creation for the created_at field.
+	worker.DefaultCreatedAt = workerDescCreatedAt.Default.(func() time.Time)
+	// workerDescUpdatedAt is the schema descriptor for updated_at field.
+	workerDescUpdatedAt := workerMixinFields0[4].Descriptor()
+	// worker.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	worker.DefaultUpdatedAt = workerDescUpdatedAt.Default.(func() time.Time)
+	// worker.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	worker.UpdateDefaultUpdatedAt = workerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workerDescCode is the schema descriptor for code field.
+	workerDescCode := workerFields[1].Descriptor()
+	// worker.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	worker.CodeValidator = func() func(string) error {
+		validators := workerDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// workerDescFirstName is the schema descriptor for first_name field.
+	workerDescFirstName := workerFields[4].Descriptor()
+	// worker.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
+	worker.FirstNameValidator = func() func(string) error {
+		validators := workerDescFirstName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(first_name string) error {
+			for _, fn := range fns {
+				if err := fn(first_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// workerDescLastName is the schema descriptor for last_name field.
+	workerDescLastName := workerFields[5].Descriptor()
+	// worker.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	worker.LastNameValidator = func() func(string) error {
+		validators := workerDescLastName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(last_name string) error {
+			for _, fn := range fns {
+				if err := fn(last_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// workerDescCity is the schema descriptor for city field.
+	workerDescCity := workerFields[6].Descriptor()
+	// worker.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	worker.CityValidator = workerDescCity.Validators[0].(func(string) error)
+	// workerDescPostalCode is the schema descriptor for postal_code field.
+	workerDescPostalCode := workerFields[7].Descriptor()
+	// worker.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
+	worker.PostalCodeValidator = workerDescPostalCode.Validators[0].(func(string) error)
+	// workerDescID is the schema descriptor for id field.
+	workerDescID := workerMixinFields0[0].Descriptor()
+	// worker.DefaultID holds the default value on creation for the id field.
+	worker.DefaultID = workerDescID.Default.(func() uuid.UUID)
 }
 
 const (

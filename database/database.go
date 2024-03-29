@@ -9,6 +9,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent"
 	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
+	"github.com/joho/godotenv"
 )
 
 var client *ent.Client
@@ -22,6 +23,11 @@ func SetClient(newClient *ent.Client) {
 }
 
 func NewEntClient(dsn string) *ent.Client {
+	err := godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file")
+	}
+
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -30,6 +36,7 @@ func NewEntClient(dsn string) *ent.Client {
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxIdleTime(time.Minute * 30)
 
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	return ent.NewClient(ent.Driver(drv))

@@ -13,6 +13,10 @@ type DocumentClassification struct {
 // Fields of the DocumentClassification.
 func (DocumentClassification) Fields() []ent.Field {
 	return []ent.Field{
+		field.Enum("status").
+			Values("A", "I").
+			Default("A").
+			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("name").
 			MaxLen(10).
 			StructTag(`json:"name" validate:"required,max=10"`),

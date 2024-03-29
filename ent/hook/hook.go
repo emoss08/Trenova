@@ -261,6 +261,18 @@ func (f HazardousMaterialFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HazardousMaterialMutation", m)
 }
 
+// The HazardousMaterialSegregationFunc type is an adapter to allow the use of ordinary
+// function as HazardousMaterialSegregation mutator.
+type HazardousMaterialSegregationFunc func(context.Context, *ent.HazardousMaterialSegregationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f HazardousMaterialSegregationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.HazardousMaterialSegregationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HazardousMaterialSegregationMutation", m)
+}
+
 // The InvoiceControlFunc type is an adapter to allow the use of ordinary
 // function as InvoiceControl mutator.
 type InvoiceControlFunc func(context.Context, *ent.InvoiceControlMutation) (ent.Value, error)
@@ -417,6 +429,18 @@ func (f TagFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TagMutation", m)
 }
 
+// The TractorFunc type is an adapter to allow the use of ordinary
+// function as Tractor mutator.
+type TractorFunc func(context.Context, *ent.TractorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TractorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TractorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TractorMutation", m)
+}
+
 // The UsStateFunc type is an adapter to allow the use of ordinary
 // function as UsState mutator.
 type UsStateFunc func(context.Context, *ent.UsStateMutation) (ent.Value, error)
@@ -451,6 +475,18 @@ func (f UserFavoriteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserFavoriteMutation", m)
+}
+
+// The WorkerFunc type is an adapter to allow the use of ordinary
+// function as Worker mutator.
+type WorkerFunc func(context.Context, *ent.WorkerMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkerMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerMutation", m)
 }
 
 // Condition is a hook condition function.

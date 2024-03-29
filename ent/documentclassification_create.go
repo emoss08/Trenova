@@ -63,6 +63,20 @@ func (dcc *DocumentClassificationCreate) SetNillableUpdatedAt(t *time.Time) *Doc
 	return dcc
 }
 
+// SetStatus sets the "status" field.
+func (dcc *DocumentClassificationCreate) SetStatus(d documentclassification.Status) *DocumentClassificationCreate {
+	dcc.mutation.SetStatus(d)
+	return dcc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (dcc *DocumentClassificationCreate) SetNillableStatus(d *documentclassification.Status) *DocumentClassificationCreate {
+	if d != nil {
+		dcc.SetStatus(*d)
+	}
+	return dcc
+}
+
 // SetName sets the "name" field.
 func (dcc *DocumentClassificationCreate) SetName(s string) *DocumentClassificationCreate {
 	dcc.mutation.SetName(s)
@@ -150,6 +164,10 @@ func (dcc *DocumentClassificationCreate) defaults() {
 		v := documentclassification.DefaultUpdatedAt()
 		dcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dcc.mutation.Status(); !ok {
+		v := documentclassification.DefaultStatus
+		dcc.mutation.SetStatus(v)
+	}
 	if _, ok := dcc.mutation.ID(); !ok {
 		v := documentclassification.DefaultID()
 		dcc.mutation.SetID(v)
@@ -169,6 +187,14 @@ func (dcc *DocumentClassificationCreate) check() error {
 	}
 	if _, ok := dcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "DocumentClassification.updated_at"`)}
+	}
+	if _, ok := dcc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "DocumentClassification.status"`)}
+	}
+	if v, ok := dcc.mutation.Status(); ok {
+		if err := documentclassification.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
+		}
 	}
 	if _, ok := dcc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "DocumentClassification.name"`)}
@@ -226,6 +252,10 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 	if value, ok := dcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := dcc.mutation.Status(); ok {
+		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
 	}
 	if value, ok := dcc.mutation.Name(); ok {
 		_spec.SetField(documentclassification.FieldName, field.TypeString, value)

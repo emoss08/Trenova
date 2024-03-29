@@ -34,8 +34,12 @@ import { FormProvider, useFormContext } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "./ui/form";
 
 const segregationTypeChoices = [
-  { value: "O", label: "Allowed With Conditions", color: "#15803d" },
-  { value: "X", label: "Not Allowed", color: "#b91c1c" },
+  {
+    value: "AllowedWithConditions",
+    label: "Allowed With Conditions",
+    color: "#15803d",
+  },
+  { value: "NotAllowed", label: "Not Allowed", color: "#b91c1c" },
 ];
 
 export function HazmatSegRulesForm() {
@@ -94,7 +98,7 @@ export function HazmatSegRulesDialog({ onOpenChange, open }: TableSheetProps) {
     control,
     {
       method: "POST",
-      path: "/hazardous_material_segregation/",
+      path: "/hazardous-material-segregations/",
       successMessage:
         "Hazardous material segregation rule created successfully.",
       queryKeysToInvalidate: ["hazardous-material-segregation-table-data"],

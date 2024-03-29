@@ -56,6 +56,8 @@ type Tx struct {
 	GoogleApi *GoogleApiClient
 	// HazardousMaterial is the client for interacting with the HazardousMaterial builders.
 	HazardousMaterial *HazardousMaterialClient
+	// HazardousMaterialSegregation is the client for interacting with the HazardousMaterialSegregation builders.
+	HazardousMaterialSegregation *HazardousMaterialSegregationClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
 	// LocationCategory is the client for interacting with the LocationCategory builders.
@@ -82,12 +84,16 @@ type Tx struct {
 	TableChangeAlert *TableChangeAlertClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
+	// Tractor is the client for interacting with the Tractor builders.
+	Tractor *TractorClient
 	// UsState is the client for interacting with the UsState builders.
 	UsState *UsStateClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// Worker is the client for interacting with the Worker builders.
+	Worker *WorkerClient
 
 	// lazily loaded.
 	client     *Client
@@ -240,6 +246,7 @@ func (tx *Tx) init() {
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
 	tx.GoogleApi = NewGoogleApiClient(tx.config)
 	tx.HazardousMaterial = NewHazardousMaterialClient(tx.config)
+	tx.HazardousMaterialSegregation = NewHazardousMaterialSegregationClient(tx.config)
 	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
 	tx.LocationCategory = NewLocationCategoryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
@@ -253,9 +260,11 @@ func (tx *Tx) init() {
 	tx.ShipmentType = NewShipmentTypeClient(tx.config)
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)
+	tx.Tractor = NewTractorClient(tx.config)
 	tx.UsState = NewUsStateClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)
+	tx.Worker = NewWorkerClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
