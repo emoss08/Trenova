@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
 
@@ -245,34 +246,61 @@ func (wu *WorkerUpdate) SetManager(u *User) *WorkerUpdate {
 	return wu.SetManagerID(u.ID)
 }
 
-// AddTractorIDs adds the "tractor" edge to the Tractor entity by IDs.
-func (wu *WorkerUpdate) AddTractorIDs(ids ...uuid.UUID) *WorkerUpdate {
-	wu.mutation.AddTractorIDs(ids...)
+// SetPrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID.
+func (wu *WorkerUpdate) SetPrimaryTractorID(id uuid.UUID) *WorkerUpdate {
+	wu.mutation.SetPrimaryTractorID(id)
 	return wu
 }
 
-// AddTractor adds the "tractor" edges to the Tractor entity.
-func (wu *WorkerUpdate) AddTractor(t ...*Tractor) *WorkerUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillablePrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wu *WorkerUpdate) SetNillablePrimaryTractorID(id *uuid.UUID) *WorkerUpdate {
+	if id != nil {
+		wu = wu.SetPrimaryTractorID(*id)
 	}
-	return wu.AddTractorIDs(ids...)
-}
-
-// AddSecondaryTractorIDs adds the "secondary_tractor" edge to the Tractor entity by IDs.
-func (wu *WorkerUpdate) AddSecondaryTractorIDs(ids ...uuid.UUID) *WorkerUpdate {
-	wu.mutation.AddSecondaryTractorIDs(ids...)
 	return wu
 }
 
-// AddSecondaryTractor adds the "secondary_tractor" edges to the Tractor entity.
-func (wu *WorkerUpdate) AddSecondaryTractor(t ...*Tractor) *WorkerUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetPrimaryTractor sets the "primary_tractor" edge to the Tractor entity.
+func (wu *WorkerUpdate) SetPrimaryTractor(t *Tractor) *WorkerUpdate {
+	return wu.SetPrimaryTractorID(t.ID)
+}
+
+// SetSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID.
+func (wu *WorkerUpdate) SetSecondaryTractorID(id uuid.UUID) *WorkerUpdate {
+	wu.mutation.SetSecondaryTractorID(id)
+	return wu
+}
+
+// SetNillableSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableSecondaryTractorID(id *uuid.UUID) *WorkerUpdate {
+	if id != nil {
+		wu = wu.SetSecondaryTractorID(*id)
 	}
-	return wu.AddSecondaryTractorIDs(ids...)
+	return wu
+}
+
+// SetSecondaryTractor sets the "secondary_tractor" edge to the Tractor entity.
+func (wu *WorkerUpdate) SetSecondaryTractor(t *Tractor) *WorkerUpdate {
+	return wu.SetSecondaryTractorID(t.ID)
+}
+
+// SetWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID.
+func (wu *WorkerUpdate) SetWorkerProfileID(id uuid.UUID) *WorkerUpdate {
+	wu.mutation.SetWorkerProfileID(id)
+	return wu
+}
+
+// SetNillableWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableWorkerProfileID(id *uuid.UUID) *WorkerUpdate {
+	if id != nil {
+		wu = wu.SetWorkerProfileID(*id)
+	}
+	return wu
+}
+
+// SetWorkerProfile sets the "worker_profile" edge to the WorkerProfile entity.
+func (wu *WorkerUpdate) SetWorkerProfile(w *WorkerProfile) *WorkerUpdate {
+	return wu.SetWorkerProfileID(w.ID)
 }
 
 // Mutation returns the WorkerMutation object of the builder.
@@ -298,46 +326,22 @@ func (wu *WorkerUpdate) ClearManager() *WorkerUpdate {
 	return wu
 }
 
-// ClearTractor clears all "tractor" edges to the Tractor entity.
-func (wu *WorkerUpdate) ClearTractor() *WorkerUpdate {
-	wu.mutation.ClearTractor()
+// ClearPrimaryTractor clears the "primary_tractor" edge to the Tractor entity.
+func (wu *WorkerUpdate) ClearPrimaryTractor() *WorkerUpdate {
+	wu.mutation.ClearPrimaryTractor()
 	return wu
 }
 
-// RemoveTractorIDs removes the "tractor" edge to Tractor entities by IDs.
-func (wu *WorkerUpdate) RemoveTractorIDs(ids ...uuid.UUID) *WorkerUpdate {
-	wu.mutation.RemoveTractorIDs(ids...)
-	return wu
-}
-
-// RemoveTractor removes "tractor" edges to Tractor entities.
-func (wu *WorkerUpdate) RemoveTractor(t ...*Tractor) *WorkerUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return wu.RemoveTractorIDs(ids...)
-}
-
-// ClearSecondaryTractor clears all "secondary_tractor" edges to the Tractor entity.
+// ClearSecondaryTractor clears the "secondary_tractor" edge to the Tractor entity.
 func (wu *WorkerUpdate) ClearSecondaryTractor() *WorkerUpdate {
 	wu.mutation.ClearSecondaryTractor()
 	return wu
 }
 
-// RemoveSecondaryTractorIDs removes the "secondary_tractor" edge to Tractor entities by IDs.
-func (wu *WorkerUpdate) RemoveSecondaryTractorIDs(ids ...uuid.UUID) *WorkerUpdate {
-	wu.mutation.RemoveSecondaryTractorIDs(ids...)
+// ClearWorkerProfile clears the "worker_profile" edge to the WorkerProfile entity.
+func (wu *WorkerUpdate) ClearWorkerProfile() *WorkerUpdate {
+	wu.mutation.ClearWorkerProfile()
 	return wu
-}
-
-// RemoveSecondaryTractor removes "secondary_tractor" edges to Tractor entities.
-func (wu *WorkerUpdate) RemoveSecondaryTractor(t ...*Tractor) *WorkerUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return wu.RemoveSecondaryTractorIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -563,12 +567,12 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if wu.mutation.TractorCleared() {
+	if wu.mutation.PrimaryTractorCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.PrimaryTractorTable,
+			Columns: []string{worker.PrimaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
@@ -576,28 +580,12 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wu.mutation.RemovedTractorIDs(); len(nodes) > 0 && !wu.mutation.TractorCleared() {
+	if nodes := wu.mutation.PrimaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := wu.mutation.TractorIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.PrimaryTractorTable,
+			Columns: []string{worker.PrimaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
@@ -610,8 +598,8 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if wu.mutation.SecondaryTractorCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
 			Table:   worker.SecondaryTractorTable,
 			Columns: []string{worker.SecondaryTractorColumn},
 			Bidi:    false,
@@ -621,10 +609,10 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wu.mutation.RemovedSecondaryTractorIDs(); len(nodes) > 0 && !wu.mutation.SecondaryTractorCleared() {
+	if nodes := wu.mutation.SecondaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
 			Table:   worker.SecondaryTractorTable,
 			Columns: []string{worker.SecondaryTractorColumn},
 			Bidi:    false,
@@ -635,17 +623,30 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := wu.mutation.SecondaryTractorIDs(); len(nodes) > 0 {
+	if wu.mutation.WorkerProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.SecondaryTractorTable,
-			Columns: []string{worker.SecondaryTractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.WorkerProfileTable,
+			Columns: []string{worker.WorkerProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.WorkerProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.WorkerProfileTable,
+			Columns: []string{worker.WorkerProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -886,34 +887,61 @@ func (wuo *WorkerUpdateOne) SetManager(u *User) *WorkerUpdateOne {
 	return wuo.SetManagerID(u.ID)
 }
 
-// AddTractorIDs adds the "tractor" edge to the Tractor entity by IDs.
-func (wuo *WorkerUpdateOne) AddTractorIDs(ids ...uuid.UUID) *WorkerUpdateOne {
-	wuo.mutation.AddTractorIDs(ids...)
+// SetPrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID.
+func (wuo *WorkerUpdateOne) SetPrimaryTractorID(id uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.SetPrimaryTractorID(id)
 	return wuo
 }
 
-// AddTractor adds the "tractor" edges to the Tractor entity.
-func (wuo *WorkerUpdateOne) AddTractor(t ...*Tractor) *WorkerUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillablePrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillablePrimaryTractorID(id *uuid.UUID) *WorkerUpdateOne {
+	if id != nil {
+		wuo = wuo.SetPrimaryTractorID(*id)
 	}
-	return wuo.AddTractorIDs(ids...)
-}
-
-// AddSecondaryTractorIDs adds the "secondary_tractor" edge to the Tractor entity by IDs.
-func (wuo *WorkerUpdateOne) AddSecondaryTractorIDs(ids ...uuid.UUID) *WorkerUpdateOne {
-	wuo.mutation.AddSecondaryTractorIDs(ids...)
 	return wuo
 }
 
-// AddSecondaryTractor adds the "secondary_tractor" edges to the Tractor entity.
-func (wuo *WorkerUpdateOne) AddSecondaryTractor(t ...*Tractor) *WorkerUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetPrimaryTractor sets the "primary_tractor" edge to the Tractor entity.
+func (wuo *WorkerUpdateOne) SetPrimaryTractor(t *Tractor) *WorkerUpdateOne {
+	return wuo.SetPrimaryTractorID(t.ID)
+}
+
+// SetSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID.
+func (wuo *WorkerUpdateOne) SetSecondaryTractorID(id uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.SetSecondaryTractorID(id)
+	return wuo
+}
+
+// SetNillableSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableSecondaryTractorID(id *uuid.UUID) *WorkerUpdateOne {
+	if id != nil {
+		wuo = wuo.SetSecondaryTractorID(*id)
 	}
-	return wuo.AddSecondaryTractorIDs(ids...)
+	return wuo
+}
+
+// SetSecondaryTractor sets the "secondary_tractor" edge to the Tractor entity.
+func (wuo *WorkerUpdateOne) SetSecondaryTractor(t *Tractor) *WorkerUpdateOne {
+	return wuo.SetSecondaryTractorID(t.ID)
+}
+
+// SetWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID.
+func (wuo *WorkerUpdateOne) SetWorkerProfileID(id uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.SetWorkerProfileID(id)
+	return wuo
+}
+
+// SetNillableWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableWorkerProfileID(id *uuid.UUID) *WorkerUpdateOne {
+	if id != nil {
+		wuo = wuo.SetWorkerProfileID(*id)
+	}
+	return wuo
+}
+
+// SetWorkerProfile sets the "worker_profile" edge to the WorkerProfile entity.
+func (wuo *WorkerUpdateOne) SetWorkerProfile(w *WorkerProfile) *WorkerUpdateOne {
+	return wuo.SetWorkerProfileID(w.ID)
 }
 
 // Mutation returns the WorkerMutation object of the builder.
@@ -939,46 +967,22 @@ func (wuo *WorkerUpdateOne) ClearManager() *WorkerUpdateOne {
 	return wuo
 }
 
-// ClearTractor clears all "tractor" edges to the Tractor entity.
-func (wuo *WorkerUpdateOne) ClearTractor() *WorkerUpdateOne {
-	wuo.mutation.ClearTractor()
+// ClearPrimaryTractor clears the "primary_tractor" edge to the Tractor entity.
+func (wuo *WorkerUpdateOne) ClearPrimaryTractor() *WorkerUpdateOne {
+	wuo.mutation.ClearPrimaryTractor()
 	return wuo
 }
 
-// RemoveTractorIDs removes the "tractor" edge to Tractor entities by IDs.
-func (wuo *WorkerUpdateOne) RemoveTractorIDs(ids ...uuid.UUID) *WorkerUpdateOne {
-	wuo.mutation.RemoveTractorIDs(ids...)
-	return wuo
-}
-
-// RemoveTractor removes "tractor" edges to Tractor entities.
-func (wuo *WorkerUpdateOne) RemoveTractor(t ...*Tractor) *WorkerUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return wuo.RemoveTractorIDs(ids...)
-}
-
-// ClearSecondaryTractor clears all "secondary_tractor" edges to the Tractor entity.
+// ClearSecondaryTractor clears the "secondary_tractor" edge to the Tractor entity.
 func (wuo *WorkerUpdateOne) ClearSecondaryTractor() *WorkerUpdateOne {
 	wuo.mutation.ClearSecondaryTractor()
 	return wuo
 }
 
-// RemoveSecondaryTractorIDs removes the "secondary_tractor" edge to Tractor entities by IDs.
-func (wuo *WorkerUpdateOne) RemoveSecondaryTractorIDs(ids ...uuid.UUID) *WorkerUpdateOne {
-	wuo.mutation.RemoveSecondaryTractorIDs(ids...)
+// ClearWorkerProfile clears the "worker_profile" edge to the WorkerProfile entity.
+func (wuo *WorkerUpdateOne) ClearWorkerProfile() *WorkerUpdateOne {
+	wuo.mutation.ClearWorkerProfile()
 	return wuo
-}
-
-// RemoveSecondaryTractor removes "secondary_tractor" edges to Tractor entities.
-func (wuo *WorkerUpdateOne) RemoveSecondaryTractor(t ...*Tractor) *WorkerUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return wuo.RemoveSecondaryTractorIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkerUpdate builder.
@@ -1234,12 +1238,12 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if wuo.mutation.TractorCleared() {
+	if wuo.mutation.PrimaryTractorCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.PrimaryTractorTable,
+			Columns: []string{worker.PrimaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
@@ -1247,28 +1251,12 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wuo.mutation.RemovedTractorIDs(); len(nodes) > 0 && !wuo.mutation.TractorCleared() {
+	if nodes := wuo.mutation.PrimaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := wuo.mutation.TractorIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.PrimaryTractorTable,
+			Columns: []string{worker.PrimaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
@@ -1281,8 +1269,8 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 	}
 	if wuo.mutation.SecondaryTractorCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
 			Table:   worker.SecondaryTractorTable,
 			Columns: []string{worker.SecondaryTractorColumn},
 			Bidi:    false,
@@ -1292,10 +1280,10 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wuo.mutation.RemovedSecondaryTractorIDs(); len(nodes) > 0 && !wuo.mutation.SecondaryTractorCleared() {
+	if nodes := wuo.mutation.SecondaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
 			Table:   worker.SecondaryTractorTable,
 			Columns: []string{worker.SecondaryTractorColumn},
 			Bidi:    false,
@@ -1306,17 +1294,30 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := wuo.mutation.SecondaryTractorIDs(); len(nodes) > 0 {
+	if wuo.mutation.WorkerProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.SecondaryTractorTable,
-			Columns: []string{worker.SecondaryTractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.WorkerProfileTable,
+			Columns: []string{worker.WorkerProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.WorkerProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.WorkerProfileTable,
+			Columns: []string{worker.WorkerProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

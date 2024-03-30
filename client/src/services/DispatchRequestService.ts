@@ -60,7 +60,7 @@ export async function getCommentTypes(): Promise<CommentType[]> {
  * @returns A promise that resolves to a FleetCode object.
  */
 export async function getFleetCodes(limit?: number): Promise<FleetCode[]> {
-  const response = await axios.get("/fleet_codes/", {
+  const response = await axios.get("/fleet-codes/", {
     params: {
       status: "A",
       limit: limit,

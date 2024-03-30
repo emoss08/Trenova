@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -50,6 +51,8 @@ const (
 	FieldPrimaryWorkerID = "primary_worker_id"
 	// FieldSecondaryWorkerID holds the string denoting the secondary_worker_id field in the database.
 	FieldSecondaryWorkerID = "secondary_worker_id"
+	// FieldFleetCodeID holds the string denoting the fleet_code_id field in the database.
+	FieldFleetCodeID = "fleet_code_id"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -64,6 +67,8 @@ const (
 	EdgePrimaryWorker = "primary_worker"
 	// EdgeSecondaryWorker holds the string denoting the secondary_worker edge name in mutations.
 	EdgeSecondaryWorker = "secondary_worker"
+	// EdgeFleetCode holds the string denoting the fleet_code edge name in mutations.
+	EdgeFleetCode = "fleet_code"
 	// Table holds the table name of the tractor in the database.
 	Table = "tractors"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -115,6 +120,13 @@ const (
 	SecondaryWorkerInverseTable = "workers"
 	// SecondaryWorkerColumn is the table column denoting the secondary_worker relation/edge.
 	SecondaryWorkerColumn = "secondary_worker_id"
+	// FleetCodeTable is the table that holds the fleet_code relation/edge.
+	FleetCodeTable = "tractors"
+	// FleetCodeInverseTable is the table name for the FleetCode entity.
+	// It exists in this package in order to avoid circular dependency with the "fleetcode" package.
+	FleetCodeInverseTable = "fleet_codes"
+	// FleetCodeColumn is the table column denoting the fleet_code relation/edge.
+	FleetCodeColumn = "fleet_code_id"
 )
 
 // Columns holds all SQL columns for tractor fields.
@@ -137,6 +149,7 @@ var Columns = []string{
 	FieldLeasedDate,
 	FieldPrimaryWorkerID,
 	FieldSecondaryWorkerID,
+	FieldFleetCodeID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -149,7 +162,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/emoss08/trenova/ent/runtime"
 var (
+	Hooks [3]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -294,6 +313,11 @@ func BySecondaryWorkerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSecondaryWorkerID, opts...).ToFunc()
 }
 
+// ByFleetCodeID orders the results by the fleet_code_id field.
+func ByFleetCodeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFleetCodeID, opts...).ToFunc()
+}
+
 // ByBusinessUnitField orders the results by business_unit field.
 func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -342,6 +366,13 @@ func BySecondaryWorkerField(field string, opts ...sql.OrderTermOption) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newSecondaryWorkerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByFleetCodeField orders the results by fleet_code field.
+func ByFleetCodeField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFleetCodeStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -381,13 +412,20 @@ func newPrimaryWorkerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PrimaryWorkerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, PrimaryWorkerTable, PrimaryWorkerColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, PrimaryWorkerTable, PrimaryWorkerColumn),
 	)
 }
 func newSecondaryWorkerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SecondaryWorkerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, SecondaryWorkerTable, SecondaryWorkerColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, SecondaryWorkerTable, SecondaryWorkerColumn),
+	)
+}
+func newFleetCodeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(FleetCodeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, FleetCodeTable, FleetCodeColumn),
 	)
 }

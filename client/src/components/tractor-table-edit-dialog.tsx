@@ -49,27 +49,12 @@ export function TractorEditForm({
 
   if (!tractor) return null;
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit, formState } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
-    defaultValues: {
-      status: tractor.status,
-      code: tractor.code,
-      equipmentType: tractor.equipmentType,
-      manufacturer: tractor?.manufacturer,
-      vinNumber: tractor?.vinNumber,
-      model: tractor?.model,
-      year: tractor?.year,
-      state: tractor?.state,
-      fleetCode: tractor?.fleetCode,
-      primaryWorker: tractor?.primaryWorker,
-      secondaryWorker: tractor?.secondaryWorker,
-      licensePlateNumber: tractor?.licensePlateNumber,
-      leasedDate: tractor?.leasedDate,
-      hosExempt: tractor.hosExempt,
-      ownerOperated: tractor.ownerOperated,
-      leased: tractor.leased,
-    },
+    defaultValues: tractor,
   });
+
+  console.info("form errors", formState.errors);
 
   const mutation = useCustomMutation<FormValues>(
     control,
@@ -125,7 +110,7 @@ export function TractorTableEditSheet({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{tractor && tractor.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {tractor && formatDate(tractor.modified)}
+            Last updated on {tractor && formatDate(tractor.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {tractor && (

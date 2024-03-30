@@ -489,6 +489,30 @@ func (f WorkerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerMutation", m)
 }
 
+// The WorkerCommentFunc type is an adapter to allow the use of ordinary
+// function as WorkerComment mutator.
+type WorkerCommentFunc func(context.Context, *ent.WorkerCommentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkerCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkerCommentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerCommentMutation", m)
+}
+
+// The WorkerProfileFunc type is an adapter to allow the use of ordinary
+// function as WorkerProfile mutator.
+type WorkerProfileFunc func(context.Context, *ent.WorkerProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkerProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkerProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkerProfileMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

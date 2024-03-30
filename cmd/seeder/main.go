@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 
@@ -15,11 +16,27 @@ import (
 	"github.com/emoss08/trenova/ent/revenuecode"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/ent/worker"
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func generateRandomString(length int) string {
+	// The characters that can be used in the random string
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	// The resulting random string
+	result := make([]byte, length)
+
+	// Generate a random string by randomly selecting characters from the chars slice
+	for i := range result {
+		result[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(result)
+}
 
 func main() {
 	// Load the .env file
@@ -256,7 +273,8 @@ func main() {
 	}
 
 	// Check if the organization has no general ledger accounts
-	glCount, err := client.GeneralLedgerAccount.Query().Where(generalledgeraccount.HasOrganizationWith(organization.ID(org.ID))).Count(ctx)
+	glCount, err := client.GeneralLedgerAccount.Query().
+		Where(generalledgeraccount.HasOrganizationWith(organization.ID(org.ID))).Count(ctx)
 
 	// If not, create the general ledger accounts
 	if glCount == 0 {
@@ -283,7 +301,58 @@ func main() {
 				log.Panicf("Failed creating general ledger account: %v", err)
 			}
 		}
+	}
 
+	// Check if the organization has no workers.
+	workerCount, err := client.Worker.Query().
+		Where(worker.HasOrganizationWith(organization.ID(org.ID))).Count(ctx)
+
+	if workerCount == 0 {
+		// Create 100 workers with WorkerProfiles
+		log.Println("Creating workers...")
+
+		// Generate a random worker code that is 10 characters long and unique.
+		// The worker code must be unique within the organization.
+		workerCodes := make(map[string]bool)
+
+		for i := 0; i < 100; i++ {
+			unique := false
+
+			var code string
+			for !unique {
+				code = "W" + generateRandomString(9)
+				if !workerCodes[code] {
+					unique = true
+					workerCodes[code] = true
+				}
+			}
+
+			if err != nil {
+				log.Panicf("Failed starting transaction: %v", err)
+			}
+
+			worker, workerErr := client.Worker.Create().
+				SetOrganization(org).
+				SetBusinessUnit(bu).
+				SetCode(code).
+				SetFirstName("Worker").
+				SetLastName(strconv.Itoa(i)).
+				Save(ctx)
+			if workerErr != nil {
+				log.Panicf("Failed creating worker: %v", workerErr)
+			}
+
+			_, err = client.WorkerProfile.Create().
+				SetOrganization(org).
+				SetBusinessUnit(bu).
+				SetWorker(worker).
+				SetWorkerID(worker.ID).
+				SetLicenseNumber("123456789").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating worker profile: %v", err)
+			}
+		}
 	}
 
 	// Check if the admin account exists

@@ -91,7 +91,6 @@ import type { Commodity, HazardousMaterial } from "@/types/commodities";
 import type { Customer } from "@/types/customer";
 import type { CommentType, FleetCode, Rate } from "@/types/dispatch";
 import type {
-  EquipmentClass,
   EquipmentManufacturer,
   EquipmentType,
   Trailer,
@@ -329,17 +328,13 @@ export function useDocumentClass(show?: boolean) {
  * @param show - show or hide the query
  * @param limit - limit the number of results
  */
-export function useEquipmentTypes(
-  equipmentClass: EquipmentClass,
-  limit: number = 100,
-  show?: boolean,
-) {
+export function useEquipmentTypes(limit: number = 100, show?: boolean) {
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipmentTypes", equipmentClass, limit] as QueryKeyWithParams<
+    queryKey: ["equipmentTypes", limit] as QueryKeyWithParams<
       "equipmentTypes",
-      [string, number]
+      [number]
     >,
-    queryFn: async () => getEquipmentTypes(equipmentClass, limit),
+    queryFn: async () => getEquipmentTypes(limit),
     enabled: show,
   });
 

@@ -98,13 +98,15 @@ func (Worker) Edges() []ent.Edge {
 			StructTag(`json:"manager"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique(),
-		edge.From("tractor", Tractor.Type).
-			Ref("primary_worker").
-			StructTag(`json:"primary_tractor"`).
+		edge.To("primary_tractor", Tractor.Type).
+			Unique().
+			StructTag(`json:"primaryTractor"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.From("secondary_tractor", Tractor.Type).
-			Ref("secondary_worker").
-			StructTag(`json:"secondary_tractor"`).
+		edge.To("secondary_tractor", Tractor.Type).
+			Unique().
+			StructTag(`json:"secondaryTractor"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("worker_profile", WorkerProfile.Type).
+			Unique(),
 	}
 }

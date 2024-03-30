@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, upperFirst } from "@/lib/utils";
 import { EquipmentStatus } from "@/types/equipment";
@@ -26,6 +26,7 @@ import {
 } from "@fortawesome/pro-solid-svg-icons";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { VariantProps } from "class-variance-authority";
 
 /**
  * Component that displays a message when no data is found.
@@ -101,23 +102,42 @@ export function BoolStatusBadge({ status }: { status: boolean }) {
   );
 }
 
+type StatusAttrProps = {
+  variant: VariantProps<typeof badgeVariants>["variant"];
+  text: string;
+};
 /**
  * Status badge that can be used to display the status of equipment. (e.g. Trailer & Tractor statuses)
  * @param status The status of the equipment
  * @returns A badge with the status of the equipment
  */
 export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
-  const mapToStatus = {
-    A: "Available",
-    OOS: "Out of Service",
-    AM: "At Maintenance",
-    S: "Sold",
-    L: "Lost",
+  const statusAttributes: Record<EquipmentStatus, StatusAttrProps> = {
+    Available: {
+      variant: "active",
+      text: "Available",
+    },
+    OutOfService: {
+      variant: "inactive",
+      text: "Out of Service",
+    },
+    AtMaintenance: {
+      variant: "purple",
+      text: "At Maintenance",
+    },
+    Sold: {
+      variant: "info",
+      text: "Sold",
+    },
+    Lost: {
+      variant: "warning",
+      text: "Lost",
+    },
   };
 
   return (
-    <Badge variant={status === "A" ? "active" : "inactive"}>
-      {mapToStatus[status]}
+    <Badge variant={statusAttributes[status].variant}>
+      {statusAttributes[status].text}
     </Badge>
   );
 }

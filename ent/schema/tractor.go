@@ -1,13 +1,17 @@
 package schema
 
 import (
-	"regexp"
+	"context"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	gen "github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/ent/hook"
+	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/tools"
 	"github.com/google/uuid"
 )
 
@@ -36,7 +40,7 @@ func (Tractor) Fields() []ent.Field {
 			Optional().
 			StructTag(`json:"licensePlateNumber" validate:"omitempty,max=50"`),
 		field.String("vin").
-			Match(regexp.MustCompile("^[0-9A-HJ-NPR-Z]{17}$")).
+			// Match(regexp.MustCompile("^[0-9A-HJ-NPR-Z]{17}$")). // VIN regex.
 			MaxLen(17).
 			Optional().
 			StructTag(`json:"vin" validate:"omitempty,alphanum,len=17"`),
@@ -50,6 +54,7 @@ func (Tractor) Fields() []ent.Field {
 			StructTag(`json:"model" validate:"omitempty,max=50"`),
 		field.Int("year").
 			Positive().
+			Nillable().
 			Optional().
 			StructTag(`json:"year" validate:"omitempty,gt=0"`),
 		field.UUID("state_id", uuid.UUID{}).
@@ -64,13 +69,13 @@ func (Tractor) Fields() []ent.Field {
 			Nillable().
 			StructTag(`json:"leasedDate" validate:"omitempty"`),
 		field.UUID("primary_worker_id", uuid.UUID{}).
-			Optional().
-			Nillable().
 			StructTag(`json:"primaryWorkerId" validate:"omitempty,uuid"`),
 		field.UUID("secondary_worker_id", uuid.UUID{}).
 			Optional().
 			Nillable().
 			StructTag(`json:"secondaryWorkerId" validate:"omitempty,uuid"`),
+		field.UUID("fleet_code_id", uuid.UUID{}).
+			StructTag(`json:"fleetCodeId" validate:"omitempty,uuid"`),
 	}
 }
 
@@ -108,15 +113,112 @@ func (Tractor) Edges() []ent.Edge {
 			StructTag(`json:"state"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique(),
-		edge.To("primary_worker", Worker.Type).
+		edge.From("primary_worker", Worker.Type).
+			Ref("primary_tractor").
 			Field("primary_worker_id").
 			StructTag(`json:"primaryWorker"`).
-			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Required().
 			Unique(),
-		edge.To("secondary_worker", Worker.Type).
+		edge.From("secondary_worker", Worker.Type).
+			Ref("secondary_tractor").
 			Field("secondary_worker_id").
 			StructTag(`json:"secondaryWorker"`).
+			Unique(),
+		edge.To("fleet_code", FleetCode.Type).
+			Field("fleet_code_id").
+			StructTag(`json:"fleetCode"`).
+			Required().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique(),
+	}
+}
+
+// Hooks for the Tractor.
+func (Tractor) Hooks() []ent.Hook {
+	return []ent.Hook{
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				// Hook to ensure the primary and seconaary workers are not the same.
+				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+					// if the primary or the secondary worker is nil, no need to check.
+					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+						return next.Mutate(ctx, m)
+					}
+
+					// If the primary and secondary workers are the same, return an error.
+					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
+					secondaryWorkerID, secondaryWorkerIDExists := m.SecondaryWorkerID()
+
+					if primaryWorkerIDExists && secondaryWorkerIDExists && primaryWorkerID == secondaryWorkerID {
+						return nil, tools.NewValidationError("The primary and secondary workers cannot be the same.", "invalidWorkers", "primaryWorkerId")
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+
+		// Hook to ensure that the leased date is set if the tractor is leased.
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+					// If the tractor is not leased, no need to check.
+					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+						return next.Mutate(ctx, m)
+					}
+
+					// If the tractor is leased, ensure the leased date is set.
+					leased, leasedExists := m.Leased()
+					_, leasedDateExists := m.LeasedDate()
+
+					if leasedExists && leased && !leasedDateExists {
+						return nil, tools.NewValidationError("The leased date must be set if the tractor is leased.",
+							"invalidLeasedDate",
+							"leasedDate")
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+
+		// Hook that validates the primary worker and tractor have the same fleet code.
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+						return next.Mutate(ctx, m)
+					}
+
+					// Get the fleet code of the tractor.
+					fleetCodeID, fleetCodeIDExists := m.FleetCodeID()
+					if !fleetCodeIDExists {
+						return nil, tools.NewValidationError("The tractor must have a fleet code.",
+							"invalidFleetCode",
+							"fleetCodeId")
+					}
+
+					// Get the primary worker
+					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
+					if !primaryWorkerIDExists {
+						return nil, tools.NewValidationError("The tractor must have a primary worker.",
+							"invalidPrimaryWorker",
+							"primaryWorkerId")
+					}
+
+					// Get the primary worker fleet code if it doesn't exist then mutate.
+					primaryWorkerFleetCode, err := m.Client().Worker.Query().Where(worker.IDEQ(primaryWorkerID)).QueryFleetCode().Only(ctx)
+					if err != nil {
+						return next.Mutate(ctx, m)
+					}
+
+					// Ensure the primary worker and tractor have the same fleet code.
+					if primaryWorkerFleetCode.ID != fleetCodeID {
+						return nil, tools.NewValidationError("The primary worker and tractor must have the same fleet code.",
+							"invalidFleetCode",
+							"fleetCodeId")
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
 }

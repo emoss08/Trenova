@@ -17,7 +17,6 @@
 
 import axios from "@/lib/axiosConfig";
 import {
-  EquipmentClass,
   EquipmentManufacturer,
   EquipmentType,
   Trailer,
@@ -28,13 +27,11 @@ import {
  * @returns a list of equipment types
  */
 export async function getEquipmentTypes(
-  equipmentClass?: EquipmentClass,
   limit?: number,
 ): Promise<ReadonlyArray<EquipmentType>> {
-  const response = await axios.get("equipment_types/", {
+  const response = await axios.get("equipment-types/", {
     params: {
       limit: limit,
-      equipment_class: equipmentClass,
     },
   });
   return response.data.results;
@@ -47,7 +44,7 @@ export async function getEquipmentTypes(
 export async function getEquipmentManufacturers(
   limit?: number,
 ): Promise<ReadonlyArray<EquipmentManufacturer>> {
-  const response = await axios.get("equipment_manufacturers/", {
+  const response = await axios.get("equipment-manufacturers/", {
     params: {
       limit: limit,
     },

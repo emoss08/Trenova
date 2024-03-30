@@ -1071,6 +1071,54 @@ func (f WorkerMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerMutation", m)
 }
 
+// The WorkerCommentQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type WorkerCommentQueryRuleFunc func(context.Context, *ent.WorkerCommentQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f WorkerCommentQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.WorkerCommentQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.WorkerCommentQuery", q)
+}
+
+// The WorkerCommentMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type WorkerCommentMutationRuleFunc func(context.Context, *ent.WorkerCommentMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f WorkerCommentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.WorkerCommentMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerCommentMutation", m)
+}
+
+// The WorkerProfileQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type WorkerProfileQueryRuleFunc func(context.Context, *ent.WorkerProfileQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f WorkerProfileQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.WorkerProfileQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.WorkerProfileQuery", q)
+}
+
+// The WorkerProfileMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type WorkerProfileMutationRuleFunc func(context.Context, *ent.WorkerProfileMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f WorkerProfileMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.WorkerProfileMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerProfileMutation", m)
+}
+
 type (
 	// Filter is the interface that wraps the Where function
 	// for filtering nodes in queries and mutations.
@@ -1186,6 +1234,10 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.WorkerQuery:
 		return q.Filter(), nil
+	case *ent.WorkerCommentQuery:
+		return q.Filter(), nil
+	case *ent.WorkerProfileQuery:
+		return q.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected query type %T for query filter", q)
 	}
@@ -1272,6 +1324,10 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.UserFavoriteMutation:
 		return m.Filter(), nil
 	case *ent.WorkerMutation:
+		return m.Filter(), nil
+	case *ent.WorkerCommentMutation:
+		return m.Filter(), nil
+	case *ent.WorkerProfileMutation:
 		return m.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected mutation type %T for mutation filter", m)

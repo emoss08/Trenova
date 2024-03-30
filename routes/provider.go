@@ -148,6 +148,12 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Hazardous Material Segregation Rule Routes
 			registerHazmatSegRuleRouter(r)
+
+			// Register Tractor Routes
+			registerTractorRouter(r)
+
+			// Register Worker Routes
+			registerWorkerRouter(r)
 		})
 	})
 
