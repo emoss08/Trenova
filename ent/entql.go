@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 
 	"entgo.io/ent/dialect/sql"
@@ -55,7 +56,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 42)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 43)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   accessorialcharge.Table,
@@ -435,6 +436,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			equipmenttype.FieldWeight:          {Type: field.TypeFloat64, Column: equipmenttype.FieldWeight},
 			equipmenttype.FieldIdlingFuelUsage: {Type: field.TypeFloat64, Column: equipmenttype.FieldIdlingFuelUsage},
 			equipmenttype.FieldExemptFromTolls: {Type: field.TypeBool, Column: equipmenttype.FieldExemptFromTolls},
+			equipmenttype.FieldColor:           {Type: field.TypeString, Column: equipmenttype.FieldColor},
 		},
 	}
 	graph.Nodes[16] = &sqlgraph.Node{
@@ -1003,9 +1005,36 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldOrganizationID: {Type: field.TypeUUID, Column: workercomment.FieldOrganizationID},
 			workercomment.FieldCreatedAt:      {Type: field.TypeTime, Column: workercomment.FieldCreatedAt},
 			workercomment.FieldUpdatedAt:      {Type: field.TypeTime, Column: workercomment.FieldUpdatedAt},
+			workercomment.FieldWorkerID:       {Type: field.TypeUUID, Column: workercomment.FieldWorkerID},
+			workercomment.FieldCommentTypeID:  {Type: field.TypeUUID, Column: workercomment.FieldCommentTypeID},
+			workercomment.FieldComment:        {Type: field.TypeString, Column: workercomment.FieldComment},
+			workercomment.FieldEnteredBy:      {Type: field.TypeUUID, Column: workercomment.FieldEnteredBy},
 		},
 	}
 	graph.Nodes[41] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   workercontact.Table,
+			Columns: workercontact.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: workercontact.FieldID,
+			},
+		},
+		Type: "WorkerContact",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			workercontact.FieldBusinessUnitID: {Type: field.TypeUUID, Column: workercontact.FieldBusinessUnitID},
+			workercontact.FieldOrganizationID: {Type: field.TypeUUID, Column: workercontact.FieldOrganizationID},
+			workercontact.FieldCreatedAt:      {Type: field.TypeTime, Column: workercontact.FieldCreatedAt},
+			workercontact.FieldUpdatedAt:      {Type: field.TypeTime, Column: workercontact.FieldUpdatedAt},
+			workercontact.FieldWorkerID:       {Type: field.TypeUUID, Column: workercontact.FieldWorkerID},
+			workercontact.FieldName:           {Type: field.TypeString, Column: workercontact.FieldName},
+			workercontact.FieldEmail:          {Type: field.TypeString, Column: workercontact.FieldEmail},
+			workercontact.FieldPhone:          {Type: field.TypeString, Column: workercontact.FieldPhone},
+			workercontact.FieldRelationship:   {Type: field.TypeString, Column: workercontact.FieldRelationship},
+			workercontact.FieldIsPrimary:      {Type: field.TypeBool, Column: workercontact.FieldIsPrimary},
+		},
+	}
+	graph.Nodes[42] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workerprofile.Table,
 			Columns: workerprofile.Columns,
@@ -2381,6 +2410,30 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"WorkerProfile",
 	)
 	graph.MustAddE(
+		"worker_comments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+		},
+		"Worker",
+		"WorkerComment",
+	)
+	graph.MustAddE(
+		"worker_contacts",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+		},
+		"Worker",
+		"WorkerContact",
+	)
+	graph.MustAddE(
 		"business_unit",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -2403,6 +2456,66 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"WorkerComment",
 		"Organization",
+	)
+	graph.MustAddE(
+		"worker",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   workercomment.WorkerTable,
+			Columns: []string{workercomment.WorkerColumn},
+			Bidi:    false,
+		},
+		"WorkerComment",
+		"Worker",
+	)
+	graph.MustAddE(
+		"comment_type",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.CommentTypeTable,
+			Columns: []string{workercomment.CommentTypeColumn},
+			Bidi:    false,
+		},
+		"WorkerComment",
+		"CommentType",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.BusinessUnitTable,
+			Columns: []string{workercontact.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"WorkerContact",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.OrganizationTable,
+			Columns: []string{workercontact.OrganizationColumn},
+			Bidi:    false,
+		},
+		"WorkerContact",
+		"Organization",
+	)
+	graph.MustAddE(
+		"worker",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   workercontact.WorkerTable,
+			Columns: []string{workercontact.WorkerColumn},
+			Bidi:    false,
+		},
+		"WorkerContact",
+		"Worker",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -2439,6 +2552,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"WorkerProfile",
 		"Worker",
+	)
+	graph.MustAddE(
+		"state",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+		},
+		"WorkerProfile",
+		"UsState",
 	)
 	return graph
 }()
@@ -4512,6 +4637,11 @@ func (f *EquipmentTypeFilter) WhereIdlingFuelUsage(p entql.Float64P) {
 // WhereExemptFromTolls applies the entql bool predicate on the exempt_from_tolls field.
 func (f *EquipmentTypeFilter) WhereExemptFromTolls(p entql.BoolP) {
 	f.Where(p.Field(equipmenttype.FieldExemptFromTolls))
+}
+
+// WhereColor applies the entql string predicate on the color field.
+func (f *EquipmentTypeFilter) WhereColor(p entql.StringP) {
+	f.Where(p.Field(equipmenttype.FieldColor))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
@@ -7677,6 +7807,34 @@ func (f *WorkerFilter) WhereHasWorkerProfileWith(preds ...predicate.WorkerProfil
 	})))
 }
 
+// WhereHasWorkerComments applies a predicate to check if query has an edge worker_comments.
+func (f *WorkerFilter) WhereHasWorkerComments() {
+	f.Where(entql.HasEdge("worker_comments"))
+}
+
+// WhereHasWorkerCommentsWith applies a predicate to check if query has an edge worker_comments with a given conditions (other predicates).
+func (f *WorkerFilter) WhereHasWorkerCommentsWith(preds ...predicate.WorkerComment) {
+	f.Where(entql.HasEdgeWith("worker_comments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasWorkerContacts applies a predicate to check if query has an edge worker_contacts.
+func (f *WorkerFilter) WhereHasWorkerContacts() {
+	f.Where(entql.HasEdge("worker_contacts"))
+}
+
+// WhereHasWorkerContactsWith applies a predicate to check if query has an edge worker_contacts with a given conditions (other predicates).
+func (f *WorkerFilter) WhereHasWorkerContactsWith(preds ...predicate.WorkerContact) {
+	f.Where(entql.HasEdgeWith("worker_contacts", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // addPredicate implements the predicateAdder interface.
 func (wcq *WorkerCommentQuery) addPredicate(pred func(s *sql.Selector)) {
 	wcq.predicates = append(wcq.predicates, pred)
@@ -7737,6 +7895,26 @@ func (f *WorkerCommentFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(workercomment.FieldUpdatedAt))
 }
 
+// WhereWorkerID applies the entql [16]byte predicate on the worker_id field.
+func (f *WorkerCommentFilter) WhereWorkerID(p entql.ValueP) {
+	f.Where(p.Field(workercomment.FieldWorkerID))
+}
+
+// WhereCommentTypeID applies the entql [16]byte predicate on the comment_type_id field.
+func (f *WorkerCommentFilter) WhereCommentTypeID(p entql.ValueP) {
+	f.Where(p.Field(workercomment.FieldCommentTypeID))
+}
+
+// WhereComment applies the entql string predicate on the comment field.
+func (f *WorkerCommentFilter) WhereComment(p entql.StringP) {
+	f.Where(p.Field(workercomment.FieldComment))
+}
+
+// WhereEnteredBy applies the entql [16]byte predicate on the entered_by field.
+func (f *WorkerCommentFilter) WhereEnteredBy(p entql.ValueP) {
+	f.Where(p.Field(workercomment.FieldEnteredBy))
+}
+
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
 func (f *WorkerCommentFilter) WhereHasBusinessUnit() {
 	f.Where(entql.HasEdge("business_unit"))
@@ -7759,6 +7937,166 @@ func (f *WorkerCommentFilter) WhereHasOrganization() {
 // WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
 func (f *WorkerCommentFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
 	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasWorker applies a predicate to check if query has an edge worker.
+func (f *WorkerCommentFilter) WhereHasWorker() {
+	f.Where(entql.HasEdge("worker"))
+}
+
+// WhereHasWorkerWith applies a predicate to check if query has an edge worker with a given conditions (other predicates).
+func (f *WorkerCommentFilter) WhereHasWorkerWith(preds ...predicate.Worker) {
+	f.Where(entql.HasEdgeWith("worker", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasCommentType applies a predicate to check if query has an edge comment_type.
+func (f *WorkerCommentFilter) WhereHasCommentType() {
+	f.Where(entql.HasEdge("comment_type"))
+}
+
+// WhereHasCommentTypeWith applies a predicate to check if query has an edge comment_type with a given conditions (other predicates).
+func (f *WorkerCommentFilter) WhereHasCommentTypeWith(preds ...predicate.CommentType) {
+	f.Where(entql.HasEdgeWith("comment_type", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
+func (wcq *WorkerContactQuery) addPredicate(pred func(s *sql.Selector)) {
+	wcq.predicates = append(wcq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the WorkerContactQuery builder.
+func (wcq *WorkerContactQuery) Filter() *WorkerContactFilter {
+	return &WorkerContactFilter{config: wcq.config, predicateAdder: wcq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *WorkerContactMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the WorkerContactMutation builder.
+func (m *WorkerContactMutation) Filter() *WorkerContactFilter {
+	return &WorkerContactFilter{config: m.config, predicateAdder: m}
+}
+
+// WorkerContactFilter provides a generic filtering capability at runtime for WorkerContactQuery.
+type WorkerContactFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *WorkerContactFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *WorkerContactFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(workercontact.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *WorkerContactFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(workercontact.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *WorkerContactFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(workercontact.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *WorkerContactFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(workercontact.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *WorkerContactFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(workercontact.FieldUpdatedAt))
+}
+
+// WhereWorkerID applies the entql [16]byte predicate on the worker_id field.
+func (f *WorkerContactFilter) WhereWorkerID(p entql.ValueP) {
+	f.Where(p.Field(workercontact.FieldWorkerID))
+}
+
+// WhereName applies the entql string predicate on the name field.
+func (f *WorkerContactFilter) WhereName(p entql.StringP) {
+	f.Where(p.Field(workercontact.FieldName))
+}
+
+// WhereEmail applies the entql string predicate on the email field.
+func (f *WorkerContactFilter) WhereEmail(p entql.StringP) {
+	f.Where(p.Field(workercontact.FieldEmail))
+}
+
+// WherePhone applies the entql string predicate on the phone field.
+func (f *WorkerContactFilter) WherePhone(p entql.StringP) {
+	f.Where(p.Field(workercontact.FieldPhone))
+}
+
+// WhereRelationship applies the entql string predicate on the relationship field.
+func (f *WorkerContactFilter) WhereRelationship(p entql.StringP) {
+	f.Where(p.Field(workercontact.FieldRelationship))
+}
+
+// WhereIsPrimary applies the entql bool predicate on the is_primary field.
+func (f *WorkerContactFilter) WhereIsPrimary(p entql.BoolP) {
+	f.Where(p.Field(workercontact.FieldIsPrimary))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *WorkerContactFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *WorkerContactFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *WorkerContactFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *WorkerContactFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasWorker applies a predicate to check if query has an edge worker.
+func (f *WorkerContactFilter) WhereHasWorker() {
+	f.Where(entql.HasEdge("worker"))
+}
+
+// WhereHasWorkerWith applies a predicate to check if query has an edge worker with a given conditions (other predicates).
+func (f *WorkerContactFilter) WhereHasWorkerWith(preds ...predicate.Worker) {
+	f.Where(entql.HasEdgeWith("worker", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -7794,7 +8132,7 @@ type WorkerProfileFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerProfileFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7931,6 +8269,20 @@ func (f *WorkerProfileFilter) WhereHasWorker() {
 // WhereHasWorkerWith applies a predicate to check if query has an edge worker with a given conditions (other predicates).
 func (f *WorkerProfileFilter) WhereHasWorkerWith(preds ...predicate.Worker) {
 	f.Where(entql.HasEdgeWith("worker", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasState applies a predicate to check if query has an edge state.
+func (f *WorkerProfileFilter) WhereHasState() {
+	f.Where(entql.HasEdge("state"))
+}
+
+// WhereHasStateWith applies a predicate to check if query has an edge state with a given conditions (other predicates).
+func (f *WorkerProfileFilter) WhereHasStateWith(preds ...predicate.UsState) {
+	f.Where(entql.HasEdgeWith("state", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}

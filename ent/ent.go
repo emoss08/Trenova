@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 )
 
@@ -155,6 +156,7 @@ func checkColumn(table, column string) error {
 			userfavorite.Table:                 userfavorite.ValidColumn,
 			worker.Table:                       worker.ValidColumn,
 			workercomment.Table:                workercomment.ValidColumn,
+			workercontact.Table:                workercontact.ValidColumn,
 			workerprofile.Table:                workerprofile.ValidColumn,
 		})
 	})

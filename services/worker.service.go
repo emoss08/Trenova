@@ -33,6 +33,8 @@ type WorkerRequest struct {
 	FleetCodeID       *uuid.UUID        `json:"fleetCodeId" validate:"omitempty,uuid"`
 	ManagerID         *uuid.UUID        `json:"managerId" validate:"omitempty,uuid"`
 	Profile           WorkerProfileRequest
+	Comments          []WorkerCommentRequest `json:"comments" validate:"omitempty,dive"`
+	Contacts          []WorkerContactRequest `json:"contacts" validate:"omitempty,dive"`
 }
 
 type WorkerUpdateRequest struct {
@@ -47,7 +49,7 @@ type WorkerUpdateRequest struct {
 	LastName          string            `json:"lastName" validate:"required,max=255"`
 	City              string            `json:"city" validate:"omitempty,max=255"`
 	PostalCode        string            `json:"postalCode" validate:"omitempty,max=10"`
-	StateID           *uuid.UUID        `json:"stateId" validate:"omitempty,uuid"`
+	StateID           uuid.UUID         `json:"stateId" validate:"omitempty,uuid"`
 	FleetCodeID       *uuid.UUID        `json:"fleetCodeId" validate:"omitempty,uuid"`
 	ManagerID         *uuid.UUID        `json:"managerId" validate:"omitempty,uuid"`
 	Profile           WorkerProfileRequest
@@ -59,7 +61,7 @@ type WorkerProfileRequest struct {
 	Sex                   string                     `json:"sex,omitempty" validate:"omitempty"`
 	DateOfBirth           *pgtype.Date               `json:"dateOfBirth" validate:"omitempty"`
 	LicenseNumber         string                     `json:"licenseNumber" validate:"required"`
-	LicenseStateID        *uuid.UUID                 `json:"licenseStateId" validate:"omitempty,uuid"`
+	LicenseStateID        uuid.UUID                  `json:"licenseStateId" validate:"omitempty,uuid"`
 	LicenseExpirationDate *pgtype.Date               `json:"licenseExpirationDate" validate:"omitempty"`
 	Endorsements          workerprofile.Endorsements `json:"endorsements" validate:"omitempty"`
 	HazmatExpirationDate  *pgtype.Date               `json:"hazmatExpirationDate" validate:"omitempty"`
@@ -68,6 +70,22 @@ type WorkerProfileRequest struct {
 	PhysicalDueDate       *pgtype.Date               `json:"physicalDueDate" validate:"omitempty"`
 	MedicalCertDate       *pgtype.Date               `json:"medicalCertDate" validate:"omitempty"`
 	MvrDueDate            *pgtype.Date               `json:"mvrDueDate" validate:"omitempty"`
+}
+
+type WorkerCommentRequest struct {
+	WorkerID      uuid.UUID `json:"workerId" validate:"required,uuid"`
+	CommentTypeID uuid.UUID `json:"commentTypeId" validate:"required"`
+	Comment       string    `json:"comment" validate:"omitempty"`
+	EnteredBy     uuid.UUID `json:"enteredBy" validate:"required"`
+}
+
+type WorkerContactRequest struct {
+	WorkerID     uuid.UUID `json:"workerId" validate:"required"`
+	Name         string    `json:"name" validate:"required"`
+	Email        string    `json:"email" validate:"required"`
+	Phone        string    `json:"phone" validate:"required"`
+	Relationship string    `json:"relationship" validate:"omitempty"`
+	IsPrimary    bool      `json:"isPrimary" validate:"omitempty"`
 }
 
 // NewWorkerOps creates a new tractor service.
@@ -138,7 +156,7 @@ func (r *WorkerOps) CreateWorker(entity WorkerRequest) (*ent.Worker, error) {
 		SetSex(entity.Profile.Sex).
 		SetDateOfBirth(entity.Profile.DateOfBirth).
 		SetLicenseNumber(entity.Profile.LicenseNumber).
-		SetNillableLicenseStateID(entity.Profile.LicenseStateID).
+		SetLicenseStateID(entity.Profile.LicenseStateID).
 		SetLicenseExpirationDate(entity.Profile.LicenseExpirationDate).
 		SetEndorsements(entity.Profile.Endorsements).
 		SetHazmatExpirationDate(entity.Profile.HazmatExpirationDate).
@@ -150,6 +168,38 @@ func (r *WorkerOps) CreateWorker(entity WorkerRequest) (*ent.Worker, error) {
 		Save(r.ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Create the worker comments
+	for _, comment := range entity.Comments {
+		_, err = r.client.WorkerComment.Create().
+			SetOrganizationID(entity.OrganizationID).
+			SetBusinessUnitID(entity.BusinessUnitID).
+			SetWorkerID(newEntity.ID).
+			SetWorker(newEntity).
+			SetCommentTypeID(comment.CommentTypeID).
+			SetComment(comment.Comment).
+			SetEnteredBy(comment.EnteredBy).
+			Save(r.ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Create the worker contacts
+	for _, contact := range entity.Contacts {
+		_, err = r.client.WorkerContact.Create().
+			SetWorkerID(newEntity.ID).
+			SetWorker(newEntity).
+			SetName(contact.Name).
+			SetEmail(contact.Email).
+			SetPhone(contact.Phone).
+			SetRelationship(contact.Relationship).
+			SetIsPrimary(contact.IsPrimary).
+			Save(r.ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return newEntity, nil
@@ -167,7 +217,7 @@ func (r *WorkerOps) UpdateWorker(entity WorkerUpdateRequest) (*ent.Worker, error
 		SetLastName(entity.LastName).
 		SetCity(entity.City).
 		SetPostalCode(entity.PostalCode).
-		SetNillableStateID(entity.StateID).
+		SetStateID(entity.StateID).
 		SetNillableFleetCodeID(entity.FleetCodeID).
 		SetNillableManagerID(entity.ManagerID)
 
@@ -178,7 +228,7 @@ func (r *WorkerOps) UpdateWorker(entity WorkerUpdateRequest) (*ent.Worker, error
 			SetSex(entity.Profile.Sex).
 			SetDateOfBirth(entity.Profile.DateOfBirth).
 			SetLicenseNumber(entity.Profile.LicenseNumber).
-			SetNillableLicenseStateID(entity.Profile.LicenseStateID).
+			SetLicenseStateID(entity.Profile.LicenseStateID).
 			SetLicenseExpirationDate(entity.Profile.LicenseExpirationDate).
 			SetEndorsements(entity.Profile.Endorsements).
 			SetHazmatExpirationDate(entity.Profile.HazmatExpirationDate).
@@ -196,11 +246,6 @@ func (r *WorkerOps) UpdateWorker(entity WorkerUpdateRequest) (*ent.Worker, error
 	// If the worker manager is nil, clear the assocation.
 	if entity.ManagerID == nil {
 		updateOp = updateOp.ClearManager()
-	}
-
-	// If the state ID is nil, clear the association.
-	if entity.StateID == nil {
-		updateOp = updateOp.ClearState()
 	}
 
 	// If the fleet code ID is nil, clear the association.

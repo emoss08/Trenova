@@ -11,7 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
 	"github.com/google/uuid"
 )
@@ -63,6 +65,30 @@ func (wcc *WorkerCommentCreate) SetNillableUpdatedAt(t *time.Time) *WorkerCommen
 	return wcc
 }
 
+// SetWorkerID sets the "worker_id" field.
+func (wcc *WorkerCommentCreate) SetWorkerID(u uuid.UUID) *WorkerCommentCreate {
+	wcc.mutation.SetWorkerID(u)
+	return wcc
+}
+
+// SetCommentTypeID sets the "comment_type_id" field.
+func (wcc *WorkerCommentCreate) SetCommentTypeID(u uuid.UUID) *WorkerCommentCreate {
+	wcc.mutation.SetCommentTypeID(u)
+	return wcc
+}
+
+// SetComment sets the "comment" field.
+func (wcc *WorkerCommentCreate) SetComment(s string) *WorkerCommentCreate {
+	wcc.mutation.SetComment(s)
+	return wcc
+}
+
+// SetEnteredBy sets the "entered_by" field.
+func (wcc *WorkerCommentCreate) SetEnteredBy(u uuid.UUID) *WorkerCommentCreate {
+	wcc.mutation.SetEnteredBy(u)
+	return wcc
+}
+
 // SetID sets the "id" field.
 func (wcc *WorkerCommentCreate) SetID(u uuid.UUID) *WorkerCommentCreate {
 	wcc.mutation.SetID(u)
@@ -85,6 +111,16 @@ func (wcc *WorkerCommentCreate) SetBusinessUnit(b *BusinessUnit) *WorkerCommentC
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (wcc *WorkerCommentCreate) SetOrganization(o *Organization) *WorkerCommentCreate {
 	return wcc.SetOrganizationID(o.ID)
+}
+
+// SetWorker sets the "worker" edge to the Worker entity.
+func (wcc *WorkerCommentCreate) SetWorker(w *Worker) *WorkerCommentCreate {
+	return wcc.SetWorkerID(w.ID)
+}
+
+// SetCommentType sets the "comment_type" edge to the CommentType entity.
+func (wcc *WorkerCommentCreate) SetCommentType(c *CommentType) *WorkerCommentCreate {
+	return wcc.SetCommentTypeID(c.ID)
 }
 
 // Mutation returns the WorkerCommentMutation object of the builder.
@@ -150,11 +186,34 @@ func (wcc *WorkerCommentCreate) check() error {
 	if _, ok := wcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "WorkerComment.updated_at"`)}
 	}
+	if _, ok := wcc.mutation.WorkerID(); !ok {
+		return &ValidationError{Name: "worker_id", err: errors.New(`ent: missing required field "WorkerComment.worker_id"`)}
+	}
+	if _, ok := wcc.mutation.CommentTypeID(); !ok {
+		return &ValidationError{Name: "comment_type_id", err: errors.New(`ent: missing required field "WorkerComment.comment_type_id"`)}
+	}
+	if _, ok := wcc.mutation.Comment(); !ok {
+		return &ValidationError{Name: "comment", err: errors.New(`ent: missing required field "WorkerComment.comment"`)}
+	}
+	if v, ok := wcc.mutation.Comment(); ok {
+		if err := workercomment.CommentValidator(v); err != nil {
+			return &ValidationError{Name: "comment", err: fmt.Errorf(`ent: validator failed for field "WorkerComment.comment": %w`, err)}
+		}
+	}
+	if _, ok := wcc.mutation.EnteredBy(); !ok {
+		return &ValidationError{Name: "entered_by", err: errors.New(`ent: missing required field "WorkerComment.entered_by"`)}
+	}
 	if _, ok := wcc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "WorkerComment.business_unit"`)}
 	}
 	if _, ok := wcc.mutation.OrganizationID(); !ok {
 		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "WorkerComment.organization"`)}
+	}
+	if _, ok := wcc.mutation.WorkerID(); !ok {
+		return &ValidationError{Name: "worker", err: errors.New(`ent: missing required edge "WorkerComment.worker"`)}
+	}
+	if _, ok := wcc.mutation.CommentTypeID(); !ok {
+		return &ValidationError{Name: "comment_type", err: errors.New(`ent: missing required edge "WorkerComment.comment_type"`)}
 	}
 	return nil
 }
@@ -199,6 +258,14 @@ func (wcc *WorkerCommentCreate) createSpec() (*WorkerComment, *sqlgraph.CreateSp
 		_spec.SetField(workercomment.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := wcc.mutation.Comment(); ok {
+		_spec.SetField(workercomment.FieldComment, field.TypeString, value)
+		_node.Comment = value
+	}
+	if value, ok := wcc.mutation.EnteredBy(); ok {
+		_spec.SetField(workercomment.FieldEnteredBy, field.TypeUUID, value)
+		_node.EnteredBy = value
+	}
 	if nodes := wcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -231,6 +298,40 @@ func (wcc *WorkerCommentCreate) createSpec() (*WorkerComment, *sqlgraph.CreateSp
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wcc.mutation.WorkerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   workercomment.WorkerTable,
+			Columns: []string{workercomment.WorkerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkerID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wcc.mutation.CommentTypeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.CommentTypeTable,
+			Columns: []string{workercomment.CommentTypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commenttype.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.CommentTypeID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

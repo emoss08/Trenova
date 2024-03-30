@@ -11,64 +11,62 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/worker"
-	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/google/uuid"
 )
 
-// WorkerCommentQuery is the builder for querying WorkerComment entities.
-type WorkerCommentQuery struct {
+// WorkerContactQuery is the builder for querying WorkerContact entities.
+type WorkerContactQuery struct {
 	config
 	ctx              *QueryContext
-	order            []workercomment.OrderOption
+	order            []workercontact.OrderOption
 	inters           []Interceptor
-	predicates       []predicate.WorkerComment
+	predicates       []predicate.WorkerContact
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withWorker       *WorkerQuery
-	withCommentType  *CommentTypeQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the WorkerCommentQuery builder.
-func (wcq *WorkerCommentQuery) Where(ps ...predicate.WorkerComment) *WorkerCommentQuery {
+// Where adds a new predicate for the WorkerContactQuery builder.
+func (wcq *WorkerContactQuery) Where(ps ...predicate.WorkerContact) *WorkerContactQuery {
 	wcq.predicates = append(wcq.predicates, ps...)
 	return wcq
 }
 
 // Limit the number of records to be returned by this query.
-func (wcq *WorkerCommentQuery) Limit(limit int) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) Limit(limit int) *WorkerContactQuery {
 	wcq.ctx.Limit = &limit
 	return wcq
 }
 
 // Offset to start from.
-func (wcq *WorkerCommentQuery) Offset(offset int) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) Offset(offset int) *WorkerContactQuery {
 	wcq.ctx.Offset = &offset
 	return wcq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (wcq *WorkerCommentQuery) Unique(unique bool) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) Unique(unique bool) *WorkerContactQuery {
 	wcq.ctx.Unique = &unique
 	return wcq
 }
 
 // Order specifies how the records should be ordered.
-func (wcq *WorkerCommentQuery) Order(o ...workercomment.OrderOption) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) Order(o ...workercontact.OrderOption) *WorkerContactQuery {
 	wcq.order = append(wcq.order, o...)
 	return wcq
 }
 
 // QueryBusinessUnit chains the current query on the "business_unit" edge.
-func (wcq *WorkerCommentQuery) QueryBusinessUnit() *BusinessUnitQuery {
+func (wcq *WorkerContactQuery) QueryBusinessUnit() *BusinessUnitQuery {
 	query := (&BusinessUnitClient{config: wcq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := wcq.prepareQuery(ctx); err != nil {
@@ -79,9 +77,9 @@ func (wcq *WorkerCommentQuery) QueryBusinessUnit() *BusinessUnitQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, selector),
 			sqlgraph.To(businessunit.Table, businessunit.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.BusinessUnitTable, workercomment.BusinessUnitColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercontact.BusinessUnitTable, workercontact.BusinessUnitColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
 		return fromU, nil
@@ -90,7 +88,7 @@ func (wcq *WorkerCommentQuery) QueryBusinessUnit() *BusinessUnitQuery {
 }
 
 // QueryOrganization chains the current query on the "organization" edge.
-func (wcq *WorkerCommentQuery) QueryOrganization() *OrganizationQuery {
+func (wcq *WorkerContactQuery) QueryOrganization() *OrganizationQuery {
 	query := (&OrganizationClient{config: wcq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := wcq.prepareQuery(ctx); err != nil {
@@ -101,9 +99,9 @@ func (wcq *WorkerCommentQuery) QueryOrganization() *OrganizationQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.OrganizationTable, workercomment.OrganizationColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercontact.OrganizationTable, workercontact.OrganizationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
 		return fromU, nil
@@ -112,7 +110,7 @@ func (wcq *WorkerCommentQuery) QueryOrganization() *OrganizationQuery {
 }
 
 // QueryWorker chains the current query on the "worker" edge.
-func (wcq *WorkerCommentQuery) QueryWorker() *WorkerQuery {
+func (wcq *WorkerContactQuery) QueryWorker() *WorkerQuery {
 	query := (&WorkerClient{config: wcq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := wcq.prepareQuery(ctx); err != nil {
@@ -123,9 +121,9 @@ func (wcq *WorkerCommentQuery) QueryWorker() *WorkerQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, selector),
 			sqlgraph.To(worker.Table, worker.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, workercomment.WorkerTable, workercomment.WorkerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, workercontact.WorkerTable, workercontact.WorkerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
 		return fromU, nil
@@ -133,43 +131,21 @@ func (wcq *WorkerCommentQuery) QueryWorker() *WorkerQuery {
 	return query
 }
 
-// QueryCommentType chains the current query on the "comment_type" edge.
-func (wcq *WorkerCommentQuery) QueryCommentType() *CommentTypeQuery {
-	query := (&CommentTypeClient{config: wcq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := wcq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := wcq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
-			sqlgraph.To(commenttype.Table, commenttype.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.CommentTypeTable, workercomment.CommentTypeColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// First returns the first WorkerComment entity from the query.
-// Returns a *NotFoundError when no WorkerComment was found.
-func (wcq *WorkerCommentQuery) First(ctx context.Context) (*WorkerComment, error) {
+// First returns the first WorkerContact entity from the query.
+// Returns a *NotFoundError when no WorkerContact was found.
+func (wcq *WorkerContactQuery) First(ctx context.Context) (*WorkerContact, error) {
 	nodes, err := wcq.Limit(1).All(setContextOp(ctx, wcq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{workercomment.Label}
+		return nil, &NotFoundError{workercontact.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) FirstX(ctx context.Context) *WorkerComment {
+func (wcq *WorkerContactQuery) FirstX(ctx context.Context) *WorkerContact {
 	node, err := wcq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -177,22 +153,22 @@ func (wcq *WorkerCommentQuery) FirstX(ctx context.Context) *WorkerComment {
 	return node
 }
 
-// FirstID returns the first WorkerComment ID from the query.
-// Returns a *NotFoundError when no WorkerComment ID was found.
-func (wcq *WorkerCommentQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first WorkerContact ID from the query.
+// Returns a *NotFoundError when no WorkerContact ID was found.
+func (wcq *WorkerContactQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = wcq.Limit(1).IDs(setContextOp(ctx, wcq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{workercomment.Label}
+		err = &NotFoundError{workercontact.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (wcq *WorkerContactQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := wcq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -200,10 +176,10 @@ func (wcq *WorkerCommentQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single WorkerComment entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one WorkerComment entity is found.
-// Returns a *NotFoundError when no WorkerComment entities are found.
-func (wcq *WorkerCommentQuery) Only(ctx context.Context) (*WorkerComment, error) {
+// Only returns a single WorkerContact entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one WorkerContact entity is found.
+// Returns a *NotFoundError when no WorkerContact entities are found.
+func (wcq *WorkerContactQuery) Only(ctx context.Context) (*WorkerContact, error) {
 	nodes, err := wcq.Limit(2).All(setContextOp(ctx, wcq.ctx, "Only"))
 	if err != nil {
 		return nil, err
@@ -212,14 +188,14 @@ func (wcq *WorkerCommentQuery) Only(ctx context.Context) (*WorkerComment, error)
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{workercomment.Label}
+		return nil, &NotFoundError{workercontact.Label}
 	default:
-		return nil, &NotSingularError{workercomment.Label}
+		return nil, &NotSingularError{workercontact.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) OnlyX(ctx context.Context) *WorkerComment {
+func (wcq *WorkerContactQuery) OnlyX(ctx context.Context) *WorkerContact {
 	node, err := wcq.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -227,10 +203,10 @@ func (wcq *WorkerCommentQuery) OnlyX(ctx context.Context) *WorkerComment {
 	return node
 }
 
-// OnlyID is like Only, but returns the only WorkerComment ID in the query.
-// Returns a *NotSingularError when more than one WorkerComment ID is found.
+// OnlyID is like Only, but returns the only WorkerContact ID in the query.
+// Returns a *NotSingularError when more than one WorkerContact ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (wcq *WorkerCommentQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (wcq *WorkerContactQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = wcq.Limit(2).IDs(setContextOp(ctx, wcq.ctx, "OnlyID")); err != nil {
 		return
@@ -239,15 +215,15 @@ func (wcq *WorkerCommentQuery) OnlyID(ctx context.Context) (id uuid.UUID, err er
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{workercomment.Label}
+		err = &NotFoundError{workercontact.Label}
 	default:
-		err = &NotSingularError{workercomment.Label}
+		err = &NotSingularError{workercontact.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (wcq *WorkerContactQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := wcq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -255,18 +231,18 @@ func (wcq *WorkerCommentQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of WorkerComments.
-func (wcq *WorkerCommentQuery) All(ctx context.Context) ([]*WorkerComment, error) {
+// All executes the query and returns a list of WorkerContacts.
+func (wcq *WorkerContactQuery) All(ctx context.Context) ([]*WorkerContact, error) {
 	ctx = setContextOp(ctx, wcq.ctx, "All")
 	if err := wcq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*WorkerComment, *WorkerCommentQuery]()
-	return withInterceptors[[]*WorkerComment](ctx, wcq, qr, wcq.inters)
+	qr := querierAll[[]*WorkerContact, *WorkerContactQuery]()
+	return withInterceptors[[]*WorkerContact](ctx, wcq, qr, wcq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) AllX(ctx context.Context) []*WorkerComment {
+func (wcq *WorkerContactQuery) AllX(ctx context.Context) []*WorkerContact {
 	nodes, err := wcq.All(ctx)
 	if err != nil {
 		panic(err)
@@ -274,20 +250,20 @@ func (wcq *WorkerCommentQuery) AllX(ctx context.Context) []*WorkerComment {
 	return nodes
 }
 
-// IDs executes the query and returns a list of WorkerComment IDs.
-func (wcq *WorkerCommentQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of WorkerContact IDs.
+func (wcq *WorkerContactQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if wcq.ctx.Unique == nil && wcq.path != nil {
 		wcq.Unique(true)
 	}
 	ctx = setContextOp(ctx, wcq.ctx, "IDs")
-	if err = wcq.Select(workercomment.FieldID).Scan(ctx, &ids); err != nil {
+	if err = wcq.Select(workercontact.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (wcq *WorkerContactQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := wcq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -296,16 +272,16 @@ func (wcq *WorkerCommentQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (wcq *WorkerCommentQuery) Count(ctx context.Context) (int, error) {
+func (wcq *WorkerContactQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, wcq.ctx, "Count")
 	if err := wcq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, wcq, querierCount[*WorkerCommentQuery](), wcq.inters)
+	return withInterceptors[int](ctx, wcq, querierCount[*WorkerContactQuery](), wcq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) CountX(ctx context.Context) int {
+func (wcq *WorkerContactQuery) CountX(ctx context.Context) int {
 	count, err := wcq.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -314,7 +290,7 @@ func (wcq *WorkerCommentQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (wcq *WorkerCommentQuery) Exist(ctx context.Context) (bool, error) {
+func (wcq *WorkerContactQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, wcq.ctx, "Exist")
 	switch _, err := wcq.FirstID(ctx); {
 	case IsNotFound(err):
@@ -327,7 +303,7 @@ func (wcq *WorkerCommentQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (wcq *WorkerCommentQuery) ExistX(ctx context.Context) bool {
+func (wcq *WorkerContactQuery) ExistX(ctx context.Context) bool {
 	exist, err := wcq.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -335,22 +311,21 @@ func (wcq *WorkerCommentQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the WorkerCommentQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the WorkerContactQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (wcq *WorkerCommentQuery) Clone() *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) Clone() *WorkerContactQuery {
 	if wcq == nil {
 		return nil
 	}
-	return &WorkerCommentQuery{
+	return &WorkerContactQuery{
 		config:           wcq.config,
 		ctx:              wcq.ctx.Clone(),
-		order:            append([]workercomment.OrderOption{}, wcq.order...),
+		order:            append([]workercontact.OrderOption{}, wcq.order...),
 		inters:           append([]Interceptor{}, wcq.inters...),
-		predicates:       append([]predicate.WorkerComment{}, wcq.predicates...),
+		predicates:       append([]predicate.WorkerContact{}, wcq.predicates...),
 		withBusinessUnit: wcq.withBusinessUnit.Clone(),
 		withOrganization: wcq.withOrganization.Clone(),
 		withWorker:       wcq.withWorker.Clone(),
-		withCommentType:  wcq.withCommentType.Clone(),
 		// clone intermediate query.
 		sql:  wcq.sql.Clone(),
 		path: wcq.path,
@@ -359,7 +334,7 @@ func (wcq *WorkerCommentQuery) Clone() *WorkerCommentQuery {
 
 // WithBusinessUnit tells the query-builder to eager-load the nodes that are connected to
 // the "business_unit" edge. The optional arguments are used to configure the query builder of the edge.
-func (wcq *WorkerCommentQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery)) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery)) *WorkerContactQuery {
 	query := (&BusinessUnitClient{config: wcq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -370,7 +345,7 @@ func (wcq *WorkerCommentQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery)
 
 // WithOrganization tells the query-builder to eager-load the nodes that are connected to
 // the "organization" edge. The optional arguments are used to configure the query builder of the edge.
-func (wcq *WorkerCommentQuery) WithOrganization(opts ...func(*OrganizationQuery)) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) WithOrganization(opts ...func(*OrganizationQuery)) *WorkerContactQuery {
 	query := (&OrganizationClient{config: wcq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -381,23 +356,12 @@ func (wcq *WorkerCommentQuery) WithOrganization(opts ...func(*OrganizationQuery)
 
 // WithWorker tells the query-builder to eager-load the nodes that are connected to
 // the "worker" edge. The optional arguments are used to configure the query builder of the edge.
-func (wcq *WorkerCommentQuery) WithWorker(opts ...func(*WorkerQuery)) *WorkerCommentQuery {
+func (wcq *WorkerContactQuery) WithWorker(opts ...func(*WorkerQuery)) *WorkerContactQuery {
 	query := (&WorkerClient{config: wcq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
 	wcq.withWorker = query
-	return wcq
-}
-
-// WithCommentType tells the query-builder to eager-load the nodes that are connected to
-// the "comment_type" edge. The optional arguments are used to configure the query builder of the edge.
-func (wcq *WorkerCommentQuery) WithCommentType(opts ...func(*CommentTypeQuery)) *WorkerCommentQuery {
-	query := (&CommentTypeClient{config: wcq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	wcq.withCommentType = query
 	return wcq
 }
 
@@ -411,15 +375,15 @@ func (wcq *WorkerCommentQuery) WithCommentType(opts ...func(*CommentTypeQuery)) 
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.WorkerComment.Query().
-//		GroupBy(workercomment.FieldBusinessUnitID).
+//	client.WorkerContact.Query().
+//		GroupBy(workercontact.FieldBusinessUnitID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (wcq *WorkerCommentQuery) GroupBy(field string, fields ...string) *WorkerCommentGroupBy {
+func (wcq *WorkerContactQuery) GroupBy(field string, fields ...string) *WorkerContactGroupBy {
 	wcq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &WorkerCommentGroupBy{build: wcq}
+	grbuild := &WorkerContactGroupBy{build: wcq}
 	grbuild.flds = &wcq.ctx.Fields
-	grbuild.label = workercomment.Label
+	grbuild.label = workercontact.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -433,23 +397,23 @@ func (wcq *WorkerCommentQuery) GroupBy(field string, fields ...string) *WorkerCo
 //		BusinessUnitID uuid.UUID `json:"businessUnitId"`
 //	}
 //
-//	client.WorkerComment.Query().
-//		Select(workercomment.FieldBusinessUnitID).
+//	client.WorkerContact.Query().
+//		Select(workercontact.FieldBusinessUnitID).
 //		Scan(ctx, &v)
-func (wcq *WorkerCommentQuery) Select(fields ...string) *WorkerCommentSelect {
+func (wcq *WorkerContactQuery) Select(fields ...string) *WorkerContactSelect {
 	wcq.ctx.Fields = append(wcq.ctx.Fields, fields...)
-	sbuild := &WorkerCommentSelect{WorkerCommentQuery: wcq}
-	sbuild.label = workercomment.Label
+	sbuild := &WorkerContactSelect{WorkerContactQuery: wcq}
+	sbuild.label = workercontact.Label
 	sbuild.flds, sbuild.scan = &wcq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a WorkerCommentSelect configured with the given aggregations.
-func (wcq *WorkerCommentQuery) Aggregate(fns ...AggregateFunc) *WorkerCommentSelect {
+// Aggregate returns a WorkerContactSelect configured with the given aggregations.
+func (wcq *WorkerContactQuery) Aggregate(fns ...AggregateFunc) *WorkerContactSelect {
 	return wcq.Select().Aggregate(fns...)
 }
 
-func (wcq *WorkerCommentQuery) prepareQuery(ctx context.Context) error {
+func (wcq *WorkerContactQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range wcq.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -461,7 +425,7 @@ func (wcq *WorkerCommentQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range wcq.ctx.Fields {
-		if !workercomment.ValidColumn(f) {
+		if !workercontact.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -475,22 +439,21 @@ func (wcq *WorkerCommentQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (wcq *WorkerCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*WorkerComment, error) {
+func (wcq *WorkerContactQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*WorkerContact, error) {
 	var (
-		nodes       = []*WorkerComment{}
+		nodes       = []*WorkerContact{}
 		_spec       = wcq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [3]bool{
 			wcq.withBusinessUnit != nil,
 			wcq.withOrganization != nil,
 			wcq.withWorker != nil,
-			wcq.withCommentType != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*WorkerComment).scanValues(nil, columns)
+		return (*WorkerContact).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &WorkerComment{config: wcq.config}
+		node := &WorkerContact{config: wcq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -509,34 +472,28 @@ func (wcq *WorkerCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	}
 	if query := wcq.withBusinessUnit; query != nil {
 		if err := wcq.loadBusinessUnit(ctx, query, nodes, nil,
-			func(n *WorkerComment, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			func(n *WorkerContact, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := wcq.withOrganization; query != nil {
 		if err := wcq.loadOrganization(ctx, query, nodes, nil,
-			func(n *WorkerComment, e *Organization) { n.Edges.Organization = e }); err != nil {
+			func(n *WorkerContact, e *Organization) { n.Edges.Organization = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := wcq.withWorker; query != nil {
 		if err := wcq.loadWorker(ctx, query, nodes, nil,
-			func(n *WorkerComment, e *Worker) { n.Edges.Worker = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := wcq.withCommentType; query != nil {
-		if err := wcq.loadCommentType(ctx, query, nodes, nil,
-			func(n *WorkerComment, e *CommentType) { n.Edges.CommentType = e }); err != nil {
+			func(n *WorkerContact, e *Worker) { n.Edges.Worker = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (wcq *WorkerCommentQuery) loadBusinessUnit(ctx context.Context, query *BusinessUnitQuery, nodes []*WorkerComment, init func(*WorkerComment), assign func(*WorkerComment, *BusinessUnit)) error {
+func (wcq *WorkerContactQuery) loadBusinessUnit(ctx context.Context, query *BusinessUnitQuery, nodes []*WorkerContact, init func(*WorkerContact), assign func(*WorkerContact, *BusinessUnit)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*WorkerComment)
+	nodeids := make(map[uuid.UUID][]*WorkerContact)
 	for i := range nodes {
 		fk := nodes[i].BusinessUnitID
 		if _, ok := nodeids[fk]; !ok {
@@ -563,9 +520,9 @@ func (wcq *WorkerCommentQuery) loadBusinessUnit(ctx context.Context, query *Busi
 	}
 	return nil
 }
-func (wcq *WorkerCommentQuery) loadOrganization(ctx context.Context, query *OrganizationQuery, nodes []*WorkerComment, init func(*WorkerComment), assign func(*WorkerComment, *Organization)) error {
+func (wcq *WorkerContactQuery) loadOrganization(ctx context.Context, query *OrganizationQuery, nodes []*WorkerContact, init func(*WorkerContact), assign func(*WorkerContact, *Organization)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*WorkerComment)
+	nodeids := make(map[uuid.UUID][]*WorkerContact)
 	for i := range nodes {
 		fk := nodes[i].OrganizationID
 		if _, ok := nodeids[fk]; !ok {
@@ -592,9 +549,9 @@ func (wcq *WorkerCommentQuery) loadOrganization(ctx context.Context, query *Orga
 	}
 	return nil
 }
-func (wcq *WorkerCommentQuery) loadWorker(ctx context.Context, query *WorkerQuery, nodes []*WorkerComment, init func(*WorkerComment), assign func(*WorkerComment, *Worker)) error {
+func (wcq *WorkerContactQuery) loadWorker(ctx context.Context, query *WorkerQuery, nodes []*WorkerContact, init func(*WorkerContact), assign func(*WorkerContact, *Worker)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*WorkerComment)
+	nodeids := make(map[uuid.UUID][]*WorkerContact)
 	for i := range nodes {
 		fk := nodes[i].WorkerID
 		if _, ok := nodeids[fk]; !ok {
@@ -621,37 +578,8 @@ func (wcq *WorkerCommentQuery) loadWorker(ctx context.Context, query *WorkerQuer
 	}
 	return nil
 }
-func (wcq *WorkerCommentQuery) loadCommentType(ctx context.Context, query *CommentTypeQuery, nodes []*WorkerComment, init func(*WorkerComment), assign func(*WorkerComment, *CommentType)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*WorkerComment)
-	for i := range nodes {
-		fk := nodes[i].CommentTypeID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(commenttype.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "comment_type_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 
-func (wcq *WorkerCommentQuery) sqlCount(ctx context.Context) (int, error) {
+func (wcq *WorkerContactQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := wcq.querySpec()
 	if len(wcq.modifiers) > 0 {
 		_spec.Modifiers = wcq.modifiers
@@ -663,8 +591,8 @@ func (wcq *WorkerCommentQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, wcq.driver, _spec)
 }
 
-func (wcq *WorkerCommentQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(workercomment.Table, workercomment.Columns, sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID))
+func (wcq *WorkerContactQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(workercontact.Table, workercontact.Columns, sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID))
 	_spec.From = wcq.sql
 	if unique := wcq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -673,23 +601,20 @@ func (wcq *WorkerCommentQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := wcq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, workercomment.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, workercontact.FieldID)
 		for i := range fields {
-			if fields[i] != workercomment.FieldID {
+			if fields[i] != workercontact.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
 		if wcq.withBusinessUnit != nil {
-			_spec.Node.AddColumnOnce(workercomment.FieldBusinessUnitID)
+			_spec.Node.AddColumnOnce(workercontact.FieldBusinessUnitID)
 		}
 		if wcq.withOrganization != nil {
-			_spec.Node.AddColumnOnce(workercomment.FieldOrganizationID)
+			_spec.Node.AddColumnOnce(workercontact.FieldOrganizationID)
 		}
 		if wcq.withWorker != nil {
-			_spec.Node.AddColumnOnce(workercomment.FieldWorkerID)
-		}
-		if wcq.withCommentType != nil {
-			_spec.Node.AddColumnOnce(workercomment.FieldCommentTypeID)
+			_spec.Node.AddColumnOnce(workercontact.FieldWorkerID)
 		}
 	}
 	if ps := wcq.predicates; len(ps) > 0 {
@@ -715,12 +640,12 @@ func (wcq *WorkerCommentQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (wcq *WorkerCommentQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (wcq *WorkerContactQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(wcq.driver.Dialect())
-	t1 := builder.Table(workercomment.Table)
+	t1 := builder.Table(workercontact.Table)
 	columns := wcq.ctx.Fields
 	if len(columns) == 0 {
-		columns = workercomment.Columns
+		columns = workercontact.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if wcq.sql != nil {
@@ -751,33 +676,33 @@ func (wcq *WorkerCommentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (wcq *WorkerCommentQuery) Modify(modifiers ...func(s *sql.Selector)) *WorkerCommentSelect {
+func (wcq *WorkerContactQuery) Modify(modifiers ...func(s *sql.Selector)) *WorkerContactSelect {
 	wcq.modifiers = append(wcq.modifiers, modifiers...)
 	return wcq.Select()
 }
 
-// WorkerCommentGroupBy is the group-by builder for WorkerComment entities.
-type WorkerCommentGroupBy struct {
+// WorkerContactGroupBy is the group-by builder for WorkerContact entities.
+type WorkerContactGroupBy struct {
 	selector
-	build *WorkerCommentQuery
+	build *WorkerContactQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (wcgb *WorkerCommentGroupBy) Aggregate(fns ...AggregateFunc) *WorkerCommentGroupBy {
+func (wcgb *WorkerContactGroupBy) Aggregate(fns ...AggregateFunc) *WorkerContactGroupBy {
 	wcgb.fns = append(wcgb.fns, fns...)
 	return wcgb
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (wcgb *WorkerCommentGroupBy) Scan(ctx context.Context, v any) error {
+func (wcgb *WorkerContactGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, wcgb.build.ctx, "GroupBy")
 	if err := wcgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WorkerCommentQuery, *WorkerCommentGroupBy](ctx, wcgb.build, wcgb, wcgb.build.inters, v)
+	return scanWithInterceptors[*WorkerContactQuery, *WorkerContactGroupBy](ctx, wcgb.build, wcgb, wcgb.build.inters, v)
 }
 
-func (wcgb *WorkerCommentGroupBy) sqlScan(ctx context.Context, root *WorkerCommentQuery, v any) error {
+func (wcgb *WorkerContactGroupBy) sqlScan(ctx context.Context, root *WorkerContactQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(wcgb.fns))
 	for _, fn := range wcgb.fns {
@@ -804,28 +729,28 @@ func (wcgb *WorkerCommentGroupBy) sqlScan(ctx context.Context, root *WorkerComme
 	return sql.ScanSlice(rows, v)
 }
 
-// WorkerCommentSelect is the builder for selecting fields of WorkerComment entities.
-type WorkerCommentSelect struct {
-	*WorkerCommentQuery
+// WorkerContactSelect is the builder for selecting fields of WorkerContact entities.
+type WorkerContactSelect struct {
+	*WorkerContactQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (wcs *WorkerCommentSelect) Aggregate(fns ...AggregateFunc) *WorkerCommentSelect {
+func (wcs *WorkerContactSelect) Aggregate(fns ...AggregateFunc) *WorkerContactSelect {
 	wcs.fns = append(wcs.fns, fns...)
 	return wcs
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (wcs *WorkerCommentSelect) Scan(ctx context.Context, v any) error {
+func (wcs *WorkerContactSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, wcs.ctx, "Select")
 	if err := wcs.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WorkerCommentQuery, *WorkerCommentSelect](ctx, wcs.WorkerCommentQuery, wcs, wcs.inters, v)
+	return scanWithInterceptors[*WorkerContactQuery, *WorkerContactSelect](ctx, wcs.WorkerContactQuery, wcs, wcs.inters, v)
 }
 
-func (wcs *WorkerCommentSelect) sqlScan(ctx context.Context, root *WorkerCommentQuery, v any) error {
+func (wcs *WorkerContactSelect) sqlScan(ctx context.Context, root *WorkerContactQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(wcs.fns))
 	for _, fn := range wcs.fns {
@@ -847,7 +772,7 @@ func (wcs *WorkerCommentSelect) sqlScan(ctx context.Context, root *WorkerComment
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (wcs *WorkerCommentSelect) Modify(modifiers ...func(s *sql.Selector)) *WorkerCommentSelect {
+func (wcs *WorkerContactSelect) Modify(modifiers ...func(s *sql.Selector)) *WorkerContactSelect {
 	wcs.modifiers = append(wcs.modifiers, modifiers...)
 	return wcs
 }

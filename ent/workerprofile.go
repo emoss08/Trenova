@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
@@ -41,7 +42,7 @@ type WorkerProfile struct {
 	// LicenseNumber holds the value of the "license_number" field.
 	LicenseNumber string `json:"licenseNumber" validate:"required"`
 	// LicenseStateID holds the value of the "license_state_id" field.
-	LicenseStateID *uuid.UUID `json:"licenseStateId" validate:"omitempty,uuid"`
+	LicenseStateID uuid.UUID `json:"licenseStateId" validate:"omitempty,uuid"`
 	// LicenseExpirationDate holds the value of the "license_expiration_date" field.
 	LicenseExpirationDate *pgtype.Date `json:"licenseExpirationDate" validate:"omitempty"`
 	// Endorsements holds the value of the "endorsements" field.
@@ -72,9 +73,11 @@ type WorkerProfileEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// Worker holds the value of the worker edge.
 	Worker *Worker `json:"worker,omitempty"`
+	// State holds the value of the state edge.
+	State *UsState `json:"state"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -110,20 +113,29 @@ func (e WorkerProfileEdges) WorkerOrErr() (*Worker, error) {
 	return nil, &NotLoadedError{edge: "worker"}
 }
 
+// StateOrErr returns the State value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkerProfileEdges) StateOrErr() (*UsState, error) {
+	if e.State != nil {
+		return e.State, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: usstate.Label}
+	}
+	return nil, &NotLoadedError{edge: "state"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*WorkerProfile) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case workerprofile.FieldLicenseStateID:
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case workerprofile.FieldDateOfBirth, workerprofile.FieldLicenseExpirationDate, workerprofile.FieldHazmatExpirationDate, workerprofile.FieldHireDate, workerprofile.FieldTerminationDate, workerprofile.FieldPhysicalDueDate, workerprofile.FieldMedicalCertDate, workerprofile.FieldMvrDueDate:
 			values[i] = new(pgtype.Date)
 		case workerprofile.FieldRace, workerprofile.FieldSex, workerprofile.FieldLicenseNumber, workerprofile.FieldEndorsements:
 			values[i] = new(sql.NullString)
 		case workerprofile.FieldCreatedAt, workerprofile.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case workerprofile.FieldID, workerprofile.FieldBusinessUnitID, workerprofile.FieldOrganizationID, workerprofile.FieldWorkerID:
+		case workerprofile.FieldID, workerprofile.FieldBusinessUnitID, workerprofile.FieldOrganizationID, workerprofile.FieldWorkerID, workerprofile.FieldLicenseStateID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -201,11 +213,10 @@ func (wp *WorkerProfile) assignValues(columns []string, values []any) error {
 				wp.LicenseNumber = value.String
 			}
 		case workerprofile.FieldLicenseStateID:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field license_state_id", values[i])
-			} else if value.Valid {
-				wp.LicenseStateID = new(uuid.UUID)
-				*wp.LicenseStateID = *value.S.(*uuid.UUID)
+			} else if value != nil {
+				wp.LicenseStateID = *value
 			}
 		case workerprofile.FieldLicenseExpirationDate:
 			if value, ok := values[i].(*pgtype.Date); !ok {
@@ -283,6 +294,11 @@ func (wp *WorkerProfile) QueryWorker() *WorkerQuery {
 	return NewWorkerProfileClient(wp.config).QueryWorker(wp)
 }
 
+// QueryState queries the "state" edge of the WorkerProfile entity.
+func (wp *WorkerProfile) QueryState() *UsStateQuery {
+	return NewWorkerProfileClient(wp.config).QueryState(wp)
+}
+
 // Update returns a builder for updating this WorkerProfile.
 // Note that you need to call WorkerProfile.Unwrap() before calling this method if this WorkerProfile
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -333,10 +349,8 @@ func (wp *WorkerProfile) String() string {
 	builder.WriteString("license_number=")
 	builder.WriteString(wp.LicenseNumber)
 	builder.WriteString(", ")
-	if v := wp.LicenseStateID; v != nil {
-		builder.WriteString("license_state_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("license_state_id=")
+	builder.WriteString(fmt.Sprintf("%v", wp.LicenseStateID))
 	builder.WriteString(", ")
 	builder.WriteString("license_expiration_date=")
 	builder.WriteString(fmt.Sprintf("%v", wp.LicenseExpirationDate))

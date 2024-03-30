@@ -28,7 +28,7 @@ export interface LocationCategory extends BaseModel {
 
 export type LocationCategoryFormValues = Omit<
   LocationCategory,
-  "organization" | "created" | "modified" | "id"
+  "organizationId" | "createdAt" | "updatedAt" | "id"
 >;
 
 export interface LocationComment extends BaseModel {

@@ -1095,6 +1095,30 @@ func (f WorkerCommentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.M
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerCommentMutation", m)
 }
 
+// The WorkerContactQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type WorkerContactQueryRuleFunc func(context.Context, *ent.WorkerContactQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f WorkerContactQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.WorkerContactQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.WorkerContactQuery", q)
+}
+
+// The WorkerContactMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type WorkerContactMutationRuleFunc func(context.Context, *ent.WorkerContactMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f WorkerContactMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.WorkerContactMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.WorkerContactMutation", m)
+}
+
 // The WorkerProfileQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type WorkerProfileQueryRuleFunc func(context.Context, *ent.WorkerProfileQuery) error
@@ -1236,6 +1260,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.WorkerCommentQuery:
 		return q.Filter(), nil
+	case *ent.WorkerContactQuery:
+		return q.Filter(), nil
 	case *ent.WorkerProfileQuery:
 		return q.Filter(), nil
 	default:
@@ -1326,6 +1352,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.WorkerMutation:
 		return m.Filter(), nil
 	case *ent.WorkerCommentMutation:
+		return m.Filter(), nil
+	case *ent.WorkerContactMutation:
 		return m.Filter(), nil
 	case *ent.WorkerProfileMutation:
 		return m.Filter(), nil

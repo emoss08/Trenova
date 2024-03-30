@@ -96,6 +96,8 @@ type Tx struct {
 	Worker *WorkerClient
 	// WorkerComment is the client for interacting with the WorkerComment builders.
 	WorkerComment *WorkerCommentClient
+	// WorkerContact is the client for interacting with the WorkerContact builders.
+	WorkerContact *WorkerContactClient
 	// WorkerProfile is the client for interacting with the WorkerProfile builders.
 	WorkerProfile *WorkerProfileClient
 
@@ -270,6 +272,7 @@ func (tx *Tx) init() {
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)
 	tx.Worker = NewWorkerClient(tx.config)
 	tx.WorkerComment = NewWorkerCommentClient(tx.config)
+	tx.WorkerContact = NewWorkerContactClient(tx.config)
 	tx.WorkerProfile = NewWorkerProfileClient(tx.config)
 }
 

@@ -79,9 +79,13 @@ type WorkerEdges struct {
 	SecondaryTractor *Tractor `json:"secondaryTractor"`
 	// WorkerProfile holds the value of the worker_profile edge.
 	WorkerProfile *WorkerProfile `json:"worker_profile,omitempty"`
+	// WorkerComments holds the value of the worker_comments edge.
+	WorkerComments []*WorkerComment `json:"worker_comments,omitempty"`
+	// WorkerContacts holds the value of the worker_contacts edge.
+	WorkerContacts []*WorkerContact `json:"worker_contacts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [10]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -170,6 +174,24 @@ func (e WorkerEdges) WorkerProfileOrErr() (*WorkerProfile, error) {
 		return nil, &NotFoundError{label: workerprofile.Label}
 	}
 	return nil, &NotLoadedError{edge: "worker_profile"}
+}
+
+// WorkerCommentsOrErr returns the WorkerComments value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkerEdges) WorkerCommentsOrErr() ([]*WorkerComment, error) {
+	if e.loadedTypes[8] {
+		return e.WorkerComments, nil
+	}
+	return nil, &NotLoadedError{edge: "worker_comments"}
+}
+
+// WorkerContactsOrErr returns the WorkerContacts value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkerEdges) WorkerContactsOrErr() ([]*WorkerContact, error) {
+	if e.loadedTypes[9] {
+		return e.WorkerContacts, nil
+	}
+	return nil, &NotLoadedError{edge: "worker_contacts"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -350,6 +372,16 @@ func (w *Worker) QuerySecondaryTractor() *TractorQuery {
 // QueryWorkerProfile queries the "worker_profile" edge of the Worker entity.
 func (w *Worker) QueryWorkerProfile() *WorkerProfileQuery {
 	return NewWorkerClient(w.config).QueryWorkerProfile(w)
+}
+
+// QueryWorkerComments queries the "worker_comments" edge of the Worker entity.
+func (w *Worker) QueryWorkerComments() *WorkerCommentQuery {
+	return NewWorkerClient(w.config).QueryWorkerComments(w)
+}
+
+// QueryWorkerContacts queries the "worker_contacts" edge of the Worker entity.
+func (w *Worker) QueryWorkerContacts() *WorkerContactQuery {
+	return NewWorkerClient(w.config).QueryWorkerContacts(w)
 }
 
 // Update returns a builder for updating this Worker.

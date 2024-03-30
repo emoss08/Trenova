@@ -76,6 +76,26 @@ func UpdatedAt(v time.Time) predicate.WorkerComment {
 	return predicate.WorkerComment(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// WorkerID applies equality check predicate on the "worker_id" field. It's identical to WorkerIDEQ.
+func WorkerID(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldWorkerID, v))
+}
+
+// CommentTypeID applies equality check predicate on the "comment_type_id" field. It's identical to CommentTypeIDEQ.
+func CommentTypeID(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldCommentTypeID, v))
+}
+
+// Comment applies equality check predicate on the "comment" field. It's identical to CommentEQ.
+func Comment(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldComment, v))
+}
+
+// EnteredBy applies equality check predicate on the "entered_by" field. It's identical to EnteredByEQ.
+func EnteredBy(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldEnteredBy, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.WorkerComment {
 	return predicate.WorkerComment(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -196,6 +216,151 @@ func UpdatedAtLTE(v time.Time) predicate.WorkerComment {
 	return predicate.WorkerComment(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// WorkerIDEQ applies the EQ predicate on the "worker_id" field.
+func WorkerIDEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldWorkerID, v))
+}
+
+// WorkerIDNEQ applies the NEQ predicate on the "worker_id" field.
+func WorkerIDNEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNEQ(FieldWorkerID, v))
+}
+
+// WorkerIDIn applies the In predicate on the "worker_id" field.
+func WorkerIDIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldIn(FieldWorkerID, vs...))
+}
+
+// WorkerIDNotIn applies the NotIn predicate on the "worker_id" field.
+func WorkerIDNotIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNotIn(FieldWorkerID, vs...))
+}
+
+// CommentTypeIDEQ applies the EQ predicate on the "comment_type_id" field.
+func CommentTypeIDEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldCommentTypeID, v))
+}
+
+// CommentTypeIDNEQ applies the NEQ predicate on the "comment_type_id" field.
+func CommentTypeIDNEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNEQ(FieldCommentTypeID, v))
+}
+
+// CommentTypeIDIn applies the In predicate on the "comment_type_id" field.
+func CommentTypeIDIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldIn(FieldCommentTypeID, vs...))
+}
+
+// CommentTypeIDNotIn applies the NotIn predicate on the "comment_type_id" field.
+func CommentTypeIDNotIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNotIn(FieldCommentTypeID, vs...))
+}
+
+// CommentEQ applies the EQ predicate on the "comment" field.
+func CommentEQ(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldComment, v))
+}
+
+// CommentNEQ applies the NEQ predicate on the "comment" field.
+func CommentNEQ(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNEQ(FieldComment, v))
+}
+
+// CommentIn applies the In predicate on the "comment" field.
+func CommentIn(vs ...string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldIn(FieldComment, vs...))
+}
+
+// CommentNotIn applies the NotIn predicate on the "comment" field.
+func CommentNotIn(vs ...string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNotIn(FieldComment, vs...))
+}
+
+// CommentGT applies the GT predicate on the "comment" field.
+func CommentGT(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldGT(FieldComment, v))
+}
+
+// CommentGTE applies the GTE predicate on the "comment" field.
+func CommentGTE(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldGTE(FieldComment, v))
+}
+
+// CommentLT applies the LT predicate on the "comment" field.
+func CommentLT(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldLT(FieldComment, v))
+}
+
+// CommentLTE applies the LTE predicate on the "comment" field.
+func CommentLTE(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldLTE(FieldComment, v))
+}
+
+// CommentContains applies the Contains predicate on the "comment" field.
+func CommentContains(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldContains(FieldComment, v))
+}
+
+// CommentHasPrefix applies the HasPrefix predicate on the "comment" field.
+func CommentHasPrefix(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldHasPrefix(FieldComment, v))
+}
+
+// CommentHasSuffix applies the HasSuffix predicate on the "comment" field.
+func CommentHasSuffix(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldHasSuffix(FieldComment, v))
+}
+
+// CommentEqualFold applies the EqualFold predicate on the "comment" field.
+func CommentEqualFold(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEqualFold(FieldComment, v))
+}
+
+// CommentContainsFold applies the ContainsFold predicate on the "comment" field.
+func CommentContainsFold(v string) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldContainsFold(FieldComment, v))
+}
+
+// EnteredByEQ applies the EQ predicate on the "entered_by" field.
+func EnteredByEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldEQ(FieldEnteredBy, v))
+}
+
+// EnteredByNEQ applies the NEQ predicate on the "entered_by" field.
+func EnteredByNEQ(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNEQ(FieldEnteredBy, v))
+}
+
+// EnteredByIn applies the In predicate on the "entered_by" field.
+func EnteredByIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldIn(FieldEnteredBy, vs...))
+}
+
+// EnteredByNotIn applies the NotIn predicate on the "entered_by" field.
+func EnteredByNotIn(vs ...uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldNotIn(FieldEnteredBy, vs...))
+}
+
+// EnteredByGT applies the GT predicate on the "entered_by" field.
+func EnteredByGT(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldGT(FieldEnteredBy, v))
+}
+
+// EnteredByGTE applies the GTE predicate on the "entered_by" field.
+func EnteredByGTE(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldGTE(FieldEnteredBy, v))
+}
+
+// EnteredByLT applies the LT predicate on the "entered_by" field.
+func EnteredByLT(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldLT(FieldEnteredBy, v))
+}
+
+// EnteredByLTE applies the LTE predicate on the "entered_by" field.
+func EnteredByLTE(v uuid.UUID) predicate.WorkerComment {
+	return predicate.WorkerComment(sql.FieldLTE(FieldEnteredBy, v))
+}
+
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
 func HasBusinessUnit() predicate.WorkerComment {
 	return predicate.WorkerComment(func(s *sql.Selector) {
@@ -234,6 +399,52 @@ func HasOrganization() predicate.WorkerComment {
 func HasOrganizationWith(preds ...predicate.Organization) predicate.WorkerComment {
 	return predicate.WorkerComment(func(s *sql.Selector) {
 		step := newOrganizationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWorker applies the HasEdge predicate on the "worker" edge.
+func HasWorker() predicate.WorkerComment {
+	return predicate.WorkerComment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, WorkerTable, WorkerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkerWith applies the HasEdge predicate on the "worker" edge with a given conditions (other predicates).
+func HasWorkerWith(preds ...predicate.Worker) predicate.WorkerComment {
+	return predicate.WorkerComment(func(s *sql.Selector) {
+		step := newWorkerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCommentType applies the HasEdge predicate on the "comment_type" edge.
+func HasCommentType() predicate.WorkerComment {
+	return predicate.WorkerComment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, CommentTypeTable, CommentTypeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommentTypeWith applies the HasEdge predicate on the "comment_type" edge with a given conditions (other predicates).
+func HasCommentTypeWith(preds ...predicate.CommentType) predicate.WorkerComment {
+	return predicate.WorkerComment(func(s *sql.Selector) {
+		step := newCommentTypeStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

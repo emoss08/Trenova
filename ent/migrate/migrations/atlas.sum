@@ -1,4 +1,4 @@
-h1:RRxqsb3HTy7AywP+b3sBUJwq7gYnCmC79JCzx3bn/oc=
+h1:VtFBWRoM1ZGPEYB071SZfrJWdAMtozaujRkPr5LGHjI=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -84,3 +84,7 @@ h1:RRxqsb3HTy7AywP+b3sBUJwq7gYnCmC79JCzx3bn/oc=
 20240330062921_alter_tractor.sql h1:mWJjcy7kAZJez7AKMqfr+DxBPur6lOGCV4Pt3j28zpI=
 20240330063655_alter_tractor.sql h1:XAwYLByY5y5IfXp/Z4SKyT4uu1e7kuPjOW04AnIbzKc=
 20240330071447_add_proper_types.sql h1:KnSR25Gv06GwcD9JBJaj06IlyegI6XrUPzrAabR9ZhQ=
+20240330162530_alter_worker_profile.sql h1:EvGgEAQJUOEt8fh9cSLdqQviZCNN8zH7WGD2sdtVPpo=
+20240330164111_alter_worker_comments.sql h1:z/Rq8v6gOXcT6CTaFvW+p3/smZYVSAdGrT9AFjTukJ8=
+20240330165157_alter_worker_contact.sql h1:j197U9+Vu5KaoiCqBECi7aHmVi1H7happgZFjFUUZug=
+20240330170824_alter_equip_type.sql h1:TzYmuZtEsSj0zT6AIT5akc2HadMZavGD9EyA4DdS7Zs=

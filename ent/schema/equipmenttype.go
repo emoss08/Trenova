@@ -102,6 +102,9 @@ func (EquipmentType) Fields() []ent.Field {
 		field.Bool("exempt_from_tolls").
 			Default(false).
 			StructTag(`json:"exemptFromTolls" validate:"omitempty"`),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 
