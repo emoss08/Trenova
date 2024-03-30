@@ -154,6 +154,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Worker Routes
 			registerWorkerRouter(r)
+
+			// Register Tag Routes
+			registerTagRouter(r)
 		})
 	})
 

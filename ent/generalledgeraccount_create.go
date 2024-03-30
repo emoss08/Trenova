@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GeneralLedgerAccountCreate is the builder for creating a GeneralLedgerAccount entity.
@@ -161,30 +162,14 @@ func (glac *GeneralLedgerAccountCreate) SetNillableInterestRate(f *float64) *Gen
 }
 
 // SetDateOpened sets the "date_opened" field.
-func (glac *GeneralLedgerAccountCreate) SetDateOpened(t time.Time) *GeneralLedgerAccountCreate {
-	glac.mutation.SetDateOpened(t)
-	return glac
-}
-
-// SetNillableDateOpened sets the "date_opened" field if the given value is not nil.
-func (glac *GeneralLedgerAccountCreate) SetNillableDateOpened(t *time.Time) *GeneralLedgerAccountCreate {
-	if t != nil {
-		glac.SetDateOpened(*t)
-	}
+func (glac *GeneralLedgerAccountCreate) SetDateOpened(pg *pgtype.Date) *GeneralLedgerAccountCreate {
+	glac.mutation.SetDateOpened(pg)
 	return glac
 }
 
 // SetDateClosed sets the "date_closed" field.
-func (glac *GeneralLedgerAccountCreate) SetDateClosed(t time.Time) *GeneralLedgerAccountCreate {
-	glac.mutation.SetDateClosed(t)
-	return glac
-}
-
-// SetNillableDateClosed sets the "date_closed" field if the given value is not nil.
-func (glac *GeneralLedgerAccountCreate) SetNillableDateClosed(t *time.Time) *GeneralLedgerAccountCreate {
-	if t != nil {
-		glac.SetDateClosed(*t)
-	}
+func (glac *GeneralLedgerAccountCreate) SetDateClosed(pg *pgtype.Date) *GeneralLedgerAccountCreate {
+	glac.mutation.SetDateClosed(pg)
 	return glac
 }
 
@@ -317,7 +302,7 @@ func (glac *GeneralLedgerAccountCreate) defaults() {
 		glac.mutation.SetStatus(v)
 	}
 	if _, ok := glac.mutation.DateOpened(); !ok {
-		v := generalledgeraccount.DefaultDateOpened()
+		v := generalledgeraccount.DefaultDateOpened
 		glac.mutation.SetDateOpened(v)
 	}
 	if _, ok := glac.mutation.IsTaxRelevant(); !ok {
@@ -456,18 +441,18 @@ func (glac *GeneralLedgerAccountCreate) createSpec() (*GeneralLedgerAccount, *sq
 	}
 	if value, ok := glac.mutation.Balance(); ok {
 		_spec.SetField(generalledgeraccount.FieldBalance, field.TypeFloat64, value)
-		_node.Balance = &value
+		_node.Balance = value
 	}
 	if value, ok := glac.mutation.InterestRate(); ok {
 		_spec.SetField(generalledgeraccount.FieldInterestRate, field.TypeFloat64, value)
-		_node.InterestRate = &value
+		_node.InterestRate = value
 	}
 	if value, ok := glac.mutation.DateOpened(); ok {
-		_spec.SetField(generalledgeraccount.FieldDateOpened, field.TypeTime, value)
+		_spec.SetField(generalledgeraccount.FieldDateOpened, field.TypeOther, value)
 		_node.DateOpened = value
 	}
 	if value, ok := glac.mutation.DateClosed(); ok {
-		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeTime, value)
+		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeOther, value)
 		_node.DateClosed = value
 	}
 	if value, ok := glac.mutation.Notes(); ok {
@@ -518,10 +503,10 @@ func (glac *GeneralLedgerAccountCreate) createSpec() (*GeneralLedgerAccount, *sq
 	}
 	if nodes := glac.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GeneralLedgerAccount is the model entity for the GeneralLedgerAccount schema.
@@ -41,13 +42,13 @@ type GeneralLedgerAccount struct {
 	// AccountClass holds the value of the "account_class" field.
 	AccountClass string `json:"accountClass" validate:"omitempty"`
 	// Balance holds the value of the "balance" field.
-	Balance *float64 `json:"balance" validate:"omitempty"`
+	Balance float64 `json:"balance" validate:"omitempty"`
 	// InterestRate holds the value of the "interest_rate" field.
-	InterestRate *float64 `json:"interestRate" validate:"omitempty"`
+	InterestRate float64 `json:"interestRate" validate:"omitempty"`
 	// DateOpened holds the value of the "date_opened" field.
-	DateOpened time.Time `json:"dateOpened" validate:"omitempty"`
+	DateOpened *pgtype.Date `json:"dateOpened" validate:"omitempty"`
 	// DateClosed holds the value of the "date_closed" field.
-	DateClosed time.Time `json:"dateClosed" validate:"omitempty"`
+	DateClosed *pgtype.Date `json:"dateClosed" validate:"omitempty"`
 	// Notes holds the value of the "notes" field.
 	Notes string `json:"notes,omitempty"`
 	// IsTaxRelevant holds the value of the "is_tax_relevant" field.
@@ -109,13 +110,17 @@ func (*GeneralLedgerAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case generalledgeraccount.FieldDateClosed:
+			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
+		case generalledgeraccount.FieldDateOpened:
+			values[i] = new(pgtype.Date)
 		case generalledgeraccount.FieldIsTaxRelevant, generalledgeraccount.FieldIsReconciled:
 			values[i] = new(sql.NullBool)
 		case generalledgeraccount.FieldBalance, generalledgeraccount.FieldInterestRate:
 			values[i] = new(sql.NullFloat64)
 		case generalledgeraccount.FieldStatus, generalledgeraccount.FieldAccountNumber, generalledgeraccount.FieldAccountType, generalledgeraccount.FieldCashFlowType, generalledgeraccount.FieldAccountSubType, generalledgeraccount.FieldAccountClass, generalledgeraccount.FieldNotes:
 			values[i] = new(sql.NullString)
-		case generalledgeraccount.FieldCreatedAt, generalledgeraccount.FieldUpdatedAt, generalledgeraccount.FieldDateOpened, generalledgeraccount.FieldDateClosed:
+		case generalledgeraccount.FieldCreatedAt, generalledgeraccount.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case generalledgeraccount.FieldID, generalledgeraccount.FieldBusinessUnitID, generalledgeraccount.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
@@ -204,27 +209,25 @@ func (gla *GeneralLedgerAccount) assignValues(columns []string, values []any) er
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field balance", values[i])
 			} else if value.Valid {
-				gla.Balance = new(float64)
-				*gla.Balance = value.Float64
+				gla.Balance = value.Float64
 			}
 		case generalledgeraccount.FieldInterestRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field interest_rate", values[i])
 			} else if value.Valid {
-				gla.InterestRate = new(float64)
-				*gla.InterestRate = value.Float64
+				gla.InterestRate = value.Float64
 			}
 		case generalledgeraccount.FieldDateOpened:
-			if value, ok := values[i].(*sql.NullTime); !ok {
+			if value, ok := values[i].(*pgtype.Date); !ok {
 				return fmt.Errorf("unexpected type %T for field date_opened", values[i])
-			} else if value.Valid {
-				gla.DateOpened = value.Time
+			} else if value != nil {
+				gla.DateOpened = value
 			}
 		case generalledgeraccount.FieldDateClosed:
-			if value, ok := values[i].(*sql.NullTime); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field date_closed", values[i])
 			} else if value.Valid {
-				gla.DateClosed = value.Time
+				gla.DateClosed = value.S.(*pgtype.Date)
 			}
 		case generalledgeraccount.FieldNotes:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -325,21 +328,19 @@ func (gla *GeneralLedgerAccount) String() string {
 	builder.WriteString("account_class=")
 	builder.WriteString(gla.AccountClass)
 	builder.WriteString(", ")
-	if v := gla.Balance; v != nil {
-		builder.WriteString("balance=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("balance=")
+	builder.WriteString(fmt.Sprintf("%v", gla.Balance))
 	builder.WriteString(", ")
-	if v := gla.InterestRate; v != nil {
-		builder.WriteString("interest_rate=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("interest_rate=")
+	builder.WriteString(fmt.Sprintf("%v", gla.InterestRate))
 	builder.WriteString(", ")
 	builder.WriteString("date_opened=")
-	builder.WriteString(gla.DateOpened.Format(time.ANSIC))
+	builder.WriteString(fmt.Sprintf("%v", gla.DateOpened))
 	builder.WriteString(", ")
-	builder.WriteString("date_closed=")
-	builder.WriteString(gla.DateClosed.Format(time.ANSIC))
+	if v := gla.DateClosed; v != nil {
+		builder.WriteString("date_closed=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("notes=")
 	builder.WriteString(gla.Notes)

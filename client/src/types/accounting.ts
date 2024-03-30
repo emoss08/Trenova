@@ -43,10 +43,7 @@ export interface Tag extends BaseModel {
   description?: string | null;
 }
 
-export type TagFormValues = Omit<
-  Tag,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
->;
+export type TagFormValues = Pick<Tag, "id">;
 
 export type DivisionCodeFormValues = Omit<
   DivisionCode,
@@ -65,16 +62,16 @@ export interface GeneralLedgerAccount extends BaseModel {
   balance: number;
   openingBalance: number;
   closingBalance: number;
-  parentAccount?: string | null;
   isReconciled?: boolean;
-  dateOpened?: Date | null;
-  dateClosed?: Date | null;
-  notes?: string | null;
-  owner?: string | null;
+  dateOpened?: string;
+  dateClosed?: string;
+  notes?: string;
   isTaxRelevant?: boolean;
-  attachment?: any | null;
-  interestRate?: number | null;
-  tags?: string[] | null;
+  interestRate?: number;
+  tagIds?: string[];
+  edges?: {
+    tags?: TagFormValues[];
+  };
 }
 
 export type GLAccountFormValues = Omit<

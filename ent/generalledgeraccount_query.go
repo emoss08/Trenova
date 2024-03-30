@@ -124,7 +124,7 @@ func (glaq *GeneralLedgerAccountQuery) QueryTags() *TagQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(generalledgeraccount.Table, generalledgeraccount.FieldID, selector),
 			sqlgraph.To(tag.Table, tag.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, generalledgeraccount.TagsTable, generalledgeraccount.TagsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, generalledgeraccount.TagsTable, generalledgeraccount.TagsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(glaq.driver.Dialect(), step)
 		return fromU, nil
@@ -552,33 +552,63 @@ func (glaq *GeneralLedgerAccountQuery) loadOrganization(ctx context.Context, que
 	return nil
 }
 func (glaq *GeneralLedgerAccountQuery) loadTags(ctx context.Context, query *TagQuery, nodes []*GeneralLedgerAccount, init func(*GeneralLedgerAccount), assign func(*GeneralLedgerAccount, *Tag)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*GeneralLedgerAccount)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*GeneralLedgerAccount)
+	nids := make(map[uuid.UUID]map[*GeneralLedgerAccount]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
 		if init != nil {
-			init(nodes[i])
+			init(node)
 		}
 	}
-	query.withFKs = true
-	query.Where(predicate.Tag(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(generalledgeraccount.TagsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(generalledgeraccount.TagsTable)
+		s.Join(joinT).On(s.C(tag.FieldID), joinT.C(generalledgeraccount.TagsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(generalledgeraccount.TagsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(generalledgeraccount.TagsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*GeneralLedgerAccount]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Tag](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.general_ledger_account_tags
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "general_ledger_account_tags" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "general_ledger_account_tags" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected "tags" node returned %v`, n.ID)
 		}
-		assign(node, n)
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

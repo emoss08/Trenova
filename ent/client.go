@@ -3858,7 +3858,7 @@ func (c *GeneralLedgerAccountClient) QueryTags(gla *GeneralLedgerAccount) *TagQu
 		step := sqlgraph.NewStep(
 			sqlgraph.From(generalledgeraccount.Table, generalledgeraccount.FieldID, id),
 			sqlgraph.To(tag.Table, tag.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, generalledgeraccount.TagsTable, generalledgeraccount.TagsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, generalledgeraccount.TagsTable, generalledgeraccount.TagsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(gla.driver.Dialect(), step)
 		return fromV, nil
@@ -6629,6 +6629,22 @@ func (c *TagClient) QueryOrganization(t *Tag) *OrganizationQuery {
 			sqlgraph.From(tag.Table, tag.FieldID, id),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, tag.OrganizationTable, tag.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGeneralLedgerAccount queries the general_ledger_account edge of a Tag.
+func (c *TagClient) QueryGeneralLedgerAccount(t *Tag) *GeneralLedgerAccountQuery {
+	query := (&GeneralLedgerAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tag.Table, tag.FieldID, id),
+			sqlgraph.To(generalledgeraccount.Table, generalledgeraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, tag.GeneralLedgerAccountTable, tag.GeneralLedgerAccountPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

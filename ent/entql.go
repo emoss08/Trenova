@@ -509,8 +509,8 @@ var schemaGraph = func() *sqlgraph.Schema {
 			generalledgeraccount.FieldAccountClass:   {Type: field.TypeString, Column: generalledgeraccount.FieldAccountClass},
 			generalledgeraccount.FieldBalance:        {Type: field.TypeFloat64, Column: generalledgeraccount.FieldBalance},
 			generalledgeraccount.FieldInterestRate:   {Type: field.TypeFloat64, Column: generalledgeraccount.FieldInterestRate},
-			generalledgeraccount.FieldDateOpened:     {Type: field.TypeTime, Column: generalledgeraccount.FieldDateOpened},
-			generalledgeraccount.FieldDateClosed:     {Type: field.TypeTime, Column: generalledgeraccount.FieldDateClosed},
+			generalledgeraccount.FieldDateOpened:     {Type: field.TypeOther, Column: generalledgeraccount.FieldDateOpened},
+			generalledgeraccount.FieldDateClosed:     {Type: field.TypeOther, Column: generalledgeraccount.FieldDateClosed},
 			generalledgeraccount.FieldNotes:          {Type: field.TypeString, Column: generalledgeraccount.FieldNotes},
 			generalledgeraccount.FieldIsTaxRelevant:  {Type: field.TypeBool, Column: generalledgeraccount.FieldIsTaxRelevant},
 			generalledgeraccount.FieldIsReconciled:   {Type: field.TypeBool, Column: generalledgeraccount.FieldIsReconciled},
@@ -862,6 +862,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tag.FieldUpdatedAt:      {Type: field.TypeTime, Column: tag.FieldUpdatedAt},
 			tag.FieldName:           {Type: field.TypeString, Column: tag.FieldName},
 			tag.FieldDescription:    {Type: field.TypeString, Column: tag.FieldDescription},
+			tag.FieldColor:          {Type: field.TypeString, Column: tag.FieldColor},
 		},
 	}
 	graph.Nodes[35] = &sqlgraph.Node{
@@ -1656,10 +1657,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 	graph.MustAddE(
 		"tags",
 		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 		},
 		"GeneralLedgerAccount",
@@ -2144,6 +2145,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"Tag",
 		"Organization",
+	)
+	graph.MustAddE(
+		"general_ledger_account",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+		},
+		"Tag",
+		"GeneralLedgerAccount",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -5027,13 +5040,13 @@ func (f *GeneralLedgerAccountFilter) WhereInterestRate(p entql.Float64P) {
 	f.Where(p.Field(generalledgeraccount.FieldInterestRate))
 }
 
-// WhereDateOpened applies the entql time.Time predicate on the date_opened field.
-func (f *GeneralLedgerAccountFilter) WhereDateOpened(p entql.TimeP) {
+// WhereDateOpened applies the entql other predicate on the date_opened field.
+func (f *GeneralLedgerAccountFilter) WhereDateOpened(p entql.OtherP) {
 	f.Where(p.Field(generalledgeraccount.FieldDateOpened))
 }
 
-// WhereDateClosed applies the entql time.Time predicate on the date_closed field.
-func (f *GeneralLedgerAccountFilter) WhereDateClosed(p entql.TimeP) {
+// WhereDateClosed applies the entql other predicate on the date_closed field.
+func (f *GeneralLedgerAccountFilter) WhereDateClosed(p entql.OtherP) {
 	f.Where(p.Field(generalledgeraccount.FieldDateClosed))
 }
 
@@ -6966,6 +6979,11 @@ func (f *TagFilter) WhereDescription(p entql.StringP) {
 	f.Where(p.Field(tag.FieldDescription))
 }
 
+// WhereColor applies the entql string predicate on the color field.
+func (f *TagFilter) WhereColor(p entql.StringP) {
+	f.Where(p.Field(tag.FieldColor))
+}
+
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
 func (f *TagFilter) WhereHasBusinessUnit() {
 	f.Where(entql.HasEdge("business_unit"))
@@ -6988,6 +7006,20 @@ func (f *TagFilter) WhereHasOrganization() {
 // WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
 func (f *TagFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
 	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasGeneralLedgerAccount applies a predicate to check if query has an edge general_ledger_account.
+func (f *TagFilter) WhereHasGeneralLedgerAccount() {
+	f.Where(entql.HasEdge("general_ledger_account"))
+}
+
+// WhereHasGeneralLedgerAccountWith applies a predicate to check if query has an edge general_ledger_account with a given conditions (other predicates).
+func (f *TagFilter) WhereHasGeneralLedgerAccountWith(preds ...predicate.GeneralLedgerAccount) {
+	f.Where(entql.HasEdgeWith("general_ledger_account", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}

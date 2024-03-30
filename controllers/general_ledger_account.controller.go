@@ -2,15 +2,41 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/middleware"
 	"github.com/emoss08/trenova/services"
 	"github.com/emoss08/trenova/tools"
 	"github.com/emoss08/trenova/tools/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type GeneralLedgerAccountResponse struct {
+	ID             uuid.UUID                        `json:"id,omitempty"`
+	BusinessUnitID uuid.UUID                        `json:"businessUnitId"`
+	OrganizationID uuid.UUID                        `json:"organizationId"`
+	Status         generalledgeraccount.Status      `json:"status" validate:"required,oneof=A I"`
+	AccountNumber  string                           `json:"accountNumber" validate:"required,max=7"`
+	AccountType    generalledgeraccount.AccountType `json:"accountType" validate:"required"`
+	CashFlowType   string                           `json:"cashFlowType" validate:"omitempty"`
+	AccountSubType string                           `json:"accountSubType" validate:"omitempty"`
+	AccountClass   string                           `json:"accountClass" validate:"omitempty"`
+	Balance        float64                          `json:"balance" validate:"omitempty"`
+	InterestRate   float64                          `json:"interestRate" validate:"omitempty"`
+	DateOpened     *pgtype.Date                     `json:"dateOpened" validate:"omitempty"`
+	DateClosed     *pgtype.Date                     `json:"dateClosed" validate:"omitempty"`
+	Notes          string                           `json:"notes,omitempty"`
+	IsTaxRelevant  bool                             `json:"isTaxRelevant" validate:"omitempty"`
+	IsReconciled   bool                             `json:"isReconciled" validate:"omitempty"`
+	TagIDs         []uuid.UUID                      `json:"tagIds,omitempty"`
+	CreatedAt      time.Time                        `json:"createdAt"`
+	UpdatedAt      time.Time                        `json:"updatedAt"`
+	Edges          ent.GeneralLedgerAccountEdges    `json:"edges"`
+}
 
 // GetGeneralLedgerAccounts gets the general ledger accounts for an organization.
 func GetGeneralLedgerAccounts(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +76,7 @@ func GetGeneralLedgerAccounts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	glAccounts, count, err := services.NewGeneralLedgerAccountOps(r.Context()).GetGeneralLedgerAccounts(limit, offset, orgID, buID)
+	glAccounts, count, err := services.NewGeneralLedgerAccountOps().GetGeneralLedgerAccounts(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -59,19 +85,50 @@ func GetGeneralLedgerAccounts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nextURL := tools.GetNextPageURL(r, limit, offset, count)
-	prevUrl := tools.GetPrevPageURL(r, limit, offset)
+	prevURL := tools.GetPrevPageURL(r, limit, offset)
+
+	responses := make([]GeneralLedgerAccountResponse, len(glAccounts))
+	for i, account := range glAccounts {
+		tagIDs := make([]uuid.UUID, len(account.Edges.Tags))
+		for j, tag := range account.Edges.Tags {
+			tagIDs[j] = tag.ID
+		}
+
+		responses[i] = GeneralLedgerAccountResponse{
+			ID:             account.ID,
+			BusinessUnitID: account.BusinessUnitID,
+			OrganizationID: account.OrganizationID,
+			Status:         account.Status,
+			AccountNumber:  account.AccountNumber,
+			AccountType:    account.AccountType,
+			CashFlowType:   account.CashFlowType,
+			AccountSubType: account.AccountSubType,
+			AccountClass:   account.AccountClass,
+			Balance:        account.Balance,
+			InterestRate:   account.InterestRate,
+			DateOpened:     account.DateOpened,
+			DateClosed:     account.DateClosed,
+			Notes:          account.Notes,
+			IsTaxRelevant:  account.IsTaxRelevant,
+			IsReconciled:   account.IsReconciled,
+			CreatedAt:      account.CreatedAt,
+			UpdatedAt:      account.UpdatedAt,
+			TagIDs:         tagIDs,
+			Edges:          account.Edges,
+		}
+	}
 
 	tools.ResponseWithJSON(w, http.StatusOK, types.HTTPResponse{
-		Results:  glAccounts,
+		Results:  responses,
 		Count:    count,
 		Next:     nextURL,
-		Previous: prevUrl,
+		Previous: prevURL,
 	})
 }
 
 // CreateGeneralLedgerAccount creates a new general ledger account for an organization.
 func CreateGeneralLedgerAccount(w http.ResponseWriter, r *http.Request) {
-	var newGLAccount ent.GeneralLedgerAccount
+	var newGLAccount services.GeneralLedgerAccountRequest
 
 	orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 	buID, buOK := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
@@ -98,8 +155,8 @@ func CreateGeneralLedgerAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdGLAccount, err := services.NewGeneralLedgerAccountOps(r.Context()).
-		CreateGeneralLedgerAccount(newGLAccount)
+	createdGLAccount, err := services.NewGeneralLedgerAccountOps().
+		CreateGeneralLedgerAccount(r.Context(), newGLAccount)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -117,7 +174,7 @@ func UpdateGeneralLedgerAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var glAccountData ent.GeneralLedgerAccount
+	var glAccountData services.GeneralLedgerAccountUpdateRequest
 
 	if err := tools.ParseBodyAndValidate(w, r, &glAccountData); err != nil {
 		return
@@ -125,7 +182,7 @@ func UpdateGeneralLedgerAccount(w http.ResponseWriter, r *http.Request) {
 
 	glAccountData.ID = uuid.MustParse(glAccountID)
 
-	glAccount, err := services.NewGeneralLedgerAccountOps(r.Context()).UpdateGeneralLedgerAccount(glAccountData)
+	glAccount, err := services.NewGeneralLedgerAccountOps().UpdateGeneralLedgerAccount(r.Context(), glAccountData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

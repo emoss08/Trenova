@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GeneralLedgerAccountUpdate is the builder for updating GeneralLedgerAccount entities.
@@ -194,16 +195,8 @@ func (glau *GeneralLedgerAccountUpdate) ClearInterestRate() *GeneralLedgerAccoun
 }
 
 // SetDateClosed sets the "date_closed" field.
-func (glau *GeneralLedgerAccountUpdate) SetDateClosed(t time.Time) *GeneralLedgerAccountUpdate {
-	glau.mutation.SetDateClosed(t)
-	return glau
-}
-
-// SetNillableDateClosed sets the "date_closed" field if the given value is not nil.
-func (glau *GeneralLedgerAccountUpdate) SetNillableDateClosed(t *time.Time) *GeneralLedgerAccountUpdate {
-	if t != nil {
-		glau.SetDateClosed(*t)
-	}
+func (glau *GeneralLedgerAccountUpdate) SetDateClosed(pg *pgtype.Date) *GeneralLedgerAccountUpdate {
+	glau.mutation.SetDateClosed(pg)
 	return glau
 }
 
@@ -431,10 +424,10 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 		_spec.ClearField(generalledgeraccount.FieldInterestRate, field.TypeFloat64)
 	}
 	if value, ok := glau.mutation.DateClosed(); ok {
-		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeTime, value)
+		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeOther, value)
 	}
 	if glau.mutation.DateClosedCleared() {
-		_spec.ClearField(generalledgeraccount.FieldDateClosed, field.TypeTime)
+		_spec.ClearField(generalledgeraccount.FieldDateClosed, field.TypeOther)
 	}
 	if value, ok := glau.mutation.Notes(); ok {
 		_spec.SetField(generalledgeraccount.FieldNotes, field.TypeString, value)
@@ -450,10 +443,10 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 	}
 	if glau.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),
@@ -463,10 +456,10 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 	}
 	if nodes := glau.mutation.RemovedTagsIDs(); len(nodes) > 0 && !glau.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),
@@ -479,10 +472,10 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 	}
 	if nodes := glau.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),
@@ -678,16 +671,8 @@ func (glauo *GeneralLedgerAccountUpdateOne) ClearInterestRate() *GeneralLedgerAc
 }
 
 // SetDateClosed sets the "date_closed" field.
-func (glauo *GeneralLedgerAccountUpdateOne) SetDateClosed(t time.Time) *GeneralLedgerAccountUpdateOne {
-	glauo.mutation.SetDateClosed(t)
-	return glauo
-}
-
-// SetNillableDateClosed sets the "date_closed" field if the given value is not nil.
-func (glauo *GeneralLedgerAccountUpdateOne) SetNillableDateClosed(t *time.Time) *GeneralLedgerAccountUpdateOne {
-	if t != nil {
-		glauo.SetDateClosed(*t)
-	}
+func (glauo *GeneralLedgerAccountUpdateOne) SetDateClosed(pg *pgtype.Date) *GeneralLedgerAccountUpdateOne {
+	glauo.mutation.SetDateClosed(pg)
 	return glauo
 }
 
@@ -945,10 +930,10 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 		_spec.ClearField(generalledgeraccount.FieldInterestRate, field.TypeFloat64)
 	}
 	if value, ok := glauo.mutation.DateClosed(); ok {
-		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeTime, value)
+		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeOther, value)
 	}
 	if glauo.mutation.DateClosedCleared() {
-		_spec.ClearField(generalledgeraccount.FieldDateClosed, field.TypeTime)
+		_spec.ClearField(generalledgeraccount.FieldDateClosed, field.TypeOther)
 	}
 	if value, ok := glauo.mutation.Notes(); ok {
 		_spec.SetField(generalledgeraccount.FieldNotes, field.TypeString, value)
@@ -964,10 +949,10 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if glauo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),
@@ -977,10 +962,10 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if nodes := glauo.mutation.RemovedTagsIDs(); len(nodes) > 0 && !glauo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),
@@ -993,10 +978,10 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if nodes := glauo.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   generalledgeraccount.TagsTable,
-			Columns: []string{generalledgeraccount.TagsColumn},
+			Columns: generalledgeraccount.TagsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tag.FieldID, field.TypeUUID),

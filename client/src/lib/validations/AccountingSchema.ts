@@ -21,9 +21,17 @@ import {
   DivisionCodeFormValues,
   GLAccountFormValues,
   RevenueCodeFormValues,
+  TagFormValues,
 } from "@/types/accounting";
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import {
+  ObjectSchema,
+  array,
+  boolean,
+  mixed,
+  number,
+  object,
+  string,
+} from "yup";
 import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
@@ -34,20 +42,24 @@ import {
 } from "../choices";
 
 export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    code: Yup.string()
+  object().shape({
+    status: string<StatusChoiceProps>().required("Status is required"),
+    code: string()
       .max(4, "Code cannot be longer than 4 characters.")
       .required("Code is required"),
-    description: Yup.string().required("Description is required"),
-    expenseAccountId: Yup.string().notRequired().nullable(),
-    revenueAccountId: Yup.string().notRequired().nullable(),
+    description: string().required("Description is required"),
+    expenseAccountId: string().notRequired().nullable(),
+    revenueAccountId: string().notRequired().nullable(),
   });
 
+export const tagSchema: ObjectSchema<TagFormValues> = object().shape({
+  id: string().required("Tag is required"),
+});
+
 export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    accountNumber: Yup.string()
+  object().shape({
+    status: string<StatusChoiceProps>().required("Status is required"),
+    accountNumber: string()
       .required("Account number is required")
       .max(7, "Account number cannot be longer than 7 characters.")
       .test(
@@ -61,68 +73,66 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
           return regex.test(value);
         },
       ),
-    accountType: Yup.string<AccountTypeChoiceProps>().required(
+    accountType: string<AccountTypeChoiceProps>().required(
       "Account type is required",
     ),
-    cashFlowType: Yup.string<CashFlowTypeChoiceProps>().optional(),
-    accountSubType: Yup.string<AccountSubTypeChoiceProps>().optional(),
+    cashFlowType: string<CashFlowTypeChoiceProps>().optional(),
+    accountSubType: string<AccountSubTypeChoiceProps>().optional(),
     accountClassification:
-      Yup.string<AccountClassificationChoiceProps>().optional(),
-    parentAccount: Yup.string().notRequired(),
-    isReconciled: Yup.boolean(),
-    notes: Yup.string().notRequired(),
-    owner: Yup.string().notRequired(),
-    isTaxRelevant: Yup.boolean(),
-    attachment: Yup.mixed().notRequired(),
-    interestRate: Yup.number().notRequired().nullable(),
-    tags: Yup.array().notRequired(),
+      string<AccountClassificationChoiceProps>().optional(),
+    notes: string(),
+    isReconciled: boolean(),
+    isTaxRelevant: boolean(),
+    attachment: mixed().notRequired(),
+    interestRate: number(),
+    tagIds: array().of(string().required()),
+    edges: object().shape({
+      tags: array().of(tagSchema),
+    }),
   });
 
 export const divisionCodeSchema: ObjectSchema<DivisionCodeFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    code: Yup.string()
+  object().shape({
+    status: string<StatusChoiceProps>().required("Status is required"),
+    code: string()
       .max(4, "Code cannot be longer than 4 characters")
       .required("Code is required"),
-    description: Yup.string()
+    description: string()
       .max(100, "Description cannot be longer than 100 characters")
       .required("Description is required"),
-    apAccount: Yup.string().notRequired(),
-    cashAccount: Yup.string().notRequired(),
-    expenseAccount: Yup.string().notRequired(),
+    apAccount: string().notRequired(),
+    cashAccount: string().notRequired(),
+    expenseAccount: string().notRequired(),
   });
 
 export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> =
-  Yup.object().shape({
-    autoCreateJournalEntries: Yup.boolean().required(
+  object().shape({
+    autoCreateJournalEntries: boolean().required(
       "Automatically Create Journal Entries must be yes or no",
     ),
-    journalEntryCriteria:
-      Yup.string<AutomaticJournalEntryChoiceType>().required(
-        "Journal Entry Criteria is required",
-      ),
-    restrictManualJournalEntries: Yup.boolean().required(
+    journalEntryCriteria: string<AutomaticJournalEntryChoiceType>().required(
+      "Journal Entry Criteria is required",
+    ),
+    restrictManualJournalEntries: boolean().required(
       "Restrict Manual Journal Entries must be yes or no",
     ),
-    requireJournalEntryApproval: Yup.boolean().required(
+    requireJournalEntryApproval: boolean().required(
       "Require Journal Entry Approval must be yes or no",
     ),
-    defaultRevenueAccountId: Yup.string().notRequired(),
-    defaultExpenseAccountId: Yup.string().notRequired(),
-    enableRecNotifications: Yup.boolean().required(
+    defaultRevenueAccountId: string().notRequired(),
+    defaultExpenseAccountId: string().notRequired(),
+    enableRecNotifications: boolean().required(
       "Enable Reconciliation Notifications must be yes or no",
     ),
-    reconciliationNotificationRecipients: Yup.array().of(
-      Yup.string().required(
-        "Reconciliation Notification Recipients is required",
-      ),
+    reconciliationNotificationRecipients: array().of(
+      string().required("Reconciliation Notification Recipients is required"),
     ),
-    recThreshold: Yup.number().required("Reconciliation Threshold is required"),
-    recThresholdAction: Yup.string<ThresholdActionChoiceType>().required(
+    recThreshold: number().required("Reconciliation Threshold is required"),
+    recThresholdAction: string<ThresholdActionChoiceType>().required(
       "Reconciliation Threshold Action is required",
     ),
-    haltOnPendingRec: Yup.boolean().required(
+    haltOnPendingRec: boolean().required(
       "Halt on Pending Reconciliation must be yes or no",
     ),
-    criticalProcesses: Yup.string().notRequired(),
+    criticalProcesses: string().notRequired(),
   });

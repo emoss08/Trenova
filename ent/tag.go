@@ -17,7 +17,7 @@ import (
 
 // Tag is the model entity for the Tag schema.
 type Tag struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// BusinessUnitID holds the value of the "business_unit_id" field.
@@ -31,12 +31,13 @@ type Tag struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TagQuery when eager-loading is set.
-	Edges                       TagEdges `json:"edges"`
-	general_ledger_account_tags *uuid.UUID
-	selectValues                sql.SelectValues
+	Edges        TagEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // TagEdges holds the relations/edges for other nodes in the graph.
@@ -45,9 +46,11 @@ type TagEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// GeneralLedgerAccount holds the value of the general_ledger_account edge.
+	GeneralLedgerAccount []*GeneralLedgerAccount `json:"general_ledger_account,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -72,19 +75,26 @@ func (e TagEdges) OrganizationOrErr() (*Organization, error) {
 	return nil, &NotLoadedError{edge: "organization"}
 }
 
+// GeneralLedgerAccountOrErr returns the GeneralLedgerAccount value or an error if the edge
+// was not loaded in eager-loading.
+func (e TagEdges) GeneralLedgerAccountOrErr() ([]*GeneralLedgerAccount, error) {
+	if e.loadedTypes[2] {
+		return e.GeneralLedgerAccount, nil
+	}
+	return nil, &NotLoadedError{edge: "general_ledger_account"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tag) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tag.FieldName, tag.FieldDescription:
+		case tag.FieldName, tag.FieldDescription, tag.FieldColor:
 			values[i] = new(sql.NullString)
 		case tag.FieldCreatedAt, tag.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case tag.FieldID, tag.FieldBusinessUnitID, tag.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
-		case tag.ForeignKeys[0]: // general_ledger_account_tags
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -140,15 +150,13 @@ func (t *Tag) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				t.Description = new(string)
-				*t.Description = value.String
+				t.Description = value.String
 			}
-		case tag.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field general_ledger_account_tags", values[i])
+		case tag.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
 			} else if value.Valid {
-				t.general_ledger_account_tags = new(uuid.UUID)
-				*t.general_ledger_account_tags = *value.S.(*uuid.UUID)
+				t.Color = value.String
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -171,6 +179,11 @@ func (t *Tag) QueryBusinessUnit() *BusinessUnitQuery {
 // QueryOrganization queries the "organization" edge of the Tag entity.
 func (t *Tag) QueryOrganization() *OrganizationQuery {
 	return NewTagClient(t.config).QueryOrganization(t)
+}
+
+// QueryGeneralLedgerAccount queries the "general_ledger_account" edge of the Tag entity.
+func (t *Tag) QueryGeneralLedgerAccount() *GeneralLedgerAccountQuery {
+	return NewTagClient(t.config).QueryGeneralLedgerAccount(t)
 }
 
 // Update returns a builder for updating this Tag.
@@ -211,10 +224,11 @@ func (t *Tag) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)
 	builder.WriteString(", ")
-	if v := t.Description; v != nil {
-		builder.WriteString("description=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("description=")
+	builder.WriteString(t.Description)
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(t.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

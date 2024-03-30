@@ -86,6 +86,11 @@ func Description(v string) predicate.Tag {
 	return predicate.Tag(sql.FieldEQ(FieldDescription, v))
 }
 
+// Color applies equality check predicate on the "color" field. It's identical to ColorEQ.
+func Color(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldEQ(FieldColor, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.Tag {
 	return predicate.Tag(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -346,6 +351,81 @@ func DescriptionContainsFold(v string) predicate.Tag {
 	return predicate.Tag(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// ColorEQ applies the EQ predicate on the "color" field.
+func ColorEQ(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldEQ(FieldColor, v))
+}
+
+// ColorNEQ applies the NEQ predicate on the "color" field.
+func ColorNEQ(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldNEQ(FieldColor, v))
+}
+
+// ColorIn applies the In predicate on the "color" field.
+func ColorIn(vs ...string) predicate.Tag {
+	return predicate.Tag(sql.FieldIn(FieldColor, vs...))
+}
+
+// ColorNotIn applies the NotIn predicate on the "color" field.
+func ColorNotIn(vs ...string) predicate.Tag {
+	return predicate.Tag(sql.FieldNotIn(FieldColor, vs...))
+}
+
+// ColorGT applies the GT predicate on the "color" field.
+func ColorGT(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldGT(FieldColor, v))
+}
+
+// ColorGTE applies the GTE predicate on the "color" field.
+func ColorGTE(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldGTE(FieldColor, v))
+}
+
+// ColorLT applies the LT predicate on the "color" field.
+func ColorLT(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldLT(FieldColor, v))
+}
+
+// ColorLTE applies the LTE predicate on the "color" field.
+func ColorLTE(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldLTE(FieldColor, v))
+}
+
+// ColorContains applies the Contains predicate on the "color" field.
+func ColorContains(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldContains(FieldColor, v))
+}
+
+// ColorHasPrefix applies the HasPrefix predicate on the "color" field.
+func ColorHasPrefix(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldHasPrefix(FieldColor, v))
+}
+
+// ColorHasSuffix applies the HasSuffix predicate on the "color" field.
+func ColorHasSuffix(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldHasSuffix(FieldColor, v))
+}
+
+// ColorIsNil applies the IsNil predicate on the "color" field.
+func ColorIsNil() predicate.Tag {
+	return predicate.Tag(sql.FieldIsNull(FieldColor))
+}
+
+// ColorNotNil applies the NotNil predicate on the "color" field.
+func ColorNotNil() predicate.Tag {
+	return predicate.Tag(sql.FieldNotNull(FieldColor))
+}
+
+// ColorEqualFold applies the EqualFold predicate on the "color" field.
+func ColorEqualFold(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldEqualFold(FieldColor, v))
+}
+
+// ColorContainsFold applies the ContainsFold predicate on the "color" field.
+func ColorContainsFold(v string) predicate.Tag {
+	return predicate.Tag(sql.FieldContainsFold(FieldColor, v))
+}
+
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
 func HasBusinessUnit() predicate.Tag {
 	return predicate.Tag(func(s *sql.Selector) {
@@ -384,6 +464,29 @@ func HasOrganization() predicate.Tag {
 func HasOrganizationWith(preds ...predicate.Organization) predicate.Tag {
 	return predicate.Tag(func(s *sql.Selector) {
 		step := newOrganizationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasGeneralLedgerAccount applies the HasEdge predicate on the "general_ledger_account" edge.
+func HasGeneralLedgerAccount() predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, GeneralLedgerAccountTable, GeneralLedgerAccountPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGeneralLedgerAccountWith applies the HasEdge predicate on the "general_ledger_account" edge with a given conditions (other predicates).
+func HasGeneralLedgerAccountWith(preds ...predicate.GeneralLedgerAccount) predicate.Tag {
+	return predicate.Tag(func(s *sql.Selector) {
+		step := newGeneralLedgerAccountStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
