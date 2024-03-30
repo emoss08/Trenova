@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -22,14 +23,19 @@ func (Tag) Fields() []ent.Field {
 			}).
 			MaxLen(50),
 		field.Text("description").
-			Nillable().
 			Optional(),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 
 // Edges of the Tag.
 func (Tag) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("general_ledger_account", GeneralLedgerAccount.Type).
+			Ref("tags"),
+	}
 }
 
 // Mixin of the Tag.

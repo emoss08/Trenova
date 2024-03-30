@@ -57,14 +57,11 @@ function GLEditForm({
         cashFlowType: glAccount.cashFlowType || "",
         accountSubType: glAccount.accountSubType,
         accountClassification: glAccount.accountClassification,
-        parentAccount: glAccount.parentAccount,
-        attachment: glAccount.attachment,
-        owner: glAccount.owner,
         interestRate: glAccount.interestRate,
         isReconciled: glAccount.isReconciled,
         isTaxRelevant: glAccount.isTaxRelevant,
         notes: glAccount.notes,
-        tags: glAccount.tags,
+        tagIds: glAccount.tagIds,
       },
     });
 

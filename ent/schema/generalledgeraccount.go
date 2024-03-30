@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // GeneralLedgerAccount holds the schema definition for the GeneralLedgerAccount entity.
@@ -21,10 +23,18 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(1)",
+				dialect.SQLite:   "VARCHAR(1)",
+			}).
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("account_number").
 			MaxLen(7).
 			Match(regexp.MustCompile("^[0-9]{4}-[0-9]{2}$")).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(7)",
+				dialect.SQLite:   "VARCHAR(7)",
+			}).
 			StructTag(`json:"accountNumber" validate:"required,max=7"`),
 		field.Enum("account_type").
 			Values("Asset",
@@ -32,6 +42,10 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 				"Equity",
 				"Revenue",
 				"Expense").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(9)",
+				dialect.SQLite:   "VARCHAR(9)",
+			}).
 			StructTag(`json:"accountType" validate:"required"`),
 		field.String("cash_flow_type").
 			Optional().
@@ -44,18 +58,31 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 			StructTag(`json:"accountClass" validate:"omitempty"`),
 		field.Float("balance").
 			Optional().
-			Nillable().
 			StructTag(`json:"balance" validate:"omitempty"`),
 		field.Float("interest_rate").
 			Optional().
-			Nillable().
 			StructTag(`json:"interestRate" validate:"omitempty"`),
-		field.Time("date_opened").
+		field.Other("date_opened", &pgtype.Date{}).
 			Immutable().
-			Default(time.Now).
+			Default(
+				func() *pgtype.Date {
+					today := pgtype.Date{}
+					today.Time = time.Now()
+					return &today
+				}(),
+			).
+			SchemaType(map[string]string{
+				dialect.Postgres: "date",
+				dialect.SQLite:   "date",
+			}).
 			StructTag(`json:"dateOpened" validate:"omitempty"`),
-		field.Time("date_closed").
+		field.Other("date_closed", &pgtype.Date{}).
 			Optional().
+			Nillable().
+			SchemaType(map[string]string{
+				dialect.Postgres: "date",
+				dialect.SQLite:   "date",
+			}).
 			StructTag(`json:"dateClosed" validate:"omitempty"`),
 		field.String("notes").
 			Optional(),

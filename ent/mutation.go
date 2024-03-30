@@ -20066,8 +20066,8 @@ type GeneralLedgerAccountMutation struct {
 	addbalance           *float64
 	interest_rate        *float64
 	addinterest_rate     *float64
-	date_opened          *time.Time
-	date_closed          *time.Time
+	date_opened          **pgtype.Date
+	date_closed          **pgtype.Date
 	notes                *string
 	is_tax_relevant      *bool
 	is_reconciled        *bool
@@ -20605,7 +20605,7 @@ func (m *GeneralLedgerAccountMutation) Balance() (r float64, exists bool) {
 // OldBalance returns the old "balance" field's value of the GeneralLedgerAccount entity.
 // If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GeneralLedgerAccountMutation) OldBalance(ctx context.Context) (v *float64, err error) {
+func (m *GeneralLedgerAccountMutation) OldBalance(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBalance is only allowed on UpdateOne operations")
 	}
@@ -20675,7 +20675,7 @@ func (m *GeneralLedgerAccountMutation) InterestRate() (r float64, exists bool) {
 // OldInterestRate returns the old "interest_rate" field's value of the GeneralLedgerAccount entity.
 // If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GeneralLedgerAccountMutation) OldInterestRate(ctx context.Context) (v *float64, err error) {
+func (m *GeneralLedgerAccountMutation) OldInterestRate(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldInterestRate is only allowed on UpdateOne operations")
 	}
@@ -20728,12 +20728,12 @@ func (m *GeneralLedgerAccountMutation) ResetInterestRate() {
 }
 
 // SetDateOpened sets the "date_opened" field.
-func (m *GeneralLedgerAccountMutation) SetDateOpened(t time.Time) {
-	m.date_opened = &t
+func (m *GeneralLedgerAccountMutation) SetDateOpened(pg *pgtype.Date) {
+	m.date_opened = &pg
 }
 
 // DateOpened returns the value of the "date_opened" field in the mutation.
-func (m *GeneralLedgerAccountMutation) DateOpened() (r time.Time, exists bool) {
+func (m *GeneralLedgerAccountMutation) DateOpened() (r *pgtype.Date, exists bool) {
 	v := m.date_opened
 	if v == nil {
 		return
@@ -20744,7 +20744,7 @@ func (m *GeneralLedgerAccountMutation) DateOpened() (r time.Time, exists bool) {
 // OldDateOpened returns the old "date_opened" field's value of the GeneralLedgerAccount entity.
 // If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GeneralLedgerAccountMutation) OldDateOpened(ctx context.Context) (v time.Time, err error) {
+func (m *GeneralLedgerAccountMutation) OldDateOpened(ctx context.Context) (v *pgtype.Date, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDateOpened is only allowed on UpdateOne operations")
 	}
@@ -20764,12 +20764,12 @@ func (m *GeneralLedgerAccountMutation) ResetDateOpened() {
 }
 
 // SetDateClosed sets the "date_closed" field.
-func (m *GeneralLedgerAccountMutation) SetDateClosed(t time.Time) {
-	m.date_closed = &t
+func (m *GeneralLedgerAccountMutation) SetDateClosed(pg *pgtype.Date) {
+	m.date_closed = &pg
 }
 
 // DateClosed returns the value of the "date_closed" field in the mutation.
-func (m *GeneralLedgerAccountMutation) DateClosed() (r time.Time, exists bool) {
+func (m *GeneralLedgerAccountMutation) DateClosed() (r *pgtype.Date, exists bool) {
 	v := m.date_closed
 	if v == nil {
 		return
@@ -20780,7 +20780,7 @@ func (m *GeneralLedgerAccountMutation) DateClosed() (r time.Time, exists bool) {
 // OldDateClosed returns the old "date_closed" field's value of the GeneralLedgerAccount entity.
 // If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GeneralLedgerAccountMutation) OldDateClosed(ctx context.Context) (v time.Time, err error) {
+func (m *GeneralLedgerAccountMutation) OldDateClosed(ctx context.Context) (v *pgtype.Date, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDateClosed is only allowed on UpdateOne operations")
 	}
@@ -21306,14 +21306,14 @@ func (m *GeneralLedgerAccountMutation) SetField(name string, value ent.Value) er
 		m.SetInterestRate(v)
 		return nil
 	case generalledgeraccount.FieldDateOpened:
-		v, ok := value.(time.Time)
+		v, ok := value.(*pgtype.Date)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDateOpened(v)
 		return nil
 	case generalledgeraccount.FieldDateClosed:
-		v, ok := value.(time.Time)
+		v, ok := value.(*pgtype.Date)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -35697,21 +35697,25 @@ func (m *TableChangeAlertMutation) ResetEdge(name string) error {
 // TagMutation represents an operation that mutates the Tag nodes in the graph.
 type TagMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *uuid.UUID
-	created_at           *time.Time
-	updated_at           *time.Time
-	name                 *string
-	description          *string
-	clearedFields        map[string]struct{}
-	business_unit        *uuid.UUID
-	clearedbusiness_unit bool
-	organization         *uuid.UUID
-	clearedorganization  bool
-	done                 bool
-	oldValue             func(context.Context) (*Tag, error)
-	predicates           []predicate.Tag
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	name                          *string
+	description                   *string
+	color                         *string
+	clearedFields                 map[string]struct{}
+	business_unit                 *uuid.UUID
+	clearedbusiness_unit          bool
+	organization                  *uuid.UUID
+	clearedorganization           bool
+	general_ledger_account        map[uuid.UUID]struct{}
+	removedgeneral_ledger_account map[uuid.UUID]struct{}
+	clearedgeneral_ledger_account bool
+	done                          bool
+	oldValue                      func(context.Context) (*Tag, error)
+	predicates                    []predicate.Tag
 }
 
 var _ ent.Mutation = (*TagMutation)(nil)
@@ -36015,7 +36019,7 @@ func (m *TagMutation) Description() (r string, exists bool) {
 // OldDescription returns the old "description" field's value of the Tag entity.
 // If the Tag object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TagMutation) OldDescription(ctx context.Context) (v *string, err error) {
+func (m *TagMutation) OldDescription(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
 	}
@@ -36045,6 +36049,55 @@ func (m *TagMutation) DescriptionCleared() bool {
 func (m *TagMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, tag.FieldDescription)
+}
+
+// SetColor sets the "color" field.
+func (m *TagMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *TagMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the Tag entity.
+// If the Tag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TagMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ClearColor clears the value of the "color" field.
+func (m *TagMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[tag.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *TagMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[tag.FieldColor]
+	return ok
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *TagMutation) ResetColor() {
+	m.color = nil
+	delete(m.clearedFields, tag.FieldColor)
 }
 
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
@@ -36101,6 +36154,60 @@ func (m *TagMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by ids.
+func (m *TagMutation) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) {
+	if m.general_ledger_account == nil {
+		m.general_ledger_account = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.general_ledger_account[ids[i]] = struct{}{}
+	}
+}
+
+// ClearGeneralLedgerAccount clears the "general_ledger_account" edge to the GeneralLedgerAccount entity.
+func (m *TagMutation) ClearGeneralLedgerAccount() {
+	m.clearedgeneral_ledger_account = true
+}
+
+// GeneralLedgerAccountCleared reports if the "general_ledger_account" edge to the GeneralLedgerAccount entity was cleared.
+func (m *TagMutation) GeneralLedgerAccountCleared() bool {
+	return m.clearedgeneral_ledger_account
+}
+
+// RemoveGeneralLedgerAccountIDs removes the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
+func (m *TagMutation) RemoveGeneralLedgerAccountIDs(ids ...uuid.UUID) {
+	if m.removedgeneral_ledger_account == nil {
+		m.removedgeneral_ledger_account = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.general_ledger_account, ids[i])
+		m.removedgeneral_ledger_account[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedGeneralLedgerAccount returns the removed IDs of the "general_ledger_account" edge to the GeneralLedgerAccount entity.
+func (m *TagMutation) RemovedGeneralLedgerAccountIDs() (ids []uuid.UUID) {
+	for id := range m.removedgeneral_ledger_account {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// GeneralLedgerAccountIDs returns the "general_ledger_account" edge IDs in the mutation.
+func (m *TagMutation) GeneralLedgerAccountIDs() (ids []uuid.UUID) {
+	for id := range m.general_ledger_account {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetGeneralLedgerAccount resets all changes to the "general_ledger_account" edge.
+func (m *TagMutation) ResetGeneralLedgerAccount() {
+	m.general_ledger_account = nil
+	m.clearedgeneral_ledger_account = false
+	m.removedgeneral_ledger_account = nil
+}
+
 // Where appends a list predicates to the TagMutation builder.
 func (m *TagMutation) Where(ps ...predicate.Tag) {
 	m.predicates = append(m.predicates, ps...)
@@ -36135,7 +36242,7 @@ func (m *TagMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TagMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.business_unit != nil {
 		fields = append(fields, tag.FieldBusinessUnitID)
 	}
@@ -36153,6 +36260,9 @@ func (m *TagMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, tag.FieldDescription)
+	}
+	if m.color != nil {
+		fields = append(fields, tag.FieldColor)
 	}
 	return fields
 }
@@ -36174,6 +36284,8 @@ func (m *TagMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case tag.FieldDescription:
 		return m.Description()
+	case tag.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -36195,6 +36307,8 @@ func (m *TagMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldName(ctx)
 	case tag.FieldDescription:
 		return m.OldDescription(ctx)
+	case tag.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown Tag field %s", name)
 }
@@ -36246,6 +36360,13 @@ func (m *TagMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDescription(v)
 		return nil
+	case tag.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Tag field %s", name)
 }
@@ -36279,6 +36400,9 @@ func (m *TagMutation) ClearedFields() []string {
 	if m.FieldCleared(tag.FieldDescription) {
 		fields = append(fields, tag.FieldDescription)
 	}
+	if m.FieldCleared(tag.FieldColor) {
+		fields = append(fields, tag.FieldColor)
+	}
 	return fields
 }
 
@@ -36295,6 +36419,9 @@ func (m *TagMutation) ClearField(name string) error {
 	switch name {
 	case tag.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case tag.FieldColor:
+		m.ClearColor()
 		return nil
 	}
 	return fmt.Errorf("unknown Tag nullable field %s", name)
@@ -36322,18 +36449,24 @@ func (m *TagMutation) ResetField(name string) error {
 	case tag.FieldDescription:
 		m.ResetDescription()
 		return nil
+	case tag.FieldColor:
+		m.ResetColor()
+		return nil
 	}
 	return fmt.Errorf("unknown Tag field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TagMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.business_unit != nil {
 		edges = append(edges, tag.EdgeBusinessUnit)
 	}
 	if m.organization != nil {
 		edges = append(edges, tag.EdgeOrganization)
+	}
+	if m.general_ledger_account != nil {
+		edges = append(edges, tag.EdgeGeneralLedgerAccount)
 	}
 	return edges
 }
@@ -36350,30 +36483,50 @@ func (m *TagMutation) AddedIDs(name string) []ent.Value {
 		if id := m.organization; id != nil {
 			return []ent.Value{*id}
 		}
+	case tag.EdgeGeneralLedgerAccount:
+		ids := make([]ent.Value, 0, len(m.general_ledger_account))
+		for id := range m.general_ledger_account {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TagMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removedgeneral_ledger_account != nil {
+		edges = append(edges, tag.EdgeGeneralLedgerAccount)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *TagMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case tag.EdgeGeneralLedgerAccount:
+		ids := make([]ent.Value, 0, len(m.removedgeneral_ledger_account))
+		for id := range m.removedgeneral_ledger_account {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TagMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedbusiness_unit {
 		edges = append(edges, tag.EdgeBusinessUnit)
 	}
 	if m.clearedorganization {
 		edges = append(edges, tag.EdgeOrganization)
+	}
+	if m.clearedgeneral_ledger_account {
+		edges = append(edges, tag.EdgeGeneralLedgerAccount)
 	}
 	return edges
 }
@@ -36386,6 +36539,8 @@ func (m *TagMutation) EdgeCleared(name string) bool {
 		return m.clearedbusiness_unit
 	case tag.EdgeOrganization:
 		return m.clearedorganization
+	case tag.EdgeGeneralLedgerAccount:
+		return m.clearedgeneral_ledger_account
 	}
 	return false
 }
@@ -36413,6 +36568,9 @@ func (m *TagMutation) ResetEdge(name string) error {
 		return nil
 	case tag.EdgeOrganization:
 		m.ResetOrganization()
+		return nil
+	case tag.EdgeGeneralLedgerAccount:
+		m.ResetGeneralLedgerAccount()
 		return nil
 	}
 	return fmt.Errorf("unknown Tag edge %s", name)

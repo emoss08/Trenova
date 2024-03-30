@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useGLAccounts, useTags, useUsers } from "@/hooks/useQueries";
+import { useTags } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import {
   accountClassificationChoices,
@@ -48,7 +48,7 @@ import {
   useForm,
 } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
-import { FileField, InputField } from "./common/fields/input";
+import { InputField } from "./common/fields/input";
 import {
   CreatableSelectField,
   SelectInput,
@@ -72,18 +72,6 @@ export function GLForm({
   const queryClient = useQueryClient();
 
   const {
-    selectGLAccounts,
-    isError: isGLAccountsError,
-    isLoading: isGLAccountsLoading,
-  } = useGLAccounts(open);
-
-  const {
-    selectUsersData,
-    isError: isUsersError,
-    isLoading: isUsersLoading,
-  } = useUsers(open);
-
-  const {
     selectTags,
     isError: isTagsError,
     isLoading: isTagsLoading,
@@ -96,9 +84,10 @@ export function GLForm({
       const newOption = { label: inputValue, value: res.data.id };
 
       // Appending the new tag to the form's current value
-      const currentTags = getValues("tags");
+      const currentTags = getValues("tagIds");
+
       const tagsArray = Array.isArray(currentTags) ? currentTags : [];
-      setValue("tags", [...tagsArray, newOption.value]);
+      setValue("tagIds", [...tagsArray, newOption.value]);
 
       setTagOptions((prev) => [...prev, newOption]);
 
@@ -198,40 +187,6 @@ export function GLForm({
           />
         </FormControl>
         <FormControl>
-          <SelectInput
-            name="parentAccount"
-            control={control}
-            label="Parent Account"
-            options={selectGLAccounts}
-            isLoading={isGLAccountsLoading}
-            isFetchError={isGLAccountsError}
-            isClearable
-            placeholder="Select Parent Account"
-            description="Parent account for hierarchical accounting"
-          />
-        </FormControl>
-        <FormControl>
-          <FileField
-            name="attachment"
-            control={control}
-            label="Attachment"
-            description="Attach relevant documents or receipts"
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="owner"
-            control={control}
-            label="Owner"
-            options={selectUsersData}
-            isLoading={isUsersLoading}
-            isFetchError={isUsersError}
-            isClearable
-            placeholder="Select Owner"
-            description="User responsible for the account"
-          />
-        </FormControl>
-        <FormControl>
           <InputField
             control={control}
             name="interestRate"
@@ -246,7 +201,7 @@ export function GLForm({
         </FormControl>
         <FormControl>
           <CreatableSelectField
-            name="tags"
+            name="tagIds"
             control={control}
             description="Tags or labels associated with the account"
             label="Tags"
@@ -303,14 +258,13 @@ export function GeneralLedgerAccountTableSheet({
         cashFlowType: undefined,
         accountSubType: undefined,
         accountClassification: undefined,
-        parentAccount: null,
-        attachment: null,
-        owner: null,
-        interestRate: null,
+        interestRate: undefined,
         isReconciled: false,
         isTaxRelevant: false,
         notes: "",
-        tags: [],
+        edges: {
+          tags: [],
+        },
       },
     });
 

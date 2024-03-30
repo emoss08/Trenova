@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
+	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/google/uuid"
@@ -83,6 +84,20 @@ func (tc *TagCreate) SetNillableDescription(s *string) *TagCreate {
 	return tc
 }
 
+// SetColor sets the "color" field.
+func (tc *TagCreate) SetColor(s string) *TagCreate {
+	tc.mutation.SetColor(s)
+	return tc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (tc *TagCreate) SetNillableColor(s *string) *TagCreate {
+	if s != nil {
+		tc.SetColor(*s)
+	}
+	return tc
+}
+
 // SetID sets the "id" field.
 func (tc *TagCreate) SetID(u uuid.UUID) *TagCreate {
 	tc.mutation.SetID(u)
@@ -105,6 +120,21 @@ func (tc *TagCreate) SetBusinessUnit(b *BusinessUnit) *TagCreate {
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (tc *TagCreate) SetOrganization(o *Organization) *TagCreate {
 	return tc.SetOrganizationID(o.ID)
+}
+
+// AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
+func (tc *TagCreate) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagCreate {
+	tc.mutation.AddGeneralLedgerAccountIDs(ids...)
+	return tc
+}
+
+// AddGeneralLedgerAccount adds the "general_ledger_account" edges to the GeneralLedgerAccount entity.
+func (tc *TagCreate) AddGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagCreate {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tc.AddGeneralLedgerAccountIDs(ids...)
 }
 
 // Mutation returns the TagMutation object of the builder.
@@ -233,7 +263,11 @@ func (tc *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := tc.mutation.Description(); ok {
 		_spec.SetField(tag.FieldDescription, field.TypeString, value)
-		_node.Description = &value
+		_node.Description = value
+	}
+	if value, ok := tc.mutation.Color(); ok {
+		_spec.SetField(tag.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := tc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -267,6 +301,22 @@ func (tc *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.GeneralLedgerAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

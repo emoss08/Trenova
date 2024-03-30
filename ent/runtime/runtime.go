@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -896,7 +897,7 @@ func init() {
 	// generalledgeraccountDescDateOpened is the schema descriptor for date_opened field.
 	generalledgeraccountDescDateOpened := generalledgeraccountFields[8].Descriptor()
 	// generalledgeraccount.DefaultDateOpened holds the default value on creation for the date_opened field.
-	generalledgeraccount.DefaultDateOpened = generalledgeraccountDescDateOpened.Default.(func() time.Time)
+	generalledgeraccount.DefaultDateOpened = generalledgeraccountDescDateOpened.Default.(*pgtype.Date)
 	// generalledgeraccountDescIsTaxRelevant is the schema descriptor for is_tax_relevant field.
 	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[11].Descriptor()
 	// generalledgeraccount.DefaultIsTaxRelevant holds the default value on creation for the is_tax_relevant field.

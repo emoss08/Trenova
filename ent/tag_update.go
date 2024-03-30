@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tag"
+	"github.com/google/uuid"
 )
 
 // TagUpdate is the builder for updating Tag entities.
@@ -69,9 +71,65 @@ func (tu *TagUpdate) ClearDescription() *TagUpdate {
 	return tu
 }
 
+// SetColor sets the "color" field.
+func (tu *TagUpdate) SetColor(s string) *TagUpdate {
+	tu.mutation.SetColor(s)
+	return tu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (tu *TagUpdate) SetNillableColor(s *string) *TagUpdate {
+	if s != nil {
+		tu.SetColor(*s)
+	}
+	return tu
+}
+
+// ClearColor clears the value of the "color" field.
+func (tu *TagUpdate) ClearColor() *TagUpdate {
+	tu.mutation.ClearColor()
+	return tu
+}
+
+// AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
+func (tu *TagUpdate) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.AddGeneralLedgerAccountIDs(ids...)
+	return tu
+}
+
+// AddGeneralLedgerAccount adds the "general_ledger_account" edges to the GeneralLedgerAccount entity.
+func (tu *TagUpdate) AddGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagUpdate {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.AddGeneralLedgerAccountIDs(ids...)
+}
+
 // Mutation returns the TagMutation object of the builder.
 func (tu *TagUpdate) Mutation() *TagMutation {
 	return tu.mutation
+}
+
+// ClearGeneralLedgerAccount clears all "general_ledger_account" edges to the GeneralLedgerAccount entity.
+func (tu *TagUpdate) ClearGeneralLedgerAccount() *TagUpdate {
+	tu.mutation.ClearGeneralLedgerAccount()
+	return tu
+}
+
+// RemoveGeneralLedgerAccountIDs removes the "general_ledger_account" edge to GeneralLedgerAccount entities by IDs.
+func (tu *TagUpdate) RemoveGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdate {
+	tu.mutation.RemoveGeneralLedgerAccountIDs(ids...)
+	return tu
+}
+
+// RemoveGeneralLedgerAccount removes "general_ledger_account" edges to GeneralLedgerAccount entities.
+func (tu *TagUpdate) RemoveGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagUpdate {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tu.RemoveGeneralLedgerAccountIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -156,6 +214,57 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
 	}
+	if value, ok := tu.mutation.Color(); ok {
+		_spec.SetField(tag.FieldColor, field.TypeString, value)
+	}
+	if tu.mutation.ColorCleared() {
+		_spec.ClearField(tag.FieldColor, field.TypeString)
+	}
+	if tu.mutation.GeneralLedgerAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedGeneralLedgerAccountIDs(); len(nodes) > 0 && !tu.mutation.GeneralLedgerAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.GeneralLedgerAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(tu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -218,9 +327,65 @@ func (tuo *TagUpdateOne) ClearDescription() *TagUpdateOne {
 	return tuo
 }
 
+// SetColor sets the "color" field.
+func (tuo *TagUpdateOne) SetColor(s string) *TagUpdateOne {
+	tuo.mutation.SetColor(s)
+	return tuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (tuo *TagUpdateOne) SetNillableColor(s *string) *TagUpdateOne {
+	if s != nil {
+		tuo.SetColor(*s)
+	}
+	return tuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (tuo *TagUpdateOne) ClearColor() *TagUpdateOne {
+	tuo.mutation.ClearColor()
+	return tuo
+}
+
+// AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
+func (tuo *TagUpdateOne) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.AddGeneralLedgerAccountIDs(ids...)
+	return tuo
+}
+
+// AddGeneralLedgerAccount adds the "general_ledger_account" edges to the GeneralLedgerAccount entity.
+func (tuo *TagUpdateOne) AddGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.AddGeneralLedgerAccountIDs(ids...)
+}
+
 // Mutation returns the TagMutation object of the builder.
 func (tuo *TagUpdateOne) Mutation() *TagMutation {
 	return tuo.mutation
+}
+
+// ClearGeneralLedgerAccount clears all "general_ledger_account" edges to the GeneralLedgerAccount entity.
+func (tuo *TagUpdateOne) ClearGeneralLedgerAccount() *TagUpdateOne {
+	tuo.mutation.ClearGeneralLedgerAccount()
+	return tuo
+}
+
+// RemoveGeneralLedgerAccountIDs removes the "general_ledger_account" edge to GeneralLedgerAccount entities by IDs.
+func (tuo *TagUpdateOne) RemoveGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdateOne {
+	tuo.mutation.RemoveGeneralLedgerAccountIDs(ids...)
+	return tuo
+}
+
+// RemoveGeneralLedgerAccount removes "general_ledger_account" edges to GeneralLedgerAccount entities.
+func (tuo *TagUpdateOne) RemoveGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagUpdateOne {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return tuo.RemoveGeneralLedgerAccountIDs(ids...)
 }
 
 // Where appends a list predicates to the TagUpdate builder.
@@ -334,6 +499,57 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	}
 	if tuo.mutation.DescriptionCleared() {
 		_spec.ClearField(tag.FieldDescription, field.TypeString)
+	}
+	if value, ok := tuo.mutation.Color(); ok {
+		_spec.SetField(tag.FieldColor, field.TypeString, value)
+	}
+	if tuo.mutation.ColorCleared() {
+		_spec.ClearField(tag.FieldColor, field.TypeString)
+	}
+	if tuo.mutation.GeneralLedgerAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedGeneralLedgerAccountIDs(); len(nodes) > 0 && !tuo.mutation.GeneralLedgerAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.GeneralLedgerAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.GeneralLedgerAccountTable,
+			Columns: tag.GeneralLedgerAccountPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(generalledgeraccount.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(tuo.modifiers...)
 	_node = &Tag{config: tuo.config}

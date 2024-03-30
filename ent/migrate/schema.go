@@ -779,16 +779,16 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
-		{Name: "account_number", Type: field.TypeString, Size: 7},
-		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"Asset", "Liability", "Equity", "Revenue", "Expense"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
+		{Name: "account_number", Type: field.TypeString, Size: 7, SchemaType: map[string]string{"postgres": "VARCHAR(7)", "sqlite3": "VARCHAR(7)"}},
+		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"Asset", "Liability", "Equity", "Revenue", "Expense"}, SchemaType: map[string]string{"postgres": "VARCHAR(9)", "sqlite3": "VARCHAR(9)"}},
 		{Name: "cash_flow_type", Type: field.TypeString, Nullable: true},
 		{Name: "account_sub_type", Type: field.TypeString, Nullable: true},
 		{Name: "account_class", Type: field.TypeString, Nullable: true},
 		{Name: "balance", Type: field.TypeFloat64, Nullable: true},
 		{Name: "interest_rate", Type: field.TypeFloat64, Nullable: true},
-		{Name: "date_opened", Type: field.TypeTime},
-		{Name: "date_closed", Type: field.TypeTime, Nullable: true},
+		{Name: "date_opened", Type: field.TypeOther, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "date_closed", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true},
 		{Name: "is_tax_relevant", Type: field.TypeBool, Default: false},
 		{Name: "is_reconciled", Type: field.TypeBool, Default: false},
@@ -1372,7 +1372,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "general_ledger_account_tags", Type: field.TypeUUID, Nullable: true},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -1382,12 +1382,6 @@ var (
 		Columns:    TagsColumns,
 		PrimaryKey: []*schema.Column{TagsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "tags_general_ledger_accounts_tags",
-				Columns:    []*schema.Column{TagsColumns[5]},
-				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
 			{
 				Symbol:     "tags_business_units_business_unit",
 				Columns:    []*schema.Column{TagsColumns[6]},
@@ -1800,6 +1794,31 @@ var (
 			},
 		},
 	}
+	// GeneralLedgerAccountTagsColumns holds the columns for the "general_ledger_account_tags" table.
+	GeneralLedgerAccountTagsColumns = []*schema.Column{
+		{Name: "general_ledger_account_id", Type: field.TypeUUID},
+		{Name: "tag_id", Type: field.TypeUUID},
+	}
+	// GeneralLedgerAccountTagsTable holds the schema information for the "general_ledger_account_tags" table.
+	GeneralLedgerAccountTagsTable = &schema.Table{
+		Name:       "general_ledger_account_tags",
+		Columns:    GeneralLedgerAccountTagsColumns,
+		PrimaryKey: []*schema.Column{GeneralLedgerAccountTagsColumns[0], GeneralLedgerAccountTagsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "general_ledger_account_tags_general_ledger_account_id",
+				Columns:    []*schema.Column{GeneralLedgerAccountTagsColumns[0]},
+				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "general_ledger_account_tags_tag_id",
+				Columns:    []*schema.Column{GeneralLedgerAccountTagsColumns[1]},
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccessorialChargesTable,
@@ -1845,6 +1864,7 @@ var (
 		WorkerCommentsTable,
 		WorkerContactsTable,
 		WorkerProfilesTable,
+		GeneralLedgerAccountTagsTable,
 	}
 )
 
@@ -1925,9 +1945,8 @@ func init() {
 	ShipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TableChangeAlertsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TableChangeAlertsTable.ForeignKeys[1].RefTable = OrganizationsTable
-	TagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
-	TagsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
-	TagsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	TagsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	TagsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TractorsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TractorsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TractorsTable.ForeignKeys[2].RefTable = EquipmentTypesTable
@@ -1957,4 +1976,6 @@ func init() {
 	WorkerProfilesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
 	WorkerProfilesTable.ForeignKeys[3].RefTable = UsStatesTable
+	GeneralLedgerAccountTagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
+	GeneralLedgerAccountTagsTable.ForeignKeys[1].RefTable = TagsTable
 }
