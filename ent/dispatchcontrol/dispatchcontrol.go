@@ -117,9 +117,9 @@ var (
 	// DefaultDeadheadTarget holds the default value on creation for the "deadhead_target" field.
 	DefaultDeadheadTarget float64
 	// DefaultMaxShipmentWeightLimit holds the default value on creation for the "max_shipment_weight_limit" field.
-	DefaultMaxShipmentWeightLimit int
+	DefaultMaxShipmentWeightLimit int32
 	// MaxShipmentWeightLimitValidator is a validator for the "max_shipment_weight_limit" field. It is called by the builders before save.
-	MaxShipmentWeightLimitValidator func(int) error
+	MaxShipmentWeightLimitValidator func(int32) error
 	// DefaultGracePeriod holds the default value on creation for the "grace_period" field.
 	DefaultGracePeriod uint8
 	// DefaultEnforceWorkerAssign holds the default value on creation for the "enforce_worker_assign" field.

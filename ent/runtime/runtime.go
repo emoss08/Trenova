@@ -88,10 +88,6 @@ func init() {
 			return nil
 		}
 	}()
-	// accessorialchargeDescDescription is the schema descriptor for description field.
-	accessorialchargeDescDescription := accessorialchargeFields[2].Descriptor()
-	// accessorialcharge.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
-	accessorialcharge.DescriptionValidator = accessorialchargeDescDescription.Validators[0].(func(string) error)
 	// accessorialchargeDescIsDetention is the schema descriptor for is_detention field.
 	accessorialchargeDescIsDetention := accessorialchargeFields[3].Descriptor()
 	// accessorialcharge.DefaultIsDetention holds the default value on creation for the is_detention field.
@@ -122,9 +118,9 @@ func init() {
 	// accountingcontrolDescRecThreshold is the schema descriptor for rec_threshold field.
 	accountingcontrolDescRecThreshold := accountingcontrolFields[0].Descriptor()
 	// accountingcontrol.DefaultRecThreshold holds the default value on creation for the rec_threshold field.
-	accountingcontrol.DefaultRecThreshold = accountingcontrolDescRecThreshold.Default.(int64)
+	accountingcontrol.DefaultRecThreshold = accountingcontrolDescRecThreshold.Default.(int8)
 	// accountingcontrol.RecThresholdValidator is a validator for the "rec_threshold" field. It is called by the builders before save.
-	accountingcontrol.RecThresholdValidator = accountingcontrolDescRecThreshold.Validators[0].(func(int64) error)
+	accountingcontrol.RecThresholdValidator = accountingcontrolDescRecThreshold.Validators[0].(func(int8) error)
 	// accountingcontrolDescAutoCreateJournalEntries is the schema descriptor for auto_create_journal_entries field.
 	accountingcontrolDescAutoCreateJournalEntries := accountingcontrolFields[2].Descriptor()
 	// accountingcontrol.DefaultAutoCreateJournalEntries holds the default value on creation for the auto_create_journal_entries field.
@@ -479,24 +475,6 @@ func init() {
 			return nil
 		}
 	}()
-	// customerDescState is the schema descriptor for state field.
-	customerDescState := customerFields[6].Descriptor()
-	// customer.StateValidator is a validator for the "state" field. It is called by the builders before save.
-	customer.StateValidator = func() func(string) error {
-		validators := customerDescState.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(state string) error {
-			for _, fn := range fns {
-				if err := fn(state); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
 	// customerDescPostalCode is the schema descriptor for postal_code field.
 	customerDescPostalCode := customerFields[7].Descriptor()
 	// customer.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
@@ -586,9 +564,9 @@ func init() {
 	// dispatchcontrolDescMaxShipmentWeightLimit is the schema descriptor for max_shipment_weight_limit field.
 	dispatchcontrolDescMaxShipmentWeightLimit := dispatchcontrolFields[2].Descriptor()
 	// dispatchcontrol.DefaultMaxShipmentWeightLimit holds the default value on creation for the max_shipment_weight_limit field.
-	dispatchcontrol.DefaultMaxShipmentWeightLimit = dispatchcontrolDescMaxShipmentWeightLimit.Default.(int)
+	dispatchcontrol.DefaultMaxShipmentWeightLimit = dispatchcontrolDescMaxShipmentWeightLimit.Default.(int32)
 	// dispatchcontrol.MaxShipmentWeightLimitValidator is a validator for the "max_shipment_weight_limit" field. It is called by the builders before save.
-	dispatchcontrol.MaxShipmentWeightLimitValidator = dispatchcontrolDescMaxShipmentWeightLimit.Validators[0].(func(int) error)
+	dispatchcontrol.MaxShipmentWeightLimitValidator = dispatchcontrolDescMaxShipmentWeightLimit.Validators[0].(func(int32) error)
 	// dispatchcontrolDescGracePeriod is the schema descriptor for grace_period field.
 	dispatchcontrolDescGracePeriod := dispatchcontrolFields[3].Descriptor()
 	// dispatchcontrol.DefaultGracePeriod holds the default value on creation for the grace_period field.
@@ -737,18 +715,6 @@ func init() {
 	emailprofileDescEmail := emailprofileFields[1].Descriptor()
 	// emailprofile.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	emailprofile.EmailValidator = emailprofileDescEmail.Validators[0].(func(string) error)
-	// emailprofileDescHost is the schema descriptor for host field.
-	emailprofileDescHost := emailprofileFields[3].Descriptor()
-	// emailprofile.HostValidator is a validator for the "host" field. It is called by the builders before save.
-	emailprofile.HostValidator = emailprofileDescHost.Validators[0].(func(string) error)
-	// emailprofileDescUsername is the schema descriptor for username field.
-	emailprofileDescUsername := emailprofileFields[5].Descriptor()
-	// emailprofile.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	emailprofile.UsernameValidator = emailprofileDescUsername.Validators[0].(func(string) error)
-	// emailprofileDescPassword is the schema descriptor for password field.
-	emailprofileDescPassword := emailprofileFields[6].Descriptor()
-	// emailprofile.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
-	emailprofile.PasswordValidator = emailprofileDescPassword.Validators[0].(func(string) error)
 	// emailprofileDescIsDefault is the schema descriptor for is_default field.
 	emailprofileDescIsDefault := emailprofileFields[7].Descriptor()
 	// emailprofile.DefaultIsDefault holds the default value on creation for the is_default field.
@@ -1010,10 +976,6 @@ func init() {
 			return nil
 		}
 	}()
-	// hazardousmaterialDescErgNumber is the schema descriptor for erg_number field.
-	hazardousmaterialDescErgNumber := hazardousmaterialFields[3].Descriptor()
-	// hazardousmaterial.ErgNumberValidator is a validator for the "erg_number" field. It is called by the builders before save.
-	hazardousmaterial.ErgNumberValidator = hazardousmaterialDescErgNumber.Validators[0].(func(string) error)
 	// hazardousmaterialDescID is the schema descriptor for id field.
 	hazardousmaterialDescID := hazardousmaterialMixinFields0[0].Descriptor()
 	// hazardousmaterial.DefaultID holds the default value on creation for the id field.
@@ -1064,10 +1026,6 @@ func init() {
 	invoicecontrol.DefaultCreditMemoNumberPrefix = invoicecontrolDescCreditMemoNumberPrefix.Default.(string)
 	// invoicecontrol.CreditMemoNumberPrefixValidator is a validator for the "credit_memo_number_prefix" field. It is called by the builders before save.
 	invoicecontrol.CreditMemoNumberPrefixValidator = invoicecontrolDescCreditMemoNumberPrefix.Validators[0].(func(string) error)
-	// invoicecontrolDescInvoiceLogoURL is the schema descriptor for invoice_logo_url field.
-	invoicecontrolDescInvoiceLogoURL := invoicecontrolFields[4].Descriptor()
-	// invoicecontrol.InvoiceLogoURLValidator is a validator for the "invoice_logo_url" field. It is called by the builders before save.
-	invoicecontrol.InvoiceLogoURLValidator = invoicecontrolDescInvoiceLogoURL.Validators[0].(func(string) error)
 	// invoicecontrolDescInvoiceDueAfterDays is the schema descriptor for invoice_due_after_days field.
 	invoicecontrolDescInvoiceDueAfterDays := invoicecontrolFields[6].Descriptor()
 	// invoicecontrol.DefaultInvoiceDueAfterDays holds the default value on creation for the invoice_due_after_days field.
@@ -1463,18 +1421,6 @@ func init() {
 	tablechangealertDescName := tablechangealertFields[1].Descriptor()
 	// tablechangealert.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tablechangealert.NameValidator = tablechangealertDescName.Validators[0].(func(string) error)
-	// tablechangealertDescTableName is the schema descriptor for table_name field.
-	tablechangealertDescTableName := tablechangealertFields[4].Descriptor()
-	// tablechangealert.TableNameValidator is a validator for the "table_name" field. It is called by the builders before save.
-	tablechangealert.TableNameValidator = tablechangealertDescTableName.Validators[0].(func(string) error)
-	// tablechangealertDescTopicName is the schema descriptor for topic_name field.
-	tablechangealertDescTopicName := tablechangealertFields[5].Descriptor()
-	// tablechangealert.TopicNameValidator is a validator for the "topic_name" field. It is called by the builders before save.
-	tablechangealert.TopicNameValidator = tablechangealertDescTopicName.Validators[0].(func(string) error)
-	// tablechangealertDescCustomSubject is the schema descriptor for custom_subject field.
-	tablechangealertDescCustomSubject := tablechangealertFields[7].Descriptor()
-	// tablechangealert.CustomSubjectValidator is a validator for the "custom_subject" field. It is called by the builders before save.
-	tablechangealert.CustomSubjectValidator = tablechangealertDescCustomSubject.Validators[0].(func(string) error)
 	// tablechangealertDescFunctionName is the schema descriptor for function_name field.
 	tablechangealertDescFunctionName := tablechangealertFields[8].Descriptor()
 	// tablechangealert.FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
@@ -1555,10 +1501,6 @@ func init() {
 	tractorDescLicensePlateNumber := tractorFields[3].Descriptor()
 	// tractor.LicensePlateNumberValidator is a validator for the "license_plate_number" field. It is called by the builders before save.
 	tractor.LicensePlateNumberValidator = tractorDescLicensePlateNumber.Validators[0].(func(string) error)
-	// tractorDescVin is the schema descriptor for vin field.
-	tractorDescVin := tractorFields[4].Descriptor()
-	// tractor.VinValidator is a validator for the "vin" field. It is called by the builders before save.
-	tractor.VinValidator = tractorDescVin.Validators[0].(func(string) error)
 	// tractorDescModel is the schema descriptor for model field.
 	tractorDescModel := tractorFields[6].Descriptor()
 	// tractor.ModelValidator is a validator for the "model" field. It is called by the builders before save.
@@ -1566,7 +1508,7 @@ func init() {
 	// tractorDescYear is the schema descriptor for year field.
 	tractorDescYear := tractorFields[7].Descriptor()
 	// tractor.YearValidator is a validator for the "year" field. It is called by the builders before save.
-	tractor.YearValidator = tractorDescYear.Validators[0].(func(int) error)
+	tractor.YearValidator = tractorDescYear.Validators[0].(func(int16) error)
 	// tractorDescLeased is the schema descriptor for leased field.
 	tractorDescLeased := tractorFields[9].Descriptor()
 	// tractor.DefaultLeased holds the default value on creation for the leased field.
@@ -1636,7 +1578,21 @@ func init() {
 	// userDescUsername is the schema descriptor for username field.
 	userDescUsername := userFields[2].Descriptor()
 	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
+	user.UsernameValidator = func() func(string) error {
+		validators := userDescUsername.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(username string) error {
+			for _, fn := range fns {
+				if err := fn(username); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescPassword is the schema descriptor for password field.
 	userDescPassword := userFields[3].Descriptor()
 	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
@@ -1716,43 +1672,11 @@ func init() {
 	// workerDescFirstName is the schema descriptor for first_name field.
 	workerDescFirstName := workerFields[4].Descriptor()
 	// worker.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
-	worker.FirstNameValidator = func() func(string) error {
-		validators := workerDescFirstName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(first_name string) error {
-			for _, fn := range fns {
-				if err := fn(first_name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
+	worker.FirstNameValidator = workerDescFirstName.Validators[0].(func(string) error)
 	// workerDescLastName is the schema descriptor for last_name field.
 	workerDescLastName := workerFields[5].Descriptor()
 	// worker.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
-	worker.LastNameValidator = func() func(string) error {
-		validators := workerDescLastName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(last_name string) error {
-			for _, fn := range fns {
-				if err := fn(last_name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// workerDescCity is the schema descriptor for city field.
-	workerDescCity := workerFields[6].Descriptor()
-	// worker.CityValidator is a validator for the "city" field. It is called by the builders before save.
-	worker.CityValidator = workerDescCity.Validators[0].(func(string) error)
+	worker.LastNameValidator = workerDescLastName.Validators[0].(func(string) error)
 	// workerDescPostalCode is the schema descriptor for postal_code field.
 	workerDescPostalCode := workerFields[7].Descriptor()
 	// worker.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.

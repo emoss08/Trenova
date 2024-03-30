@@ -29,7 +29,7 @@ type DispatchControl struct {
 	// DeadheadTarget holds the value of the "deadhead_target" field.
 	DeadheadTarget float64 `json:"deadheadTarget" validate:"omitempty"`
 	// MaxShipmentWeightLimit holds the value of the "max_shipment_weight_limit" field.
-	MaxShipmentWeightLimit int `json:"maxShipmentWeightLimit" validate:"required,gt=0,lt=1000000"`
+	MaxShipmentWeightLimit int32 `json:"maxShipmentWeightLimit" validate:"required,gt=0,lt=1000000"`
 	// GracePeriod holds the value of the "grace_period" field.
 	GracePeriod uint8 `json:"gracePeriod" validate:"required,lt=100"`
 	// EnforceWorkerAssign holds the value of the "enforce_worker_assign" field.
@@ -159,7 +159,7 @@ func (dc *DispatchControl) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_shipment_weight_limit", values[i])
 			} else if value.Valid {
-				dc.MaxShipmentWeightLimit = int(value.Int64)
+				dc.MaxShipmentWeightLimit = int32(value.Int64)
 			}
 		case dispatchcontrol.FieldGracePeriod:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

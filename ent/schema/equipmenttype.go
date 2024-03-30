@@ -45,6 +45,10 @@ func (EquipmentType) Fields() []ent.Field {
 				"Chassis",
 				"Other").
 			Default("Undefined").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"equipmentClass" validate:"required,oneof=Undefined Car Van Pickup Straight Tractor Trailer Container Chassis Other"`),
 		field.Float("fixed_cost").
 			SchemaType(map[string]string{

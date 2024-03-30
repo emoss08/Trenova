@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
 )
 
@@ -40,8 +41,8 @@ type Customer struct {
 	AddressLine2 string `json:"addressLine2" validate:"omitempty,max=150"`
 	// City holds the value of the "city" field.
 	City string `json:"city" validate:"required,max=150"`
-	// State holds the value of the "state" field.
-	State string `json:"state" validate:"required,len=2"`
+	// StateID holds the value of the "state_id" field.
+	StateID uuid.UUID `json:"stateId" validate:"omitempty,uuid"`
 	// PostalCode holds the value of the "postal_code" field.
 	PostalCode string `json:"postalCode" validate:"required,max=10"`
 	// HasCustomerPortal holds the value of the "has_customer_portal" field.
@@ -60,9 +61,11 @@ type CustomerEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// State holds the value of the state edge.
+	State *UsState `json:"state"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -87,6 +90,17 @@ func (e CustomerEdges) OrganizationOrErr() (*Organization, error) {
 	return nil, &NotLoadedError{edge: "organization"}
 }
 
+// StateOrErr returns the State value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CustomerEdges) StateOrErr() (*UsState, error) {
+	if e.State != nil {
+		return e.State, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: usstate.Label}
+	}
+	return nil, &NotLoadedError{edge: "state"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Customer) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -94,11 +108,11 @@ func (*Customer) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case customer.FieldHasCustomerPortal, customer.FieldAutoMarkReadyToBill:
 			values[i] = new(sql.NullBool)
-		case customer.FieldStatus, customer.FieldCode, customer.FieldName, customer.FieldAddressLine1, customer.FieldAddressLine2, customer.FieldCity, customer.FieldState, customer.FieldPostalCode:
+		case customer.FieldStatus, customer.FieldCode, customer.FieldName, customer.FieldAddressLine1, customer.FieldAddressLine2, customer.FieldCity, customer.FieldPostalCode:
 			values[i] = new(sql.NullString)
 		case customer.FieldCreatedAt, customer.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case customer.FieldID, customer.FieldBusinessUnitID, customer.FieldOrganizationID:
+		case customer.FieldID, customer.FieldBusinessUnitID, customer.FieldOrganizationID, customer.FieldStateID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -181,11 +195,11 @@ func (c *Customer) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				c.City = value.String
 			}
-		case customer.FieldState:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field state", values[i])
-			} else if value.Valid {
-				c.State = value.String
+		case customer.FieldStateID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field state_id", values[i])
+			} else if value != nil {
+				c.StateID = *value
 			}
 		case customer.FieldPostalCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -226,6 +240,11 @@ func (c *Customer) QueryBusinessUnit() *BusinessUnitQuery {
 // QueryOrganization queries the "organization" edge of the Customer entity.
 func (c *Customer) QueryOrganization() *OrganizationQuery {
 	return NewCustomerClient(c.config).QueryOrganization(c)
+}
+
+// QueryState queries the "state" edge of the Customer entity.
+func (c *Customer) QueryState() *UsStateQuery {
+	return NewCustomerClient(c.config).QueryState(c)
 }
 
 // Update returns a builder for updating this Customer.
@@ -281,8 +300,8 @@ func (c *Customer) String() string {
 	builder.WriteString("city=")
 	builder.WriteString(c.City)
 	builder.WriteString(", ")
-	builder.WriteString("state=")
-	builder.WriteString(c.State)
+	builder.WriteString("state_id=")
+	builder.WriteString(fmt.Sprintf("%v", c.StateID))
 	builder.WriteString(", ")
 	builder.WriteString("postal_code=")
 	builder.WriteString(c.PostalCode)

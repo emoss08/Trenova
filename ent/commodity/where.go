@@ -92,12 +92,12 @@ func UnitOfMeasure(v string) predicate.Commodity {
 }
 
 // MinTemp applies equality check predicate on the "min_temp" field. It's identical to MinTempEQ.
-func MinTemp(v int) predicate.Commodity {
+func MinTemp(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldEQ(FieldMinTemp, v))
 }
 
 // MaxTemp applies equality check predicate on the "max_temp" field. It's identical to MaxTempEQ.
-func MaxTemp(v int) predicate.Commodity {
+func MaxTemp(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldEQ(FieldMaxTemp, v))
 }
 
@@ -402,42 +402,42 @@ func UnitOfMeasureContainsFold(v string) predicate.Commodity {
 }
 
 // MinTempEQ applies the EQ predicate on the "min_temp" field.
-func MinTempEQ(v int) predicate.Commodity {
+func MinTempEQ(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldEQ(FieldMinTemp, v))
 }
 
 // MinTempNEQ applies the NEQ predicate on the "min_temp" field.
-func MinTempNEQ(v int) predicate.Commodity {
+func MinTempNEQ(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldNEQ(FieldMinTemp, v))
 }
 
 // MinTempIn applies the In predicate on the "min_temp" field.
-func MinTempIn(vs ...int) predicate.Commodity {
+func MinTempIn(vs ...int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldIn(FieldMinTemp, vs...))
 }
 
 // MinTempNotIn applies the NotIn predicate on the "min_temp" field.
-func MinTempNotIn(vs ...int) predicate.Commodity {
+func MinTempNotIn(vs ...int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldNotIn(FieldMinTemp, vs...))
 }
 
 // MinTempGT applies the GT predicate on the "min_temp" field.
-func MinTempGT(v int) predicate.Commodity {
+func MinTempGT(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldGT(FieldMinTemp, v))
 }
 
 // MinTempGTE applies the GTE predicate on the "min_temp" field.
-func MinTempGTE(v int) predicate.Commodity {
+func MinTempGTE(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldGTE(FieldMinTemp, v))
 }
 
 // MinTempLT applies the LT predicate on the "min_temp" field.
-func MinTempLT(v int) predicate.Commodity {
+func MinTempLT(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldLT(FieldMinTemp, v))
 }
 
 // MinTempLTE applies the LTE predicate on the "min_temp" field.
-func MinTempLTE(v int) predicate.Commodity {
+func MinTempLTE(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldLTE(FieldMinTemp, v))
 }
 
@@ -452,42 +452,42 @@ func MinTempNotNil() predicate.Commodity {
 }
 
 // MaxTempEQ applies the EQ predicate on the "max_temp" field.
-func MaxTempEQ(v int) predicate.Commodity {
+func MaxTempEQ(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldEQ(FieldMaxTemp, v))
 }
 
 // MaxTempNEQ applies the NEQ predicate on the "max_temp" field.
-func MaxTempNEQ(v int) predicate.Commodity {
+func MaxTempNEQ(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldNEQ(FieldMaxTemp, v))
 }
 
 // MaxTempIn applies the In predicate on the "max_temp" field.
-func MaxTempIn(vs ...int) predicate.Commodity {
+func MaxTempIn(vs ...int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldIn(FieldMaxTemp, vs...))
 }
 
 // MaxTempNotIn applies the NotIn predicate on the "max_temp" field.
-func MaxTempNotIn(vs ...int) predicate.Commodity {
+func MaxTempNotIn(vs ...int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldNotIn(FieldMaxTemp, vs...))
 }
 
 // MaxTempGT applies the GT predicate on the "max_temp" field.
-func MaxTempGT(v int) predicate.Commodity {
+func MaxTempGT(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldGT(FieldMaxTemp, v))
 }
 
 // MaxTempGTE applies the GTE predicate on the "max_temp" field.
-func MaxTempGTE(v int) predicate.Commodity {
+func MaxTempGTE(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldGTE(FieldMaxTemp, v))
 }
 
 // MaxTempLT applies the LT predicate on the "max_temp" field.
-func MaxTempLT(v int) predicate.Commodity {
+func MaxTempLT(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldLT(FieldMaxTemp, v))
 }
 
 // MaxTempLTE applies the LTE predicate on the "max_temp" field.
-func MaxTempLTE(v int) predicate.Commodity {
+func MaxTempLTE(v int8) predicate.Commodity {
 	return predicate.Commodity(sql.FieldLTE(FieldMaxTemp, v))
 }
 

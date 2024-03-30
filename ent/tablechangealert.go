@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // TableChangeAlert is the model entity for the TableChangeAlert schema.
@@ -53,9 +54,9 @@ type TableChangeAlert struct {
 	// EmailRecipients holds the value of the "email_recipients" field.
 	EmailRecipients string `json:"emailRecipients"`
 	// EffectiveDate holds the value of the "effective_date" field.
-	EffectiveDate *time.Time `json:"effectiveDate"`
+	EffectiveDate *pgtype.Date `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
-	ExpirationDate *time.Time `json:"expirationDate"`
+	ExpirationDate *pgtype.Date `json:"expirationDate"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TableChangeAlertQuery when eager-loading is set.
 	Edges        TableChangeAlertEdges `json:"edges"`
@@ -100,9 +101,11 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
+			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
 		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
-		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt, tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
+		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case tablechangealert.FieldID, tablechangealert.FieldBusinessUnitID, tablechangealert.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
@@ -224,18 +227,16 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				tca.EmailRecipients = value.String
 			}
 		case tablechangealert.FieldEffectiveDate:
-			if value, ok := values[i].(*sql.NullTime); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field effective_date", values[i])
 			} else if value.Valid {
-				tca.EffectiveDate = new(time.Time)
-				*tca.EffectiveDate = value.Time
+				tca.EffectiveDate = value.S.(*pgtype.Date)
 			}
 		case tablechangealert.FieldExpirationDate:
-			if value, ok := values[i].(*sql.NullTime); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field expiration_date", values[i])
 			} else if value.Valid {
-				tca.ExpirationDate = new(time.Time)
-				*tca.ExpirationDate = value.Time
+				tca.ExpirationDate = value.S.(*pgtype.Date)
 			}
 		default:
 			tca.selectValues.Set(columns[i], values[i])
@@ -333,12 +334,12 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString(", ")
 	if v := tca.EffectiveDate; v != nil {
 		builder.WriteString("effective_date=")
-		builder.WriteString(v.Format(time.ANSIC))
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	if v := tca.ExpirationDate; v != nil {
 		builder.WriteString("expiration_date=")
-		builder.WriteString(v.Format(time.ANSIC))
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

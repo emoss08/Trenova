@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // ID filters vertices based on their ID field.
@@ -122,12 +123,12 @@ func EmailRecipients(v string) predicate.TableChangeAlert {
 }
 
 // EffectiveDate applies equality check predicate on the "effective_date" field. It's identical to EffectiveDateEQ.
-func EffectiveDate(v time.Time) predicate.TableChangeAlert {
+func EffectiveDate(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldEffectiveDate, v))
 }
 
 // ExpirationDate applies equality check predicate on the "expiration_date" field. It's identical to ExpirationDateEQ.
-func ExpirationDate(v time.Time) predicate.TableChangeAlert {
+func ExpirationDate(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldExpirationDate, v))
 }
 
@@ -977,42 +978,42 @@ func EmailRecipientsContainsFold(v string) predicate.TableChangeAlert {
 }
 
 // EffectiveDateEQ applies the EQ predicate on the "effective_date" field.
-func EffectiveDateEQ(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateEQ(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldEffectiveDate, v))
 }
 
 // EffectiveDateNEQ applies the NEQ predicate on the "effective_date" field.
-func EffectiveDateNEQ(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateNEQ(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNEQ(FieldEffectiveDate, v))
 }
 
 // EffectiveDateIn applies the In predicate on the "effective_date" field.
-func EffectiveDateIn(vs ...time.Time) predicate.TableChangeAlert {
+func EffectiveDateIn(vs ...*pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldIn(FieldEffectiveDate, vs...))
 }
 
 // EffectiveDateNotIn applies the NotIn predicate on the "effective_date" field.
-func EffectiveDateNotIn(vs ...time.Time) predicate.TableChangeAlert {
+func EffectiveDateNotIn(vs ...*pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotIn(FieldEffectiveDate, vs...))
 }
 
 // EffectiveDateGT applies the GT predicate on the "effective_date" field.
-func EffectiveDateGT(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateGT(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldGT(FieldEffectiveDate, v))
 }
 
 // EffectiveDateGTE applies the GTE predicate on the "effective_date" field.
-func EffectiveDateGTE(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateGTE(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldGTE(FieldEffectiveDate, v))
 }
 
 // EffectiveDateLT applies the LT predicate on the "effective_date" field.
-func EffectiveDateLT(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateLT(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldLT(FieldEffectiveDate, v))
 }
 
 // EffectiveDateLTE applies the LTE predicate on the "effective_date" field.
-func EffectiveDateLTE(v time.Time) predicate.TableChangeAlert {
+func EffectiveDateLTE(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldLTE(FieldEffectiveDate, v))
 }
 
@@ -1027,42 +1028,42 @@ func EffectiveDateNotNil() predicate.TableChangeAlert {
 }
 
 // ExpirationDateEQ applies the EQ predicate on the "expiration_date" field.
-func ExpirationDateEQ(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateEQ(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldExpirationDate, v))
 }
 
 // ExpirationDateNEQ applies the NEQ predicate on the "expiration_date" field.
-func ExpirationDateNEQ(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateNEQ(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNEQ(FieldExpirationDate, v))
 }
 
 // ExpirationDateIn applies the In predicate on the "expiration_date" field.
-func ExpirationDateIn(vs ...time.Time) predicate.TableChangeAlert {
+func ExpirationDateIn(vs ...*pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldIn(FieldExpirationDate, vs...))
 }
 
 // ExpirationDateNotIn applies the NotIn predicate on the "expiration_date" field.
-func ExpirationDateNotIn(vs ...time.Time) predicate.TableChangeAlert {
+func ExpirationDateNotIn(vs ...*pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotIn(FieldExpirationDate, vs...))
 }
 
 // ExpirationDateGT applies the GT predicate on the "expiration_date" field.
-func ExpirationDateGT(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateGT(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldGT(FieldExpirationDate, v))
 }
 
 // ExpirationDateGTE applies the GTE predicate on the "expiration_date" field.
-func ExpirationDateGTE(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateGTE(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldGTE(FieldExpirationDate, v))
 }
 
 // ExpirationDateLT applies the LT predicate on the "expiration_date" field.
-func ExpirationDateLT(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateLT(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldLT(FieldExpirationDate, v))
 }
 
 // ExpirationDateLTE applies the LTE predicate on the "expiration_date" field.
-func ExpirationDateLTE(v time.Time) predicate.TableChangeAlert {
+func ExpirationDateLTE(v *pgtype.Date) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldLTE(FieldExpirationDate, v))
 }
 

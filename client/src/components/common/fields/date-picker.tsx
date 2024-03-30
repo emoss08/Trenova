@@ -75,11 +75,8 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         date.getDate(),
       );
 
-      // Format the date to ISO string without converting it to UTC
-      const formattedDate = format(
-        localMidnightDate,
-        "yyyy-MM-dd'T'HH:mm:ssXXX",
-      );
+      // Format the date to a simple ISO string (yyyy-MM-dd)
+      const formattedDate = format(localMidnightDate, "yyyy-MM-dd");
       field.onChange(formattedDate);
     } else {
       field.onChange(""); // Clear the value if the date is removed

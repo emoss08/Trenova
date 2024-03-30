@@ -37,7 +37,7 @@ type AccessorialCharge struct {
 	// IsDetention holds the value of the "is_detention" field.
 	IsDetention bool `json:"isDetention" validate:"omitempty"`
 	// Method holds the value of the "method" field.
-	Method accessorialcharge.Method `json:"method,omitempty"`
+	Method accessorialcharge.Method `json:"method" validate:"required,oneof=Distance Flat Percentage"`
 	// Amount holds the value of the "amount" field.
 	Amount float64 `json:"amount" validate:"required,gt=0"`
 	// Edges holds the relations/edges for other nodes in the graph.

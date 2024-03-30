@@ -92,7 +92,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 		Fields: map[string]*sqlgraph.FieldSpec{
 			accountingcontrol.FieldCreatedAt:                    {Type: field.TypeTime, Column: accountingcontrol.FieldCreatedAt},
 			accountingcontrol.FieldUpdatedAt:                    {Type: field.TypeTime, Column: accountingcontrol.FieldUpdatedAt},
-			accountingcontrol.FieldRecThreshold:                 {Type: field.TypeInt64, Column: accountingcontrol.FieldRecThreshold},
+			accountingcontrol.FieldRecThreshold:                 {Type: field.TypeInt8, Column: accountingcontrol.FieldRecThreshold},
 			accountingcontrol.FieldRecThresholdAction:           {Type: field.TypeEnum, Column: accountingcontrol.FieldRecThresholdAction},
 			accountingcontrol.FieldAutoCreateJournalEntries:     {Type: field.TypeBool, Column: accountingcontrol.FieldAutoCreateJournalEntries},
 			accountingcontrol.FieldJournalEntryCriteria:         {Type: field.TypeEnum, Column: accountingcontrol.FieldJournalEntryCriteria},
@@ -221,8 +221,8 @@ var schemaGraph = func() *sqlgraph.Schema {
 			commodity.FieldName:                {Type: field.TypeString, Column: commodity.FieldName},
 			commodity.FieldIsHazmat:            {Type: field.TypeBool, Column: commodity.FieldIsHazmat},
 			commodity.FieldUnitOfMeasure:       {Type: field.TypeString, Column: commodity.FieldUnitOfMeasure},
-			commodity.FieldMinTemp:             {Type: field.TypeInt, Column: commodity.FieldMinTemp},
-			commodity.FieldMaxTemp:             {Type: field.TypeInt, Column: commodity.FieldMaxTemp},
+			commodity.FieldMinTemp:             {Type: field.TypeInt8, Column: commodity.FieldMinTemp},
+			commodity.FieldMaxTemp:             {Type: field.TypeInt8, Column: commodity.FieldMaxTemp},
 			commodity.FieldDescription:         {Type: field.TypeString, Column: commodity.FieldDescription},
 			commodity.FieldHazardousMaterialID: {Type: field.TypeUUID, Column: commodity.FieldHazardousMaterialID},
 		},
@@ -248,7 +248,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			customer.FieldAddressLine1:        {Type: field.TypeString, Column: customer.FieldAddressLine1},
 			customer.FieldAddressLine2:        {Type: field.TypeString, Column: customer.FieldAddressLine2},
 			customer.FieldCity:                {Type: field.TypeString, Column: customer.FieldCity},
-			customer.FieldState:               {Type: field.TypeString, Column: customer.FieldState},
+			customer.FieldStateID:             {Type: field.TypeUUID, Column: customer.FieldStateID},
 			customer.FieldPostalCode:          {Type: field.TypeString, Column: customer.FieldPostalCode},
 			customer.FieldHasCustomerPortal:   {Type: field.TypeBool, Column: customer.FieldHasCustomerPortal},
 			customer.FieldAutoMarkReadyToBill: {Type: field.TypeBool, Column: customer.FieldAutoMarkReadyToBill},
@@ -290,7 +290,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			dispatchcontrol.FieldUpdatedAt:                    {Type: field.TypeTime, Column: dispatchcontrol.FieldUpdatedAt},
 			dispatchcontrol.FieldRecordServiceIncident:        {Type: field.TypeEnum, Column: dispatchcontrol.FieldRecordServiceIncident},
 			dispatchcontrol.FieldDeadheadTarget:               {Type: field.TypeFloat64, Column: dispatchcontrol.FieldDeadheadTarget},
-			dispatchcontrol.FieldMaxShipmentWeightLimit:       {Type: field.TypeInt, Column: dispatchcontrol.FieldMaxShipmentWeightLimit},
+			dispatchcontrol.FieldMaxShipmentWeightLimit:       {Type: field.TypeInt32, Column: dispatchcontrol.FieldMaxShipmentWeightLimit},
 			dispatchcontrol.FieldGracePeriod:                  {Type: field.TypeUint8, Column: dispatchcontrol.FieldGracePeriod},
 			dispatchcontrol.FieldEnforceWorkerAssign:          {Type: field.TypeBool, Column: dispatchcontrol.FieldEnforceWorkerAssign},
 			dispatchcontrol.FieldTrailerContinuity:            {Type: field.TypeBool, Column: dispatchcontrol.FieldTrailerContinuity},
@@ -381,7 +381,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			emailprofile.FieldEmail:          {Type: field.TypeString, Column: emailprofile.FieldEmail},
 			emailprofile.FieldProtocol:       {Type: field.TypeEnum, Column: emailprofile.FieldProtocol},
 			emailprofile.FieldHost:           {Type: field.TypeString, Column: emailprofile.FieldHost},
-			emailprofile.FieldPort:           {Type: field.TypeInt, Column: emailprofile.FieldPort},
+			emailprofile.FieldPort:           {Type: field.TypeInt16, Column: emailprofile.FieldPort},
 			emailprofile.FieldUsername:       {Type: field.TypeString, Column: emailprofile.FieldUsername},
 			emailprofile.FieldPassword:       {Type: field.TypeString, Column: emailprofile.FieldPassword},
 			emailprofile.FieldIsDefault:      {Type: field.TypeBool, Column: emailprofile.FieldIsDefault},
@@ -839,8 +839,8 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldTriggerName:     {Type: field.TypeString, Column: tablechangealert.FieldTriggerName},
 			tablechangealert.FieldListenerName:    {Type: field.TypeString, Column: tablechangealert.FieldListenerName},
 			tablechangealert.FieldEmailRecipients: {Type: field.TypeString, Column: tablechangealert.FieldEmailRecipients},
-			tablechangealert.FieldEffectiveDate:   {Type: field.TypeTime, Column: tablechangealert.FieldEffectiveDate},
-			tablechangealert.FieldExpirationDate:  {Type: field.TypeTime, Column: tablechangealert.FieldExpirationDate},
+			tablechangealert.FieldEffectiveDate:   {Type: field.TypeOther, Column: tablechangealert.FieldEffectiveDate},
+			tablechangealert.FieldExpirationDate:  {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
 		},
 	}
 	graph.Nodes[34] = &sqlgraph.Node{
@@ -884,10 +884,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tractor.FieldVin:                     {Type: field.TypeString, Column: tractor.FieldVin},
 			tractor.FieldEquipmentManufacturerID: {Type: field.TypeUUID, Column: tractor.FieldEquipmentManufacturerID},
 			tractor.FieldModel:                   {Type: field.TypeString, Column: tractor.FieldModel},
-			tractor.FieldYear:                    {Type: field.TypeInt, Column: tractor.FieldYear},
+			tractor.FieldYear:                    {Type: field.TypeInt16, Column: tractor.FieldYear},
 			tractor.FieldStateID:                 {Type: field.TypeUUID, Column: tractor.FieldStateID},
 			tractor.FieldLeased:                  {Type: field.TypeBool, Column: tractor.FieldLeased},
-			tractor.FieldLeasedDate:              {Type: field.TypeTime, Column: tractor.FieldLeasedDate},
+			tractor.FieldLeasedDate:              {Type: field.TypeOther, Column: tractor.FieldLeasedDate},
 			tractor.FieldPrimaryWorkerID:         {Type: field.TypeUUID, Column: tractor.FieldPrimaryWorkerID},
 			tractor.FieldSecondaryWorkerID:       {Type: field.TypeUUID, Column: tractor.FieldSecondaryWorkerID},
 			tractor.FieldFleetCodeID:             {Type: field.TypeUUID, Column: tractor.FieldFleetCodeID},
@@ -1275,6 +1275,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"Customer",
 		"Organization",
+	)
+	graph.MustAddE(
+		"state",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+		},
+		"Customer",
+		"UsState",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -2605,8 +2617,8 @@ func (f *AccountingControlFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(accountingcontrol.FieldUpdatedAt))
 }
 
-// WhereRecThreshold applies the entql int64 predicate on the rec_threshold field.
-func (f *AccountingControlFilter) WhereRecThreshold(p entql.Int64P) {
+// WhereRecThreshold applies the entql int8 predicate on the rec_threshold field.
+func (f *AccountingControlFilter) WhereRecThreshold(p entql.Int8P) {
 	f.Where(p.Field(accountingcontrol.FieldRecThreshold))
 }
 
@@ -3307,13 +3319,13 @@ func (f *CommodityFilter) WhereUnitOfMeasure(p entql.StringP) {
 	f.Where(p.Field(commodity.FieldUnitOfMeasure))
 }
 
-// WhereMinTemp applies the entql int predicate on the min_temp field.
-func (f *CommodityFilter) WhereMinTemp(p entql.IntP) {
+// WhereMinTemp applies the entql int8 predicate on the min_temp field.
+func (f *CommodityFilter) WhereMinTemp(p entql.Int8P) {
 	f.Where(p.Field(commodity.FieldMinTemp))
 }
 
-// WhereMaxTemp applies the entql int predicate on the max_temp field.
-func (f *CommodityFilter) WhereMaxTemp(p entql.IntP) {
+// WhereMaxTemp applies the entql int8 predicate on the max_temp field.
+func (f *CommodityFilter) WhereMaxTemp(p entql.Int8P) {
 	f.Where(p.Field(commodity.FieldMaxTemp))
 }
 
@@ -3459,9 +3471,9 @@ func (f *CustomerFilter) WhereCity(p entql.StringP) {
 	f.Where(p.Field(customer.FieldCity))
 }
 
-// WhereState applies the entql string predicate on the state field.
-func (f *CustomerFilter) WhereState(p entql.StringP) {
-	f.Where(p.Field(customer.FieldState))
+// WhereStateID applies the entql [16]byte predicate on the state_id field.
+func (f *CustomerFilter) WhereStateID(p entql.ValueP) {
+	f.Where(p.Field(customer.FieldStateID))
 }
 
 // WherePostalCode applies the entql string predicate on the postal_code field.
@@ -3501,6 +3513,20 @@ func (f *CustomerFilter) WhereHasOrganization() {
 // WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
 func (f *CustomerFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
 	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasState applies a predicate to check if query has an edge state.
+func (f *CustomerFilter) WhereHasState() {
+	f.Where(entql.HasEdge("state"))
+}
+
+// WhereHasStateWith applies a predicate to check if query has an edge state with a given conditions (other predicates).
+func (f *CustomerFilter) WhereHasStateWith(preds ...predicate.UsState) {
+	f.Where(entql.HasEdgeWith("state", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -3675,8 +3701,8 @@ func (f *DispatchControlFilter) WhereDeadheadTarget(p entql.Float64P) {
 	f.Where(p.Field(dispatchcontrol.FieldDeadheadTarget))
 }
 
-// WhereMaxShipmentWeightLimit applies the entql int predicate on the max_shipment_weight_limit field.
-func (f *DispatchControlFilter) WhereMaxShipmentWeightLimit(p entql.IntP) {
+// WhereMaxShipmentWeightLimit applies the entql int32 predicate on the max_shipment_weight_limit field.
+func (f *DispatchControlFilter) WhereMaxShipmentWeightLimit(p entql.Int32P) {
 	f.Where(p.Field(dispatchcontrol.FieldMaxShipmentWeightLimit))
 }
 
@@ -4212,8 +4238,8 @@ func (f *EmailProfileFilter) WhereHost(p entql.StringP) {
 	f.Where(p.Field(emailprofile.FieldHost))
 }
 
-// WherePort applies the entql int predicate on the port field.
-func (f *EmailProfileFilter) WherePort(p entql.IntP) {
+// WherePort applies the entql int16 predicate on the port field.
+func (f *EmailProfileFilter) WherePort(p entql.Int16P) {
 	f.Where(p.Field(emailprofile.FieldPort))
 }
 
@@ -6702,13 +6728,13 @@ func (f *TableChangeAlertFilter) WhereEmailRecipients(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldEmailRecipients))
 }
 
-// WhereEffectiveDate applies the entql time.Time predicate on the effective_date field.
-func (f *TableChangeAlertFilter) WhereEffectiveDate(p entql.TimeP) {
+// WhereEffectiveDate applies the entql other predicate on the effective_date field.
+func (f *TableChangeAlertFilter) WhereEffectiveDate(p entql.OtherP) {
 	f.Where(p.Field(tablechangealert.FieldEffectiveDate))
 }
 
-// WhereExpirationDate applies the entql time.Time predicate on the expiration_date field.
-func (f *TableChangeAlertFilter) WhereExpirationDate(p entql.TimeP) {
+// WhereExpirationDate applies the entql other predicate on the expiration_date field.
+func (f *TableChangeAlertFilter) WhereExpirationDate(p entql.OtherP) {
 	f.Where(p.Field(tablechangealert.FieldExpirationDate))
 }
 
@@ -6933,8 +6959,8 @@ func (f *TractorFilter) WhereModel(p entql.StringP) {
 	f.Where(p.Field(tractor.FieldModel))
 }
 
-// WhereYear applies the entql int predicate on the year field.
-func (f *TractorFilter) WhereYear(p entql.IntP) {
+// WhereYear applies the entql int16 predicate on the year field.
+func (f *TractorFilter) WhereYear(p entql.Int16P) {
 	f.Where(p.Field(tractor.FieldYear))
 }
 
@@ -6948,8 +6974,8 @@ func (f *TractorFilter) WhereLeased(p entql.BoolP) {
 	f.Where(p.Field(tractor.FieldLeased))
 }
 
-// WhereLeasedDate applies the entql time.Time predicate on the leased_date field.
-func (f *TractorFilter) WhereLeasedDate(p entql.TimeP) {
+// WhereLeasedDate applies the entql other predicate on the leased_date field.
+func (f *TractorFilter) WhereLeasedDate(p entql.OtherP) {
 	f.Where(p.Field(tractor.FieldLeasedDate))
 }
 

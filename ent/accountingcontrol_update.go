@@ -40,14 +40,14 @@ func (acu *AccountingControlUpdate) SetUpdatedAt(t time.Time) *AccountingControl
 }
 
 // SetRecThreshold sets the "rec_threshold" field.
-func (acu *AccountingControlUpdate) SetRecThreshold(i int64) *AccountingControlUpdate {
+func (acu *AccountingControlUpdate) SetRecThreshold(i int8) *AccountingControlUpdate {
 	acu.mutation.ResetRecThreshold()
 	acu.mutation.SetRecThreshold(i)
 	return acu
 }
 
 // SetNillableRecThreshold sets the "rec_threshold" field if the given value is not nil.
-func (acu *AccountingControlUpdate) SetNillableRecThreshold(i *int64) *AccountingControlUpdate {
+func (acu *AccountingControlUpdate) SetNillableRecThreshold(i *int8) *AccountingControlUpdate {
 	if i != nil {
 		acu.SetRecThreshold(*i)
 	}
@@ -55,7 +55,7 @@ func (acu *AccountingControlUpdate) SetNillableRecThreshold(i *int64) *Accountin
 }
 
 // AddRecThreshold adds i to the "rec_threshold" field.
-func (acu *AccountingControlUpdate) AddRecThreshold(i int64) *AccountingControlUpdate {
+func (acu *AccountingControlUpdate) AddRecThreshold(i int8) *AccountingControlUpdate {
 	acu.mutation.AddRecThreshold(i)
 	return acu
 }
@@ -363,10 +363,10 @@ func (acu *AccountingControlUpdate) sqlSave(ctx context.Context) (n int, err err
 		_spec.SetField(accountingcontrol.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := acu.mutation.RecThreshold(); ok {
-		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt64, value)
+		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt8, value)
 	}
 	if value, ok := acu.mutation.AddedRecThreshold(); ok {
-		_spec.AddField(accountingcontrol.FieldRecThreshold, field.TypeInt64, value)
+		_spec.AddField(accountingcontrol.FieldRecThreshold, field.TypeInt8, value)
 	}
 	if value, ok := acu.mutation.RecThresholdAction(); ok {
 		_spec.SetField(accountingcontrol.FieldRecThresholdAction, field.TypeEnum, value)
@@ -540,14 +540,14 @@ func (acuo *AccountingControlUpdateOne) SetUpdatedAt(t time.Time) *AccountingCon
 }
 
 // SetRecThreshold sets the "rec_threshold" field.
-func (acuo *AccountingControlUpdateOne) SetRecThreshold(i int64) *AccountingControlUpdateOne {
+func (acuo *AccountingControlUpdateOne) SetRecThreshold(i int8) *AccountingControlUpdateOne {
 	acuo.mutation.ResetRecThreshold()
 	acuo.mutation.SetRecThreshold(i)
 	return acuo
 }
 
 // SetNillableRecThreshold sets the "rec_threshold" field if the given value is not nil.
-func (acuo *AccountingControlUpdateOne) SetNillableRecThreshold(i *int64) *AccountingControlUpdateOne {
+func (acuo *AccountingControlUpdateOne) SetNillableRecThreshold(i *int8) *AccountingControlUpdateOne {
 	if i != nil {
 		acuo.SetRecThreshold(*i)
 	}
@@ -555,7 +555,7 @@ func (acuo *AccountingControlUpdateOne) SetNillableRecThreshold(i *int64) *Accou
 }
 
 // AddRecThreshold adds i to the "rec_threshold" field.
-func (acuo *AccountingControlUpdateOne) AddRecThreshold(i int64) *AccountingControlUpdateOne {
+func (acuo *AccountingControlUpdateOne) AddRecThreshold(i int8) *AccountingControlUpdateOne {
 	acuo.mutation.AddRecThreshold(i)
 	return acuo
 }
@@ -893,10 +893,10 @@ func (acuo *AccountingControlUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 		_spec.SetField(accountingcontrol.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := acuo.mutation.RecThreshold(); ok {
-		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt64, value)
+		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt8, value)
 	}
 	if value, ok := acuo.mutation.AddedRecThreshold(); ok {
-		_spec.AddField(accountingcontrol.FieldRecThreshold, field.TypeInt64, value)
+		_spec.AddField(accountingcontrol.FieldRecThreshold, field.TypeInt8, value)
 	}
 	if value, ok := acuo.mutation.RecThresholdAction(); ok {
 		_spec.SetField(accountingcontrol.FieldRecThresholdAction, field.TypeEnum, value)

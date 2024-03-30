@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/tools"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Tractor holds the schema definition for the Tractor entity.
@@ -26,10 +28,18 @@ func (Tractor) Fields() []ent.Field {
 		field.String("code").
 			NotEmpty().
 			MaxLen(50).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(50)",
+				dialect.SQLite:   "VARCHAR(50)",
+			}).
 			StructTag(`json:"code" validate:"required,max=50"`),
 		field.Enum("status").
 			Values("Available", "OutOfService", "AtMaintenance", "Sold", "Lost").
 			Default("Available").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(13)",
+				dialect.SQLite:   "VARCHAR(13)",
+			}).
 			StructTag(`json:"status" validate:"required,oneof=Available OutOfService AtMaintenance Sold Lost"`),
 		field.UUID("equipment_type_id", uuid.UUID{}).
 			Optional().
@@ -38,11 +48,18 @@ func (Tractor) Fields() []ent.Field {
 		field.String("license_plate_number").
 			MaxLen(50).
 			Optional().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(50)",
+				dialect.SQLite:   "VARCHAR(50)",
+			}).
 			StructTag(`json:"licensePlateNumber" validate:"omitempty,max=50"`),
 		field.String("vin").
 			// Match(regexp.MustCompile("^[0-9A-HJ-NPR-Z]{17}$")). // VIN regex.
-			MaxLen(17).
 			Optional().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(17)",
+				dialect.SQLite:   "VARCHAR(17)",
+			}).
 			StructTag(`json:"vin" validate:"omitempty,alphanum,len=17"`),
 		field.UUID("equipment_manufacturer_id", uuid.UUID{}).
 			Optional().
@@ -51,8 +68,12 @@ func (Tractor) Fields() []ent.Field {
 		field.String("model").
 			MaxLen(50).
 			Optional().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(50)",
+				dialect.SQLite:   "VARCHAR(50)",
+			}).
 			StructTag(`json:"model" validate:"omitempty,max=50"`),
-		field.Int("year").
+		field.Int16("year").
 			Positive().
 			Nillable().
 			Optional().
@@ -64,9 +85,13 @@ func (Tractor) Fields() []ent.Field {
 		field.Bool("leased").
 			Default(false).
 			StructTag(`json:"leased" validate:"omitempty"`),
-		field.Time("leased_date").
+		field.Other("leased_date", &pgtype.Date{}).
 			Optional().
 			Nillable().
+			SchemaType(map[string]string{
+				dialect.Postgres: "date",
+				dialect.SQLite:   "date",
+			}).
 			StructTag(`json:"leasedDate" validate:"omitempty"`),
 		field.UUID("primary_worker_id", uuid.UUID{}).
 			StructTag(`json:"primaryWorkerId" validate:"omitempty,uuid"`),

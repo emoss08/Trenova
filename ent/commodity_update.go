@@ -100,14 +100,14 @@ func (cu *CommodityUpdate) ClearUnitOfMeasure() *CommodityUpdate {
 }
 
 // SetMinTemp sets the "min_temp" field.
-func (cu *CommodityUpdate) SetMinTemp(i int) *CommodityUpdate {
+func (cu *CommodityUpdate) SetMinTemp(i int8) *CommodityUpdate {
 	cu.mutation.ResetMinTemp()
 	cu.mutation.SetMinTemp(i)
 	return cu
 }
 
 // SetNillableMinTemp sets the "min_temp" field if the given value is not nil.
-func (cu *CommodityUpdate) SetNillableMinTemp(i *int) *CommodityUpdate {
+func (cu *CommodityUpdate) SetNillableMinTemp(i *int8) *CommodityUpdate {
 	if i != nil {
 		cu.SetMinTemp(*i)
 	}
@@ -115,7 +115,7 @@ func (cu *CommodityUpdate) SetNillableMinTemp(i *int) *CommodityUpdate {
 }
 
 // AddMinTemp adds i to the "min_temp" field.
-func (cu *CommodityUpdate) AddMinTemp(i int) *CommodityUpdate {
+func (cu *CommodityUpdate) AddMinTemp(i int8) *CommodityUpdate {
 	cu.mutation.AddMinTemp(i)
 	return cu
 }
@@ -127,14 +127,14 @@ func (cu *CommodityUpdate) ClearMinTemp() *CommodityUpdate {
 }
 
 // SetMaxTemp sets the "max_temp" field.
-func (cu *CommodityUpdate) SetMaxTemp(i int) *CommodityUpdate {
+func (cu *CommodityUpdate) SetMaxTemp(i int8) *CommodityUpdate {
 	cu.mutation.ResetMaxTemp()
 	cu.mutation.SetMaxTemp(i)
 	return cu
 }
 
 // SetNillableMaxTemp sets the "max_temp" field if the given value is not nil.
-func (cu *CommodityUpdate) SetNillableMaxTemp(i *int) *CommodityUpdate {
+func (cu *CommodityUpdate) SetNillableMaxTemp(i *int8) *CommodityUpdate {
 	if i != nil {
 		cu.SetMaxTemp(*i)
 	}
@@ -142,7 +142,7 @@ func (cu *CommodityUpdate) SetNillableMaxTemp(i *int) *CommodityUpdate {
 }
 
 // AddMaxTemp adds i to the "max_temp" field.
-func (cu *CommodityUpdate) AddMaxTemp(i int) *CommodityUpdate {
+func (cu *CommodityUpdate) AddMaxTemp(i int8) *CommodityUpdate {
 	cu.mutation.AddMaxTemp(i)
 	return cu
 }
@@ -303,22 +303,22 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(commodity.FieldUnitOfMeasure, field.TypeString)
 	}
 	if value, ok := cu.mutation.MinTemp(); ok {
-		_spec.SetField(commodity.FieldMinTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMinTemp, field.TypeInt8, value)
 	}
 	if value, ok := cu.mutation.AddedMinTemp(); ok {
-		_spec.AddField(commodity.FieldMinTemp, field.TypeInt, value)
+		_spec.AddField(commodity.FieldMinTemp, field.TypeInt8, value)
 	}
 	if cu.mutation.MinTempCleared() {
-		_spec.ClearField(commodity.FieldMinTemp, field.TypeInt)
+		_spec.ClearField(commodity.FieldMinTemp, field.TypeInt8)
 	}
 	if value, ok := cu.mutation.MaxTemp(); ok {
-		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt8, value)
 	}
 	if value, ok := cu.mutation.AddedMaxTemp(); ok {
-		_spec.AddField(commodity.FieldMaxTemp, field.TypeInt, value)
+		_spec.AddField(commodity.FieldMaxTemp, field.TypeInt8, value)
 	}
 	if cu.mutation.MaxTempCleared() {
-		_spec.ClearField(commodity.FieldMaxTemp, field.TypeInt)
+		_spec.ClearField(commodity.FieldMaxTemp, field.TypeInt8)
 	}
 	if value, ok := cu.mutation.Description(); ok {
 		_spec.SetField(commodity.FieldDescription, field.TypeString, value)
@@ -446,14 +446,14 @@ func (cuo *CommodityUpdateOne) ClearUnitOfMeasure() *CommodityUpdateOne {
 }
 
 // SetMinTemp sets the "min_temp" field.
-func (cuo *CommodityUpdateOne) SetMinTemp(i int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) SetMinTemp(i int8) *CommodityUpdateOne {
 	cuo.mutation.ResetMinTemp()
 	cuo.mutation.SetMinTemp(i)
 	return cuo
 }
 
 // SetNillableMinTemp sets the "min_temp" field if the given value is not nil.
-func (cuo *CommodityUpdateOne) SetNillableMinTemp(i *int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) SetNillableMinTemp(i *int8) *CommodityUpdateOne {
 	if i != nil {
 		cuo.SetMinTemp(*i)
 	}
@@ -461,7 +461,7 @@ func (cuo *CommodityUpdateOne) SetNillableMinTemp(i *int) *CommodityUpdateOne {
 }
 
 // AddMinTemp adds i to the "min_temp" field.
-func (cuo *CommodityUpdateOne) AddMinTemp(i int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) AddMinTemp(i int8) *CommodityUpdateOne {
 	cuo.mutation.AddMinTemp(i)
 	return cuo
 }
@@ -473,14 +473,14 @@ func (cuo *CommodityUpdateOne) ClearMinTemp() *CommodityUpdateOne {
 }
 
 // SetMaxTemp sets the "max_temp" field.
-func (cuo *CommodityUpdateOne) SetMaxTemp(i int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) SetMaxTemp(i int8) *CommodityUpdateOne {
 	cuo.mutation.ResetMaxTemp()
 	cuo.mutation.SetMaxTemp(i)
 	return cuo
 }
 
 // SetNillableMaxTemp sets the "max_temp" field if the given value is not nil.
-func (cuo *CommodityUpdateOne) SetNillableMaxTemp(i *int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) SetNillableMaxTemp(i *int8) *CommodityUpdateOne {
 	if i != nil {
 		cuo.SetMaxTemp(*i)
 	}
@@ -488,7 +488,7 @@ func (cuo *CommodityUpdateOne) SetNillableMaxTemp(i *int) *CommodityUpdateOne {
 }
 
 // AddMaxTemp adds i to the "max_temp" field.
-func (cuo *CommodityUpdateOne) AddMaxTemp(i int) *CommodityUpdateOne {
+func (cuo *CommodityUpdateOne) AddMaxTemp(i int8) *CommodityUpdateOne {
 	cuo.mutation.AddMaxTemp(i)
 	return cuo
 }
@@ -679,22 +679,22 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 		_spec.ClearField(commodity.FieldUnitOfMeasure, field.TypeString)
 	}
 	if value, ok := cuo.mutation.MinTemp(); ok {
-		_spec.SetField(commodity.FieldMinTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMinTemp, field.TypeInt8, value)
 	}
 	if value, ok := cuo.mutation.AddedMinTemp(); ok {
-		_spec.AddField(commodity.FieldMinTemp, field.TypeInt, value)
+		_spec.AddField(commodity.FieldMinTemp, field.TypeInt8, value)
 	}
 	if cuo.mutation.MinTempCleared() {
-		_spec.ClearField(commodity.FieldMinTemp, field.TypeInt)
+		_spec.ClearField(commodity.FieldMinTemp, field.TypeInt8)
 	}
 	if value, ok := cuo.mutation.MaxTemp(); ok {
-		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt8, value)
 	}
 	if value, ok := cuo.mutation.AddedMaxTemp(); ok {
-		_spec.AddField(commodity.FieldMaxTemp, field.TypeInt, value)
+		_spec.AddField(commodity.FieldMaxTemp, field.TypeInt8, value)
 	}
 	if cuo.mutation.MaxTempCleared() {
-		_spec.ClearField(commodity.FieldMaxTemp, field.TypeInt)
+		_spec.ClearField(commodity.FieldMaxTemp, field.TypeInt8)
 	}
 	if value, ok := cuo.mutation.Description(); ok {
 		_spec.SetField(commodity.FieldDescription, field.TypeString, value)

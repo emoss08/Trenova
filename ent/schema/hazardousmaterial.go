@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 )
 
@@ -20,6 +21,10 @@ func (HazardousMaterial) Fields() []ent.Field {
 		field.String("name").
 			MaxLen(100).
 			NotEmpty().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(100)",
+				dialect.SQLite:   "VARCHAR(100)",
+			}).
 			StructTag(`json:"name"`),
 		field.Enum("hazard_class").
 			Values("HazardClass1And1",
@@ -43,10 +48,13 @@ func (HazardousMaterial) Fields() []ent.Field {
 				"HazardClass8",
 				"HazardClass9").
 			Default("HazardClass1And1").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(16)",
+				dialect.SQLite:   "VARCHAR(16)",
+			}).
 			StructTag(`json:"hazardClass" validate:"required"`),
 		field.String("erg_number").
 			Optional().
-			MaxLen(255).
 			StructTag(`json:"ergNumber" validate:"omitempty"`),
 		field.Text("description").
 			Optional().

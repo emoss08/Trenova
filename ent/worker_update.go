@@ -407,11 +407,6 @@ func (wu *WorkerUpdate) check() error {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Worker.last_name": %w`, err)}
 		}
 	}
-	if v, ok := wu.mutation.City(); ok {
-		if err := worker.CityValidator(v); err != nil {
-			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Worker.city": %w`, err)}
-		}
-	}
 	if v, ok := wu.mutation.PostalCode(); ok {
 		if err := worker.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Worker.postal_code": %w`, err)}
@@ -1059,11 +1054,6 @@ func (wuo *WorkerUpdateOne) check() error {
 	if v, ok := wuo.mutation.LastName(); ok {
 		if err := worker.LastNameValidator(v); err != nil {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Worker.last_name": %w`, err)}
-		}
-	}
-	if v, ok := wuo.mutation.City(); ok {
-		if err := worker.CityValidator(v); err != nil {
-			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Worker.city": %w`, err)}
 		}
 	}
 	if v, ok := wuo.mutation.PostalCode(); ok {

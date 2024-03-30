@@ -37,8 +37,8 @@ const (
 	FieldAddressLine2 = "address_line_2"
 	// FieldCity holds the string denoting the city field in the database.
 	FieldCity = "city"
-	// FieldState holds the string denoting the state field in the database.
-	FieldState = "state"
+	// FieldStateID holds the string denoting the state_id field in the database.
+	FieldStateID = "state_id"
 	// FieldPostalCode holds the string denoting the postal_code field in the database.
 	FieldPostalCode = "postal_code"
 	// FieldHasCustomerPortal holds the string denoting the has_customer_portal field in the database.
@@ -49,6 +49,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
+	// EdgeState holds the string denoting the state edge name in mutations.
+	EdgeState = "state"
 	// Table holds the table name of the customer in the database.
 	Table = "customers"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -65,6 +67,13 @@ const (
 	OrganizationInverseTable = "organizations"
 	// OrganizationColumn is the table column denoting the organization relation/edge.
 	OrganizationColumn = "organization_id"
+	// StateTable is the table that holds the state relation/edge.
+	StateTable = "customers"
+	// StateInverseTable is the table name for the UsState entity.
+	// It exists in this package in order to avoid circular dependency with the "usstate" package.
+	StateInverseTable = "us_states"
+	// StateColumn is the table column denoting the state relation/edge.
+	StateColumn = "state_id"
 )
 
 // Columns holds all SQL columns for customer fields.
@@ -80,7 +89,7 @@ var Columns = []string{
 	FieldAddressLine1,
 	FieldAddressLine2,
 	FieldCity,
-	FieldState,
+	FieldStateID,
 	FieldPostalCode,
 	FieldHasCustomerPortal,
 	FieldAutoMarkReadyToBill,
@@ -119,8 +128,6 @@ var (
 	AddressLine2Validator func(string) error
 	// CityValidator is a validator for the "city" field. It is called by the builders before save.
 	CityValidator func(string) error
-	// StateValidator is a validator for the "state" field. It is called by the builders before save.
-	StateValidator func(string) error
 	// PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
 	PostalCodeValidator func(string) error
 	// DefaultHasCustomerPortal holds the default value on creation for the "has_customer_portal" field.
@@ -215,9 +222,9 @@ func ByCity(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCity, opts...).ToFunc()
 }
 
-// ByState orders the results by the state field.
-func ByState(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldState, opts...).ToFunc()
+// ByStateID orders the results by the state_id field.
+func ByStateID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStateID, opts...).ToFunc()
 }
 
 // ByPostalCode orders the results by the postal_code field.
@@ -248,6 +255,13 @@ func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByStateField orders the results by state field.
+func ByStateField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -260,5 +274,12 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
+}
+func newStateStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, StateTable, StateColumn),
 	)
 }

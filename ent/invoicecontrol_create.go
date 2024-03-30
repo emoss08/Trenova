@@ -346,11 +346,6 @@ func (icc *InvoiceControlCreate) check() error {
 			return &ValidationError{Name: "credit_memo_number_prefix", err: fmt.Errorf(`ent: validator failed for field "InvoiceControl.credit_memo_number_prefix": %w`, err)}
 		}
 	}
-	if v, ok := icc.mutation.InvoiceLogoURL(); ok {
-		if err := invoicecontrol.InvoiceLogoURLValidator(v); err != nil {
-			return &ValidationError{Name: "invoice_logo_url", err: fmt.Errorf(`ent: validator failed for field "InvoiceControl.invoice_logo_url": %w`, err)}
-		}
-	}
 	if _, ok := icc.mutation.InvoiceDateFormat(); !ok {
 		return &ValidationError{Name: "invoice_date_format", err: errors.New(`ent: missing required field "InvoiceControl.invoice_date_format"`)}
 	}

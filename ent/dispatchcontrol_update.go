@@ -74,14 +74,14 @@ func (dcu *DispatchControlUpdate) AddDeadheadTarget(f float64) *DispatchControlU
 }
 
 // SetMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field.
-func (dcu *DispatchControlUpdate) SetMaxShipmentWeightLimit(i int) *DispatchControlUpdate {
+func (dcu *DispatchControlUpdate) SetMaxShipmentWeightLimit(i int32) *DispatchControlUpdate {
 	dcu.mutation.ResetMaxShipmentWeightLimit()
 	dcu.mutation.SetMaxShipmentWeightLimit(i)
 	return dcu
 }
 
 // SetNillableMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field if the given value is not nil.
-func (dcu *DispatchControlUpdate) SetNillableMaxShipmentWeightLimit(i *int) *DispatchControlUpdate {
+func (dcu *DispatchControlUpdate) SetNillableMaxShipmentWeightLimit(i *int32) *DispatchControlUpdate {
 	if i != nil {
 		dcu.SetMaxShipmentWeightLimit(*i)
 	}
@@ -89,7 +89,7 @@ func (dcu *DispatchControlUpdate) SetNillableMaxShipmentWeightLimit(i *int) *Dis
 }
 
 // AddMaxShipmentWeightLimit adds i to the "max_shipment_weight_limit" field.
-func (dcu *DispatchControlUpdate) AddMaxShipmentWeightLimit(i int) *DispatchControlUpdate {
+func (dcu *DispatchControlUpdate) AddMaxShipmentWeightLimit(i int32) *DispatchControlUpdate {
 	dcu.mutation.AddMaxShipmentWeightLimit(i)
 	return dcu
 }
@@ -354,10 +354,10 @@ func (dcu *DispatchControlUpdate) sqlSave(ctx context.Context) (n int, err error
 		_spec.AddField(dispatchcontrol.FieldDeadheadTarget, field.TypeFloat64, value)
 	}
 	if value, ok := dcu.mutation.MaxShipmentWeightLimit(); ok {
-		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt, value)
+		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt32, value)
 	}
 	if value, ok := dcu.mutation.AddedMaxShipmentWeightLimit(); ok {
-		_spec.AddField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt, value)
+		_spec.AddField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt32, value)
 	}
 	if value, ok := dcu.mutation.GracePeriod(); ok {
 		_spec.SetField(dispatchcontrol.FieldGracePeriod, field.TypeUint8, value)
@@ -511,14 +511,14 @@ func (dcuo *DispatchControlUpdateOne) AddDeadheadTarget(f float64) *DispatchCont
 }
 
 // SetMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field.
-func (dcuo *DispatchControlUpdateOne) SetMaxShipmentWeightLimit(i int) *DispatchControlUpdateOne {
+func (dcuo *DispatchControlUpdateOne) SetMaxShipmentWeightLimit(i int32) *DispatchControlUpdateOne {
 	dcuo.mutation.ResetMaxShipmentWeightLimit()
 	dcuo.mutation.SetMaxShipmentWeightLimit(i)
 	return dcuo
 }
 
 // SetNillableMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field if the given value is not nil.
-func (dcuo *DispatchControlUpdateOne) SetNillableMaxShipmentWeightLimit(i *int) *DispatchControlUpdateOne {
+func (dcuo *DispatchControlUpdateOne) SetNillableMaxShipmentWeightLimit(i *int32) *DispatchControlUpdateOne {
 	if i != nil {
 		dcuo.SetMaxShipmentWeightLimit(*i)
 	}
@@ -526,7 +526,7 @@ func (dcuo *DispatchControlUpdateOne) SetNillableMaxShipmentWeightLimit(i *int) 
 }
 
 // AddMaxShipmentWeightLimit adds i to the "max_shipment_weight_limit" field.
-func (dcuo *DispatchControlUpdateOne) AddMaxShipmentWeightLimit(i int) *DispatchControlUpdateOne {
+func (dcuo *DispatchControlUpdateOne) AddMaxShipmentWeightLimit(i int32) *DispatchControlUpdateOne {
 	dcuo.mutation.AddMaxShipmentWeightLimit(i)
 	return dcuo
 }
@@ -821,10 +821,10 @@ func (dcuo *DispatchControlUpdateOne) sqlSave(ctx context.Context) (_node *Dispa
 		_spec.AddField(dispatchcontrol.FieldDeadheadTarget, field.TypeFloat64, value)
 	}
 	if value, ok := dcuo.mutation.MaxShipmentWeightLimit(); ok {
-		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt, value)
+		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt32, value)
 	}
 	if value, ok := dcuo.mutation.AddedMaxShipmentWeightLimit(); ok {
-		_spec.AddField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt, value)
+		_spec.AddField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt32, value)
 	}
 	if value, ok := dcuo.mutation.GracePeriod(); ok {
 		_spec.SetField(dispatchcontrol.FieldGracePeriod, field.TypeUint8, value)

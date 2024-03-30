@@ -80,13 +80,13 @@ func (dcc *DispatchControlCreate) SetNillableDeadheadTarget(f *float64) *Dispatc
 }
 
 // SetMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field.
-func (dcc *DispatchControlCreate) SetMaxShipmentWeightLimit(i int) *DispatchControlCreate {
+func (dcc *DispatchControlCreate) SetMaxShipmentWeightLimit(i int32) *DispatchControlCreate {
 	dcc.mutation.SetMaxShipmentWeightLimit(i)
 	return dcc
 }
 
 // SetNillableMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field if the given value is not nil.
-func (dcc *DispatchControlCreate) SetNillableMaxShipmentWeightLimit(i *int) *DispatchControlCreate {
+func (dcc *DispatchControlCreate) SetNillableMaxShipmentWeightLimit(i *int32) *DispatchControlCreate {
 	if i != nil {
 		dcc.SetMaxShipmentWeightLimit(*i)
 	}
@@ -464,7 +464,7 @@ func (dcc *DispatchControlCreate) createSpec() (*DispatchControl, *sqlgraph.Crea
 		_node.DeadheadTarget = value
 	}
 	if value, ok := dcc.mutation.MaxShipmentWeightLimit(); ok {
-		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt, value)
+		_spec.SetField(dispatchcontrol.FieldMaxShipmentWeightLimit, field.TypeInt32, value)
 		_node.MaxShipmentWeightLimit = value
 	}
 	if value, ok := dcc.mutation.GracePeriod(); ok {

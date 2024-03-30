@@ -165,8 +165,6 @@ var (
 	FirstNameValidator func(string) error
 	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	LastNameValidator func(string) error
-	// CityValidator is a validator for the "city" field. It is called by the builders before save.
-	CityValidator func(string) error
 	// PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
 	PostalCodeValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.

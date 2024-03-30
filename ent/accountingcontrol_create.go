@@ -53,13 +53,13 @@ func (acc *AccountingControlCreate) SetNillableUpdatedAt(t *time.Time) *Accounti
 }
 
 // SetRecThreshold sets the "rec_threshold" field.
-func (acc *AccountingControlCreate) SetRecThreshold(i int64) *AccountingControlCreate {
+func (acc *AccountingControlCreate) SetRecThreshold(i int8) *AccountingControlCreate {
 	acc.mutation.SetRecThreshold(i)
 	return acc
 }
 
 // SetNillableRecThreshold sets the "rec_threshold" field if the given value is not nil.
-func (acc *AccountingControlCreate) SetNillableRecThreshold(i *int64) *AccountingControlCreate {
+func (acc *AccountingControlCreate) SetNillableRecThreshold(i *int8) *AccountingControlCreate {
 	if i != nil {
 		acc.SetRecThreshold(*i)
 	}
@@ -430,7 +430,7 @@ func (acc *AccountingControlCreate) createSpec() (*AccountingControl, *sqlgraph.
 		_node.UpdatedAt = value
 	}
 	if value, ok := acc.mutation.RecThreshold(); ok {
-		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt64, value)
+		_spec.SetField(accountingcontrol.FieldRecThreshold, field.TypeInt8, value)
 		_node.RecThreshold = value
 	}
 	if value, ok := acc.mutation.RecThresholdAction(); ok {

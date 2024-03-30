@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -24,6 +25,10 @@ func (Worker) Fields() []ent.Field {
 		field.String("code").
 			NotEmpty().
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"code" validate:"required,max=10"`),
 		field.String("profile_picture_url").
 			Optional().
@@ -34,19 +39,20 @@ func (Worker) Fields() []ent.Field {
 			StructTag(`json:"workerType" validate:"required,oneof=Employee Contractor"`),
 		field.String("first_name").
 			NotEmpty().
-			MaxLen(255).
 			StructTag(`json:"firstName" validate:"required,max=255"`),
 		field.String("last_name").
 			NotEmpty().
-			MaxLen(255).
 			StructTag(`json:"lastName" validate:"required,max=255"`),
 		field.String("city").
 			Optional().
-			MaxLen(255).
 			StructTag(`json:"city" validate:"omitempty,max=255"`),
 		field.String("postal_code").
 			Optional().
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"postalCode" validate:"omitempty,max=10"`),
 		field.UUID("state_id", uuid.UUID{}).
 			Optional().

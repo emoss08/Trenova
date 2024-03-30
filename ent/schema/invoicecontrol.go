@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -18,10 +19,18 @@ func (InvoiceControl) Fields() []ent.Field {
 		field.String("invoice_number_prefix").
 			Default("INV-").
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"invoiceNumberPrefix"`),
 		field.String("credit_memo_number_prefix").
 			Default("CM-").
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"creditMemoNumberPrefix"`),
 		field.Text("invoice_terms").
 			Optional().
@@ -31,7 +40,6 @@ func (InvoiceControl) Fields() []ent.Field {
 			StructTag(`json:"invoiceFooter"`),
 		field.String("invoice_logo_url").
 			Optional().
-			MaxLen(255).
 			StructTag(`json:"invoiceLogoUrl"`),
 		field.Enum("invoice_date_format").
 			Values("InvoiceDateFormatMDY", "InvoiceDateFormatDMY", "InvoiceDateFormatYMD", "InvoiceDateFormatYDM").

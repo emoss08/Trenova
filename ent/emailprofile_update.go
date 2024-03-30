@@ -104,14 +104,14 @@ func (epu *EmailProfileUpdate) ClearHost() *EmailProfileUpdate {
 }
 
 // SetPort sets the "port" field.
-func (epu *EmailProfileUpdate) SetPort(i int) *EmailProfileUpdate {
+func (epu *EmailProfileUpdate) SetPort(i int16) *EmailProfileUpdate {
 	epu.mutation.ResetPort()
 	epu.mutation.SetPort(i)
 	return epu
 }
 
 // SetNillablePort sets the "port" field if the given value is not nil.
-func (epu *EmailProfileUpdate) SetNillablePort(i *int) *EmailProfileUpdate {
+func (epu *EmailProfileUpdate) SetNillablePort(i *int16) *EmailProfileUpdate {
 	if i != nil {
 		epu.SetPort(*i)
 	}
@@ -119,7 +119,7 @@ func (epu *EmailProfileUpdate) SetNillablePort(i *int) *EmailProfileUpdate {
 }
 
 // AddPort adds i to the "port" field.
-func (epu *EmailProfileUpdate) AddPort(i int) *EmailProfileUpdate {
+func (epu *EmailProfileUpdate) AddPort(i int16) *EmailProfileUpdate {
 	epu.mutation.AddPort(i)
 	return epu
 }
@@ -248,21 +248,6 @@ func (epu *EmailProfileUpdate) check() error {
 			return &ValidationError{Name: "protocol", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.protocol": %w`, err)}
 		}
 	}
-	if v, ok := epu.mutation.Host(); ok {
-		if err := emailprofile.HostValidator(v); err != nil {
-			return &ValidationError{Name: "host", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.host": %w`, err)}
-		}
-	}
-	if v, ok := epu.mutation.Username(); ok {
-		if err := emailprofile.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.username": %w`, err)}
-		}
-	}
-	if v, ok := epu.mutation.Password(); ok {
-		if err := emailprofile.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.password": %w`, err)}
-		}
-	}
 	if _, ok := epu.mutation.BusinessUnitID(); epu.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "EmailProfile.business_unit"`)
 	}
@@ -312,13 +297,13 @@ func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(emailprofile.FieldHost, field.TypeString)
 	}
 	if value, ok := epu.mutation.Port(); ok {
-		_spec.SetField(emailprofile.FieldPort, field.TypeInt, value)
+		_spec.SetField(emailprofile.FieldPort, field.TypeInt16, value)
 	}
 	if value, ok := epu.mutation.AddedPort(); ok {
-		_spec.AddField(emailprofile.FieldPort, field.TypeInt, value)
+		_spec.AddField(emailprofile.FieldPort, field.TypeInt16, value)
 	}
 	if epu.mutation.PortCleared() {
-		_spec.ClearField(emailprofile.FieldPort, field.TypeInt)
+		_spec.ClearField(emailprofile.FieldPort, field.TypeInt16)
 	}
 	if value, ok := epu.mutation.Username(); ok {
 		_spec.SetField(emailprofile.FieldUsername, field.TypeString, value)
@@ -432,14 +417,14 @@ func (epuo *EmailProfileUpdateOne) ClearHost() *EmailProfileUpdateOne {
 }
 
 // SetPort sets the "port" field.
-func (epuo *EmailProfileUpdateOne) SetPort(i int) *EmailProfileUpdateOne {
+func (epuo *EmailProfileUpdateOne) SetPort(i int16) *EmailProfileUpdateOne {
 	epuo.mutation.ResetPort()
 	epuo.mutation.SetPort(i)
 	return epuo
 }
 
 // SetNillablePort sets the "port" field if the given value is not nil.
-func (epuo *EmailProfileUpdateOne) SetNillablePort(i *int) *EmailProfileUpdateOne {
+func (epuo *EmailProfileUpdateOne) SetNillablePort(i *int16) *EmailProfileUpdateOne {
 	if i != nil {
 		epuo.SetPort(*i)
 	}
@@ -447,7 +432,7 @@ func (epuo *EmailProfileUpdateOne) SetNillablePort(i *int) *EmailProfileUpdateOn
 }
 
 // AddPort adds i to the "port" field.
-func (epuo *EmailProfileUpdateOne) AddPort(i int) *EmailProfileUpdateOne {
+func (epuo *EmailProfileUpdateOne) AddPort(i int16) *EmailProfileUpdateOne {
 	epuo.mutation.AddPort(i)
 	return epuo
 }
@@ -589,21 +574,6 @@ func (epuo *EmailProfileUpdateOne) check() error {
 			return &ValidationError{Name: "protocol", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.protocol": %w`, err)}
 		}
 	}
-	if v, ok := epuo.mutation.Host(); ok {
-		if err := emailprofile.HostValidator(v); err != nil {
-			return &ValidationError{Name: "host", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.host": %w`, err)}
-		}
-	}
-	if v, ok := epuo.mutation.Username(); ok {
-		if err := emailprofile.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.username": %w`, err)}
-		}
-	}
-	if v, ok := epuo.mutation.Password(); ok {
-		if err := emailprofile.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.password": %w`, err)}
-		}
-	}
 	if _, ok := epuo.mutation.BusinessUnitID(); epuo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "EmailProfile.business_unit"`)
 	}
@@ -670,13 +640,13 @@ func (epuo *EmailProfileUpdateOne) sqlSave(ctx context.Context) (_node *EmailPro
 		_spec.ClearField(emailprofile.FieldHost, field.TypeString)
 	}
 	if value, ok := epuo.mutation.Port(); ok {
-		_spec.SetField(emailprofile.FieldPort, field.TypeInt, value)
+		_spec.SetField(emailprofile.FieldPort, field.TypeInt16, value)
 	}
 	if value, ok := epuo.mutation.AddedPort(); ok {
-		_spec.AddField(emailprofile.FieldPort, field.TypeInt, value)
+		_spec.AddField(emailprofile.FieldPort, field.TypeInt16, value)
 	}
 	if epuo.mutation.PortCleared() {
-		_spec.ClearField(emailprofile.FieldPort, field.TypeInt)
+		_spec.ClearField(emailprofile.FieldPort, field.TypeInt16)
 	}
 	if value, ok := epuo.mutation.Username(); ok {
 		_spec.SetField(emailprofile.FieldUsername, field.TypeString, value)

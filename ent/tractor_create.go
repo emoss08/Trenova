@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // TractorCreate is the builder for creating a Tractor entity.
@@ -159,13 +160,13 @@ func (tc *TractorCreate) SetNillableModel(s *string) *TractorCreate {
 }
 
 // SetYear sets the "year" field.
-func (tc *TractorCreate) SetYear(i int) *TractorCreate {
+func (tc *TractorCreate) SetYear(i int16) *TractorCreate {
 	tc.mutation.SetYear(i)
 	return tc
 }
 
 // SetNillableYear sets the "year" field if the given value is not nil.
-func (tc *TractorCreate) SetNillableYear(i *int) *TractorCreate {
+func (tc *TractorCreate) SetNillableYear(i *int16) *TractorCreate {
 	if i != nil {
 		tc.SetYear(*i)
 	}
@@ -201,16 +202,8 @@ func (tc *TractorCreate) SetNillableLeased(b *bool) *TractorCreate {
 }
 
 // SetLeasedDate sets the "leased_date" field.
-func (tc *TractorCreate) SetLeasedDate(t time.Time) *TractorCreate {
-	tc.mutation.SetLeasedDate(t)
-	return tc
-}
-
-// SetNillableLeasedDate sets the "leased_date" field if the given value is not nil.
-func (tc *TractorCreate) SetNillableLeasedDate(t *time.Time) *TractorCreate {
-	if t != nil {
-		tc.SetLeasedDate(*t)
-	}
+func (tc *TractorCreate) SetLeasedDate(pg *pgtype.Date) *TractorCreate {
+	tc.mutation.SetLeasedDate(pg)
 	return tc
 }
 
@@ -398,11 +391,6 @@ func (tc *TractorCreate) check() error {
 			return &ValidationError{Name: "license_plate_number", err: fmt.Errorf(`ent: validator failed for field "Tractor.license_plate_number": %w`, err)}
 		}
 	}
-	if v, ok := tc.mutation.Vin(); ok {
-		if err := tractor.VinValidator(v); err != nil {
-			return &ValidationError{Name: "vin", err: fmt.Errorf(`ent: validator failed for field "Tractor.vin": %w`, err)}
-		}
-	}
 	if v, ok := tc.mutation.Model(); ok {
 		if err := tractor.ModelValidator(v); err != nil {
 			return &ValidationError{Name: "model", err: fmt.Errorf(`ent: validator failed for field "Tractor.model": %w`, err)}
@@ -498,7 +486,7 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 		_node.Model = value
 	}
 	if value, ok := tc.mutation.Year(); ok {
-		_spec.SetField(tractor.FieldYear, field.TypeInt, value)
+		_spec.SetField(tractor.FieldYear, field.TypeInt16, value)
 		_node.Year = &value
 	}
 	if value, ok := tc.mutation.Leased(); ok {
@@ -506,8 +494,8 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 		_node.Leased = value
 	}
 	if value, ok := tc.mutation.LeasedDate(); ok {
-		_spec.SetField(tractor.FieldLeasedDate, field.TypeTime, value)
-		_node.LeasedDate = &value
+		_spec.SetField(tractor.FieldLeasedDate, field.TypeOther, value)
+		_node.LeasedDate = value
 	}
 	if nodes := tc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

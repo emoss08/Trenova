@@ -1913,6 +1913,22 @@ func (c *CustomerClient) QueryOrganization(cu *Customer) *OrganizationQuery {
 	return query
 }
 
+// QueryState queries the state edge of a Customer.
+func (c *CustomerClient) QueryState(cu *Customer) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, customer.StateTable, customer.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CustomerClient) Hooks() []Hook {
 	hooks := c.hooks.Customer

@@ -71,8 +71,8 @@ func (r *TableChangeAlertOps) CreateTableChangeAlert(newTableChangeAlert ent.Tab
 		SetTriggerName(newTableChangeAlert.TriggerName).
 		SetListenerName(newTableChangeAlert.ListenerName).
 		SetEmailRecipients(newTableChangeAlert.EmailRecipients).
-		SetNillableEffectiveDate(newTableChangeAlert.EffectiveDate).
-		SetNillableExpirationDate(newTableChangeAlert.ExpirationDate).
+		SetEffectiveDate(newTableChangeAlert.EffectiveDate).
+		SetExpirationDate(newTableChangeAlert.ExpirationDate).
 		Save(r.ctx)
 	if err != nil {
 		return nil, err
@@ -97,8 +97,8 @@ func (r *TableChangeAlertOps) UpdateTableChangeAlert(tableChangeAlert ent.TableC
 		SetTriggerName(tableChangeAlert.TriggerName).
 		SetListenerName(tableChangeAlert.ListenerName).
 		SetEmailRecipients(tableChangeAlert.EmailRecipients).
-		SetNillableEffectiveDate(tableChangeAlert.EffectiveDate).
-		SetNillableExpirationDate(tableChangeAlert.ExpirationDate)
+		SetEffectiveDate(tableChangeAlert.EffectiveDate).
+		SetExpirationDate(tableChangeAlert.ExpirationDate)
 
 	// Execute the update operation
 	updateTableChangeAlert, err := updateOp.Save(r.ctx)

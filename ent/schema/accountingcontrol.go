@@ -16,13 +16,16 @@ type AccountingControl struct {
 // Fields of the AccountingControl.
 func (AccountingControl) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("rec_threshold").
+		field.Int8("rec_threshold").
 			Default(50).
 			Positive().
 			StructTag(`json:"recThreshold" validate:"required"`),
 		field.Enum("rec_threshold_action").
 			Values("Halt", "Warn").
 			Default("Halt").
+			SchemaType(map[string]string{
+				"mysql": "ENUM('Halt', 'Warn')",
+			}).
 			StructTag(`json:"recThresholdAction" validate:"required"`),
 		field.Bool("auto_create_journal_entries").
 			Default(false).

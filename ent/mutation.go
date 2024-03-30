@@ -1095,8 +1095,8 @@ type AccountingControlMutation struct {
 	id                              *uuid.UUID
 	created_at                      *time.Time
 	updated_at                      *time.Time
-	rec_threshold                   *int64
-	addrec_threshold                *int64
+	rec_threshold                   *int8
+	addrec_threshold                *int8
 	rec_threshold_action            *accountingcontrol.RecThresholdAction
 	auto_create_journal_entries     *bool
 	journal_entry_criteria          *accountingcontrol.JournalEntryCriteria
@@ -1296,13 +1296,13 @@ func (m *AccountingControlMutation) ResetUpdatedAt() {
 }
 
 // SetRecThreshold sets the "rec_threshold" field.
-func (m *AccountingControlMutation) SetRecThreshold(i int64) {
+func (m *AccountingControlMutation) SetRecThreshold(i int8) {
 	m.rec_threshold = &i
 	m.addrec_threshold = nil
 }
 
 // RecThreshold returns the value of the "rec_threshold" field in the mutation.
-func (m *AccountingControlMutation) RecThreshold() (r int64, exists bool) {
+func (m *AccountingControlMutation) RecThreshold() (r int8, exists bool) {
 	v := m.rec_threshold
 	if v == nil {
 		return
@@ -1313,7 +1313,7 @@ func (m *AccountingControlMutation) RecThreshold() (r int64, exists bool) {
 // OldRecThreshold returns the old "rec_threshold" field's value of the AccountingControl entity.
 // If the AccountingControl object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountingControlMutation) OldRecThreshold(ctx context.Context) (v int64, err error) {
+func (m *AccountingControlMutation) OldRecThreshold(ctx context.Context) (v int8, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRecThreshold is only allowed on UpdateOne operations")
 	}
@@ -1328,7 +1328,7 @@ func (m *AccountingControlMutation) OldRecThreshold(ctx context.Context) (v int6
 }
 
 // AddRecThreshold adds i to the "rec_threshold" field.
-func (m *AccountingControlMutation) AddRecThreshold(i int64) {
+func (m *AccountingControlMutation) AddRecThreshold(i int8) {
 	if m.addrec_threshold != nil {
 		*m.addrec_threshold += i
 	} else {
@@ -1337,7 +1337,7 @@ func (m *AccountingControlMutation) AddRecThreshold(i int64) {
 }
 
 // AddedRecThreshold returns the value that was added to the "rec_threshold" field in this mutation.
-func (m *AccountingControlMutation) AddedRecThreshold() (r int64, exists bool) {
+func (m *AccountingControlMutation) AddedRecThreshold() (r int8, exists bool) {
 	v := m.addrec_threshold
 	if v == nil {
 		return
@@ -2049,7 +2049,7 @@ func (m *AccountingControlMutation) SetField(name string, value ent.Value) error
 		m.SetUpdatedAt(v)
 		return nil
 	case accountingcontrol.FieldRecThreshold:
-		v, ok := value.(int64)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2156,7 +2156,7 @@ func (m *AccountingControlMutation) AddedField(name string) (ent.Value, bool) {
 func (m *AccountingControlMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case accountingcontrol.FieldRecThreshold:
-		v, ok := value.(int64)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -6785,10 +6785,10 @@ type CommodityMutation struct {
 	name                      *string
 	is_hazmat                 *bool
 	unit_of_measure           *string
-	min_temp                  *int
-	addmin_temp               *int
-	max_temp                  *int
-	addmax_temp               *int
+	min_temp                  *int8
+	addmin_temp               *int8
+	max_temp                  *int8
+	addmax_temp               *int8
 	description               *string
 	clearedFields             map[string]struct{}
 	business_unit             *uuid.UUID
@@ -7208,13 +7208,13 @@ func (m *CommodityMutation) ResetUnitOfMeasure() {
 }
 
 // SetMinTemp sets the "min_temp" field.
-func (m *CommodityMutation) SetMinTemp(i int) {
+func (m *CommodityMutation) SetMinTemp(i int8) {
 	m.min_temp = &i
 	m.addmin_temp = nil
 }
 
 // MinTemp returns the value of the "min_temp" field in the mutation.
-func (m *CommodityMutation) MinTemp() (r int, exists bool) {
+func (m *CommodityMutation) MinTemp() (r int8, exists bool) {
 	v := m.min_temp
 	if v == nil {
 		return
@@ -7225,7 +7225,7 @@ func (m *CommodityMutation) MinTemp() (r int, exists bool) {
 // OldMinTemp returns the old "min_temp" field's value of the Commodity entity.
 // If the Commodity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CommodityMutation) OldMinTemp(ctx context.Context) (v int, err error) {
+func (m *CommodityMutation) OldMinTemp(ctx context.Context) (v int8, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMinTemp is only allowed on UpdateOne operations")
 	}
@@ -7240,7 +7240,7 @@ func (m *CommodityMutation) OldMinTemp(ctx context.Context) (v int, err error) {
 }
 
 // AddMinTemp adds i to the "min_temp" field.
-func (m *CommodityMutation) AddMinTemp(i int) {
+func (m *CommodityMutation) AddMinTemp(i int8) {
 	if m.addmin_temp != nil {
 		*m.addmin_temp += i
 	} else {
@@ -7249,7 +7249,7 @@ func (m *CommodityMutation) AddMinTemp(i int) {
 }
 
 // AddedMinTemp returns the value that was added to the "min_temp" field in this mutation.
-func (m *CommodityMutation) AddedMinTemp() (r int, exists bool) {
+func (m *CommodityMutation) AddedMinTemp() (r int8, exists bool) {
 	v := m.addmin_temp
 	if v == nil {
 		return
@@ -7278,13 +7278,13 @@ func (m *CommodityMutation) ResetMinTemp() {
 }
 
 // SetMaxTemp sets the "max_temp" field.
-func (m *CommodityMutation) SetMaxTemp(i int) {
+func (m *CommodityMutation) SetMaxTemp(i int8) {
 	m.max_temp = &i
 	m.addmax_temp = nil
 }
 
 // MaxTemp returns the value of the "max_temp" field in the mutation.
-func (m *CommodityMutation) MaxTemp() (r int, exists bool) {
+func (m *CommodityMutation) MaxTemp() (r int8, exists bool) {
 	v := m.max_temp
 	if v == nil {
 		return
@@ -7295,7 +7295,7 @@ func (m *CommodityMutation) MaxTemp() (r int, exists bool) {
 // OldMaxTemp returns the old "max_temp" field's value of the Commodity entity.
 // If the Commodity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CommodityMutation) OldMaxTemp(ctx context.Context) (v int, err error) {
+func (m *CommodityMutation) OldMaxTemp(ctx context.Context) (v int8, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMaxTemp is only allowed on UpdateOne operations")
 	}
@@ -7310,7 +7310,7 @@ func (m *CommodityMutation) OldMaxTemp(ctx context.Context) (v int, err error) {
 }
 
 // AddMaxTemp adds i to the "max_temp" field.
-func (m *CommodityMutation) AddMaxTemp(i int) {
+func (m *CommodityMutation) AddMaxTemp(i int8) {
 	if m.addmax_temp != nil {
 		*m.addmax_temp += i
 	} else {
@@ -7319,7 +7319,7 @@ func (m *CommodityMutation) AddMaxTemp(i int) {
 }
 
 // AddedMaxTemp returns the value that was added to the "max_temp" field in this mutation.
-func (m *CommodityMutation) AddedMaxTemp() (r int, exists bool) {
+func (m *CommodityMutation) AddedMaxTemp() (r int8, exists bool) {
 	v := m.addmax_temp
 	if v == nil {
 		return
@@ -7728,14 +7728,14 @@ func (m *CommodityMutation) SetField(name string, value ent.Value) error {
 		m.SetUnitOfMeasure(v)
 		return nil
 	case commodity.FieldMinTemp:
-		v, ok := value.(int)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMinTemp(v)
 		return nil
 	case commodity.FieldMaxTemp:
-		v, ok := value.(int)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7791,14 +7791,14 @@ func (m *CommodityMutation) AddedField(name string) (ent.Value, bool) {
 func (m *CommodityMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case commodity.FieldMinTemp:
-		v, ok := value.(int)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMinTemp(v)
 		return nil
 	case commodity.FieldMaxTemp:
-		v, ok := value.(int)
+		v, ok := value.(int8)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -8028,7 +8028,6 @@ type CustomerMutation struct {
 	address_line_1          *string
 	address_line_2          *string
 	city                    *string
-	state                   *string
 	postal_code             *string
 	has_customer_portal     *bool
 	auto_mark_ready_to_bill *bool
@@ -8037,6 +8036,8 @@ type CustomerMutation struct {
 	clearedbusiness_unit    bool
 	organization            *uuid.UUID
 	clearedorganization     bool
+	state                   *uuid.UUID
+	clearedstate            bool
 	done                    bool
 	oldValue                func(context.Context) (*Customer, error)
 	predicates              []predicate.Customer
@@ -8519,13 +8520,13 @@ func (m *CustomerMutation) ResetCity() {
 	m.city = nil
 }
 
-// SetState sets the "state" field.
-func (m *CustomerMutation) SetState(s string) {
-	m.state = &s
+// SetStateID sets the "state_id" field.
+func (m *CustomerMutation) SetStateID(u uuid.UUID) {
+	m.state = &u
 }
 
-// State returns the value of the "state" field in the mutation.
-func (m *CustomerMutation) State() (r string, exists bool) {
+// StateID returns the value of the "state_id" field in the mutation.
+func (m *CustomerMutation) StateID() (r uuid.UUID, exists bool) {
 	v := m.state
 	if v == nil {
 		return
@@ -8533,25 +8534,25 @@ func (m *CustomerMutation) State() (r string, exists bool) {
 	return *v, true
 }
 
-// OldState returns the old "state" field's value of the Customer entity.
+// OldStateID returns the old "state_id" field's value of the Customer entity.
 // If the Customer object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CustomerMutation) OldState(ctx context.Context) (v string, err error) {
+func (m *CustomerMutation) OldStateID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldState is only allowed on UpdateOne operations")
+		return v, errors.New("OldStateID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldState requires an ID field in the mutation")
+		return v, errors.New("OldStateID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldState: %w", err)
+		return v, fmt.Errorf("querying old value for OldStateID: %w", err)
 	}
-	return oldValue.State, nil
+	return oldValue.StateID, nil
 }
 
-// ResetState resets all changes to the "state" field.
-func (m *CustomerMutation) ResetState() {
+// ResetStateID resets all changes to the "state_id" field.
+func (m *CustomerMutation) ResetStateID() {
 	m.state = nil
 }
 
@@ -8717,6 +8718,33 @@ func (m *CustomerMutation) ResetOrganization() {
 	m.clearedorganization = false
 }
 
+// ClearState clears the "state" edge to the UsState entity.
+func (m *CustomerMutation) ClearState() {
+	m.clearedstate = true
+	m.clearedFields[customer.FieldStateID] = struct{}{}
+}
+
+// StateCleared reports if the "state" edge to the UsState entity was cleared.
+func (m *CustomerMutation) StateCleared() bool {
+	return m.clearedstate
+}
+
+// StateIDs returns the "state" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StateID instead. It exists only for internal usage by the builders.
+func (m *CustomerMutation) StateIDs() (ids []uuid.UUID) {
+	if id := m.state; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetState resets all changes to the "state" edge.
+func (m *CustomerMutation) ResetState() {
+	m.state = nil
+	m.clearedstate = false
+}
+
 // Where appends a list predicates to the CustomerMutation builder.
 func (m *CustomerMutation) Where(ps ...predicate.Customer) {
 	m.predicates = append(m.predicates, ps...)
@@ -8783,7 +8811,7 @@ func (m *CustomerMutation) Fields() []string {
 		fields = append(fields, customer.FieldCity)
 	}
 	if m.state != nil {
-		fields = append(fields, customer.FieldState)
+		fields = append(fields, customer.FieldStateID)
 	}
 	if m.postal_code != nil {
 		fields = append(fields, customer.FieldPostalCode)
@@ -8822,8 +8850,8 @@ func (m *CustomerMutation) Field(name string) (ent.Value, bool) {
 		return m.AddressLine2()
 	case customer.FieldCity:
 		return m.City()
-	case customer.FieldState:
-		return m.State()
+	case customer.FieldStateID:
+		return m.StateID()
 	case customer.FieldPostalCode:
 		return m.PostalCode()
 	case customer.FieldHasCustomerPortal:
@@ -8859,8 +8887,8 @@ func (m *CustomerMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldAddressLine2(ctx)
 	case customer.FieldCity:
 		return m.OldCity(ctx)
-	case customer.FieldState:
-		return m.OldState(ctx)
+	case customer.FieldStateID:
+		return m.OldStateID(ctx)
 	case customer.FieldPostalCode:
 		return m.OldPostalCode(ctx)
 	case customer.FieldHasCustomerPortal:
@@ -8946,12 +8974,12 @@ func (m *CustomerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCity(v)
 		return nil
-	case customer.FieldState:
-		v, ok := value.(string)
+	case customer.FieldStateID:
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetState(v)
+		m.SetStateID(v)
 		return nil
 	case customer.FieldPostalCode:
 		v, ok := value.(string)
@@ -9062,8 +9090,8 @@ func (m *CustomerMutation) ResetField(name string) error {
 	case customer.FieldCity:
 		m.ResetCity()
 		return nil
-	case customer.FieldState:
-		m.ResetState()
+	case customer.FieldStateID:
+		m.ResetStateID()
 		return nil
 	case customer.FieldPostalCode:
 		m.ResetPostalCode()
@@ -9080,12 +9108,15 @@ func (m *CustomerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CustomerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.business_unit != nil {
 		edges = append(edges, customer.EdgeBusinessUnit)
 	}
 	if m.organization != nil {
 		edges = append(edges, customer.EdgeOrganization)
+	}
+	if m.state != nil {
+		edges = append(edges, customer.EdgeState)
 	}
 	return edges
 }
@@ -9102,13 +9133,17 @@ func (m *CustomerMutation) AddedIDs(name string) []ent.Value {
 		if id := m.organization; id != nil {
 			return []ent.Value{*id}
 		}
+	case customer.EdgeState:
+		if id := m.state; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CustomerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	return edges
 }
 
@@ -9120,12 +9155,15 @@ func (m *CustomerMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CustomerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedbusiness_unit {
 		edges = append(edges, customer.EdgeBusinessUnit)
 	}
 	if m.clearedorganization {
 		edges = append(edges, customer.EdgeOrganization)
+	}
+	if m.clearedstate {
+		edges = append(edges, customer.EdgeState)
 	}
 	return edges
 }
@@ -9138,6 +9176,8 @@ func (m *CustomerMutation) EdgeCleared(name string) bool {
 		return m.clearedbusiness_unit
 	case customer.EdgeOrganization:
 		return m.clearedorganization
+	case customer.EdgeState:
+		return m.clearedstate
 	}
 	return false
 }
@@ -9152,6 +9192,9 @@ func (m *CustomerMutation) ClearEdge(name string) error {
 	case customer.EdgeOrganization:
 		m.ClearOrganization()
 		return nil
+	case customer.EdgeState:
+		m.ClearState()
+		return nil
 	}
 	return fmt.Errorf("unknown Customer unique edge %s", name)
 }
@@ -9165,6 +9208,9 @@ func (m *CustomerMutation) ResetEdge(name string) error {
 		return nil
 	case customer.EdgeOrganization:
 		m.ResetOrganization()
+		return nil
+	case customer.EdgeState:
+		m.ResetState()
 		return nil
 	}
 	return fmt.Errorf("unknown Customer edge %s", name)
@@ -10032,8 +10078,8 @@ type DispatchControlMutation struct {
 	record_service_incident         *dispatchcontrol.RecordServiceIncident
 	deadhead_target                 *float64
 	adddeadhead_target              *float64
-	max_shipment_weight_limit       *int
-	addmax_shipment_weight_limit    *int
+	max_shipment_weight_limit       *int32
+	addmax_shipment_weight_limit    *int32
 	grace_period                    *uint8
 	addgrace_period                 *int8
 	enforce_worker_assign           *bool
@@ -10323,13 +10369,13 @@ func (m *DispatchControlMutation) ResetDeadheadTarget() {
 }
 
 // SetMaxShipmentWeightLimit sets the "max_shipment_weight_limit" field.
-func (m *DispatchControlMutation) SetMaxShipmentWeightLimit(i int) {
+func (m *DispatchControlMutation) SetMaxShipmentWeightLimit(i int32) {
 	m.max_shipment_weight_limit = &i
 	m.addmax_shipment_weight_limit = nil
 }
 
 // MaxShipmentWeightLimit returns the value of the "max_shipment_weight_limit" field in the mutation.
-func (m *DispatchControlMutation) MaxShipmentWeightLimit() (r int, exists bool) {
+func (m *DispatchControlMutation) MaxShipmentWeightLimit() (r int32, exists bool) {
 	v := m.max_shipment_weight_limit
 	if v == nil {
 		return
@@ -10340,7 +10386,7 @@ func (m *DispatchControlMutation) MaxShipmentWeightLimit() (r int, exists bool) 
 // OldMaxShipmentWeightLimit returns the old "max_shipment_weight_limit" field's value of the DispatchControl entity.
 // If the DispatchControl object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DispatchControlMutation) OldMaxShipmentWeightLimit(ctx context.Context) (v int, err error) {
+func (m *DispatchControlMutation) OldMaxShipmentWeightLimit(ctx context.Context) (v int32, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMaxShipmentWeightLimit is only allowed on UpdateOne operations")
 	}
@@ -10355,7 +10401,7 @@ func (m *DispatchControlMutation) OldMaxShipmentWeightLimit(ctx context.Context)
 }
 
 // AddMaxShipmentWeightLimit adds i to the "max_shipment_weight_limit" field.
-func (m *DispatchControlMutation) AddMaxShipmentWeightLimit(i int) {
+func (m *DispatchControlMutation) AddMaxShipmentWeightLimit(i int32) {
 	if m.addmax_shipment_weight_limit != nil {
 		*m.addmax_shipment_weight_limit += i
 	} else {
@@ -10364,7 +10410,7 @@ func (m *DispatchControlMutation) AddMaxShipmentWeightLimit(i int) {
 }
 
 // AddedMaxShipmentWeightLimit returns the value that was added to the "max_shipment_weight_limit" field in this mutation.
-func (m *DispatchControlMutation) AddedMaxShipmentWeightLimit() (r int, exists bool) {
+func (m *DispatchControlMutation) AddedMaxShipmentWeightLimit() (r int32, exists bool) {
 	v := m.addmax_shipment_weight_limit
 	if v == nil {
 		return
@@ -10988,7 +11034,7 @@ func (m *DispatchControlMutation) SetField(name string, value ent.Value) error {
 		m.SetDeadheadTarget(v)
 		return nil
 	case dispatchcontrol.FieldMaxShipmentWeightLimit:
-		v, ok := value.(int)
+		v, ok := value.(int32)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -11105,7 +11151,7 @@ func (m *DispatchControlMutation) AddField(name string, value ent.Value) error {
 		m.AddDeadheadTarget(v)
 		return nil
 	case dispatchcontrol.FieldMaxShipmentWeightLimit:
-		v, ok := value.(int)
+		v, ok := value.(int32)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -13955,8 +14001,8 @@ type EmailProfileMutation struct {
 	email                *string
 	protocol             *emailprofile.Protocol
 	host                 *string
-	port                 *int
-	addport              *int
+	port                 *int16
+	addport              *int16
 	username             *string
 	password             *string
 	is_default           *bool
@@ -14389,13 +14435,13 @@ func (m *EmailProfileMutation) ResetHost() {
 }
 
 // SetPort sets the "port" field.
-func (m *EmailProfileMutation) SetPort(i int) {
+func (m *EmailProfileMutation) SetPort(i int16) {
 	m.port = &i
 	m.addport = nil
 }
 
 // Port returns the value of the "port" field in the mutation.
-func (m *EmailProfileMutation) Port() (r int, exists bool) {
+func (m *EmailProfileMutation) Port() (r int16, exists bool) {
 	v := m.port
 	if v == nil {
 		return
@@ -14406,7 +14452,7 @@ func (m *EmailProfileMutation) Port() (r int, exists bool) {
 // OldPort returns the old "port" field's value of the EmailProfile entity.
 // If the EmailProfile object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EmailProfileMutation) OldPort(ctx context.Context) (v int, err error) {
+func (m *EmailProfileMutation) OldPort(ctx context.Context) (v int16, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPort is only allowed on UpdateOne operations")
 	}
@@ -14421,7 +14467,7 @@ func (m *EmailProfileMutation) OldPort(ctx context.Context) (v int, err error) {
 }
 
 // AddPort adds i to the "port" field.
-func (m *EmailProfileMutation) AddPort(i int) {
+func (m *EmailProfileMutation) AddPort(i int16) {
 	if m.addport != nil {
 		*m.addport += i
 	} else {
@@ -14430,7 +14476,7 @@ func (m *EmailProfileMutation) AddPort(i int) {
 }
 
 // AddedPort returns the value that was added to the "port" field in this mutation.
-func (m *EmailProfileMutation) AddedPort() (r int, exists bool) {
+func (m *EmailProfileMutation) AddedPort() (r int16, exists bool) {
 	v := m.addport
 	if v == nil {
 		return
@@ -14848,7 +14894,7 @@ func (m *EmailProfileMutation) SetField(name string, value ent.Value) error {
 		m.SetHost(v)
 		return nil
 	case emailprofile.FieldPort:
-		v, ok := value.(int)
+		v, ok := value.(int16)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -14906,7 +14952,7 @@ func (m *EmailProfileMutation) AddedField(name string) (ent.Value, bool) {
 func (m *EmailProfileMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case emailprofile.FieldPort:
-		v, ok := value.(int)
+		v, ok := value.(int16)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -34050,8 +34096,8 @@ type TableChangeAlertMutation struct {
 	trigger_name         *string
 	listener_name        *string
 	email_recipients     *string
-	effective_date       *time.Time
-	expiration_date      *time.Time
+	effective_date       **pgtype.Date
+	expiration_date      **pgtype.Date
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -34847,12 +34893,12 @@ func (m *TableChangeAlertMutation) ResetEmailRecipients() {
 }
 
 // SetEffectiveDate sets the "effective_date" field.
-func (m *TableChangeAlertMutation) SetEffectiveDate(t time.Time) {
-	m.effective_date = &t
+func (m *TableChangeAlertMutation) SetEffectiveDate(pg *pgtype.Date) {
+	m.effective_date = &pg
 }
 
 // EffectiveDate returns the value of the "effective_date" field in the mutation.
-func (m *TableChangeAlertMutation) EffectiveDate() (r time.Time, exists bool) {
+func (m *TableChangeAlertMutation) EffectiveDate() (r *pgtype.Date, exists bool) {
 	v := m.effective_date
 	if v == nil {
 		return
@@ -34863,7 +34909,7 @@ func (m *TableChangeAlertMutation) EffectiveDate() (r time.Time, exists bool) {
 // OldEffectiveDate returns the old "effective_date" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldEffectiveDate(ctx context.Context) (v *time.Time, err error) {
+func (m *TableChangeAlertMutation) OldEffectiveDate(ctx context.Context) (v *pgtype.Date, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEffectiveDate is only allowed on UpdateOne operations")
 	}
@@ -34896,12 +34942,12 @@ func (m *TableChangeAlertMutation) ResetEffectiveDate() {
 }
 
 // SetExpirationDate sets the "expiration_date" field.
-func (m *TableChangeAlertMutation) SetExpirationDate(t time.Time) {
-	m.expiration_date = &t
+func (m *TableChangeAlertMutation) SetExpirationDate(pg *pgtype.Date) {
+	m.expiration_date = &pg
 }
 
 // ExpirationDate returns the value of the "expiration_date" field in the mutation.
-func (m *TableChangeAlertMutation) ExpirationDate() (r time.Time, exists bool) {
+func (m *TableChangeAlertMutation) ExpirationDate() (r *pgtype.Date, exists bool) {
 	v := m.expiration_date
 	if v == nil {
 		return
@@ -34912,7 +34958,7 @@ func (m *TableChangeAlertMutation) ExpirationDate() (r time.Time, exists bool) {
 // OldExpirationDate returns the old "expiration_date" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldExpirationDate(ctx context.Context) (v *time.Time, err error) {
+func (m *TableChangeAlertMutation) OldExpirationDate(ctx context.Context) (v *pgtype.Date, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldExpirationDate is only allowed on UpdateOne operations")
 	}
@@ -35298,14 +35344,14 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		m.SetEmailRecipients(v)
 		return nil
 	case tablechangealert.FieldEffectiveDate:
-		v, ok := value.(time.Time)
+		v, ok := value.(*pgtype.Date)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEffectiveDate(v)
 		return nil
 	case tablechangealert.FieldExpirationDate:
-		v, ok := value.(time.Time)
+		v, ok := value.(*pgtype.Date)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -36310,10 +36356,10 @@ type TractorMutation struct {
 	license_plate_number          *string
 	vin                           *string
 	model                         *string
-	year                          *int
-	addyear                       *int
+	year                          *int16
+	addyear                       *int16
 	leased                        *bool
-	leased_date                   *time.Time
+	leased_date                   **pgtype.Date
 	clearedFields                 map[string]struct{}
 	business_unit                 *uuid.UUID
 	clearedbusiness_unit          bool
@@ -36902,13 +36948,13 @@ func (m *TractorMutation) ResetModel() {
 }
 
 // SetYear sets the "year" field.
-func (m *TractorMutation) SetYear(i int) {
+func (m *TractorMutation) SetYear(i int16) {
 	m.year = &i
 	m.addyear = nil
 }
 
 // Year returns the value of the "year" field in the mutation.
-func (m *TractorMutation) Year() (r int, exists bool) {
+func (m *TractorMutation) Year() (r int16, exists bool) {
 	v := m.year
 	if v == nil {
 		return
@@ -36919,7 +36965,7 @@ func (m *TractorMutation) Year() (r int, exists bool) {
 // OldYear returns the old "year" field's value of the Tractor entity.
 // If the Tractor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TractorMutation) OldYear(ctx context.Context) (v *int, err error) {
+func (m *TractorMutation) OldYear(ctx context.Context) (v *int16, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldYear is only allowed on UpdateOne operations")
 	}
@@ -36934,7 +36980,7 @@ func (m *TractorMutation) OldYear(ctx context.Context) (v *int, err error) {
 }
 
 // AddYear adds i to the "year" field.
-func (m *TractorMutation) AddYear(i int) {
+func (m *TractorMutation) AddYear(i int16) {
 	if m.addyear != nil {
 		*m.addyear += i
 	} else {
@@ -36943,7 +36989,7 @@ func (m *TractorMutation) AddYear(i int) {
 }
 
 // AddedYear returns the value that was added to the "year" field in this mutation.
-func (m *TractorMutation) AddedYear() (r int, exists bool) {
+func (m *TractorMutation) AddedYear() (r int16, exists bool) {
 	v := m.addyear
 	if v == nil {
 		return
@@ -37057,12 +37103,12 @@ func (m *TractorMutation) ResetLeased() {
 }
 
 // SetLeasedDate sets the "leased_date" field.
-func (m *TractorMutation) SetLeasedDate(t time.Time) {
-	m.leased_date = &t
+func (m *TractorMutation) SetLeasedDate(pg *pgtype.Date) {
+	m.leased_date = &pg
 }
 
 // LeasedDate returns the value of the "leased_date" field in the mutation.
-func (m *TractorMutation) LeasedDate() (r time.Time, exists bool) {
+func (m *TractorMutation) LeasedDate() (r *pgtype.Date, exists bool) {
 	v := m.leased_date
 	if v == nil {
 		return
@@ -37073,7 +37119,7 @@ func (m *TractorMutation) LeasedDate() (r time.Time, exists bool) {
 // OldLeasedDate returns the old "leased_date" field's value of the Tractor entity.
 // If the Tractor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TractorMutation) OldLeasedDate(ctx context.Context) (v *time.Time, err error) {
+func (m *TractorMutation) OldLeasedDate(ctx context.Context) (v *pgtype.Date, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLeasedDate is only allowed on UpdateOne operations")
 	}
@@ -37707,7 +37753,7 @@ func (m *TractorMutation) SetField(name string, value ent.Value) error {
 		m.SetModel(v)
 		return nil
 	case tractor.FieldYear:
-		v, ok := value.(int)
+		v, ok := value.(int16)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37728,7 +37774,7 @@ func (m *TractorMutation) SetField(name string, value ent.Value) error {
 		m.SetLeased(v)
 		return nil
 	case tractor.FieldLeasedDate:
-		v, ok := value.(time.Time)
+		v, ok := value.(*pgtype.Date)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -37786,7 +37832,7 @@ func (m *TractorMutation) AddedField(name string) (ent.Value, bool) {
 func (m *TractorMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	case tractor.FieldYear:
-		v, ok := value.(int)
+		v, ok := value.(int16)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

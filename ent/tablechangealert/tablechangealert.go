@@ -123,12 +123,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// TableNameValidator is a validator for the "table_name" field. It is called by the builders before save.
-	TableNameValidator func(string) error
-	// TopicNameValidator is a validator for the "topic_name" field. It is called by the builders before save.
-	TopicNameValidator func(string) error
-	// CustomSubjectValidator is a validator for the "custom_subject" field. It is called by the builders before save.
-	CustomSubjectValidator func(string) error
 	// FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
 	FunctionNameValidator func(string) error
 	// TriggerNameValidator is a validator for the "trigger_name" field. It is called by the builders before save.

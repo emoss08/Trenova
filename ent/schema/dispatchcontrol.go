@@ -1,7 +1,8 @@
-
 package schema
+
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -21,12 +22,16 @@ func (DispatchControl) Fields() []ent.Field {
 				"Delivery",
 				"PickupAndDelivery",
 				"AllExceptShipper").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(17)",
+				dialect.SQLite:   "VARCHAR(17)",
+			}).
 			Default("Never").
 			StructTag(`json:"recordServiceIncident" validate:"required,oneof=Never Pickup Delivery PickupAndDelivery AllExceptShipper"`),
 		field.Float("deadhead_target").
 			Default(0).
 			StructTag(`json:"deadheadTarget" validate:"omitempty"`),
-		field.Int("max_shipment_weight_limit").
+		field.Int32("max_shipment_weight_limit").
 			Default(80000).
 			Positive().
 			StructTag(`json:"maxShipmentWeightLimit" validate:"required,gt=0,lt=1000000"`),

@@ -16,7 +16,7 @@ type UserFavorite struct {
 func (UserFavorite) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("page_link").
-			MaxLen(255).
+			NotEmpty().
 			Unique().
 			StructTag(`json:"pageLink"`),
 		field.UUID("user_id", uuid.UUID{}).

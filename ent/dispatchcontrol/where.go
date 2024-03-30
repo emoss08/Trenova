@@ -72,7 +72,7 @@ func DeadheadTarget(v float64) predicate.DispatchControl {
 }
 
 // MaxShipmentWeightLimit applies equality check predicate on the "max_shipment_weight_limit" field. It's identical to MaxShipmentWeightLimitEQ.
-func MaxShipmentWeightLimit(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimit(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldEQ(FieldMaxShipmentWeightLimit, v))
 }
 
@@ -262,42 +262,42 @@ func DeadheadTargetLTE(v float64) predicate.DispatchControl {
 }
 
 // MaxShipmentWeightLimitEQ applies the EQ predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitEQ(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitEQ(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldEQ(FieldMaxShipmentWeightLimit, v))
 }
 
 // MaxShipmentWeightLimitNEQ applies the NEQ predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitNEQ(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitNEQ(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldNEQ(FieldMaxShipmentWeightLimit, v))
 }
 
 // MaxShipmentWeightLimitIn applies the In predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitIn(vs ...int) predicate.DispatchControl {
+func MaxShipmentWeightLimitIn(vs ...int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldIn(FieldMaxShipmentWeightLimit, vs...))
 }
 
 // MaxShipmentWeightLimitNotIn applies the NotIn predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitNotIn(vs ...int) predicate.DispatchControl {
+func MaxShipmentWeightLimitNotIn(vs ...int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldNotIn(FieldMaxShipmentWeightLimit, vs...))
 }
 
 // MaxShipmentWeightLimitGT applies the GT predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitGT(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitGT(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldGT(FieldMaxShipmentWeightLimit, v))
 }
 
 // MaxShipmentWeightLimitGTE applies the GTE predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitGTE(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitGTE(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldGTE(FieldMaxShipmentWeightLimit, v))
 }
 
 // MaxShipmentWeightLimitLT applies the LT predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitLT(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitLT(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldLT(FieldMaxShipmentWeightLimit, v))
 }
 
 // MaxShipmentWeightLimitLTE applies the LTE predicate on the "max_shipment_weight_limit" field.
-func MaxShipmentWeightLimitLTE(v int) predicate.DispatchControl {
+func MaxShipmentWeightLimitLTE(v int32) predicate.DispatchControl {
 	return predicate.DispatchControl(sql.FieldLTE(FieldMaxShipmentWeightLimit, v))
 }
 

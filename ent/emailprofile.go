@@ -37,7 +37,7 @@ type EmailProfile struct {
 	// Host holds the value of the "host" field.
 	Host string `json:"host,omitempty"`
 	// Port holds the value of the "port" field.
-	Port int `json:"port,omitempty"`
+	Port int16 `json:"port,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Password holds the value of the "password" field.
@@ -171,7 +171,7 @@ func (ep *EmailProfile) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field port", values[i])
 			} else if value.Valid {
-				ep.Port = int(value.Int64)
+				ep.Port = int16(value.Int64)
 			}
 		case emailprofile.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {

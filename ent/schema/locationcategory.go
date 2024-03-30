@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -17,6 +18,10 @@ func (LocationCategory) Fields() []ent.Field {
 		field.String("name").
 			MaxLen(100).
 			NotEmpty().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(100)",
+				dialect.SQLite:   "VARCHAR(100)",
+			}).
 			StructTag(`json:"name" validate:"required"`),
 		field.Text("description").
 			Optional().

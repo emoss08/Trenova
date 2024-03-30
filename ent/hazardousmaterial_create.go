@@ -272,11 +272,6 @@ func (hmc *HazardousMaterialCreate) check() error {
 			return &ValidationError{Name: "hazard_class", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.hazard_class": %w`, err)}
 		}
 	}
-	if v, ok := hmc.mutation.ErgNumber(); ok {
-		if err := hazardousmaterial.ErgNumberValidator(v); err != nil {
-			return &ValidationError{Name: "erg_number", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.erg_number": %w`, err)}
-		}
-	}
 	if _, ok := hmc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "HazardousMaterial.business_unit"`)}
 	}

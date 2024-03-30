@@ -38,9 +38,9 @@ type Commodity struct {
 	// UnitOfMeasure holds the value of the "unit_of_measure" field.
 	UnitOfMeasure string `json:"unitOfMeasure" validate:"omitempty,oneof=Pallet Tote Drum Cylinder Case Ampule Bag Bottle Pail Pieces IsoTank"`
 	// MinTemp holds the value of the "min_temp" field.
-	MinTemp int `json:"minTemp" validate:"omitempty,max=150"`
+	MinTemp int8 `json:"minTemp" validate:"omitempty,max=127"`
 	// MaxTemp holds the value of the "max_temp" field.
-	MaxTemp int `json:"maxTemp" validate:"omitempty,max=150"`
+	MaxTemp int8 `json:"maxTemp" validate:"omitempty,max=127"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description" validate:"omitempty"`
 	// HazardousMaterialID holds the value of the "hazardous_material_id" field.
@@ -187,13 +187,13 @@ func (c *Commodity) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field min_temp", values[i])
 			} else if value.Valid {
-				c.MinTemp = int(value.Int64)
+				c.MinTemp = int8(value.Int64)
 			}
 		case commodity.FieldMaxTemp:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field max_temp", values[i])
 			} else if value.Valid {
-				c.MaxTemp = int(value.Int64)
+				c.MaxTemp = int8(value.Int64)
 			}
 		case commodity.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {

@@ -92,8 +92,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
 	CodeValidator func(string) error
-	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
-	DescriptionValidator func(string) error
 	// DefaultIsDetention holds the default value on creation for the "is_detention" field.
 	DefaultIsDetention bool
 	// DefaultAmount holds the default value on creation for the "amount" field.

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -35,6 +36,10 @@ func (HazardousMaterialSegregation) Fields() []ent.Field {
 				"HazardClass7",
 				"HazardClass8",
 				"HazardClass9").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(16)",
+				dialect.SQLite:   "VARCHAR(16)",
+			}).
 			Default("HazardClass1And1").
 			StructTag(`json:"classA" validate:"required"`),
 		field.Enum("class_b").
@@ -58,11 +63,19 @@ func (HazardousMaterialSegregation) Fields() []ent.Field {
 				"HazardClass7",
 				"HazardClass8",
 				"HazardClass9").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(16)",
+				dialect.SQLite:   "VARCHAR(16)",
+			}).
 			Default("HazardClass1And1").
 			StructTag(`json:"classB" validate:"required"`),
 		field.Enum("segregation_type").
 			Values("NotAllowed", "AllowedWithConditions").
 			Default("NotAllowed").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(21)",
+				dialect.SQLite:   "VARCHAR(21)",
+			}).
 			StructTag(`json:"segregationType" validate:"required"`),
 	}
 }

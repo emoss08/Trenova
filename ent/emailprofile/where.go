@@ -92,7 +92,7 @@ func Host(v string) predicate.EmailProfile {
 }
 
 // Port applies equality check predicate on the "port" field. It's identical to PortEQ.
-func Port(v int) predicate.EmailProfile {
+func Port(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldEQ(FieldPort, v))
 }
 
@@ -467,42 +467,42 @@ func HostContainsFold(v string) predicate.EmailProfile {
 }
 
 // PortEQ applies the EQ predicate on the "port" field.
-func PortEQ(v int) predicate.EmailProfile {
+func PortEQ(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldEQ(FieldPort, v))
 }
 
 // PortNEQ applies the NEQ predicate on the "port" field.
-func PortNEQ(v int) predicate.EmailProfile {
+func PortNEQ(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldNEQ(FieldPort, v))
 }
 
 // PortIn applies the In predicate on the "port" field.
-func PortIn(vs ...int) predicate.EmailProfile {
+func PortIn(vs ...int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldIn(FieldPort, vs...))
 }
 
 // PortNotIn applies the NotIn predicate on the "port" field.
-func PortNotIn(vs ...int) predicate.EmailProfile {
+func PortNotIn(vs ...int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldNotIn(FieldPort, vs...))
 }
 
 // PortGT applies the GT predicate on the "port" field.
-func PortGT(v int) predicate.EmailProfile {
+func PortGT(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldGT(FieldPort, v))
 }
 
 // PortGTE applies the GTE predicate on the "port" field.
-func PortGTE(v int) predicate.EmailProfile {
+func PortGTE(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldGTE(FieldPort, v))
 }
 
 // PortLT applies the LT predicate on the "port" field.
-func PortLT(v int) predicate.EmailProfile {
+func PortLT(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldLT(FieldPort, v))
 }
 
 // PortLTE applies the LTE predicate on the "port" field.
-func PortLTE(v int) predicate.EmailProfile {
+func PortLTE(v int16) predicate.EmailProfile {
 	return predicate.EmailProfile(sql.FieldLTE(FieldPort, v))
 }
 
