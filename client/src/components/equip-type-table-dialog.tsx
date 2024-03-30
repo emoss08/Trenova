@@ -38,6 +38,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
+import { GradientPicker } from "./common/fields/color-field";
 import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
@@ -174,6 +175,14 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
             description="Description of the Equipment Type"
           />
         </FormControl>
+        <FormControl className="col-span-full">
+          <GradientPicker
+            name="color"
+            label="Color"
+            description="Color Code of the Equipment Type"
+            control={control}
+          />
+        </FormControl>
       </FormGroup>
     </Form>
   );
@@ -197,6 +206,7 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
       weight: undefined,
       variableCost: undefined,
       width: undefined,
+      color: undefined,
     },
   });
 

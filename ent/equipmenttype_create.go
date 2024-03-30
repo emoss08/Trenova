@@ -237,6 +237,20 @@ func (etc *EquipmentTypeCreate) SetNillableExemptFromTolls(b *bool) *EquipmentTy
 	return etc
 }
 
+// SetColor sets the "color" field.
+func (etc *EquipmentTypeCreate) SetColor(s string) *EquipmentTypeCreate {
+	etc.mutation.SetColor(s)
+	return etc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (etc *EquipmentTypeCreate) SetNillableColor(s *string) *EquipmentTypeCreate {
+	if s != nil {
+		etc.SetColor(*s)
+	}
+	return etc
+}
+
 // SetID sets the "id" field.
 func (etc *EquipmentTypeCreate) SetID(u uuid.UUID) *EquipmentTypeCreate {
 	etc.mutation.SetID(u)
@@ -463,6 +477,10 @@ func (etc *EquipmentTypeCreate) createSpec() (*EquipmentType, *sqlgraph.CreateSp
 	if value, ok := etc.mutation.ExemptFromTolls(); ok {
 		_spec.SetField(equipmenttype.FieldExemptFromTolls, field.TypeBool, value)
 		_node.ExemptFromTolls = value
+	}
+	if value, ok := etc.mutation.Color(); ok {
+		_spec.SetField(equipmenttype.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := etc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

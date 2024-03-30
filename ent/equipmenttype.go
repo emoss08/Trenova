@@ -54,6 +54,8 @@ type EquipmentType struct {
 	IdlingFuelUsage float64 `json:"idlingFuelUsage" validate:"omitempty"`
 	// ExemptFromTolls holds the value of the "exempt_from_tolls" field.
 	ExemptFromTolls bool `json:"exemptFromTolls" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EquipmentTypeQuery when eager-loading is set.
 	Edges        EquipmentTypeEdges `json:"edges"`
@@ -102,7 +104,7 @@ func (*EquipmentType) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case equipmenttype.FieldCostPerMile, equipmenttype.FieldFixedCost, equipmenttype.FieldVariableCost, equipmenttype.FieldHeight, equipmenttype.FieldLength, equipmenttype.FieldWidth, equipmenttype.FieldWeight, equipmenttype.FieldIdlingFuelUsage:
 			values[i] = new(sql.NullFloat64)
-		case equipmenttype.FieldStatus, equipmenttype.FieldName, equipmenttype.FieldDescription, equipmenttype.FieldEquipmentClass:
+		case equipmenttype.FieldStatus, equipmenttype.FieldName, equipmenttype.FieldDescription, equipmenttype.FieldEquipmentClass, equipmenttype.FieldColor:
 			values[i] = new(sql.NullString)
 		case equipmenttype.FieldCreatedAt, equipmenttype.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -231,6 +233,12 @@ func (et *EquipmentType) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				et.ExemptFromTolls = value.Bool
 			}
+		case equipmenttype.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				et.Color = value.String
+			}
 		default:
 			et.selectValues.Set(columns[i], values[i])
 		}
@@ -327,6 +335,9 @@ func (et *EquipmentType) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("exempt_from_tolls=")
 	builder.WriteString(fmt.Sprintf("%v", et.ExemptFromTolls))
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(et.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

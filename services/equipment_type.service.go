@@ -69,6 +69,7 @@ func (r *EquipmentTypeOps) CreateEquipmentType(newEquipType ent.EquipmentType) (
 		SetLength(newEquipType.Length).
 		SetWidth(newEquipType.Width).
 		SetWeight(newEquipType.Weight).
+		SetColor(newEquipType.Color).
 		SetIdlingFuelUsage(newEquipType.IdlingFuelUsage).
 		SetExemptFromTolls(newEquipType.ExemptFromTolls).
 		Save(r.ctx)
@@ -94,6 +95,7 @@ func (r *EquipmentTypeOps) UpdateEquipmentType(equipmentType ent.EquipmentType) 
 		SetLength(equipmentType.Length).
 		SetWidth(equipmentType.Width).
 		SetWeight(equipmentType.Weight).
+		SetColor(equipmentType.Color).
 		SetIdlingFuelUsage(equipmentType.IdlingFuelUsage).
 		SetExemptFromTolls(equipmentType.ExemptFromTolls)
 

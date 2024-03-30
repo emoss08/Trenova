@@ -75,6 +75,7 @@ export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
     width: Yup.number().transform((value) =>
       Number.isNaN(value) ? undefined : value,
     ),
+    color: Yup.string().max(100, "Color cannot be more than 100 characters"),
   });
 
 export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValues> =
@@ -83,7 +84,7 @@ export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValu
     name: Yup.string()
       .required("Name is required")
       .max(50, "Name cannot be more than 50 characters"),
-    description: Yup.string().notRequired(),
+    description: Yup.string(),
   });
 
 export const trailerSchema: ObjectSchema<TrailerFormValues> =

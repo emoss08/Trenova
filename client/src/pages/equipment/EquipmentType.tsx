@@ -64,6 +64,21 @@ const columns: ColumnDef<EquipmentType>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+    cell: ({ row }) => {
+      if (row.original.color) {
+        return (
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{ backgroundColor: row.original.color }}
+            />
+            {row.original.name}
+          </div>
+        );
+      } else {
+        return row.original.name;
+      }
+    },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
