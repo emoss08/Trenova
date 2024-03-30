@@ -129,5 +129,8 @@ type Worker func(*sql.Selector)
 // WorkerComment is the predicate function for workercomment builders.
 type WorkerComment func(*sql.Selector)
 
+// WorkerContact is the predicate function for workercontact builders.
+type WorkerContact func(*sql.Selector)
+
 // WorkerProfile is the predicate function for workerprofile builders.
 type WorkerProfile func(*sql.Selector)

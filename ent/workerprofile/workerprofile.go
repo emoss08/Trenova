@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -58,6 +59,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeWorker holds the string denoting the worker edge name in mutations.
 	EdgeWorker = "worker"
+	// EdgeState holds the string denoting the state edge name in mutations.
+	EdgeState = "state"
 	// Table holds the table name of the workerprofile in the database.
 	Table = "worker_profiles"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -81,6 +84,13 @@ const (
 	WorkerInverseTable = "workers"
 	// WorkerColumn is the table column denoting the worker relation/edge.
 	WorkerColumn = "worker_id"
+	// StateTable is the table that holds the state relation/edge.
+	StateTable = "worker_profiles"
+	// StateInverseTable is the table name for the UsState entity.
+	// It exists in this package in order to avoid circular dependency with the "usstate" package.
+	StateInverseTable = "us_states"
+	// StateColumn is the table column denoting the state relation/edge.
+	StateColumn = "license_state_id"
 )
 
 // Columns holds all SQL columns for workerprofile fields.
@@ -116,7 +126,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/emoss08/trenova/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -275,6 +291,13 @@ func ByWorkerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newWorkerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByStateField orders the results by state field.
+func ByStateField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -294,5 +317,12 @@ func newWorkerStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, true, WorkerTable, WorkerColumn),
+	)
+}
+func newStateStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, StateTable, StateColumn),
 	)
 }

@@ -342,12 +342,19 @@ func main() {
 				log.Panicf("Failed creating worker: %v", workerErr)
 			}
 
+			// Get the first available state.
+			state, stateErr := client.UsState.Query().First(ctx)
+			if stateErr != nil {
+				log.Panicf("Failed querying state: %v", stateErr)
+			}
+
 			_, err = client.WorkerProfile.Create().
 				SetOrganization(org).
 				SetBusinessUnit(bu).
 				SetWorker(worker).
 				SetWorkerID(worker.ID).
 				SetLicenseNumber("123456789").
+				SetLicenseStateID(state.ID).
 				Save(ctx)
 			if err != nil {
 				log.Panicf("Failed creating worker profile: %v", err)

@@ -57,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 
 	stdsql "database/sql"
@@ -149,6 +150,8 @@ type Client struct {
 	Worker *WorkerClient
 	// WorkerComment is the client for interacting with the WorkerComment builders.
 	WorkerComment *WorkerCommentClient
+	// WorkerContact is the client for interacting with the WorkerContact builders.
+	WorkerContact *WorkerContactClient
 	// WorkerProfile is the client for interacting with the WorkerProfile builders.
 	WorkerProfile *WorkerProfileClient
 }
@@ -203,6 +206,7 @@ func (c *Client) init() {
 	c.UserFavorite = NewUserFavoriteClient(c.config)
 	c.Worker = NewWorkerClient(c.config)
 	c.WorkerComment = NewWorkerCommentClient(c.config)
+	c.WorkerContact = NewWorkerContactClient(c.config)
 	c.WorkerProfile = NewWorkerProfileClient(c.config)
 }
 
@@ -337,6 +341,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		UserFavorite:                 NewUserFavoriteClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
+		WorkerContact:                NewWorkerContactClient(cfg),
 		WorkerProfile:                NewWorkerProfileClient(cfg),
 	}, nil
 }
@@ -398,6 +403,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		UserFavorite:                 NewUserFavoriteClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
+		WorkerContact:                NewWorkerContactClient(cfg),
 		WorkerProfile:                NewWorkerProfileClient(cfg),
 	}, nil
 }
@@ -437,7 +443,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
 		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
 		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerProfile,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -456,7 +462,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
 		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
 		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerProfile,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -547,6 +553,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Worker.mutate(ctx, m)
 	case *WorkerCommentMutation:
 		return c.WorkerComment.mutate(ctx, m)
+	case *WorkerContactMutation:
+		return c.WorkerContact.mutate(ctx, m)
 	case *WorkerProfileMutation:
 		return c.WorkerProfile.mutate(ctx, m)
 	default:
@@ -7646,6 +7654,38 @@ func (c *WorkerClient) QueryWorkerProfile(w *Worker) *WorkerProfileQuery {
 	return query
 }
 
+// QueryWorkerComments queries the worker_comments edge of a Worker.
+func (c *WorkerClient) QueryWorkerComments(w *Worker) *WorkerCommentQuery {
+	query := (&WorkerCommentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(workercomment.Table, workercomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.WorkerCommentsTable, worker.WorkerCommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkerContacts queries the worker_contacts edge of a Worker.
+func (c *WorkerClient) QueryWorkerContacts(w *Worker) *WorkerContactQuery {
+	query := (&WorkerContactClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := w.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, id),
+			sqlgraph.To(workercontact.Table, workercontact.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.WorkerContactsTable, worker.WorkerContactsColumn),
+		)
+		fromV = sqlgraph.Neighbors(w.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkerClient) Hooks() []Hook {
 	return c.hooks.Worker
@@ -7811,6 +7851,38 @@ func (c *WorkerCommentClient) QueryOrganization(wc *WorkerComment) *Organization
 	return query
 }
 
+// QueryWorker queries the worker edge of a WorkerComment.
+func (c *WorkerCommentClient) QueryWorker(wc *WorkerComment) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercomment.Table, workercomment.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workercomment.WorkerTable, workercomment.WorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommentType queries the comment_type edge of a WorkerComment.
+func (c *WorkerCommentClient) QueryCommentType(wc *WorkerComment) *CommentTypeQuery {
+	query := (&CommentTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercomment.Table, workercomment.FieldID, id),
+			sqlgraph.To(commenttype.Table, commenttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.CommentTypeTable, workercomment.CommentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkerCommentClient) Hooks() []Hook {
 	return c.hooks.WorkerComment
@@ -7833,6 +7905,187 @@ func (c *WorkerCommentClient) mutate(ctx context.Context, m *WorkerCommentMutati
 		return (&WorkerCommentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown WorkerComment mutation op: %q", m.Op())
+	}
+}
+
+// WorkerContactClient is a client for the WorkerContact schema.
+type WorkerContactClient struct {
+	config
+}
+
+// NewWorkerContactClient returns a client for the WorkerContact from the given config.
+func NewWorkerContactClient(c config) *WorkerContactClient {
+	return &WorkerContactClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workercontact.Hooks(f(g(h())))`.
+func (c *WorkerContactClient) Use(hooks ...Hook) {
+	c.hooks.WorkerContact = append(c.hooks.WorkerContact, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workercontact.Intercept(f(g(h())))`.
+func (c *WorkerContactClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkerContact = append(c.inters.WorkerContact, interceptors...)
+}
+
+// Create returns a builder for creating a WorkerContact entity.
+func (c *WorkerContactClient) Create() *WorkerContactCreate {
+	mutation := newWorkerContactMutation(c.config, OpCreate)
+	return &WorkerContactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkerContact entities.
+func (c *WorkerContactClient) CreateBulk(builders ...*WorkerContactCreate) *WorkerContactCreateBulk {
+	return &WorkerContactCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkerContactClient) MapCreateBulk(slice any, setFunc func(*WorkerContactCreate, int)) *WorkerContactCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkerContactCreateBulk{err: fmt.Errorf("calling to WorkerContactClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkerContactCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkerContactCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkerContact.
+func (c *WorkerContactClient) Update() *WorkerContactUpdate {
+	mutation := newWorkerContactMutation(c.config, OpUpdate)
+	return &WorkerContactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkerContactClient) UpdateOne(wc *WorkerContact) *WorkerContactUpdateOne {
+	mutation := newWorkerContactMutation(c.config, OpUpdateOne, withWorkerContact(wc))
+	return &WorkerContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkerContactClient) UpdateOneID(id uuid.UUID) *WorkerContactUpdateOne {
+	mutation := newWorkerContactMutation(c.config, OpUpdateOne, withWorkerContactID(id))
+	return &WorkerContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkerContact.
+func (c *WorkerContactClient) Delete() *WorkerContactDelete {
+	mutation := newWorkerContactMutation(c.config, OpDelete)
+	return &WorkerContactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkerContactClient) DeleteOne(wc *WorkerContact) *WorkerContactDeleteOne {
+	return c.DeleteOneID(wc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkerContactClient) DeleteOneID(id uuid.UUID) *WorkerContactDeleteOne {
+	builder := c.Delete().Where(workercontact.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkerContactDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkerContact.
+func (c *WorkerContactClient) Query() *WorkerContactQuery {
+	return &WorkerContactQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkerContact},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkerContact entity by its id.
+func (c *WorkerContactClient) Get(ctx context.Context, id uuid.UUID) (*WorkerContact, error) {
+	return c.Query().Where(workercontact.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkerContactClient) GetX(ctx context.Context, id uuid.UUID) *WorkerContact {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a WorkerContact.
+func (c *WorkerContactClient) QueryBusinessUnit(wc *WorkerContact) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercontact.BusinessUnitTable, workercontact.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a WorkerContact.
+func (c *WorkerContactClient) QueryOrganization(wc *WorkerContact) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercontact.OrganizationTable, workercontact.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorker queries the worker edge of a WorkerContact.
+func (c *WorkerContactClient) QueryWorker(wc *WorkerContact) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercontact.Table, workercontact.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workercontact.WorkerTable, workercontact.WorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkerContactClient) Hooks() []Hook {
+	return c.hooks.WorkerContact
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkerContactClient) Interceptors() []Interceptor {
+	return c.inters.WorkerContact
+}
+
+func (c *WorkerContactClient) mutate(ctx context.Context, m *WorkerContactMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkerContactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkerContactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkerContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkerContactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkerContact mutation op: %q", m.Op())
 	}
 }
 
@@ -7992,9 +8245,26 @@ func (c *WorkerProfileClient) QueryWorker(wp *WorkerProfile) *WorkerQuery {
 	return query
 }
 
+// QueryState queries the state edge of a WorkerProfile.
+func (c *WorkerProfileClient) QueryState(wp *WorkerProfile) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workerprofile.Table, workerprofile.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workerprofile.StateTable, workerprofile.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(wp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkerProfileClient) Hooks() []Hook {
-	return c.hooks.WorkerProfile
+	hooks := c.hooks.WorkerProfile
+	return append(hooks[:len(hooks):len(hooks)], workerprofile.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -8028,7 +8298,7 @@ type (
 		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
 		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
 		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite, Worker,
-		WorkerComment, WorkerProfile []ent.Hook
+		WorkerComment, WorkerContact, WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
@@ -8039,7 +8309,7 @@ type (
 		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
 		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
 		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite, Worker,
-		WorkerComment, WorkerProfile []ent.Interceptor
+		WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
 	}
 )
 

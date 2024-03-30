@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -114,12 +115,6 @@ func (wpu *WorkerProfileUpdate) SetNillableLicenseStateID(u *uuid.UUID) *WorkerP
 	if u != nil {
 		wpu.SetLicenseStateID(*u)
 	}
-	return wpu
-}
-
-// ClearLicenseStateID clears the value of the "license_state_id" field.
-func (wpu *WorkerProfileUpdate) ClearLicenseStateID() *WorkerProfileUpdate {
-	wpu.mutation.ClearLicenseStateID()
 	return wpu
 }
 
@@ -227,14 +222,33 @@ func (wpu *WorkerProfileUpdate) ClearMvrDueDate() *WorkerProfileUpdate {
 	return wpu
 }
 
+// SetStateID sets the "state" edge to the UsState entity by ID.
+func (wpu *WorkerProfileUpdate) SetStateID(id uuid.UUID) *WorkerProfileUpdate {
+	wpu.mutation.SetStateID(id)
+	return wpu
+}
+
+// SetState sets the "state" edge to the UsState entity.
+func (wpu *WorkerProfileUpdate) SetState(u *UsState) *WorkerProfileUpdate {
+	return wpu.SetStateID(u.ID)
+}
+
 // Mutation returns the WorkerProfileMutation object of the builder.
 func (wpu *WorkerProfileUpdate) Mutation() *WorkerProfileMutation {
 	return wpu.mutation
 }
 
+// ClearState clears the "state" edge to the UsState entity.
+func (wpu *WorkerProfileUpdate) ClearState() *WorkerProfileUpdate {
+	wpu.mutation.ClearState()
+	return wpu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (wpu *WorkerProfileUpdate) Save(ctx context.Context) (int, error) {
-	wpu.defaults()
+	if err := wpu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, wpu.sqlSave, wpu.mutation, wpu.hooks)
 }
 
@@ -261,11 +275,15 @@ func (wpu *WorkerProfileUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (wpu *WorkerProfileUpdate) defaults() {
+func (wpu *WorkerProfileUpdate) defaults() error {
 	if _, ok := wpu.mutation.UpdatedAt(); !ok {
+		if workerprofile.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workerprofile.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workerprofile.UpdateDefaultUpdatedAt()
 		wpu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -288,6 +306,9 @@ func (wpu *WorkerProfileUpdate) check() error {
 	}
 	if _, ok := wpu.mutation.WorkerID(); wpu.mutation.WorkerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "WorkerProfile.worker"`)
+	}
+	if _, ok := wpu.mutation.StateID(); wpu.mutation.StateCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "WorkerProfile.state"`)
 	}
 	return nil
 }
@@ -333,12 +354,6 @@ func (wpu *WorkerProfileUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := wpu.mutation.LicenseNumber(); ok {
 		_spec.SetField(workerprofile.FieldLicenseNumber, field.TypeString, value)
-	}
-	if value, ok := wpu.mutation.LicenseStateID(); ok {
-		_spec.SetField(workerprofile.FieldLicenseStateID, field.TypeUUID, value)
-	}
-	if wpu.mutation.LicenseStateIDCleared() {
-		_spec.ClearField(workerprofile.FieldLicenseStateID, field.TypeUUID)
 	}
 	if value, ok := wpu.mutation.LicenseExpirationDate(); ok {
 		_spec.SetField(workerprofile.FieldLicenseExpirationDate, field.TypeOther, value)
@@ -387,6 +402,35 @@ func (wpu *WorkerProfileUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if wpu.mutation.MvrDueDateCleared() {
 		_spec.ClearField(workerprofile.FieldMvrDueDate, field.TypeOther)
+	}
+	if wpu.mutation.StateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wpu.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(wpu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, wpu.driver, _spec); err != nil {
@@ -496,12 +540,6 @@ func (wpuo *WorkerProfileUpdateOne) SetNillableLicenseStateID(u *uuid.UUID) *Wor
 	return wpuo
 }
 
-// ClearLicenseStateID clears the value of the "license_state_id" field.
-func (wpuo *WorkerProfileUpdateOne) ClearLicenseStateID() *WorkerProfileUpdateOne {
-	wpuo.mutation.ClearLicenseStateID()
-	return wpuo
-}
-
 // SetLicenseExpirationDate sets the "license_expiration_date" field.
 func (wpuo *WorkerProfileUpdateOne) SetLicenseExpirationDate(pg *pgtype.Date) *WorkerProfileUpdateOne {
 	wpuo.mutation.SetLicenseExpirationDate(pg)
@@ -606,9 +644,26 @@ func (wpuo *WorkerProfileUpdateOne) ClearMvrDueDate() *WorkerProfileUpdateOne {
 	return wpuo
 }
 
+// SetStateID sets the "state" edge to the UsState entity by ID.
+func (wpuo *WorkerProfileUpdateOne) SetStateID(id uuid.UUID) *WorkerProfileUpdateOne {
+	wpuo.mutation.SetStateID(id)
+	return wpuo
+}
+
+// SetState sets the "state" edge to the UsState entity.
+func (wpuo *WorkerProfileUpdateOne) SetState(u *UsState) *WorkerProfileUpdateOne {
+	return wpuo.SetStateID(u.ID)
+}
+
 // Mutation returns the WorkerProfileMutation object of the builder.
 func (wpuo *WorkerProfileUpdateOne) Mutation() *WorkerProfileMutation {
 	return wpuo.mutation
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (wpuo *WorkerProfileUpdateOne) ClearState() *WorkerProfileUpdateOne {
+	wpuo.mutation.ClearState()
+	return wpuo
 }
 
 // Where appends a list predicates to the WorkerProfileUpdate builder.
@@ -626,7 +681,9 @@ func (wpuo *WorkerProfileUpdateOne) Select(field string, fields ...string) *Work
 
 // Save executes the query and returns the updated WorkerProfile entity.
 func (wpuo *WorkerProfileUpdateOne) Save(ctx context.Context) (*WorkerProfile, error) {
-	wpuo.defaults()
+	if err := wpuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, wpuo.sqlSave, wpuo.mutation, wpuo.hooks)
 }
 
@@ -653,11 +710,15 @@ func (wpuo *WorkerProfileUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (wpuo *WorkerProfileUpdateOne) defaults() {
+func (wpuo *WorkerProfileUpdateOne) defaults() error {
 	if _, ok := wpuo.mutation.UpdatedAt(); !ok {
+		if workerprofile.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workerprofile.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workerprofile.UpdateDefaultUpdatedAt()
 		wpuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -680,6 +741,9 @@ func (wpuo *WorkerProfileUpdateOne) check() error {
 	}
 	if _, ok := wpuo.mutation.WorkerID(); wpuo.mutation.WorkerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "WorkerProfile.worker"`)
+	}
+	if _, ok := wpuo.mutation.StateID(); wpuo.mutation.StateCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "WorkerProfile.state"`)
 	}
 	return nil
 }
@@ -743,12 +807,6 @@ func (wpuo *WorkerProfileUpdateOne) sqlSave(ctx context.Context) (_node *WorkerP
 	if value, ok := wpuo.mutation.LicenseNumber(); ok {
 		_spec.SetField(workerprofile.FieldLicenseNumber, field.TypeString, value)
 	}
-	if value, ok := wpuo.mutation.LicenseStateID(); ok {
-		_spec.SetField(workerprofile.FieldLicenseStateID, field.TypeUUID, value)
-	}
-	if wpuo.mutation.LicenseStateIDCleared() {
-		_spec.ClearField(workerprofile.FieldLicenseStateID, field.TypeUUID)
-	}
 	if value, ok := wpuo.mutation.LicenseExpirationDate(); ok {
 		_spec.SetField(workerprofile.FieldLicenseExpirationDate, field.TypeOther, value)
 	}
@@ -796,6 +854,35 @@ func (wpuo *WorkerProfileUpdateOne) sqlSave(ctx context.Context) (_node *WorkerP
 	}
 	if wpuo.mutation.MvrDueDateCleared() {
 		_spec.ClearField(workerprofile.FieldMvrDueDate, field.TypeOther)
+	}
+	if wpuo.mutation.StateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wpuo.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(wpuo.modifiers...)
 	_node = &WorkerProfile{config: wpuo.config}

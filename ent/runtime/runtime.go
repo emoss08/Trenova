@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
@@ -1700,11 +1701,52 @@ func init() {
 	workercomment.DefaultUpdatedAt = workercommentDescUpdatedAt.Default.(func() time.Time)
 	// workercomment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workercomment.UpdateDefaultUpdatedAt = workercommentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workercommentDescComment is the schema descriptor for comment field.
+	workercommentDescComment := workercommentFields[2].Descriptor()
+	// workercomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
+	workercomment.CommentValidator = workercommentDescComment.Validators[0].(func(string) error)
 	// workercommentDescID is the schema descriptor for id field.
 	workercommentDescID := workercommentMixinFields0[0].Descriptor()
 	// workercomment.DefaultID holds the default value on creation for the id field.
 	workercomment.DefaultID = workercommentDescID.Default.(func() uuid.UUID)
+	workercontactMixin := schema.WorkerContact{}.Mixin()
+	workercontactMixinFields0 := workercontactMixin[0].Fields()
+	_ = workercontactMixinFields0
+	workercontactFields := schema.WorkerContact{}.Fields()
+	_ = workercontactFields
+	// workercontactDescCreatedAt is the schema descriptor for created_at field.
+	workercontactDescCreatedAt := workercontactMixinFields0[3].Descriptor()
+	// workercontact.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workercontact.DefaultCreatedAt = workercontactDescCreatedAt.Default.(func() time.Time)
+	// workercontactDescUpdatedAt is the schema descriptor for updated_at field.
+	workercontactDescUpdatedAt := workercontactMixinFields0[4].Descriptor()
+	// workercontact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workercontact.DefaultUpdatedAt = workercontactDescUpdatedAt.Default.(func() time.Time)
+	// workercontact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workercontact.UpdateDefaultUpdatedAt = workercontactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workercontactDescName is the schema descriptor for name field.
+	workercontactDescName := workercontactFields[1].Descriptor()
+	// workercontact.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	workercontact.NameValidator = workercontactDescName.Validators[0].(func(string) error)
+	// workercontactDescEmail is the schema descriptor for email field.
+	workercontactDescEmail := workercontactFields[2].Descriptor()
+	// workercontact.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	workercontact.EmailValidator = workercontactDescEmail.Validators[0].(func(string) error)
+	// workercontactDescPhone is the schema descriptor for phone field.
+	workercontactDescPhone := workercontactFields[3].Descriptor()
+	// workercontact.PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
+	workercontact.PhoneValidator = workercontactDescPhone.Validators[0].(func(string) error)
+	// workercontactDescIsPrimary is the schema descriptor for is_primary field.
+	workercontactDescIsPrimary := workercontactFields[5].Descriptor()
+	// workercontact.DefaultIsPrimary holds the default value on creation for the is_primary field.
+	workercontact.DefaultIsPrimary = workercontactDescIsPrimary.Default.(bool)
+	// workercontactDescID is the schema descriptor for id field.
+	workercontactDescID := workercontactMixinFields0[0].Descriptor()
+	// workercontact.DefaultID holds the default value on creation for the id field.
+	workercontact.DefaultID = workercontactDescID.Default.(func() uuid.UUID)
 	workerprofileMixin := schema.WorkerProfile{}.Mixin()
+	workerprofileHooks := schema.WorkerProfile{}.Hooks()
+	workerprofile.Hooks[0] = workerprofileHooks[0]
 	workerprofileMixinFields0 := workerprofileMixin[0].Fields()
 	_ = workerprofileMixinFields0
 	workerprofileFields := schema.WorkerProfile{}.Fields()

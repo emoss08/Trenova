@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
@@ -117,14 +118,6 @@ func (wpc *WorkerProfileCreate) SetLicenseStateID(u uuid.UUID) *WorkerProfileCre
 	return wpc
 }
 
-// SetNillableLicenseStateID sets the "license_state_id" field if the given value is not nil.
-func (wpc *WorkerProfileCreate) SetNillableLicenseStateID(u *uuid.UUID) *WorkerProfileCreate {
-	if u != nil {
-		wpc.SetLicenseStateID(*u)
-	}
-	return wpc
-}
-
 // SetLicenseExpirationDate sets the "license_expiration_date" field.
 func (wpc *WorkerProfileCreate) SetLicenseExpirationDate(pg *pgtype.Date) *WorkerProfileCreate {
 	wpc.mutation.SetLicenseExpirationDate(pg)
@@ -210,6 +203,17 @@ func (wpc *WorkerProfileCreate) SetWorker(w *Worker) *WorkerProfileCreate {
 	return wpc.SetWorkerID(w.ID)
 }
 
+// SetStateID sets the "state" edge to the UsState entity by ID.
+func (wpc *WorkerProfileCreate) SetStateID(id uuid.UUID) *WorkerProfileCreate {
+	wpc.mutation.SetStateID(id)
+	return wpc
+}
+
+// SetState sets the "state" edge to the UsState entity.
+func (wpc *WorkerProfileCreate) SetState(u *UsState) *WorkerProfileCreate {
+	return wpc.SetStateID(u.ID)
+}
+
 // Mutation returns the WorkerProfileMutation object of the builder.
 func (wpc *WorkerProfileCreate) Mutation() *WorkerProfileMutation {
 	return wpc.mutation
@@ -217,7 +221,9 @@ func (wpc *WorkerProfileCreate) Mutation() *WorkerProfileMutation {
 
 // Save creates the WorkerProfile in the database.
 func (wpc *WorkerProfileCreate) Save(ctx context.Context) (*WorkerProfile, error) {
-	wpc.defaults()
+	if err := wpc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, wpc.sqlSave, wpc.mutation, wpc.hooks)
 }
 
@@ -244,12 +250,18 @@ func (wpc *WorkerProfileCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (wpc *WorkerProfileCreate) defaults() {
+func (wpc *WorkerProfileCreate) defaults() error {
 	if _, ok := wpc.mutation.CreatedAt(); !ok {
+		if workerprofile.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workerprofile.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := workerprofile.DefaultCreatedAt()
 		wpc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := wpc.mutation.UpdatedAt(); !ok {
+		if workerprofile.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workerprofile.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workerprofile.DefaultUpdatedAt()
 		wpc.mutation.SetUpdatedAt(v)
 	}
@@ -258,9 +270,13 @@ func (wpc *WorkerProfileCreate) defaults() {
 		wpc.mutation.SetEndorsements(v)
 	}
 	if _, ok := wpc.mutation.ID(); !ok {
+		if workerprofile.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized workerprofile.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := workerprofile.DefaultID()
 		wpc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -288,6 +304,9 @@ func (wpc *WorkerProfileCreate) check() error {
 			return &ValidationError{Name: "license_number", err: fmt.Errorf(`ent: validator failed for field "WorkerProfile.license_number": %w`, err)}
 		}
 	}
+	if _, ok := wpc.mutation.LicenseStateID(); !ok {
+		return &ValidationError{Name: "license_state_id", err: errors.New(`ent: missing required field "WorkerProfile.license_state_id"`)}
+	}
 	if v, ok := wpc.mutation.Endorsements(); ok {
 		if err := workerprofile.EndorsementsValidator(v); err != nil {
 			return &ValidationError{Name: "endorsements", err: fmt.Errorf(`ent: validator failed for field "WorkerProfile.endorsements": %w`, err)}
@@ -301,6 +320,9 @@ func (wpc *WorkerProfileCreate) check() error {
 	}
 	if _, ok := wpc.mutation.WorkerID(); !ok {
 		return &ValidationError{Name: "worker", err: errors.New(`ent: missing required edge "WorkerProfile.worker"`)}
+	}
+	if _, ok := wpc.mutation.StateID(); !ok {
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required edge "WorkerProfile.state"`)}
 	}
 	return nil
 }
@@ -360,10 +382,6 @@ func (wpc *WorkerProfileCreate) createSpec() (*WorkerProfile, *sqlgraph.CreateSp
 	if value, ok := wpc.mutation.LicenseNumber(); ok {
 		_spec.SetField(workerprofile.FieldLicenseNumber, field.TypeString, value)
 		_node.LicenseNumber = value
-	}
-	if value, ok := wpc.mutation.LicenseStateID(); ok {
-		_spec.SetField(workerprofile.FieldLicenseStateID, field.TypeUUID, value)
-		_node.LicenseStateID = &value
 	}
 	if value, ok := wpc.mutation.LicenseExpirationDate(); ok {
 		_spec.SetField(workerprofile.FieldLicenseExpirationDate, field.TypeOther, value)
@@ -446,6 +464,23 @@ func (wpc *WorkerProfileCreate) createSpec() (*WorkerProfile, *sqlgraph.CreateSp
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkerID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wpc.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.StateTable,
+			Columns: []string{workerprofile.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.LicenseStateID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

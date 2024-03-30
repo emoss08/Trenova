@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ type WorkerProfileQuery struct {
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
 	withWorker       *WorkerQuery
+	withState        *UsStateQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -124,6 +126,28 @@ func (wpq *WorkerProfileQuery) QueryWorker() *WorkerQuery {
 			sqlgraph.From(workerprofile.Table, workerprofile.FieldID, selector),
 			sqlgraph.To(worker.Table, worker.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, true, workerprofile.WorkerTable, workerprofile.WorkerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wpq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryState chains the current query on the "state" edge.
+func (wpq *WorkerProfileQuery) QueryState() *UsStateQuery {
+	query := (&UsStateClient{config: wpq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wpq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wpq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workerprofile.Table, workerprofile.FieldID, selector),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workerprofile.StateTable, workerprofile.StateColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wpq.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +350,7 @@ func (wpq *WorkerProfileQuery) Clone() *WorkerProfileQuery {
 		withBusinessUnit: wpq.withBusinessUnit.Clone(),
 		withOrganization: wpq.withOrganization.Clone(),
 		withWorker:       wpq.withWorker.Clone(),
+		withState:        wpq.withState.Clone(),
 		// clone intermediate query.
 		sql:  wpq.sql.Clone(),
 		path: wpq.path,
@@ -362,6 +387,17 @@ func (wpq *WorkerProfileQuery) WithWorker(opts ...func(*WorkerQuery)) *WorkerPro
 		opt(query)
 	}
 	wpq.withWorker = query
+	return wpq
+}
+
+// WithState tells the query-builder to eager-load the nodes that are connected to
+// the "state" edge. The optional arguments are used to configure the query builder of the edge.
+func (wpq *WorkerProfileQuery) WithState(opts ...func(*UsStateQuery)) *WorkerProfileQuery {
+	query := (&UsStateClient{config: wpq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	wpq.withState = query
 	return wpq
 }
 
@@ -443,10 +479,11 @@ func (wpq *WorkerProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	var (
 		nodes       = []*WorkerProfile{}
 		_spec       = wpq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			wpq.withBusinessUnit != nil,
 			wpq.withOrganization != nil,
 			wpq.withWorker != nil,
+			wpq.withState != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +522,12 @@ func (wpq *WorkerProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	if query := wpq.withWorker; query != nil {
 		if err := wpq.loadWorker(ctx, query, nodes, nil,
 			func(n *WorkerProfile, e *Worker) { n.Edges.Worker = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := wpq.withState; query != nil {
+		if err := wpq.loadState(ctx, query, nodes, nil,
+			func(n *WorkerProfile, e *UsState) { n.Edges.State = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -578,6 +621,35 @@ func (wpq *WorkerProfileQuery) loadWorker(ctx context.Context, query *WorkerQuer
 	}
 	return nil
 }
+func (wpq *WorkerProfileQuery) loadState(ctx context.Context, query *UsStateQuery, nodes []*WorkerProfile, init func(*WorkerProfile), assign func(*WorkerProfile, *UsState)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*WorkerProfile)
+	for i := range nodes {
+		fk := nodes[i].LicenseStateID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(usstate.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "license_state_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (wpq *WorkerProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := wpq.querySpec()
@@ -615,6 +687,9 @@ func (wpq *WorkerProfileQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if wpq.withWorker != nil {
 			_spec.Node.AddColumnOnce(workerprofile.FieldWorkerID)
+		}
+		if wpq.withState != nil {
+			_spec.Node.AddColumnOnce(workerprofile.FieldLicenseStateID)
 		}
 	}
 	if ps := wpq.predicates; len(ps) > 0 {

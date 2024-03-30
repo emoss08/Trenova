@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
@@ -292,6 +294,36 @@ func (wc *WorkerCreate) SetNillableWorkerProfileID(id *uuid.UUID) *WorkerCreate 
 // SetWorkerProfile sets the "worker_profile" edge to the WorkerProfile entity.
 func (wc *WorkerCreate) SetWorkerProfile(w *WorkerProfile) *WorkerCreate {
 	return wc.SetWorkerProfileID(w.ID)
+}
+
+// AddWorkerCommentIDs adds the "worker_comments" edge to the WorkerComment entity by IDs.
+func (wc *WorkerCreate) AddWorkerCommentIDs(ids ...uuid.UUID) *WorkerCreate {
+	wc.mutation.AddWorkerCommentIDs(ids...)
+	return wc
+}
+
+// AddWorkerComments adds the "worker_comments" edges to the WorkerComment entity.
+func (wc *WorkerCreate) AddWorkerComments(w ...*WorkerComment) *WorkerCreate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wc.AddWorkerCommentIDs(ids...)
+}
+
+// AddWorkerContactIDs adds the "worker_contacts" edge to the WorkerContact entity by IDs.
+func (wc *WorkerCreate) AddWorkerContactIDs(ids ...uuid.UUID) *WorkerCreate {
+	wc.mutation.AddWorkerContactIDs(ids...)
+	return wc
+}
+
+// AddWorkerContacts adds the "worker_contacts" edges to the WorkerContact entity.
+func (wc *WorkerCreate) AddWorkerContacts(w ...*WorkerContact) *WorkerCreate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wc.AddWorkerContactIDs(ids...)
 }
 
 // Mutation returns the WorkerMutation object of the builder.
@@ -617,6 +649,38 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wc.mutation.WorkerCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wc.mutation.WorkerContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

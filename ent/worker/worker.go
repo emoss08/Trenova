@@ -62,6 +62,10 @@ const (
 	EdgeSecondaryTractor = "secondary_tractor"
 	// EdgeWorkerProfile holds the string denoting the worker_profile edge name in mutations.
 	EdgeWorkerProfile = "worker_profile"
+	// EdgeWorkerComments holds the string denoting the worker_comments edge name in mutations.
+	EdgeWorkerComments = "worker_comments"
+	// EdgeWorkerContacts holds the string denoting the worker_contacts edge name in mutations.
+	EdgeWorkerContacts = "worker_contacts"
 	// Table holds the table name of the worker in the database.
 	Table = "workers"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -120,6 +124,20 @@ const (
 	WorkerProfileInverseTable = "worker_profiles"
 	// WorkerProfileColumn is the table column denoting the worker_profile relation/edge.
 	WorkerProfileColumn = "worker_id"
+	// WorkerCommentsTable is the table that holds the worker_comments relation/edge.
+	WorkerCommentsTable = "worker_comments"
+	// WorkerCommentsInverseTable is the table name for the WorkerComment entity.
+	// It exists in this package in order to avoid circular dependency with the "workercomment" package.
+	WorkerCommentsInverseTable = "worker_comments"
+	// WorkerCommentsColumn is the table column denoting the worker_comments relation/edge.
+	WorkerCommentsColumn = "worker_id"
+	// WorkerContactsTable is the table that holds the worker_contacts relation/edge.
+	WorkerContactsTable = "worker_contacts"
+	// WorkerContactsInverseTable is the table name for the WorkerContact entity.
+	// It exists in this package in order to avoid circular dependency with the "workercontact" package.
+	WorkerContactsInverseTable = "worker_contacts"
+	// WorkerContactsColumn is the table column denoting the worker_contacts relation/edge.
+	WorkerContactsColumn = "worker_id"
 )
 
 // Columns holds all SQL columns for worker fields.
@@ -361,6 +379,34 @@ func ByWorkerProfileField(field string, opts ...sql.OrderTermOption) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newWorkerProfileStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByWorkerCommentsCount orders the results by worker_comments count.
+func ByWorkerCommentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkerCommentsStep(), opts...)
+	}
+}
+
+// ByWorkerComments orders the results by worker_comments terms.
+func ByWorkerComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkerCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByWorkerContactsCount orders the results by worker_contacts count.
+func ByWorkerContactsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkerContactsStep(), opts...)
+	}
+}
+
+// ByWorkerContacts orders the results by worker_contacts terms.
+func ByWorkerContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkerContactsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -415,5 +461,19 @@ func newWorkerProfileStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkerProfileInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, WorkerProfileTable, WorkerProfileColumn),
+	)
+}
+func newWorkerCommentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkerCommentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WorkerCommentsTable, WorkerCommentsColumn),
+	)
+}
+func newWorkerContactsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkerContactsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WorkerContactsTable, WorkerContactsColumn),
 	)
 }

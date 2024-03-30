@@ -975,6 +975,52 @@ func HasWorkerProfileWith(preds ...predicate.WorkerProfile) predicate.Worker {
 	})
 }
 
+// HasWorkerComments applies the HasEdge predicate on the "worker_comments" edge.
+func HasWorkerComments() predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WorkerCommentsTable, WorkerCommentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkerCommentsWith applies the HasEdge predicate on the "worker_comments" edge with a given conditions (other predicates).
+func HasWorkerCommentsWith(preds ...predicate.WorkerComment) predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := newWorkerCommentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWorkerContacts applies the HasEdge predicate on the "worker_contacts" edge.
+func HasWorkerContacts() predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WorkerContactsTable, WorkerContactsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkerContactsWith applies the HasEdge predicate on the "worker_contacts" edge with a given conditions (other predicates).
+func HasWorkerContactsWith(preds ...predicate.WorkerContact) predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := newWorkerContactsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Worker) predicate.Worker {
 	return predicate.Worker(sql.AndPredicates(predicates...))

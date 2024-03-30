@@ -19,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
@@ -38,6 +40,8 @@ type WorkerQuery struct {
 	withPrimaryTractor   *TractorQuery
 	withSecondaryTractor *TractorQuery
 	withWorkerProfile    *WorkerProfileQuery
+	withWorkerComments   *WorkerCommentQuery
+	withWorkerContacts   *WorkerContactQuery
 	modifiers            []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -251,6 +255,50 @@ func (wq *WorkerQuery) QueryWorkerProfile() *WorkerProfileQuery {
 	return query
 }
 
+// QueryWorkerComments chains the current query on the "worker_comments" edge.
+func (wq *WorkerQuery) QueryWorkerComments() *WorkerCommentQuery {
+	query := (&WorkerCommentClient{config: wq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, selector),
+			sqlgraph.To(workercomment.Table, workercomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.WorkerCommentsTable, worker.WorkerCommentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWorkerContacts chains the current query on the "worker_contacts" edge.
+func (wq *WorkerQuery) QueryWorkerContacts() *WorkerContactQuery {
+	query := (&WorkerContactClient{config: wq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, selector),
+			sqlgraph.To(workercontact.Table, workercontact.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worker.WorkerContactsTable, worker.WorkerContactsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Worker entity from the query.
 // Returns a *NotFoundError when no Worker was found.
 func (wq *WorkerQuery) First(ctx context.Context) (*Worker, error) {
@@ -451,6 +499,8 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 		withPrimaryTractor:   wq.withPrimaryTractor.Clone(),
 		withSecondaryTractor: wq.withSecondaryTractor.Clone(),
 		withWorkerProfile:    wq.withWorkerProfile.Clone(),
+		withWorkerComments:   wq.withWorkerComments.Clone(),
+		withWorkerContacts:   wq.withWorkerContacts.Clone(),
 		// clone intermediate query.
 		sql:  wq.sql.Clone(),
 		path: wq.path,
@@ -545,6 +595,28 @@ func (wq *WorkerQuery) WithWorkerProfile(opts ...func(*WorkerProfileQuery)) *Wor
 	return wq
 }
 
+// WithWorkerComments tells the query-builder to eager-load the nodes that are connected to
+// the "worker_comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithWorkerComments(opts ...func(*WorkerCommentQuery)) *WorkerQuery {
+	query := (&WorkerCommentClient{config: wq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	wq.withWorkerComments = query
+	return wq
+}
+
+// WithWorkerContacts tells the query-builder to eager-load the nodes that are connected to
+// the "worker_contacts" edge. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithWorkerContacts(opts ...func(*WorkerContactQuery)) *WorkerQuery {
+	query := (&WorkerContactClient{config: wq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	wq.withWorkerContacts = query
+	return wq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -623,7 +695,7 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 	var (
 		nodes       = []*Worker{}
 		_spec       = wq.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [10]bool{
 			wq.withBusinessUnit != nil,
 			wq.withOrganization != nil,
 			wq.withState != nil,
@@ -632,6 +704,8 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 			wq.withPrimaryTractor != nil,
 			wq.withSecondaryTractor != nil,
 			wq.withWorkerProfile != nil,
+			wq.withWorkerComments != nil,
+			wq.withWorkerContacts != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -700,6 +774,20 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 	if query := wq.withWorkerProfile; query != nil {
 		if err := wq.loadWorkerProfile(ctx, query, nodes, nil,
 			func(n *Worker, e *WorkerProfile) { n.Edges.WorkerProfile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := wq.withWorkerComments; query != nil {
+		if err := wq.loadWorkerComments(ctx, query, nodes,
+			func(n *Worker) { n.Edges.WorkerComments = []*WorkerComment{} },
+			func(n *Worker, e *WorkerComment) { n.Edges.WorkerComments = append(n.Edges.WorkerComments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := wq.withWorkerContacts; query != nil {
+		if err := wq.loadWorkerContacts(ctx, query, nodes,
+			func(n *Worker) { n.Edges.WorkerContacts = []*WorkerContact{} },
+			func(n *Worker, e *WorkerContact) { n.Edges.WorkerContacts = append(n.Edges.WorkerContacts, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -929,6 +1017,66 @@ func (wq *WorkerQuery) loadWorkerProfile(ctx context.Context, query *WorkerProfi
 	}
 	query.Where(predicate.WorkerProfile(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(worker.WorkerProfileColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "worker_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (wq *WorkerQuery) loadWorkerComments(ctx context.Context, query *WorkerCommentQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *WorkerComment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Worker)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workercomment.FieldWorkerID)
+	}
+	query.Where(predicate.WorkerComment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(worker.WorkerCommentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "worker_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (wq *WorkerQuery) loadWorkerContacts(ctx context.Context, query *WorkerContactQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *WorkerContact)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Worker)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workercontact.FieldWorkerID)
+	}
+	query.Where(predicate.WorkerContact(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(worker.WorkerContactsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

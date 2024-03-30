@@ -10,15 +10,14 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/worker"
-	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/google/uuid"
 )
 
-// WorkerComment is the model entity for the WorkerComment schema.
-type WorkerComment struct {
+// WorkerContact is the model entity for the WorkerContact schema.
+type WorkerContact struct {
 	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
@@ -32,36 +31,38 @@ type WorkerComment struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 	// WorkerID holds the value of the "worker_id" field.
 	WorkerID uuid.UUID `json:"workerId" validate:"required"`
-	// CommentTypeID holds the value of the "comment_type_id" field.
-	CommentTypeID uuid.UUID `json:"commentTypeId" validate:"required"`
-	// Comment holds the value of the "comment" field.
-	Comment string `json:"comment" validate:"omitempty"`
-	// EnteredBy holds the value of the "entered_by" field.
-	EnteredBy uuid.UUID `json:"enteredBy" validate:"required"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name" validate:"required"`
+	// Email holds the value of the "email" field.
+	Email string `json:"email" validate:"required"`
+	// Phone holds the value of the "phone" field.
+	Phone string `json:"phone" validate:"required"`
+	// Relationship holds the value of the "relationship" field.
+	Relationship string `json:"relationship" validate:"omitempty"`
+	// IsPrimary holds the value of the "is_primary" field.
+	IsPrimary bool `json:"isPrimary" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the WorkerCommentQuery when eager-loading is set.
-	Edges        WorkerCommentEdges `json:"edges"`
+	// The values are being populated by the WorkerContactQuery when eager-loading is set.
+	Edges        WorkerContactEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// WorkerCommentEdges holds the relations/edges for other nodes in the graph.
-type WorkerCommentEdges struct {
+// WorkerContactEdges holds the relations/edges for other nodes in the graph.
+type WorkerContactEdges struct {
 	// BusinessUnit holds the value of the business_unit edge.
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
 	// Worker holds the value of the worker edge.
 	Worker *Worker `json:"worker"`
-	// CommentType holds the value of the comment_type edge.
-	CommentType *CommentType `json:"commentType"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [3]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e WorkerCommentEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
+func (e WorkerContactEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
 	if e.BusinessUnit != nil {
 		return e.BusinessUnit, nil
 	} else if e.loadedTypes[0] {
@@ -72,7 +73,7 @@ func (e WorkerCommentEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
 
 // OrganizationOrErr returns the Organization value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e WorkerCommentEdges) OrganizationOrErr() (*Organization, error) {
+func (e WorkerContactEdges) OrganizationOrErr() (*Organization, error) {
 	if e.Organization != nil {
 		return e.Organization, nil
 	} else if e.loadedTypes[1] {
@@ -83,7 +84,7 @@ func (e WorkerCommentEdges) OrganizationOrErr() (*Organization, error) {
 
 // WorkerOrErr returns the Worker value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e WorkerCommentEdges) WorkerOrErr() (*Worker, error) {
+func (e WorkerContactEdges) WorkerOrErr() (*Worker, error) {
 	if e.Worker != nil {
 		return e.Worker, nil
 	} else if e.loadedTypes[2] {
@@ -92,27 +93,18 @@ func (e WorkerCommentEdges) WorkerOrErr() (*Worker, error) {
 	return nil, &NotLoadedError{edge: "worker"}
 }
 
-// CommentTypeOrErr returns the CommentType value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e WorkerCommentEdges) CommentTypeOrErr() (*CommentType, error) {
-	if e.CommentType != nil {
-		return e.CommentType, nil
-	} else if e.loadedTypes[3] {
-		return nil, &NotFoundError{label: commenttype.Label}
-	}
-	return nil, &NotLoadedError{edge: "comment_type"}
-}
-
 // scanValues returns the types for scanning values from sql.Rows.
-func (*WorkerComment) scanValues(columns []string) ([]any, error) {
+func (*WorkerContact) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case workercomment.FieldComment:
+		case workercontact.FieldIsPrimary:
+			values[i] = new(sql.NullBool)
+		case workercontact.FieldName, workercontact.FieldEmail, workercontact.FieldPhone, workercontact.FieldRelationship:
 			values[i] = new(sql.NullString)
-		case workercomment.FieldCreatedAt, workercomment.FieldUpdatedAt:
+		case workercontact.FieldCreatedAt, workercontact.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case workercomment.FieldID, workercomment.FieldBusinessUnitID, workercomment.FieldOrganizationID, workercomment.FieldWorkerID, workercomment.FieldCommentTypeID, workercomment.FieldEnteredBy:
+		case workercontact.FieldID, workercontact.FieldBusinessUnitID, workercontact.FieldOrganizationID, workercontact.FieldWorkerID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -122,66 +114,78 @@ func (*WorkerComment) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the WorkerComment fields.
-func (wc *WorkerComment) assignValues(columns []string, values []any) error {
+// to the WorkerContact fields.
+func (wc *WorkerContact) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case workercomment.FieldID:
+		case workercontact.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				wc.ID = *value
 			}
-		case workercomment.FieldBusinessUnitID:
+		case workercontact.FieldBusinessUnitID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
 			} else if value != nil {
 				wc.BusinessUnitID = *value
 			}
-		case workercomment.FieldOrganizationID:
+		case workercontact.FieldOrganizationID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
 			} else if value != nil {
 				wc.OrganizationID = *value
 			}
-		case workercomment.FieldCreatedAt:
+		case workercontact.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				wc.CreatedAt = value.Time
 			}
-		case workercomment.FieldUpdatedAt:
+		case workercontact.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				wc.UpdatedAt = value.Time
 			}
-		case workercomment.FieldWorkerID:
+		case workercontact.FieldWorkerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field worker_id", values[i])
 			} else if value != nil {
 				wc.WorkerID = *value
 			}
-		case workercomment.FieldCommentTypeID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field comment_type_id", values[i])
-			} else if value != nil {
-				wc.CommentTypeID = *value
-			}
-		case workercomment.FieldComment:
+		case workercontact.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field comment", values[i])
+				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				wc.Comment = value.String
+				wc.Name = value.String
 			}
-		case workercomment.FieldEnteredBy:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field entered_by", values[i])
-			} else if value != nil {
-				wc.EnteredBy = *value
+		case workercontact.FieldEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field email", values[i])
+			} else if value.Valid {
+				wc.Email = value.String
+			}
+		case workercontact.FieldPhone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field phone", values[i])
+			} else if value.Valid {
+				wc.Phone = value.String
+			}
+		case workercontact.FieldRelationship:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field relationship", values[i])
+			} else if value.Valid {
+				wc.Relationship = value.String
+			}
+		case workercontact.FieldIsPrimary:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_primary", values[i])
+			} else if value.Valid {
+				wc.IsPrimary = value.Bool
 			}
 		default:
 			wc.selectValues.Set(columns[i], values[i])
@@ -190,54 +194,49 @@ func (wc *WorkerComment) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the WorkerComment.
+// Value returns the ent.Value that was dynamically selected and assigned to the WorkerContact.
 // This includes values selected through modifiers, order, etc.
-func (wc *WorkerComment) Value(name string) (ent.Value, error) {
+func (wc *WorkerContact) Value(name string) (ent.Value, error) {
 	return wc.selectValues.Get(name)
 }
 
-// QueryBusinessUnit queries the "business_unit" edge of the WorkerComment entity.
-func (wc *WorkerComment) QueryBusinessUnit() *BusinessUnitQuery {
-	return NewWorkerCommentClient(wc.config).QueryBusinessUnit(wc)
+// QueryBusinessUnit queries the "business_unit" edge of the WorkerContact entity.
+func (wc *WorkerContact) QueryBusinessUnit() *BusinessUnitQuery {
+	return NewWorkerContactClient(wc.config).QueryBusinessUnit(wc)
 }
 
-// QueryOrganization queries the "organization" edge of the WorkerComment entity.
-func (wc *WorkerComment) QueryOrganization() *OrganizationQuery {
-	return NewWorkerCommentClient(wc.config).QueryOrganization(wc)
+// QueryOrganization queries the "organization" edge of the WorkerContact entity.
+func (wc *WorkerContact) QueryOrganization() *OrganizationQuery {
+	return NewWorkerContactClient(wc.config).QueryOrganization(wc)
 }
 
-// QueryWorker queries the "worker" edge of the WorkerComment entity.
-func (wc *WorkerComment) QueryWorker() *WorkerQuery {
-	return NewWorkerCommentClient(wc.config).QueryWorker(wc)
+// QueryWorker queries the "worker" edge of the WorkerContact entity.
+func (wc *WorkerContact) QueryWorker() *WorkerQuery {
+	return NewWorkerContactClient(wc.config).QueryWorker(wc)
 }
 
-// QueryCommentType queries the "comment_type" edge of the WorkerComment entity.
-func (wc *WorkerComment) QueryCommentType() *CommentTypeQuery {
-	return NewWorkerCommentClient(wc.config).QueryCommentType(wc)
-}
-
-// Update returns a builder for updating this WorkerComment.
-// Note that you need to call WorkerComment.Unwrap() before calling this method if this WorkerComment
+// Update returns a builder for updating this WorkerContact.
+// Note that you need to call WorkerContact.Unwrap() before calling this method if this WorkerContact
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (wc *WorkerComment) Update() *WorkerCommentUpdateOne {
-	return NewWorkerCommentClient(wc.config).UpdateOne(wc)
+func (wc *WorkerContact) Update() *WorkerContactUpdateOne {
+	return NewWorkerContactClient(wc.config).UpdateOne(wc)
 }
 
-// Unwrap unwraps the WorkerComment entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the WorkerContact entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (wc *WorkerComment) Unwrap() *WorkerComment {
+func (wc *WorkerContact) Unwrap() *WorkerContact {
 	_tx, ok := wc.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: WorkerComment is not a transactional entity")
+		panic("ent: WorkerContact is not a transactional entity")
 	}
 	wc.config.driver = _tx.drv
 	return wc
 }
 
 // String implements the fmt.Stringer.
-func (wc *WorkerComment) String() string {
+func (wc *WorkerContact) String() string {
 	var builder strings.Builder
-	builder.WriteString("WorkerComment(")
+	builder.WriteString("WorkerContact(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", wc.ID))
 	builder.WriteString("business_unit_id=")
 	builder.WriteString(fmt.Sprintf("%v", wc.BusinessUnitID))
@@ -254,17 +253,23 @@ func (wc *WorkerComment) String() string {
 	builder.WriteString("worker_id=")
 	builder.WriteString(fmt.Sprintf("%v", wc.WorkerID))
 	builder.WriteString(", ")
-	builder.WriteString("comment_type_id=")
-	builder.WriteString(fmt.Sprintf("%v", wc.CommentTypeID))
+	builder.WriteString("name=")
+	builder.WriteString(wc.Name)
 	builder.WriteString(", ")
-	builder.WriteString("comment=")
-	builder.WriteString(wc.Comment)
+	builder.WriteString("email=")
+	builder.WriteString(wc.Email)
 	builder.WriteString(", ")
-	builder.WriteString("entered_by=")
-	builder.WriteString(fmt.Sprintf("%v", wc.EnteredBy))
+	builder.WriteString("phone=")
+	builder.WriteString(wc.Phone)
+	builder.WriteString(", ")
+	builder.WriteString("relationship=")
+	builder.WriteString(wc.Relationship)
+	builder.WriteString(", ")
+	builder.WriteString("is_primary=")
+	builder.WriteString(fmt.Sprintf("%v", wc.IsPrimary))
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// WorkerComments is a parsable slice of WorkerComment.
-type WorkerComments []*WorkerComment
+// WorkerContacts is a parsable slice of WorkerContact.
+type WorkerContacts []*WorkerContact

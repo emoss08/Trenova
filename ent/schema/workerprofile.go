@@ -1,11 +1,18 @@
 package schema
 
 import (
+	"context"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	gen "github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/ent/hook"
+	"github.com/emoss08/trenova/tools"
 	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -38,8 +45,6 @@ func (WorkerProfile) Fields() []ent.Field {
 			NotEmpty().
 			StructTag(`json:"licenseNumber" validate:"required"`),
 		field.UUID("license_state_id", uuid.UUID{}).
-			Optional().
-			Nillable().
 			StructTag(`json:"licenseStateId" validate:"omitempty,uuid"`),
 		field.Other("license_expiration_date", &pgtype.Date{}).
 			Optional().
@@ -107,6 +112,12 @@ func (WorkerProfile) Edges() []ent.Edge {
 			Immutable().
 			Unique().
 			Required(),
+		edge.To("state", UsState.Type).
+			Field("license_state_id").
+			StructTag(`json:"state"`).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Required().
+			Unique(),
 	}
 }
 
@@ -114,5 +125,37 @@ func (WorkerProfile) Edges() []ent.Edge {
 func (WorkerProfile) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
+	}
+}
+
+// Hooks for the WorkerProfile.
+func (WorkerProfile) Hooks() []ent.Hook {
+	return []ent.Hook{
+		// Hook that ensures if the worker has an TankerHazmat and/or Hazmat endorsement, the hazmat expiration date is set.
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.WorkerProfileFunc(func(ctx context.Context, m *gen.WorkerProfileMutation) (ent.Value, error) {
+					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+						return next.Mutate(ctx, m)
+					}
+
+					// Get the worker endorsement value.
+					endorsement, endorsementExists := m.Endorsements()
+
+					// If the worker has a TankerHazmat or Hazmat endorsement, ensure the hazmat expiration date is set.
+					if endorsementExists && (endorsement == "TankerHazmat" || endorsement == "Hazmat") {
+						_, hazmatExpirationExists := m.HazmatExpirationDate()
+
+						if !hazmatExpirationExists {
+							return nil, tools.NewValidationError("Hazmat Expiration date is required for this endorsement. Please try again.",
+								"invalidEndorsement",
+								"hazmatExpirationDate")
+						}
+						return next.Mutate(ctx, m)
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
 }

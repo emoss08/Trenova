@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workercontact"
 	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
@@ -303,6 +305,36 @@ func (wu *WorkerUpdate) SetWorkerProfile(w *WorkerProfile) *WorkerUpdate {
 	return wu.SetWorkerProfileID(w.ID)
 }
 
+// AddWorkerCommentIDs adds the "worker_comments" edge to the WorkerComment entity by IDs.
+func (wu *WorkerUpdate) AddWorkerCommentIDs(ids ...uuid.UUID) *WorkerUpdate {
+	wu.mutation.AddWorkerCommentIDs(ids...)
+	return wu
+}
+
+// AddWorkerComments adds the "worker_comments" edges to the WorkerComment entity.
+func (wu *WorkerUpdate) AddWorkerComments(w ...*WorkerComment) *WorkerUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wu.AddWorkerCommentIDs(ids...)
+}
+
+// AddWorkerContactIDs adds the "worker_contacts" edge to the WorkerContact entity by IDs.
+func (wu *WorkerUpdate) AddWorkerContactIDs(ids ...uuid.UUID) *WorkerUpdate {
+	wu.mutation.AddWorkerContactIDs(ids...)
+	return wu
+}
+
+// AddWorkerContacts adds the "worker_contacts" edges to the WorkerContact entity.
+func (wu *WorkerUpdate) AddWorkerContacts(w ...*WorkerContact) *WorkerUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wu.AddWorkerContactIDs(ids...)
+}
+
 // Mutation returns the WorkerMutation object of the builder.
 func (wu *WorkerUpdate) Mutation() *WorkerMutation {
 	return wu.mutation
@@ -342,6 +374,48 @@ func (wu *WorkerUpdate) ClearSecondaryTractor() *WorkerUpdate {
 func (wu *WorkerUpdate) ClearWorkerProfile() *WorkerUpdate {
 	wu.mutation.ClearWorkerProfile()
 	return wu
+}
+
+// ClearWorkerComments clears all "worker_comments" edges to the WorkerComment entity.
+func (wu *WorkerUpdate) ClearWorkerComments() *WorkerUpdate {
+	wu.mutation.ClearWorkerComments()
+	return wu
+}
+
+// RemoveWorkerCommentIDs removes the "worker_comments" edge to WorkerComment entities by IDs.
+func (wu *WorkerUpdate) RemoveWorkerCommentIDs(ids ...uuid.UUID) *WorkerUpdate {
+	wu.mutation.RemoveWorkerCommentIDs(ids...)
+	return wu
+}
+
+// RemoveWorkerComments removes "worker_comments" edges to WorkerComment entities.
+func (wu *WorkerUpdate) RemoveWorkerComments(w ...*WorkerComment) *WorkerUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wu.RemoveWorkerCommentIDs(ids...)
+}
+
+// ClearWorkerContacts clears all "worker_contacts" edges to the WorkerContact entity.
+func (wu *WorkerUpdate) ClearWorkerContacts() *WorkerUpdate {
+	wu.mutation.ClearWorkerContacts()
+	return wu
+}
+
+// RemoveWorkerContactIDs removes the "worker_contacts" edge to WorkerContact entities by IDs.
+func (wu *WorkerUpdate) RemoveWorkerContactIDs(ids ...uuid.UUID) *WorkerUpdate {
+	wu.mutation.RemoveWorkerContactIDs(ids...)
+	return wu
+}
+
+// RemoveWorkerContacts removes "worker_contacts" edges to WorkerContact entities.
+func (wu *WorkerUpdate) RemoveWorkerContacts(w ...*WorkerContact) *WorkerUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wu.RemoveWorkerContactIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -649,6 +723,96 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if wu.mutation.WorkerCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.RemovedWorkerCommentsIDs(); len(nodes) > 0 && !wu.mutation.WorkerCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.WorkerCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if wu.mutation.WorkerContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.RemovedWorkerContactsIDs(); len(nodes) > 0 && !wu.mutation.WorkerContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.WorkerContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(wu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, wu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -939,6 +1103,36 @@ func (wuo *WorkerUpdateOne) SetWorkerProfile(w *WorkerProfile) *WorkerUpdateOne 
 	return wuo.SetWorkerProfileID(w.ID)
 }
 
+// AddWorkerCommentIDs adds the "worker_comments" edge to the WorkerComment entity by IDs.
+func (wuo *WorkerUpdateOne) AddWorkerCommentIDs(ids ...uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.AddWorkerCommentIDs(ids...)
+	return wuo
+}
+
+// AddWorkerComments adds the "worker_comments" edges to the WorkerComment entity.
+func (wuo *WorkerUpdateOne) AddWorkerComments(w ...*WorkerComment) *WorkerUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wuo.AddWorkerCommentIDs(ids...)
+}
+
+// AddWorkerContactIDs adds the "worker_contacts" edge to the WorkerContact entity by IDs.
+func (wuo *WorkerUpdateOne) AddWorkerContactIDs(ids ...uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.AddWorkerContactIDs(ids...)
+	return wuo
+}
+
+// AddWorkerContacts adds the "worker_contacts" edges to the WorkerContact entity.
+func (wuo *WorkerUpdateOne) AddWorkerContacts(w ...*WorkerContact) *WorkerUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wuo.AddWorkerContactIDs(ids...)
+}
+
 // Mutation returns the WorkerMutation object of the builder.
 func (wuo *WorkerUpdateOne) Mutation() *WorkerMutation {
 	return wuo.mutation
@@ -978,6 +1172,48 @@ func (wuo *WorkerUpdateOne) ClearSecondaryTractor() *WorkerUpdateOne {
 func (wuo *WorkerUpdateOne) ClearWorkerProfile() *WorkerUpdateOne {
 	wuo.mutation.ClearWorkerProfile()
 	return wuo
+}
+
+// ClearWorkerComments clears all "worker_comments" edges to the WorkerComment entity.
+func (wuo *WorkerUpdateOne) ClearWorkerComments() *WorkerUpdateOne {
+	wuo.mutation.ClearWorkerComments()
+	return wuo
+}
+
+// RemoveWorkerCommentIDs removes the "worker_comments" edge to WorkerComment entities by IDs.
+func (wuo *WorkerUpdateOne) RemoveWorkerCommentIDs(ids ...uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.RemoveWorkerCommentIDs(ids...)
+	return wuo
+}
+
+// RemoveWorkerComments removes "worker_comments" edges to WorkerComment entities.
+func (wuo *WorkerUpdateOne) RemoveWorkerComments(w ...*WorkerComment) *WorkerUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wuo.RemoveWorkerCommentIDs(ids...)
+}
+
+// ClearWorkerContacts clears all "worker_contacts" edges to the WorkerContact entity.
+func (wuo *WorkerUpdateOne) ClearWorkerContacts() *WorkerUpdateOne {
+	wuo.mutation.ClearWorkerContacts()
+	return wuo
+}
+
+// RemoveWorkerContactIDs removes the "worker_contacts" edge to WorkerContact entities by IDs.
+func (wuo *WorkerUpdateOne) RemoveWorkerContactIDs(ids ...uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.RemoveWorkerContactIDs(ids...)
+	return wuo
+}
+
+// RemoveWorkerContacts removes "worker_contacts" edges to WorkerContact entities.
+func (wuo *WorkerUpdateOne) RemoveWorkerContacts(w ...*WorkerContact) *WorkerUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return wuo.RemoveWorkerContactIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkerUpdate builder.
@@ -1308,6 +1544,96 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if wuo.mutation.WorkerCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.RemovedWorkerCommentsIDs(); len(nodes) > 0 && !wuo.mutation.WorkerCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.WorkerCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerCommentsTable,
+			Columns: []string{worker.WorkerCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if wuo.mutation.WorkerContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.RemovedWorkerContactsIDs(); len(nodes) > 0 && !wuo.mutation.WorkerContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.WorkerContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worker.WorkerContactsTable,
+			Columns: []string{worker.WorkerContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workercontact.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

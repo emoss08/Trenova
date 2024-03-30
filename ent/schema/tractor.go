@@ -175,7 +175,9 @@ func (Tractor) Hooks() []ent.Hook {
 					secondaryWorkerID, secondaryWorkerIDExists := m.SecondaryWorkerID()
 
 					if primaryWorkerIDExists && secondaryWorkerIDExists && primaryWorkerID == secondaryWorkerID {
-						return nil, tools.NewValidationError("The primary and secondary workers cannot be the same.", "invalidWorkers", "primaryWorkerId")
+						return nil, tools.NewValidationError("The primary and secondary workers cannot be the same. Please try again.",
+							"invalidWorkers",
+							"primaryWorkerId")
 					}
 
 					return next.Mutate(ctx, m)
@@ -196,7 +198,7 @@ func (Tractor) Hooks() []ent.Hook {
 					_, leasedDateExists := m.LeasedDate()
 
 					if leasedExists && leased && !leasedDateExists {
-						return nil, tools.NewValidationError("The leased date must be set if the tractor is leased.",
+						return nil, tools.NewValidationError("The leased date must be set if the tractor is leased. Please try again.",
 							"invalidLeasedDate",
 							"leasedDate")
 					}
@@ -216,7 +218,7 @@ func (Tractor) Hooks() []ent.Hook {
 					// Get the fleet code of the tractor.
 					fleetCodeID, fleetCodeIDExists := m.FleetCodeID()
 					if !fleetCodeIDExists {
-						return nil, tools.NewValidationError("The tractor must have a fleet code.",
+						return nil, tools.NewValidationError("The tractor must have a fleet code. Please try again.",
 							"invalidFleetCode",
 							"fleetCodeId")
 					}
@@ -224,7 +226,7 @@ func (Tractor) Hooks() []ent.Hook {
 					// Get the primary worker
 					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
 					if !primaryWorkerIDExists {
-						return nil, tools.NewValidationError("The tractor must have a primary worker.",
+						return nil, tools.NewValidationError("The tractor must have a primary worker. Please try again.",
 							"invalidPrimaryWorker",
 							"primaryWorkerId")
 					}
@@ -237,7 +239,7 @@ func (Tractor) Hooks() []ent.Hook {
 
 					// Ensure the primary worker and tractor have the same fleet code.
 					if primaryWorkerFleetCode.ID != fleetCodeID {
-						return nil, tools.NewValidationError("The primary worker and tractor must have the same fleet code.",
+						return nil, tools.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
 							"invalidFleetCode",
 							"fleetCodeId")
 					}

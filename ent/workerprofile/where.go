@@ -567,36 +567,6 @@ func LicenseStateIDNotIn(vs ...uuid.UUID) predicate.WorkerProfile {
 	return predicate.WorkerProfile(sql.FieldNotIn(FieldLicenseStateID, vs...))
 }
 
-// LicenseStateIDGT applies the GT predicate on the "license_state_id" field.
-func LicenseStateIDGT(v uuid.UUID) predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldGT(FieldLicenseStateID, v))
-}
-
-// LicenseStateIDGTE applies the GTE predicate on the "license_state_id" field.
-func LicenseStateIDGTE(v uuid.UUID) predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldGTE(FieldLicenseStateID, v))
-}
-
-// LicenseStateIDLT applies the LT predicate on the "license_state_id" field.
-func LicenseStateIDLT(v uuid.UUID) predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldLT(FieldLicenseStateID, v))
-}
-
-// LicenseStateIDLTE applies the LTE predicate on the "license_state_id" field.
-func LicenseStateIDLTE(v uuid.UUID) predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldLTE(FieldLicenseStateID, v))
-}
-
-// LicenseStateIDIsNil applies the IsNil predicate on the "license_state_id" field.
-func LicenseStateIDIsNil() predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldIsNull(FieldLicenseStateID))
-}
-
-// LicenseStateIDNotNil applies the NotNil predicate on the "license_state_id" field.
-func LicenseStateIDNotNil() predicate.WorkerProfile {
-	return predicate.WorkerProfile(sql.FieldNotNull(FieldLicenseStateID))
-}
-
 // LicenseExpirationDateEQ applies the EQ predicate on the "license_expiration_date" field.
 func LicenseExpirationDateEQ(v *pgtype.Date) predicate.WorkerProfile {
 	return predicate.WorkerProfile(sql.FieldEQ(FieldLicenseExpirationDate, v))
@@ -1038,6 +1008,29 @@ func HasWorker() predicate.WorkerProfile {
 func HasWorkerWith(preds ...predicate.Worker) predicate.WorkerProfile {
 	return predicate.WorkerProfile(func(s *sql.Selector) {
 		step := newWorkerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasState applies the HasEdge predicate on the "state" edge.
+func HasState() predicate.WorkerProfile {
+	return predicate.WorkerProfile(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, StateTable, StateColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateWith applies the HasEdge predicate on the "state" edge with a given conditions (other predicates).
+func HasStateWith(preds ...predicate.UsState) predicate.WorkerProfile {
+	return predicate.WorkerProfile(func(s *sql.Selector) {
+		step := newStateStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

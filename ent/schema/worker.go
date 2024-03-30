@@ -114,5 +114,7 @@ func (Worker) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("worker_profile", WorkerProfile.Type).
 			Unique(),
+		edge.To("worker_comments", WorkerComment.Type),
+		edge.To("worker_contacts", WorkerContact.Type),
 	}
 }
