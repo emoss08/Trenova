@@ -16,8 +16,10 @@
  */
 
 import { EquipmentClassChoiceProps } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types/index";
+import { IChoiceProps, StatusChoiceProps } from "@/types/index";
+import { FleetCode } from "./dispatch";
 import { BaseModel } from "./organization";
+import { Worker } from "./worker";
 
 export interface EquipmentType extends BaseModel {
   id: string;
@@ -53,35 +55,40 @@ export type EquipmentManufacturerFormValues = Pick<
   "name" | "description" | "status"
 >;
 
-export type EquipmentStatus = "A" | "OOS" | "AM" | "S" | "L";
+export type EquipmentStatus =
+  | "Available"
+  | "OutOfService"
+  | "AtMaintenance"
+  | "Sold"
+  | "Lost";
 
 export const equipmentStatusChoices = [
   {
-    value: "A",
+    value: "Available",
     label: "Available",
     color: "#16a34a",
   },
   {
-    value: "OOS",
+    value: "OutOfService",
     label: "Out of Service",
     color: "#dc2626",
   },
   {
-    value: "AM",
+    value: "AtMaintenance",
     label: "At Maintenance",
     color: "#9333ea",
   },
   {
-    value: "S",
+    value: "Sold",
     label: "Sold",
     color: "#2563eb",
   },
   {
-    value: "L",
+    value: "Lost",
     label: "Lost",
     color: "#ca8a04",
   },
-];
+] satisfies IChoiceProps<EquipmentStatus>[];
 
 export interface Trailer extends BaseModel {
   id: string;
@@ -120,26 +127,36 @@ export type TrailerFormValues = Omit<
 export interface Tractor extends BaseModel {
   id: string;
   code: string;
-  equipmentType: string;
-  status: string;
+  equipmentTypeId: string;
+  status: EquipmentStatus;
   licensePlateNumber?: string;
-  vinNumber?: string;
-  manufacturer?: string;
+  vin?: string;
+  equipmentManufacturerId?: string | null;
   model?: string;
-  year?: number;
+  year?: number | null;
   state?: string;
   leased: boolean;
-  leasedDate?: string;
-  primaryWorker?: string;
-  secondaryWorker?: string;
-  hosExempt: boolean;
-  ownerOperated: boolean;
-  fleetCode?: string;
+  leasedDate?: string | null;
+  primaryWorkerId: string;
+  secondaryWorkerId?: string | null;
+  fleetCodeId: string;
+  edges?: {
+    equipmentType?: EquipmentType;
+    equipmentManufacturer?: EquipmentManufacturer;
+    primaryWorker?: Worker;
+    secondaryWorker?: Worker;
+    fleetCode?: FleetCode;
+  };
 }
 
 export type TractorFormValues = Omit<
   Tractor,
-  "id" | "organization" | "businessUnit" | "created" | "modified"
+  | "id"
+  | "organizationId"
+  | "businessUnitId"
+  | "createdAt"
+  | "updatedAt"
+  | "edges"
 >;
 
 export type EquipmentClass = "TRACTOR" | "TRAILER";

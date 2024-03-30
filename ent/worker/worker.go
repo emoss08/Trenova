@@ -56,10 +56,12 @@ const (
 	EdgeFleetCode = "fleet_code"
 	// EdgeManager holds the string denoting the manager edge name in mutations.
 	EdgeManager = "manager"
-	// EdgeTractor holds the string denoting the tractor edge name in mutations.
-	EdgeTractor = "tractor"
+	// EdgePrimaryTractor holds the string denoting the primary_tractor edge name in mutations.
+	EdgePrimaryTractor = "primary_tractor"
 	// EdgeSecondaryTractor holds the string denoting the secondary_tractor edge name in mutations.
 	EdgeSecondaryTractor = "secondary_tractor"
+	// EdgeWorkerProfile holds the string denoting the worker_profile edge name in mutations.
+	EdgeWorkerProfile = "worker_profile"
 	// Table holds the table name of the worker in the database.
 	Table = "workers"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -97,13 +99,13 @@ const (
 	ManagerInverseTable = "users"
 	// ManagerColumn is the table column denoting the manager relation/edge.
 	ManagerColumn = "manager_id"
-	// TractorTable is the table that holds the tractor relation/edge.
-	TractorTable = "tractors"
-	// TractorInverseTable is the table name for the Tractor entity.
+	// PrimaryTractorTable is the table that holds the primary_tractor relation/edge.
+	PrimaryTractorTable = "tractors"
+	// PrimaryTractorInverseTable is the table name for the Tractor entity.
 	// It exists in this package in order to avoid circular dependency with the "tractor" package.
-	TractorInverseTable = "tractors"
-	// TractorColumn is the table column denoting the tractor relation/edge.
-	TractorColumn = "primary_worker_id"
+	PrimaryTractorInverseTable = "tractors"
+	// PrimaryTractorColumn is the table column denoting the primary_tractor relation/edge.
+	PrimaryTractorColumn = "primary_worker_id"
 	// SecondaryTractorTable is the table that holds the secondary_tractor relation/edge.
 	SecondaryTractorTable = "tractors"
 	// SecondaryTractorInverseTable is the table name for the Tractor entity.
@@ -111,6 +113,13 @@ const (
 	SecondaryTractorInverseTable = "tractors"
 	// SecondaryTractorColumn is the table column denoting the secondary_tractor relation/edge.
 	SecondaryTractorColumn = "secondary_worker_id"
+	// WorkerProfileTable is the table that holds the worker_profile relation/edge.
+	WorkerProfileTable = "worker_profiles"
+	// WorkerProfileInverseTable is the table name for the WorkerProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "workerprofile" package.
+	WorkerProfileInverseTable = "worker_profiles"
+	// WorkerProfileColumn is the table column denoting the worker_profile relation/edge.
+	WorkerProfileColumn = "worker_id"
 )
 
 // Columns holds all SQL columns for worker fields.
@@ -334,31 +343,24 @@ func ByManagerField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByTractorCount orders the results by tractor count.
-func ByTractorCount(opts ...sql.OrderTermOption) OrderOption {
+// ByPrimaryTractorField orders the results by primary_tractor field.
+func ByPrimaryTractorField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTractorStep(), opts...)
+		sqlgraph.OrderByNeighborTerms(s, newPrimaryTractorStep(), sql.OrderByField(field, opts...))
 	}
 }
 
-// ByTractor orders the results by tractor terms.
-func ByTractor(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// BySecondaryTractorField orders the results by secondary_tractor field.
+func BySecondaryTractorField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTractorStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newSecondaryTractorStep(), sql.OrderByField(field, opts...))
 	}
 }
 
-// BySecondaryTractorCount orders the results by secondary_tractor count.
-func BySecondaryTractorCount(opts ...sql.OrderTermOption) OrderOption {
+// ByWorkerProfileField orders the results by worker_profile field.
+func ByWorkerProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newSecondaryTractorStep(), opts...)
-	}
-}
-
-// BySecondaryTractor orders the results by secondary_tractor terms.
-func BySecondaryTractor(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newSecondaryTractorStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newWorkerProfileStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -396,17 +398,24 @@ func newManagerStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, false, ManagerTable, ManagerColumn),
 	)
 }
-func newTractorStep() *sqlgraph.Step {
+func newPrimaryTractorStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TractorInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, TractorTable, TractorColumn),
+		sqlgraph.To(PrimaryTractorInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, PrimaryTractorTable, PrimaryTractorColumn),
 	)
 }
 func newSecondaryTractorStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SecondaryTractorInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, SecondaryTractorTable, SecondaryTractorColumn),
+		sqlgraph.Edge(sqlgraph.O2O, false, SecondaryTractorTable, SecondaryTractorColumn),
+	)
+}
+func newWorkerProfileStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkerProfileInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, WorkerProfileTable, WorkerProfileColumn),
 	)
 }

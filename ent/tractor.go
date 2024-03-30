@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
+	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -47,7 +48,7 @@ type Tractor struct {
 	// Model holds the value of the "model" field.
 	Model string `json:"model" validate:"omitempty,max=50"`
 	// Year holds the value of the "year" field.
-	Year int `json:"year" validate:"omitempty,gt=0"`
+	Year *int `json:"year" validate:"omitempty,gt=0"`
 	// StateID holds the value of the "state_id" field.
 	StateID *uuid.UUID `json:"stateId" validate:"omitempty,uuid"`
 	// Leased holds the value of the "leased" field.
@@ -55,9 +56,11 @@ type Tractor struct {
 	// LeasedDate holds the value of the "leased_date" field.
 	LeasedDate *time.Time `json:"leasedDate" validate:"omitempty"`
 	// PrimaryWorkerID holds the value of the "primary_worker_id" field.
-	PrimaryWorkerID *uuid.UUID `json:"primaryWorkerId" validate:"omitempty,uuid"`
+	PrimaryWorkerID uuid.UUID `json:"primaryWorkerId" validate:"omitempty,uuid"`
 	// SecondaryWorkerID holds the value of the "secondary_worker_id" field.
 	SecondaryWorkerID *uuid.UUID `json:"secondaryWorkerId" validate:"omitempty,uuid"`
+	// FleetCodeID holds the value of the "fleet_code_id" field.
+	FleetCodeID uuid.UUID `json:"fleetCodeId" validate:"omitempty,uuid"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TractorQuery when eager-loading is set.
 	Edges        TractorEdges `json:"edges"`
@@ -80,9 +83,11 @@ type TractorEdges struct {
 	PrimaryWorker *Worker `json:"primaryWorker"`
 	// SecondaryWorker holds the value of the secondary_worker edge.
 	SecondaryWorker *Worker `json:"secondaryWorker"`
+	// FleetCode holds the value of the fleet_code edge.
+	FleetCode *FleetCode `json:"fleetCode"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -162,12 +167,23 @@ func (e TractorEdges) SecondaryWorkerOrErr() (*Worker, error) {
 	return nil, &NotLoadedError{edge: "secondary_worker"}
 }
 
+// FleetCodeOrErr returns the FleetCode value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TractorEdges) FleetCodeOrErr() (*FleetCode, error) {
+	if e.FleetCode != nil {
+		return e.FleetCode, nil
+	} else if e.loadedTypes[7] {
+		return nil, &NotFoundError{label: fleetcode.Label}
+	}
+	return nil, &NotLoadedError{edge: "fleet_code"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tractor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tractor.FieldEquipmentManufacturerID, tractor.FieldStateID, tractor.FieldPrimaryWorkerID, tractor.FieldSecondaryWorkerID:
+		case tractor.FieldEquipmentManufacturerID, tractor.FieldStateID, tractor.FieldSecondaryWorkerID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case tractor.FieldLeased:
 			values[i] = new(sql.NullBool)
@@ -177,7 +193,7 @@ func (*Tractor) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case tractor.FieldCreatedAt, tractor.FieldUpdatedAt, tractor.FieldLeasedDate:
 			values[i] = new(sql.NullTime)
-		case tractor.FieldID, tractor.FieldBusinessUnitID, tractor.FieldOrganizationID, tractor.FieldEquipmentTypeID:
+		case tractor.FieldID, tractor.FieldBusinessUnitID, tractor.FieldOrganizationID, tractor.FieldEquipmentTypeID, tractor.FieldPrimaryWorkerID, tractor.FieldFleetCodeID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -271,7 +287,8 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field year", values[i])
 			} else if value.Valid {
-				t.Year = int(value.Int64)
+				t.Year = new(int)
+				*t.Year = int(value.Int64)
 			}
 		case tractor.FieldStateID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -294,11 +311,10 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 				*t.LeasedDate = value.Time
 			}
 		case tractor.FieldPrimaryWorkerID:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field primary_worker_id", values[i])
-			} else if value.Valid {
-				t.PrimaryWorkerID = new(uuid.UUID)
-				*t.PrimaryWorkerID = *value.S.(*uuid.UUID)
+			} else if value != nil {
+				t.PrimaryWorkerID = *value
 			}
 		case tractor.FieldSecondaryWorkerID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -306,6 +322,12 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.SecondaryWorkerID = new(uuid.UUID)
 				*t.SecondaryWorkerID = *value.S.(*uuid.UUID)
+			}
+		case tractor.FieldFleetCodeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field fleet_code_id", values[i])
+			} else if value != nil {
+				t.FleetCodeID = *value
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -353,6 +375,11 @@ func (t *Tractor) QueryPrimaryWorker() *WorkerQuery {
 // QuerySecondaryWorker queries the "secondary_worker" edge of the Tractor entity.
 func (t *Tractor) QuerySecondaryWorker() *WorkerQuery {
 	return NewTractorClient(t.config).QuerySecondaryWorker(t)
+}
+
+// QueryFleetCode queries the "fleet_code" edge of the Tractor entity.
+func (t *Tractor) QueryFleetCode() *FleetCodeQuery {
+	return NewTractorClient(t.config).QueryFleetCode(t)
 }
 
 // Update returns a builder for updating this Tractor.
@@ -413,8 +440,10 @@ func (t *Tractor) String() string {
 	builder.WriteString("model=")
 	builder.WriteString(t.Model)
 	builder.WriteString(", ")
-	builder.WriteString("year=")
-	builder.WriteString(fmt.Sprintf("%v", t.Year))
+	if v := t.Year; v != nil {
+		builder.WriteString("year=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := t.StateID; v != nil {
 		builder.WriteString("state_id=")
@@ -429,15 +458,16 @@ func (t *Tractor) String() string {
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := t.PrimaryWorkerID; v != nil {
-		builder.WriteString("primary_worker_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("primary_worker_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.PrimaryWorkerID))
 	builder.WriteString(", ")
 	if v := t.SecondaryWorkerID; v != nil {
 		builder.WriteString("secondary_worker_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("fleet_code_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.FleetCodeID))
 	builder.WriteByte(')')
 	return builder.String()
 }

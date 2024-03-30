@@ -52,6 +52,8 @@ import (
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workerprofile"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -152,6 +154,8 @@ func checkColumn(table, column string) error {
 			user.Table:                         user.ValidColumn,
 			userfavorite.Table:                 userfavorite.ValidColumn,
 			worker.Table:                       worker.ValidColumn,
+			workercomment.Table:                workercomment.ValidColumn,
+			workerprofile.Table:                workerprofile.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

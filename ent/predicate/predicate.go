@@ -125,3 +125,9 @@ type UserFavorite func(*sql.Selector)
 
 // Worker is the predicate function for worker builders.
 type Worker func(*sql.Selector)
+
+// WorkerComment is the predicate function for workercomment builders.
+type WorkerComment func(*sql.Selector)
+
+// WorkerProfile is the predicate function for workerprofile builders.
+type WorkerProfile func(*sql.Selector)

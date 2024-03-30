@@ -56,8 +56,7 @@ export function TractorForm({
   control: Control<FormValues>;
   open: boolean;
 }) {
-  const { selectEquipmentType, isLoading, isError } =
-    useEquipmentTypes("TRACTOR");
+  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes();
 
   const {
     selectEquipManufacturers,
@@ -116,7 +115,7 @@ export function TractorForm({
       <FormGroup>
         <FormControl>
           <SelectInput
-            name="equipmentType"
+            name="equipmentTypeId"
             rules={{ required: true }}
             control={control}
             label="Equip. Type"
@@ -132,7 +131,7 @@ export function TractorForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="manufacturer"
+            name="equipmentManufacturerId"
             control={control}
             label="Manufacturer"
             options={selectEquipManufacturers}
@@ -149,7 +148,7 @@ export function TractorForm({
         <FormControl>
           <InputField
             control={control}
-            name="vinNumber"
+            name="vin"
             label="Vin Number"
             placeholder="Vin Number"
             autoCapitalize="none"
@@ -196,7 +195,8 @@ export function TractorForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="fleetCode"
+            name="fleetCodeId"
+            rules={{ required: true }}
             control={control}
             label="Fleet Code"
             options={selectFleetCodes}
@@ -206,15 +206,15 @@ export function TractorForm({
             description="Select the code that identifies the tractor within your fleet."
             hasPopoutWindow
             popoutLink="/dispatch/fleet-codes/"
-            isClearable
             popoutLinkLabel="Fleet Code"
           />
         </FormControl>
         <FormControl>
           <SelectInput
-            name="primaryWorker"
+            name="primaryWorkerId"
             control={control}
             label="Primary Worker"
+            rules={{ required: true }}
             options={selectWorkers}
             isFetchError={isWorkerError}
             isLoading={isWorkersLoading}
@@ -228,7 +228,7 @@ export function TractorForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="secondaryWorker"
+            name="secondaryWorkerId"
             control={control}
             label="Secondary Worker"
             options={selectWorkers}
@@ -265,22 +265,6 @@ export function TractorForm({
         <FormControl className="mt-5">
           <CheckboxInput
             control={control}
-            label="HOS Exempt?"
-            name="hosExempt"
-            description="Indicate whether the tractor is exempt from Hours of Service (HOS) regulations."
-          />
-        </FormControl>
-        <FormControl className="mt-5">
-          <CheckboxInput
-            control={control}
-            label="Owner Operated?"
-            name="ownerOperated"
-            description="Indicate whether the tractor is not owned by the company."
-          />
-        </FormControl>
-        <FormControl className="mt-5">
-          <CheckboxInput
-            control={control}
             label="Leased?"
             name="leased"
             description="Indicate whether the tractor is leased."
@@ -297,21 +281,19 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
     defaultValues: {
-      status: "A",
+      status: "Available",
       code: "",
-      equipmentType: "",
-      manufacturer: "",
-      vinNumber: "",
+      equipmentTypeId: "",
+      equipmentManufacturerId: "",
+      vin: "",
       model: "",
       year: undefined,
       state: "",
-      fleetCode: "",
-      primaryWorker: "",
-      secondaryWorker: "",
+      fleetCodeId: "",
+      primaryWorkerId: "",
+      secondaryWorkerId: "",
       licensePlateNumber: "",
       leasedDate: "",
-      hosExempt: false,
-      ownerOperated: false,
       leased: false,
     },
   });

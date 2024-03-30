@@ -32,6 +32,8 @@ const badgeVariants = cva(
         inactive:
           "border border-red-100 bg-red-500 text-red-100 dark:border-red-500 dark:bg-red-600/30 dark:text-red-400 forced-colors:outline",
         info: "border border-blue-100 bg-blue-500 text-blue-100 dark:border-blue-500 dark:bg-blue-600/30 dark:text-blue-400 forced-colors:outline",
+        purple:
+          "border border-purple-100 bg-purple-500 text-purple-100 dark:border-purple-500 dark:bg-purple-600/30 dark:text-purple-400 forced-colors:outline",
         warning:
           "border border-yellow-100 bg-yellow-500 text-yellow-100 dark:border-yellow-500 dark:bg-yellow-600/30 dark:text-yellow-400 forced-colors:outline",
         outline: "text-foreground",
@@ -67,3 +69,4 @@ function Badge({ className, variant, withDot = true, ...props }: BadgeProps) {
 }
 
 export { Badge, badgeVariants };
+

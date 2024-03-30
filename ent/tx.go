@@ -94,6 +94,10 @@ type Tx struct {
 	UserFavorite *UserFavoriteClient
 	// Worker is the client for interacting with the Worker builders.
 	Worker *WorkerClient
+	// WorkerComment is the client for interacting with the WorkerComment builders.
+	WorkerComment *WorkerCommentClient
+	// WorkerProfile is the client for interacting with the WorkerProfile builders.
+	WorkerProfile *WorkerProfileClient
 
 	// lazily loaded.
 	client     *Client
@@ -265,6 +269,8 @@ func (tx *Tx) init() {
 	tx.User = NewUserClient(tx.config)
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)
 	tx.Worker = NewWorkerClient(tx.config)
+	tx.WorkerComment = NewWorkerCommentClient(tx.config)
+	tx.WorkerProfile = NewWorkerProfileClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

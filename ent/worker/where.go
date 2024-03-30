@@ -906,21 +906,21 @@ func HasManagerWith(preds ...predicate.User) predicate.Worker {
 	})
 }
 
-// HasTractor applies the HasEdge predicate on the "tractor" edge.
-func HasTractor() predicate.Worker {
+// HasPrimaryTractor applies the HasEdge predicate on the "primary_tractor" edge.
+func HasPrimaryTractor() predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, TractorTable, TractorColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, PrimaryTractorTable, PrimaryTractorColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasTractorWith applies the HasEdge predicate on the "tractor" edge with a given conditions (other predicates).
-func HasTractorWith(preds ...predicate.Tractor) predicate.Worker {
+// HasPrimaryTractorWith applies the HasEdge predicate on the "primary_tractor" edge with a given conditions (other predicates).
+func HasPrimaryTractorWith(preds ...predicate.Tractor) predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
-		step := newTractorStep()
+		step := newPrimaryTractorStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -934,7 +934,7 @@ func HasSecondaryTractor() predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, SecondaryTractorTable, SecondaryTractorColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, SecondaryTractorTable, SecondaryTractorColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -944,6 +944,29 @@ func HasSecondaryTractor() predicate.Worker {
 func HasSecondaryTractorWith(preds ...predicate.Tractor) predicate.Worker {
 	return predicate.Worker(func(s *sql.Selector) {
 		step := newSecondaryTractorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWorkerProfile applies the HasEdge predicate on the "worker_profile" edge.
+func HasWorkerProfile() predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, WorkerProfileTable, WorkerProfileColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkerProfileWith applies the HasEdge predicate on the "worker_profile" edge with a given conditions (other predicates).
+func HasWorkerProfileWith(preds ...predicate.WorkerProfile) predicate.Worker {
+	return predicate.Worker(func(s *sql.Selector) {
+		step := newWorkerProfileStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

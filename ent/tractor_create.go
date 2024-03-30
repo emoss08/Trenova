@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
+	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -219,14 +220,6 @@ func (tc *TractorCreate) SetPrimaryWorkerID(u uuid.UUID) *TractorCreate {
 	return tc
 }
 
-// SetNillablePrimaryWorkerID sets the "primary_worker_id" field if the given value is not nil.
-func (tc *TractorCreate) SetNillablePrimaryWorkerID(u *uuid.UUID) *TractorCreate {
-	if u != nil {
-		tc.SetPrimaryWorkerID(*u)
-	}
-	return tc
-}
-
 // SetSecondaryWorkerID sets the "secondary_worker_id" field.
 func (tc *TractorCreate) SetSecondaryWorkerID(u uuid.UUID) *TractorCreate {
 	tc.mutation.SetSecondaryWorkerID(u)
@@ -238,6 +231,12 @@ func (tc *TractorCreate) SetNillableSecondaryWorkerID(u *uuid.UUID) *TractorCrea
 	if u != nil {
 		tc.SetSecondaryWorkerID(*u)
 	}
+	return tc
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (tc *TractorCreate) SetFleetCodeID(u uuid.UUID) *TractorCreate {
+	tc.mutation.SetFleetCodeID(u)
 	return tc
 }
 
@@ -290,6 +289,11 @@ func (tc *TractorCreate) SetSecondaryWorker(w *Worker) *TractorCreate {
 	return tc.SetSecondaryWorkerID(w.ID)
 }
 
+// SetFleetCode sets the "fleet_code" edge to the FleetCode entity.
+func (tc *TractorCreate) SetFleetCode(f *FleetCode) *TractorCreate {
+	return tc.SetFleetCodeID(f.ID)
+}
+
 // Mutation returns the TractorMutation object of the builder.
 func (tc *TractorCreate) Mutation() *TractorMutation {
 	return tc.mutation
@@ -297,7 +301,9 @@ func (tc *TractorCreate) Mutation() *TractorMutation {
 
 // Save creates the Tractor in the database.
 func (tc *TractorCreate) Save(ctx context.Context) (*Tractor, error) {
-	tc.defaults()
+	if err := tc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, tc.sqlSave, tc.mutation, tc.hooks)
 }
 
@@ -324,12 +330,18 @@ func (tc *TractorCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tc *TractorCreate) defaults() {
+func (tc *TractorCreate) defaults() error {
 	if _, ok := tc.mutation.CreatedAt(); !ok {
+		if tractor.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tractor.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := tractor.DefaultCreatedAt()
 		tc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
+		if tractor.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tractor.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tractor.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
@@ -342,9 +354,13 @@ func (tc *TractorCreate) defaults() {
 		tc.mutation.SetLeased(v)
 	}
 	if _, ok := tc.mutation.ID(); !ok {
+		if tractor.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized tractor.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := tractor.DefaultID()
 		tc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -400,11 +416,23 @@ func (tc *TractorCreate) check() error {
 	if _, ok := tc.mutation.Leased(); !ok {
 		return &ValidationError{Name: "leased", err: errors.New(`ent: missing required field "Tractor.leased"`)}
 	}
+	if _, ok := tc.mutation.PrimaryWorkerID(); !ok {
+		return &ValidationError{Name: "primary_worker_id", err: errors.New(`ent: missing required field "Tractor.primary_worker_id"`)}
+	}
+	if _, ok := tc.mutation.FleetCodeID(); !ok {
+		return &ValidationError{Name: "fleet_code_id", err: errors.New(`ent: missing required field "Tractor.fleet_code_id"`)}
+	}
 	if _, ok := tc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "Tractor.business_unit"`)}
 	}
 	if _, ok := tc.mutation.OrganizationID(); !ok {
 		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "Tractor.organization"`)}
+	}
+	if _, ok := tc.mutation.PrimaryWorkerID(); !ok {
+		return &ValidationError{Name: "primary_worker", err: errors.New(`ent: missing required edge "Tractor.primary_worker"`)}
+	}
+	if _, ok := tc.mutation.FleetCodeID(); !ok {
+		return &ValidationError{Name: "fleet_code", err: errors.New(`ent: missing required edge "Tractor.fleet_code"`)}
 	}
 	return nil
 }
@@ -471,7 +499,7 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := tc.mutation.Year(); ok {
 		_spec.SetField(tractor.FieldYear, field.TypeInt, value)
-		_node.Year = value
+		_node.Year = &value
 	}
 	if value, ok := tc.mutation.Leased(); ok {
 		_spec.SetField(tractor.FieldLeased, field.TypeBool, value)
@@ -568,8 +596,8 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 	}
 	if nodes := tc.mutation.PrimaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.PrimaryWorkerTable,
 			Columns: []string{tractor.PrimaryWorkerColumn},
 			Bidi:    false,
@@ -580,13 +608,13 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.PrimaryWorkerID = &nodes[0]
+		_node.PrimaryWorkerID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := tc.mutation.SecondaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.SecondaryWorkerTable,
 			Columns: []string{tractor.SecondaryWorkerColumn},
 			Bidi:    false,
@@ -598,6 +626,23 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.SecondaryWorkerID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.FleetCodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.FleetCodeTable,
+			Columns: []string{tractor.FleetCodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fleetcode.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.FleetCodeID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

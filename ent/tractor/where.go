@@ -136,6 +136,11 @@ func SecondaryWorkerID(v uuid.UUID) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldSecondaryWorkerID, v))
 }
 
+// FleetCodeID applies equality check predicate on the "fleet_code_id" field. It's identical to FleetCodeIDEQ.
+func FleetCodeID(v uuid.UUID) predicate.Tractor {
+	return predicate.Tractor(sql.FieldEQ(FieldFleetCodeID, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -786,16 +791,6 @@ func PrimaryWorkerIDNotIn(vs ...uuid.UUID) predicate.Tractor {
 	return predicate.Tractor(sql.FieldNotIn(FieldPrimaryWorkerID, vs...))
 }
 
-// PrimaryWorkerIDIsNil applies the IsNil predicate on the "primary_worker_id" field.
-func PrimaryWorkerIDIsNil() predicate.Tractor {
-	return predicate.Tractor(sql.FieldIsNull(FieldPrimaryWorkerID))
-}
-
-// PrimaryWorkerIDNotNil applies the NotNil predicate on the "primary_worker_id" field.
-func PrimaryWorkerIDNotNil() predicate.Tractor {
-	return predicate.Tractor(sql.FieldNotNull(FieldPrimaryWorkerID))
-}
-
 // SecondaryWorkerIDEQ applies the EQ predicate on the "secondary_worker_id" field.
 func SecondaryWorkerIDEQ(v uuid.UUID) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldSecondaryWorkerID, v))
@@ -824,6 +819,26 @@ func SecondaryWorkerIDIsNil() predicate.Tractor {
 // SecondaryWorkerIDNotNil applies the NotNil predicate on the "secondary_worker_id" field.
 func SecondaryWorkerIDNotNil() predicate.Tractor {
 	return predicate.Tractor(sql.FieldNotNull(FieldSecondaryWorkerID))
+}
+
+// FleetCodeIDEQ applies the EQ predicate on the "fleet_code_id" field.
+func FleetCodeIDEQ(v uuid.UUID) predicate.Tractor {
+	return predicate.Tractor(sql.FieldEQ(FieldFleetCodeID, v))
+}
+
+// FleetCodeIDNEQ applies the NEQ predicate on the "fleet_code_id" field.
+func FleetCodeIDNEQ(v uuid.UUID) predicate.Tractor {
+	return predicate.Tractor(sql.FieldNEQ(FieldFleetCodeID, v))
+}
+
+// FleetCodeIDIn applies the In predicate on the "fleet_code_id" field.
+func FleetCodeIDIn(vs ...uuid.UUID) predicate.Tractor {
+	return predicate.Tractor(sql.FieldIn(FieldFleetCodeID, vs...))
+}
+
+// FleetCodeIDNotIn applies the NotIn predicate on the "fleet_code_id" field.
+func FleetCodeIDNotIn(vs ...uuid.UUID) predicate.Tractor {
+	return predicate.Tractor(sql.FieldNotIn(FieldFleetCodeID, vs...))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
@@ -946,7 +961,7 @@ func HasPrimaryWorker() predicate.Tractor {
 	return predicate.Tractor(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, PrimaryWorkerTable, PrimaryWorkerColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, PrimaryWorkerTable, PrimaryWorkerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -969,7 +984,7 @@ func HasSecondaryWorker() predicate.Tractor {
 	return predicate.Tractor(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, SecondaryWorkerTable, SecondaryWorkerColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, SecondaryWorkerTable, SecondaryWorkerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -979,6 +994,29 @@ func HasSecondaryWorker() predicate.Tractor {
 func HasSecondaryWorkerWith(preds ...predicate.Worker) predicate.Tractor {
 	return predicate.Tractor(func(s *sql.Selector) {
 		step := newSecondaryWorkerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasFleetCode applies the HasEdge predicate on the "fleet_code" edge.
+func HasFleetCode() predicate.Tractor {
+	return predicate.Tractor(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, FleetCodeTable, FleetCodeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFleetCodeWith applies the HasEdge predicate on the "fleet_code" edge with a given conditions (other predicates).
+func HasFleetCodeWith(preds ...predicate.FleetCode) predicate.Tractor {
+	return predicate.Tractor(func(s *sql.Selector) {
+		step := newFleetCodeStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

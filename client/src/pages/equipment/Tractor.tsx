@@ -18,12 +18,12 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { equipmentStatusChoices, Tractor } from "@/types/equipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
 import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
 import { TractorDialog } from "@/components/tractor-table-dialog";
 import { TractorTableEditSheet } from "@/components/tractor-table-edit-dialog";
+import { equipmentStatusChoices, Tractor } from "@/types/equipment";
+import { FilterConfig } from "@/types/tables";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<Tractor>[] = [
   {
@@ -67,13 +67,8 @@ const columns: ColumnDef<Tractor>[] = [
     },
   },
   {
-    accessorKey: "equipTypeName",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Equipment Type" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    accessorFn: (row) => `${row.edges?.equipmentType?.name}`,
+    header: "Equipment Type",
   },
 ];
 

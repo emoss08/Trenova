@@ -52,7 +52,10 @@ import (
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -104,6 +107,8 @@ const (
 	TypeUser                         = "User"
 	TypeUserFavorite                 = "UserFavorite"
 	TypeWorker                       = "Worker"
+	TypeWorkerComment                = "WorkerComment"
+	TypeWorkerProfile                = "WorkerProfile"
 )
 
 // AccessorialChargeMutation represents an operation that mutates the AccessorialCharge nodes in the graph.
@@ -36324,6 +36329,8 @@ type TractorMutation struct {
 	clearedprimary_worker         bool
 	secondary_worker              *uuid.UUID
 	clearedsecondary_worker       bool
+	fleet_code                    *uuid.UUID
+	clearedfleet_code             bool
 	done                          bool
 	oldValue                      func(context.Context) (*Tractor, error)
 	predicates                    []predicate.Tractor
@@ -36912,7 +36919,7 @@ func (m *TractorMutation) Year() (r int, exists bool) {
 // OldYear returns the old "year" field's value of the Tractor entity.
 // If the Tractor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TractorMutation) OldYear(ctx context.Context) (v int, err error) {
+func (m *TractorMutation) OldYear(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldYear is only allowed on UpdateOne operations")
 	}
@@ -37115,7 +37122,7 @@ func (m *TractorMutation) PrimaryWorkerID() (r uuid.UUID, exists bool) {
 // OldPrimaryWorkerID returns the old "primary_worker_id" field's value of the Tractor entity.
 // If the Tractor object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TractorMutation) OldPrimaryWorkerID(ctx context.Context) (v *uuid.UUID, err error) {
+func (m *TractorMutation) OldPrimaryWorkerID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPrimaryWorkerID is only allowed on UpdateOne operations")
 	}
@@ -37129,22 +37136,9 @@ func (m *TractorMutation) OldPrimaryWorkerID(ctx context.Context) (v *uuid.UUID,
 	return oldValue.PrimaryWorkerID, nil
 }
 
-// ClearPrimaryWorkerID clears the value of the "primary_worker_id" field.
-func (m *TractorMutation) ClearPrimaryWorkerID() {
-	m.primary_worker = nil
-	m.clearedFields[tractor.FieldPrimaryWorkerID] = struct{}{}
-}
-
-// PrimaryWorkerIDCleared returns if the "primary_worker_id" field was cleared in this mutation.
-func (m *TractorMutation) PrimaryWorkerIDCleared() bool {
-	_, ok := m.clearedFields[tractor.FieldPrimaryWorkerID]
-	return ok
-}
-
 // ResetPrimaryWorkerID resets all changes to the "primary_worker_id" field.
 func (m *TractorMutation) ResetPrimaryWorkerID() {
 	m.primary_worker = nil
-	delete(m.clearedFields, tractor.FieldPrimaryWorkerID)
 }
 
 // SetSecondaryWorkerID sets the "secondary_worker_id" field.
@@ -37194,6 +37188,42 @@ func (m *TractorMutation) SecondaryWorkerIDCleared() bool {
 func (m *TractorMutation) ResetSecondaryWorkerID() {
 	m.secondary_worker = nil
 	delete(m.clearedFields, tractor.FieldSecondaryWorkerID)
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (m *TractorMutation) SetFleetCodeID(u uuid.UUID) {
+	m.fleet_code = &u
+}
+
+// FleetCodeID returns the value of the "fleet_code_id" field in the mutation.
+func (m *TractorMutation) FleetCodeID() (r uuid.UUID, exists bool) {
+	v := m.fleet_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFleetCodeID returns the old "fleet_code_id" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldFleetCodeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFleetCodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFleetCodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFleetCodeID: %w", err)
+	}
+	return oldValue.FleetCodeID, nil
+}
+
+// ResetFleetCodeID resets all changes to the "fleet_code_id" field.
+func (m *TractorMutation) ResetFleetCodeID() {
+	m.fleet_code = nil
 }
 
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
@@ -37339,7 +37369,7 @@ func (m *TractorMutation) ClearPrimaryWorker() {
 
 // PrimaryWorkerCleared reports if the "primary_worker" edge to the Worker entity was cleared.
 func (m *TractorMutation) PrimaryWorkerCleared() bool {
-	return m.PrimaryWorkerIDCleared() || m.clearedprimary_worker
+	return m.clearedprimary_worker
 }
 
 // PrimaryWorkerIDs returns the "primary_worker" edge IDs in the mutation.
@@ -37385,6 +37415,33 @@ func (m *TractorMutation) ResetSecondaryWorker() {
 	m.clearedsecondary_worker = false
 }
 
+// ClearFleetCode clears the "fleet_code" edge to the FleetCode entity.
+func (m *TractorMutation) ClearFleetCode() {
+	m.clearedfleet_code = true
+	m.clearedFields[tractor.FieldFleetCodeID] = struct{}{}
+}
+
+// FleetCodeCleared reports if the "fleet_code" edge to the FleetCode entity was cleared.
+func (m *TractorMutation) FleetCodeCleared() bool {
+	return m.clearedfleet_code
+}
+
+// FleetCodeIDs returns the "fleet_code" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FleetCodeID instead. It exists only for internal usage by the builders.
+func (m *TractorMutation) FleetCodeIDs() (ids []uuid.UUID) {
+	if id := m.fleet_code; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFleetCode resets all changes to the "fleet_code" edge.
+func (m *TractorMutation) ResetFleetCode() {
+	m.fleet_code = nil
+	m.clearedfleet_code = false
+}
+
 // Where appends a list predicates to the TractorMutation builder.
 func (m *TractorMutation) Where(ps ...predicate.Tractor) {
 	m.predicates = append(m.predicates, ps...)
@@ -37419,7 +37476,7 @@ func (m *TractorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TractorMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.business_unit != nil {
 		fields = append(fields, tractor.FieldBusinessUnitID)
 	}
@@ -37471,6 +37528,9 @@ func (m *TractorMutation) Fields() []string {
 	if m.secondary_worker != nil {
 		fields = append(fields, tractor.FieldSecondaryWorkerID)
 	}
+	if m.fleet_code != nil {
+		fields = append(fields, tractor.FieldFleetCodeID)
+	}
 	return fields
 }
 
@@ -37513,6 +37573,8 @@ func (m *TractorMutation) Field(name string) (ent.Value, bool) {
 		return m.PrimaryWorkerID()
 	case tractor.FieldSecondaryWorkerID:
 		return m.SecondaryWorkerID()
+	case tractor.FieldFleetCodeID:
+		return m.FleetCodeID()
 	}
 	return nil, false
 }
@@ -37556,6 +37618,8 @@ func (m *TractorMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldPrimaryWorkerID(ctx)
 	case tractor.FieldSecondaryWorkerID:
 		return m.OldSecondaryWorkerID(ctx)
+	case tractor.FieldFleetCodeID:
+		return m.OldFleetCodeID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Tractor field %s", name)
 }
@@ -37684,6 +37748,13 @@ func (m *TractorMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSecondaryWorkerID(v)
 		return nil
+	case tractor.FieldFleetCodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFleetCodeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Tractor field %s", name)
 }
@@ -37753,9 +37824,6 @@ func (m *TractorMutation) ClearedFields() []string {
 	if m.FieldCleared(tractor.FieldLeasedDate) {
 		fields = append(fields, tractor.FieldLeasedDate)
 	}
-	if m.FieldCleared(tractor.FieldPrimaryWorkerID) {
-		fields = append(fields, tractor.FieldPrimaryWorkerID)
-	}
 	if m.FieldCleared(tractor.FieldSecondaryWorkerID) {
 		fields = append(fields, tractor.FieldSecondaryWorkerID)
 	}
@@ -37796,9 +37864,6 @@ func (m *TractorMutation) ClearField(name string) error {
 		return nil
 	case tractor.FieldLeasedDate:
 		m.ClearLeasedDate()
-		return nil
-	case tractor.FieldPrimaryWorkerID:
-		m.ClearPrimaryWorkerID()
 		return nil
 	case tractor.FieldSecondaryWorkerID:
 		m.ClearSecondaryWorkerID()
@@ -37862,13 +37927,16 @@ func (m *TractorMutation) ResetField(name string) error {
 	case tractor.FieldSecondaryWorkerID:
 		m.ResetSecondaryWorkerID()
 		return nil
+	case tractor.FieldFleetCodeID:
+		m.ResetFleetCodeID()
+		return nil
 	}
 	return fmt.Errorf("unknown Tractor field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TractorMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.business_unit != nil {
 		edges = append(edges, tractor.EdgeBusinessUnit)
 	}
@@ -37889,6 +37957,9 @@ func (m *TractorMutation) AddedEdges() []string {
 	}
 	if m.secondary_worker != nil {
 		edges = append(edges, tractor.EdgeSecondaryWorker)
+	}
+	if m.fleet_code != nil {
+		edges = append(edges, tractor.EdgeFleetCode)
 	}
 	return edges
 }
@@ -37925,13 +37996,17 @@ func (m *TractorMutation) AddedIDs(name string) []ent.Value {
 		if id := m.secondary_worker; id != nil {
 			return []ent.Value{*id}
 		}
+	case tractor.EdgeFleetCode:
+		if id := m.fleet_code; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TractorMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	return edges
 }
 
@@ -37943,7 +38018,7 @@ func (m *TractorMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TractorMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedbusiness_unit {
 		edges = append(edges, tractor.EdgeBusinessUnit)
 	}
@@ -37964,6 +38039,9 @@ func (m *TractorMutation) ClearedEdges() []string {
 	}
 	if m.clearedsecondary_worker {
 		edges = append(edges, tractor.EdgeSecondaryWorker)
+	}
+	if m.clearedfleet_code {
+		edges = append(edges, tractor.EdgeFleetCode)
 	}
 	return edges
 }
@@ -37986,6 +38064,8 @@ func (m *TractorMutation) EdgeCleared(name string) bool {
 		return m.clearedprimary_worker
 	case tractor.EdgeSecondaryWorker:
 		return m.clearedsecondary_worker
+	case tractor.EdgeFleetCode:
+		return m.clearedfleet_code
 	}
 	return false
 }
@@ -38015,6 +38095,9 @@ func (m *TractorMutation) ClearEdge(name string) error {
 	case tractor.EdgeSecondaryWorker:
 		m.ClearSecondaryWorker()
 		return nil
+	case tractor.EdgeFleetCode:
+		m.ClearFleetCode()
+		return nil
 	}
 	return fmt.Errorf("unknown Tractor unique edge %s", name)
 }
@@ -38043,6 +38126,9 @@ func (m *TractorMutation) ResetEdge(name string) error {
 		return nil
 	case tractor.EdgeSecondaryWorker:
 		m.ResetSecondaryWorker()
+		return nil
+	case tractor.EdgeFleetCode:
+		m.ResetFleetCode()
 		return nil
 	}
 	return fmt.Errorf("unknown Tractor edge %s", name)
@@ -40831,12 +40917,12 @@ type WorkerMutation struct {
 	clearedfleet_code        bool
 	manager                  *uuid.UUID
 	clearedmanager           bool
-	tractor                  map[uuid.UUID]struct{}
-	removedtractor           map[uuid.UUID]struct{}
-	clearedtractor           bool
-	secondary_tractor        map[uuid.UUID]struct{}
-	removedsecondary_tractor map[uuid.UUID]struct{}
+	primary_tractor          *uuid.UUID
+	clearedprimary_tractor   bool
+	secondary_tractor        *uuid.UUID
 	clearedsecondary_tractor bool
+	worker_profile           *uuid.UUID
+	clearedworker_profile    bool
 	done                     bool
 	oldValue                 func(context.Context) (*Worker, error)
 	predicates               []predicate.Worker
@@ -41699,68 +41785,48 @@ func (m *WorkerMutation) ResetManager() {
 	m.clearedmanager = false
 }
 
-// AddTractorIDs adds the "tractor" edge to the Tractor entity by ids.
-func (m *WorkerMutation) AddTractorIDs(ids ...uuid.UUID) {
-	if m.tractor == nil {
-		m.tractor = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.tractor[ids[i]] = struct{}{}
-	}
+// SetPrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by id.
+func (m *WorkerMutation) SetPrimaryTractorID(id uuid.UUID) {
+	m.primary_tractor = &id
 }
 
-// ClearTractor clears the "tractor" edge to the Tractor entity.
-func (m *WorkerMutation) ClearTractor() {
-	m.clearedtractor = true
+// ClearPrimaryTractor clears the "primary_tractor" edge to the Tractor entity.
+func (m *WorkerMutation) ClearPrimaryTractor() {
+	m.clearedprimary_tractor = true
 }
 
-// TractorCleared reports if the "tractor" edge to the Tractor entity was cleared.
-func (m *WorkerMutation) TractorCleared() bool {
-	return m.clearedtractor
+// PrimaryTractorCleared reports if the "primary_tractor" edge to the Tractor entity was cleared.
+func (m *WorkerMutation) PrimaryTractorCleared() bool {
+	return m.clearedprimary_tractor
 }
 
-// RemoveTractorIDs removes the "tractor" edge to the Tractor entity by IDs.
-func (m *WorkerMutation) RemoveTractorIDs(ids ...uuid.UUID) {
-	if m.removedtractor == nil {
-		m.removedtractor = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.tractor, ids[i])
-		m.removedtractor[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedTractor returns the removed IDs of the "tractor" edge to the Tractor entity.
-func (m *WorkerMutation) RemovedTractorIDs() (ids []uuid.UUID) {
-	for id := range m.removedtractor {
-		ids = append(ids, id)
+// PrimaryTractorID returns the "primary_tractor" edge ID in the mutation.
+func (m *WorkerMutation) PrimaryTractorID() (id uuid.UUID, exists bool) {
+	if m.primary_tractor != nil {
+		return *m.primary_tractor, true
 	}
 	return
 }
 
-// TractorIDs returns the "tractor" edge IDs in the mutation.
-func (m *WorkerMutation) TractorIDs() (ids []uuid.UUID) {
-	for id := range m.tractor {
-		ids = append(ids, id)
+// PrimaryTractorIDs returns the "primary_tractor" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PrimaryTractorID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) PrimaryTractorIDs() (ids []uuid.UUID) {
+	if id := m.primary_tractor; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetTractor resets all changes to the "tractor" edge.
-func (m *WorkerMutation) ResetTractor() {
-	m.tractor = nil
-	m.clearedtractor = false
-	m.removedtractor = nil
+// ResetPrimaryTractor resets all changes to the "primary_tractor" edge.
+func (m *WorkerMutation) ResetPrimaryTractor() {
+	m.primary_tractor = nil
+	m.clearedprimary_tractor = false
 }
 
-// AddSecondaryTractorIDs adds the "secondary_tractor" edge to the Tractor entity by ids.
-func (m *WorkerMutation) AddSecondaryTractorIDs(ids ...uuid.UUID) {
-	if m.secondary_tractor == nil {
-		m.secondary_tractor = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.secondary_tractor[ids[i]] = struct{}{}
-	}
+// SetSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by id.
+func (m *WorkerMutation) SetSecondaryTractorID(id uuid.UUID) {
+	m.secondary_tractor = &id
 }
 
 // ClearSecondaryTractor clears the "secondary_tractor" edge to the Tractor entity.
@@ -41773,29 +41839,20 @@ func (m *WorkerMutation) SecondaryTractorCleared() bool {
 	return m.clearedsecondary_tractor
 }
 
-// RemoveSecondaryTractorIDs removes the "secondary_tractor" edge to the Tractor entity by IDs.
-func (m *WorkerMutation) RemoveSecondaryTractorIDs(ids ...uuid.UUID) {
-	if m.removedsecondary_tractor == nil {
-		m.removedsecondary_tractor = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.secondary_tractor, ids[i])
-		m.removedsecondary_tractor[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedSecondaryTractor returns the removed IDs of the "secondary_tractor" edge to the Tractor entity.
-func (m *WorkerMutation) RemovedSecondaryTractorIDs() (ids []uuid.UUID) {
-	for id := range m.removedsecondary_tractor {
-		ids = append(ids, id)
+// SecondaryTractorID returns the "secondary_tractor" edge ID in the mutation.
+func (m *WorkerMutation) SecondaryTractorID() (id uuid.UUID, exists bool) {
+	if m.secondary_tractor != nil {
+		return *m.secondary_tractor, true
 	}
 	return
 }
 
 // SecondaryTractorIDs returns the "secondary_tractor" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SecondaryTractorID instead. It exists only for internal usage by the builders.
 func (m *WorkerMutation) SecondaryTractorIDs() (ids []uuid.UUID) {
-	for id := range m.secondary_tractor {
-		ids = append(ids, id)
+	if id := m.secondary_tractor; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -41804,7 +41861,45 @@ func (m *WorkerMutation) SecondaryTractorIDs() (ids []uuid.UUID) {
 func (m *WorkerMutation) ResetSecondaryTractor() {
 	m.secondary_tractor = nil
 	m.clearedsecondary_tractor = false
-	m.removedsecondary_tractor = nil
+}
+
+// SetWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by id.
+func (m *WorkerMutation) SetWorkerProfileID(id uuid.UUID) {
+	m.worker_profile = &id
+}
+
+// ClearWorkerProfile clears the "worker_profile" edge to the WorkerProfile entity.
+func (m *WorkerMutation) ClearWorkerProfile() {
+	m.clearedworker_profile = true
+}
+
+// WorkerProfileCleared reports if the "worker_profile" edge to the WorkerProfile entity was cleared.
+func (m *WorkerMutation) WorkerProfileCleared() bool {
+	return m.clearedworker_profile
+}
+
+// WorkerProfileID returns the "worker_profile" edge ID in the mutation.
+func (m *WorkerMutation) WorkerProfileID() (id uuid.UUID, exists bool) {
+	if m.worker_profile != nil {
+		return *m.worker_profile, true
+	}
+	return
+}
+
+// WorkerProfileIDs returns the "worker_profile" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkerProfileID instead. It exists only for internal usage by the builders.
+func (m *WorkerMutation) WorkerProfileIDs() (ids []uuid.UUID) {
+	if id := m.worker_profile; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkerProfile resets all changes to the "worker_profile" edge.
+func (m *WorkerMutation) ResetWorkerProfile() {
+	m.worker_profile = nil
+	m.clearedworker_profile = false
 }
 
 // Where appends a list predicates to the WorkerMutation builder.
@@ -42217,7 +42312,7 @@ func (m *WorkerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.business_unit != nil {
 		edges = append(edges, worker.EdgeBusinessUnit)
 	}
@@ -42233,11 +42328,14 @@ func (m *WorkerMutation) AddedEdges() []string {
 	if m.manager != nil {
 		edges = append(edges, worker.EdgeManager)
 	}
-	if m.tractor != nil {
-		edges = append(edges, worker.EdgeTractor)
+	if m.primary_tractor != nil {
+		edges = append(edges, worker.EdgePrimaryTractor)
 	}
 	if m.secondary_tractor != nil {
 		edges = append(edges, worker.EdgeSecondaryTractor)
+	}
+	if m.worker_profile != nil {
+		edges = append(edges, worker.EdgeWorkerProfile)
 	}
 	return edges
 }
@@ -42266,57 +42364,37 @@ func (m *WorkerMutation) AddedIDs(name string) []ent.Value {
 		if id := m.manager; id != nil {
 			return []ent.Value{*id}
 		}
-	case worker.EdgeTractor:
-		ids := make([]ent.Value, 0, len(m.tractor))
-		for id := range m.tractor {
-			ids = append(ids, id)
+	case worker.EdgePrimaryTractor:
+		if id := m.primary_tractor; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	case worker.EdgeSecondaryTractor:
-		ids := make([]ent.Value, 0, len(m.secondary_tractor))
-		for id := range m.secondary_tractor {
-			ids = append(ids, id)
+		if id := m.secondary_tractor; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
+	case worker.EdgeWorkerProfile:
+		if id := m.worker_profile; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
-	if m.removedtractor != nil {
-		edges = append(edges, worker.EdgeTractor)
-	}
-	if m.removedsecondary_tractor != nil {
-		edges = append(edges, worker.EdgeSecondaryTractor)
-	}
+	edges := make([]string, 0, 8)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *WorkerMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case worker.EdgeTractor:
-		ids := make([]ent.Value, 0, len(m.removedtractor))
-		for id := range m.removedtractor {
-			ids = append(ids, id)
-		}
-		return ids
-	case worker.EdgeSecondaryTractor:
-		ids := make([]ent.Value, 0, len(m.removedsecondary_tractor))
-		for id := range m.removedsecondary_tractor {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedbusiness_unit {
 		edges = append(edges, worker.EdgeBusinessUnit)
 	}
@@ -42332,11 +42410,14 @@ func (m *WorkerMutation) ClearedEdges() []string {
 	if m.clearedmanager {
 		edges = append(edges, worker.EdgeManager)
 	}
-	if m.clearedtractor {
-		edges = append(edges, worker.EdgeTractor)
+	if m.clearedprimary_tractor {
+		edges = append(edges, worker.EdgePrimaryTractor)
 	}
 	if m.clearedsecondary_tractor {
 		edges = append(edges, worker.EdgeSecondaryTractor)
+	}
+	if m.clearedworker_profile {
+		edges = append(edges, worker.EdgeWorkerProfile)
 	}
 	return edges
 }
@@ -42355,10 +42436,12 @@ func (m *WorkerMutation) EdgeCleared(name string) bool {
 		return m.clearedfleet_code
 	case worker.EdgeManager:
 		return m.clearedmanager
-	case worker.EdgeTractor:
-		return m.clearedtractor
+	case worker.EdgePrimaryTractor:
+		return m.clearedprimary_tractor
 	case worker.EdgeSecondaryTractor:
 		return m.clearedsecondary_tractor
+	case worker.EdgeWorkerProfile:
+		return m.clearedworker_profile
 	}
 	return false
 }
@@ -42381,6 +42464,15 @@ func (m *WorkerMutation) ClearEdge(name string) error {
 		return nil
 	case worker.EdgeManager:
 		m.ClearManager()
+		return nil
+	case worker.EdgePrimaryTractor:
+		m.ClearPrimaryTractor()
+		return nil
+	case worker.EdgeSecondaryTractor:
+		m.ClearSecondaryTractor()
+		return nil
+	case worker.EdgeWorkerProfile:
+		m.ClearWorkerProfile()
 		return nil
 	}
 	return fmt.Errorf("unknown Worker unique edge %s", name)
@@ -42405,12 +42497,2236 @@ func (m *WorkerMutation) ResetEdge(name string) error {
 	case worker.EdgeManager:
 		m.ResetManager()
 		return nil
-	case worker.EdgeTractor:
-		m.ResetTractor()
+	case worker.EdgePrimaryTractor:
+		m.ResetPrimaryTractor()
 		return nil
 	case worker.EdgeSecondaryTractor:
 		m.ResetSecondaryTractor()
 		return nil
+	case worker.EdgeWorkerProfile:
+		m.ResetWorkerProfile()
+		return nil
 	}
 	return fmt.Errorf("unknown Worker edge %s", name)
+}
+
+// WorkerCommentMutation represents an operation that mutates the WorkerComment nodes in the graph.
+type WorkerCommentMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	done                 bool
+	oldValue             func(context.Context) (*WorkerComment, error)
+	predicates           []predicate.WorkerComment
+}
+
+var _ ent.Mutation = (*WorkerCommentMutation)(nil)
+
+// workercommentOption allows management of the mutation configuration using functional options.
+type workercommentOption func(*WorkerCommentMutation)
+
+// newWorkerCommentMutation creates new mutation for the WorkerComment entity.
+func newWorkerCommentMutation(c config, op Op, opts ...workercommentOption) *WorkerCommentMutation {
+	m := &WorkerCommentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkerComment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkerCommentID sets the ID field of the mutation.
+func withWorkerCommentID(id uuid.UUID) workercommentOption {
+	return func(m *WorkerCommentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WorkerComment
+		)
+		m.oldValue = func(ctx context.Context) (*WorkerComment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WorkerComment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorkerComment sets the old WorkerComment of the mutation.
+func withWorkerComment(node *WorkerComment) workercommentOption {
+	return func(m *WorkerCommentMutation) {
+		m.oldValue = func(context.Context) (*WorkerComment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkerCommentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkerCommentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of WorkerComment entities.
+func (m *WorkerCommentMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkerCommentMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkerCommentMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WorkerComment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *WorkerCommentMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *WorkerCommentMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *WorkerCommentMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *WorkerCommentMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *WorkerCommentMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *WorkerCommentMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkerCommentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkerCommentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkerCommentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkerCommentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkerCommentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkerCommentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *WorkerCommentMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[workercomment.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *WorkerCommentMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *WorkerCommentMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *WorkerCommentMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *WorkerCommentMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[workercomment.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *WorkerCommentMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *WorkerCommentMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *WorkerCommentMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// Where appends a list predicates to the WorkerCommentMutation builder.
+func (m *WorkerCommentMutation) Where(ps ...predicate.WorkerComment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkerCommentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkerCommentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WorkerComment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkerCommentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkerCommentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WorkerComment).
+func (m *WorkerCommentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkerCommentMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.business_unit != nil {
+		fields = append(fields, workercomment.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, workercomment.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, workercomment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, workercomment.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkerCommentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case workercomment.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case workercomment.FieldOrganizationID:
+		return m.OrganizationID()
+	case workercomment.FieldCreatedAt:
+		return m.CreatedAt()
+	case workercomment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkerCommentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case workercomment.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case workercomment.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case workercomment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case workercomment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WorkerComment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerCommentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case workercomment.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case workercomment.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case workercomment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case workercomment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerComment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkerCommentMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkerCommentMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerCommentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown WorkerComment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkerCommentMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkerCommentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkerCommentMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown WorkerComment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkerCommentMutation) ResetField(name string) error {
+	switch name {
+	case workercomment.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case workercomment.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case workercomment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case workercomment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerComment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkerCommentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.business_unit != nil {
+		edges = append(edges, workercomment.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, workercomment.EdgeOrganization)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkerCommentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case workercomment.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case workercomment.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkerCommentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkerCommentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkerCommentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedbusiness_unit {
+		edges = append(edges, workercomment.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, workercomment.EdgeOrganization)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkerCommentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case workercomment.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case workercomment.EdgeOrganization:
+		return m.clearedorganization
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkerCommentMutation) ClearEdge(name string) error {
+	switch name {
+	case workercomment.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case workercomment.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerComment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkerCommentMutation) ResetEdge(name string) error {
+	switch name {
+	case workercomment.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case workercomment.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerComment edge %s", name)
+}
+
+// WorkerProfileMutation represents an operation that mutates the WorkerProfile nodes in the graph.
+type WorkerProfileMutation struct {
+	config
+	op                      Op
+	typ                     string
+	id                      *uuid.UUID
+	created_at              *time.Time
+	updated_at              *time.Time
+	race                    *string
+	sex                     *string
+	date_of_birth           **pgtype.Date
+	license_number          *string
+	license_state_id        *uuid.UUID
+	license_expiration_date **pgtype.Date
+	endorsements            *workerprofile.Endorsements
+	hazmat_expiration_date  **pgtype.Date
+	hire_date               **pgtype.Date
+	termination_date        **pgtype.Date
+	physical_due_date       **pgtype.Date
+	medical_cert_date       **pgtype.Date
+	mvr_due_date            **pgtype.Date
+	clearedFields           map[string]struct{}
+	business_unit           *uuid.UUID
+	clearedbusiness_unit    bool
+	organization            *uuid.UUID
+	clearedorganization     bool
+	worker                  *uuid.UUID
+	clearedworker           bool
+	done                    bool
+	oldValue                func(context.Context) (*WorkerProfile, error)
+	predicates              []predicate.WorkerProfile
+}
+
+var _ ent.Mutation = (*WorkerProfileMutation)(nil)
+
+// workerprofileOption allows management of the mutation configuration using functional options.
+type workerprofileOption func(*WorkerProfileMutation)
+
+// newWorkerProfileMutation creates new mutation for the WorkerProfile entity.
+func newWorkerProfileMutation(c config, op Op, opts ...workerprofileOption) *WorkerProfileMutation {
+	m := &WorkerProfileMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkerProfile,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkerProfileID sets the ID field of the mutation.
+func withWorkerProfileID(id uuid.UUID) workerprofileOption {
+	return func(m *WorkerProfileMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WorkerProfile
+		)
+		m.oldValue = func(ctx context.Context) (*WorkerProfile, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WorkerProfile.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorkerProfile sets the old WorkerProfile of the mutation.
+func withWorkerProfile(node *WorkerProfile) workerprofileOption {
+	return func(m *WorkerProfileMutation) {
+		m.oldValue = func(context.Context) (*WorkerProfile, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkerProfileMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkerProfileMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of WorkerProfile entities.
+func (m *WorkerProfileMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkerProfileMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkerProfileMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WorkerProfile.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *WorkerProfileMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *WorkerProfileMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *WorkerProfileMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *WorkerProfileMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *WorkerProfileMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *WorkerProfileMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkerProfileMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkerProfileMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkerProfileMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkerProfileMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkerProfileMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkerProfileMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetWorkerID sets the "worker_id" field.
+func (m *WorkerProfileMutation) SetWorkerID(u uuid.UUID) {
+	m.worker = &u
+}
+
+// WorkerID returns the value of the "worker_id" field in the mutation.
+func (m *WorkerProfileMutation) WorkerID() (r uuid.UUID, exists bool) {
+	v := m.worker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkerID returns the old "worker_id" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldWorkerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkerID: %w", err)
+	}
+	return oldValue.WorkerID, nil
+}
+
+// ResetWorkerID resets all changes to the "worker_id" field.
+func (m *WorkerProfileMutation) ResetWorkerID() {
+	m.worker = nil
+}
+
+// SetRace sets the "race" field.
+func (m *WorkerProfileMutation) SetRace(s string) {
+	m.race = &s
+}
+
+// Race returns the value of the "race" field in the mutation.
+func (m *WorkerProfileMutation) Race() (r string, exists bool) {
+	v := m.race
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRace returns the old "race" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldRace(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRace is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRace requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRace: %w", err)
+	}
+	return oldValue.Race, nil
+}
+
+// ClearRace clears the value of the "race" field.
+func (m *WorkerProfileMutation) ClearRace() {
+	m.race = nil
+	m.clearedFields[workerprofile.FieldRace] = struct{}{}
+}
+
+// RaceCleared returns if the "race" field was cleared in this mutation.
+func (m *WorkerProfileMutation) RaceCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldRace]
+	return ok
+}
+
+// ResetRace resets all changes to the "race" field.
+func (m *WorkerProfileMutation) ResetRace() {
+	m.race = nil
+	delete(m.clearedFields, workerprofile.FieldRace)
+}
+
+// SetSex sets the "sex" field.
+func (m *WorkerProfileMutation) SetSex(s string) {
+	m.sex = &s
+}
+
+// Sex returns the value of the "sex" field in the mutation.
+func (m *WorkerProfileMutation) Sex() (r string, exists bool) {
+	v := m.sex
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSex returns the old "sex" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldSex(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSex is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSex requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSex: %w", err)
+	}
+	return oldValue.Sex, nil
+}
+
+// ClearSex clears the value of the "sex" field.
+func (m *WorkerProfileMutation) ClearSex() {
+	m.sex = nil
+	m.clearedFields[workerprofile.FieldSex] = struct{}{}
+}
+
+// SexCleared returns if the "sex" field was cleared in this mutation.
+func (m *WorkerProfileMutation) SexCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldSex]
+	return ok
+}
+
+// ResetSex resets all changes to the "sex" field.
+func (m *WorkerProfileMutation) ResetSex() {
+	m.sex = nil
+	delete(m.clearedFields, workerprofile.FieldSex)
+}
+
+// SetDateOfBirth sets the "date_of_birth" field.
+func (m *WorkerProfileMutation) SetDateOfBirth(pg *pgtype.Date) {
+	m.date_of_birth = &pg
+}
+
+// DateOfBirth returns the value of the "date_of_birth" field in the mutation.
+func (m *WorkerProfileMutation) DateOfBirth() (r *pgtype.Date, exists bool) {
+	v := m.date_of_birth
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDateOfBirth returns the old "date_of_birth" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldDateOfBirth(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDateOfBirth is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDateOfBirth requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDateOfBirth: %w", err)
+	}
+	return oldValue.DateOfBirth, nil
+}
+
+// ClearDateOfBirth clears the value of the "date_of_birth" field.
+func (m *WorkerProfileMutation) ClearDateOfBirth() {
+	m.date_of_birth = nil
+	m.clearedFields[workerprofile.FieldDateOfBirth] = struct{}{}
+}
+
+// DateOfBirthCleared returns if the "date_of_birth" field was cleared in this mutation.
+func (m *WorkerProfileMutation) DateOfBirthCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldDateOfBirth]
+	return ok
+}
+
+// ResetDateOfBirth resets all changes to the "date_of_birth" field.
+func (m *WorkerProfileMutation) ResetDateOfBirth() {
+	m.date_of_birth = nil
+	delete(m.clearedFields, workerprofile.FieldDateOfBirth)
+}
+
+// SetLicenseNumber sets the "license_number" field.
+func (m *WorkerProfileMutation) SetLicenseNumber(s string) {
+	m.license_number = &s
+}
+
+// LicenseNumber returns the value of the "license_number" field in the mutation.
+func (m *WorkerProfileMutation) LicenseNumber() (r string, exists bool) {
+	v := m.license_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicenseNumber returns the old "license_number" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldLicenseNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicenseNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicenseNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicenseNumber: %w", err)
+	}
+	return oldValue.LicenseNumber, nil
+}
+
+// ResetLicenseNumber resets all changes to the "license_number" field.
+func (m *WorkerProfileMutation) ResetLicenseNumber() {
+	m.license_number = nil
+}
+
+// SetLicenseStateID sets the "license_state_id" field.
+func (m *WorkerProfileMutation) SetLicenseStateID(u uuid.UUID) {
+	m.license_state_id = &u
+}
+
+// LicenseStateID returns the value of the "license_state_id" field in the mutation.
+func (m *WorkerProfileMutation) LicenseStateID() (r uuid.UUID, exists bool) {
+	v := m.license_state_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicenseStateID returns the old "license_state_id" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldLicenseStateID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicenseStateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicenseStateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicenseStateID: %w", err)
+	}
+	return oldValue.LicenseStateID, nil
+}
+
+// ClearLicenseStateID clears the value of the "license_state_id" field.
+func (m *WorkerProfileMutation) ClearLicenseStateID() {
+	m.license_state_id = nil
+	m.clearedFields[workerprofile.FieldLicenseStateID] = struct{}{}
+}
+
+// LicenseStateIDCleared returns if the "license_state_id" field was cleared in this mutation.
+func (m *WorkerProfileMutation) LicenseStateIDCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldLicenseStateID]
+	return ok
+}
+
+// ResetLicenseStateID resets all changes to the "license_state_id" field.
+func (m *WorkerProfileMutation) ResetLicenseStateID() {
+	m.license_state_id = nil
+	delete(m.clearedFields, workerprofile.FieldLicenseStateID)
+}
+
+// SetLicenseExpirationDate sets the "license_expiration_date" field.
+func (m *WorkerProfileMutation) SetLicenseExpirationDate(pg *pgtype.Date) {
+	m.license_expiration_date = &pg
+}
+
+// LicenseExpirationDate returns the value of the "license_expiration_date" field in the mutation.
+func (m *WorkerProfileMutation) LicenseExpirationDate() (r *pgtype.Date, exists bool) {
+	v := m.license_expiration_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicenseExpirationDate returns the old "license_expiration_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldLicenseExpirationDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicenseExpirationDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicenseExpirationDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicenseExpirationDate: %w", err)
+	}
+	return oldValue.LicenseExpirationDate, nil
+}
+
+// ClearLicenseExpirationDate clears the value of the "license_expiration_date" field.
+func (m *WorkerProfileMutation) ClearLicenseExpirationDate() {
+	m.license_expiration_date = nil
+	m.clearedFields[workerprofile.FieldLicenseExpirationDate] = struct{}{}
+}
+
+// LicenseExpirationDateCleared returns if the "license_expiration_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) LicenseExpirationDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldLicenseExpirationDate]
+	return ok
+}
+
+// ResetLicenseExpirationDate resets all changes to the "license_expiration_date" field.
+func (m *WorkerProfileMutation) ResetLicenseExpirationDate() {
+	m.license_expiration_date = nil
+	delete(m.clearedFields, workerprofile.FieldLicenseExpirationDate)
+}
+
+// SetEndorsements sets the "endorsements" field.
+func (m *WorkerProfileMutation) SetEndorsements(w workerprofile.Endorsements) {
+	m.endorsements = &w
+}
+
+// Endorsements returns the value of the "endorsements" field in the mutation.
+func (m *WorkerProfileMutation) Endorsements() (r workerprofile.Endorsements, exists bool) {
+	v := m.endorsements
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEndorsements returns the old "endorsements" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldEndorsements(ctx context.Context) (v workerprofile.Endorsements, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEndorsements is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEndorsements requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEndorsements: %w", err)
+	}
+	return oldValue.Endorsements, nil
+}
+
+// ClearEndorsements clears the value of the "endorsements" field.
+func (m *WorkerProfileMutation) ClearEndorsements() {
+	m.endorsements = nil
+	m.clearedFields[workerprofile.FieldEndorsements] = struct{}{}
+}
+
+// EndorsementsCleared returns if the "endorsements" field was cleared in this mutation.
+func (m *WorkerProfileMutation) EndorsementsCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldEndorsements]
+	return ok
+}
+
+// ResetEndorsements resets all changes to the "endorsements" field.
+func (m *WorkerProfileMutation) ResetEndorsements() {
+	m.endorsements = nil
+	delete(m.clearedFields, workerprofile.FieldEndorsements)
+}
+
+// SetHazmatExpirationDate sets the "hazmat_expiration_date" field.
+func (m *WorkerProfileMutation) SetHazmatExpirationDate(pg *pgtype.Date) {
+	m.hazmat_expiration_date = &pg
+}
+
+// HazmatExpirationDate returns the value of the "hazmat_expiration_date" field in the mutation.
+func (m *WorkerProfileMutation) HazmatExpirationDate() (r *pgtype.Date, exists bool) {
+	v := m.hazmat_expiration_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHazmatExpirationDate returns the old "hazmat_expiration_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldHazmatExpirationDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHazmatExpirationDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHazmatExpirationDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHazmatExpirationDate: %w", err)
+	}
+	return oldValue.HazmatExpirationDate, nil
+}
+
+// ClearHazmatExpirationDate clears the value of the "hazmat_expiration_date" field.
+func (m *WorkerProfileMutation) ClearHazmatExpirationDate() {
+	m.hazmat_expiration_date = nil
+	m.clearedFields[workerprofile.FieldHazmatExpirationDate] = struct{}{}
+}
+
+// HazmatExpirationDateCleared returns if the "hazmat_expiration_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) HazmatExpirationDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldHazmatExpirationDate]
+	return ok
+}
+
+// ResetHazmatExpirationDate resets all changes to the "hazmat_expiration_date" field.
+func (m *WorkerProfileMutation) ResetHazmatExpirationDate() {
+	m.hazmat_expiration_date = nil
+	delete(m.clearedFields, workerprofile.FieldHazmatExpirationDate)
+}
+
+// SetHireDate sets the "hire_date" field.
+func (m *WorkerProfileMutation) SetHireDate(pg *pgtype.Date) {
+	m.hire_date = &pg
+}
+
+// HireDate returns the value of the "hire_date" field in the mutation.
+func (m *WorkerProfileMutation) HireDate() (r *pgtype.Date, exists bool) {
+	v := m.hire_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHireDate returns the old "hire_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldHireDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHireDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHireDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHireDate: %w", err)
+	}
+	return oldValue.HireDate, nil
+}
+
+// ClearHireDate clears the value of the "hire_date" field.
+func (m *WorkerProfileMutation) ClearHireDate() {
+	m.hire_date = nil
+	m.clearedFields[workerprofile.FieldHireDate] = struct{}{}
+}
+
+// HireDateCleared returns if the "hire_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) HireDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldHireDate]
+	return ok
+}
+
+// ResetHireDate resets all changes to the "hire_date" field.
+func (m *WorkerProfileMutation) ResetHireDate() {
+	m.hire_date = nil
+	delete(m.clearedFields, workerprofile.FieldHireDate)
+}
+
+// SetTerminationDate sets the "termination_date" field.
+func (m *WorkerProfileMutation) SetTerminationDate(pg *pgtype.Date) {
+	m.termination_date = &pg
+}
+
+// TerminationDate returns the value of the "termination_date" field in the mutation.
+func (m *WorkerProfileMutation) TerminationDate() (r *pgtype.Date, exists bool) {
+	v := m.termination_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTerminationDate returns the old "termination_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldTerminationDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTerminationDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTerminationDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTerminationDate: %w", err)
+	}
+	return oldValue.TerminationDate, nil
+}
+
+// ClearTerminationDate clears the value of the "termination_date" field.
+func (m *WorkerProfileMutation) ClearTerminationDate() {
+	m.termination_date = nil
+	m.clearedFields[workerprofile.FieldTerminationDate] = struct{}{}
+}
+
+// TerminationDateCleared returns if the "termination_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) TerminationDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldTerminationDate]
+	return ok
+}
+
+// ResetTerminationDate resets all changes to the "termination_date" field.
+func (m *WorkerProfileMutation) ResetTerminationDate() {
+	m.termination_date = nil
+	delete(m.clearedFields, workerprofile.FieldTerminationDate)
+}
+
+// SetPhysicalDueDate sets the "physical_due_date" field.
+func (m *WorkerProfileMutation) SetPhysicalDueDate(pg *pgtype.Date) {
+	m.physical_due_date = &pg
+}
+
+// PhysicalDueDate returns the value of the "physical_due_date" field in the mutation.
+func (m *WorkerProfileMutation) PhysicalDueDate() (r *pgtype.Date, exists bool) {
+	v := m.physical_due_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhysicalDueDate returns the old "physical_due_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldPhysicalDueDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhysicalDueDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhysicalDueDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhysicalDueDate: %w", err)
+	}
+	return oldValue.PhysicalDueDate, nil
+}
+
+// ClearPhysicalDueDate clears the value of the "physical_due_date" field.
+func (m *WorkerProfileMutation) ClearPhysicalDueDate() {
+	m.physical_due_date = nil
+	m.clearedFields[workerprofile.FieldPhysicalDueDate] = struct{}{}
+}
+
+// PhysicalDueDateCleared returns if the "physical_due_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) PhysicalDueDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldPhysicalDueDate]
+	return ok
+}
+
+// ResetPhysicalDueDate resets all changes to the "physical_due_date" field.
+func (m *WorkerProfileMutation) ResetPhysicalDueDate() {
+	m.physical_due_date = nil
+	delete(m.clearedFields, workerprofile.FieldPhysicalDueDate)
+}
+
+// SetMedicalCertDate sets the "medical_cert_date" field.
+func (m *WorkerProfileMutation) SetMedicalCertDate(pg *pgtype.Date) {
+	m.medical_cert_date = &pg
+}
+
+// MedicalCertDate returns the value of the "medical_cert_date" field in the mutation.
+func (m *WorkerProfileMutation) MedicalCertDate() (r *pgtype.Date, exists bool) {
+	v := m.medical_cert_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMedicalCertDate returns the old "medical_cert_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldMedicalCertDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMedicalCertDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMedicalCertDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMedicalCertDate: %w", err)
+	}
+	return oldValue.MedicalCertDate, nil
+}
+
+// ClearMedicalCertDate clears the value of the "medical_cert_date" field.
+func (m *WorkerProfileMutation) ClearMedicalCertDate() {
+	m.medical_cert_date = nil
+	m.clearedFields[workerprofile.FieldMedicalCertDate] = struct{}{}
+}
+
+// MedicalCertDateCleared returns if the "medical_cert_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) MedicalCertDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldMedicalCertDate]
+	return ok
+}
+
+// ResetMedicalCertDate resets all changes to the "medical_cert_date" field.
+func (m *WorkerProfileMutation) ResetMedicalCertDate() {
+	m.medical_cert_date = nil
+	delete(m.clearedFields, workerprofile.FieldMedicalCertDate)
+}
+
+// SetMvrDueDate sets the "mvr_due_date" field.
+func (m *WorkerProfileMutation) SetMvrDueDate(pg *pgtype.Date) {
+	m.mvr_due_date = &pg
+}
+
+// MvrDueDate returns the value of the "mvr_due_date" field in the mutation.
+func (m *WorkerProfileMutation) MvrDueDate() (r *pgtype.Date, exists bool) {
+	v := m.mvr_due_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMvrDueDate returns the old "mvr_due_date" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldMvrDueDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMvrDueDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMvrDueDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMvrDueDate: %w", err)
+	}
+	return oldValue.MvrDueDate, nil
+}
+
+// ClearMvrDueDate clears the value of the "mvr_due_date" field.
+func (m *WorkerProfileMutation) ClearMvrDueDate() {
+	m.mvr_due_date = nil
+	m.clearedFields[workerprofile.FieldMvrDueDate] = struct{}{}
+}
+
+// MvrDueDateCleared returns if the "mvr_due_date" field was cleared in this mutation.
+func (m *WorkerProfileMutation) MvrDueDateCleared() bool {
+	_, ok := m.clearedFields[workerprofile.FieldMvrDueDate]
+	return ok
+}
+
+// ResetMvrDueDate resets all changes to the "mvr_due_date" field.
+func (m *WorkerProfileMutation) ResetMvrDueDate() {
+	m.mvr_due_date = nil
+	delete(m.clearedFields, workerprofile.FieldMvrDueDate)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *WorkerProfileMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[workerprofile.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *WorkerProfileMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *WorkerProfileMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *WorkerProfileMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *WorkerProfileMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[workerprofile.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *WorkerProfileMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *WorkerProfileMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *WorkerProfileMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearWorker clears the "worker" edge to the Worker entity.
+func (m *WorkerProfileMutation) ClearWorker() {
+	m.clearedworker = true
+	m.clearedFields[workerprofile.FieldWorkerID] = struct{}{}
+}
+
+// WorkerCleared reports if the "worker" edge to the Worker entity was cleared.
+func (m *WorkerProfileMutation) WorkerCleared() bool {
+	return m.clearedworker
+}
+
+// WorkerIDs returns the "worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkerID instead. It exists only for internal usage by the builders.
+func (m *WorkerProfileMutation) WorkerIDs() (ids []uuid.UUID) {
+	if id := m.worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorker resets all changes to the "worker" edge.
+func (m *WorkerProfileMutation) ResetWorker() {
+	m.worker = nil
+	m.clearedworker = false
+}
+
+// Where appends a list predicates to the WorkerProfileMutation builder.
+func (m *WorkerProfileMutation) Where(ps ...predicate.WorkerProfile) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkerProfileMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkerProfileMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WorkerProfile, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkerProfileMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkerProfileMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WorkerProfile).
+func (m *WorkerProfileMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkerProfileMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.business_unit != nil {
+		fields = append(fields, workerprofile.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, workerprofile.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, workerprofile.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, workerprofile.FieldUpdatedAt)
+	}
+	if m.worker != nil {
+		fields = append(fields, workerprofile.FieldWorkerID)
+	}
+	if m.race != nil {
+		fields = append(fields, workerprofile.FieldRace)
+	}
+	if m.sex != nil {
+		fields = append(fields, workerprofile.FieldSex)
+	}
+	if m.date_of_birth != nil {
+		fields = append(fields, workerprofile.FieldDateOfBirth)
+	}
+	if m.license_number != nil {
+		fields = append(fields, workerprofile.FieldLicenseNumber)
+	}
+	if m.license_state_id != nil {
+		fields = append(fields, workerprofile.FieldLicenseStateID)
+	}
+	if m.license_expiration_date != nil {
+		fields = append(fields, workerprofile.FieldLicenseExpirationDate)
+	}
+	if m.endorsements != nil {
+		fields = append(fields, workerprofile.FieldEndorsements)
+	}
+	if m.hazmat_expiration_date != nil {
+		fields = append(fields, workerprofile.FieldHazmatExpirationDate)
+	}
+	if m.hire_date != nil {
+		fields = append(fields, workerprofile.FieldHireDate)
+	}
+	if m.termination_date != nil {
+		fields = append(fields, workerprofile.FieldTerminationDate)
+	}
+	if m.physical_due_date != nil {
+		fields = append(fields, workerprofile.FieldPhysicalDueDate)
+	}
+	if m.medical_cert_date != nil {
+		fields = append(fields, workerprofile.FieldMedicalCertDate)
+	}
+	if m.mvr_due_date != nil {
+		fields = append(fields, workerprofile.FieldMvrDueDate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkerProfileMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case workerprofile.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case workerprofile.FieldOrganizationID:
+		return m.OrganizationID()
+	case workerprofile.FieldCreatedAt:
+		return m.CreatedAt()
+	case workerprofile.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case workerprofile.FieldWorkerID:
+		return m.WorkerID()
+	case workerprofile.FieldRace:
+		return m.Race()
+	case workerprofile.FieldSex:
+		return m.Sex()
+	case workerprofile.FieldDateOfBirth:
+		return m.DateOfBirth()
+	case workerprofile.FieldLicenseNumber:
+		return m.LicenseNumber()
+	case workerprofile.FieldLicenseStateID:
+		return m.LicenseStateID()
+	case workerprofile.FieldLicenseExpirationDate:
+		return m.LicenseExpirationDate()
+	case workerprofile.FieldEndorsements:
+		return m.Endorsements()
+	case workerprofile.FieldHazmatExpirationDate:
+		return m.HazmatExpirationDate()
+	case workerprofile.FieldHireDate:
+		return m.HireDate()
+	case workerprofile.FieldTerminationDate:
+		return m.TerminationDate()
+	case workerprofile.FieldPhysicalDueDate:
+		return m.PhysicalDueDate()
+	case workerprofile.FieldMedicalCertDate:
+		return m.MedicalCertDate()
+	case workerprofile.FieldMvrDueDate:
+		return m.MvrDueDate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkerProfileMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case workerprofile.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case workerprofile.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case workerprofile.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case workerprofile.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case workerprofile.FieldWorkerID:
+		return m.OldWorkerID(ctx)
+	case workerprofile.FieldRace:
+		return m.OldRace(ctx)
+	case workerprofile.FieldSex:
+		return m.OldSex(ctx)
+	case workerprofile.FieldDateOfBirth:
+		return m.OldDateOfBirth(ctx)
+	case workerprofile.FieldLicenseNumber:
+		return m.OldLicenseNumber(ctx)
+	case workerprofile.FieldLicenseStateID:
+		return m.OldLicenseStateID(ctx)
+	case workerprofile.FieldLicenseExpirationDate:
+		return m.OldLicenseExpirationDate(ctx)
+	case workerprofile.FieldEndorsements:
+		return m.OldEndorsements(ctx)
+	case workerprofile.FieldHazmatExpirationDate:
+		return m.OldHazmatExpirationDate(ctx)
+	case workerprofile.FieldHireDate:
+		return m.OldHireDate(ctx)
+	case workerprofile.FieldTerminationDate:
+		return m.OldTerminationDate(ctx)
+	case workerprofile.FieldPhysicalDueDate:
+		return m.OldPhysicalDueDate(ctx)
+	case workerprofile.FieldMedicalCertDate:
+		return m.OldMedicalCertDate(ctx)
+	case workerprofile.FieldMvrDueDate:
+		return m.OldMvrDueDate(ctx)
+	}
+	return nil, fmt.Errorf("unknown WorkerProfile field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerProfileMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case workerprofile.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case workerprofile.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case workerprofile.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case workerprofile.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case workerprofile.FieldWorkerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkerID(v)
+		return nil
+	case workerprofile.FieldRace:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRace(v)
+		return nil
+	case workerprofile.FieldSex:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSex(v)
+		return nil
+	case workerprofile.FieldDateOfBirth:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDateOfBirth(v)
+		return nil
+	case workerprofile.FieldLicenseNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicenseNumber(v)
+		return nil
+	case workerprofile.FieldLicenseStateID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicenseStateID(v)
+		return nil
+	case workerprofile.FieldLicenseExpirationDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicenseExpirationDate(v)
+		return nil
+	case workerprofile.FieldEndorsements:
+		v, ok := value.(workerprofile.Endorsements)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEndorsements(v)
+		return nil
+	case workerprofile.FieldHazmatExpirationDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHazmatExpirationDate(v)
+		return nil
+	case workerprofile.FieldHireDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHireDate(v)
+		return nil
+	case workerprofile.FieldTerminationDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTerminationDate(v)
+		return nil
+	case workerprofile.FieldPhysicalDueDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhysicalDueDate(v)
+		return nil
+	case workerprofile.FieldMedicalCertDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMedicalCertDate(v)
+		return nil
+	case workerprofile.FieldMvrDueDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMvrDueDate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerProfile field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkerProfileMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkerProfileMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkerProfileMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown WorkerProfile numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkerProfileMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(workerprofile.FieldRace) {
+		fields = append(fields, workerprofile.FieldRace)
+	}
+	if m.FieldCleared(workerprofile.FieldSex) {
+		fields = append(fields, workerprofile.FieldSex)
+	}
+	if m.FieldCleared(workerprofile.FieldDateOfBirth) {
+		fields = append(fields, workerprofile.FieldDateOfBirth)
+	}
+	if m.FieldCleared(workerprofile.FieldLicenseStateID) {
+		fields = append(fields, workerprofile.FieldLicenseStateID)
+	}
+	if m.FieldCleared(workerprofile.FieldLicenseExpirationDate) {
+		fields = append(fields, workerprofile.FieldLicenseExpirationDate)
+	}
+	if m.FieldCleared(workerprofile.FieldEndorsements) {
+		fields = append(fields, workerprofile.FieldEndorsements)
+	}
+	if m.FieldCleared(workerprofile.FieldHazmatExpirationDate) {
+		fields = append(fields, workerprofile.FieldHazmatExpirationDate)
+	}
+	if m.FieldCleared(workerprofile.FieldHireDate) {
+		fields = append(fields, workerprofile.FieldHireDate)
+	}
+	if m.FieldCleared(workerprofile.FieldTerminationDate) {
+		fields = append(fields, workerprofile.FieldTerminationDate)
+	}
+	if m.FieldCleared(workerprofile.FieldPhysicalDueDate) {
+		fields = append(fields, workerprofile.FieldPhysicalDueDate)
+	}
+	if m.FieldCleared(workerprofile.FieldMedicalCertDate) {
+		fields = append(fields, workerprofile.FieldMedicalCertDate)
+	}
+	if m.FieldCleared(workerprofile.FieldMvrDueDate) {
+		fields = append(fields, workerprofile.FieldMvrDueDate)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkerProfileMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkerProfileMutation) ClearField(name string) error {
+	switch name {
+	case workerprofile.FieldRace:
+		m.ClearRace()
+		return nil
+	case workerprofile.FieldSex:
+		m.ClearSex()
+		return nil
+	case workerprofile.FieldDateOfBirth:
+		m.ClearDateOfBirth()
+		return nil
+	case workerprofile.FieldLicenseStateID:
+		m.ClearLicenseStateID()
+		return nil
+	case workerprofile.FieldLicenseExpirationDate:
+		m.ClearLicenseExpirationDate()
+		return nil
+	case workerprofile.FieldEndorsements:
+		m.ClearEndorsements()
+		return nil
+	case workerprofile.FieldHazmatExpirationDate:
+		m.ClearHazmatExpirationDate()
+		return nil
+	case workerprofile.FieldHireDate:
+		m.ClearHireDate()
+		return nil
+	case workerprofile.FieldTerminationDate:
+		m.ClearTerminationDate()
+		return nil
+	case workerprofile.FieldPhysicalDueDate:
+		m.ClearPhysicalDueDate()
+		return nil
+	case workerprofile.FieldMedicalCertDate:
+		m.ClearMedicalCertDate()
+		return nil
+	case workerprofile.FieldMvrDueDate:
+		m.ClearMvrDueDate()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerProfile nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkerProfileMutation) ResetField(name string) error {
+	switch name {
+	case workerprofile.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case workerprofile.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case workerprofile.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case workerprofile.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case workerprofile.FieldWorkerID:
+		m.ResetWorkerID()
+		return nil
+	case workerprofile.FieldRace:
+		m.ResetRace()
+		return nil
+	case workerprofile.FieldSex:
+		m.ResetSex()
+		return nil
+	case workerprofile.FieldDateOfBirth:
+		m.ResetDateOfBirth()
+		return nil
+	case workerprofile.FieldLicenseNumber:
+		m.ResetLicenseNumber()
+		return nil
+	case workerprofile.FieldLicenseStateID:
+		m.ResetLicenseStateID()
+		return nil
+	case workerprofile.FieldLicenseExpirationDate:
+		m.ResetLicenseExpirationDate()
+		return nil
+	case workerprofile.FieldEndorsements:
+		m.ResetEndorsements()
+		return nil
+	case workerprofile.FieldHazmatExpirationDate:
+		m.ResetHazmatExpirationDate()
+		return nil
+	case workerprofile.FieldHireDate:
+		m.ResetHireDate()
+		return nil
+	case workerprofile.FieldTerminationDate:
+		m.ResetTerminationDate()
+		return nil
+	case workerprofile.FieldPhysicalDueDate:
+		m.ResetPhysicalDueDate()
+		return nil
+	case workerprofile.FieldMedicalCertDate:
+		m.ResetMedicalCertDate()
+		return nil
+	case workerprofile.FieldMvrDueDate:
+		m.ResetMvrDueDate()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerProfile field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkerProfileMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.business_unit != nil {
+		edges = append(edges, workerprofile.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, workerprofile.EdgeOrganization)
+	}
+	if m.worker != nil {
+		edges = append(edges, workerprofile.EdgeWorker)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkerProfileMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case workerprofile.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case workerprofile.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case workerprofile.EdgeWorker:
+		if id := m.worker; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkerProfileMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkerProfileMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkerProfileMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedbusiness_unit {
+		edges = append(edges, workerprofile.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, workerprofile.EdgeOrganization)
+	}
+	if m.clearedworker {
+		edges = append(edges, workerprofile.EdgeWorker)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkerProfileMutation) EdgeCleared(name string) bool {
+	switch name {
+	case workerprofile.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case workerprofile.EdgeOrganization:
+		return m.clearedorganization
+	case workerprofile.EdgeWorker:
+		return m.clearedworker
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkerProfileMutation) ClearEdge(name string) error {
+	switch name {
+	case workerprofile.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case workerprofile.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case workerprofile.EdgeWorker:
+		m.ClearWorker()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerProfile unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkerProfileMutation) ResetEdge(name string) error {
+	switch name {
+	case workerprofile.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case workerprofile.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case workerprofile.EdgeWorker:
+		m.ResetWorker()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkerProfile edge %s", name)
 }

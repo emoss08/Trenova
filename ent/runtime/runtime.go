@@ -46,6 +46,8 @@ import (
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workercomment"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
 
@@ -1513,6 +1515,10 @@ func init() {
 	// tag.DefaultID holds the default value on creation for the id field.
 	tag.DefaultID = tagDescID.Default.(func() uuid.UUID)
 	tractorMixin := schema.Tractor{}.Mixin()
+	tractorHooks := schema.Tractor{}.Hooks()
+	tractor.Hooks[0] = tractorHooks[0]
+	tractor.Hooks[1] = tractorHooks[1]
+	tractor.Hooks[2] = tractorHooks[2]
 	tractorMixinFields0 := tractorMixin[0].Fields()
 	_ = tractorMixinFields0
 	tractorFields := schema.Tractor{}.Fields()
@@ -1552,21 +1558,7 @@ func init() {
 	// tractorDescVin is the schema descriptor for vin field.
 	tractorDescVin := tractorFields[4].Descriptor()
 	// tractor.VinValidator is a validator for the "vin" field. It is called by the builders before save.
-	tractor.VinValidator = func() func(string) error {
-		validators := tractorDescVin.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(vin string) error {
-			for _, fn := range fns {
-				if err := fn(vin); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
+	tractor.VinValidator = tractorDescVin.Validators[0].(func(string) error)
 	// tractorDescModel is the schema descriptor for model field.
 	tractorDescModel := tractorFields[6].Descriptor()
 	// tractor.ModelValidator is a validator for the "model" field. It is called by the builders before save.
@@ -1769,6 +1761,48 @@ func init() {
 	workerDescID := workerMixinFields0[0].Descriptor()
 	// worker.DefaultID holds the default value on creation for the id field.
 	worker.DefaultID = workerDescID.Default.(func() uuid.UUID)
+	workercommentMixin := schema.WorkerComment{}.Mixin()
+	workercommentMixinFields0 := workercommentMixin[0].Fields()
+	_ = workercommentMixinFields0
+	workercommentFields := schema.WorkerComment{}.Fields()
+	_ = workercommentFields
+	// workercommentDescCreatedAt is the schema descriptor for created_at field.
+	workercommentDescCreatedAt := workercommentMixinFields0[3].Descriptor()
+	// workercomment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workercomment.DefaultCreatedAt = workercommentDescCreatedAt.Default.(func() time.Time)
+	// workercommentDescUpdatedAt is the schema descriptor for updated_at field.
+	workercommentDescUpdatedAt := workercommentMixinFields0[4].Descriptor()
+	// workercomment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workercomment.DefaultUpdatedAt = workercommentDescUpdatedAt.Default.(func() time.Time)
+	// workercomment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workercomment.UpdateDefaultUpdatedAt = workercommentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workercommentDescID is the schema descriptor for id field.
+	workercommentDescID := workercommentMixinFields0[0].Descriptor()
+	// workercomment.DefaultID holds the default value on creation for the id field.
+	workercomment.DefaultID = workercommentDescID.Default.(func() uuid.UUID)
+	workerprofileMixin := schema.WorkerProfile{}.Mixin()
+	workerprofileMixinFields0 := workerprofileMixin[0].Fields()
+	_ = workerprofileMixinFields0
+	workerprofileFields := schema.WorkerProfile{}.Fields()
+	_ = workerprofileFields
+	// workerprofileDescCreatedAt is the schema descriptor for created_at field.
+	workerprofileDescCreatedAt := workerprofileMixinFields0[3].Descriptor()
+	// workerprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workerprofile.DefaultCreatedAt = workerprofileDescCreatedAt.Default.(func() time.Time)
+	// workerprofileDescUpdatedAt is the schema descriptor for updated_at field.
+	workerprofileDescUpdatedAt := workerprofileMixinFields0[4].Descriptor()
+	// workerprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workerprofile.DefaultUpdatedAt = workerprofileDescUpdatedAt.Default.(func() time.Time)
+	// workerprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workerprofile.UpdateDefaultUpdatedAt = workerprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workerprofileDescLicenseNumber is the schema descriptor for license_number field.
+	workerprofileDescLicenseNumber := workerprofileFields[4].Descriptor()
+	// workerprofile.LicenseNumberValidator is a validator for the "license_number" field. It is called by the builders before save.
+	workerprofile.LicenseNumberValidator = workerprofileDescLicenseNumber.Validators[0].(func(string) error)
+	// workerprofileDescID is the schema descriptor for id field.
+	workerprofileDescID := workerprofileMixinFields0[0].Descriptor()
+	// workerprofile.DefaultID holds the default value on creation for the id field.
+	workerprofile.DefaultID = workerprofileDescID.Default.(func() uuid.UUID)
 }
 
 const (

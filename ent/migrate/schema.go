@@ -1420,8 +1420,9 @@ var (
 		{Name: "equipment_type_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "equipment_manufacturer_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "primary_worker_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "secondary_worker_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "fleet_code_id", Type: field.TypeUUID},
+		{Name: "primary_worker_id", Type: field.TypeUUID, Unique: true},
+		{Name: "secondary_worker_id", Type: field.TypeUUID, Unique: true, Nullable: true},
 	}
 	// TractorsTable holds the schema information for the "tractors" table.
 	TractorsTable = &schema.Table{
@@ -1460,14 +1461,20 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "tractors_workers_primary_worker",
+				Symbol:     "tractors_fleet_codes_fleet_code",
 				Columns:    []*schema.Column{TractorsColumns[16]},
+				RefColumns: []*schema.Column{FleetCodesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tractors_workers_primary_tractor",
+				Columns:    []*schema.Column{TractorsColumns[17]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "tractors_workers_secondary_worker",
-				Columns:    []*schema.Column{TractorsColumns[17]},
+				Symbol:     "tractors_workers_secondary_tractor",
+				Columns:    []*schema.Column{TractorsColumns[18]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1648,6 +1655,82 @@ var (
 			},
 		},
 	}
+	// WorkerCommentsColumns holds the columns for the "worker_comments" table.
+	WorkerCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// WorkerCommentsTable holds the schema information for the "worker_comments" table.
+	WorkerCommentsTable = &schema.Table{
+		Name:       "worker_comments",
+		Columns:    WorkerCommentsColumns,
+		PrimaryKey: []*schema.Column{WorkerCommentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "worker_comments_business_units_business_unit",
+				Columns:    []*schema.Column{WorkerCommentsColumns[3]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "worker_comments_organizations_organization",
+				Columns:    []*schema.Column{WorkerCommentsColumns[4]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// WorkerProfilesColumns holds the columns for the "worker_profiles" table.
+	WorkerProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "race", Type: field.TypeString, Nullable: true},
+		{Name: "sex", Type: field.TypeString, Nullable: true},
+		{Name: "date_of_birth", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "license_number", Type: field.TypeString},
+		{Name: "license_state_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "license_expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "endorsements", Type: field.TypeEnum, Nullable: true, Enums: []string{"None", "Tanker", "Hazmat", "TankerHazmat"}, Default: "None"},
+		{Name: "hazmat_expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "hire_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "termination_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "physical_due_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "medical_cert_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "mvr_due_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "worker_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// WorkerProfilesTable holds the schema information for the "worker_profiles" table.
+	WorkerProfilesTable = &schema.Table{
+		Name:       "worker_profiles",
+		Columns:    WorkerProfilesColumns,
+		PrimaryKey: []*schema.Column{WorkerProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "worker_profiles_workers_worker_profile",
+				Columns:    []*schema.Column{WorkerProfilesColumns[16]},
+				RefColumns: []*schema.Column{WorkersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "worker_profiles_business_units_business_unit",
+				Columns:    []*schema.Column{WorkerProfilesColumns[17]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "worker_profiles_organizations_organization",
+				Columns:    []*schema.Column{WorkerProfilesColumns[18]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccessorialChargesTable,
@@ -1690,6 +1773,8 @@ var (
 		UsersTable,
 		UserFavoritesTable,
 		WorkersTable,
+		WorkerCommentsTable,
+		WorkerProfilesTable,
 	}
 )
 
@@ -1777,8 +1862,9 @@ func init() {
 	TractorsTable.ForeignKeys[2].RefTable = EquipmentTypesTable
 	TractorsTable.ForeignKeys[3].RefTable = EquipmentManufactuersTable
 	TractorsTable.ForeignKeys[4].RefTable = UsStatesTable
-	TractorsTable.ForeignKeys[5].RefTable = WorkersTable
+	TractorsTable.ForeignKeys[5].RefTable = FleetCodesTable
 	TractorsTable.ForeignKeys[6].RefTable = WorkersTable
+	TractorsTable.ForeignKeys[7].RefTable = WorkersTable
 	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
@@ -1789,4 +1875,9 @@ func init() {
 	WorkersTable.ForeignKeys[2].RefTable = UsStatesTable
 	WorkersTable.ForeignKeys[3].RefTable = FleetCodesTable
 	WorkersTable.ForeignKeys[4].RefTable = UsersTable
+	WorkerCommentsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	WorkerCommentsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	WorkerProfilesTable.ForeignKeys[0].RefTable = WorkersTable
+	WorkerProfilesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	WorkerProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
 }

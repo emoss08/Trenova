@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
 
@@ -34,8 +35,9 @@ type WorkerQuery struct {
 	withState            *UsStateQuery
 	withFleetCode        *FleetCodeQuery
 	withManager          *UserQuery
-	withTractor          *TractorQuery
+	withPrimaryTractor   *TractorQuery
 	withSecondaryTractor *TractorQuery
+	withWorkerProfile    *WorkerProfileQuery
 	modifiers            []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -183,8 +185,8 @@ func (wq *WorkerQuery) QueryManager() *UserQuery {
 	return query
 }
 
-// QueryTractor chains the current query on the "tractor" edge.
-func (wq *WorkerQuery) QueryTractor() *TractorQuery {
+// QueryPrimaryTractor chains the current query on the "primary_tractor" edge.
+func (wq *WorkerQuery) QueryPrimaryTractor() *TractorQuery {
 	query := (&TractorClient{config: wq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := wq.prepareQuery(ctx); err != nil {
@@ -197,7 +199,7 @@ func (wq *WorkerQuery) QueryTractor() *TractorQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(worker.Table, worker.FieldID, selector),
 			sqlgraph.To(tractor.Table, tractor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, worker.TractorTable, worker.TractorColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, worker.PrimaryTractorTable, worker.PrimaryTractorColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
 		return fromU, nil
@@ -219,7 +221,29 @@ func (wq *WorkerQuery) QuerySecondaryTractor() *TractorQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(worker.Table, worker.FieldID, selector),
 			sqlgraph.To(tractor.Table, tractor.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, worker.SecondaryTractorTable, worker.SecondaryTractorColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, worker.SecondaryTractorTable, worker.SecondaryTractorColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWorkerProfile chains the current query on the "worker_profile" edge.
+func (wq *WorkerQuery) QueryWorkerProfile() *WorkerProfileQuery {
+	query := (&WorkerProfileClient{config: wq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worker.Table, worker.FieldID, selector),
+			sqlgraph.To(workerprofile.Table, workerprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, worker.WorkerProfileTable, worker.WorkerProfileColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wq.driver.Dialect(), step)
 		return fromU, nil
@@ -424,8 +448,9 @@ func (wq *WorkerQuery) Clone() *WorkerQuery {
 		withState:            wq.withState.Clone(),
 		withFleetCode:        wq.withFleetCode.Clone(),
 		withManager:          wq.withManager.Clone(),
-		withTractor:          wq.withTractor.Clone(),
+		withPrimaryTractor:   wq.withPrimaryTractor.Clone(),
 		withSecondaryTractor: wq.withSecondaryTractor.Clone(),
+		withWorkerProfile:    wq.withWorkerProfile.Clone(),
 		// clone intermediate query.
 		sql:  wq.sql.Clone(),
 		path: wq.path,
@@ -487,14 +512,14 @@ func (wq *WorkerQuery) WithManager(opts ...func(*UserQuery)) *WorkerQuery {
 	return wq
 }
 
-// WithTractor tells the query-builder to eager-load the nodes that are connected to
-// the "tractor" edge. The optional arguments are used to configure the query builder of the edge.
-func (wq *WorkerQuery) WithTractor(opts ...func(*TractorQuery)) *WorkerQuery {
+// WithPrimaryTractor tells the query-builder to eager-load the nodes that are connected to
+// the "primary_tractor" edge. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithPrimaryTractor(opts ...func(*TractorQuery)) *WorkerQuery {
 	query := (&TractorClient{config: wq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	wq.withTractor = query
+	wq.withPrimaryTractor = query
 	return wq
 }
 
@@ -506,6 +531,17 @@ func (wq *WorkerQuery) WithSecondaryTractor(opts ...func(*TractorQuery)) *Worker
 		opt(query)
 	}
 	wq.withSecondaryTractor = query
+	return wq
+}
+
+// WithWorkerProfile tells the query-builder to eager-load the nodes that are connected to
+// the "worker_profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithWorkerProfile(opts ...func(*WorkerProfileQuery)) *WorkerQuery {
+	query := (&WorkerProfileClient{config: wq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	wq.withWorkerProfile = query
 	return wq
 }
 
@@ -587,14 +623,15 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 	var (
 		nodes       = []*Worker{}
 		_spec       = wq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			wq.withBusinessUnit != nil,
 			wq.withOrganization != nil,
 			wq.withState != nil,
 			wq.withFleetCode != nil,
 			wq.withManager != nil,
-			wq.withTractor != nil,
+			wq.withPrimaryTractor != nil,
 			wq.withSecondaryTractor != nil,
+			wq.withWorkerProfile != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -648,17 +685,21 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 			return nil, err
 		}
 	}
-	if query := wq.withTractor; query != nil {
-		if err := wq.loadTractor(ctx, query, nodes,
-			func(n *Worker) { n.Edges.Tractor = []*Tractor{} },
-			func(n *Worker, e *Tractor) { n.Edges.Tractor = append(n.Edges.Tractor, e) }); err != nil {
+	if query := wq.withPrimaryTractor; query != nil {
+		if err := wq.loadPrimaryTractor(ctx, query, nodes, nil,
+			func(n *Worker, e *Tractor) { n.Edges.PrimaryTractor = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := wq.withSecondaryTractor; query != nil {
-		if err := wq.loadSecondaryTractor(ctx, query, nodes,
-			func(n *Worker) { n.Edges.SecondaryTractor = []*Tractor{} },
-			func(n *Worker, e *Tractor) { n.Edges.SecondaryTractor = append(n.Edges.SecondaryTractor, e) }); err != nil {
+		if err := wq.loadSecondaryTractor(ctx, query, nodes, nil,
+			func(n *Worker, e *Tractor) { n.Edges.SecondaryTractor = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := wq.withWorkerProfile; query != nil {
+		if err := wq.loadWorkerProfile(ctx, query, nodes, nil,
+			func(n *Worker, e *WorkerProfile) { n.Edges.WorkerProfile = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -819,21 +860,18 @@ func (wq *WorkerQuery) loadManager(ctx context.Context, query *UserQuery, nodes 
 	}
 	return nil
 }
-func (wq *WorkerQuery) loadTractor(ctx context.Context, query *TractorQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *Tractor)) error {
+func (wq *WorkerQuery) loadPrimaryTractor(ctx context.Context, query *TractorQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *Tractor)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Worker)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
 	}
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(tractor.FieldPrimaryWorkerID)
 	}
 	query.Where(predicate.Tractor(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(worker.TractorColumn), fks...))
+		s.Where(sql.InValues(s.C(worker.PrimaryTractorColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -841,12 +879,9 @@ func (wq *WorkerQuery) loadTractor(ctx context.Context, query *TractorQuery, nod
 	}
 	for _, n := range neighbors {
 		fk := n.PrimaryWorkerID
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "primary_worker_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "primary_worker_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "primary_worker_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -858,9 +893,6 @@ func (wq *WorkerQuery) loadSecondaryTractor(ctx context.Context, query *TractorQ
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
 	}
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(tractor.FieldSecondaryWorkerID)
@@ -880,6 +912,33 @@ func (wq *WorkerQuery) loadSecondaryTractor(ctx context.Context, query *TractorQ
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "secondary_worker_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (wq *WorkerQuery) loadWorkerProfile(ctx context.Context, query *WorkerProfileQuery, nodes []*Worker, init func(*Worker), assign func(*Worker, *WorkerProfile)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Worker)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workerprofile.FieldWorkerID)
+	}
+	query.Where(predicate.WorkerProfile(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(worker.WorkerProfileColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "worker_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

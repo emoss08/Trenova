@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
+	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tractor"
@@ -35,6 +36,7 @@ type TractorQuery struct {
 	withState                 *UsStateQuery
 	withPrimaryWorker         *WorkerQuery
 	withSecondaryWorker       *WorkerQuery
+	withFleetCode             *FleetCodeQuery
 	modifiers                 []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -196,7 +198,7 @@ func (tq *TractorQuery) QueryPrimaryWorker() *WorkerQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(tractor.Table, tractor.FieldID, selector),
 			sqlgraph.To(worker.Table, worker.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, tractor.PrimaryWorkerTable, tractor.PrimaryWorkerColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, tractor.PrimaryWorkerTable, tractor.PrimaryWorkerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -218,7 +220,29 @@ func (tq *TractorQuery) QuerySecondaryWorker() *WorkerQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(tractor.Table, tractor.FieldID, selector),
 			sqlgraph.To(worker.Table, worker.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, tractor.SecondaryWorkerTable, tractor.SecondaryWorkerColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, tractor.SecondaryWorkerTable, tractor.SecondaryWorkerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFleetCode chains the current query on the "fleet_code" edge.
+func (tq *TractorQuery) QueryFleetCode() *FleetCodeQuery {
+	query := (&FleetCodeClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tractor.Table, tractor.FieldID, selector),
+			sqlgraph.To(fleetcode.Table, fleetcode.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tractor.FleetCodeTable, tractor.FleetCodeColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -425,6 +449,7 @@ func (tq *TractorQuery) Clone() *TractorQuery {
 		withState:                 tq.withState.Clone(),
 		withPrimaryWorker:         tq.withPrimaryWorker.Clone(),
 		withSecondaryWorker:       tq.withSecondaryWorker.Clone(),
+		withFleetCode:             tq.withFleetCode.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
@@ -508,6 +533,17 @@ func (tq *TractorQuery) WithSecondaryWorker(opts ...func(*WorkerQuery)) *Tractor
 	return tq
 }
 
+// WithFleetCode tells the query-builder to eager-load the nodes that are connected to
+// the "fleet_code" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TractorQuery) WithFleetCode(opts ...func(*FleetCodeQuery)) *TractorQuery {
+	query := (&FleetCodeClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withFleetCode = query
+	return tq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -586,7 +622,7 @@ func (tq *TractorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Trac
 	var (
 		nodes       = []*Tractor{}
 		_spec       = tq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			tq.withBusinessUnit != nil,
 			tq.withOrganization != nil,
 			tq.withEquipmentType != nil,
@@ -594,6 +630,7 @@ func (tq *TractorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Trac
 			tq.withState != nil,
 			tq.withPrimaryWorker != nil,
 			tq.withSecondaryWorker != nil,
+			tq.withFleetCode != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -656,6 +693,12 @@ func (tq *TractorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Trac
 	if query := tq.withSecondaryWorker; query != nil {
 		if err := tq.loadSecondaryWorker(ctx, query, nodes, nil,
 			func(n *Tractor, e *Worker) { n.Edges.SecondaryWorker = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withFleetCode; query != nil {
+		if err := tq.loadFleetCode(ctx, query, nodes, nil,
+			func(n *Tractor, e *FleetCode) { n.Edges.FleetCode = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -817,10 +860,7 @@ func (tq *TractorQuery) loadPrimaryWorker(ctx context.Context, query *WorkerQuer
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Tractor)
 	for i := range nodes {
-		if nodes[i].PrimaryWorkerID == nil {
-			continue
-		}
-		fk := *nodes[i].PrimaryWorkerID
+		fk := nodes[i].PrimaryWorkerID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -877,6 +917,35 @@ func (tq *TractorQuery) loadSecondaryWorker(ctx context.Context, query *WorkerQu
 	}
 	return nil
 }
+func (tq *TractorQuery) loadFleetCode(ctx context.Context, query *FleetCodeQuery, nodes []*Tractor, init func(*Tractor), assign func(*Tractor, *FleetCode)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Tractor)
+	for i := range nodes {
+		fk := nodes[i].FleetCodeID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(fleetcode.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "fleet_code_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (tq *TractorQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
@@ -926,6 +995,9 @@ func (tq *TractorQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if tq.withSecondaryWorker != nil {
 			_spec.Node.AddColumnOnce(tractor.FieldSecondaryWorkerID)
+		}
+		if tq.withFleetCode != nil {
+			_spec.Node.AddColumnOnce(tractor.FieldFleetCodeID)
 		}
 	}
 	if ps := tq.predicates; len(ps) > 0 {

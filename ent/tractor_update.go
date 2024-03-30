@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
+	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -263,12 +264,6 @@ func (tu *TractorUpdate) SetNillablePrimaryWorkerID(u *uuid.UUID) *TractorUpdate
 	return tu
 }
 
-// ClearPrimaryWorkerID clears the value of the "primary_worker_id" field.
-func (tu *TractorUpdate) ClearPrimaryWorkerID() *TractorUpdate {
-	tu.mutation.ClearPrimaryWorkerID()
-	return tu
-}
-
 // SetSecondaryWorkerID sets the "secondary_worker_id" field.
 func (tu *TractorUpdate) SetSecondaryWorkerID(u uuid.UUID) *TractorUpdate {
 	tu.mutation.SetSecondaryWorkerID(u)
@@ -286,6 +281,20 @@ func (tu *TractorUpdate) SetNillableSecondaryWorkerID(u *uuid.UUID) *TractorUpda
 // ClearSecondaryWorkerID clears the value of the "secondary_worker_id" field.
 func (tu *TractorUpdate) ClearSecondaryWorkerID() *TractorUpdate {
 	tu.mutation.ClearSecondaryWorkerID()
+	return tu
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (tu *TractorUpdate) SetFleetCodeID(u uuid.UUID) *TractorUpdate {
+	tu.mutation.SetFleetCodeID(u)
+	return tu
+}
+
+// SetNillableFleetCodeID sets the "fleet_code_id" field if the given value is not nil.
+func (tu *TractorUpdate) SetNillableFleetCodeID(u *uuid.UUID) *TractorUpdate {
+	if u != nil {
+		tu.SetFleetCodeID(*u)
+	}
 	return tu
 }
 
@@ -312,6 +321,11 @@ func (tu *TractorUpdate) SetPrimaryWorker(w *Worker) *TractorUpdate {
 // SetSecondaryWorker sets the "secondary_worker" edge to the Worker entity.
 func (tu *TractorUpdate) SetSecondaryWorker(w *Worker) *TractorUpdate {
 	return tu.SetSecondaryWorkerID(w.ID)
+}
+
+// SetFleetCode sets the "fleet_code" edge to the FleetCode entity.
+func (tu *TractorUpdate) SetFleetCode(f *FleetCode) *TractorUpdate {
+	return tu.SetFleetCodeID(f.ID)
 }
 
 // Mutation returns the TractorMutation object of the builder.
@@ -349,9 +363,17 @@ func (tu *TractorUpdate) ClearSecondaryWorker() *TractorUpdate {
 	return tu
 }
 
+// ClearFleetCode clears the "fleet_code" edge to the FleetCode entity.
+func (tu *TractorUpdate) ClearFleetCode() *TractorUpdate {
+	tu.mutation.ClearFleetCode()
+	return tu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (tu *TractorUpdate) Save(ctx context.Context) (int, error) {
-	tu.defaults()
+	if err := tu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
 }
 
@@ -378,11 +400,15 @@ func (tu *TractorUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tu *TractorUpdate) defaults() {
+func (tu *TractorUpdate) defaults() error {
 	if _, ok := tu.mutation.UpdatedAt(); !ok {
+		if tractor.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tractor.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tractor.UpdateDefaultUpdatedAt()
 		tu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -422,6 +448,12 @@ func (tu *TractorUpdate) check() error {
 	}
 	if _, ok := tu.mutation.OrganizationID(); tu.mutation.OrganizationCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Tractor.organization"`)
+	}
+	if _, ok := tu.mutation.PrimaryWorkerID(); tu.mutation.PrimaryWorkerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Tractor.primary_worker"`)
+	}
+	if _, ok := tu.mutation.FleetCodeID(); tu.mutation.FleetCodeCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Tractor.fleet_code"`)
 	}
 	return nil
 }
@@ -578,8 +610,8 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if tu.mutation.PrimaryWorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.PrimaryWorkerTable,
 			Columns: []string{tractor.PrimaryWorkerColumn},
 			Bidi:    false,
@@ -591,8 +623,8 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := tu.mutation.PrimaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.PrimaryWorkerTable,
 			Columns: []string{tractor.PrimaryWorkerColumn},
 			Bidi:    false,
@@ -607,8 +639,8 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if tu.mutation.SecondaryWorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.SecondaryWorkerTable,
 			Columns: []string{tractor.SecondaryWorkerColumn},
 			Bidi:    false,
@@ -620,13 +652,42 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := tu.mutation.SecondaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.SecondaryWorkerTable,
 			Columns: []string{tractor.SecondaryWorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.FleetCodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.FleetCodeTable,
+			Columns: []string{tractor.FleetCodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fleetcode.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.FleetCodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.FleetCodeTable,
+			Columns: []string{tractor.FleetCodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fleetcode.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -885,12 +946,6 @@ func (tuo *TractorUpdateOne) SetNillablePrimaryWorkerID(u *uuid.UUID) *TractorUp
 	return tuo
 }
 
-// ClearPrimaryWorkerID clears the value of the "primary_worker_id" field.
-func (tuo *TractorUpdateOne) ClearPrimaryWorkerID() *TractorUpdateOne {
-	tuo.mutation.ClearPrimaryWorkerID()
-	return tuo
-}
-
 // SetSecondaryWorkerID sets the "secondary_worker_id" field.
 func (tuo *TractorUpdateOne) SetSecondaryWorkerID(u uuid.UUID) *TractorUpdateOne {
 	tuo.mutation.SetSecondaryWorkerID(u)
@@ -908,6 +963,20 @@ func (tuo *TractorUpdateOne) SetNillableSecondaryWorkerID(u *uuid.UUID) *Tractor
 // ClearSecondaryWorkerID clears the value of the "secondary_worker_id" field.
 func (tuo *TractorUpdateOne) ClearSecondaryWorkerID() *TractorUpdateOne {
 	tuo.mutation.ClearSecondaryWorkerID()
+	return tuo
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (tuo *TractorUpdateOne) SetFleetCodeID(u uuid.UUID) *TractorUpdateOne {
+	tuo.mutation.SetFleetCodeID(u)
+	return tuo
+}
+
+// SetNillableFleetCodeID sets the "fleet_code_id" field if the given value is not nil.
+func (tuo *TractorUpdateOne) SetNillableFleetCodeID(u *uuid.UUID) *TractorUpdateOne {
+	if u != nil {
+		tuo.SetFleetCodeID(*u)
+	}
 	return tuo
 }
 
@@ -934,6 +1003,11 @@ func (tuo *TractorUpdateOne) SetPrimaryWorker(w *Worker) *TractorUpdateOne {
 // SetSecondaryWorker sets the "secondary_worker" edge to the Worker entity.
 func (tuo *TractorUpdateOne) SetSecondaryWorker(w *Worker) *TractorUpdateOne {
 	return tuo.SetSecondaryWorkerID(w.ID)
+}
+
+// SetFleetCode sets the "fleet_code" edge to the FleetCode entity.
+func (tuo *TractorUpdateOne) SetFleetCode(f *FleetCode) *TractorUpdateOne {
+	return tuo.SetFleetCodeID(f.ID)
 }
 
 // Mutation returns the TractorMutation object of the builder.
@@ -971,6 +1045,12 @@ func (tuo *TractorUpdateOne) ClearSecondaryWorker() *TractorUpdateOne {
 	return tuo
 }
 
+// ClearFleetCode clears the "fleet_code" edge to the FleetCode entity.
+func (tuo *TractorUpdateOne) ClearFleetCode() *TractorUpdateOne {
+	tuo.mutation.ClearFleetCode()
+	return tuo
+}
+
 // Where appends a list predicates to the TractorUpdate builder.
 func (tuo *TractorUpdateOne) Where(ps ...predicate.Tractor) *TractorUpdateOne {
 	tuo.mutation.Where(ps...)
@@ -986,7 +1066,9 @@ func (tuo *TractorUpdateOne) Select(field string, fields ...string) *TractorUpda
 
 // Save executes the query and returns the updated Tractor entity.
 func (tuo *TractorUpdateOne) Save(ctx context.Context) (*Tractor, error) {
-	tuo.defaults()
+	if err := tuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
 }
 
@@ -1013,11 +1095,15 @@ func (tuo *TractorUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (tuo *TractorUpdateOne) defaults() {
+func (tuo *TractorUpdateOne) defaults() error {
 	if _, ok := tuo.mutation.UpdatedAt(); !ok {
+		if tractor.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized tractor.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := tractor.UpdateDefaultUpdatedAt()
 		tuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1057,6 +1143,12 @@ func (tuo *TractorUpdateOne) check() error {
 	}
 	if _, ok := tuo.mutation.OrganizationID(); tuo.mutation.OrganizationCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Tractor.organization"`)
+	}
+	if _, ok := tuo.mutation.PrimaryWorkerID(); tuo.mutation.PrimaryWorkerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Tractor.primary_worker"`)
+	}
+	if _, ok := tuo.mutation.FleetCodeID(); tuo.mutation.FleetCodeCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Tractor.fleet_code"`)
 	}
 	return nil
 }
@@ -1230,8 +1322,8 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if tuo.mutation.PrimaryWorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.PrimaryWorkerTable,
 			Columns: []string{tractor.PrimaryWorkerColumn},
 			Bidi:    false,
@@ -1243,8 +1335,8 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if nodes := tuo.mutation.PrimaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.PrimaryWorkerTable,
 			Columns: []string{tractor.PrimaryWorkerColumn},
 			Bidi:    false,
@@ -1259,8 +1351,8 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if tuo.mutation.SecondaryWorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.SecondaryWorkerTable,
 			Columns: []string{tractor.SecondaryWorkerColumn},
 			Bidi:    false,
@@ -1272,13 +1364,42 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if nodes := tuo.mutation.SecondaryWorkerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
 			Table:   tractor.SecondaryWorkerTable,
 			Columns: []string{tractor.SecondaryWorkerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(worker.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.FleetCodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.FleetCodeTable,
+			Columns: []string{tractor.FleetCodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fleetcode.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.FleetCodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.FleetCodeTable,
+			Columns: []string{tractor.FleetCodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fleetcode.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

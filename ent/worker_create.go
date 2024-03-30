@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
 
@@ -236,34 +237,61 @@ func (wc *WorkerCreate) SetManager(u *User) *WorkerCreate {
 	return wc.SetManagerID(u.ID)
 }
 
-// AddTractorIDs adds the "tractor" edge to the Tractor entity by IDs.
-func (wc *WorkerCreate) AddTractorIDs(ids ...uuid.UUID) *WorkerCreate {
-	wc.mutation.AddTractorIDs(ids...)
+// SetPrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID.
+func (wc *WorkerCreate) SetPrimaryTractorID(id uuid.UUID) *WorkerCreate {
+	wc.mutation.SetPrimaryTractorID(id)
 	return wc
 }
 
-// AddTractor adds the "tractor" edges to the Tractor entity.
-func (wc *WorkerCreate) AddTractor(t ...*Tractor) *WorkerCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillablePrimaryTractorID sets the "primary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wc *WorkerCreate) SetNillablePrimaryTractorID(id *uuid.UUID) *WorkerCreate {
+	if id != nil {
+		wc = wc.SetPrimaryTractorID(*id)
 	}
-	return wc.AddTractorIDs(ids...)
-}
-
-// AddSecondaryTractorIDs adds the "secondary_tractor" edge to the Tractor entity by IDs.
-func (wc *WorkerCreate) AddSecondaryTractorIDs(ids ...uuid.UUID) *WorkerCreate {
-	wc.mutation.AddSecondaryTractorIDs(ids...)
 	return wc
 }
 
-// AddSecondaryTractor adds the "secondary_tractor" edges to the Tractor entity.
-func (wc *WorkerCreate) AddSecondaryTractor(t ...*Tractor) *WorkerCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetPrimaryTractor sets the "primary_tractor" edge to the Tractor entity.
+func (wc *WorkerCreate) SetPrimaryTractor(t *Tractor) *WorkerCreate {
+	return wc.SetPrimaryTractorID(t.ID)
+}
+
+// SetSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID.
+func (wc *WorkerCreate) SetSecondaryTractorID(id uuid.UUID) *WorkerCreate {
+	wc.mutation.SetSecondaryTractorID(id)
+	return wc
+}
+
+// SetNillableSecondaryTractorID sets the "secondary_tractor" edge to the Tractor entity by ID if the given value is not nil.
+func (wc *WorkerCreate) SetNillableSecondaryTractorID(id *uuid.UUID) *WorkerCreate {
+	if id != nil {
+		wc = wc.SetSecondaryTractorID(*id)
 	}
-	return wc.AddSecondaryTractorIDs(ids...)
+	return wc
+}
+
+// SetSecondaryTractor sets the "secondary_tractor" edge to the Tractor entity.
+func (wc *WorkerCreate) SetSecondaryTractor(t *Tractor) *WorkerCreate {
+	return wc.SetSecondaryTractorID(t.ID)
+}
+
+// SetWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID.
+func (wc *WorkerCreate) SetWorkerProfileID(id uuid.UUID) *WorkerCreate {
+	wc.mutation.SetWorkerProfileID(id)
+	return wc
+}
+
+// SetNillableWorkerProfileID sets the "worker_profile" edge to the WorkerProfile entity by ID if the given value is not nil.
+func (wc *WorkerCreate) SetNillableWorkerProfileID(id *uuid.UUID) *WorkerCreate {
+	if id != nil {
+		wc = wc.SetWorkerProfileID(*id)
+	}
+	return wc
+}
+
+// SetWorkerProfile sets the "worker_profile" edge to the WorkerProfile entity.
+func (wc *WorkerCreate) SetWorkerProfile(w *WorkerProfile) *WorkerCreate {
+	return wc.SetWorkerProfileID(w.ID)
 }
 
 // Mutation returns the WorkerMutation object of the builder.
@@ -553,12 +581,12 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 		_node.ManagerID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := wc.mutation.TractorIDs(); len(nodes) > 0 {
+	if nodes := wc.mutation.PrimaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   worker.TractorTable,
-			Columns: []string{worker.TractorColumn},
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.PrimaryTractorTable,
+			Columns: []string{worker.PrimaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
@@ -571,13 +599,29 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	}
 	if nodes := wc.mutation.SecondaryTractorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
 			Table:   worker.SecondaryTractorTable,
 			Columns: []string{worker.SecondaryTractorColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tractor.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := wc.mutation.WorkerProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   worker.WorkerProfileTable,
+			Columns: []string{worker.WorkerProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workerprofile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

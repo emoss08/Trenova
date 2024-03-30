@@ -12,9 +12,11 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/tractor"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
+	"github.com/emoss08/trenova/ent/workerprofile"
 	"github.com/google/uuid"
 )
 
@@ -71,13 +73,15 @@ type WorkerEdges struct {
 	FleetCode *FleetCode `json:"fleetCode"`
 	// Manager holds the value of the manager edge.
 	Manager *User `json:"manager"`
-	// Tractor holds the value of the tractor edge.
-	Tractor []*Tractor `json:"primary_tractor"`
+	// PrimaryTractor holds the value of the primary_tractor edge.
+	PrimaryTractor *Tractor `json:"primaryTractor"`
 	// SecondaryTractor holds the value of the secondary_tractor edge.
-	SecondaryTractor []*Tractor `json:"secondary_tractor"`
+	SecondaryTractor *Tractor `json:"secondaryTractor"`
+	// WorkerProfile holds the value of the worker_profile edge.
+	WorkerProfile *WorkerProfile `json:"worker_profile,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -135,22 +139,37 @@ func (e WorkerEdges) ManagerOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "manager"}
 }
 
-// TractorOrErr returns the Tractor value or an error if the edge
-// was not loaded in eager-loading.
-func (e WorkerEdges) TractorOrErr() ([]*Tractor, error) {
-	if e.loadedTypes[5] {
-		return e.Tractor, nil
+// PrimaryTractorOrErr returns the PrimaryTractor value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkerEdges) PrimaryTractorOrErr() (*Tractor, error) {
+	if e.PrimaryTractor != nil {
+		return e.PrimaryTractor, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: tractor.Label}
 	}
-	return nil, &NotLoadedError{edge: "tractor"}
+	return nil, &NotLoadedError{edge: "primary_tractor"}
 }
 
 // SecondaryTractorOrErr returns the SecondaryTractor value or an error if the edge
-// was not loaded in eager-loading.
-func (e WorkerEdges) SecondaryTractorOrErr() ([]*Tractor, error) {
-	if e.loadedTypes[6] {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkerEdges) SecondaryTractorOrErr() (*Tractor, error) {
+	if e.SecondaryTractor != nil {
 		return e.SecondaryTractor, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: tractor.Label}
 	}
 	return nil, &NotLoadedError{edge: "secondary_tractor"}
+}
+
+// WorkerProfileOrErr returns the WorkerProfile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkerEdges) WorkerProfileOrErr() (*WorkerProfile, error) {
+	if e.WorkerProfile != nil {
+		return e.WorkerProfile, nil
+	} else if e.loadedTypes[7] {
+		return nil, &NotFoundError{label: workerprofile.Label}
+	}
+	return nil, &NotLoadedError{edge: "worker_profile"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -318,14 +337,19 @@ func (w *Worker) QueryManager() *UserQuery {
 	return NewWorkerClient(w.config).QueryManager(w)
 }
 
-// QueryTractor queries the "tractor" edge of the Worker entity.
-func (w *Worker) QueryTractor() *TractorQuery {
-	return NewWorkerClient(w.config).QueryTractor(w)
+// QueryPrimaryTractor queries the "primary_tractor" edge of the Worker entity.
+func (w *Worker) QueryPrimaryTractor() *TractorQuery {
+	return NewWorkerClient(w.config).QueryPrimaryTractor(w)
 }
 
 // QuerySecondaryTractor queries the "secondary_tractor" edge of the Worker entity.
 func (w *Worker) QuerySecondaryTractor() *TractorQuery {
 	return NewWorkerClient(w.config).QuerySecondaryTractor(w)
+}
+
+// QueryWorkerProfile queries the "worker_profile" edge of the Worker entity.
+func (w *Worker) QueryWorkerProfile() *WorkerProfileQuery {
+	return NewWorkerClient(w.config).QueryWorkerProfile(w)
 }
 
 // Update returns a builder for updating this Worker.
