@@ -36,6 +36,7 @@ export interface EquipmentType extends BaseModel {
   weight?: number;
   idlingFuelUsage?: number;
   exemptFromTolls: boolean;
+  color?: string;
 }
 
 export type EquipmentTypeFormValues = Omit<

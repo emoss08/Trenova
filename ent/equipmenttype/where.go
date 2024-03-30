@@ -131,6 +131,11 @@ func ExemptFromTolls(v bool) predicate.EquipmentType {
 	return predicate.EquipmentType(sql.FieldEQ(FieldExemptFromTolls, v))
 }
 
+// Color applies equality check predicate on the "color" field. It's identical to ColorEQ.
+func Color(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldEQ(FieldColor, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.EquipmentType {
 	return predicate.EquipmentType(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -839,6 +844,81 @@ func ExemptFromTollsEQ(v bool) predicate.EquipmentType {
 // ExemptFromTollsNEQ applies the NEQ predicate on the "exempt_from_tolls" field.
 func ExemptFromTollsNEQ(v bool) predicate.EquipmentType {
 	return predicate.EquipmentType(sql.FieldNEQ(FieldExemptFromTolls, v))
+}
+
+// ColorEQ applies the EQ predicate on the "color" field.
+func ColorEQ(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldEQ(FieldColor, v))
+}
+
+// ColorNEQ applies the NEQ predicate on the "color" field.
+func ColorNEQ(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldNEQ(FieldColor, v))
+}
+
+// ColorIn applies the In predicate on the "color" field.
+func ColorIn(vs ...string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldIn(FieldColor, vs...))
+}
+
+// ColorNotIn applies the NotIn predicate on the "color" field.
+func ColorNotIn(vs ...string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldNotIn(FieldColor, vs...))
+}
+
+// ColorGT applies the GT predicate on the "color" field.
+func ColorGT(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldGT(FieldColor, v))
+}
+
+// ColorGTE applies the GTE predicate on the "color" field.
+func ColorGTE(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldGTE(FieldColor, v))
+}
+
+// ColorLT applies the LT predicate on the "color" field.
+func ColorLT(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldLT(FieldColor, v))
+}
+
+// ColorLTE applies the LTE predicate on the "color" field.
+func ColorLTE(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldLTE(FieldColor, v))
+}
+
+// ColorContains applies the Contains predicate on the "color" field.
+func ColorContains(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldContains(FieldColor, v))
+}
+
+// ColorHasPrefix applies the HasPrefix predicate on the "color" field.
+func ColorHasPrefix(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldHasPrefix(FieldColor, v))
+}
+
+// ColorHasSuffix applies the HasSuffix predicate on the "color" field.
+func ColorHasSuffix(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldHasSuffix(FieldColor, v))
+}
+
+// ColorIsNil applies the IsNil predicate on the "color" field.
+func ColorIsNil() predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldIsNull(FieldColor))
+}
+
+// ColorNotNil applies the NotNil predicate on the "color" field.
+func ColorNotNil() predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldNotNull(FieldColor))
+}
+
+// ColorEqualFold applies the EqualFold predicate on the "color" field.
+func ColorEqualFold(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldEqualFold(FieldColor, v))
+}
+
+// ColorContainsFold applies the ContainsFold predicate on the "color" field.
+func ColorContainsFold(v string) predicate.EquipmentType {
+	return predicate.EquipmentType(sql.FieldContainsFold(FieldColor, v))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

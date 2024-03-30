@@ -50,6 +50,8 @@ const (
 	FieldIdlingFuelUsage = "idling_fuel_usage"
 	// FieldExemptFromTolls holds the string denoting the exempt_from_tolls field in the database.
 	FieldExemptFromTolls = "exempt_from_tolls"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -92,6 +94,7 @@ var Columns = []string{
 	FieldWeight,
 	FieldIdlingFuelUsage,
 	FieldExemptFromTolls,
+	FieldColor,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -270,6 +273,11 @@ func ByIdlingFuelUsage(opts ...sql.OrderTermOption) OrderOption {
 // ByExemptFromTolls orders the results by the exempt_from_tolls field.
 func ByExemptFromTolls(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldExemptFromTolls, opts...).ToFunc()
+}
+
+// ByColor orders the results by the color field.
+func ByColor(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldColor, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.

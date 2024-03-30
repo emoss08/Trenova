@@ -69,6 +69,23 @@ const columns: ColumnDef<Tractor>[] = [
   {
     accessorFn: (row) => `${row.edges?.equipmentType?.name}`,
     header: "Equipment Type",
+    cell: ({ row }) => {
+      if (row.original.edges?.equipmentType?.color) {
+        return (
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{
+                backgroundColor: row.original.edges?.equipmentType?.color,
+              }}
+            />
+            {row.original.edges?.equipmentType?.name}
+          </div>
+        );
+      } else {
+        return row.original.edges?.equipmentType?.name;
+      }
+    },
   },
 ];
 

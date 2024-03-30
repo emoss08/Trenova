@@ -327,6 +327,26 @@ func (etu *EquipmentTypeUpdate) SetNillableExemptFromTolls(b *bool) *EquipmentTy
 	return etu
 }
 
+// SetColor sets the "color" field.
+func (etu *EquipmentTypeUpdate) SetColor(s string) *EquipmentTypeUpdate {
+	etu.mutation.SetColor(s)
+	return etu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (etu *EquipmentTypeUpdate) SetNillableColor(s *string) *EquipmentTypeUpdate {
+	if s != nil {
+		etu.SetColor(*s)
+	}
+	return etu
+}
+
+// ClearColor clears the value of the "color" field.
+func (etu *EquipmentTypeUpdate) ClearColor() *EquipmentTypeUpdate {
+	etu.mutation.ClearColor()
+	return etu
+}
+
 // Mutation returns the EquipmentTypeMutation object of the builder.
 func (etu *EquipmentTypeUpdate) Mutation() *EquipmentTypeMutation {
 	return etu.mutation
@@ -504,6 +524,12 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := etu.mutation.ExemptFromTolls(); ok {
 		_spec.SetField(equipmenttype.FieldExemptFromTolls, field.TypeBool, value)
+	}
+	if value, ok := etu.mutation.Color(); ok {
+		_spec.SetField(equipmenttype.FieldColor, field.TypeString, value)
+	}
+	if etu.mutation.ColorCleared() {
+		_spec.ClearField(equipmenttype.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(etu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, etu.driver, _spec); err != nil {
@@ -825,6 +851,26 @@ func (etuo *EquipmentTypeUpdateOne) SetNillableExemptFromTolls(b *bool) *Equipme
 	return etuo
 }
 
+// SetColor sets the "color" field.
+func (etuo *EquipmentTypeUpdateOne) SetColor(s string) *EquipmentTypeUpdateOne {
+	etuo.mutation.SetColor(s)
+	return etuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (etuo *EquipmentTypeUpdateOne) SetNillableColor(s *string) *EquipmentTypeUpdateOne {
+	if s != nil {
+		etuo.SetColor(*s)
+	}
+	return etuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (etuo *EquipmentTypeUpdateOne) ClearColor() *EquipmentTypeUpdateOne {
+	etuo.mutation.ClearColor()
+	return etuo
+}
+
 // Mutation returns the EquipmentTypeMutation object of the builder.
 func (etuo *EquipmentTypeUpdateOne) Mutation() *EquipmentTypeMutation {
 	return etuo.mutation
@@ -1032,6 +1078,12 @@ func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Equipme
 	}
 	if value, ok := etuo.mutation.ExemptFromTolls(); ok {
 		_spec.SetField(equipmenttype.FieldExemptFromTolls, field.TypeBool, value)
+	}
+	if value, ok := etuo.mutation.Color(); ok {
+		_spec.SetField(equipmenttype.FieldColor, field.TypeString, value)
+	}
+	if etuo.mutation.ColorCleared() {
+		_spec.ClearField(equipmenttype.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(etuo.modifiers...)
 	_node = &EquipmentType{config: etuo.config}
