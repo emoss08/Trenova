@@ -179,12 +179,10 @@ var (
 	CodeValidator func(string) error
 	// LicensePlateNumberValidator is a validator for the "license_plate_number" field. It is called by the builders before save.
 	LicensePlateNumberValidator func(string) error
-	// VinValidator is a validator for the "vin" field. It is called by the builders before save.
-	VinValidator func(string) error
 	// ModelValidator is a validator for the "model" field. It is called by the builders before save.
 	ModelValidator func(string) error
 	// YearValidator is a validator for the "year" field. It is called by the builders before save.
-	YearValidator func(int) error
+	YearValidator func(int16) error
 	// DefaultLeased holds the default value on creation for the "leased" field.
 	DefaultLeased bool
 	// DefaultID holds the default value on creation for the "id" field.

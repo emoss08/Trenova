@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // TractorUpdate is the builder for updating Tractor entities.
@@ -170,14 +171,14 @@ func (tu *TractorUpdate) ClearModel() *TractorUpdate {
 }
 
 // SetYear sets the "year" field.
-func (tu *TractorUpdate) SetYear(i int) *TractorUpdate {
+func (tu *TractorUpdate) SetYear(i int16) *TractorUpdate {
 	tu.mutation.ResetYear()
 	tu.mutation.SetYear(i)
 	return tu
 }
 
 // SetNillableYear sets the "year" field if the given value is not nil.
-func (tu *TractorUpdate) SetNillableYear(i *int) *TractorUpdate {
+func (tu *TractorUpdate) SetNillableYear(i *int16) *TractorUpdate {
 	if i != nil {
 		tu.SetYear(*i)
 	}
@@ -185,7 +186,7 @@ func (tu *TractorUpdate) SetNillableYear(i *int) *TractorUpdate {
 }
 
 // AddYear adds i to the "year" field.
-func (tu *TractorUpdate) AddYear(i int) *TractorUpdate {
+func (tu *TractorUpdate) AddYear(i int16) *TractorUpdate {
 	tu.mutation.AddYear(i)
 	return tu
 }
@@ -231,16 +232,8 @@ func (tu *TractorUpdate) SetNillableLeased(b *bool) *TractorUpdate {
 }
 
 // SetLeasedDate sets the "leased_date" field.
-func (tu *TractorUpdate) SetLeasedDate(t time.Time) *TractorUpdate {
-	tu.mutation.SetLeasedDate(t)
-	return tu
-}
-
-// SetNillableLeasedDate sets the "leased_date" field if the given value is not nil.
-func (tu *TractorUpdate) SetNillableLeasedDate(t *time.Time) *TractorUpdate {
-	if t != nil {
-		tu.SetLeasedDate(*t)
-	}
+func (tu *TractorUpdate) SetLeasedDate(pg *pgtype.Date) *TractorUpdate {
+	tu.mutation.SetLeasedDate(pg)
 	return tu
 }
 
@@ -428,11 +421,6 @@ func (tu *TractorUpdate) check() error {
 			return &ValidationError{Name: "license_plate_number", err: fmt.Errorf(`ent: validator failed for field "Tractor.license_plate_number": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Vin(); ok {
-		if err := tractor.VinValidator(v); err != nil {
-			return &ValidationError{Name: "vin", err: fmt.Errorf(`ent: validator failed for field "Tractor.vin": %w`, err)}
-		}
-	}
 	if v, ok := tu.mutation.Model(); ok {
 		if err := tractor.ModelValidator(v); err != nil {
 			return &ValidationError{Name: "model", err: fmt.Errorf(`ent: validator failed for field "Tractor.model": %w`, err)}
@@ -504,22 +492,22 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(tractor.FieldModel, field.TypeString)
 	}
 	if value, ok := tu.mutation.Year(); ok {
-		_spec.SetField(tractor.FieldYear, field.TypeInt, value)
+		_spec.SetField(tractor.FieldYear, field.TypeInt16, value)
 	}
 	if value, ok := tu.mutation.AddedYear(); ok {
-		_spec.AddField(tractor.FieldYear, field.TypeInt, value)
+		_spec.AddField(tractor.FieldYear, field.TypeInt16, value)
 	}
 	if tu.mutation.YearCleared() {
-		_spec.ClearField(tractor.FieldYear, field.TypeInt)
+		_spec.ClearField(tractor.FieldYear, field.TypeInt16)
 	}
 	if value, ok := tu.mutation.Leased(); ok {
 		_spec.SetField(tractor.FieldLeased, field.TypeBool, value)
 	}
 	if value, ok := tu.mutation.LeasedDate(); ok {
-		_spec.SetField(tractor.FieldLeasedDate, field.TypeTime, value)
+		_spec.SetField(tractor.FieldLeasedDate, field.TypeOther, value)
 	}
 	if tu.mutation.LeasedDateCleared() {
-		_spec.ClearField(tractor.FieldLeasedDate, field.TypeTime)
+		_spec.ClearField(tractor.FieldLeasedDate, field.TypeOther)
 	}
 	if tu.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -852,14 +840,14 @@ func (tuo *TractorUpdateOne) ClearModel() *TractorUpdateOne {
 }
 
 // SetYear sets the "year" field.
-func (tuo *TractorUpdateOne) SetYear(i int) *TractorUpdateOne {
+func (tuo *TractorUpdateOne) SetYear(i int16) *TractorUpdateOne {
 	tuo.mutation.ResetYear()
 	tuo.mutation.SetYear(i)
 	return tuo
 }
 
 // SetNillableYear sets the "year" field if the given value is not nil.
-func (tuo *TractorUpdateOne) SetNillableYear(i *int) *TractorUpdateOne {
+func (tuo *TractorUpdateOne) SetNillableYear(i *int16) *TractorUpdateOne {
 	if i != nil {
 		tuo.SetYear(*i)
 	}
@@ -867,7 +855,7 @@ func (tuo *TractorUpdateOne) SetNillableYear(i *int) *TractorUpdateOne {
 }
 
 // AddYear adds i to the "year" field.
-func (tuo *TractorUpdateOne) AddYear(i int) *TractorUpdateOne {
+func (tuo *TractorUpdateOne) AddYear(i int16) *TractorUpdateOne {
 	tuo.mutation.AddYear(i)
 	return tuo
 }
@@ -913,16 +901,8 @@ func (tuo *TractorUpdateOne) SetNillableLeased(b *bool) *TractorUpdateOne {
 }
 
 // SetLeasedDate sets the "leased_date" field.
-func (tuo *TractorUpdateOne) SetLeasedDate(t time.Time) *TractorUpdateOne {
-	tuo.mutation.SetLeasedDate(t)
-	return tuo
-}
-
-// SetNillableLeasedDate sets the "leased_date" field if the given value is not nil.
-func (tuo *TractorUpdateOne) SetNillableLeasedDate(t *time.Time) *TractorUpdateOne {
-	if t != nil {
-		tuo.SetLeasedDate(*t)
-	}
+func (tuo *TractorUpdateOne) SetLeasedDate(pg *pgtype.Date) *TractorUpdateOne {
+	tuo.mutation.SetLeasedDate(pg)
 	return tuo
 }
 
@@ -1123,11 +1103,6 @@ func (tuo *TractorUpdateOne) check() error {
 			return &ValidationError{Name: "license_plate_number", err: fmt.Errorf(`ent: validator failed for field "Tractor.license_plate_number": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Vin(); ok {
-		if err := tractor.VinValidator(v); err != nil {
-			return &ValidationError{Name: "vin", err: fmt.Errorf(`ent: validator failed for field "Tractor.vin": %w`, err)}
-		}
-	}
 	if v, ok := tuo.mutation.Model(); ok {
 		if err := tractor.ModelValidator(v); err != nil {
 			return &ValidationError{Name: "model", err: fmt.Errorf(`ent: validator failed for field "Tractor.model": %w`, err)}
@@ -1216,22 +1191,22 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 		_spec.ClearField(tractor.FieldModel, field.TypeString)
 	}
 	if value, ok := tuo.mutation.Year(); ok {
-		_spec.SetField(tractor.FieldYear, field.TypeInt, value)
+		_spec.SetField(tractor.FieldYear, field.TypeInt16, value)
 	}
 	if value, ok := tuo.mutation.AddedYear(); ok {
-		_spec.AddField(tractor.FieldYear, field.TypeInt, value)
+		_spec.AddField(tractor.FieldYear, field.TypeInt16, value)
 	}
 	if tuo.mutation.YearCleared() {
-		_spec.ClearField(tractor.FieldYear, field.TypeInt)
+		_spec.ClearField(tractor.FieldYear, field.TypeInt16)
 	}
 	if value, ok := tuo.mutation.Leased(); ok {
 		_spec.SetField(tractor.FieldLeased, field.TypeBool, value)
 	}
 	if value, ok := tuo.mutation.LeasedDate(); ok {
-		_spec.SetField(tractor.FieldLeasedDate, field.TypeTime, value)
+		_spec.SetField(tractor.FieldLeasedDate, field.TypeOther, value)
 	}
 	if tuo.mutation.LeasedDateCleared() {
-		_spec.ClearField(tractor.FieldLeasedDate, field.TypeTime)
+		_spec.ClearField(tractor.FieldLeasedDate, field.TypeOther)
 	}
 	if tuo.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{

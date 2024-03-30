@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/usstate"
+	"github.com/google/uuid"
 )
 
 // CustomerUpdate is the builder for updating Customer entities.
@@ -125,16 +127,16 @@ func (cu *CustomerUpdate) SetNillableCity(s *string) *CustomerUpdate {
 	return cu
 }
 
-// SetState sets the "state" field.
-func (cu *CustomerUpdate) SetState(s string) *CustomerUpdate {
-	cu.mutation.SetState(s)
+// SetStateID sets the "state_id" field.
+func (cu *CustomerUpdate) SetStateID(u uuid.UUID) *CustomerUpdate {
+	cu.mutation.SetStateID(u)
 	return cu
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (cu *CustomerUpdate) SetNillableState(s *string) *CustomerUpdate {
-	if s != nil {
-		cu.SetState(*s)
+// SetNillableStateID sets the "state_id" field if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableStateID(u *uuid.UUID) *CustomerUpdate {
+	if u != nil {
+		cu.SetStateID(*u)
 	}
 	return cu
 }
@@ -181,9 +183,20 @@ func (cu *CustomerUpdate) SetNillableAutoMarkReadyToBill(b *bool) *CustomerUpdat
 	return cu
 }
 
+// SetState sets the "state" edge to the UsState entity.
+func (cu *CustomerUpdate) SetState(u *UsState) *CustomerUpdate {
+	return cu.SetStateID(u.ID)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cu *CustomerUpdate) Mutation() *CustomerMutation {
 	return cu.mutation
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (cu *CustomerUpdate) ClearState() *CustomerUpdate {
+	cu.mutation.ClearState()
+	return cu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -260,11 +273,6 @@ func (cu *CustomerUpdate) check() error {
 			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Customer.city": %w`, err)}
 		}
 	}
-	if v, ok := cu.mutation.State(); ok {
-		if err := customer.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Customer.state": %w`, err)}
-		}
-	}
 	if v, ok := cu.mutation.PostalCode(); ok {
 		if err := customer.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Customer.postal_code": %w`, err)}
@@ -275,6 +283,9 @@ func (cu *CustomerUpdate) check() error {
 	}
 	if _, ok := cu.mutation.OrganizationID(); cu.mutation.OrganizationCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Customer.organization"`)
+	}
+	if _, ok := cu.mutation.StateID(); cu.mutation.StateCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Customer.state"`)
 	}
 	return nil
 }
@@ -321,9 +332,6 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.City(); ok {
 		_spec.SetField(customer.FieldCity, field.TypeString, value)
 	}
-	if value, ok := cu.mutation.State(); ok {
-		_spec.SetField(customer.FieldState, field.TypeString, value)
-	}
 	if value, ok := cu.mutation.PostalCode(); ok {
 		_spec.SetField(customer.FieldPostalCode, field.TypeString, value)
 	}
@@ -332,6 +340,35 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
+	}
+	if cu.mutation.StateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(cu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
@@ -451,16 +488,16 @@ func (cuo *CustomerUpdateOne) SetNillableCity(s *string) *CustomerUpdateOne {
 	return cuo
 }
 
-// SetState sets the "state" field.
-func (cuo *CustomerUpdateOne) SetState(s string) *CustomerUpdateOne {
-	cuo.mutation.SetState(s)
+// SetStateID sets the "state_id" field.
+func (cuo *CustomerUpdateOne) SetStateID(u uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.SetStateID(u)
 	return cuo
 }
 
-// SetNillableState sets the "state" field if the given value is not nil.
-func (cuo *CustomerUpdateOne) SetNillableState(s *string) *CustomerUpdateOne {
-	if s != nil {
-		cuo.SetState(*s)
+// SetNillableStateID sets the "state_id" field if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableStateID(u *uuid.UUID) *CustomerUpdateOne {
+	if u != nil {
+		cuo.SetStateID(*u)
 	}
 	return cuo
 }
@@ -507,9 +544,20 @@ func (cuo *CustomerUpdateOne) SetNillableAutoMarkReadyToBill(b *bool) *CustomerU
 	return cuo
 }
 
+// SetState sets the "state" edge to the UsState entity.
+func (cuo *CustomerUpdateOne) SetState(u *UsState) *CustomerUpdateOne {
+	return cuo.SetStateID(u.ID)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cuo *CustomerUpdateOne) Mutation() *CustomerMutation {
 	return cuo.mutation
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (cuo *CustomerUpdateOne) ClearState() *CustomerUpdateOne {
+	cuo.mutation.ClearState()
+	return cuo
 }
 
 // Where appends a list predicates to the CustomerUpdate builder.
@@ -599,11 +647,6 @@ func (cuo *CustomerUpdateOne) check() error {
 			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Customer.city": %w`, err)}
 		}
 	}
-	if v, ok := cuo.mutation.State(); ok {
-		if err := customer.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Customer.state": %w`, err)}
-		}
-	}
 	if v, ok := cuo.mutation.PostalCode(); ok {
 		if err := customer.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Customer.postal_code": %w`, err)}
@@ -614,6 +657,9 @@ func (cuo *CustomerUpdateOne) check() error {
 	}
 	if _, ok := cuo.mutation.OrganizationID(); cuo.mutation.OrganizationCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Customer.organization"`)
+	}
+	if _, ok := cuo.mutation.StateID(); cuo.mutation.StateCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Customer.state"`)
 	}
 	return nil
 }
@@ -677,9 +723,6 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 	if value, ok := cuo.mutation.City(); ok {
 		_spec.SetField(customer.FieldCity, field.TypeString, value)
 	}
-	if value, ok := cuo.mutation.State(); ok {
-		_spec.SetField(customer.FieldState, field.TypeString, value)
-	}
 	if value, ok := cuo.mutation.PostalCode(); ok {
 		_spec.SetField(customer.FieldPostalCode, field.TypeString, value)
 	}
@@ -688,6 +731,35 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 	}
 	if value, ok := cuo.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
+	}
+	if cuo.mutation.StateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(cuo.modifiers...)
 	_node = &Customer{config: cuo.config}

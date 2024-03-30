@@ -104,13 +104,13 @@ func (epc *EmailProfileCreate) SetNillableHost(s *string) *EmailProfileCreate {
 }
 
 // SetPort sets the "port" field.
-func (epc *EmailProfileCreate) SetPort(i int) *EmailProfileCreate {
+func (epc *EmailProfileCreate) SetPort(i int16) *EmailProfileCreate {
 	epc.mutation.SetPort(i)
 	return epc
 }
 
 // SetNillablePort sets the "port" field if the given value is not nil.
-func (epc *EmailProfileCreate) SetNillablePort(i *int) *EmailProfileCreate {
+func (epc *EmailProfileCreate) SetNillablePort(i *int16) *EmailProfileCreate {
 	if i != nil {
 		epc.SetPort(*i)
 	}
@@ -283,21 +283,6 @@ func (epc *EmailProfileCreate) check() error {
 			return &ValidationError{Name: "protocol", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.protocol": %w`, err)}
 		}
 	}
-	if v, ok := epc.mutation.Host(); ok {
-		if err := emailprofile.HostValidator(v); err != nil {
-			return &ValidationError{Name: "host", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.host": %w`, err)}
-		}
-	}
-	if v, ok := epc.mutation.Username(); ok {
-		if err := emailprofile.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.username": %w`, err)}
-		}
-	}
-	if v, ok := epc.mutation.Password(); ok {
-		if err := emailprofile.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "EmailProfile.password": %w`, err)}
-		}
-	}
 	if _, ok := epc.mutation.IsDefault(); !ok {
 		return &ValidationError{Name: "is_default", err: errors.New(`ent: missing required field "EmailProfile.is_default"`)}
 	}
@@ -367,7 +352,7 @@ func (epc *EmailProfileCreate) createSpec() (*EmailProfile, *sqlgraph.CreateSpec
 		_node.Host = value
 	}
 	if value, ok := epc.mutation.Port(); ok {
-		_spec.SetField(emailprofile.FieldPort, field.TypeInt, value)
+		_spec.SetField(emailprofile.FieldPort, field.TypeInt16, value)
 		_node.Port = value
 	}
 	if value, ok := epc.mutation.Username(); ok {

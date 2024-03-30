@@ -246,11 +246,6 @@ func (acc *AccessorialChargeCreate) check() error {
 			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.code": %w`, err)}
 		}
 	}
-	if v, ok := acc.mutation.Description(); ok {
-		if err := accessorialcharge.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.description": %w`, err)}
-		}
-	}
 	if _, ok := acc.mutation.IsDetention(); !ok {
 		return &ValidationError{Name: "is_detention", err: errors.New(`ent: missing required field "AccessorialCharge.is_detention"`)}
 	}

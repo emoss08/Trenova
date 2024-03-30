@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -19,10 +20,18 @@ func (Commodity) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(1)",
+				dialect.SQLite:   "VARCHAR(1)",
+			}).
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("name").
 			MaxLen(100).
 			NotEmpty().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(100)",
+				dialect.SQLite:   "VARCHAR(100)",
+			}).
 			StructTag(`json:"name" validate:"required"`),
 		field.Bool("is_hazmat").
 			Default(false).
@@ -30,12 +39,12 @@ func (Commodity) Fields() []ent.Field {
 		field.String("unit_of_measure").
 			Optional().
 			StructTag(`json:"unitOfMeasure" validate:"omitempty,oneof=Pallet Tote Drum Cylinder Case Ampule Bag Bottle Pail Pieces IsoTank"`),
-		field.Int("min_temp").
+		field.Int8("min_temp").
 			Optional().
-			StructTag(`json:"minTemp" validate:"omitempty,max=150"`),
-		field.Int("max_temp").
+			StructTag(`json:"minTemp" validate:"omitempty,max=127"`),
+		field.Int8("max_temp").
 			Optional().
-			StructTag(`json:"maxTemp" validate:"omitempty,max=150"`),
+			StructTag(`json:"maxTemp" validate:"omitempty,max=127"`),
 		field.Text("description").
 			Optional().
 			StructTag(`json:"description" validate:"omitempty"`),

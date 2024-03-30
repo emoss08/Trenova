@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -20,10 +21,18 @@ func (DivisionCode) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(1)",
+				dialect.SQLite:   "VARCHAR(1)",
+			}).
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("code").
 			NotEmpty().
 			MaxLen(4).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(4)",
+				dialect.SQLite:   "VARCHAR(4)",
+			}).
 			StructTag(`json:"code" validate:"required,max=4"`),
 		field.Text("description").
 			NotEmpty().

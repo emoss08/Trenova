@@ -26,7 +26,7 @@ type AccountingControl struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
 	// RecThreshold holds the value of the "rec_threshold" field.
-	RecThreshold int64 `json:"recThreshold" validate:"required"`
+	RecThreshold int8 `json:"recThreshold" validate:"required"`
 	// RecThresholdAction holds the value of the "rec_threshold_action" field.
 	RecThresholdAction accountingcontrol.RecThresholdAction `json:"recThresholdAction" validate:"required"`
 	// AutoCreateJournalEntries holds the value of the "auto_create_journal_entries" field.
@@ -172,7 +172,7 @@ func (ac *AccountingControl) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field rec_threshold", values[i])
 			} else if value.Valid {
-				ac.RecThreshold = value.Int64
+				ac.RecThreshold = int8(value.Int64)
 			}
 		case accountingcontrol.FieldRecThresholdAction:
 			if value, ok := values[i].(*sql.NullString); !ok {

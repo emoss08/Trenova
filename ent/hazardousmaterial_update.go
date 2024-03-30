@@ -215,11 +215,6 @@ func (hmu *HazardousMaterialUpdate) check() error {
 			return &ValidationError{Name: "hazard_class", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.hazard_class": %w`, err)}
 		}
 	}
-	if v, ok := hmu.mutation.ErgNumber(); ok {
-		if err := hazardousmaterial.ErgNumberValidator(v); err != nil {
-			return &ValidationError{Name: "erg_number", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.erg_number": %w`, err)}
-		}
-	}
 	if _, ok := hmu.mutation.BusinessUnitID(); hmu.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "HazardousMaterial.business_unit"`)
 	}
@@ -502,11 +497,6 @@ func (hmuo *HazardousMaterialUpdateOne) check() error {
 	if v, ok := hmuo.mutation.HazardClass(); ok {
 		if err := hazardousmaterial.HazardClassValidator(v); err != nil {
 			return &ValidationError{Name: "hazard_class", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.hazard_class": %w`, err)}
-		}
-	}
-	if v, ok := hmuo.mutation.ErgNumber(); ok {
-		if err := hazardousmaterial.ErgNumberValidator(v); err != nil {
-			return &ValidationError{Name: "erg_number", err: fmt.Errorf(`ent: validator failed for field "HazardousMaterial.erg_number": %w`, err)}
 		}
 	}
 	if _, ok := hmuo.mutation.BusinessUnitID(); hmuo.mutation.BusinessUnitCleared() && !ok {

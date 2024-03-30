@@ -63,7 +63,7 @@ func (r *CustomerOps) CreateCustomer(newCustomer ent.Customer) (*ent.Customer, e
 		SetAddressLine1(newCustomer.AddressLine1).
 		SetAddressLine2(newCustomer.AddressLine2).
 		SetCity(newCustomer.City).
-		SetState(newCustomer.State).
+		SetStateID(newCustomer.StateID).
 		SetPostalCode(newCustomer.PostalCode).
 		SetHasCustomerPortal(newCustomer.HasCustomerPortal).
 		SetAutoMarkReadyToBill(newCustomer.AutoMarkReadyToBill).
@@ -85,7 +85,7 @@ func (r *CustomerOps) UpdateCustomer(customer ent.Customer) (*ent.Customer, erro
 		SetAddressLine1(customer.AddressLine1).
 		SetAddressLine2(customer.AddressLine2).
 		SetCity(customer.City).
-		SetState(customer.State).
+		SetStateID(customer.StateID).
 		SetPostalCode(customer.PostalCode).
 		SetHasCustomerPortal(customer.HasCustomerPortal).
 		SetAutoMarkReadyToBill(customer.AutoMarkReadyToBill)

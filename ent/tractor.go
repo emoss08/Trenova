@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Tractor is the model entity for the Tractor schema.
@@ -48,13 +49,13 @@ type Tractor struct {
 	// Model holds the value of the "model" field.
 	Model string `json:"model" validate:"omitempty,max=50"`
 	// Year holds the value of the "year" field.
-	Year *int `json:"year" validate:"omitempty,gt=0"`
+	Year *int16 `json:"year" validate:"omitempty,gt=0"`
 	// StateID holds the value of the "state_id" field.
 	StateID *uuid.UUID `json:"stateId" validate:"omitempty,uuid"`
 	// Leased holds the value of the "leased" field.
 	Leased bool `json:"leased" validate:"omitempty"`
 	// LeasedDate holds the value of the "leased_date" field.
-	LeasedDate *time.Time `json:"leasedDate" validate:"omitempty"`
+	LeasedDate *pgtype.Date `json:"leasedDate" validate:"omitempty"`
 	// PrimaryWorkerID holds the value of the "primary_worker_id" field.
 	PrimaryWorkerID uuid.UUID `json:"primaryWorkerId" validate:"omitempty,uuid"`
 	// SecondaryWorkerID holds the value of the "secondary_worker_id" field.
@@ -183,6 +184,8 @@ func (*Tractor) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case tractor.FieldLeasedDate:
+			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
 		case tractor.FieldEquipmentManufacturerID, tractor.FieldStateID, tractor.FieldSecondaryWorkerID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case tractor.FieldLeased:
@@ -191,7 +194,7 @@ func (*Tractor) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case tractor.FieldCode, tractor.FieldStatus, tractor.FieldLicensePlateNumber, tractor.FieldVin, tractor.FieldModel:
 			values[i] = new(sql.NullString)
-		case tractor.FieldCreatedAt, tractor.FieldUpdatedAt, tractor.FieldLeasedDate:
+		case tractor.FieldCreatedAt, tractor.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case tractor.FieldID, tractor.FieldBusinessUnitID, tractor.FieldOrganizationID, tractor.FieldEquipmentTypeID, tractor.FieldPrimaryWorkerID, tractor.FieldFleetCodeID:
 			values[i] = new(uuid.UUID)
@@ -287,8 +290,8 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field year", values[i])
 			} else if value.Valid {
-				t.Year = new(int)
-				*t.Year = int(value.Int64)
+				t.Year = new(int16)
+				*t.Year = int16(value.Int64)
 			}
 		case tractor.FieldStateID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -304,11 +307,10 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 				t.Leased = value.Bool
 			}
 		case tractor.FieldLeasedDate:
-			if value, ok := values[i].(*sql.NullTime); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field leased_date", values[i])
 			} else if value.Valid {
-				t.LeasedDate = new(time.Time)
-				*t.LeasedDate = value.Time
+				t.LeasedDate = value.S.(*pgtype.Date)
 			}
 		case tractor.FieldPrimaryWorkerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -455,7 +457,7 @@ func (t *Tractor) String() string {
 	builder.WriteString(", ")
 	if v := t.LeasedDate; v != nil {
 		builder.WriteString("leased_date=")
-		builder.WriteString(v.Format(time.ANSIC))
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("primary_worker_id=")

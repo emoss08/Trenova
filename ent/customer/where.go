@@ -101,9 +101,9 @@ func City(v string) predicate.Customer {
 	return predicate.Customer(sql.FieldEQ(FieldCity, v))
 }
 
-// State applies equality check predicate on the "state" field. It's identical to StateEQ.
-func State(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldEQ(FieldState, v))
+// StateID applies equality check predicate on the "state_id" field. It's identical to StateIDEQ.
+func StateID(v uuid.UUID) predicate.Customer {
+	return predicate.Customer(sql.FieldEQ(FieldStateID, v))
 }
 
 // PostalCode applies equality check predicate on the "postal_code" field. It's identical to PostalCodeEQ.
@@ -596,69 +596,24 @@ func CityContainsFold(v string) predicate.Customer {
 	return predicate.Customer(sql.FieldContainsFold(FieldCity, v))
 }
 
-// StateEQ applies the EQ predicate on the "state" field.
-func StateEQ(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldEQ(FieldState, v))
+// StateIDEQ applies the EQ predicate on the "state_id" field.
+func StateIDEQ(v uuid.UUID) predicate.Customer {
+	return predicate.Customer(sql.FieldEQ(FieldStateID, v))
 }
 
-// StateNEQ applies the NEQ predicate on the "state" field.
-func StateNEQ(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldNEQ(FieldState, v))
+// StateIDNEQ applies the NEQ predicate on the "state_id" field.
+func StateIDNEQ(v uuid.UUID) predicate.Customer {
+	return predicate.Customer(sql.FieldNEQ(FieldStateID, v))
 }
 
-// StateIn applies the In predicate on the "state" field.
-func StateIn(vs ...string) predicate.Customer {
-	return predicate.Customer(sql.FieldIn(FieldState, vs...))
+// StateIDIn applies the In predicate on the "state_id" field.
+func StateIDIn(vs ...uuid.UUID) predicate.Customer {
+	return predicate.Customer(sql.FieldIn(FieldStateID, vs...))
 }
 
-// StateNotIn applies the NotIn predicate on the "state" field.
-func StateNotIn(vs ...string) predicate.Customer {
-	return predicate.Customer(sql.FieldNotIn(FieldState, vs...))
-}
-
-// StateGT applies the GT predicate on the "state" field.
-func StateGT(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldGT(FieldState, v))
-}
-
-// StateGTE applies the GTE predicate on the "state" field.
-func StateGTE(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldGTE(FieldState, v))
-}
-
-// StateLT applies the LT predicate on the "state" field.
-func StateLT(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldLT(FieldState, v))
-}
-
-// StateLTE applies the LTE predicate on the "state" field.
-func StateLTE(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldLTE(FieldState, v))
-}
-
-// StateContains applies the Contains predicate on the "state" field.
-func StateContains(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldContains(FieldState, v))
-}
-
-// StateHasPrefix applies the HasPrefix predicate on the "state" field.
-func StateHasPrefix(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldHasPrefix(FieldState, v))
-}
-
-// StateHasSuffix applies the HasSuffix predicate on the "state" field.
-func StateHasSuffix(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldHasSuffix(FieldState, v))
-}
-
-// StateEqualFold applies the EqualFold predicate on the "state" field.
-func StateEqualFold(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldEqualFold(FieldState, v))
-}
-
-// StateContainsFold applies the ContainsFold predicate on the "state" field.
-func StateContainsFold(v string) predicate.Customer {
-	return predicate.Customer(sql.FieldContainsFold(FieldState, v))
+// StateIDNotIn applies the NotIn predicate on the "state_id" field.
+func StateIDNotIn(vs ...uuid.UUID) predicate.Customer {
+	return predicate.Customer(sql.FieldNotIn(FieldStateID, vs...))
 }
 
 // PostalCodeEQ applies the EQ predicate on the "postal_code" field.
@@ -784,6 +739,29 @@ func HasOrganization() predicate.Customer {
 func HasOrganizationWith(preds ...predicate.Organization) predicate.Customer {
 	return predicate.Customer(func(s *sql.Selector) {
 		step := newOrganizationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasState applies the HasEdge predicate on the "state" edge.
+func HasState() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, StateTable, StateColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateWith applies the HasEdge predicate on the "state" edge with a given conditions (other predicates).
+func HasStateWith(preds ...predicate.UsState) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newStateStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

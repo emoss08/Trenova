@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -18,12 +19,24 @@ func (Organization) Fields() []ent.Field {
 		field.UUID("business_unit_id", uuid.UUID{}).
 			StructTag(`json:"businessUnitId"`),
 		field.String("name").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(100)",
+				dialect.SQLite:   "VARCHAR(100)",
+			}).
 			MaxLen(100),
 		field.String("scac_code").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(4)",
+				dialect.SQLite:   "VARCHAR(4)",
+			}).
 			MaxLen(4).
 			StructTag(`json:"scacCode"`),
 		field.String("dot_number").
 			MaxLen(12).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(12)",
+				dialect.SQLite:   "VARCHAR(12)",
+			}).
 			StructTag(`json:"dotNumber"`),
 		field.String("logo_url").
 			Optional().
@@ -32,9 +45,17 @@ func (Organization) Fields() []ent.Field {
 		field.Enum("org_type").
 			Values("A", "B", "X").
 			Default("A").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(1)",
+				dialect.SQLite:   "VARCHAR(1)",
+			}).
 			StructTag(`json:"orgType"`),
 		field.Enum("timezone").
 			Values("AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(17)",
+				dialect.SQLite:   "VARCHAR(17)",
+			}).
 			Default("AmericaLosAngeles"),
 	}
 }

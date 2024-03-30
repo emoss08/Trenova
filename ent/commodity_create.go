@@ -113,13 +113,13 @@ func (cc *CommodityCreate) SetNillableUnitOfMeasure(s *string) *CommodityCreate 
 }
 
 // SetMinTemp sets the "min_temp" field.
-func (cc *CommodityCreate) SetMinTemp(i int) *CommodityCreate {
+func (cc *CommodityCreate) SetMinTemp(i int8) *CommodityCreate {
 	cc.mutation.SetMinTemp(i)
 	return cc
 }
 
 // SetNillableMinTemp sets the "min_temp" field if the given value is not nil.
-func (cc *CommodityCreate) SetNillableMinTemp(i *int) *CommodityCreate {
+func (cc *CommodityCreate) SetNillableMinTemp(i *int8) *CommodityCreate {
 	if i != nil {
 		cc.SetMinTemp(*i)
 	}
@@ -127,13 +127,13 @@ func (cc *CommodityCreate) SetNillableMinTemp(i *int) *CommodityCreate {
 }
 
 // SetMaxTemp sets the "max_temp" field.
-func (cc *CommodityCreate) SetMaxTemp(i int) *CommodityCreate {
+func (cc *CommodityCreate) SetMaxTemp(i int8) *CommodityCreate {
 	cc.mutation.SetMaxTemp(i)
 	return cc
 }
 
 // SetNillableMaxTemp sets the "max_temp" field if the given value is not nil.
-func (cc *CommodityCreate) SetNillableMaxTemp(i *int) *CommodityCreate {
+func (cc *CommodityCreate) SetNillableMaxTemp(i *int8) *CommodityCreate {
 	if i != nil {
 		cc.SetMaxTemp(*i)
 	}
@@ -353,11 +353,11 @@ func (cc *CommodityCreate) createSpec() (*Commodity, *sqlgraph.CreateSpec) {
 		_node.UnitOfMeasure = value
 	}
 	if value, ok := cc.mutation.MinTemp(); ok {
-		_spec.SetField(commodity.FieldMinTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMinTemp, field.TypeInt8, value)
 		_node.MinTemp = value
 	}
 	if value, ok := cc.mutation.MaxTemp(); ok {
-		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt, value)
+		_spec.SetField(commodity.FieldMaxTemp, field.TypeInt8, value)
 		_node.MaxTemp = value
 	}
 	if value, ok := cc.mutation.Description(); ok {

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/tablechangealert"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // TableChangeAlertUpdate is the builder for updating TableChangeAlert entities.
@@ -252,16 +253,8 @@ func (tcau *TableChangeAlertUpdate) ClearEmailRecipients() *TableChangeAlertUpda
 }
 
 // SetEffectiveDate sets the "effective_date" field.
-func (tcau *TableChangeAlertUpdate) SetEffectiveDate(t time.Time) *TableChangeAlertUpdate {
-	tcau.mutation.SetEffectiveDate(t)
-	return tcau
-}
-
-// SetNillableEffectiveDate sets the "effective_date" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableEffectiveDate(t *time.Time) *TableChangeAlertUpdate {
-	if t != nil {
-		tcau.SetEffectiveDate(*t)
-	}
+func (tcau *TableChangeAlertUpdate) SetEffectiveDate(pg *pgtype.Date) *TableChangeAlertUpdate {
+	tcau.mutation.SetEffectiveDate(pg)
 	return tcau
 }
 
@@ -272,16 +265,8 @@ func (tcau *TableChangeAlertUpdate) ClearEffectiveDate() *TableChangeAlertUpdate
 }
 
 // SetExpirationDate sets the "expiration_date" field.
-func (tcau *TableChangeAlertUpdate) SetExpirationDate(t time.Time) *TableChangeAlertUpdate {
-	tcau.mutation.SetExpirationDate(t)
-	return tcau
-}
-
-// SetNillableExpirationDate sets the "expiration_date" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableExpirationDate(t *time.Time) *TableChangeAlertUpdate {
-	if t != nil {
-		tcau.SetExpirationDate(*t)
-	}
+func (tcau *TableChangeAlertUpdate) SetExpirationDate(pg *pgtype.Date) *TableChangeAlertUpdate {
+	tcau.mutation.SetExpirationDate(pg)
 	return tcau
 }
 
@@ -358,21 +343,6 @@ func (tcau *TableChangeAlertUpdate) check() error {
 	if v, ok := tcau.mutation.Source(); ok {
 		if err := tablechangealert.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.source": %w`, err)}
-		}
-	}
-	if v, ok := tcau.mutation.TableName(); ok {
-		if err := tablechangealert.TableNameValidator(v); err != nil {
-			return &ValidationError{Name: "table_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.table_name": %w`, err)}
-		}
-	}
-	if v, ok := tcau.mutation.TopicName(); ok {
-		if err := tablechangealert.TopicNameValidator(v); err != nil {
-			return &ValidationError{Name: "topic_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic_name": %w`, err)}
-		}
-	}
-	if v, ok := tcau.mutation.CustomSubject(); ok {
-		if err := tablechangealert.CustomSubjectValidator(v); err != nil {
-			return &ValidationError{Name: "custom_subject", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.custom_subject": %w`, err)}
 		}
 	}
 	if v, ok := tcau.mutation.FunctionName(); ok {
@@ -481,16 +451,16 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 		_spec.ClearField(tablechangealert.FieldEmailRecipients, field.TypeString)
 	}
 	if value, ok := tcau.mutation.EffectiveDate(); ok {
-		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)
+		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeOther, value)
 	}
 	if tcau.mutation.EffectiveDateCleared() {
-		_spec.ClearField(tablechangealert.FieldEffectiveDate, field.TypeTime)
+		_spec.ClearField(tablechangealert.FieldEffectiveDate, field.TypeOther)
 	}
 	if value, ok := tcau.mutation.ExpirationDate(); ok {
-		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeTime, value)
+		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeOther, value)
 	}
 	if tcau.mutation.ExpirationDateCleared() {
-		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
+		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
 	}
 	_spec.AddModifiers(tcau.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, tcau.driver, _spec); err != nil {
@@ -737,16 +707,8 @@ func (tcauo *TableChangeAlertUpdateOne) ClearEmailRecipients() *TableChangeAlert
 }
 
 // SetEffectiveDate sets the "effective_date" field.
-func (tcauo *TableChangeAlertUpdateOne) SetEffectiveDate(t time.Time) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetEffectiveDate(t)
-	return tcauo
-}
-
-// SetNillableEffectiveDate sets the "effective_date" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableEffectiveDate(t *time.Time) *TableChangeAlertUpdateOne {
-	if t != nil {
-		tcauo.SetEffectiveDate(*t)
-	}
+func (tcauo *TableChangeAlertUpdateOne) SetEffectiveDate(pg *pgtype.Date) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetEffectiveDate(pg)
 	return tcauo
 }
 
@@ -757,16 +719,8 @@ func (tcauo *TableChangeAlertUpdateOne) ClearEffectiveDate() *TableChangeAlertUp
 }
 
 // SetExpirationDate sets the "expiration_date" field.
-func (tcauo *TableChangeAlertUpdateOne) SetExpirationDate(t time.Time) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetExpirationDate(t)
-	return tcauo
-}
-
-// SetNillableExpirationDate sets the "expiration_date" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableExpirationDate(t *time.Time) *TableChangeAlertUpdateOne {
-	if t != nil {
-		tcauo.SetExpirationDate(*t)
-	}
+func (tcauo *TableChangeAlertUpdateOne) SetExpirationDate(pg *pgtype.Date) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetExpirationDate(pg)
 	return tcauo
 }
 
@@ -856,21 +810,6 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 	if v, ok := tcauo.mutation.Source(); ok {
 		if err := tablechangealert.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.source": %w`, err)}
-		}
-	}
-	if v, ok := tcauo.mutation.TableName(); ok {
-		if err := tablechangealert.TableNameValidator(v); err != nil {
-			return &ValidationError{Name: "table_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.table_name": %w`, err)}
-		}
-	}
-	if v, ok := tcauo.mutation.TopicName(); ok {
-		if err := tablechangealert.TopicNameValidator(v); err != nil {
-			return &ValidationError{Name: "topic_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.topic_name": %w`, err)}
-		}
-	}
-	if v, ok := tcauo.mutation.CustomSubject(); ok {
-		if err := tablechangealert.CustomSubjectValidator(v); err != nil {
-			return &ValidationError{Name: "custom_subject", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.custom_subject": %w`, err)}
 		}
 	}
 	if v, ok := tcauo.mutation.FunctionName(); ok {
@@ -996,16 +935,16 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 		_spec.ClearField(tablechangealert.FieldEmailRecipients, field.TypeString)
 	}
 	if value, ok := tcauo.mutation.EffectiveDate(); ok {
-		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeTime, value)
+		_spec.SetField(tablechangealert.FieldEffectiveDate, field.TypeOther, value)
 	}
 	if tcauo.mutation.EffectiveDateCleared() {
-		_spec.ClearField(tablechangealert.FieldEffectiveDate, field.TypeTime)
+		_spec.ClearField(tablechangealert.FieldEffectiveDate, field.TypeOther)
 	}
 	if value, ok := tcauo.mutation.ExpirationDate(); ok {
-		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeTime, value)
+		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeOther, value)
 	}
 	if tcauo.mutation.ExpirationDateCleared() {
-		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeTime)
+		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
 	}
 	_spec.AddModifiers(tcauo.modifiers...)
 	_node = &TableChangeAlert{config: tcauo.config}

@@ -130,9 +130,9 @@ var (
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultRecThreshold holds the default value on creation for the "rec_threshold" field.
-	DefaultRecThreshold int64
+	DefaultRecThreshold int8
 	// RecThresholdValidator is a validator for the "rec_threshold" field. It is called by the builders before save.
-	RecThresholdValidator func(int64) error
+	RecThresholdValidator func(int8) error
 	// DefaultAutoCreateJournalEntries holds the default value on creation for the "auto_create_journal_entries" field.
 	DefaultAutoCreateJournalEntries bool
 	// DefaultRestrictManualJournalEntries holds the default value on creation for the "restrict_manual_journal_entries" field.

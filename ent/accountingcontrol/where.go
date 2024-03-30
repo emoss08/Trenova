@@ -67,7 +67,7 @@ func UpdatedAt(v time.Time) predicate.AccountingControl {
 }
 
 // RecThreshold applies equality check predicate on the "rec_threshold" field. It's identical to RecThresholdEQ.
-func RecThreshold(v int64) predicate.AccountingControl {
+func RecThreshold(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldEQ(FieldRecThreshold, v))
 }
 
@@ -192,42 +192,42 @@ func UpdatedAtLTE(v time.Time) predicate.AccountingControl {
 }
 
 // RecThresholdEQ applies the EQ predicate on the "rec_threshold" field.
-func RecThresholdEQ(v int64) predicate.AccountingControl {
+func RecThresholdEQ(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldEQ(FieldRecThreshold, v))
 }
 
 // RecThresholdNEQ applies the NEQ predicate on the "rec_threshold" field.
-func RecThresholdNEQ(v int64) predicate.AccountingControl {
+func RecThresholdNEQ(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldNEQ(FieldRecThreshold, v))
 }
 
 // RecThresholdIn applies the In predicate on the "rec_threshold" field.
-func RecThresholdIn(vs ...int64) predicate.AccountingControl {
+func RecThresholdIn(vs ...int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldIn(FieldRecThreshold, vs...))
 }
 
 // RecThresholdNotIn applies the NotIn predicate on the "rec_threshold" field.
-func RecThresholdNotIn(vs ...int64) predicate.AccountingControl {
+func RecThresholdNotIn(vs ...int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldNotIn(FieldRecThreshold, vs...))
 }
 
 // RecThresholdGT applies the GT predicate on the "rec_threshold" field.
-func RecThresholdGT(v int64) predicate.AccountingControl {
+func RecThresholdGT(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldGT(FieldRecThreshold, v))
 }
 
 // RecThresholdGTE applies the GTE predicate on the "rec_threshold" field.
-func RecThresholdGTE(v int64) predicate.AccountingControl {
+func RecThresholdGTE(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldGTE(FieldRecThreshold, v))
 }
 
 // RecThresholdLT applies the LT predicate on the "rec_threshold" field.
-func RecThresholdLT(v int64) predicate.AccountingControl {
+func RecThresholdLT(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldLT(FieldRecThreshold, v))
 }
 
 // RecThresholdLTE applies the LTE predicate on the "rec_threshold" field.
-func RecThresholdLTE(v int64) predicate.AccountingControl {
+func RecThresholdLTE(v int8) predicate.AccountingControl {
 	return predicate.AccountingControl(sql.FieldLTE(FieldRecThreshold, v))
 }
 

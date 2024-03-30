@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
 )
 
@@ -26,6 +27,7 @@ type CustomerQuery struct {
 	predicates       []predicate.Customer
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	withState        *UsStateQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -100,6 +102,28 @@ func (cq *CustomerQuery) QueryOrganization() *OrganizationQuery {
 			sqlgraph.From(customer.Table, customer.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, customer.OrganizationTable, customer.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryState chains the current query on the "state" edge.
+func (cq *CustomerQuery) QueryState() *UsStateQuery {
+	query := (&UsStateClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, customer.StateTable, customer.StateColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -301,6 +325,7 @@ func (cq *CustomerQuery) Clone() *CustomerQuery {
 		predicates:       append([]predicate.Customer{}, cq.predicates...),
 		withBusinessUnit: cq.withBusinessUnit.Clone(),
 		withOrganization: cq.withOrganization.Clone(),
+		withState:        cq.withState.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -326,6 +351,17 @@ func (cq *CustomerQuery) WithOrganization(opts ...func(*OrganizationQuery)) *Cus
 		opt(query)
 	}
 	cq.withOrganization = query
+	return cq
+}
+
+// WithState tells the query-builder to eager-load the nodes that are connected to
+// the "state" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithState(opts ...func(*UsStateQuery)) *CustomerQuery {
+	query := (&UsStateClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withState = query
 	return cq
 }
 
@@ -407,9 +443,10 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	var (
 		nodes       = []*Customer{}
 		_spec       = cq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			cq.withBusinessUnit != nil,
 			cq.withOrganization != nil,
+			cq.withState != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +479,12 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	if query := cq.withOrganization; query != nil {
 		if err := cq.loadOrganization(ctx, query, nodes, nil,
 			func(n *Customer, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withState; query != nil {
+		if err := cq.loadState(ctx, query, nodes, nil,
+			func(n *Customer, e *UsState) { n.Edges.State = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -506,6 +549,35 @@ func (cq *CustomerQuery) loadOrganization(ctx context.Context, query *Organizati
 	}
 	return nil
 }
+func (cq *CustomerQuery) loadState(ctx context.Context, query *UsStateQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *UsState)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Customer)
+	for i := range nodes {
+		fk := nodes[i].StateID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(usstate.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "state_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (cq *CustomerQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
@@ -540,6 +612,9 @@ func (cq *CustomerQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if cq.withOrganization != nil {
 			_spec.Node.AddColumnOnce(customer.FieldOrganizationID)
+		}
+		if cq.withState != nil {
+			_spec.Node.AddColumnOnce(customer.FieldStateID)
 		}
 	}
 	if ps := cq.predicates; len(ps) > 0 {

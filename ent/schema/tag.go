@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -15,6 +16,10 @@ type Tag struct {
 func (Tag) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(50)",
+				dialect.SQLite:   "VARCHAR(50)",
+			}).
 			MaxLen(50),
 		field.Text("description").
 			Nillable().

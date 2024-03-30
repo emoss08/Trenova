@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
 )
 
@@ -115,9 +116,9 @@ func (cc *CustomerCreate) SetCity(s string) *CustomerCreate {
 	return cc
 }
 
-// SetState sets the "state" field.
-func (cc *CustomerCreate) SetState(s string) *CustomerCreate {
-	cc.mutation.SetState(s)
+// SetStateID sets the "state_id" field.
+func (cc *CustomerCreate) SetStateID(u uuid.UUID) *CustomerCreate {
+	cc.mutation.SetStateID(u)
 	return cc
 }
 
@@ -177,6 +178,11 @@ func (cc *CustomerCreate) SetBusinessUnit(b *BusinessUnit) *CustomerCreate {
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (cc *CustomerCreate) SetOrganization(o *Organization) *CustomerCreate {
 	return cc.SetOrganizationID(o.ID)
+}
+
+// SetState sets the "state" edge to the UsState entity.
+func (cc *CustomerCreate) SetState(u *UsState) *CustomerCreate {
+	return cc.SetStateID(u.ID)
 }
 
 // Mutation returns the CustomerMutation object of the builder.
@@ -311,13 +317,8 @@ func (cc *CustomerCreate) check() error {
 			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Customer.city": %w`, err)}
 		}
 	}
-	if _, ok := cc.mutation.State(); !ok {
-		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "Customer.state"`)}
-	}
-	if v, ok := cc.mutation.State(); ok {
-		if err := customer.StateValidator(v); err != nil {
-			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Customer.state": %w`, err)}
-		}
+	if _, ok := cc.mutation.StateID(); !ok {
+		return &ValidationError{Name: "state_id", err: errors.New(`ent: missing required field "Customer.state_id"`)}
 	}
 	if _, ok := cc.mutation.PostalCode(); !ok {
 		return &ValidationError{Name: "postal_code", err: errors.New(`ent: missing required field "Customer.postal_code"`)}
@@ -338,6 +339,9 @@ func (cc *CustomerCreate) check() error {
 	}
 	if _, ok := cc.mutation.OrganizationID(); !ok {
 		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "Customer.organization"`)}
+	}
+	if _, ok := cc.mutation.StateID(); !ok {
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required edge "Customer.state"`)}
 	}
 	return nil
 }
@@ -406,10 +410,6 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 		_spec.SetField(customer.FieldCity, field.TypeString, value)
 		_node.City = value
 	}
-	if value, ok := cc.mutation.State(); ok {
-		_spec.SetField(customer.FieldState, field.TypeString, value)
-		_node.State = value
-	}
 	if value, ok := cc.mutation.PostalCode(); ok {
 		_spec.SetField(customer.FieldPostalCode, field.TypeString, value)
 		_node.PostalCode = value
@@ -454,6 +454,23 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.StateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.StateTable,
+			Columns: []string{customer.StateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usstate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.StateID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

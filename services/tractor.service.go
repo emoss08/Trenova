@@ -72,7 +72,7 @@ func (r *TractorOps) CreateTractor(entity ent.Tractor) (*ent.Tractor, error) {
 		SetNillableYear(entity.Year).
 		SetNillableStateID(entity.StateID).
 		SetLeased(entity.Leased).
-		SetNillableLeasedDate(entity.LeasedDate).
+		SetLeasedDate(entity.LeasedDate).
 		SetPrimaryWorkerID(entity.PrimaryWorkerID).
 		SetNillableSecondaryWorkerID(entity.SecondaryWorkerID).
 		SetFleetCodeID(entity.FleetCodeID).
@@ -98,7 +98,7 @@ func (r *TractorOps) UpdateTractor(entity ent.Tractor) (*ent.Tractor, error) {
 		SetNillableYear(entity.Year).
 		SetNillableStateID(entity.StateID).
 		SetLeased(entity.Leased).
-		SetNillableLeasedDate(entity.LeasedDate).
+		SetLeasedDate(entity.LeasedDate).
 		SetPrimaryWorkerID(entity.PrimaryWorkerID).
 		SetNillableSecondaryWorkerID(entity.SecondaryWorkerID).
 		SetFleetCodeID(entity.FleetCodeID)

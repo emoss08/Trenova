@@ -10,8 +10,12 @@ import (
 	"time"
 
 	gen "github.com/emoss08/trenova/ent"
+	"github.com/google/uuid"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/emoss08/trenova/ent/hook"
@@ -28,34 +32,60 @@ func (Customer) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(1)",
+				dialect.SQLite:   "VARCHAR(1)",
+			}).
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("code").
 			NotEmpty().
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"code" validate:"required,max=10"`),
 		field.String("name").
 			NotEmpty().
 			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
 			StructTag(`json:"name" validate:"required,max=150"`),
 		field.String("address_line_1").
 			NotEmpty().
 			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
 			StructTag(`json:"addressLine1" validate:"required,max=150"`),
 		field.String("address_line_2").
 			Optional().
 			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
 			StructTag(`json:"addressLine2" validate:"omitempty,max=150"`),
 		field.String("city").
 			NotEmpty().
 			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
 			StructTag(`json:"city" validate:"required,max=150"`),
-		field.String("state").
-			NotEmpty().
-			MaxLen(2).
-			StructTag(`json:"state" validate:"required,len=2"`),
+		field.UUID("state_id", uuid.UUID{}).
+			StructTag(`json:"stateId" validate:"omitempty,uuid"`),
 		field.String("postal_code").
 			NotEmpty().
 			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
 			StructTag(`json:"postalCode" validate:"required,max=10"`),
 		field.Bool("has_customer_portal").
 			Default(false).
@@ -84,7 +114,14 @@ func (Customer) Indexes() []ent.Index {
 
 // Edges of the Customer.
 func (Customer) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("state", UsState.Type).
+			Field("state_id").
+			Required().
+			StructTag(`json:"state"`).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Unique(),
+	}
 }
 
 // Hooks for the Customer.

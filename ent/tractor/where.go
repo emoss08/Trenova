@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // ID filters vertices based on their ID field.
@@ -107,7 +108,7 @@ func Model(v string) predicate.Tractor {
 }
 
 // Year applies equality check predicate on the "year" field. It's identical to YearEQ.
-func Year(v int) predicate.Tractor {
+func Year(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldYear, v))
 }
 
@@ -122,7 +123,7 @@ func Leased(v bool) predicate.Tractor {
 }
 
 // LeasedDate applies equality check predicate on the "leased_date" field. It's identical to LeasedDateEQ.
-func LeasedDate(v time.Time) predicate.Tractor {
+func LeasedDate(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldLeasedDate, v))
 }
 
@@ -632,42 +633,42 @@ func ModelContainsFold(v string) predicate.Tractor {
 }
 
 // YearEQ applies the EQ predicate on the "year" field.
-func YearEQ(v int) predicate.Tractor {
+func YearEQ(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldYear, v))
 }
 
 // YearNEQ applies the NEQ predicate on the "year" field.
-func YearNEQ(v int) predicate.Tractor {
+func YearNEQ(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldNEQ(FieldYear, v))
 }
 
 // YearIn applies the In predicate on the "year" field.
-func YearIn(vs ...int) predicate.Tractor {
+func YearIn(vs ...int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldIn(FieldYear, vs...))
 }
 
 // YearNotIn applies the NotIn predicate on the "year" field.
-func YearNotIn(vs ...int) predicate.Tractor {
+func YearNotIn(vs ...int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldNotIn(FieldYear, vs...))
 }
 
 // YearGT applies the GT predicate on the "year" field.
-func YearGT(v int) predicate.Tractor {
+func YearGT(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldGT(FieldYear, v))
 }
 
 // YearGTE applies the GTE predicate on the "year" field.
-func YearGTE(v int) predicate.Tractor {
+func YearGTE(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldGTE(FieldYear, v))
 }
 
 // YearLT applies the LT predicate on the "year" field.
-func YearLT(v int) predicate.Tractor {
+func YearLT(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldLT(FieldYear, v))
 }
 
 // YearLTE applies the LTE predicate on the "year" field.
-func YearLTE(v int) predicate.Tractor {
+func YearLTE(v int16) predicate.Tractor {
 	return predicate.Tractor(sql.FieldLTE(FieldYear, v))
 }
 
@@ -722,42 +723,42 @@ func LeasedNEQ(v bool) predicate.Tractor {
 }
 
 // LeasedDateEQ applies the EQ predicate on the "leased_date" field.
-func LeasedDateEQ(v time.Time) predicate.Tractor {
+func LeasedDateEQ(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldLeasedDate, v))
 }
 
 // LeasedDateNEQ applies the NEQ predicate on the "leased_date" field.
-func LeasedDateNEQ(v time.Time) predicate.Tractor {
+func LeasedDateNEQ(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldNEQ(FieldLeasedDate, v))
 }
 
 // LeasedDateIn applies the In predicate on the "leased_date" field.
-func LeasedDateIn(vs ...time.Time) predicate.Tractor {
+func LeasedDateIn(vs ...*pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldIn(FieldLeasedDate, vs...))
 }
 
 // LeasedDateNotIn applies the NotIn predicate on the "leased_date" field.
-func LeasedDateNotIn(vs ...time.Time) predicate.Tractor {
+func LeasedDateNotIn(vs ...*pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldNotIn(FieldLeasedDate, vs...))
 }
 
 // LeasedDateGT applies the GT predicate on the "leased_date" field.
-func LeasedDateGT(v time.Time) predicate.Tractor {
+func LeasedDateGT(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldGT(FieldLeasedDate, v))
 }
 
 // LeasedDateGTE applies the GTE predicate on the "leased_date" field.
-func LeasedDateGTE(v time.Time) predicate.Tractor {
+func LeasedDateGTE(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldGTE(FieldLeasedDate, v))
 }
 
 // LeasedDateLT applies the LT predicate on the "leased_date" field.
-func LeasedDateLT(v time.Time) predicate.Tractor {
+func LeasedDateLT(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldLT(FieldLeasedDate, v))
 }
 
 // LeasedDateLTE applies the LTE predicate on the "leased_date" field.
-func LeasedDateLTE(v time.Time) predicate.Tractor {
+func LeasedDateLTE(v *pgtype.Date) predicate.Tractor {
 	return predicate.Tractor(sql.FieldLTE(FieldLeasedDate, v))
 }
 

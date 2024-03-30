@@ -185,11 +185,6 @@ func (acu *AccessorialChargeUpdate) check() error {
 			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.code": %w`, err)}
 		}
 	}
-	if v, ok := acu.mutation.Description(); ok {
-		if err := accessorialcharge.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.description": %w`, err)}
-		}
-	}
 	if v, ok := acu.mutation.Method(); ok {
 		if err := accessorialcharge.MethodValidator(v); err != nil {
 			return &ValidationError{Name: "method", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.method": %w`, err)}
@@ -438,11 +433,6 @@ func (acuo *AccessorialChargeUpdateOne) check() error {
 	if v, ok := acuo.mutation.Code(); ok {
 		if err := accessorialcharge.CodeValidator(v); err != nil {
 			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.code": %w`, err)}
-		}
-	}
-	if v, ok := acuo.mutation.Description(); ok {
-		if err := accessorialcharge.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "AccessorialCharge.description": %w`, err)}
 		}
 	}
 	if v, ok := acuo.mutation.Method(); ok {

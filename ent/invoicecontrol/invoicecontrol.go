@@ -119,8 +119,6 @@ var (
 	DefaultCreditMemoNumberPrefix string
 	// CreditMemoNumberPrefixValidator is a validator for the "credit_memo_number_prefix" field. It is called by the builders before save.
 	CreditMemoNumberPrefixValidator func(string) error
-	// InvoiceLogoURLValidator is a validator for the "invoice_logo_url" field. It is called by the builders before save.
-	InvoiceLogoURLValidator func(string) error
 	// DefaultInvoiceDueAfterDays holds the default value on creation for the "invoice_due_after_days" field.
 	DefaultInvoiceDueAfterDays uint8
 	// InvoiceDueAfterDaysValidator is a validator for the "invoice_due_after_days" field. It is called by the builders before save.

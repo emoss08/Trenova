@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 )
 
@@ -24,23 +25,28 @@ type EmailProfile struct {
 func (EmailProfile) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
-			MaxLen(255),
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
+			MaxLen(150),
 		field.String("email").
-			MaxLen(255),
+			NotEmpty(),
 		field.Enum("protocol").
 			Values("TLS", "SSL", "UNENCRYPTED").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(11)",
+				dialect.SQLite:   "VARCHAR(11)",
+			}).
 			StructTag(`json:"protocol"`).
 			Optional(),
 		field.String("host").
-			MaxLen(255).
 			Optional(),
-		field.Int("port").
+		field.Int16("port").
 			Optional(),
 		field.String("username").
-			MaxLen(255).
 			Optional(),
 		field.String("password").
-			MaxLen(255).
 			Sensitive().
 			Optional(),
 		field.Bool("is_default").

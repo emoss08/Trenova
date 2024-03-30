@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -36,6 +37,10 @@ func (BillingControl) Fields() []ent.Field {
 		field.Enum("shipment_transfer_criteria").
 			Values("ReadyAndCompleted", "Completed", "ReadyToBill").
 			Default("ReadyToBill").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(17)",
+				dialect.SQLite:   "VARCHAR(17)",
+			}).
 			StructTag(`json:"shipmentTransferCriteria" validate:"omitempty"`),
 		field.Bool("enforce_customer_billing").
 			Default(false).
