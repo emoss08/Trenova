@@ -141,7 +141,7 @@ func (r *HazardousMaterialSegregationOps) UpdateHazmatSegRule(
 		}
 	}()
 
-	current, err := tx.EquipmentManufactuer.Get(ctx, entity.ID) // Get the current entity.
+	current, err := tx.HazardousMaterialSegregation.Get(ctx, entity.ID) // Get the current entity.
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
 		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
