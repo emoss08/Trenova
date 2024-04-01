@@ -37,6 +37,27 @@ func (wcu *WorkerContactUpdate) SetUpdatedAt(t time.Time) *WorkerContactUpdate {
 	return wcu
 }
 
+// SetVersion sets the "version" field.
+func (wcu *WorkerContactUpdate) SetVersion(i int) *WorkerContactUpdate {
+	wcu.mutation.ResetVersion()
+	wcu.mutation.SetVersion(i)
+	return wcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wcu *WorkerContactUpdate) SetNillableVersion(i *int) *WorkerContactUpdate {
+	if i != nil {
+		wcu.SetVersion(*i)
+	}
+	return wcu
+}
+
+// AddVersion adds i to the "version" field.
+func (wcu *WorkerContactUpdate) AddVersion(i int) *WorkerContactUpdate {
+	wcu.mutation.AddVersion(i)
+	return wcu
+}
+
 // SetWorkerID sets the "worker_id" field.
 func (wcu *WorkerContactUpdate) SetWorkerID(u uuid.UUID) *WorkerContactUpdate {
 	wcu.mutation.SetWorkerID(u)
@@ -229,6 +250,12 @@ func (wcu *WorkerContactUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := wcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(workercontact.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := wcu.mutation.Version(); ok {
+		_spec.SetField(workercontact.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wcu.mutation.AddedVersion(); ok {
+		_spec.AddField(workercontact.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := wcu.mutation.Name(); ok {
 		_spec.SetField(workercontact.FieldName, field.TypeString, value)
 	}
@@ -301,6 +328,27 @@ type WorkerContactUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (wcuo *WorkerContactUpdateOne) SetUpdatedAt(t time.Time) *WorkerContactUpdateOne {
 	wcuo.mutation.SetUpdatedAt(t)
+	return wcuo
+}
+
+// SetVersion sets the "version" field.
+func (wcuo *WorkerContactUpdateOne) SetVersion(i int) *WorkerContactUpdateOne {
+	wcuo.mutation.ResetVersion()
+	wcuo.mutation.SetVersion(i)
+	return wcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wcuo *WorkerContactUpdateOne) SetNillableVersion(i *int) *WorkerContactUpdateOne {
+	if i != nil {
+		wcuo.SetVersion(*i)
+	}
+	return wcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (wcuo *WorkerContactUpdateOne) AddVersion(i int) *WorkerContactUpdateOne {
+	wcuo.mutation.AddVersion(i)
 	return wcuo
 }
 
@@ -525,6 +573,12 @@ func (wcuo *WorkerContactUpdateOne) sqlSave(ctx context.Context) (_node *WorkerC
 	}
 	if value, ok := wcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(workercontact.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := wcuo.mutation.Version(); ok {
+		_spec.SetField(workercontact.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(workercontact.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := wcuo.mutation.Name(); ok {
 		_spec.SetField(workercontact.FieldName, field.TypeString, value)

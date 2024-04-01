@@ -28,6 +28,8 @@ type HazardousMaterialSegregation struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// ClassA holds the value of the "class_a" field.
 	ClassA hazardousmaterialsegregation.ClassA `json:"classA" validate:"required"`
 	// ClassB holds the value of the "class_b" field.
@@ -78,6 +80,8 @@ func (*HazardousMaterialSegregation) scanValues(columns []string) ([]any, error)
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case hazardousmaterialsegregation.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case hazardousmaterialsegregation.FieldClassA, hazardousmaterialsegregation.FieldClassB, hazardousmaterialsegregation.FieldSegregationType:
 			values[i] = new(sql.NullString)
 		case hazardousmaterialsegregation.FieldCreatedAt, hazardousmaterialsegregation.FieldUpdatedAt:
@@ -128,6 +132,12 @@ func (hms *HazardousMaterialSegregation) assignValues(columns []string, values [
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				hms.UpdatedAt = value.Time
+			}
+		case hazardousmaterialsegregation.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				hms.Version = int(value.Int64)
 			}
 		case hazardousmaterialsegregation.FieldClassA:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -204,6 +214,9 @@ func (hms *HazardousMaterialSegregation) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(hms.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", hms.Version))
 	builder.WriteString(", ")
 	builder.WriteString("class_a=")
 	builder.WriteString(fmt.Sprintf("%v", hms.ClassA))

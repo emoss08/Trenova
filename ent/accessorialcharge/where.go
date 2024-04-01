@@ -76,6 +76,11 @@ func UpdatedAt(v time.Time) predicate.AccessorialCharge {
 	return predicate.AccessorialCharge(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldEQ(FieldVersion, v))
+}
+
 // Code applies equality check predicate on the "code" field. It's identical to CodeEQ.
 func Code(v string) predicate.AccessorialCharge {
 	return predicate.AccessorialCharge(sql.FieldEQ(FieldCode, v))
@@ -214,6 +219,46 @@ func UpdatedAtLT(v time.Time) predicate.AccessorialCharge {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.AccessorialCharge {
 	return predicate.AccessorialCharge(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(sql.FieldLTE(FieldVersion, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

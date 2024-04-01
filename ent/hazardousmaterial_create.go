@@ -63,6 +63,20 @@ func (hmc *HazardousMaterialCreate) SetNillableUpdatedAt(t *time.Time) *Hazardou
 	return hmc
 }
 
+// SetVersion sets the "version" field.
+func (hmc *HazardousMaterialCreate) SetVersion(i int) *HazardousMaterialCreate {
+	hmc.mutation.SetVersion(i)
+	return hmc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmc *HazardousMaterialCreate) SetNillableVersion(i *int) *HazardousMaterialCreate {
+	if i != nil {
+		hmc.SetVersion(*i)
+	}
+	return hmc
+}
+
 // SetStatus sets the "status" field.
 func (hmc *HazardousMaterialCreate) SetStatus(h hazardousmaterial.Status) *HazardousMaterialCreate {
 	hmc.mutation.SetStatus(h)
@@ -220,6 +234,10 @@ func (hmc *HazardousMaterialCreate) defaults() {
 		v := hazardousmaterial.DefaultUpdatedAt()
 		hmc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := hmc.mutation.Version(); !ok {
+		v := hazardousmaterial.DefaultVersion
+		hmc.mutation.SetVersion(v)
+	}
 	if _, ok := hmc.mutation.Status(); !ok {
 		v := hazardousmaterial.DefaultStatus
 		hmc.mutation.SetStatus(v)
@@ -247,6 +265,9 @@ func (hmc *HazardousMaterialCreate) check() error {
 	}
 	if _, ok := hmc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "HazardousMaterial.updated_at"`)}
+	}
+	if _, ok := hmc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "HazardousMaterial.version"`)}
 	}
 	if _, ok := hmc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "HazardousMaterial.status"`)}
@@ -320,6 +341,10 @@ func (hmc *HazardousMaterialCreate) createSpec() (*HazardousMaterial, *sqlgraph.
 	if value, ok := hmc.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterial.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := hmc.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterial.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := hmc.mutation.Status(); ok {
 		_spec.SetField(hazardousmaterial.FieldStatus, field.TypeEnum, value)

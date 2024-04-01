@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/shipmenttype"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -12,32 +16,34 @@ import (
 )
 
 type ShipmentTypeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewShipmentTypeOps creates a new shipment type service.
-func NewShipmentTypeOps(ctx context.Context) *ShipmentTypeOps {
+func NewShipmentTypeOps() *ShipmentTypeOps {
 	return &ShipmentTypeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetShipmentTypes gets the shipment type for an organization.
-func (r *ShipmentTypeOps) GetShipmentTypes(limit, offset int, orgID, buID uuid.UUID) ([]*ent.ShipmentType, int, error) {
-	shipTypeCount, countErr := r.client.ShipmentType.Query().Where(
+func (r *ShipmentTypeOps) GetShipmentTypes(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.ShipmentType, int, error) {
+	entityCount, countErr := r.client.ShipmentType.Query().Where(
 		shipmenttype.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	shipmentTypes, err := r.client.ShipmentType.Query().
+	entities, err := r.client.ShipmentType.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -45,43 +51,122 @@ func (r *ShipmentTypeOps) GetShipmentTypes(limit, offset int, orgID, buID uuid.U
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return shipmentTypes, shipTypeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateShipmentType creates a new shipment type.
-func (r *ShipmentTypeOps) CreateShipmentType(newShipmentType ent.ShipmentType) (*ent.ShipmentType, error) {
-	shipmentType, err := r.client.ShipmentType.Create().
-		SetOrganizationID(newShipmentType.OrganizationID).
-		SetBusinessUnitID(newShipmentType.BusinessUnitID).
-		SetStatus(newShipmentType.Status).
-		SetCode(newShipmentType.Code).
-		SetDescription(newShipmentType.Description).
-		Save(r.ctx)
+func (r *ShipmentTypeOps) CreateShipmentType(
+	ctx context.Context, newEntity ent.ShipmentType,
+) (*ent.ShipmentType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.ShipmentType.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetCode(newEntity.Code).
+		SetDescription(newEntity.Description).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return shipmentType, nil
+	return createdEntity, nil
 }
 
 // UpdateShipmentType updates a shipment type.
-func (r *ShipmentTypeOps) UpdateShipmentType(shipmentType ent.ShipmentType) (*ent.ShipmentType, error) {
+func (r *ShipmentTypeOps) UpdateShipmentType(
+	ctx context.Context, entity ent.ShipmentType,
+) (*ent.ShipmentType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.ShipmentType.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
+	}
+
 	// Start building the update operation
-	updateOp := r.client.ShipmentType.UpdateOneID(shipmentType.ID).
-		SetStatus(shipmentType.Status).
-		SetCode(shipmentType.Code).
-		SetDescription(shipmentType.Description)
+	updateOp := r.client.ShipmentType.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetDescription(entity.Description).
+		SetVersion(entity.Version + 1) // Increment the version
 
 	// Execute the update operation
-	updateShipmentType, err := updateOp.Save(r.ctx)
+	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return updateShipmentType, nil
+	return updatedEntity, nil
 }

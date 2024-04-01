@@ -7,14 +7,13 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 )
-
-// GeneralLedgerAccountOps is the service for general ledger account.
-type GeneralLedgerAccountOps struct {
-	client *ent.Client
-}
 
 type GeneralLedgerAccountRequest struct {
 	BusinessUnitID uuid.UUID                        `json:"businessUnitId"`
@@ -32,6 +31,7 @@ type GeneralLedgerAccountRequest struct {
 	Notes          string                           `json:"notes,omitempty"`
 	IsTaxRelevant  bool                             `json:"isTaxRelevant" validate:"omitempty"`
 	IsReconciled   bool                             `json:"isReconciled" validate:"omitempty"`
+	Version        int                              `json:"version" validate:"omitempty"`
 	TagIDs         []uuid.UUID                      `json:"tagIds,omitempty"`
 }
 
@@ -40,16 +40,23 @@ type GeneralLedgerAccountUpdateRequest struct {
 	GeneralLedgerAccountRequest
 }
 
+// GeneralLedgerAccountOps is the service for general ledger account.
+type GeneralLedgerAccountOps struct {
+	client *ent.Client
+	logger *logrus.Logger
+}
+
 // NewGeneralLedgerAccountOps creates a new general ledger account service.
 func NewGeneralLedgerAccountOps() *GeneralLedgerAccountOps {
 	return &GeneralLedgerAccountOps{
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetGeneralLedgerAccounts gets the general ledger accounts for an organization.
 func (r *GeneralLedgerAccountOps) GetGeneralLedgerAccounts(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.GeneralLedgerAccount, int, error) {
-	glAccountCount, countErr := r.client.GeneralLedgerAccount.Query().
+	entityCount, countErr := r.client.GeneralLedgerAccount.Query().
 		Where(
 			generalledgeraccount.HasOrganizationWith(
 				organization.IDEQ(orgID),
@@ -61,7 +68,7 @@ func (r *GeneralLedgerAccountOps) GetGeneralLedgerAccounts(ctx context.Context, 
 		return nil, 0, countErr
 	}
 
-	glAccounts, err := r.client.GeneralLedgerAccount.Query().
+	entities, err := r.client.GeneralLedgerAccount.Query().
 		Limit(limit).
 		WithTags().
 		Offset(offset).
@@ -75,75 +82,154 @@ func (r *GeneralLedgerAccountOps) GetGeneralLedgerAccounts(ctx context.Context, 
 		return nil, 0, err
 	}
 
-	return glAccounts, glAccountCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateGeneralLedgerAccount creates a new general ledger account for an organization.
-func (r *GeneralLedgerAccountOps) CreateGeneralLedgerAccount(ctx context.Context, newGLAccount GeneralLedgerAccountRequest) (*ent.GeneralLedgerAccount, error) {
-	glAccount, err := r.client.GeneralLedgerAccount.Create().
-		SetOrganizationID(newGLAccount.OrganizationID).
-		SetBusinessUnitID(newGLAccount.BusinessUnitID).
-		SetStatus(newGLAccount.Status).
-		SetAccountNumber(newGLAccount.AccountNumber).
-		SetAccountType(newGLAccount.AccountType).
-		SetCashFlowType(newGLAccount.CashFlowType).
-		SetAccountSubType(newGLAccount.AccountSubType).
-		SetAccountClass(newGLAccount.AccountClass).
-		SetBalance(newGLAccount.Balance).
-		SetInterestRate(newGLAccount.InterestRate).
-		SetNotes(newGLAccount.Notes).
-		SetIsTaxRelevant(newGLAccount.IsTaxRelevant).
-		SetIsReconciled(newGLAccount.IsReconciled).
+func (r *GeneralLedgerAccountOps) CreateGeneralLedgerAccount(
+	ctx context.Context, newEntity GeneralLedgerAccountRequest,
+) (*ent.GeneralLedgerAccount, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.GeneralLedgerAccount.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetAccountNumber(newEntity.AccountNumber).
+		SetAccountType(newEntity.AccountType).
+		SetCashFlowType(newEntity.CashFlowType).
+		SetAccountSubType(newEntity.AccountSubType).
+		SetAccountClass(newEntity.AccountClass).
+		SetBalance(newEntity.Balance).
+		SetInterestRate(newEntity.InterestRate).
+		SetNotes(newEntity.Notes).
+		SetIsTaxRelevant(newEntity.IsTaxRelevant).
+		SetIsReconciled(newEntity.IsReconciled).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// If the tags are provided, add them to the general ledger account
-	if len(newGLAccount.TagIDs) > 0 {
-		_, updateErr := glAccount.Update().
-			AddTagIDs(newGLAccount.TagIDs...).
-			Save(ctx)
+	if len(newEntity.TagIDs) > 0 {
+		updateErr := createdEntity.Update().
+			AddTagIDs(newEntity.TagIDs...).
+			SaveX(ctx)
 		if updateErr != nil {
-			return nil, updateErr
+			return nil, eris.Wrap(err, "failed to create entity")
 		}
 	}
 
-	return glAccount, nil
+	return createdEntity, nil
 }
 
 // UpdateGeneralLedgerAccount updates a general ledger account.
-func (r *GeneralLedgerAccountOps) UpdateGeneralLedgerAccount(ctx context.Context, glAccount GeneralLedgerAccountUpdateRequest) (*ent.GeneralLedgerAccount, error) {
+func (r *GeneralLedgerAccountOps) UpdateGeneralLedgerAccount(
+	ctx context.Context, entity GeneralLedgerAccountUpdateRequest,
+) (*ent.GeneralLedgerAccount, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.GeneralLedgerAccount.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"accountNumber")
+	}
+
 	// Start building the update operation
-	updateOp := r.client.GeneralLedgerAccount.UpdateOneID(glAccount.ID).
-		SetStatus(glAccount.Status).
-		SetAccountNumber(glAccount.AccountNumber).
-		SetAccountType(glAccount.AccountType).
-		SetCashFlowType(glAccount.CashFlowType).
-		SetAccountSubType(glAccount.AccountSubType).
-		SetAccountClass(glAccount.AccountClass).
-		SetBalance(glAccount.Balance).
-		SetInterestRate(glAccount.InterestRate).
-		SetNotes(glAccount.Notes).
-		SetIsTaxRelevant(glAccount.IsTaxRelevant).
-		SetIsReconciled(glAccount.IsReconciled)
+	updateOp := tx.GeneralLedgerAccount.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetAccountNumber(entity.AccountNumber).
+		SetAccountType(entity.AccountType).
+		SetCashFlowType(entity.CashFlowType).
+		SetAccountSubType(entity.AccountSubType).
+		SetAccountClass(entity.AccountClass).
+		SetBalance(entity.Balance).
+		SetInterestRate(entity.InterestRate).
+		SetNotes(entity.Notes).
+		SetIsTaxRelevant(entity.IsTaxRelevant).
+		SetIsReconciled(entity.IsReconciled).
+		SetVersion(entity.Version + 1) // Increment the version
 
 	// If the tags are provided, add them to the general ledger account
-	if len(glAccount.TagIDs) > 0 {
+	if len(entity.TagIDs) > 0 {
 		updateOp = updateOp.ClearTags().
-			AddTagIDs(glAccount.TagIDs...)
+			AddTagIDs(entity.TagIDs...)
 	}
 
 	// If the tags are not provided, clear the tags
-	if len(glAccount.TagIDs) == 0 {
+	if len(entity.TagIDs) == 0 {
 		updateOp = updateOp.ClearTags()
 	}
 
 	// Execute the update operation
-	updatedGLAccount, err := updateOp.Save(ctx)
+	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "failed to update entity")
 	}
 
-	return updatedGLAccount, nil
+	return updatedEntity, nil
 }

@@ -63,6 +63,20 @@ func (emc *EquipmentManufactuerCreate) SetNillableUpdatedAt(t *time.Time) *Equip
 	return emc
 }
 
+// SetVersion sets the "version" field.
+func (emc *EquipmentManufactuerCreate) SetVersion(i int) *EquipmentManufactuerCreate {
+	emc.mutation.SetVersion(i)
+	return emc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (emc *EquipmentManufactuerCreate) SetNillableVersion(i *int) *EquipmentManufactuerCreate {
+	if i != nil {
+		emc.SetVersion(*i)
+	}
+	return emc
+}
+
 // SetStatus sets the "status" field.
 func (emc *EquipmentManufactuerCreate) SetStatus(e equipmentmanufactuer.Status) *EquipmentManufactuerCreate {
 	emc.mutation.SetStatus(e)
@@ -164,6 +178,10 @@ func (emc *EquipmentManufactuerCreate) defaults() {
 		v := equipmentmanufactuer.DefaultUpdatedAt()
 		emc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := emc.mutation.Version(); !ok {
+		v := equipmentmanufactuer.DefaultVersion
+		emc.mutation.SetVersion(v)
+	}
 	if _, ok := emc.mutation.Status(); !ok {
 		v := equipmentmanufactuer.DefaultStatus
 		emc.mutation.SetStatus(v)
@@ -187,6 +205,9 @@ func (emc *EquipmentManufactuerCreate) check() error {
 	}
 	if _, ok := emc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "EquipmentManufactuer.updated_at"`)}
+	}
+	if _, ok := emc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "EquipmentManufactuer.version"`)}
 	}
 	if _, ok := emc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "EquipmentManufactuer.status"`)}
@@ -252,6 +273,10 @@ func (emc *EquipmentManufactuerCreate) createSpec() (*EquipmentManufactuer, *sql
 	if value, ok := emc.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := emc.mutation.Version(); ok {
+		_spec.SetField(equipmentmanufactuer.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := emc.mutation.Status(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldStatus, field.TypeEnum, value)

@@ -49,23 +49,7 @@ function TrailerEditForm({
 
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
-    defaultValues: {
-      code: trailer.code,
-      status: trailer.status,
-      equipmentType: trailer.equipmentType,
-      make: trailer.make,
-      model: trailer.model,
-      year: trailer.year,
-      vinNumber: trailer.vinNumber,
-      fleetCode: trailer.fleetCode,
-      licensePlateNumber: trailer.licensePlateNumber,
-      lastInspection: trailer.lastInspection,
-      state: trailer.state,
-      isLeased: trailer.isLeased,
-      registrationNumber: trailer.registrationNumber,
-      registrationState: trailer.registrationState,
-      registrationExpiration: trailer.registrationExpiration,
-    },
+    defaultValues: trailer,
   });
 
   const mutation = useCustomMutation<FormValues>(
@@ -125,7 +109,7 @@ export function TrailerEditDialog({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{trailer && trailer.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {trailer && formatDate(trailer.modified)}
+            Last updated on {trailer && formatDate(trailer.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {trailer && (

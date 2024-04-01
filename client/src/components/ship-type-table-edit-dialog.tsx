@@ -47,11 +47,7 @@ function ShipmentTypeEditForm({
 
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(shipmentTypeSchema),
-    defaultValues: {
-      status: shipmentType.status,
-      code: shipmentType.code,
-      description: shipmentType?.description || "",
-    },
+    defaultValues: shipmentType,
   });
 
   const mutation = useCustomMutation<FormValues>(

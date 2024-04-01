@@ -50,19 +50,7 @@ function GLEditForm({
   const { handleSubmit, control, getValues, setValue } =
     useForm<GLAccountFormValues>({
       resolver: yupResolver(glAccountSchema),
-      defaultValues: {
-        status: glAccount.status,
-        accountNumber: glAccount.accountNumber,
-        accountType: glAccount.accountType,
-        cashFlowType: glAccount.cashFlowType || "",
-        accountSubType: glAccount.accountSubType,
-        accountClassification: glAccount.accountClassification,
-        interestRate: glAccount.interestRate,
-        isReconciled: glAccount.isReconciled,
-        isTaxRelevant: glAccount.isTaxRelevant,
-        notes: glAccount.notes,
-        tagIds: glAccount.tagIds,
-      },
+      defaultValues: glAccount,
     });
 
   const mutation = useCustomMutation<GLAccountFormValues>(

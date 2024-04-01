@@ -35,6 +35,27 @@ func (lcu *LocationCategoryUpdate) SetUpdatedAt(t time.Time) *LocationCategoryUp
 	return lcu
 }
 
+// SetVersion sets the "version" field.
+func (lcu *LocationCategoryUpdate) SetVersion(i int) *LocationCategoryUpdate {
+	lcu.mutation.ResetVersion()
+	lcu.mutation.SetVersion(i)
+	return lcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (lcu *LocationCategoryUpdate) SetNillableVersion(i *int) *LocationCategoryUpdate {
+	if i != nil {
+		lcu.SetVersion(*i)
+	}
+	return lcu
+}
+
+// AddVersion adds i to the "version" field.
+func (lcu *LocationCategoryUpdate) AddVersion(i int) *LocationCategoryUpdate {
+	lcu.mutation.AddVersion(i)
+	return lcu
+}
+
 // SetName sets the "name" field.
 func (lcu *LocationCategoryUpdate) SetName(s string) *LocationCategoryUpdate {
 	lcu.mutation.SetName(s)
@@ -167,6 +188,12 @@ func (lcu *LocationCategoryUpdate) sqlSave(ctx context.Context) (n int, err erro
 	if value, ok := lcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(locationcategory.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := lcu.mutation.Version(); ok {
+		_spec.SetField(locationcategory.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := lcu.mutation.AddedVersion(); ok {
+		_spec.AddField(locationcategory.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := lcu.mutation.Name(); ok {
 		_spec.SetField(locationcategory.FieldName, field.TypeString, value)
 	}
@@ -207,6 +234,27 @@ type LocationCategoryUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (lcuo *LocationCategoryUpdateOne) SetUpdatedAt(t time.Time) *LocationCategoryUpdateOne {
 	lcuo.mutation.SetUpdatedAt(t)
+	return lcuo
+}
+
+// SetVersion sets the "version" field.
+func (lcuo *LocationCategoryUpdateOne) SetVersion(i int) *LocationCategoryUpdateOne {
+	lcuo.mutation.ResetVersion()
+	lcuo.mutation.SetVersion(i)
+	return lcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (lcuo *LocationCategoryUpdateOne) SetNillableVersion(i *int) *LocationCategoryUpdateOne {
+	if i != nil {
+		lcuo.SetVersion(*i)
+	}
+	return lcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (lcuo *LocationCategoryUpdateOne) AddVersion(i int) *LocationCategoryUpdateOne {
+	lcuo.mutation.AddVersion(i)
 	return lcuo
 }
 
@@ -371,6 +419,12 @@ func (lcuo *LocationCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Loca
 	}
 	if value, ok := lcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(locationcategory.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := lcuo.mutation.Version(); ok {
+		_spec.SetField(locationcategory.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := lcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(locationcategory.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := lcuo.mutation.Name(); ok {
 		_spec.SetField(locationcategory.FieldName, field.TypeString, value)

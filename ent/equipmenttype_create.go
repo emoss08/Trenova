@@ -63,6 +63,20 @@ func (etc *EquipmentTypeCreate) SetNillableUpdatedAt(t *time.Time) *EquipmentTyp
 	return etc
 }
 
+// SetVersion sets the "version" field.
+func (etc *EquipmentTypeCreate) SetVersion(i int) *EquipmentTypeCreate {
+	etc.mutation.SetVersion(i)
+	return etc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (etc *EquipmentTypeCreate) SetNillableVersion(i *int) *EquipmentTypeCreate {
+	if i != nil {
+		etc.SetVersion(*i)
+	}
+	return etc
+}
+
 // SetStatus sets the "status" field.
 func (etc *EquipmentTypeCreate) SetStatus(e equipmenttype.Status) *EquipmentTypeCreate {
 	etc.mutation.SetStatus(e)
@@ -318,6 +332,10 @@ func (etc *EquipmentTypeCreate) defaults() {
 		v := equipmenttype.DefaultUpdatedAt()
 		etc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := etc.mutation.Version(); !ok {
+		v := equipmenttype.DefaultVersion
+		etc.mutation.SetVersion(v)
+	}
 	if _, ok := etc.mutation.Status(); !ok {
 		v := equipmenttype.DefaultStatus
 		etc.mutation.SetStatus(v)
@@ -349,6 +367,9 @@ func (etc *EquipmentTypeCreate) check() error {
 	}
 	if _, ok := etc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "EquipmentType.updated_at"`)}
+	}
+	if _, ok := etc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "EquipmentType.version"`)}
 	}
 	if _, ok := etc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "EquipmentType.status"`)}
@@ -425,6 +446,10 @@ func (etc *EquipmentTypeCreate) createSpec() (*EquipmentType, *sqlgraph.CreateSp
 	if value, ok := etc.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmenttype.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := etc.mutation.Version(); ok {
+		_spec.SetField(equipmenttype.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := etc.mutation.Status(); ok {
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)

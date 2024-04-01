@@ -63,6 +63,20 @@ func (hmsc *HazardousMaterialSegregationCreate) SetNillableUpdatedAt(t *time.Tim
 	return hmsc
 }
 
+// SetVersion sets the "version" field.
+func (hmsc *HazardousMaterialSegregationCreate) SetVersion(i int) *HazardousMaterialSegregationCreate {
+	hmsc.mutation.SetVersion(i)
+	return hmsc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmsc *HazardousMaterialSegregationCreate) SetNillableVersion(i *int) *HazardousMaterialSegregationCreate {
+	if i != nil {
+		hmsc.SetVersion(*i)
+	}
+	return hmsc
+}
+
 // SetClassA sets the "class_a" field.
 func (hmsc *HazardousMaterialSegregationCreate) SetClassA(h hazardousmaterialsegregation.ClassA) *HazardousMaterialSegregationCreate {
 	hmsc.mutation.SetClassA(h)
@@ -172,6 +186,10 @@ func (hmsc *HazardousMaterialSegregationCreate) defaults() {
 		v := hazardousmaterialsegregation.DefaultUpdatedAt()
 		hmsc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := hmsc.mutation.Version(); !ok {
+		v := hazardousmaterialsegregation.DefaultVersion
+		hmsc.mutation.SetVersion(v)
+	}
 	if _, ok := hmsc.mutation.ClassA(); !ok {
 		v := hazardousmaterialsegregation.DefaultClassA
 		hmsc.mutation.SetClassA(v)
@@ -203,6 +221,9 @@ func (hmsc *HazardousMaterialSegregationCreate) check() error {
 	}
 	if _, ok := hmsc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "HazardousMaterialSegregation.updated_at"`)}
+	}
+	if _, ok := hmsc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "HazardousMaterialSegregation.version"`)}
 	}
 	if _, ok := hmsc.mutation.ClassA(); !ok {
 		return &ValidationError{Name: "class_a", err: errors.New(`ent: missing required field "HazardousMaterialSegregation.class_a"`)}
@@ -276,6 +297,10 @@ func (hmsc *HazardousMaterialSegregationCreate) createSpec() (*HazardousMaterial
 	if value, ok := hmsc.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := hmsc.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterialsegregation.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := hmsc.mutation.ClassA(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldClassA, field.TypeEnum, value)

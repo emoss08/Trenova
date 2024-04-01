@@ -37,6 +37,27 @@ func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
 	return uu
 }
 
+// SetVersion sets the "version" field.
+func (uu *UserUpdate) SetVersion(i int) *UserUpdate {
+	uu.mutation.ResetVersion()
+	uu.mutation.SetVersion(i)
+	return uu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableVersion(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetVersion(*i)
+	}
+	return uu
+}
+
+// AddVersion adds i to the "version" field.
+func (uu *UserUpdate) AddVersion(i int) *UserUpdate {
+	uu.mutation.AddVersion(i)
+	return uu
+}
+
 // SetStatus sets the "status" field.
 func (uu *UserUpdate) SetStatus(u user.Status) *UserUpdate {
 	uu.mutation.SetStatus(u)
@@ -368,6 +389,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := uu.mutation.Version(); ok {
+		_spec.SetField(user.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := uu.mutation.AddedVersion(); ok {
+		_spec.AddField(user.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := uu.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
 	}
@@ -486,6 +513,27 @@ type UserUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdatedAt(t)
+	return uuo
+}
+
+// SetVersion sets the "version" field.
+func (uuo *UserUpdateOne) SetVersion(i int) *UserUpdateOne {
+	uuo.mutation.ResetVersion()
+	uuo.mutation.SetVersion(i)
+	return uuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableVersion(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetVersion(*i)
+	}
+	return uuo
+}
+
+// AddVersion adds i to the "version" field.
+func (uuo *UserUpdateOne) AddVersion(i int) *UserUpdateOne {
+	uuo.mutation.AddVersion(i)
 	return uuo
 }
 
@@ -849,6 +897,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uuo.mutation.Version(); ok {
+		_spec.SetField(user.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := uuo.mutation.AddedVersion(); ok {
+		_spec.AddField(user.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := uuo.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeEnum, value)

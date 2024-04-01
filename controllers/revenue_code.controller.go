@@ -48,7 +48,7 @@ func GetRevenueCodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	revnueCodes, count, err := services.NewRevenueCodeOps(r.Context()).GetRevenueCodes(limit, offset, orgID, buID)
+	revnueCodes, count, err := services.NewRevenueCodeOps().GetRevenueCodes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -95,7 +95,7 @@ func CreateRevenueCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createRevenueCode, err := services.NewRevenueCodeOps(r.Context()).CreateRevenueCode(newRevenueCode)
+	createRevenueCode, err := services.NewRevenueCodeOps().CreateRevenueCode(r.Context(), newRevenueCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -121,7 +121,7 @@ func UpdateRevenueCode(w http.ResponseWriter, r *http.Request) {
 
 	revenueCodeData.ID = uuid.MustParse(revenueCodeID)
 
-	revenueCode, err := services.NewRevenueCodeOps(r.Context()).UpdateRevenueCode(revenueCodeData)
+	revenueCode, err := services.NewRevenueCodeOps().UpdateRevenueCode(r.Context(), revenueCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

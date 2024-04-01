@@ -48,7 +48,7 @@ func GetHazardousMaterial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hazardousMaterials, count, err := services.NewHazardousMaterialOps(r.Context()).GetHazardousMaterials(limit, offset, orgID, buID)
+	hazardousMaterials, count, err := services.NewHazardousMaterialOps().GetHazardousMaterials(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateHazardousMaterial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdMaterial, err := services.NewHazardousMaterialOps(r.Context()).CreateHazardousMaterial(newHazardousMaterial)
+	createdMaterial, err := services.NewHazardousMaterialOps().CreateHazardousMaterial(r.Context(), newHazardousMaterial)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateHazardousMaterial(w http.ResponseWriter, r *http.Request) {
 
 	hazmatData.ID = uuid.MustParse(hazmatID)
 
-	hazardousMaterial, err := services.NewHazardousMaterialOps(r.Context()).UpdateHazardousMaterial(hazmatData)
+	hazardousMaterial, err := services.NewHazardousMaterialOps().UpdateHazardousMaterial(r.Context(), hazmatData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

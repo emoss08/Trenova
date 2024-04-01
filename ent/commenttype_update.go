@@ -35,6 +35,27 @@ func (ctu *CommentTypeUpdate) SetUpdatedAt(t time.Time) *CommentTypeUpdate {
 	return ctu
 }
 
+// SetVersion sets the "version" field.
+func (ctu *CommentTypeUpdate) SetVersion(i int) *CommentTypeUpdate {
+	ctu.mutation.ResetVersion()
+	ctu.mutation.SetVersion(i)
+	return ctu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctu *CommentTypeUpdate) SetNillableVersion(i *int) *CommentTypeUpdate {
+	if i != nil {
+		ctu.SetVersion(*i)
+	}
+	return ctu
+}
+
+// AddVersion adds i to the "version" field.
+func (ctu *CommentTypeUpdate) AddVersion(i int) *CommentTypeUpdate {
+	ctu.mutation.AddVersion(i)
+	return ctu
+}
+
 // SetStatus sets the "status" field.
 func (ctu *CommentTypeUpdate) SetStatus(c commenttype.Status) *CommentTypeUpdate {
 	ctu.mutation.SetStatus(c)
@@ -185,6 +206,12 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ctu.mutation.UpdatedAt(); ok {
 		_spec.SetField(commenttype.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := ctu.mutation.Version(); ok {
+		_spec.SetField(commenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ctu.mutation.AddedVersion(); ok {
+		_spec.AddField(commenttype.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := ctu.mutation.Status(); ok {
 		_spec.SetField(commenttype.FieldStatus, field.TypeEnum, value)
 	}
@@ -225,6 +252,27 @@ type CommentTypeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (ctuo *CommentTypeUpdateOne) SetUpdatedAt(t time.Time) *CommentTypeUpdateOne {
 	ctuo.mutation.SetUpdatedAt(t)
+	return ctuo
+}
+
+// SetVersion sets the "version" field.
+func (ctuo *CommentTypeUpdateOne) SetVersion(i int) *CommentTypeUpdateOne {
+	ctuo.mutation.ResetVersion()
+	ctuo.mutation.SetVersion(i)
+	return ctuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctuo *CommentTypeUpdateOne) SetNillableVersion(i *int) *CommentTypeUpdateOne {
+	if i != nil {
+		ctuo.SetVersion(*i)
+	}
+	return ctuo
+}
+
+// AddVersion adds i to the "version" field.
+func (ctuo *CommentTypeUpdateOne) AddVersion(i int) *CommentTypeUpdateOne {
+	ctuo.mutation.AddVersion(i)
 	return ctuo
 }
 
@@ -407,6 +455,12 @@ func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentTy
 	}
 	if value, ok := ctuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(commenttype.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := ctuo.mutation.Version(); ok {
+		_spec.SetField(commenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ctuo.mutation.AddedVersion(); ok {
+		_spec.AddField(commenttype.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := ctuo.mutation.Status(); ok {
 		_spec.SetField(commenttype.FieldStatus, field.TypeEnum, value)

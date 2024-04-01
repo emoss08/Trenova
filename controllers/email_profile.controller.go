@@ -48,7 +48,7 @@ func GetEmailProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	emailProfiles, count, err := services.NewEmailProfileOps(r.Context()).GetEmailProfiles(limit, offset, orgID, buID)
+	emailProfiles, count, err := services.NewEmailProfileOps().GetEmailProfiles(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -106,7 +106,7 @@ func CreateEmailProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdEmailProfile, err := services.NewEmailProfileOps(r.Context()).CreateEmailProfile(newEmailProfile)
+	createdEmailProfile, err := services.NewEmailProfileOps().CreateEmailProfile(r.Context(), newEmailProfile)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -143,7 +143,7 @@ func UpdateEmailProfile(w http.ResponseWriter, r *http.Request) {
 
 	emailProfileData.ID = uuid.MustParse(emailProfileID)
 
-	emailProfile, err := services.NewEmailProfileOps(r.Context()).UpdateEmailProfile(emailProfileData)
+	emailProfile, err := services.NewEmailProfileOps().UpdateEmailProfile(r.Context(), emailProfileData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

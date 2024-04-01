@@ -48,7 +48,7 @@ func GetEquipmentManufacturer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	equipmentManufacturers, count, err := services.NewEquipmentManufactuerOps(r.Context()).GetEquipmentManufacturers(limit, offset, orgID, buID)
+	equipmentManufacturers, count, err := services.NewEquipmentManufactuerOps().GetEquipmentManufacturers(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateEquipmentManufacturer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createEquipManu, err := services.NewEquipmentManufactuerOps(r.Context()).CreateEquipmentManufacturer(newEquipManu)
+	createEquipManu, err := services.NewEquipmentManufactuerOps().CreateEquipmentManufacturer(r.Context(), newEquipManu)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateEquipmentManfacturer(w http.ResponseWriter, r *http.Request) {
 
 	equipManuData.ID = uuid.MustParse(equipManuID)
 
-	equipmentManufacturer, err := services.NewEquipmentManufactuerOps(r.Context()).UpdateEquipmentManufacturer(equipManuData)
+	equipmentManufacturer, err := services.NewEquipmentManufactuerOps().UpdateEquipmentManufacturer(r.Context(), equipManuData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

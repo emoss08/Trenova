@@ -25,6 +25,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// FieldWorkerID holds the string denoting the worker_id field in the database.
 	FieldWorkerID = "worker_id"
 	// FieldRace holds the string denoting the race field in the database.
@@ -100,6 +102,7 @@ var Columns = []string{
 	FieldOrganizationID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldVersion,
 	FieldWorkerID,
 	FieldRace,
 	FieldSex,
@@ -139,6 +142,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion int
 	// LicenseNumberValidator is a validator for the "license_number" field. It is called by the builders before save.
 	LicenseNumberValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
@@ -199,6 +204,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
 // ByWorkerID orders the results by the worker_id field.

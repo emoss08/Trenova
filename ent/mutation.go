@@ -121,6 +121,8 @@ type AccessorialChargeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *accessorialcharge.Status
 	code                 *string
 	description          *string
@@ -384,6 +386,62 @@ func (m *AccessorialChargeMutation) OldUpdatedAt(ctx context.Context) (v time.Ti
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *AccessorialChargeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *AccessorialChargeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *AccessorialChargeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the AccessorialCharge entity.
+// If the AccessorialCharge object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccessorialChargeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *AccessorialChargeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *AccessorialChargeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *AccessorialChargeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -723,7 +781,7 @@ func (m *AccessorialChargeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccessorialChargeMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.business_unit != nil {
 		fields = append(fields, accessorialcharge.FieldBusinessUnitID)
 	}
@@ -735,6 +793,9 @@ func (m *AccessorialChargeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, accessorialcharge.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, accessorialcharge.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, accessorialcharge.FieldStatus)
@@ -770,6 +831,8 @@ func (m *AccessorialChargeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case accessorialcharge.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case accessorialcharge.FieldVersion:
+		return m.Version()
 	case accessorialcharge.FieldStatus:
 		return m.Status()
 	case accessorialcharge.FieldCode:
@@ -799,6 +862,8 @@ func (m *AccessorialChargeMutation) OldField(ctx context.Context, name string) (
 		return m.OldCreatedAt(ctx)
 	case accessorialcharge.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case accessorialcharge.FieldVersion:
+		return m.OldVersion(ctx)
 	case accessorialcharge.FieldStatus:
 		return m.OldStatus(ctx)
 	case accessorialcharge.FieldCode:
@@ -847,6 +912,13 @@ func (m *AccessorialChargeMutation) SetField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case accessorialcharge.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case accessorialcharge.FieldStatus:
 		v, ok := value.(accessorialcharge.Status)
@@ -898,6 +970,9 @@ func (m *AccessorialChargeMutation) SetField(name string, value ent.Value) error
 // this mutation.
 func (m *AccessorialChargeMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, accessorialcharge.FieldVersion)
+	}
 	if m.addamount != nil {
 		fields = append(fields, accessorialcharge.FieldAmount)
 	}
@@ -909,6 +984,8 @@ func (m *AccessorialChargeMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *AccessorialChargeMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case accessorialcharge.FieldVersion:
+		return m.AddedVersion()
 	case accessorialcharge.FieldAmount:
 		return m.AddedAmount()
 	}
@@ -920,6 +997,13 @@ func (m *AccessorialChargeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *AccessorialChargeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case accessorialcharge.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case accessorialcharge.FieldAmount:
 		v, ok := value.(float64)
 		if !ok {
@@ -974,6 +1058,9 @@ func (m *AccessorialChargeMutation) ResetField(name string) error {
 		return nil
 	case accessorialcharge.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case accessorialcharge.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case accessorialcharge.FieldStatus:
 		m.ResetStatus()
@@ -5173,6 +5260,8 @@ type ChargeTypeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *chargetype.Status
 	name                 *string
 	description          *string
@@ -5434,6 +5523,62 @@ func (m *ChargeTypeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *ChargeTypeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ChargeTypeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the ChargeType entity.
+// If the ChargeType object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChargeTypeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ChargeTypeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ChargeTypeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ChargeTypeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *ChargeTypeMutation) SetStatus(c chargetype.Status) {
 	m.status = &c
@@ -5643,7 +5788,7 @@ func (m *ChargeTypeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChargeTypeMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, chargetype.FieldBusinessUnitID)
 	}
@@ -5655,6 +5800,9 @@ func (m *ChargeTypeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, chargetype.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, chargetype.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, chargetype.FieldStatus)
@@ -5681,6 +5829,8 @@ func (m *ChargeTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case chargetype.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case chargetype.FieldVersion:
+		return m.Version()
 	case chargetype.FieldStatus:
 		return m.Status()
 	case chargetype.FieldName:
@@ -5704,6 +5854,8 @@ func (m *ChargeTypeMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCreatedAt(ctx)
 	case chargetype.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case chargetype.FieldVersion:
+		return m.OldVersion(ctx)
 	case chargetype.FieldStatus:
 		return m.OldStatus(ctx)
 	case chargetype.FieldName:
@@ -5747,6 +5899,13 @@ func (m *ChargeTypeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case chargetype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case chargetype.FieldStatus:
 		v, ok := value.(chargetype.Status)
 		if !ok {
@@ -5775,13 +5934,21 @@ func (m *ChargeTypeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ChargeTypeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, chargetype.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ChargeTypeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case chargetype.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -5790,6 +5957,13 @@ func (m *ChargeTypeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ChargeTypeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case chargetype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ChargeType numeric field %s", name)
 }
@@ -5837,6 +6011,9 @@ func (m *ChargeTypeMutation) ResetField(name string) error {
 		return nil
 	case chargetype.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case chargetype.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case chargetype.FieldStatus:
 		m.ResetStatus()
@@ -5951,6 +6128,8 @@ type CommentTypeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *commenttype.Status
 	name                 *string
 	severity             *commenttype.Severity
@@ -6213,6 +6392,62 @@ func (m *CommentTypeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *CommentTypeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *CommentTypeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the CommentType entity.
+// If the CommentType object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommentTypeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *CommentTypeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *CommentTypeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *CommentTypeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *CommentTypeMutation) SetStatus(c commenttype.Status) {
 	m.status = &c
@@ -6458,7 +6693,7 @@ func (m *CommentTypeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommentTypeMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.business_unit != nil {
 		fields = append(fields, commenttype.FieldBusinessUnitID)
 	}
@@ -6470,6 +6705,9 @@ func (m *CommentTypeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, commenttype.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, commenttype.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, commenttype.FieldStatus)
@@ -6499,6 +6737,8 @@ func (m *CommentTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case commenttype.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case commenttype.FieldVersion:
+		return m.Version()
 	case commenttype.FieldStatus:
 		return m.Status()
 	case commenttype.FieldName:
@@ -6524,6 +6764,8 @@ func (m *CommentTypeMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCreatedAt(ctx)
 	case commenttype.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case commenttype.FieldVersion:
+		return m.OldVersion(ctx)
 	case commenttype.FieldStatus:
 		return m.OldStatus(ctx)
 	case commenttype.FieldName:
@@ -6569,6 +6811,13 @@ func (m *CommentTypeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case commenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case commenttype.FieldStatus:
 		v, ok := value.(commenttype.Status)
 		if !ok {
@@ -6604,13 +6853,21 @@ func (m *CommentTypeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *CommentTypeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, commenttype.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *CommentTypeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case commenttype.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -6619,6 +6876,13 @@ func (m *CommentTypeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *CommentTypeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case commenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown CommentType numeric field %s", name)
 }
@@ -6666,6 +6930,9 @@ func (m *CommentTypeMutation) ResetField(name string) error {
 		return nil
 	case commenttype.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case commenttype.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case commenttype.FieldStatus:
 		m.ResetStatus()
@@ -6783,6 +7050,8 @@ type CommodityMutation struct {
 	id                        *uuid.UUID
 	created_at                *time.Time
 	updated_at                *time.Time
+	version                   *int
+	addversion                *int
 	status                    *commodity.Status
 	name                      *string
 	is_hazmat                 *bool
@@ -7050,6 +7319,62 @@ func (m *CommodityMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *CommodityMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *CommodityMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *CommodityMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Commodity entity.
+// If the Commodity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommodityMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *CommodityMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *CommodityMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *CommodityMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -7562,7 +7887,7 @@ func (m *CommodityMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CommodityMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.business_unit != nil {
 		fields = append(fields, commodity.FieldBusinessUnitID)
 	}
@@ -7574,6 +7899,9 @@ func (m *CommodityMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, commodity.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, commodity.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, commodity.FieldStatus)
@@ -7615,6 +7943,8 @@ func (m *CommodityMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case commodity.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case commodity.FieldVersion:
+		return m.Version()
 	case commodity.FieldStatus:
 		return m.Status()
 	case commodity.FieldName:
@@ -7648,6 +7978,8 @@ func (m *CommodityMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCreatedAt(ctx)
 	case commodity.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case commodity.FieldVersion:
+		return m.OldVersion(ctx)
 	case commodity.FieldStatus:
 		return m.OldStatus(ctx)
 	case commodity.FieldName:
@@ -7700,6 +8032,13 @@ func (m *CommodityMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case commodity.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case commodity.FieldStatus:
 		v, ok := value.(commodity.Status)
@@ -7765,6 +8104,9 @@ func (m *CommodityMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *CommodityMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, commodity.FieldVersion)
+	}
 	if m.addmin_temp != nil {
 		fields = append(fields, commodity.FieldMinTemp)
 	}
@@ -7779,6 +8121,8 @@ func (m *CommodityMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *CommodityMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case commodity.FieldVersion:
+		return m.AddedVersion()
 	case commodity.FieldMinTemp:
 		return m.AddedMinTemp()
 	case commodity.FieldMaxTemp:
@@ -7792,6 +8136,13 @@ func (m *CommodityMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *CommodityMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case commodity.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case commodity.FieldMinTemp:
 		v, ok := value.(int8)
 		if !ok {
@@ -7877,6 +8228,9 @@ func (m *CommodityMutation) ResetField(name string) error {
 		return nil
 	case commodity.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case commodity.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case commodity.FieldStatus:
 		m.ResetStatus()
@@ -8024,6 +8378,8 @@ type CustomerMutation struct {
 	id                      *uuid.UUID
 	created_at              *time.Time
 	updated_at              *time.Time
+	version                 *int
+	addversion              *int
 	status                  *customer.Status
 	code                    *string
 	name                    *string
@@ -8291,6 +8647,62 @@ func (m *CustomerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err e
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *CustomerMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *CustomerMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *CustomerMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Customer entity.
+// If the Customer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CustomerMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *CustomerMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *CustomerMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *CustomerMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -8781,7 +9193,7 @@ func (m *CustomerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CustomerMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.business_unit != nil {
 		fields = append(fields, customer.FieldBusinessUnitID)
 	}
@@ -8793,6 +9205,9 @@ func (m *CustomerMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, customer.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, customer.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, customer.FieldStatus)
@@ -8840,6 +9255,8 @@ func (m *CustomerMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case customer.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case customer.FieldVersion:
+		return m.Version()
 	case customer.FieldStatus:
 		return m.Status()
 	case customer.FieldCode:
@@ -8877,6 +9294,8 @@ func (m *CustomerMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldCreatedAt(ctx)
 	case customer.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case customer.FieldVersion:
+		return m.OldVersion(ctx)
 	case customer.FieldStatus:
 		return m.OldStatus(ctx)
 	case customer.FieldCode:
@@ -8933,6 +9352,13 @@ func (m *CustomerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case customer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case customer.FieldStatus:
 		v, ok := value.(customer.Status)
@@ -9011,13 +9437,21 @@ func (m *CustomerMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *CustomerMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, customer.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *CustomerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case customer.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -9026,6 +9460,13 @@ func (m *CustomerMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *CustomerMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case customer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Customer numeric field %s", name)
 }
@@ -9073,6 +9514,9 @@ func (m *CustomerMutation) ResetField(name string) error {
 		return nil
 	case customer.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case customer.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case customer.FieldStatus:
 		m.ResetStatus()
@@ -9226,6 +9670,8 @@ type DelayCodeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *delaycode.Status
 	code                 *string
 	description          *string
@@ -9488,6 +9934,62 @@ func (m *DelayCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *DelayCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *DelayCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the DelayCode entity.
+// If the DelayCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DelayCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *DelayCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *DelayCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *DelayCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *DelayCodeMutation) SetStatus(d delaycode.Status) {
 	m.status = &d
@@ -9746,7 +10248,7 @@ func (m *DelayCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DelayCodeMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.business_unit != nil {
 		fields = append(fields, delaycode.FieldBusinessUnitID)
 	}
@@ -9758,6 +10260,9 @@ func (m *DelayCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, delaycode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, delaycode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, delaycode.FieldStatus)
@@ -9787,6 +10292,8 @@ func (m *DelayCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case delaycode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case delaycode.FieldVersion:
+		return m.Version()
 	case delaycode.FieldStatus:
 		return m.Status()
 	case delaycode.FieldCode:
@@ -9812,6 +10319,8 @@ func (m *DelayCodeMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCreatedAt(ctx)
 	case delaycode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case delaycode.FieldVersion:
+		return m.OldVersion(ctx)
 	case delaycode.FieldStatus:
 		return m.OldStatus(ctx)
 	case delaycode.FieldCode:
@@ -9857,6 +10366,13 @@ func (m *DelayCodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case delaycode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case delaycode.FieldStatus:
 		v, ok := value.(delaycode.Status)
 		if !ok {
@@ -9892,13 +10408,21 @@ func (m *DelayCodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *DelayCodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, delaycode.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *DelayCodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case delaycode.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -9907,6 +10431,13 @@ func (m *DelayCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *DelayCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case delaycode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DelayCode numeric field %s", name)
 }
@@ -9960,6 +10491,9 @@ func (m *DelayCodeMutation) ResetField(name string) error {
 		return nil
 	case delaycode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case delaycode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case delaycode.FieldStatus:
 		m.ResetStatus()
@@ -11339,6 +11873,8 @@ type DivisionCodeMutation struct {
 	id                     *uuid.UUID
 	created_at             *time.Time
 	updated_at             *time.Time
+	version                *int
+	addversion             *int
 	status                 *divisioncode.Status
 	code                   *string
 	description            *string
@@ -11604,6 +12140,62 @@ func (m *DivisionCodeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, e
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *DivisionCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *DivisionCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *DivisionCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the DivisionCode entity.
+// If the DivisionCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DivisionCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *DivisionCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *DivisionCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *DivisionCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -12030,7 +12622,7 @@ func (m *DivisionCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DivisionCodeMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.business_unit != nil {
 		fields = append(fields, divisioncode.FieldBusinessUnitID)
 	}
@@ -12042,6 +12634,9 @@ func (m *DivisionCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, divisioncode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, divisioncode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, divisioncode.FieldStatus)
@@ -12077,6 +12672,8 @@ func (m *DivisionCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case divisioncode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case divisioncode.FieldVersion:
+		return m.Version()
 	case divisioncode.FieldStatus:
 		return m.Status()
 	case divisioncode.FieldCode:
@@ -12106,6 +12703,8 @@ func (m *DivisionCodeMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case divisioncode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case divisioncode.FieldVersion:
+		return m.OldVersion(ctx)
 	case divisioncode.FieldStatus:
 		return m.OldStatus(ctx)
 	case divisioncode.FieldCode:
@@ -12154,6 +12753,13 @@ func (m *DivisionCodeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case divisioncode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case divisioncode.FieldStatus:
 		v, ok := value.(divisioncode.Status)
@@ -12204,13 +12810,21 @@ func (m *DivisionCodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *DivisionCodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, divisioncode.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *DivisionCodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case divisioncode.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -12219,6 +12833,13 @@ func (m *DivisionCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *DivisionCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case divisioncode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DivisionCode numeric field %s", name)
 }
@@ -12278,6 +12899,9 @@ func (m *DivisionCodeMutation) ResetField(name string) error {
 		return nil
 	case divisioncode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case divisioncode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case divisioncode.FieldStatus:
 		m.ResetStatus()
@@ -12455,6 +13079,8 @@ type DocumentClassificationMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *documentclassification.Status
 	name                 *string
 	description          *string
@@ -12716,6 +13342,62 @@ func (m *DocumentClassificationMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *DocumentClassificationMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *DocumentClassificationMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *DocumentClassificationMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *DocumentClassificationMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *DocumentClassificationMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *DocumentClassificationMutation) SetStatus(d documentclassification.Status) {
 	m.status = &d
@@ -12925,7 +13607,7 @@ func (m *DocumentClassificationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DocumentClassificationMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, documentclassification.FieldBusinessUnitID)
 	}
@@ -12937,6 +13619,9 @@ func (m *DocumentClassificationMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, documentclassification.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, documentclassification.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, documentclassification.FieldStatus)
@@ -12963,6 +13648,8 @@ func (m *DocumentClassificationMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case documentclassification.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case documentclassification.FieldVersion:
+		return m.Version()
 	case documentclassification.FieldStatus:
 		return m.Status()
 	case documentclassification.FieldName:
@@ -12986,6 +13673,8 @@ func (m *DocumentClassificationMutation) OldField(ctx context.Context, name stri
 		return m.OldCreatedAt(ctx)
 	case documentclassification.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case documentclassification.FieldVersion:
+		return m.OldVersion(ctx)
 	case documentclassification.FieldStatus:
 		return m.OldStatus(ctx)
 	case documentclassification.FieldName:
@@ -13029,6 +13718,13 @@ func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) 
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case documentclassification.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case documentclassification.FieldStatus:
 		v, ok := value.(documentclassification.Status)
 		if !ok {
@@ -13057,13 +13753,21 @@ func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *DocumentClassificationMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, documentclassification.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *DocumentClassificationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case documentclassification.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -13072,6 +13776,13 @@ func (m *DocumentClassificationMutation) AddedField(name string) (ent.Value, boo
 // type.
 func (m *DocumentClassificationMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case documentclassification.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DocumentClassification numeric field %s", name)
 }
@@ -13119,6 +13830,9 @@ func (m *DocumentClassificationMutation) ResetField(name string) error {
 		return nil
 	case documentclassification.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case documentclassification.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case documentclassification.FieldStatus:
 		m.ResetStatus()
@@ -13999,6 +14713,8 @@ type EmailProfileMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	name                 *string
 	email                *string
 	protocol             *emailprofile.Protocol
@@ -14264,6 +14980,62 @@ func (m *EmailProfileMutation) OldUpdatedAt(ctx context.Context) (v time.Time, e
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *EmailProfileMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *EmailProfileMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *EmailProfileMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the EmailProfile entity.
+// If the EmailProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailProfileMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *EmailProfileMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *EmailProfileMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *EmailProfileMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetName sets the "name" field.
@@ -14728,7 +15500,7 @@ func (m *EmailProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EmailProfileMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.business_unit != nil {
 		fields = append(fields, emailprofile.FieldBusinessUnitID)
 	}
@@ -14740,6 +15512,9 @@ func (m *EmailProfileMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, emailprofile.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, emailprofile.FieldVersion)
 	}
 	if m.name != nil {
 		fields = append(fields, emailprofile.FieldName)
@@ -14781,6 +15556,8 @@ func (m *EmailProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case emailprofile.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case emailprofile.FieldVersion:
+		return m.Version()
 	case emailprofile.FieldName:
 		return m.Name()
 	case emailprofile.FieldEmail:
@@ -14814,6 +15591,8 @@ func (m *EmailProfileMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case emailprofile.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case emailprofile.FieldVersion:
+		return m.OldVersion(ctx)
 	case emailprofile.FieldName:
 		return m.OldName(ctx)
 	case emailprofile.FieldEmail:
@@ -14866,6 +15645,13 @@ func (m *EmailProfileMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case emailprofile.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case emailprofile.FieldName:
 		v, ok := value.(string)
@@ -14931,6 +15717,9 @@ func (m *EmailProfileMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *EmailProfileMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, emailprofile.FieldVersion)
+	}
 	if m.addport != nil {
 		fields = append(fields, emailprofile.FieldPort)
 	}
@@ -14942,6 +15731,8 @@ func (m *EmailProfileMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *EmailProfileMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case emailprofile.FieldVersion:
+		return m.AddedVersion()
 	case emailprofile.FieldPort:
 		return m.AddedPort()
 	}
@@ -14953,6 +15744,13 @@ func (m *EmailProfileMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *EmailProfileMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case emailprofile.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case emailprofile.FieldPort:
 		v, ok := value.(int16)
 		if !ok {
@@ -15031,6 +15829,9 @@ func (m *EmailProfileMutation) ResetField(name string) error {
 		return nil
 	case emailprofile.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case emailprofile.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case emailprofile.FieldName:
 		m.ResetName()
@@ -15160,6 +15961,8 @@ type EquipmentManufactuerMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *equipmentmanufactuer.Status
 	name                 *string
 	description          *string
@@ -15421,6 +16224,62 @@ func (m *EquipmentManufactuerMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *EquipmentManufactuerMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *EquipmentManufactuerMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the EquipmentManufactuer entity.
+// If the EquipmentManufactuer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EquipmentManufactuerMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *EquipmentManufactuerMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *EquipmentManufactuerMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *EquipmentManufactuerMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *EquipmentManufactuerMutation) SetStatus(e equipmentmanufactuer.Status) {
 	m.status = &e
@@ -15630,7 +16489,7 @@ func (m *EquipmentManufactuerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EquipmentManufactuerMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, equipmentmanufactuer.FieldBusinessUnitID)
 	}
@@ -15642,6 +16501,9 @@ func (m *EquipmentManufactuerMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, equipmentmanufactuer.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, equipmentmanufactuer.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, equipmentmanufactuer.FieldStatus)
@@ -15668,6 +16530,8 @@ func (m *EquipmentManufactuerMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case equipmentmanufactuer.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case equipmentmanufactuer.FieldVersion:
+		return m.Version()
 	case equipmentmanufactuer.FieldStatus:
 		return m.Status()
 	case equipmentmanufactuer.FieldName:
@@ -15691,6 +16555,8 @@ func (m *EquipmentManufactuerMutation) OldField(ctx context.Context, name string
 		return m.OldCreatedAt(ctx)
 	case equipmentmanufactuer.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case equipmentmanufactuer.FieldVersion:
+		return m.OldVersion(ctx)
 	case equipmentmanufactuer.FieldStatus:
 		return m.OldStatus(ctx)
 	case equipmentmanufactuer.FieldName:
@@ -15734,6 +16600,13 @@ func (m *EquipmentManufactuerMutation) SetField(name string, value ent.Value) er
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case equipmentmanufactuer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case equipmentmanufactuer.FieldStatus:
 		v, ok := value.(equipmentmanufactuer.Status)
 		if !ok {
@@ -15762,13 +16635,21 @@ func (m *EquipmentManufactuerMutation) SetField(name string, value ent.Value) er
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *EquipmentManufactuerMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, equipmentmanufactuer.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *EquipmentManufactuerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case equipmentmanufactuer.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -15777,6 +16658,13 @@ func (m *EquipmentManufactuerMutation) AddedField(name string) (ent.Value, bool)
 // type.
 func (m *EquipmentManufactuerMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case equipmentmanufactuer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown EquipmentManufactuer numeric field %s", name)
 }
@@ -15824,6 +16712,9 @@ func (m *EquipmentManufactuerMutation) ResetField(name string) error {
 		return nil
 	case equipmentmanufactuer.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case equipmentmanufactuer.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case equipmentmanufactuer.FieldStatus:
 		m.ResetStatus()
@@ -15938,6 +16829,8 @@ type EquipmentTypeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *equipmenttype.Status
 	name                 *string
 	description          *string
@@ -16216,6 +17109,62 @@ func (m *EquipmentTypeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *EquipmentTypeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *EquipmentTypeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *EquipmentTypeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the EquipmentType entity.
+// If the EquipmentType object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EquipmentTypeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *EquipmentTypeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *EquipmentTypeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *EquipmentTypeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -17108,7 +18057,7 @@ func (m *EquipmentTypeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EquipmentTypeMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.business_unit != nil {
 		fields = append(fields, equipmenttype.FieldBusinessUnitID)
 	}
@@ -17120,6 +18069,9 @@ func (m *EquipmentTypeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, equipmenttype.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, equipmenttype.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, equipmenttype.FieldStatus)
@@ -17179,6 +18131,8 @@ func (m *EquipmentTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case equipmenttype.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case equipmenttype.FieldVersion:
+		return m.Version()
 	case equipmenttype.FieldStatus:
 		return m.Status()
 	case equipmenttype.FieldName:
@@ -17224,6 +18178,8 @@ func (m *EquipmentTypeMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCreatedAt(ctx)
 	case equipmenttype.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case equipmenttype.FieldVersion:
+		return m.OldVersion(ctx)
 	case equipmenttype.FieldStatus:
 		return m.OldStatus(ctx)
 	case equipmenttype.FieldName:
@@ -17288,6 +18244,13 @@ func (m *EquipmentTypeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case equipmenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case equipmenttype.FieldStatus:
 		v, ok := value.(equipmenttype.Status)
@@ -17395,6 +18358,9 @@ func (m *EquipmentTypeMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *EquipmentTypeMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, equipmenttype.FieldVersion)
+	}
 	if m.addcost_per_mile != nil {
 		fields = append(fields, equipmenttype.FieldCostPerMile)
 	}
@@ -17427,6 +18393,8 @@ func (m *EquipmentTypeMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *EquipmentTypeMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case equipmenttype.FieldVersion:
+		return m.AddedVersion()
 	case equipmenttype.FieldCostPerMile:
 		return m.AddedCostPerMile()
 	case equipmenttype.FieldFixedCost:
@@ -17452,6 +18420,13 @@ func (m *EquipmentTypeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *EquipmentTypeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case equipmenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case equipmenttype.FieldCostPerMile:
 		v, ok := value.(float64)
 		if !ok {
@@ -17609,6 +18584,9 @@ func (m *EquipmentTypeMutation) ResetField(name string) error {
 		return nil
 	case equipmenttype.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case equipmenttype.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case equipmenttype.FieldStatus:
 		m.ResetStatus()
@@ -18835,6 +19813,8 @@ type FleetCodeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *fleetcode.Status
 	code                 *string
 	description          *string
@@ -19102,6 +20082,62 @@ func (m *FleetCodeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *FleetCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *FleetCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *FleetCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the FleetCode entity.
+// If the FleetCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FleetCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *FleetCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *FleetCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *FleetCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -19599,7 +20635,7 @@ func (m *FleetCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FleetCodeMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.business_unit != nil {
 		fields = append(fields, fleetcode.FieldBusinessUnitID)
 	}
@@ -19611,6 +20647,9 @@ func (m *FleetCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, fleetcode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, fleetcode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, fleetcode.FieldStatus)
@@ -19649,6 +20688,8 @@ func (m *FleetCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case fleetcode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case fleetcode.FieldVersion:
+		return m.Version()
 	case fleetcode.FieldStatus:
 		return m.Status()
 	case fleetcode.FieldCode:
@@ -19680,6 +20721,8 @@ func (m *FleetCodeMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCreatedAt(ctx)
 	case fleetcode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case fleetcode.FieldVersion:
+		return m.OldVersion(ctx)
 	case fleetcode.FieldStatus:
 		return m.OldStatus(ctx)
 	case fleetcode.FieldCode:
@@ -19730,6 +20773,13 @@ func (m *FleetCodeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case fleetcode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case fleetcode.FieldStatus:
 		v, ok := value.(fleetcode.Status)
@@ -19788,6 +20838,9 @@ func (m *FleetCodeMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *FleetCodeMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, fleetcode.FieldVersion)
+	}
 	if m.addrevenue_goal != nil {
 		fields = append(fields, fleetcode.FieldRevenueGoal)
 	}
@@ -19805,6 +20858,8 @@ func (m *FleetCodeMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *FleetCodeMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case fleetcode.FieldVersion:
+		return m.AddedVersion()
 	case fleetcode.FieldRevenueGoal:
 		return m.AddedRevenueGoal()
 	case fleetcode.FieldDeadheadGoal:
@@ -19820,6 +20875,13 @@ func (m *FleetCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *FleetCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case fleetcode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case fleetcode.FieldRevenueGoal:
 		v, ok := value.(float64)
 		if !ok {
@@ -19912,6 +20974,9 @@ func (m *FleetCodeMutation) ResetField(name string) error {
 		return nil
 	case fleetcode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case fleetcode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case fleetcode.FieldStatus:
 		m.ResetStatus()
@@ -20056,6 +21121,8 @@ type GeneralLedgerAccountMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *generalledgeraccount.Status
 	account_number       *string
 	account_type         *generalledgeraccount.AccountType
@@ -20330,6 +21397,62 @@ func (m *GeneralLedgerAccountMutation) OldUpdatedAt(ctx context.Context) (v time
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *GeneralLedgerAccountMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *GeneralLedgerAccountMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *GeneralLedgerAccountMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the GeneralLedgerAccount entity.
+// If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GeneralLedgerAccountMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *GeneralLedgerAccountMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *GeneralLedgerAccountMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *GeneralLedgerAccountMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -21075,7 +22198,7 @@ func (m *GeneralLedgerAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GeneralLedgerAccountMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.business_unit != nil {
 		fields = append(fields, generalledgeraccount.FieldBusinessUnitID)
 	}
@@ -21087,6 +22210,9 @@ func (m *GeneralLedgerAccountMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, generalledgeraccount.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, generalledgeraccount.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, generalledgeraccount.FieldStatus)
@@ -21143,6 +22269,8 @@ func (m *GeneralLedgerAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case generalledgeraccount.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case generalledgeraccount.FieldVersion:
+		return m.Version()
 	case generalledgeraccount.FieldStatus:
 		return m.Status()
 	case generalledgeraccount.FieldAccountNumber:
@@ -21186,6 +22314,8 @@ func (m *GeneralLedgerAccountMutation) OldField(ctx context.Context, name string
 		return m.OldCreatedAt(ctx)
 	case generalledgeraccount.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case generalledgeraccount.FieldVersion:
+		return m.OldVersion(ctx)
 	case generalledgeraccount.FieldStatus:
 		return m.OldStatus(ctx)
 	case generalledgeraccount.FieldAccountNumber:
@@ -21248,6 +22378,13 @@ func (m *GeneralLedgerAccountMutation) SetField(name string, value ent.Value) er
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case generalledgeraccount.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case generalledgeraccount.FieldStatus:
 		v, ok := value.(generalledgeraccount.Status)
@@ -21348,6 +22485,9 @@ func (m *GeneralLedgerAccountMutation) SetField(name string, value ent.Value) er
 // this mutation.
 func (m *GeneralLedgerAccountMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, generalledgeraccount.FieldVersion)
+	}
 	if m.addbalance != nil {
 		fields = append(fields, generalledgeraccount.FieldBalance)
 	}
@@ -21362,6 +22502,8 @@ func (m *GeneralLedgerAccountMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *GeneralLedgerAccountMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case generalledgeraccount.FieldVersion:
+		return m.AddedVersion()
 	case generalledgeraccount.FieldBalance:
 		return m.AddedBalance()
 	case generalledgeraccount.FieldInterestRate:
@@ -21375,6 +22517,13 @@ func (m *GeneralLedgerAccountMutation) AddedField(name string) (ent.Value, bool)
 // type.
 func (m *GeneralLedgerAccountMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case generalledgeraccount.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case generalledgeraccount.FieldBalance:
 		v, ok := value.(float64)
 		if !ok {
@@ -21472,6 +22621,9 @@ func (m *GeneralLedgerAccountMutation) ResetField(name string) error {
 		return nil
 	case generalledgeraccount.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case generalledgeraccount.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case generalledgeraccount.FieldStatus:
 		m.ResetStatus()
@@ -22480,6 +23632,8 @@ type HazardousMaterialMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *hazardousmaterial.Status
 	name                 *string
 	hazard_class         *hazardousmaterial.HazardClass
@@ -22743,6 +23897,62 @@ func (m *HazardousMaterialMutation) OldUpdatedAt(ctx context.Context) (v time.Ti
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *HazardousMaterialMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *HazardousMaterialMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *HazardousMaterialMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the HazardousMaterial entity.
+// If the HazardousMaterial object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *HazardousMaterialMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *HazardousMaterialMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *HazardousMaterialMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -23137,7 +24347,7 @@ func (m *HazardousMaterialMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *HazardousMaterialMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.business_unit != nil {
 		fields = append(fields, hazardousmaterial.FieldBusinessUnitID)
 	}
@@ -23149,6 +24359,9 @@ func (m *HazardousMaterialMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, hazardousmaterial.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, hazardousmaterial.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, hazardousmaterial.FieldStatus)
@@ -23187,6 +24400,8 @@ func (m *HazardousMaterialMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case hazardousmaterial.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case hazardousmaterial.FieldVersion:
+		return m.Version()
 	case hazardousmaterial.FieldStatus:
 		return m.Status()
 	case hazardousmaterial.FieldName:
@@ -23218,6 +24433,8 @@ func (m *HazardousMaterialMutation) OldField(ctx context.Context, name string) (
 		return m.OldCreatedAt(ctx)
 	case hazardousmaterial.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case hazardousmaterial.FieldVersion:
+		return m.OldVersion(ctx)
 	case hazardousmaterial.FieldStatus:
 		return m.OldStatus(ctx)
 	case hazardousmaterial.FieldName:
@@ -23268,6 +24485,13 @@ func (m *HazardousMaterialMutation) SetField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case hazardousmaterial.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case hazardousmaterial.FieldStatus:
 		v, ok := value.(hazardousmaterial.Status)
@@ -23325,13 +24549,21 @@ func (m *HazardousMaterialMutation) SetField(name string, value ent.Value) error
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *HazardousMaterialMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, hazardousmaterial.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *HazardousMaterialMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case hazardousmaterial.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -23340,6 +24572,13 @@ func (m *HazardousMaterialMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *HazardousMaterialMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case hazardousmaterial.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown HazardousMaterial numeric field %s", name)
 }
@@ -23405,6 +24644,9 @@ func (m *HazardousMaterialMutation) ResetField(name string) error {
 		return nil
 	case hazardousmaterial.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case hazardousmaterial.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case hazardousmaterial.FieldStatus:
 		m.ResetStatus()
@@ -23531,6 +24773,8 @@ type HazardousMaterialSegregationMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	class_a              *hazardousmaterialsegregation.ClassA
 	class_b              *hazardousmaterialsegregation.ClassB
 	segregation_type     *hazardousmaterialsegregation.SegregationType
@@ -23792,6 +25036,62 @@ func (m *HazardousMaterialSegregationMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *HazardousMaterialSegregationMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *HazardousMaterialSegregationMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the HazardousMaterialSegregation entity.
+// If the HazardousMaterialSegregation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HazardousMaterialSegregationMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *HazardousMaterialSegregationMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *HazardousMaterialSegregationMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *HazardousMaterialSegregationMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetClassA sets the "class_a" field.
 func (m *HazardousMaterialSegregationMutation) SetClassA(h hazardousmaterialsegregation.ClassA) {
 	m.class_a = &h
@@ -23988,7 +25288,7 @@ func (m *HazardousMaterialSegregationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *HazardousMaterialSegregationMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, hazardousmaterialsegregation.FieldBusinessUnitID)
 	}
@@ -24000,6 +25300,9 @@ func (m *HazardousMaterialSegregationMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, hazardousmaterialsegregation.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldVersion)
 	}
 	if m.class_a != nil {
 		fields = append(fields, hazardousmaterialsegregation.FieldClassA)
@@ -24026,6 +25329,8 @@ func (m *HazardousMaterialSegregationMutation) Field(name string) (ent.Value, bo
 		return m.CreatedAt()
 	case hazardousmaterialsegregation.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case hazardousmaterialsegregation.FieldVersion:
+		return m.Version()
 	case hazardousmaterialsegregation.FieldClassA:
 		return m.ClassA()
 	case hazardousmaterialsegregation.FieldClassB:
@@ -24049,6 +25354,8 @@ func (m *HazardousMaterialSegregationMutation) OldField(ctx context.Context, nam
 		return m.OldCreatedAt(ctx)
 	case hazardousmaterialsegregation.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case hazardousmaterialsegregation.FieldVersion:
+		return m.OldVersion(ctx)
 	case hazardousmaterialsegregation.FieldClassA:
 		return m.OldClassA(ctx)
 	case hazardousmaterialsegregation.FieldClassB:
@@ -24092,6 +25399,13 @@ func (m *HazardousMaterialSegregationMutation) SetField(name string, value ent.V
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case hazardousmaterialsegregation.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case hazardousmaterialsegregation.FieldClassA:
 		v, ok := value.(hazardousmaterialsegregation.ClassA)
 		if !ok {
@@ -24120,13 +25434,21 @@ func (m *HazardousMaterialSegregationMutation) SetField(name string, value ent.V
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *HazardousMaterialSegregationMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, hazardousmaterialsegregation.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *HazardousMaterialSegregationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case hazardousmaterialsegregation.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -24135,6 +25457,13 @@ func (m *HazardousMaterialSegregationMutation) AddedField(name string) (ent.Valu
 // type.
 func (m *HazardousMaterialSegregationMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case hazardousmaterialsegregation.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown HazardousMaterialSegregation numeric field %s", name)
 }
@@ -24173,6 +25502,9 @@ func (m *HazardousMaterialSegregationMutation) ResetField(name string) error {
 		return nil
 	case hazardousmaterialsegregation.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case hazardousmaterialsegregation.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case hazardousmaterialsegregation.FieldClassA:
 		m.ResetClassA()
@@ -25522,6 +26854,8 @@ type LocationCategoryMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	name                 *string
 	description          *string
 	color                *string
@@ -25783,6 +27117,62 @@ func (m *LocationCategoryMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *LocationCategoryMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *LocationCategoryMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the LocationCategory entity.
+// If the LocationCategory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LocationCategoryMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *LocationCategoryMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *LocationCategoryMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *LocationCategoryMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetName sets the "name" field.
 func (m *LocationCategoryMutation) SetName(s string) {
 	m.name = &s
@@ -26005,7 +27395,7 @@ func (m *LocationCategoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LocationCategoryMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, locationcategory.FieldBusinessUnitID)
 	}
@@ -26017,6 +27407,9 @@ func (m *LocationCategoryMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, locationcategory.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, locationcategory.FieldVersion)
 	}
 	if m.name != nil {
 		fields = append(fields, locationcategory.FieldName)
@@ -26043,6 +27436,8 @@ func (m *LocationCategoryMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case locationcategory.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case locationcategory.FieldVersion:
+		return m.Version()
 	case locationcategory.FieldName:
 		return m.Name()
 	case locationcategory.FieldDescription:
@@ -26066,6 +27461,8 @@ func (m *LocationCategoryMutation) OldField(ctx context.Context, name string) (e
 		return m.OldCreatedAt(ctx)
 	case locationcategory.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case locationcategory.FieldVersion:
+		return m.OldVersion(ctx)
 	case locationcategory.FieldName:
 		return m.OldName(ctx)
 	case locationcategory.FieldDescription:
@@ -26109,6 +27506,13 @@ func (m *LocationCategoryMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case locationcategory.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case locationcategory.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -26137,13 +27541,21 @@ func (m *LocationCategoryMutation) SetField(name string, value ent.Value) error 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *LocationCategoryMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, locationcategory.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *LocationCategoryMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case locationcategory.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -26152,6 +27564,13 @@ func (m *LocationCategoryMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *LocationCategoryMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case locationcategory.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown LocationCategory numeric field %s", name)
 }
@@ -26205,6 +27624,9 @@ func (m *LocationCategoryMutation) ResetField(name string) error {
 		return nil
 	case locationcategory.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case locationcategory.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case locationcategory.FieldName:
 		m.ResetName()
@@ -27690,6 +29112,8 @@ type QualifierCodeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *qualifiercode.Status
 	code                 *string
 	description          *string
@@ -27951,6 +29375,62 @@ func (m *QualifierCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *QualifierCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *QualifierCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the QualifierCode entity.
+// If the QualifierCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QualifierCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *QualifierCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *QualifierCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *QualifierCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *QualifierCodeMutation) SetStatus(q qualifiercode.Status) {
 	m.status = &q
@@ -28147,7 +29627,7 @@ func (m *QualifierCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *QualifierCodeMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, qualifiercode.FieldBusinessUnitID)
 	}
@@ -28159,6 +29639,9 @@ func (m *QualifierCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, qualifiercode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, qualifiercode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, qualifiercode.FieldStatus)
@@ -28185,6 +29668,8 @@ func (m *QualifierCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case qualifiercode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case qualifiercode.FieldVersion:
+		return m.Version()
 	case qualifiercode.FieldStatus:
 		return m.Status()
 	case qualifiercode.FieldCode:
@@ -28208,6 +29693,8 @@ func (m *QualifierCodeMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCreatedAt(ctx)
 	case qualifiercode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case qualifiercode.FieldVersion:
+		return m.OldVersion(ctx)
 	case qualifiercode.FieldStatus:
 		return m.OldStatus(ctx)
 	case qualifiercode.FieldCode:
@@ -28251,6 +29738,13 @@ func (m *QualifierCodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case qualifiercode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case qualifiercode.FieldStatus:
 		v, ok := value.(qualifiercode.Status)
 		if !ok {
@@ -28279,13 +29773,21 @@ func (m *QualifierCodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *QualifierCodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, qualifiercode.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *QualifierCodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case qualifiercode.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -28294,6 +29796,13 @@ func (m *QualifierCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *QualifierCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case qualifiercode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown QualifierCode numeric field %s", name)
 }
@@ -28332,6 +29841,9 @@ func (m *QualifierCodeMutation) ResetField(name string) error {
 		return nil
 	case qualifiercode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case qualifiercode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case qualifiercode.FieldStatus:
 		m.ResetStatus()
@@ -28446,6 +29958,8 @@ type ReasonCodeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *reasoncode.Status
 	code                 *string
 	code_type            *reasoncode.CodeType
@@ -28708,6 +30222,62 @@ func (m *ReasonCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *ReasonCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ReasonCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the ReasonCode entity.
+// If the ReasonCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReasonCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ReasonCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ReasonCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ReasonCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *ReasonCodeMutation) SetStatus(r reasoncode.Status) {
 	m.status = &r
@@ -28953,7 +30523,7 @@ func (m *ReasonCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReasonCodeMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.business_unit != nil {
 		fields = append(fields, reasoncode.FieldBusinessUnitID)
 	}
@@ -28965,6 +30535,9 @@ func (m *ReasonCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, reasoncode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, reasoncode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, reasoncode.FieldStatus)
@@ -28994,6 +30567,8 @@ func (m *ReasonCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case reasoncode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case reasoncode.FieldVersion:
+		return m.Version()
 	case reasoncode.FieldStatus:
 		return m.Status()
 	case reasoncode.FieldCode:
@@ -29019,6 +30594,8 @@ func (m *ReasonCodeMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCreatedAt(ctx)
 	case reasoncode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case reasoncode.FieldVersion:
+		return m.OldVersion(ctx)
 	case reasoncode.FieldStatus:
 		return m.OldStatus(ctx)
 	case reasoncode.FieldCode:
@@ -29064,6 +30641,13 @@ func (m *ReasonCodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case reasoncode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case reasoncode.FieldStatus:
 		v, ok := value.(reasoncode.Status)
 		if !ok {
@@ -29099,13 +30683,21 @@ func (m *ReasonCodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ReasonCodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, reasoncode.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ReasonCodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case reasoncode.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -29114,6 +30706,13 @@ func (m *ReasonCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ReasonCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case reasoncode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ReasonCode numeric field %s", name)
 }
@@ -29161,6 +30760,9 @@ func (m *ReasonCodeMutation) ResetField(name string) error {
 		return nil
 	case reasoncode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case reasoncode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case reasoncode.FieldStatus:
 		m.ResetStatus()
@@ -29278,6 +30880,8 @@ type RevenueCodeMutation struct {
 	id                     *uuid.UUID
 	created_at             *time.Time
 	updated_at             *time.Time
+	version                *int
+	addversion             *int
 	status                 *revenuecode.Status
 	code                   *string
 	description            *string
@@ -29541,6 +31145,62 @@ func (m *RevenueCodeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, er
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *RevenueCodeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *RevenueCodeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *RevenueCodeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the RevenueCode entity.
+// If the RevenueCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RevenueCodeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *RevenueCodeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *RevenueCodeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *RevenueCodeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -29891,7 +31551,7 @@ func (m *RevenueCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RevenueCodeMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.business_unit != nil {
 		fields = append(fields, revenuecode.FieldBusinessUnitID)
 	}
@@ -29903,6 +31563,9 @@ func (m *RevenueCodeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, revenuecode.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, revenuecode.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, revenuecode.FieldStatus)
@@ -29935,6 +31598,8 @@ func (m *RevenueCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case revenuecode.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case revenuecode.FieldVersion:
+		return m.Version()
 	case revenuecode.FieldStatus:
 		return m.Status()
 	case revenuecode.FieldCode:
@@ -29962,6 +31627,8 @@ func (m *RevenueCodeMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCreatedAt(ctx)
 	case revenuecode.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case revenuecode.FieldVersion:
+		return m.OldVersion(ctx)
 	case revenuecode.FieldStatus:
 		return m.OldStatus(ctx)
 	case revenuecode.FieldCode:
@@ -30009,6 +31676,13 @@ func (m *RevenueCodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case revenuecode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case revenuecode.FieldStatus:
 		v, ok := value.(revenuecode.Status)
 		if !ok {
@@ -30051,13 +31725,21 @@ func (m *RevenueCodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *RevenueCodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, revenuecode.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *RevenueCodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case revenuecode.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -30066,6 +31748,13 @@ func (m *RevenueCodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *RevenueCodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case revenuecode.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown RevenueCode numeric field %s", name)
 }
@@ -30119,6 +31808,9 @@ func (m *RevenueCodeMutation) ResetField(name string) error {
 		return nil
 	case revenuecode.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case revenuecode.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case revenuecode.FieldStatus:
 		m.ResetStatus()
@@ -30949,6 +32641,8 @@ type ServiceTypeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *servicetype.Status
 	code                 *string
 	description          *string
@@ -31210,6 +32904,62 @@ func (m *ServiceTypeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *ServiceTypeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ServiceTypeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the ServiceType entity.
+// If the ServiceType object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceTypeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ServiceTypeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ServiceTypeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ServiceTypeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *ServiceTypeMutation) SetStatus(s servicetype.Status) {
 	m.status = &s
@@ -31419,7 +33169,7 @@ func (m *ServiceTypeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceTypeMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, servicetype.FieldBusinessUnitID)
 	}
@@ -31431,6 +33181,9 @@ func (m *ServiceTypeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, servicetype.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, servicetype.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, servicetype.FieldStatus)
@@ -31457,6 +33210,8 @@ func (m *ServiceTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case servicetype.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case servicetype.FieldVersion:
+		return m.Version()
 	case servicetype.FieldStatus:
 		return m.Status()
 	case servicetype.FieldCode:
@@ -31480,6 +33235,8 @@ func (m *ServiceTypeMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCreatedAt(ctx)
 	case servicetype.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case servicetype.FieldVersion:
+		return m.OldVersion(ctx)
 	case servicetype.FieldStatus:
 		return m.OldStatus(ctx)
 	case servicetype.FieldCode:
@@ -31523,6 +33280,13 @@ func (m *ServiceTypeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case servicetype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case servicetype.FieldStatus:
 		v, ok := value.(servicetype.Status)
 		if !ok {
@@ -31551,13 +33315,21 @@ func (m *ServiceTypeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ServiceTypeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, servicetype.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ServiceTypeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case servicetype.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -31566,6 +33338,13 @@ func (m *ServiceTypeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ServiceTypeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case servicetype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceType numeric field %s", name)
 }
@@ -31613,6 +33392,9 @@ func (m *ServiceTypeMutation) ResetField(name string) error {
 		return nil
 	case servicetype.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case servicetype.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case servicetype.FieldStatus:
 		m.ResetStatus()
@@ -33381,6 +35163,8 @@ type ShipmentTypeMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *shipmenttype.Status
 	code                 *string
 	description          *string
@@ -33642,6 +35426,62 @@ func (m *ShipmentTypeMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *ShipmentTypeMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ShipmentTypeMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the ShipmentType entity.
+// If the ShipmentType object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentTypeMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ShipmentTypeMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ShipmentTypeMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ShipmentTypeMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *ShipmentTypeMutation) SetStatus(s shipmenttype.Status) {
 	m.status = &s
@@ -33851,7 +35691,7 @@ func (m *ShipmentTypeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ShipmentTypeMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, shipmenttype.FieldBusinessUnitID)
 	}
@@ -33863,6 +35703,9 @@ func (m *ShipmentTypeMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, shipmenttype.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, shipmenttype.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, shipmenttype.FieldStatus)
@@ -33889,6 +35732,8 @@ func (m *ShipmentTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case shipmenttype.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case shipmenttype.FieldVersion:
+		return m.Version()
 	case shipmenttype.FieldStatus:
 		return m.Status()
 	case shipmenttype.FieldCode:
@@ -33912,6 +35757,8 @@ func (m *ShipmentTypeMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case shipmenttype.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case shipmenttype.FieldVersion:
+		return m.OldVersion(ctx)
 	case shipmenttype.FieldStatus:
 		return m.OldStatus(ctx)
 	case shipmenttype.FieldCode:
@@ -33955,6 +35802,13 @@ func (m *ShipmentTypeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case shipmenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case shipmenttype.FieldStatus:
 		v, ok := value.(shipmenttype.Status)
 		if !ok {
@@ -33983,13 +35837,21 @@ func (m *ShipmentTypeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ShipmentTypeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, shipmenttype.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ShipmentTypeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case shipmenttype.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -33998,6 +35860,13 @@ func (m *ShipmentTypeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ShipmentTypeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case shipmenttype.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ShipmentType numeric field %s", name)
 }
@@ -34045,6 +35914,9 @@ func (m *ShipmentTypeMutation) ResetField(name string) error {
 		return nil
 	case shipmenttype.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case shipmenttype.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case shipmenttype.FieldStatus:
 		m.ResetStatus()
@@ -34159,6 +36031,8 @@ type TableChangeAlertMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	status               *tablechangealert.Status
 	name                 *string
 	database_action      *tablechangealert.DatabaseAction
@@ -34429,6 +36303,62 @@ func (m *TableChangeAlertMutation) OldUpdatedAt(ctx context.Context) (v time.Tim
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *TableChangeAlertMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *TableChangeAlertMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *TableChangeAlertMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *TableChangeAlertMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *TableChangeAlertMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *TableChangeAlertMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -35153,7 +37083,7 @@ func (m *TableChangeAlertMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TableChangeAlertMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.business_unit != nil {
 		fields = append(fields, tablechangealert.FieldBusinessUnitID)
 	}
@@ -35165,6 +37095,9 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, tablechangealert.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, tablechangealert.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, tablechangealert.FieldStatus)
@@ -35224,6 +37157,8 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case tablechangealert.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case tablechangealert.FieldVersion:
+		return m.Version()
 	case tablechangealert.FieldStatus:
 		return m.Status()
 	case tablechangealert.FieldName:
@@ -35269,6 +37204,8 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldCreatedAt(ctx)
 	case tablechangealert.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case tablechangealert.FieldVersion:
+		return m.OldVersion(ctx)
 	case tablechangealert.FieldStatus:
 		return m.OldStatus(ctx)
 	case tablechangealert.FieldName:
@@ -35333,6 +37270,13 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case tablechangealert.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case tablechangealert.FieldStatus:
 		v, ok := value.(tablechangealert.Status)
@@ -35439,13 +37383,21 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *TableChangeAlertMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, tablechangealert.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *TableChangeAlertMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case tablechangealert.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -35454,6 +37406,13 @@ func (m *TableChangeAlertMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TableChangeAlertMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case tablechangealert.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TableChangeAlert numeric field %s", name)
 }
@@ -35555,6 +37514,9 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 		return nil
 	case tablechangealert.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case tablechangealert.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case tablechangealert.FieldStatus:
 		m.ResetStatus()
@@ -35702,6 +37664,8 @@ type TagMutation struct {
 	id                            *uuid.UUID
 	created_at                    *time.Time
 	updated_at                    *time.Time
+	version                       *int
+	addversion                    *int
 	name                          *string
 	description                   *string
 	color                         *string
@@ -35964,6 +37928,62 @@ func (m *TagMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error)
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *TagMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *TagMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *TagMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Tag entity.
+// If the Tag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TagMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *TagMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *TagMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *TagMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetName sets the "name" field.
@@ -36242,7 +38262,7 @@ func (m *TagMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TagMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, tag.FieldBusinessUnitID)
 	}
@@ -36254,6 +38274,9 @@ func (m *TagMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, tag.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, tag.FieldVersion)
 	}
 	if m.name != nil {
 		fields = append(fields, tag.FieldName)
@@ -36280,6 +38303,8 @@ func (m *TagMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case tag.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case tag.FieldVersion:
+		return m.Version()
 	case tag.FieldName:
 		return m.Name()
 	case tag.FieldDescription:
@@ -36303,6 +38328,8 @@ func (m *TagMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldCreatedAt(ctx)
 	case tag.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case tag.FieldVersion:
+		return m.OldVersion(ctx)
 	case tag.FieldName:
 		return m.OldName(ctx)
 	case tag.FieldDescription:
@@ -36346,6 +38373,13 @@ func (m *TagMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case tag.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case tag.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -36374,13 +38408,21 @@ func (m *TagMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *TagMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, tag.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *TagMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case tag.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -36389,6 +38431,13 @@ func (m *TagMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TagMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case tag.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Tag numeric field %s", name)
 }
@@ -36442,6 +38491,9 @@ func (m *TagMutation) ResetField(name string) error {
 		return nil
 	case tag.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case tag.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case tag.FieldName:
 		m.ResetName()
@@ -36584,6 +38636,8 @@ type TractorMutation struct {
 	id                            *uuid.UUID
 	created_at                    *time.Time
 	updated_at                    *time.Time
+	version                       *int
+	addversion                    *int
 	code                          *string
 	status                        *tractor.Status
 	license_plate_number          *string
@@ -36861,6 +38915,62 @@ func (m *TractorMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err er
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *TractorMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *TractorMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *TractorMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Tractor entity.
+// If the Tractor object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TractorMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *TractorMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *TractorMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *TractorMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetCode sets the "code" field.
@@ -37755,7 +39865,7 @@ func (m *TractorMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TractorMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.business_unit != nil {
 		fields = append(fields, tractor.FieldBusinessUnitID)
 	}
@@ -37767,6 +39877,9 @@ func (m *TractorMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, tractor.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, tractor.FieldVersion)
 	}
 	if m.code != nil {
 		fields = append(fields, tractor.FieldCode)
@@ -37826,6 +39939,8 @@ func (m *TractorMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case tractor.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case tractor.FieldVersion:
+		return m.Version()
 	case tractor.FieldCode:
 		return m.Code()
 	case tractor.FieldStatus:
@@ -37871,6 +39986,8 @@ func (m *TractorMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldCreatedAt(ctx)
 	case tractor.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case tractor.FieldVersion:
+		return m.OldVersion(ctx)
 	case tractor.FieldCode:
 		return m.OldCode(ctx)
 	case tractor.FieldStatus:
@@ -37935,6 +40052,13 @@ func (m *TractorMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case tractor.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case tractor.FieldCode:
 		v, ok := value.(string)
@@ -38042,6 +40166,9 @@ func (m *TractorMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TractorMutation) AddedFields() []string {
 	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, tractor.FieldVersion)
+	}
 	if m.addyear != nil {
 		fields = append(fields, tractor.FieldYear)
 	}
@@ -38053,6 +40180,8 @@ func (m *TractorMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TractorMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case tractor.FieldVersion:
+		return m.AddedVersion()
 	case tractor.FieldYear:
 		return m.AddedYear()
 	}
@@ -38064,6 +40193,13 @@ func (m *TractorMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TractorMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case tractor.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	case tractor.FieldYear:
 		v, ok := value.(int16)
 		if !ok {
@@ -38166,6 +40302,9 @@ func (m *TractorMutation) ResetField(name string) error {
 		return nil
 	case tractor.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case tractor.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case tractor.FieldCode:
 		m.ResetCode()
@@ -39023,6 +41162,8 @@ type UserMutation struct {
 	id                    *uuid.UUID
 	created_at            *time.Time
 	updated_at            *time.Time
+	version               *int
+	addversion            *int
 	status                *user.Status
 	name                  *string
 	username              *string
@@ -39294,6 +41435,62 @@ func (m *UserMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *UserMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *UserMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *UserMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *UserMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *UserMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *UserMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -39922,7 +42119,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.business_unit != nil {
 		fields = append(fields, user.FieldBusinessUnitID)
 	}
@@ -39934,6 +42131,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, user.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, user.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, user.FieldStatus)
@@ -39987,6 +42187,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case user.FieldVersion:
+		return m.Version()
 	case user.FieldStatus:
 		return m.Status()
 	case user.FieldName:
@@ -40028,6 +42230,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case user.FieldVersion:
+		return m.OldVersion(ctx)
 	case user.FieldStatus:
 		return m.OldStatus(ctx)
 	case user.FieldName:
@@ -40088,6 +42292,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case user.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case user.FieldStatus:
 		v, ok := value.(user.Status)
@@ -40180,13 +42391,21 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, user.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -40195,6 +42414,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -40260,6 +42486,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case user.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case user.FieldStatus:
 		m.ResetStatus()
@@ -40429,6 +42658,8 @@ type UserFavoriteMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	page_link            *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
@@ -40690,6 +42921,62 @@ func (m *UserFavoriteMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *UserFavoriteMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *UserFavoriteMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the UserFavorite entity.
+// If the UserFavorite object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFavoriteMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *UserFavoriteMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *UserFavoriteMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *UserFavoriteMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // SetPageLink sets the "page_link" field.
 func (m *UserFavoriteMutation) SetPageLink(s string) {
 	m.page_link = &s
@@ -40877,7 +43164,7 @@ func (m *UserFavoriteMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserFavoriteMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.business_unit != nil {
 		fields = append(fields, userfavorite.FieldBusinessUnitID)
 	}
@@ -40889,6 +43176,9 @@ func (m *UserFavoriteMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, userfavorite.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, userfavorite.FieldVersion)
 	}
 	if m.page_link != nil {
 		fields = append(fields, userfavorite.FieldPageLink)
@@ -40912,6 +43202,8 @@ func (m *UserFavoriteMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case userfavorite.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case userfavorite.FieldVersion:
+		return m.Version()
 	case userfavorite.FieldPageLink:
 		return m.PageLink()
 	case userfavorite.FieldUserID:
@@ -40933,6 +43225,8 @@ func (m *UserFavoriteMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case userfavorite.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case userfavorite.FieldVersion:
+		return m.OldVersion(ctx)
 	case userfavorite.FieldPageLink:
 		return m.OldPageLink(ctx)
 	case userfavorite.FieldUserID:
@@ -40974,6 +43268,13 @@ func (m *UserFavoriteMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case userfavorite.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case userfavorite.FieldPageLink:
 		v, ok := value.(string)
 		if !ok {
@@ -40995,13 +43296,21 @@ func (m *UserFavoriteMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserFavoriteMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, userfavorite.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserFavoriteMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case userfavorite.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -41010,6 +43319,13 @@ func (m *UserFavoriteMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserFavoriteMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case userfavorite.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown UserFavorite numeric field %s", name)
 }
@@ -41048,6 +43364,9 @@ func (m *UserFavoriteMutation) ResetField(name string) error {
 		return nil
 	case userfavorite.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case userfavorite.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case userfavorite.FieldPageLink:
 		m.ResetPageLink()
@@ -41177,6 +43496,8 @@ type WorkerMutation struct {
 	id                       *uuid.UUID
 	created_at               *time.Time
 	updated_at               *time.Time
+	version                  *int
+	addversion               *int
 	status                   *worker.Status
 	code                     *string
 	profile_picture_url      *string
@@ -41459,6 +43780,62 @@ func (m *WorkerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err err
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *WorkerMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *WorkerMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *WorkerMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *WorkerMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *WorkerMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *WorkerMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetStatus sets the "status" field.
@@ -42329,7 +44706,7 @@ func (m *WorkerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.business_unit != nil {
 		fields = append(fields, worker.FieldBusinessUnitID)
 	}
@@ -42341,6 +44718,9 @@ func (m *WorkerMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, worker.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, worker.FieldVersion)
 	}
 	if m.status != nil {
 		fields = append(fields, worker.FieldStatus)
@@ -42391,6 +44771,8 @@ func (m *WorkerMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case worker.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case worker.FieldVersion:
+		return m.Version()
 	case worker.FieldStatus:
 		return m.Status()
 	case worker.FieldCode:
@@ -42430,6 +44812,8 @@ func (m *WorkerMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldCreatedAt(ctx)
 	case worker.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case worker.FieldVersion:
+		return m.OldVersion(ctx)
 	case worker.FieldStatus:
 		return m.OldStatus(ctx)
 	case worker.FieldCode:
@@ -42488,6 +44872,13 @@ func (m *WorkerMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case worker.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case worker.FieldStatus:
 		v, ok := value.(worker.Status)
@@ -42573,13 +44964,21 @@ func (m *WorkerMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *WorkerMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, worker.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *WorkerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case worker.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -42588,6 +44987,13 @@ func (m *WorkerMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *WorkerMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case worker.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Worker numeric field %s", name)
 }
@@ -42665,6 +45071,9 @@ func (m *WorkerMutation) ResetField(name string) error {
 		return nil
 	case worker.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case worker.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case worker.FieldStatus:
 		m.ResetStatus()
@@ -42965,6 +45374,8 @@ type WorkerCommentMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	comment              *string
 	entered_by           *uuid.UUID
 	clearedFields        map[string]struct{}
@@ -43227,6 +45638,62 @@ func (m *WorkerCommentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *WorkerCommentMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *WorkerCommentMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *WorkerCommentMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *WorkerCommentMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *WorkerCommentMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *WorkerCommentMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetWorkerID sets the "worker_id" field.
@@ -43515,7 +45982,7 @@ func (m *WorkerCommentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerCommentMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.business_unit != nil {
 		fields = append(fields, workercomment.FieldBusinessUnitID)
 	}
@@ -43527,6 +45994,9 @@ func (m *WorkerCommentMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, workercomment.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, workercomment.FieldVersion)
 	}
 	if m.worker != nil {
 		fields = append(fields, workercomment.FieldWorkerID)
@@ -43556,6 +46026,8 @@ func (m *WorkerCommentMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case workercomment.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case workercomment.FieldVersion:
+		return m.Version()
 	case workercomment.FieldWorkerID:
 		return m.WorkerID()
 	case workercomment.FieldCommentTypeID:
@@ -43581,6 +46053,8 @@ func (m *WorkerCommentMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCreatedAt(ctx)
 	case workercomment.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case workercomment.FieldVersion:
+		return m.OldVersion(ctx)
 	case workercomment.FieldWorkerID:
 		return m.OldWorkerID(ctx)
 	case workercomment.FieldCommentTypeID:
@@ -43626,6 +46100,13 @@ func (m *WorkerCommentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case workercomment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	case workercomment.FieldWorkerID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
@@ -43661,13 +46142,21 @@ func (m *WorkerCommentMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *WorkerCommentMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, workercomment.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *WorkerCommentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workercomment.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -43676,6 +46165,13 @@ func (m *WorkerCommentMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *WorkerCommentMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case workercomment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown WorkerComment numeric field %s", name)
 }
@@ -43714,6 +46210,9 @@ func (m *WorkerCommentMutation) ResetField(name string) error {
 		return nil
 	case workercomment.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case workercomment.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case workercomment.FieldWorkerID:
 		m.ResetWorkerID()
@@ -43867,6 +46366,8 @@ type WorkerContactMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	version              *int
+	addversion           *int
 	name                 *string
 	email                *string
 	phone                *string
@@ -44130,6 +46631,62 @@ func (m *WorkerContactMutation) OldUpdatedAt(ctx context.Context) (v time.Time, 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *WorkerContactMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *WorkerContactMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *WorkerContactMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the WorkerContact entity.
+// If the WorkerContact object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerContactMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *WorkerContactMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *WorkerContactMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *WorkerContactMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetWorkerID sets the "worker_id" field.
@@ -44476,7 +47033,7 @@ func (m *WorkerContactMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerContactMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.business_unit != nil {
 		fields = append(fields, workercontact.FieldBusinessUnitID)
 	}
@@ -44488,6 +47045,9 @@ func (m *WorkerContactMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, workercontact.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, workercontact.FieldVersion)
 	}
 	if m.worker != nil {
 		fields = append(fields, workercontact.FieldWorkerID)
@@ -44523,6 +47083,8 @@ func (m *WorkerContactMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case workercontact.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case workercontact.FieldVersion:
+		return m.Version()
 	case workercontact.FieldWorkerID:
 		return m.WorkerID()
 	case workercontact.FieldName:
@@ -44552,6 +47114,8 @@ func (m *WorkerContactMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCreatedAt(ctx)
 	case workercontact.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case workercontact.FieldVersion:
+		return m.OldVersion(ctx)
 	case workercontact.FieldWorkerID:
 		return m.OldWorkerID(ctx)
 	case workercontact.FieldName:
@@ -44600,6 +47164,13 @@ func (m *WorkerContactMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case workercontact.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case workercontact.FieldWorkerID:
 		v, ok := value.(uuid.UUID)
@@ -44650,13 +47221,21 @@ func (m *WorkerContactMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *WorkerContactMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, workercontact.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *WorkerContactMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workercontact.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -44665,6 +47244,13 @@ func (m *WorkerContactMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *WorkerContactMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case workercontact.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown WorkerContact numeric field %s", name)
 }
@@ -44712,6 +47298,9 @@ func (m *WorkerContactMutation) ResetField(name string) error {
 		return nil
 	case workercontact.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case workercontact.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case workercontact.FieldWorkerID:
 		m.ResetWorkerID()
@@ -44853,6 +47442,8 @@ type WorkerProfileMutation struct {
 	id                      *uuid.UUID
 	created_at              *time.Time
 	updated_at              *time.Time
+	version                 *int
+	addversion              *int
 	race                    *string
 	sex                     *string
 	date_of_birth           **pgtype.Date
@@ -45125,6 +47716,62 @@ func (m *WorkerProfileMutation) OldUpdatedAt(ctx context.Context) (v time.Time, 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *WorkerProfileMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *WorkerProfileMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *WorkerProfileMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the WorkerProfile entity.
+// If the WorkerProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerProfileMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *WorkerProfileMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *WorkerProfileMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *WorkerProfileMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
 }
 
 // SetWorkerID sets the "worker_id" field.
@@ -45929,7 +48576,7 @@ func (m *WorkerProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerProfileMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.business_unit != nil {
 		fields = append(fields, workerprofile.FieldBusinessUnitID)
 	}
@@ -45941,6 +48588,9 @@ func (m *WorkerProfileMutation) Fields() []string {
 	}
 	if m.updated_at != nil {
 		fields = append(fields, workerprofile.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, workerprofile.FieldVersion)
 	}
 	if m.worker != nil {
 		fields = append(fields, workerprofile.FieldWorkerID)
@@ -46000,6 +48650,8 @@ func (m *WorkerProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case workerprofile.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case workerprofile.FieldVersion:
+		return m.Version()
 	case workerprofile.FieldWorkerID:
 		return m.WorkerID()
 	case workerprofile.FieldRace:
@@ -46045,6 +48697,8 @@ func (m *WorkerProfileMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldCreatedAt(ctx)
 	case workerprofile.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case workerprofile.FieldVersion:
+		return m.OldVersion(ctx)
 	case workerprofile.FieldWorkerID:
 		return m.OldWorkerID(ctx)
 	case workerprofile.FieldRace:
@@ -46109,6 +48763,13 @@ func (m *WorkerProfileMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case workerprofile.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
 		return nil
 	case workerprofile.FieldWorkerID:
 		v, ok := value.(uuid.UUID)
@@ -46215,13 +48876,21 @@ func (m *WorkerProfileMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *WorkerProfileMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, workerprofile.FieldVersion)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *WorkerProfileMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workerprofile.FieldVersion:
+		return m.AddedVersion()
+	}
 	return nil, false
 }
 
@@ -46230,6 +48899,13 @@ func (m *WorkerProfileMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *WorkerProfileMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case workerprofile.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown WorkerProfile numeric field %s", name)
 }
@@ -46337,6 +49013,9 @@ func (m *WorkerProfileMutation) ResetField(name string) error {
 		return nil
 	case workerprofile.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case workerprofile.FieldVersion:
+		m.ResetVersion()
 		return nil
 	case workerprofile.FieldWorkerID:
 		m.ResetWorkerID()

@@ -48,7 +48,7 @@ func GetFleetCodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fleetCodes, count, err := services.NewFleetCodeOps(r.Context()).GetFleetCodes(limit, offset, orgID, buID)
+	fleetCodes, count, err := services.NewFleetCodeOps().GetFleetCodes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateFleetCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createFleetCode, err := services.NewFleetCodeOps(r.Context()).CreateFleetCode(newFleetCode)
+	createFleetCode, err := services.NewFleetCodeOps().CreateFleetCode(r.Context(), newFleetCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateFleetCode(w http.ResponseWriter, r *http.Request) {
 
 	fleetCodeData.ID = uuid.MustParse(fleetCodeID)
 
-	fleetCode, err := services.NewFleetCodeOps(r.Context()).UpdateFleetCode(fleetCodeData)
+	fleetCode, err := services.NewFleetCodeOps().UpdateFleetCode(r.Context(), fleetCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

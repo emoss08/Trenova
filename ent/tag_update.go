@@ -37,6 +37,27 @@ func (tu *TagUpdate) SetUpdatedAt(t time.Time) *TagUpdate {
 	return tu
 }
 
+// SetVersion sets the "version" field.
+func (tu *TagUpdate) SetVersion(i int) *TagUpdate {
+	tu.mutation.ResetVersion()
+	tu.mutation.SetVersion(i)
+	return tu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tu *TagUpdate) SetNillableVersion(i *int) *TagUpdate {
+	if i != nil {
+		tu.SetVersion(*i)
+	}
+	return tu
+}
+
+// AddVersion adds i to the "version" field.
+func (tu *TagUpdate) AddVersion(i int) *TagUpdate {
+	tu.mutation.AddVersion(i)
+	return tu
+}
+
 // SetName sets the "name" field.
 func (tu *TagUpdate) SetName(s string) *TagUpdate {
 	tu.mutation.SetName(s)
@@ -205,6 +226,12 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.UpdatedAt(); ok {
 		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := tu.mutation.Version(); ok {
+		_spec.SetField(tag.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tu.mutation.AddedVersion(); ok {
+		_spec.AddField(tag.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)
 	}
@@ -290,6 +317,27 @@ type TagUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (tuo *TagUpdateOne) SetUpdatedAt(t time.Time) *TagUpdateOne {
 	tuo.mutation.SetUpdatedAt(t)
+	return tuo
+}
+
+// SetVersion sets the "version" field.
+func (tuo *TagUpdateOne) SetVersion(i int) *TagUpdateOne {
+	tuo.mutation.ResetVersion()
+	tuo.mutation.SetVersion(i)
+	return tuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tuo *TagUpdateOne) SetNillableVersion(i *int) *TagUpdateOne {
+	if i != nil {
+		tuo.SetVersion(*i)
+	}
+	return tuo
+}
+
+// AddVersion adds i to the "version" field.
+func (tuo *TagUpdateOne) AddVersion(i int) *TagUpdateOne {
+	tuo.mutation.AddVersion(i)
 	return tuo
 }
 
@@ -490,6 +538,12 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	}
 	if value, ok := tuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := tuo.mutation.Version(); ok {
+		_spec.SetField(tag.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tuo.mutation.AddedVersion(); ok {
+		_spec.AddField(tag.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)

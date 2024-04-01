@@ -70,6 +70,20 @@ func (wc *WorkerCreate) SetNillableUpdatedAt(t *time.Time) *WorkerCreate {
 	return wc
 }
 
+// SetVersion sets the "version" field.
+func (wc *WorkerCreate) SetVersion(i int) *WorkerCreate {
+	wc.mutation.SetVersion(i)
+	return wc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wc *WorkerCreate) SetNillableVersion(i *int) *WorkerCreate {
+	if i != nil {
+		wc.SetVersion(*i)
+	}
+	return wc
+}
+
 // SetStatus sets the "status" field.
 func (wc *WorkerCreate) SetStatus(w worker.Status) *WorkerCreate {
 	wc.mutation.SetStatus(w)
@@ -369,6 +383,10 @@ func (wc *WorkerCreate) defaults() {
 		v := worker.DefaultUpdatedAt()
 		wc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := wc.mutation.Version(); !ok {
+		v := worker.DefaultVersion
+		wc.mutation.SetVersion(v)
+	}
 	if _, ok := wc.mutation.Status(); !ok {
 		v := worker.DefaultStatus
 		wc.mutation.SetStatus(v)
@@ -396,6 +414,9 @@ func (wc *WorkerCreate) check() error {
 	}
 	if _, ok := wc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Worker.updated_at"`)}
+	}
+	if _, ok := wc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Worker.version"`)}
 	}
 	if _, ok := wc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Worker.status"`)}
@@ -490,6 +511,10 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	if value, ok := wc.mutation.UpdatedAt(); ok {
 		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := wc.mutation.Version(); ok {
+		_spec.SetField(worker.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := wc.mutation.Status(); ok {
 		_spec.SetField(worker.FieldStatus, field.TypeEnum, value)

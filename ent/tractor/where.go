@@ -77,6 +77,11 @@ func UpdatedAt(v time.Time) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldEQ(FieldVersion, v))
+}
+
 // Code applies equality check predicate on the "code" field. It's identical to CodeEQ.
 func Code(v string) predicate.Tractor {
 	return predicate.Tractor(sql.FieldEQ(FieldCode, v))
@@ -260,6 +265,46 @@ func UpdatedAtLT(v time.Time) predicate.Tractor {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Tractor {
 	return predicate.Tractor(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.Tractor {
+	return predicate.Tractor(sql.FieldLTE(FieldVersion, v))
 }
 
 // CodeEQ applies the EQ predicate on the "code" field.

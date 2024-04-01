@@ -8,30 +8,29 @@ import (
 	"github.com/emoss08/trenova/ent/billingcontrol"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/google/uuid"
+	"github.com/rotisserie/eris"
 )
 
 // BillingControlOps is the service for billing control settings.
 type BillingControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewBillingControlOps creates a new billing control service.
-func NewBillingControlOps(ctx context.Context) *BillingControlOps {
+func NewBillingControlOps() *BillingControlOps {
 	return &BillingControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetBillingControl gets the billing control settings for an organization.
-func (r *BillingControlOps) GetBillingControl(orgID, buID uuid.UUID) (*ent.BillingControl, error) {
+func (r *BillingControlOps) GetBillingControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.BillingControl, error) {
 	billingControl, err := r.client.BillingControl.Query().Where(
 		billingcontrol.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func (r *BillingControlOps) GetBillingControl(orgID, buID uuid.UUID) (*ent.Billi
 }
 
 // UpdateBillingControl updates the billing control settings for an organization.
-func (r *BillingControlOps) UpdateBillingControl(bc ent.BillingControl) (*ent.BillingControl, error) {
+func (r *BillingControlOps) UpdateBillingControl(ctx context.Context, bc ent.BillingControl) (*ent.BillingControl, error) {
 	updatedBC, err := r.client.BillingControl.
 		UpdateOneID(bc.ID).
 		SetRemoveBillingHistory(bc.RemoveBillingHistory).
@@ -51,9 +50,9 @@ func (r *BillingControlOps) UpdateBillingControl(bc ent.BillingControl) (*ent.Bi
 		SetAutoBillCriteria(bc.AutoBillCriteria).
 		SetShipmentTransferCriteria(bc.ShipmentTransferCriteria).
 		SetEnforceCustomerBilling(bc.EnforceCustomerBilling).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "failed to update entity")
 	}
 
 	return updatedBC, nil

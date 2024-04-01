@@ -48,7 +48,7 @@ func GetQualifierCodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	qualifierCodes, count, err := services.NewQualifierCodeOps(r.Context()).GetQualifierCodes(limit, offset, orgID, buID)
+	qualifierCodes, count, err := services.NewQualifierCodeOps().GetQualifierCodes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateQualifierCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createQualifierCode, err := services.NewQualifierCodeOps(r.Context()).CreateQualifierCode(newQualifierCode)
+	createQualifierCode, err := services.NewQualifierCodeOps().CreateQualifierCode(r.Context(), newQualifierCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateQualifierCode(w http.ResponseWriter, r *http.Request) {
 
 	qualifierCodeData.ID = uuid.MustParse(qualifierCodeID)
 
-	qualifierCode, err := services.NewQualifierCodeOps(r.Context()).UpdateQualifierCode(qualifierCodeData)
+	qualifierCode, err := services.NewQualifierCodeOps().UpdateQualifierCode(r.Context(), qualifierCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

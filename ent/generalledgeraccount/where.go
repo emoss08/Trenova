@@ -77,6 +77,11 @@ func UpdatedAt(v time.Time) predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldVersion, v))
+}
+
 // AccountNumber applies equality check predicate on the "account_number" field. It's identical to AccountNumberEQ.
 func AccountNumber(v string) predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldAccountNumber, v))
@@ -250,6 +255,46 @@ func UpdatedAtLT(v time.Time) predicate.GeneralLedgerAccount {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.GeneralLedgerAccount {
+	return predicate.GeneralLedgerAccount(sql.FieldLTE(FieldVersion, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

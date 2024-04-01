@@ -35,6 +35,27 @@ func (hmu *HazardousMaterialUpdate) SetUpdatedAt(t time.Time) *HazardousMaterial
 	return hmu
 }
 
+// SetVersion sets the "version" field.
+func (hmu *HazardousMaterialUpdate) SetVersion(i int) *HazardousMaterialUpdate {
+	hmu.mutation.ResetVersion()
+	hmu.mutation.SetVersion(i)
+	return hmu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmu *HazardousMaterialUpdate) SetNillableVersion(i *int) *HazardousMaterialUpdate {
+	if i != nil {
+		hmu.SetVersion(*i)
+	}
+	return hmu
+}
+
+// AddVersion adds i to the "version" field.
+func (hmu *HazardousMaterialUpdate) AddVersion(i int) *HazardousMaterialUpdate {
+	hmu.mutation.AddVersion(i)
+	return hmu
+}
+
 // SetStatus sets the "status" field.
 func (hmu *HazardousMaterialUpdate) SetStatus(h hazardousmaterial.Status) *HazardousMaterialUpdate {
 	hmu.mutation.SetStatus(h)
@@ -245,6 +266,12 @@ func (hmu *HazardousMaterialUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := hmu.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterial.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := hmu.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterial.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := hmu.mutation.AddedVersion(); ok {
+		_spec.AddField(hazardousmaterial.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := hmu.mutation.Status(); ok {
 		_spec.SetField(hazardousmaterial.FieldStatus, field.TypeEnum, value)
 	}
@@ -303,6 +330,27 @@ type HazardousMaterialUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (hmuo *HazardousMaterialUpdateOne) SetUpdatedAt(t time.Time) *HazardousMaterialUpdateOne {
 	hmuo.mutation.SetUpdatedAt(t)
+	return hmuo
+}
+
+// SetVersion sets the "version" field.
+func (hmuo *HazardousMaterialUpdateOne) SetVersion(i int) *HazardousMaterialUpdateOne {
+	hmuo.mutation.ResetVersion()
+	hmuo.mutation.SetVersion(i)
+	return hmuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmuo *HazardousMaterialUpdateOne) SetNillableVersion(i *int) *HazardousMaterialUpdateOne {
+	if i != nil {
+		hmuo.SetVersion(*i)
+	}
+	return hmuo
+}
+
+// AddVersion adds i to the "version" field.
+func (hmuo *HazardousMaterialUpdateOne) AddVersion(i int) *HazardousMaterialUpdateOne {
+	hmuo.mutation.AddVersion(i)
 	return hmuo
 }
 
@@ -545,6 +593,12 @@ func (hmuo *HazardousMaterialUpdateOne) sqlSave(ctx context.Context) (_node *Haz
 	}
 	if value, ok := hmuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterial.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := hmuo.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterial.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := hmuo.mutation.AddedVersion(); ok {
+		_spec.AddField(hazardousmaterial.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := hmuo.mutation.Status(); ok {
 		_spec.SetField(hazardousmaterial.FieldStatus, field.TypeEnum, value)

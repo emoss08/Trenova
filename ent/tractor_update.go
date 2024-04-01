@@ -42,6 +42,27 @@ func (tu *TractorUpdate) SetUpdatedAt(t time.Time) *TractorUpdate {
 	return tu
 }
 
+// SetVersion sets the "version" field.
+func (tu *TractorUpdate) SetVersion(i int) *TractorUpdate {
+	tu.mutation.ResetVersion()
+	tu.mutation.SetVersion(i)
+	return tu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tu *TractorUpdate) SetNillableVersion(i *int) *TractorUpdate {
+	if i != nil {
+		tu.SetVersion(*i)
+	}
+	return tu
+}
+
+// AddVersion adds i to the "version" field.
+func (tu *TractorUpdate) AddVersion(i int) *TractorUpdate {
+	tu.mutation.AddVersion(i)
+	return tu
+}
+
 // SetCode sets the "code" field.
 func (tu *TractorUpdate) SetCode(s string) *TractorUpdate {
 	tu.mutation.SetCode(s)
@@ -467,6 +488,12 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.UpdatedAt(); ok {
 		_spec.SetField(tractor.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := tu.mutation.Version(); ok {
+		_spec.SetField(tractor.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tu.mutation.AddedVersion(); ok {
+		_spec.AddField(tractor.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := tu.mutation.Code(); ok {
 		_spec.SetField(tractor.FieldCode, field.TypeString, value)
 	}
@@ -708,6 +735,27 @@ type TractorUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (tuo *TractorUpdateOne) SetUpdatedAt(t time.Time) *TractorUpdateOne {
 	tuo.mutation.SetUpdatedAt(t)
+	return tuo
+}
+
+// SetVersion sets the "version" field.
+func (tuo *TractorUpdateOne) SetVersion(i int) *TractorUpdateOne {
+	tuo.mutation.ResetVersion()
+	tuo.mutation.SetVersion(i)
+	return tuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tuo *TractorUpdateOne) SetNillableVersion(i *int) *TractorUpdateOne {
+	if i != nil {
+		tuo.SetVersion(*i)
+	}
+	return tuo
+}
+
+// AddVersion adds i to the "version" field.
+func (tuo *TractorUpdateOne) AddVersion(i int) *TractorUpdateOne {
+	tuo.mutation.AddVersion(i)
 	return tuo
 }
 
@@ -1165,6 +1213,12 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if value, ok := tuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(tractor.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := tuo.mutation.Version(); ok {
+		_spec.SetField(tractor.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tuo.mutation.AddedVersion(); ok {
+		_spec.AddField(tractor.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := tuo.mutation.Code(); ok {
 		_spec.SetField(tractor.FieldCode, field.TypeString, value)

@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/accessorialcharge"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -12,32 +16,32 @@ import (
 )
 
 type AccessorialChargeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewAccessorialChargeOps creates a new accessorial charge service.
-func NewAccessorialChargeOps(ctx context.Context) *AccessorialChargeOps {
+func NewAccessorialChargeOps() *AccessorialChargeOps {
 	return &AccessorialChargeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetAccessorialCharges gets the accessorial charges for an organization.
-func (r *AccessorialChargeOps) GetAccessorialCharges(limit, offset int, orgID, buID uuid.UUID) ([]*ent.AccessorialCharge, int, error) {
-	accessorialChargeCount, countErr := r.client.AccessorialCharge.Query().Where(
+func (r *AccessorialChargeOps) GetAccessorialCharges(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.AccessorialCharge, int, error) {
+	entityCount, countErr := r.client.AccessorialCharge.Query().Where(
 		accessorialcharge.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	accessorialCharges, err := r.client.AccessorialCharge.Query().
+	entities, err := r.client.AccessorialCharge.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -45,49 +49,124 @@ func (r *AccessorialChargeOps) GetAccessorialCharges(limit, offset int, orgID, b
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return accessorialCharges, accessorialChargeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateAccessorialCharge creates a new accessorial charge.
-func (r *AccessorialChargeOps) CreateAccessorialCharge(newAccessorialCharge ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	accessorialCharge, err := r.client.AccessorialCharge.Create().
-		SetOrganizationID(newAccessorialCharge.OrganizationID).
-		SetBusinessUnitID(newAccessorialCharge.BusinessUnitID).
-		SetStatus(newAccessorialCharge.Status).
-		SetCode(newAccessorialCharge.Code).
-		SetDescription(newAccessorialCharge.Description).
-		SetIsDetention(newAccessorialCharge.IsDetention).
-		SetMethod(newAccessorialCharge.Method).
-		SetAmount(newAccessorialCharge.Amount).
-		Save(r.ctx)
+func (r *AccessorialChargeOps) CreateAccessorialCharge(ctx context.Context, newEntity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return accessorialCharge, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.AccessorialCharge.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetCode(newEntity.Code).
+		SetDescription(newEntity.Description).
+		SetIsDetention(newEntity.IsDetention).
+		SetMethod(newEntity.Method).
+		SetAmount(newEntity.Amount).
+		Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to create accessorial charge")
+	}
+
+	return createdEntity, nil
 }
 
 // UpdateAccessorialCharge updates a accessorial charge.
-func (r *AccessorialChargeOps) UpdateAccessorialCharge(accessorialCharge ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	// Start building the update operation
-	updateOp := r.client.AccessorialCharge.UpdateOneID(accessorialCharge.ID).
-		SetStatus(accessorialCharge.Status).
-		SetCode(accessorialCharge.Code).
-		SetDescription(accessorialCharge.Description).
-		SetIsDetention(accessorialCharge.IsDetention).
-		SetMethod(accessorialCharge.Method).
-		SetAmount(accessorialCharge.Amount)
-
-	// Execute the update operation
-	updatedAccessorialCharge, err := updateOp.Save(r.ctx)
+func (r *AccessorialChargeOps) UpdateAccessorialCharge(ctx context.Context, entity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updatedAccessorialCharge, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.AccessorialCharge.Get(ctx, entity.ID)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
+	}
+
+	// Start building the update operation
+	updateOp := tx.AccessorialCharge.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetDescription(entity.Description).
+		SetIsDetention(entity.IsDetention).
+		SetMethod(entity.Method).
+		SetAmount(entity.Amount).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

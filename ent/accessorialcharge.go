@@ -28,6 +28,8 @@ type AccessorialCharge struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status accessorialcharge.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
@@ -88,6 +90,8 @@ func (*AccessorialCharge) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case accessorialcharge.FieldAmount:
 			values[i] = new(sql.NullFloat64)
+		case accessorialcharge.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case accessorialcharge.FieldStatus, accessorialcharge.FieldCode, accessorialcharge.FieldDescription, accessorialcharge.FieldMethod:
 			values[i] = new(sql.NullString)
 		case accessorialcharge.FieldCreatedAt, accessorialcharge.FieldUpdatedAt:
@@ -138,6 +142,12 @@ func (ac *AccessorialCharge) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ac.UpdatedAt = value.Time
+			}
+		case accessorialcharge.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				ac.Version = int(value.Int64)
 			}
 		case accessorialcharge.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -232,6 +242,9 @@ func (ac *AccessorialCharge) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ac.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", ac.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", ac.Status))

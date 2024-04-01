@@ -72,6 +72,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			accessorialcharge.FieldOrganizationID: {Type: field.TypeUUID, Column: accessorialcharge.FieldOrganizationID},
 			accessorialcharge.FieldCreatedAt:      {Type: field.TypeTime, Column: accessorialcharge.FieldCreatedAt},
 			accessorialcharge.FieldUpdatedAt:      {Type: field.TypeTime, Column: accessorialcharge.FieldUpdatedAt},
+			accessorialcharge.FieldVersion:        {Type: field.TypeInt, Column: accessorialcharge.FieldVersion},
 			accessorialcharge.FieldStatus:         {Type: field.TypeEnum, Column: accessorialcharge.FieldStatus},
 			accessorialcharge.FieldCode:           {Type: field.TypeString, Column: accessorialcharge.FieldCode},
 			accessorialcharge.FieldDescription:    {Type: field.TypeString, Column: accessorialcharge.FieldDescription},
@@ -177,6 +178,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			chargetype.FieldOrganizationID: {Type: field.TypeUUID, Column: chargetype.FieldOrganizationID},
 			chargetype.FieldCreatedAt:      {Type: field.TypeTime, Column: chargetype.FieldCreatedAt},
 			chargetype.FieldUpdatedAt:      {Type: field.TypeTime, Column: chargetype.FieldUpdatedAt},
+			chargetype.FieldVersion:        {Type: field.TypeInt, Column: chargetype.FieldVersion},
 			chargetype.FieldStatus:         {Type: field.TypeEnum, Column: chargetype.FieldStatus},
 			chargetype.FieldName:           {Type: field.TypeString, Column: chargetype.FieldName},
 			chargetype.FieldDescription:    {Type: field.TypeString, Column: chargetype.FieldDescription},
@@ -197,6 +199,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			commenttype.FieldOrganizationID: {Type: field.TypeUUID, Column: commenttype.FieldOrganizationID},
 			commenttype.FieldCreatedAt:      {Type: field.TypeTime, Column: commenttype.FieldCreatedAt},
 			commenttype.FieldUpdatedAt:      {Type: field.TypeTime, Column: commenttype.FieldUpdatedAt},
+			commenttype.FieldVersion:        {Type: field.TypeInt, Column: commenttype.FieldVersion},
 			commenttype.FieldStatus:         {Type: field.TypeEnum, Column: commenttype.FieldStatus},
 			commenttype.FieldName:           {Type: field.TypeString, Column: commenttype.FieldName},
 			commenttype.FieldSeverity:       {Type: field.TypeEnum, Column: commenttype.FieldSeverity},
@@ -218,6 +221,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			commodity.FieldOrganizationID:      {Type: field.TypeUUID, Column: commodity.FieldOrganizationID},
 			commodity.FieldCreatedAt:           {Type: field.TypeTime, Column: commodity.FieldCreatedAt},
 			commodity.FieldUpdatedAt:           {Type: field.TypeTime, Column: commodity.FieldUpdatedAt},
+			commodity.FieldVersion:             {Type: field.TypeInt, Column: commodity.FieldVersion},
 			commodity.FieldStatus:              {Type: field.TypeEnum, Column: commodity.FieldStatus},
 			commodity.FieldName:                {Type: field.TypeString, Column: commodity.FieldName},
 			commodity.FieldIsHazmat:            {Type: field.TypeBool, Column: commodity.FieldIsHazmat},
@@ -243,6 +247,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			customer.FieldOrganizationID:      {Type: field.TypeUUID, Column: customer.FieldOrganizationID},
 			customer.FieldCreatedAt:           {Type: field.TypeTime, Column: customer.FieldCreatedAt},
 			customer.FieldUpdatedAt:           {Type: field.TypeTime, Column: customer.FieldUpdatedAt},
+			customer.FieldVersion:             {Type: field.TypeInt, Column: customer.FieldVersion},
 			customer.FieldStatus:              {Type: field.TypeEnum, Column: customer.FieldStatus},
 			customer.FieldCode:                {Type: field.TypeString, Column: customer.FieldCode},
 			customer.FieldName:                {Type: field.TypeString, Column: customer.FieldName},
@@ -270,6 +275,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			delaycode.FieldOrganizationID:   {Type: field.TypeUUID, Column: delaycode.FieldOrganizationID},
 			delaycode.FieldCreatedAt:        {Type: field.TypeTime, Column: delaycode.FieldCreatedAt},
 			delaycode.FieldUpdatedAt:        {Type: field.TypeTime, Column: delaycode.FieldUpdatedAt},
+			delaycode.FieldVersion:          {Type: field.TypeInt, Column: delaycode.FieldVersion},
 			delaycode.FieldStatus:           {Type: field.TypeEnum, Column: delaycode.FieldStatus},
 			delaycode.FieldCode:             {Type: field.TypeString, Column: delaycode.FieldCode},
 			delaycode.FieldDescription:      {Type: field.TypeString, Column: delaycode.FieldDescription},
@@ -318,6 +324,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			divisioncode.FieldOrganizationID:   {Type: field.TypeUUID, Column: divisioncode.FieldOrganizationID},
 			divisioncode.FieldCreatedAt:        {Type: field.TypeTime, Column: divisioncode.FieldCreatedAt},
 			divisioncode.FieldUpdatedAt:        {Type: field.TypeTime, Column: divisioncode.FieldUpdatedAt},
+			divisioncode.FieldVersion:          {Type: field.TypeInt, Column: divisioncode.FieldVersion},
 			divisioncode.FieldStatus:           {Type: field.TypeEnum, Column: divisioncode.FieldStatus},
 			divisioncode.FieldCode:             {Type: field.TypeString, Column: divisioncode.FieldCode},
 			divisioncode.FieldDescription:      {Type: field.TypeString, Column: divisioncode.FieldDescription},
@@ -341,6 +348,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			documentclassification.FieldOrganizationID: {Type: field.TypeUUID, Column: documentclassification.FieldOrganizationID},
 			documentclassification.FieldCreatedAt:      {Type: field.TypeTime, Column: documentclassification.FieldCreatedAt},
 			documentclassification.FieldUpdatedAt:      {Type: field.TypeTime, Column: documentclassification.FieldUpdatedAt},
+			documentclassification.FieldVersion:        {Type: field.TypeInt, Column: documentclassification.FieldVersion},
 			documentclassification.FieldStatus:         {Type: field.TypeEnum, Column: documentclassification.FieldStatus},
 			documentclassification.FieldName:           {Type: field.TypeString, Column: documentclassification.FieldName},
 			documentclassification.FieldDescription:    {Type: field.TypeString, Column: documentclassification.FieldDescription},
@@ -378,6 +386,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			emailprofile.FieldOrganizationID: {Type: field.TypeUUID, Column: emailprofile.FieldOrganizationID},
 			emailprofile.FieldCreatedAt:      {Type: field.TypeTime, Column: emailprofile.FieldCreatedAt},
 			emailprofile.FieldUpdatedAt:      {Type: field.TypeTime, Column: emailprofile.FieldUpdatedAt},
+			emailprofile.FieldVersion:        {Type: field.TypeInt, Column: emailprofile.FieldVersion},
 			emailprofile.FieldName:           {Type: field.TypeString, Column: emailprofile.FieldName},
 			emailprofile.FieldEmail:          {Type: field.TypeString, Column: emailprofile.FieldEmail},
 			emailprofile.FieldProtocol:       {Type: field.TypeEnum, Column: emailprofile.FieldProtocol},
@@ -403,6 +412,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			equipmentmanufactuer.FieldOrganizationID: {Type: field.TypeUUID, Column: equipmentmanufactuer.FieldOrganizationID},
 			equipmentmanufactuer.FieldCreatedAt:      {Type: field.TypeTime, Column: equipmentmanufactuer.FieldCreatedAt},
 			equipmentmanufactuer.FieldUpdatedAt:      {Type: field.TypeTime, Column: equipmentmanufactuer.FieldUpdatedAt},
+			equipmentmanufactuer.FieldVersion:        {Type: field.TypeInt, Column: equipmentmanufactuer.FieldVersion},
 			equipmentmanufactuer.FieldStatus:         {Type: field.TypeEnum, Column: equipmentmanufactuer.FieldStatus},
 			equipmentmanufactuer.FieldName:           {Type: field.TypeString, Column: equipmentmanufactuer.FieldName},
 			equipmentmanufactuer.FieldDescription:    {Type: field.TypeString, Column: equipmentmanufactuer.FieldDescription},
@@ -423,6 +433,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			equipmenttype.FieldOrganizationID:  {Type: field.TypeUUID, Column: equipmenttype.FieldOrganizationID},
 			equipmenttype.FieldCreatedAt:       {Type: field.TypeTime, Column: equipmenttype.FieldCreatedAt},
 			equipmenttype.FieldUpdatedAt:       {Type: field.TypeTime, Column: equipmenttype.FieldUpdatedAt},
+			equipmenttype.FieldVersion:         {Type: field.TypeInt, Column: equipmenttype.FieldVersion},
 			equipmenttype.FieldStatus:          {Type: field.TypeEnum, Column: equipmenttype.FieldStatus},
 			equipmenttype.FieldName:            {Type: field.TypeString, Column: equipmenttype.FieldName},
 			equipmenttype.FieldDescription:     {Type: field.TypeString, Column: equipmenttype.FieldDescription},
@@ -477,6 +488,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			fleetcode.FieldOrganizationID: {Type: field.TypeUUID, Column: fleetcode.FieldOrganizationID},
 			fleetcode.FieldCreatedAt:      {Type: field.TypeTime, Column: fleetcode.FieldCreatedAt},
 			fleetcode.FieldUpdatedAt:      {Type: field.TypeTime, Column: fleetcode.FieldUpdatedAt},
+			fleetcode.FieldVersion:        {Type: field.TypeInt, Column: fleetcode.FieldVersion},
 			fleetcode.FieldStatus:         {Type: field.TypeEnum, Column: fleetcode.FieldStatus},
 			fleetcode.FieldCode:           {Type: field.TypeString, Column: fleetcode.FieldCode},
 			fleetcode.FieldDescription:    {Type: field.TypeString, Column: fleetcode.FieldDescription},
@@ -501,6 +513,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			generalledgeraccount.FieldOrganizationID: {Type: field.TypeUUID, Column: generalledgeraccount.FieldOrganizationID},
 			generalledgeraccount.FieldCreatedAt:      {Type: field.TypeTime, Column: generalledgeraccount.FieldCreatedAt},
 			generalledgeraccount.FieldUpdatedAt:      {Type: field.TypeTime, Column: generalledgeraccount.FieldUpdatedAt},
+			generalledgeraccount.FieldVersion:        {Type: field.TypeInt, Column: generalledgeraccount.FieldVersion},
 			generalledgeraccount.FieldStatus:         {Type: field.TypeEnum, Column: generalledgeraccount.FieldStatus},
 			generalledgeraccount.FieldAccountNumber:  {Type: field.TypeString, Column: generalledgeraccount.FieldAccountNumber},
 			generalledgeraccount.FieldAccountType:    {Type: field.TypeEnum, Column: generalledgeraccount.FieldAccountType},
@@ -552,6 +565,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			hazardousmaterial.FieldOrganizationID:     {Type: field.TypeUUID, Column: hazardousmaterial.FieldOrganizationID},
 			hazardousmaterial.FieldCreatedAt:          {Type: field.TypeTime, Column: hazardousmaterial.FieldCreatedAt},
 			hazardousmaterial.FieldUpdatedAt:          {Type: field.TypeTime, Column: hazardousmaterial.FieldUpdatedAt},
+			hazardousmaterial.FieldVersion:            {Type: field.TypeInt, Column: hazardousmaterial.FieldVersion},
 			hazardousmaterial.FieldStatus:             {Type: field.TypeEnum, Column: hazardousmaterial.FieldStatus},
 			hazardousmaterial.FieldName:               {Type: field.TypeString, Column: hazardousmaterial.FieldName},
 			hazardousmaterial.FieldHazardClass:        {Type: field.TypeEnum, Column: hazardousmaterial.FieldHazardClass},
@@ -576,6 +590,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			hazardousmaterialsegregation.FieldOrganizationID:  {Type: field.TypeUUID, Column: hazardousmaterialsegregation.FieldOrganizationID},
 			hazardousmaterialsegregation.FieldCreatedAt:       {Type: field.TypeTime, Column: hazardousmaterialsegregation.FieldCreatedAt},
 			hazardousmaterialsegregation.FieldUpdatedAt:       {Type: field.TypeTime, Column: hazardousmaterialsegregation.FieldUpdatedAt},
+			hazardousmaterialsegregation.FieldVersion:         {Type: field.TypeInt, Column: hazardousmaterialsegregation.FieldVersion},
 			hazardousmaterialsegregation.FieldClassA:          {Type: field.TypeEnum, Column: hazardousmaterialsegregation.FieldClassA},
 			hazardousmaterialsegregation.FieldClassB:          {Type: field.TypeEnum, Column: hazardousmaterialsegregation.FieldClassB},
 			hazardousmaterialsegregation.FieldSegregationType: {Type: field.TypeEnum, Column: hazardousmaterialsegregation.FieldSegregationType},
@@ -622,6 +637,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			locationcategory.FieldOrganizationID: {Type: field.TypeUUID, Column: locationcategory.FieldOrganizationID},
 			locationcategory.FieldCreatedAt:      {Type: field.TypeTime, Column: locationcategory.FieldCreatedAt},
 			locationcategory.FieldUpdatedAt:      {Type: field.TypeTime, Column: locationcategory.FieldUpdatedAt},
+			locationcategory.FieldVersion:        {Type: field.TypeInt, Column: locationcategory.FieldVersion},
 			locationcategory.FieldName:           {Type: field.TypeString, Column: locationcategory.FieldName},
 			locationcategory.FieldDescription:    {Type: field.TypeString, Column: locationcategory.FieldDescription},
 			locationcategory.FieldColor:          {Type: field.TypeString, Column: locationcategory.FieldColor},
@@ -664,6 +680,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			qualifiercode.FieldOrganizationID: {Type: field.TypeUUID, Column: qualifiercode.FieldOrganizationID},
 			qualifiercode.FieldCreatedAt:      {Type: field.TypeTime, Column: qualifiercode.FieldCreatedAt},
 			qualifiercode.FieldUpdatedAt:      {Type: field.TypeTime, Column: qualifiercode.FieldUpdatedAt},
+			qualifiercode.FieldVersion:        {Type: field.TypeInt, Column: qualifiercode.FieldVersion},
 			qualifiercode.FieldStatus:         {Type: field.TypeEnum, Column: qualifiercode.FieldStatus},
 			qualifiercode.FieldCode:           {Type: field.TypeString, Column: qualifiercode.FieldCode},
 			qualifiercode.FieldDescription:    {Type: field.TypeString, Column: qualifiercode.FieldDescription},
@@ -684,6 +701,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			reasoncode.FieldOrganizationID: {Type: field.TypeUUID, Column: reasoncode.FieldOrganizationID},
 			reasoncode.FieldCreatedAt:      {Type: field.TypeTime, Column: reasoncode.FieldCreatedAt},
 			reasoncode.FieldUpdatedAt:      {Type: field.TypeTime, Column: reasoncode.FieldUpdatedAt},
+			reasoncode.FieldVersion:        {Type: field.TypeInt, Column: reasoncode.FieldVersion},
 			reasoncode.FieldStatus:         {Type: field.TypeEnum, Column: reasoncode.FieldStatus},
 			reasoncode.FieldCode:           {Type: field.TypeString, Column: reasoncode.FieldCode},
 			reasoncode.FieldCodeType:       {Type: field.TypeEnum, Column: reasoncode.FieldCodeType},
@@ -705,6 +723,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			revenuecode.FieldOrganizationID:   {Type: field.TypeUUID, Column: revenuecode.FieldOrganizationID},
 			revenuecode.FieldCreatedAt:        {Type: field.TypeTime, Column: revenuecode.FieldCreatedAt},
 			revenuecode.FieldUpdatedAt:        {Type: field.TypeTime, Column: revenuecode.FieldUpdatedAt},
+			revenuecode.FieldVersion:          {Type: field.TypeInt, Column: revenuecode.FieldVersion},
 			revenuecode.FieldStatus:           {Type: field.TypeEnum, Column: revenuecode.FieldStatus},
 			revenuecode.FieldCode:             {Type: field.TypeString, Column: revenuecode.FieldCode},
 			revenuecode.FieldDescription:      {Type: field.TypeString, Column: revenuecode.FieldDescription},
@@ -745,6 +764,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			servicetype.FieldOrganizationID: {Type: field.TypeUUID, Column: servicetype.FieldOrganizationID},
 			servicetype.FieldCreatedAt:      {Type: field.TypeTime, Column: servicetype.FieldCreatedAt},
 			servicetype.FieldUpdatedAt:      {Type: field.TypeTime, Column: servicetype.FieldUpdatedAt},
+			servicetype.FieldVersion:        {Type: field.TypeInt, Column: servicetype.FieldVersion},
 			servicetype.FieldStatus:         {Type: field.TypeEnum, Column: servicetype.FieldStatus},
 			servicetype.FieldCode:           {Type: field.TypeString, Column: servicetype.FieldCode},
 			servicetype.FieldDescription:    {Type: field.TypeString, Column: servicetype.FieldDescription},
@@ -809,6 +829,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			shipmenttype.FieldOrganizationID: {Type: field.TypeUUID, Column: shipmenttype.FieldOrganizationID},
 			shipmenttype.FieldCreatedAt:      {Type: field.TypeTime, Column: shipmenttype.FieldCreatedAt},
 			shipmenttype.FieldUpdatedAt:      {Type: field.TypeTime, Column: shipmenttype.FieldUpdatedAt},
+			shipmenttype.FieldVersion:        {Type: field.TypeInt, Column: shipmenttype.FieldVersion},
 			shipmenttype.FieldStatus:         {Type: field.TypeEnum, Column: shipmenttype.FieldStatus},
 			shipmenttype.FieldCode:           {Type: field.TypeString, Column: shipmenttype.FieldCode},
 			shipmenttype.FieldDescription:    {Type: field.TypeString, Column: shipmenttype.FieldDescription},
@@ -829,6 +850,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldOrganizationID:  {Type: field.TypeUUID, Column: tablechangealert.FieldOrganizationID},
 			tablechangealert.FieldCreatedAt:       {Type: field.TypeTime, Column: tablechangealert.FieldCreatedAt},
 			tablechangealert.FieldUpdatedAt:       {Type: field.TypeTime, Column: tablechangealert.FieldUpdatedAt},
+			tablechangealert.FieldVersion:         {Type: field.TypeInt, Column: tablechangealert.FieldVersion},
 			tablechangealert.FieldStatus:          {Type: field.TypeEnum, Column: tablechangealert.FieldStatus},
 			tablechangealert.FieldName:            {Type: field.TypeString, Column: tablechangealert.FieldName},
 			tablechangealert.FieldDatabaseAction:  {Type: field.TypeEnum, Column: tablechangealert.FieldDatabaseAction},
@@ -860,6 +882,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tag.FieldOrganizationID: {Type: field.TypeUUID, Column: tag.FieldOrganizationID},
 			tag.FieldCreatedAt:      {Type: field.TypeTime, Column: tag.FieldCreatedAt},
 			tag.FieldUpdatedAt:      {Type: field.TypeTime, Column: tag.FieldUpdatedAt},
+			tag.FieldVersion:        {Type: field.TypeInt, Column: tag.FieldVersion},
 			tag.FieldName:           {Type: field.TypeString, Column: tag.FieldName},
 			tag.FieldDescription:    {Type: field.TypeString, Column: tag.FieldDescription},
 			tag.FieldColor:          {Type: field.TypeString, Column: tag.FieldColor},
@@ -880,6 +903,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tractor.FieldOrganizationID:          {Type: field.TypeUUID, Column: tractor.FieldOrganizationID},
 			tractor.FieldCreatedAt:               {Type: field.TypeTime, Column: tractor.FieldCreatedAt},
 			tractor.FieldUpdatedAt:               {Type: field.TypeTime, Column: tractor.FieldUpdatedAt},
+			tractor.FieldVersion:                 {Type: field.TypeInt, Column: tractor.FieldVersion},
 			tractor.FieldCode:                    {Type: field.TypeString, Column: tractor.FieldCode},
 			tractor.FieldStatus:                  {Type: field.TypeEnum, Column: tractor.FieldStatus},
 			tractor.FieldEquipmentTypeID:         {Type: field.TypeUUID, Column: tractor.FieldEquipmentTypeID},
@@ -930,6 +954,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldOrganizationID: {Type: field.TypeUUID, Column: user.FieldOrganizationID},
 			user.FieldCreatedAt:      {Type: field.TypeTime, Column: user.FieldCreatedAt},
 			user.FieldUpdatedAt:      {Type: field.TypeTime, Column: user.FieldUpdatedAt},
+			user.FieldVersion:        {Type: field.TypeInt, Column: user.FieldVersion},
 			user.FieldStatus:         {Type: field.TypeEnum, Column: user.FieldStatus},
 			user.FieldName:           {Type: field.TypeString, Column: user.FieldName},
 			user.FieldUsername:       {Type: field.TypeString, Column: user.FieldUsername},
@@ -959,6 +984,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userfavorite.FieldOrganizationID: {Type: field.TypeUUID, Column: userfavorite.FieldOrganizationID},
 			userfavorite.FieldCreatedAt:      {Type: field.TypeTime, Column: userfavorite.FieldCreatedAt},
 			userfavorite.FieldUpdatedAt:      {Type: field.TypeTime, Column: userfavorite.FieldUpdatedAt},
+			userfavorite.FieldVersion:        {Type: field.TypeInt, Column: userfavorite.FieldVersion},
 			userfavorite.FieldPageLink:       {Type: field.TypeString, Column: userfavorite.FieldPageLink},
 			userfavorite.FieldUserID:         {Type: field.TypeUUID, Column: userfavorite.FieldUserID},
 		},
@@ -978,6 +1004,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldOrganizationID:    {Type: field.TypeUUID, Column: worker.FieldOrganizationID},
 			worker.FieldCreatedAt:         {Type: field.TypeTime, Column: worker.FieldCreatedAt},
 			worker.FieldUpdatedAt:         {Type: field.TypeTime, Column: worker.FieldUpdatedAt},
+			worker.FieldVersion:           {Type: field.TypeInt, Column: worker.FieldVersion},
 			worker.FieldStatus:            {Type: field.TypeEnum, Column: worker.FieldStatus},
 			worker.FieldCode:              {Type: field.TypeString, Column: worker.FieldCode},
 			worker.FieldProfilePictureURL: {Type: field.TypeString, Column: worker.FieldProfilePictureURL},
@@ -1006,6 +1033,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldOrganizationID: {Type: field.TypeUUID, Column: workercomment.FieldOrganizationID},
 			workercomment.FieldCreatedAt:      {Type: field.TypeTime, Column: workercomment.FieldCreatedAt},
 			workercomment.FieldUpdatedAt:      {Type: field.TypeTime, Column: workercomment.FieldUpdatedAt},
+			workercomment.FieldVersion:        {Type: field.TypeInt, Column: workercomment.FieldVersion},
 			workercomment.FieldWorkerID:       {Type: field.TypeUUID, Column: workercomment.FieldWorkerID},
 			workercomment.FieldCommentTypeID:  {Type: field.TypeUUID, Column: workercomment.FieldCommentTypeID},
 			workercomment.FieldComment:        {Type: field.TypeString, Column: workercomment.FieldComment},
@@ -1027,6 +1055,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercontact.FieldOrganizationID: {Type: field.TypeUUID, Column: workercontact.FieldOrganizationID},
 			workercontact.FieldCreatedAt:      {Type: field.TypeTime, Column: workercontact.FieldCreatedAt},
 			workercontact.FieldUpdatedAt:      {Type: field.TypeTime, Column: workercontact.FieldUpdatedAt},
+			workercontact.FieldVersion:        {Type: field.TypeInt, Column: workercontact.FieldVersion},
 			workercontact.FieldWorkerID:       {Type: field.TypeUUID, Column: workercontact.FieldWorkerID},
 			workercontact.FieldName:           {Type: field.TypeString, Column: workercontact.FieldName},
 			workercontact.FieldEmail:          {Type: field.TypeString, Column: workercontact.FieldEmail},
@@ -1050,6 +1079,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workerprofile.FieldOrganizationID:        {Type: field.TypeUUID, Column: workerprofile.FieldOrganizationID},
 			workerprofile.FieldCreatedAt:             {Type: field.TypeTime, Column: workerprofile.FieldCreatedAt},
 			workerprofile.FieldUpdatedAt:             {Type: field.TypeTime, Column: workerprofile.FieldUpdatedAt},
+			workerprofile.FieldVersion:               {Type: field.TypeInt, Column: workerprofile.FieldVersion},
 			workerprofile.FieldWorkerID:              {Type: field.TypeUUID, Column: workerprofile.FieldWorkerID},
 			workerprofile.FieldRace:                  {Type: field.TypeString, Column: workerprofile.FieldRace},
 			workerprofile.FieldSex:                   {Type: field.TypeString, Column: workerprofile.FieldSex},
@@ -2647,6 +2677,11 @@ func (f *AccessorialChargeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(accessorialcharge.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *AccessorialChargeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(accessorialcharge.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *AccessorialChargeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(accessorialcharge.FieldStatus))
@@ -3226,6 +3261,11 @@ func (f *ChargeTypeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(chargetype.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *ChargeTypeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(chargetype.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *ChargeTypeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(chargetype.FieldStatus))
@@ -3327,6 +3367,11 @@ func (f *CommentTypeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *CommentTypeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(commenttype.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *CommentTypeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(commenttype.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -3435,6 +3480,11 @@ func (f *CommodityFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *CommodityFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(commodity.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *CommodityFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(commodity.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -3577,6 +3627,11 @@ func (f *CustomerFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *CustomerFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(customer.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *CustomerFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(customer.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -3729,6 +3784,11 @@ func (f *DelayCodeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *DelayCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(delaycode.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *DelayCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(delaycode.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -3977,6 +4037,11 @@ func (f *DivisionCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(divisioncode.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *DivisionCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(divisioncode.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *DivisionCodeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(divisioncode.FieldStatus))
@@ -4135,6 +4200,11 @@ func (f *DocumentClassificationFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *DocumentClassificationFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(documentclassification.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *DocumentClassificationFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(documentclassification.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -4356,6 +4426,11 @@ func (f *EmailProfileFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(emailprofile.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *EmailProfileFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(emailprofile.FieldVersion))
+}
+
 // WhereName applies the entql string predicate on the name field.
 func (f *EmailProfileFilter) WhereName(p entql.StringP) {
 	f.Where(p.Field(emailprofile.FieldName))
@@ -4484,6 +4559,11 @@ func (f *EquipmentManufactuerFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(equipmentmanufactuer.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *EquipmentManufactuerFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(equipmentmanufactuer.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *EquipmentManufactuerFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(equipmentmanufactuer.FieldStatus))
@@ -4585,6 +4665,11 @@ func (f *EquipmentTypeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *EquipmentTypeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(equipmenttype.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *EquipmentTypeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(equipmenttype.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -4863,6 +4948,11 @@ func (f *FleetCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(fleetcode.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *FleetCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(fleetcode.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *FleetCodeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(fleetcode.FieldStatus))
@@ -4998,6 +5088,11 @@ func (f *GeneralLedgerAccountFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *GeneralLedgerAccountFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(generalledgeraccount.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *GeneralLedgerAccountFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(generalledgeraccount.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -5275,6 +5370,11 @@ func (f *HazardousMaterialFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(hazardousmaterial.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *HazardousMaterialFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(hazardousmaterial.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *HazardousMaterialFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(hazardousmaterial.FieldStatus))
@@ -5396,6 +5496,11 @@ func (f *HazardousMaterialSegregationFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *HazardousMaterialSegregationFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(hazardousmaterialsegregation.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *HazardousMaterialSegregationFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(hazardousmaterialsegregation.FieldVersion))
 }
 
 // WhereClassA applies the entql string predicate on the class_a field.
@@ -5632,6 +5737,11 @@ func (f *LocationCategoryFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *LocationCategoryFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(locationcategory.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *LocationCategoryFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(locationcategory.FieldVersion))
 }
 
 // WhereName applies the entql string predicate on the name field.
@@ -5962,6 +6072,11 @@ func (f *QualifierCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(qualifiercode.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *QualifierCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(qualifiercode.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *QualifierCodeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(qualifiercode.FieldStatus))
@@ -6063,6 +6178,11 @@ func (f *ReasonCodeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *ReasonCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(reasoncode.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *ReasonCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(reasoncode.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -6171,6 +6291,11 @@ func (f *RevenueCodeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *RevenueCodeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(revenuecode.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *RevenueCodeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(revenuecode.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -6405,6 +6530,11 @@ func (f *ServiceTypeFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *ServiceTypeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(servicetype.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *ServiceTypeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(servicetype.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -6708,6 +6838,11 @@ func (f *ShipmentTypeFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(shipmenttype.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *ShipmentTypeFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(shipmenttype.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *ShipmentTypeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(shipmenttype.FieldStatus))
@@ -6809,6 +6944,11 @@ func (f *TableChangeAlertFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *TableChangeAlertFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(tablechangealert.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *TableChangeAlertFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(tablechangealert.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -6969,6 +7109,11 @@ func (f *TagFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(tag.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *TagFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(tag.FieldVersion))
+}
+
 // WhereName applies the entql string predicate on the name field.
 func (f *TagFilter) WhereName(p entql.StringP) {
 	f.Where(p.Field(tag.FieldName))
@@ -7084,6 +7229,11 @@ func (f *TractorFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *TractorFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(tractor.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *TractorFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(tractor.FieldVersion))
 }
 
 // WhereCode applies the entql string predicate on the code field.
@@ -7398,6 +7548,11 @@ func (f *UserFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(user.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *UserFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(user.FieldVersion))
+}
+
 // WhereStatus applies the entql string predicate on the status field.
 func (f *UserFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(user.FieldStatus))
@@ -7560,6 +7715,11 @@ func (f *UserFavoriteFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(userfavorite.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *UserFavoriteFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(userfavorite.FieldVersion))
+}
+
 // WherePageLink applies the entql string predicate on the page_link field.
 func (f *UserFavoriteFilter) WherePageLink(p entql.StringP) {
 	f.Where(p.Field(userfavorite.FieldPageLink))
@@ -7670,6 +7830,11 @@ func (f *WorkerFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *WorkerFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(worker.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *WorkerFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(worker.FieldVersion))
 }
 
 // WhereStatus applies the entql string predicate on the status field.
@@ -7927,6 +8092,11 @@ func (f *WorkerCommentFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(workercomment.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *WorkerCommentFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(workercomment.FieldVersion))
+}
+
 // WhereWorkerID applies the entql [16]byte predicate on the worker_id field.
 func (f *WorkerCommentFilter) WhereWorkerID(p entql.ValueP) {
 	f.Where(p.Field(workercomment.FieldWorkerID))
@@ -8063,6 +8233,11 @@ func (f *WorkerContactFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(workercontact.FieldUpdatedAt))
 }
 
+// WhereVersion applies the entql int predicate on the version field.
+func (f *WorkerContactFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(workercontact.FieldVersion))
+}
+
 // WhereWorkerID applies the entql [16]byte predicate on the worker_id field.
 func (f *WorkerContactFilter) WhereWorkerID(p entql.ValueP) {
 	f.Where(p.Field(workercontact.FieldWorkerID))
@@ -8193,6 +8368,11 @@ func (f *WorkerProfileFilter) WhereCreatedAt(p entql.TimeP) {
 // WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
 func (f *WorkerProfileFilter) WhereUpdatedAt(p entql.TimeP) {
 	f.Where(p.Field(workerprofile.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *WorkerProfileFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(workerprofile.FieldVersion))
 }
 
 // WhereWorkerID applies the entql [16]byte predicate on the worker_id field.

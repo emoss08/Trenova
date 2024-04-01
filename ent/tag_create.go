@@ -64,6 +64,20 @@ func (tc *TagCreate) SetNillableUpdatedAt(t *time.Time) *TagCreate {
 	return tc
 }
 
+// SetVersion sets the "version" field.
+func (tc *TagCreate) SetVersion(i int) *TagCreate {
+	tc.mutation.SetVersion(i)
+	return tc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tc *TagCreate) SetNillableVersion(i *int) *TagCreate {
+	if i != nil {
+		tc.SetVersion(*i)
+	}
+	return tc
+}
+
 // SetName sets the "name" field.
 func (tc *TagCreate) SetName(s string) *TagCreate {
 	tc.mutation.SetName(s)
@@ -180,6 +194,10 @@ func (tc *TagCreate) defaults() {
 		v := tag.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tc.mutation.Version(); !ok {
+		v := tag.DefaultVersion
+		tc.mutation.SetVersion(v)
+	}
 	if _, ok := tc.mutation.ID(); !ok {
 		v := tag.DefaultID()
 		tc.mutation.SetID(v)
@@ -199,6 +217,9 @@ func (tc *TagCreate) check() error {
 	}
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tag.updated_at"`)}
+	}
+	if _, ok := tc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Tag.version"`)}
 	}
 	if _, ok := tc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Tag.name"`)}
@@ -256,6 +277,10 @@ func (tc *TagCreate) createSpec() (*Tag, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.UpdatedAt(); ok {
 		_spec.SetField(tag.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := tc.mutation.Version(); ok {
+		_spec.SetField(tag.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(tag.FieldName, field.TypeString, value)

@@ -28,6 +28,8 @@ type EquipmentType struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status equipmenttype.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
@@ -104,6 +106,8 @@ func (*EquipmentType) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case equipmenttype.FieldCostPerMile, equipmenttype.FieldFixedCost, equipmenttype.FieldVariableCost, equipmenttype.FieldHeight, equipmenttype.FieldLength, equipmenttype.FieldWidth, equipmenttype.FieldWeight, equipmenttype.FieldIdlingFuelUsage:
 			values[i] = new(sql.NullFloat64)
+		case equipmenttype.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case equipmenttype.FieldStatus, equipmenttype.FieldName, equipmenttype.FieldDescription, equipmenttype.FieldEquipmentClass, equipmenttype.FieldColor:
 			values[i] = new(sql.NullString)
 		case equipmenttype.FieldCreatedAt, equipmenttype.FieldUpdatedAt:
@@ -154,6 +158,12 @@ func (et *EquipmentType) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				et.UpdatedAt = value.Time
+			}
+		case equipmenttype.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				et.Version = int(value.Int64)
 			}
 		case equipmenttype.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -296,6 +306,9 @@ func (et *EquipmentType) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(et.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", et.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", et.Status))

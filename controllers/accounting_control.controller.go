@@ -32,7 +32,7 @@ func GetAccountingControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accountingControl, err := services.NewAccountingControlOps(r.Context()).GetAccountingControl(orgID, buID)
+	accountingControl, err := services.NewAccountingControlOps().GetAccountingControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -57,7 +57,7 @@ func UpdateAccountingControl(w http.ResponseWriter, r *http.Request) {
 
 	aControlData.ID = uuid.MustParse(accountingControlID)
 
-	accountingControl, err := services.NewAccountingControlOps(r.Context()).UpdateAccountingControl(aControlData)
+	accountingControl, err := services.NewAccountingControlOps().UpdateAccountingControl(r.Context(), aControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

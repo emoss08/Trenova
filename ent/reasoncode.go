@@ -28,6 +28,8 @@ type ReasonCode struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status reasoncode.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
@@ -80,6 +82,8 @@ func (*ReasonCode) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case reasoncode.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case reasoncode.FieldStatus, reasoncode.FieldCode, reasoncode.FieldCodeType, reasoncode.FieldDescription:
 			values[i] = new(sql.NullString)
 		case reasoncode.FieldCreatedAt, reasoncode.FieldUpdatedAt:
@@ -130,6 +134,12 @@ func (rc *ReasonCode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				rc.UpdatedAt = value.Time
+			}
+		case reasoncode.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				rc.Version = int(value.Int64)
 			}
 		case reasoncode.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -212,6 +222,9 @@ func (rc *ReasonCode) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(rc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", rc.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", rc.Status))

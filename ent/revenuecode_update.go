@@ -37,6 +37,27 @@ func (rcu *RevenueCodeUpdate) SetUpdatedAt(t time.Time) *RevenueCodeUpdate {
 	return rcu
 }
 
+// SetVersion sets the "version" field.
+func (rcu *RevenueCodeUpdate) SetVersion(i int) *RevenueCodeUpdate {
+	rcu.mutation.ResetVersion()
+	rcu.mutation.SetVersion(i)
+	return rcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (rcu *RevenueCodeUpdate) SetNillableVersion(i *int) *RevenueCodeUpdate {
+	if i != nil {
+		rcu.SetVersion(*i)
+	}
+	return rcu
+}
+
+// AddVersion adds i to the "version" field.
+func (rcu *RevenueCodeUpdate) AddVersion(i int) *RevenueCodeUpdate {
+	rcu.mutation.AddVersion(i)
+	return rcu
+}
+
 // SetStatus sets the "status" field.
 func (rcu *RevenueCodeUpdate) SetStatus(r revenuecode.Status) *RevenueCodeUpdate {
 	rcu.mutation.SetStatus(r)
@@ -235,6 +256,12 @@ func (rcu *RevenueCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := rcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(revenuecode.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := rcu.mutation.Version(); ok {
+		_spec.SetField(revenuecode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := rcu.mutation.AddedVersion(); ok {
+		_spec.AddField(revenuecode.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := rcu.mutation.Status(); ok {
 		_spec.SetField(revenuecode.FieldStatus, field.TypeEnum, value)
 	}
@@ -327,6 +354,27 @@ type RevenueCodeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (rcuo *RevenueCodeUpdateOne) SetUpdatedAt(t time.Time) *RevenueCodeUpdateOne {
 	rcuo.mutation.SetUpdatedAt(t)
+	return rcuo
+}
+
+// SetVersion sets the "version" field.
+func (rcuo *RevenueCodeUpdateOne) SetVersion(i int) *RevenueCodeUpdateOne {
+	rcuo.mutation.ResetVersion()
+	rcuo.mutation.SetVersion(i)
+	return rcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (rcuo *RevenueCodeUpdateOne) SetNillableVersion(i *int) *RevenueCodeUpdateOne {
+	if i != nil {
+		rcuo.SetVersion(*i)
+	}
+	return rcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (rcuo *RevenueCodeUpdateOne) AddVersion(i int) *RevenueCodeUpdateOne {
+	rcuo.mutation.AddVersion(i)
 	return rcuo
 }
 
@@ -557,6 +605,12 @@ func (rcuo *RevenueCodeUpdateOne) sqlSave(ctx context.Context) (_node *RevenueCo
 	}
 	if value, ok := rcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(revenuecode.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := rcuo.mutation.Version(); ok {
+		_spec.SetField(revenuecode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := rcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(revenuecode.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := rcuo.mutation.Status(); ok {
 		_spec.SetField(revenuecode.FieldStatus, field.TypeEnum, value)

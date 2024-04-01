@@ -29,6 +29,8 @@ type FleetCode struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status fleetcode.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
@@ -104,6 +106,8 @@ func (*FleetCode) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case fleetcode.FieldRevenueGoal, fleetcode.FieldDeadheadGoal, fleetcode.FieldMileageGoal:
 			values[i] = new(sql.NullFloat64)
+		case fleetcode.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case fleetcode.FieldStatus, fleetcode.FieldCode, fleetcode.FieldDescription:
 			values[i] = new(sql.NullString)
 		case fleetcode.FieldCreatedAt, fleetcode.FieldUpdatedAt:
@@ -154,6 +158,12 @@ func (fc *FleetCode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				fc.UpdatedAt = value.Time
+			}
+		case fleetcode.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				fc.Version = int(value.Int64)
 			}
 		case fleetcode.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -260,6 +270,9 @@ func (fc *FleetCode) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(fc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", fc.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", fc.Status))

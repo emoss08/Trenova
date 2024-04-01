@@ -35,6 +35,27 @@ func (etu *EquipmentTypeUpdate) SetUpdatedAt(t time.Time) *EquipmentTypeUpdate {
 	return etu
 }
 
+// SetVersion sets the "version" field.
+func (etu *EquipmentTypeUpdate) SetVersion(i int) *EquipmentTypeUpdate {
+	etu.mutation.ResetVersion()
+	etu.mutation.SetVersion(i)
+	return etu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (etu *EquipmentTypeUpdate) SetNillableVersion(i *int) *EquipmentTypeUpdate {
+	if i != nil {
+		etu.SetVersion(*i)
+	}
+	return etu
+}
+
+// AddVersion adds i to the "version" field.
+func (etu *EquipmentTypeUpdate) AddVersion(i int) *EquipmentTypeUpdate {
+	etu.mutation.AddVersion(i)
+	return etu
+}
+
 // SetStatus sets the "status" field.
 func (etu *EquipmentTypeUpdate) SetStatus(e equipmenttype.Status) *EquipmentTypeUpdate {
 	etu.mutation.SetStatus(e)
@@ -435,6 +456,12 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := etu.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmenttype.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := etu.mutation.Version(); ok {
+		_spec.SetField(equipmenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := etu.mutation.AddedVersion(); ok {
+		_spec.AddField(equipmenttype.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := etu.mutation.Status(); ok {
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)
 	}
@@ -556,6 +583,27 @@ type EquipmentTypeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (etuo *EquipmentTypeUpdateOne) SetUpdatedAt(t time.Time) *EquipmentTypeUpdateOne {
 	etuo.mutation.SetUpdatedAt(t)
+	return etuo
+}
+
+// SetVersion sets the "version" field.
+func (etuo *EquipmentTypeUpdateOne) SetVersion(i int) *EquipmentTypeUpdateOne {
+	etuo.mutation.ResetVersion()
+	etuo.mutation.SetVersion(i)
+	return etuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (etuo *EquipmentTypeUpdateOne) SetNillableVersion(i *int) *EquipmentTypeUpdateOne {
+	if i != nil {
+		etuo.SetVersion(*i)
+	}
+	return etuo
+}
+
+// AddVersion adds i to the "version" field.
+func (etuo *EquipmentTypeUpdateOne) AddVersion(i int) *EquipmentTypeUpdateOne {
+	etuo.mutation.AddVersion(i)
 	return etuo
 }
 
@@ -988,6 +1036,12 @@ func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Equipme
 	}
 	if value, ok := etuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmenttype.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := etuo.mutation.Version(); ok {
+		_spec.SetField(equipmenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := etuo.mutation.AddedVersion(); ok {
+		_spec.AddField(equipmenttype.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := etuo.mutation.Status(); ok {
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)

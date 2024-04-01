@@ -48,7 +48,7 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tags, count, err := services.NewTagOps(r.Context()).GetTags(limit, offset, orgID, buID)
+	tags, count, err := services.NewTagOps().GetTags(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newRecord, err := services.NewTagOps(r.Context()).CreateTag(newEntity)
+	newRecord, err := services.NewTagOps().CreateTag(r.Context(), newEntity)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateTag(w http.ResponseWriter, r *http.Request) {
 
 	entityData.ID = uuid.MustParse(tagID)
 
-	updatedEntity, err := services.NewTagOps(r.Context()).UpdateTag(entityData)
+	updatedEntity, err := services.NewTagOps().UpdateTag(r.Context(), entityData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

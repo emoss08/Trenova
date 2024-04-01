@@ -21,28 +21,27 @@ import { BaseModel } from "./organization";
 /** Customer Type */
 export interface Customer extends BaseModel {
   id: string;
-  organization: string;
   status: StatusChoiceProps;
   code: string;
   name: string;
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  zipCode?: string | null;
-  state?: string | null;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  zipCode?: string;
+  state?: string;
   hasCustomerPortal?: boolean;
   autoMarkReadyToBill?: boolean;
   created: string;
   modified: string;
-  advocate?: string | null;
-  advocateFullName?: string | null;
-  lastBillDate?: string | null;
-  lastShipDate?: string | null;
-  totalShipments?: number | null;
-  deliverySlots?: DeliverySlot[] | null;
-  contacts?: CustomerContact[] | null;
-  emailProfile?: CustomerEmailProfile | null;
-  ruleProfile?: CustomerRuleProfile | null;
+  advocate?: string;
+  advocateFullName?: string;
+  lastBillDate?: string;
+  lastShipDate?: string;
+  totalShipments?: number;
+  deliverySlots?: DeliverySlot[];
+  contacts?: CustomerContact[];
+  emailProfile?: CustomerEmailProfile;
+  ruleProfile?: CustomerRuleProfile;
 }
 
 export type CustomerFormValues = Omit<

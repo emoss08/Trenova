@@ -4,7 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/tablechangealert"
+	"github.com/emoss08/trenova/tools"
 	"github.com/emoss08/trenova/tools/kafka"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -13,32 +17,34 @@ import (
 )
 
 type TableChangeAlertOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewTableChangeAlertOps creates a new table change alert service.
-func NewTableChangeAlertOps(ctx context.Context) *TableChangeAlertOps {
+func NewTableChangeAlertOps() *TableChangeAlertOps {
 	return &TableChangeAlertOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetTableChangeAlerts gets the table change alert for an organization.
-func (r *TableChangeAlertOps) GetTableChangeAlerts(limit, offset int, orgID, buID uuid.UUID) ([]*ent.TableChangeAlert, int, error) {
-	tableChangeAlertCount, countErr := r.client.TableChangeAlert.Query().Where(
+func (r *TableChangeAlertOps) GetTableChangeAlerts(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.TableChangeAlert, int, error) {
+	entityCount, countErr := r.client.TableChangeAlert.Query().Where(
 		tablechangealert.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	tableChangeAlerts, err := r.client.TableChangeAlert.Query().
+	entities, err := r.client.TableChangeAlert.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -46,62 +52,141 @@ func (r *TableChangeAlertOps) GetTableChangeAlerts(limit, offset int, orgID, buI
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return tableChangeAlerts, tableChangeAlertCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateTableChangeAlert creates a new table change alert.
-func (r *TableChangeAlertOps) CreateTableChangeAlert(newTableChangeAlert ent.TableChangeAlert) (*ent.TableChangeAlert, error) {
-	tableChangeAlert, err := r.client.TableChangeAlert.Create().
-		SetOrganizationID(newTableChangeAlert.OrganizationID).
-		SetBusinessUnitID(newTableChangeAlert.BusinessUnitID).
-		SetStatus(newTableChangeAlert.Status).
-		SetName(newTableChangeAlert.Name).
-		SetDatabaseAction(newTableChangeAlert.DatabaseAction).
-		SetSource(newTableChangeAlert.Source).
-		SetTableName(newTableChangeAlert.TableName).
-		SetTopicName(newTableChangeAlert.TopicName).
-		SetDescription(newTableChangeAlert.Description).
-		SetCustomSubject(newTableChangeAlert.CustomSubject).
-		SetFunctionName(newTableChangeAlert.FunctionName).
-		SetTriggerName(newTableChangeAlert.TriggerName).
-		SetListenerName(newTableChangeAlert.ListenerName).
-		SetEmailRecipients(newTableChangeAlert.EmailRecipients).
-		SetEffectiveDate(newTableChangeAlert.EffectiveDate).
-		SetExpirationDate(newTableChangeAlert.ExpirationDate).
-		Save(r.ctx)
+func (r *TableChangeAlertOps) CreateTableChangeAlert(
+	ctx context.Context, newEntity ent.TableChangeAlert,
+) (*ent.TableChangeAlert, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.TableChangeAlert.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetName(newEntity.Name).
+		SetDatabaseAction(newEntity.DatabaseAction).
+		SetSource(newEntity.Source).
+		SetTableName(newEntity.TableName).
+		SetTopicName(newEntity.TopicName).
+		SetDescription(newEntity.Description).
+		SetCustomSubject(newEntity.CustomSubject).
+		SetFunctionName(newEntity.FunctionName).
+		SetTriggerName(newEntity.TriggerName).
+		SetListenerName(newEntity.ListenerName).
+		SetEmailRecipients(newEntity.EmailRecipients).
+		SetEffectiveDate(newEntity.EffectiveDate).
+		SetExpirationDate(newEntity.ExpirationDate).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return tableChangeAlert, nil
+	return createdEntity, nil
 }
 
 // UpdateTableChangeAlert updates a table change alert.
-func (r *TableChangeAlertOps) UpdateTableChangeAlert(tableChangeAlert ent.TableChangeAlert) (*ent.TableChangeAlert, error) {
+func (r *TableChangeAlertOps) UpdateTableChangeAlert(
+	ctx context.Context, entity ent.TableChangeAlert,
+) (*ent.TableChangeAlert, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.TableChangeAlert.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"name")
+	}
+
 	// Start building the update operation
-	updateOp := r.client.TableChangeAlert.UpdateOneID(tableChangeAlert.ID).
-		SetStatus(tableChangeAlert.Status).
-		SetName(tableChangeAlert.Name).
-		SetDatabaseAction(tableChangeAlert.DatabaseAction).
-		SetSource(tableChangeAlert.Source).
-		SetTableName(tableChangeAlert.TableName).
-		SetTopicName(tableChangeAlert.TopicName).
-		SetDescription(tableChangeAlert.Description).
-		SetCustomSubject(tableChangeAlert.CustomSubject).
-		SetFunctionName(tableChangeAlert.FunctionName).
-		SetTriggerName(tableChangeAlert.TriggerName).
-		SetListenerName(tableChangeAlert.ListenerName).
-		SetEmailRecipients(tableChangeAlert.EmailRecipients).
-		SetEffectiveDate(tableChangeAlert.EffectiveDate).
-		SetExpirationDate(tableChangeAlert.ExpirationDate)
+	updateOp := tx.TableChangeAlert.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetName(entity.Name).
+		SetDatabaseAction(entity.DatabaseAction).
+		SetSource(entity.Source).
+		SetTableName(entity.TableName).
+		SetTopicName(entity.TopicName).
+		SetDescription(entity.Description).
+		SetCustomSubject(entity.CustomSubject).
+		SetFunctionName(entity.FunctionName).
+		SetTriggerName(entity.TriggerName).
+		SetListenerName(entity.ListenerName).
+		SetEmailRecipients(entity.EmailRecipients).
+		SetEffectiveDate(entity.EffectiveDate).
+		SetExpirationDate(entity.ExpirationDate).
+		SetVersion(entity.Version + 1) // Increment the version
 
 	// Execute the update operation
-	updateTableChangeAlert, err := updateOp.Save(r.ctx)
+	updateTableChangeAlert, err := updateOp.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +199,7 @@ type TableName struct {
 	Label string `json:"label"`
 }
 
-func (r *TableChangeAlertOps) GetTableNames() ([]TableName, int, error) {
+func (r *TableChangeAlertOps) GetTableNames(ctx context.Context) ([]TableName, int, error) {
 	excludedTableNames := map[string]bool{
 		"table_change_alerts":       true,
 		"shipment_controls":         true,
@@ -134,23 +219,34 @@ func (r *TableChangeAlertOps) GetTableNames() ([]TableName, int, error) {
 		"email_profiles":            true,
 	}
 
-	tx, err := r.client.Tx(r.ctx)
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
+	// Ensure the transaction is either committed or rolled back
 	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
 		} else {
-			err = tx.Commit() // if Commit returns error update err with commit err
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
 		}
 	}()
 
 	query := "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
-	rows, err := tx.QueryContext(r.ctx, query)
+	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return nil, 0, err
 	}

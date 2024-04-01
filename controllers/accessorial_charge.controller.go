@@ -48,7 +48,7 @@ func GetAccessorialCharge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessorialCharges, count, err := services.NewAccessorialChargeOps(r.Context()).GetAccessorialCharges(limit, offset, orgID, buID)
+	accessorialCharges, count, err := services.NewAccessorialChargeOps().GetAccessorialCharges(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,8 +96,8 @@ func CreateAccessorialCharge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createAccessorialCharge, err := services.NewAccessorialChargeOps(r.Context()).
-		CreateAccessorialCharge(newAccessorialCharge)
+	createAccessorialCharge, err := services.NewAccessorialChargeOps().
+		CreateAccessorialCharge(r.Context(), newAccessorialCharge)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -123,7 +123,7 @@ func UpdateAccessorialCharge(w http.ResponseWriter, r *http.Request) {
 
 	accessorialChargeData.ID = uuid.MustParse(accessorialChargeID)
 
-	accessorialCharge, err := services.NewAccessorialChargeOps(r.Context()).UpdateAccessorialCharge(accessorialChargeData)
+	accessorialCharge, err := services.NewAccessorialChargeOps().UpdateAccessorialCharge(r.Context(), accessorialChargeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

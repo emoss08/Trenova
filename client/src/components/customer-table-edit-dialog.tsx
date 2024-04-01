@@ -51,33 +51,7 @@ export function CustomerEditForm({
 
   const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
-    defaultValues: {
-      status: customer.status,
-      code: customer.code,
-      name: customer.name,
-      addressLine1: customer.addressLine1,
-      addressLine2: customer.addressLine2,
-      city: customer.city,
-      state: customer.state,
-      zipCode: customer.zipCode,
-      hasCustomerPortal: customer.hasCustomerPortal,
-      autoMarkReadyToBill: customer.autoMarkReadyToBill,
-      deliverySlots: customer?.deliverySlots || [],
-      contacts: customer?.contacts || [],
-      emailProfile: {
-        subject: customer.emailProfile?.subject || "",
-        comment: customer.emailProfile?.comment || "",
-        fromAddress: customer.emailProfile?.fromAddress || "",
-        blindCopy: customer.emailProfile?.blindCopy || "",
-        readReceipt: customer.emailProfile?.readReceipt || false,
-        readReceiptTo: customer.emailProfile?.readReceiptTo || "",
-        attachmentName: customer.emailProfile?.attachmentName || "",
-      },
-      ruleProfile: {
-        name: customer.ruleProfile?.name || "",
-        documentClass: customer.ruleProfile?.documentClass || [],
-      },
-    },
+    defaultValues: customer,
   });
 
   const { control, handleSubmit, reset } = customerForm;

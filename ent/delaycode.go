@@ -28,6 +28,8 @@ type DelayCode struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status delaycode.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
@@ -82,6 +84,8 @@ func (*DelayCode) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case delaycode.FieldFCarrierOrDriver:
 			values[i] = new(sql.NullBool)
+		case delaycode.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case delaycode.FieldStatus, delaycode.FieldCode, delaycode.FieldDescription:
 			values[i] = new(sql.NullString)
 		case delaycode.FieldCreatedAt, delaycode.FieldUpdatedAt:
@@ -132,6 +136,12 @@ func (dc *DelayCode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				dc.UpdatedAt = value.Time
+			}
+		case delaycode.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				dc.Version = int(value.Int64)
 			}
 		case delaycode.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -214,6 +224,9 @@ func (dc *DelayCode) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(dc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", dc.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", dc.Status))

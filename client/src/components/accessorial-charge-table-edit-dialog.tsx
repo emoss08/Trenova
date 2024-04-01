@@ -46,14 +46,7 @@ function ACEditForm({
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(accessorialChargeSchema),
-    defaultValues: {
-      status: accessorialCharge.status,
-      code: accessorialCharge.code,
-      description: accessorialCharge.description,
-      isDetention: accessorialCharge.isDetention,
-      method: accessorialCharge.method,
-      amount: accessorialCharge.amount,
-    },
+    defaultValues: accessorialCharge,
   });
 
   const mutation = useCustomMutation<FormValues>(

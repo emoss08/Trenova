@@ -35,6 +35,27 @@ func (ufu *UserFavoriteUpdate) SetUpdatedAt(t time.Time) *UserFavoriteUpdate {
 	return ufu
 }
 
+// SetVersion sets the "version" field.
+func (ufu *UserFavoriteUpdate) SetVersion(i int) *UserFavoriteUpdate {
+	ufu.mutation.ResetVersion()
+	ufu.mutation.SetVersion(i)
+	return ufu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ufu *UserFavoriteUpdate) SetNillableVersion(i *int) *UserFavoriteUpdate {
+	if i != nil {
+		ufu.SetVersion(*i)
+	}
+	return ufu
+}
+
+// AddVersion adds i to the "version" field.
+func (ufu *UserFavoriteUpdate) AddVersion(i int) *UserFavoriteUpdate {
+	ufu.mutation.AddVersion(i)
+	return ufu
+}
+
 // SetPageLink sets the "page_link" field.
 func (ufu *UserFavoriteUpdate) SetPageLink(s string) *UserFavoriteUpdate {
 	ufu.mutation.SetPageLink(s)
@@ -130,6 +151,12 @@ func (ufu *UserFavoriteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ufu.mutation.UpdatedAt(); ok {
 		_spec.SetField(userfavorite.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := ufu.mutation.Version(); ok {
+		_spec.SetField(userfavorite.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ufu.mutation.AddedVersion(); ok {
+		_spec.AddField(userfavorite.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := ufu.mutation.PageLink(); ok {
 		_spec.SetField(userfavorite.FieldPageLink, field.TypeString, value)
 	}
@@ -158,6 +185,27 @@ type UserFavoriteUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (ufuo *UserFavoriteUpdateOne) SetUpdatedAt(t time.Time) *UserFavoriteUpdateOne {
 	ufuo.mutation.SetUpdatedAt(t)
+	return ufuo
+}
+
+// SetVersion sets the "version" field.
+func (ufuo *UserFavoriteUpdateOne) SetVersion(i int) *UserFavoriteUpdateOne {
+	ufuo.mutation.ResetVersion()
+	ufuo.mutation.SetVersion(i)
+	return ufuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ufuo *UserFavoriteUpdateOne) SetNillableVersion(i *int) *UserFavoriteUpdateOne {
+	if i != nil {
+		ufuo.SetVersion(*i)
+	}
+	return ufuo
+}
+
+// AddVersion adds i to the "version" field.
+func (ufuo *UserFavoriteUpdateOne) AddVersion(i int) *UserFavoriteUpdateOne {
+	ufuo.mutation.AddVersion(i)
 	return ufuo
 }
 
@@ -285,6 +333,12 @@ func (ufuo *UserFavoriteUpdateOne) sqlSave(ctx context.Context) (_node *UserFavo
 	}
 	if value, ok := ufuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(userfavorite.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := ufuo.mutation.Version(); ok {
+		_spec.SetField(userfavorite.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ufuo.mutation.AddedVersion(); ok {
+		_spec.AddField(userfavorite.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := ufuo.mutation.PageLink(); ok {
 		_spec.SetField(userfavorite.FieldPageLink, field.TypeString, value)

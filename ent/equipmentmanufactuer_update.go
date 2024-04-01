@@ -35,6 +35,27 @@ func (emu *EquipmentManufactuerUpdate) SetUpdatedAt(t time.Time) *EquipmentManuf
 	return emu
 }
 
+// SetVersion sets the "version" field.
+func (emu *EquipmentManufactuerUpdate) SetVersion(i int) *EquipmentManufactuerUpdate {
+	emu.mutation.ResetVersion()
+	emu.mutation.SetVersion(i)
+	return emu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (emu *EquipmentManufactuerUpdate) SetNillableVersion(i *int) *EquipmentManufactuerUpdate {
+	if i != nil {
+		emu.SetVersion(*i)
+	}
+	return emu
+}
+
+// AddVersion adds i to the "version" field.
+func (emu *EquipmentManufactuerUpdate) AddVersion(i int) *EquipmentManufactuerUpdate {
+	emu.mutation.AddVersion(i)
+	return emu
+}
+
 // SetStatus sets the "status" field.
 func (emu *EquipmentManufactuerUpdate) SetStatus(e equipmentmanufactuer.Status) *EquipmentManufactuerUpdate {
 	emu.mutation.SetStatus(e)
@@ -166,6 +187,12 @@ func (emu *EquipmentManufactuerUpdate) sqlSave(ctx context.Context) (n int, err 
 	if value, ok := emu.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := emu.mutation.Version(); ok {
+		_spec.SetField(equipmentmanufactuer.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := emu.mutation.AddedVersion(); ok {
+		_spec.AddField(equipmentmanufactuer.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := emu.mutation.Status(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldStatus, field.TypeEnum, value)
 	}
@@ -203,6 +230,27 @@ type EquipmentManufactuerUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (emuo *EquipmentManufactuerUpdateOne) SetUpdatedAt(t time.Time) *EquipmentManufactuerUpdateOne {
 	emuo.mutation.SetUpdatedAt(t)
+	return emuo
+}
+
+// SetVersion sets the "version" field.
+func (emuo *EquipmentManufactuerUpdateOne) SetVersion(i int) *EquipmentManufactuerUpdateOne {
+	emuo.mutation.ResetVersion()
+	emuo.mutation.SetVersion(i)
+	return emuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (emuo *EquipmentManufactuerUpdateOne) SetNillableVersion(i *int) *EquipmentManufactuerUpdateOne {
+	if i != nil {
+		emuo.SetVersion(*i)
+	}
+	return emuo
+}
+
+// AddVersion adds i to the "version" field.
+func (emuo *EquipmentManufactuerUpdateOne) AddVersion(i int) *EquipmentManufactuerUpdateOne {
+	emuo.mutation.AddVersion(i)
 	return emuo
 }
 
@@ -366,6 +414,12 @@ func (emuo *EquipmentManufactuerUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if value, ok := emuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := emuo.mutation.Version(); ok {
+		_spec.SetField(equipmentmanufactuer.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := emuo.mutation.AddedVersion(); ok {
+		_spec.AddField(equipmentmanufactuer.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := emuo.mutation.Status(); ok {
 		_spec.SetField(equipmentmanufactuer.FieldStatus, field.TypeEnum, value)

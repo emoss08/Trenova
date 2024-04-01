@@ -35,6 +35,27 @@ func (stu *ServiceTypeUpdate) SetUpdatedAt(t time.Time) *ServiceTypeUpdate {
 	return stu
 }
 
+// SetVersion sets the "version" field.
+func (stu *ServiceTypeUpdate) SetVersion(i int) *ServiceTypeUpdate {
+	stu.mutation.ResetVersion()
+	stu.mutation.SetVersion(i)
+	return stu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (stu *ServiceTypeUpdate) SetNillableVersion(i *int) *ServiceTypeUpdate {
+	if i != nil {
+		stu.SetVersion(*i)
+	}
+	return stu
+}
+
+// AddVersion adds i to the "version" field.
+func (stu *ServiceTypeUpdate) AddVersion(i int) *ServiceTypeUpdate {
+	stu.mutation.AddVersion(i)
+	return stu
+}
+
 // SetStatus sets the "status" field.
 func (stu *ServiceTypeUpdate) SetStatus(s servicetype.Status) *ServiceTypeUpdate {
 	stu.mutation.SetStatus(s)
@@ -166,6 +187,12 @@ func (stu *ServiceTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := stu.mutation.UpdatedAt(); ok {
 		_spec.SetField(servicetype.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := stu.mutation.Version(); ok {
+		_spec.SetField(servicetype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := stu.mutation.AddedVersion(); ok {
+		_spec.AddField(servicetype.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := stu.mutation.Status(); ok {
 		_spec.SetField(servicetype.FieldStatus, field.TypeEnum, value)
 	}
@@ -203,6 +230,27 @@ type ServiceTypeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (stuo *ServiceTypeUpdateOne) SetUpdatedAt(t time.Time) *ServiceTypeUpdateOne {
 	stuo.mutation.SetUpdatedAt(t)
+	return stuo
+}
+
+// SetVersion sets the "version" field.
+func (stuo *ServiceTypeUpdateOne) SetVersion(i int) *ServiceTypeUpdateOne {
+	stuo.mutation.ResetVersion()
+	stuo.mutation.SetVersion(i)
+	return stuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (stuo *ServiceTypeUpdateOne) SetNillableVersion(i *int) *ServiceTypeUpdateOne {
+	if i != nil {
+		stuo.SetVersion(*i)
+	}
+	return stuo
+}
+
+// AddVersion adds i to the "version" field.
+func (stuo *ServiceTypeUpdateOne) AddVersion(i int) *ServiceTypeUpdateOne {
+	stuo.mutation.AddVersion(i)
 	return stuo
 }
 
@@ -366,6 +414,12 @@ func (stuo *ServiceTypeUpdateOne) sqlSave(ctx context.Context) (_node *ServiceTy
 	}
 	if value, ok := stuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(servicetype.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := stuo.mutation.Version(); ok {
+		_spec.SetField(servicetype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := stuo.mutation.AddedVersion(); ok {
+		_spec.AddField(servicetype.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := stuo.mutation.Status(); ok {
 		_spec.SetField(servicetype.FieldStatus, field.TypeEnum, value)

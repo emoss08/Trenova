@@ -37,6 +37,27 @@ func (cu *CustomerUpdate) SetUpdatedAt(t time.Time) *CustomerUpdate {
 	return cu
 }
 
+// SetVersion sets the "version" field.
+func (cu *CustomerUpdate) SetVersion(i int) *CustomerUpdate {
+	cu.mutation.ResetVersion()
+	cu.mutation.SetVersion(i)
+	return cu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableVersion(i *int) *CustomerUpdate {
+	if i != nil {
+		cu.SetVersion(*i)
+	}
+	return cu
+}
+
+// AddVersion adds i to the "version" field.
+func (cu *CustomerUpdate) AddVersion(i int) *CustomerUpdate {
+	cu.mutation.AddVersion(i)
+	return cu
+}
+
 // SetStatus sets the "status" field.
 func (cu *CustomerUpdate) SetStatus(c customer.Status) *CustomerUpdate {
 	cu.mutation.SetStatus(c)
@@ -311,6 +332,12 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.UpdatedAt(); ok {
 		_spec.SetField(customer.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := cu.mutation.Version(); ok {
+		_spec.SetField(customer.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := cu.mutation.AddedVersion(); ok {
+		_spec.AddField(customer.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := cu.mutation.Status(); ok {
 		_spec.SetField(customer.FieldStatus, field.TypeEnum, value)
 	}
@@ -395,6 +422,27 @@ type CustomerUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (cuo *CustomerUpdateOne) SetUpdatedAt(t time.Time) *CustomerUpdateOne {
 	cuo.mutation.SetUpdatedAt(t)
+	return cuo
+}
+
+// SetVersion sets the "version" field.
+func (cuo *CustomerUpdateOne) SetVersion(i int) *CustomerUpdateOne {
+	cuo.mutation.ResetVersion()
+	cuo.mutation.SetVersion(i)
+	return cuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableVersion(i *int) *CustomerUpdateOne {
+	if i != nil {
+		cuo.SetVersion(*i)
+	}
+	return cuo
+}
+
+// AddVersion adds i to the "version" field.
+func (cuo *CustomerUpdateOne) AddVersion(i int) *CustomerUpdateOne {
+	cuo.mutation.AddVersion(i)
 	return cuo
 }
 
@@ -701,6 +749,12 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(customer.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := cuo.mutation.Version(); ok {
+		_spec.SetField(customer.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := cuo.mutation.AddedVersion(); ok {
+		_spec.AddField(customer.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.Status(); ok {
 		_spec.SetField(customer.FieldStatus, field.TypeEnum, value)

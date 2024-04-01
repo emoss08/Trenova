@@ -63,6 +63,20 @@ func (dcc *DocumentClassificationCreate) SetNillableUpdatedAt(t *time.Time) *Doc
 	return dcc
 }
 
+// SetVersion sets the "version" field.
+func (dcc *DocumentClassificationCreate) SetVersion(i int) *DocumentClassificationCreate {
+	dcc.mutation.SetVersion(i)
+	return dcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcc *DocumentClassificationCreate) SetNillableVersion(i *int) *DocumentClassificationCreate {
+	if i != nil {
+		dcc.SetVersion(*i)
+	}
+	return dcc
+}
+
 // SetStatus sets the "status" field.
 func (dcc *DocumentClassificationCreate) SetStatus(d documentclassification.Status) *DocumentClassificationCreate {
 	dcc.mutation.SetStatus(d)
@@ -164,6 +178,10 @@ func (dcc *DocumentClassificationCreate) defaults() {
 		v := documentclassification.DefaultUpdatedAt()
 		dcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dcc.mutation.Version(); !ok {
+		v := documentclassification.DefaultVersion
+		dcc.mutation.SetVersion(v)
+	}
 	if _, ok := dcc.mutation.Status(); !ok {
 		v := documentclassification.DefaultStatus
 		dcc.mutation.SetStatus(v)
@@ -187,6 +205,9 @@ func (dcc *DocumentClassificationCreate) check() error {
 	}
 	if _, ok := dcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "DocumentClassification.updated_at"`)}
+	}
+	if _, ok := dcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "DocumentClassification.version"`)}
 	}
 	if _, ok := dcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "DocumentClassification.status"`)}
@@ -252,6 +273,10 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 	if value, ok := dcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := dcc.mutation.Version(); ok {
+		_spec.SetField(documentclassification.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := dcc.mutation.Status(); ok {
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)

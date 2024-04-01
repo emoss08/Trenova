@@ -9,6 +9,7 @@ import (
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/server"
 	trenova_kafka "github.com/emoss08/trenova/tools/kafka"
+	"github.com/emoss08/trenova/tools/logger"
 	"github.com/emoss08/trenova/tools/minio"
 	"github.com/emoss08/trenova/tools/redis"
 	"github.com/emoss08/trenova/tools/session"
@@ -22,6 +23,10 @@ func main() {
 	if err != nil {
 		panic("Error loading .env file")
 	}
+
+	// Initialize and set the global logger
+	customLogger := logger.NewLogger()
+	logger.SetLogger(customLogger)
 
 	// Initialize the database
 	client := database.NewEntClient(os.Getenv("DB_DSN"))
@@ -81,6 +86,9 @@ func main() {
 
 	// Create media bucket
 	err = minio.CreateMediaBucket("trenova-media", "us-east-1")
+	if err != nil {
+		log.Panicf("Failed to create media bucket: %v", err)
+	}
 
 	// Setup server
 	server.SetupAndRun()

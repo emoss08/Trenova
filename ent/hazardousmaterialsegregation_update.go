@@ -35,6 +35,27 @@ func (hmsu *HazardousMaterialSegregationUpdate) SetUpdatedAt(t time.Time) *Hazar
 	return hmsu
 }
 
+// SetVersion sets the "version" field.
+func (hmsu *HazardousMaterialSegregationUpdate) SetVersion(i int) *HazardousMaterialSegregationUpdate {
+	hmsu.mutation.ResetVersion()
+	hmsu.mutation.SetVersion(i)
+	return hmsu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmsu *HazardousMaterialSegregationUpdate) SetNillableVersion(i *int) *HazardousMaterialSegregationUpdate {
+	if i != nil {
+		hmsu.SetVersion(*i)
+	}
+	return hmsu
+}
+
+// AddVersion adds i to the "version" field.
+func (hmsu *HazardousMaterialSegregationUpdate) AddVersion(i int) *HazardousMaterialSegregationUpdate {
+	hmsu.mutation.AddVersion(i)
+	return hmsu
+}
+
 // SetClassA sets the "class_a" field.
 func (hmsu *HazardousMaterialSegregationUpdate) SetClassA(h hazardousmaterialsegregation.ClassA) *HazardousMaterialSegregationUpdate {
 	hmsu.mutation.SetClassA(h)
@@ -165,6 +186,12 @@ func (hmsu *HazardousMaterialSegregationUpdate) sqlSave(ctx context.Context) (n 
 	if value, ok := hmsu.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := hmsu.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterialsegregation.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := hmsu.mutation.AddedVersion(); ok {
+		_spec.AddField(hazardousmaterialsegregation.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := hmsu.mutation.ClassA(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldClassA, field.TypeEnum, value)
 	}
@@ -199,6 +226,27 @@ type HazardousMaterialSegregationUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (hmsuo *HazardousMaterialSegregationUpdateOne) SetUpdatedAt(t time.Time) *HazardousMaterialSegregationUpdateOne {
 	hmsuo.mutation.SetUpdatedAt(t)
+	return hmsuo
+}
+
+// SetVersion sets the "version" field.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) SetVersion(i int) *HazardousMaterialSegregationUpdateOne {
+	hmsuo.mutation.ResetVersion()
+	hmsuo.mutation.SetVersion(i)
+	return hmsuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) SetNillableVersion(i *int) *HazardousMaterialSegregationUpdateOne {
+	if i != nil {
+		hmsuo.SetVersion(*i)
+	}
+	return hmsuo
+}
+
+// AddVersion adds i to the "version" field.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) AddVersion(i int) *HazardousMaterialSegregationUpdateOne {
+	hmsuo.mutation.AddVersion(i)
 	return hmsuo
 }
 
@@ -361,6 +409,12 @@ func (hmsuo *HazardousMaterialSegregationUpdateOne) sqlSave(ctx context.Context)
 	}
 	if value, ok := hmsuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := hmsuo.mutation.Version(); ok {
+		_spec.SetField(hazardousmaterialsegregation.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := hmsuo.mutation.AddedVersion(); ok {
+		_spec.AddField(hazardousmaterialsegregation.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := hmsuo.mutation.ClassA(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldClassA, field.TypeEnum, value)

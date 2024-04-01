@@ -43,12 +43,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(commentTypeSchema),
-    defaultValues: {
-      status: commentType.status,
-      name: commentType.name,
-      description: commentType.description,
-      severity: commentType.severity,
-    },
+    defaultValues: commentType,
   });
 
   const mutation = useCustomMutation<FormValues>(

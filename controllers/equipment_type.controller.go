@@ -48,7 +48,7 @@ func GetEquipmentTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	equipmentTypes, count, err := services.NewEquipmentTypeOps(r.Context()).GetEquipmentTypes(limit, offset, orgID, buID)
+	equipmentTypes, count, err := services.NewEquipmentTypeOps().GetEquipmentTypes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateEquipmentType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createEquipType, err := services.NewEquipmentTypeOps(r.Context()).CreateEquipmentType(newEquipType)
+	createEquipType, err := services.NewEquipmentTypeOps().CreateEquipmentType(r.Context(), newEquipType)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateEquipmentType(w http.ResponseWriter, r *http.Request) {
 
 	equipTypeData.ID = uuid.MustParse(equipTypeID)
 
-	equipmentType, err := services.NewEquipmentTypeOps(r.Context()).UpdateEquipmentType(equipTypeData)
+	equipmentType, err := services.NewEquipmentTypeOps().UpdateEquipmentType(r.Context(), equipTypeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

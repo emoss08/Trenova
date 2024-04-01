@@ -38,6 +38,27 @@ func (glau *GeneralLedgerAccountUpdate) SetUpdatedAt(t time.Time) *GeneralLedger
 	return glau
 }
 
+// SetVersion sets the "version" field.
+func (glau *GeneralLedgerAccountUpdate) SetVersion(i int) *GeneralLedgerAccountUpdate {
+	glau.mutation.ResetVersion()
+	glau.mutation.SetVersion(i)
+	return glau
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (glau *GeneralLedgerAccountUpdate) SetNillableVersion(i *int) *GeneralLedgerAccountUpdate {
+	if i != nil {
+		glau.SetVersion(*i)
+	}
+	return glau
+}
+
+// AddVersion adds i to the "version" field.
+func (glau *GeneralLedgerAccountUpdate) AddVersion(i int) *GeneralLedgerAccountUpdate {
+	glau.mutation.AddVersion(i)
+	return glau
+}
+
 // SetStatus sets the "status" field.
 func (glau *GeneralLedgerAccountUpdate) SetStatus(ge generalledgeraccount.Status) *GeneralLedgerAccountUpdate {
 	glau.mutation.SetStatus(ge)
@@ -378,6 +399,12 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 	if value, ok := glau.mutation.UpdatedAt(); ok {
 		_spec.SetField(generalledgeraccount.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := glau.mutation.Version(); ok {
+		_spec.SetField(generalledgeraccount.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := glau.mutation.AddedVersion(); ok {
+		_spec.AddField(generalledgeraccount.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := glau.mutation.Status(); ok {
 		_spec.SetField(generalledgeraccount.FieldStatus, field.TypeEnum, value)
 	}
@@ -511,6 +538,27 @@ type GeneralLedgerAccountUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (glauo *GeneralLedgerAccountUpdateOne) SetUpdatedAt(t time.Time) *GeneralLedgerAccountUpdateOne {
 	glauo.mutation.SetUpdatedAt(t)
+	return glauo
+}
+
+// SetVersion sets the "version" field.
+func (glauo *GeneralLedgerAccountUpdateOne) SetVersion(i int) *GeneralLedgerAccountUpdateOne {
+	glauo.mutation.ResetVersion()
+	glauo.mutation.SetVersion(i)
+	return glauo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (glauo *GeneralLedgerAccountUpdateOne) SetNillableVersion(i *int) *GeneralLedgerAccountUpdateOne {
+	if i != nil {
+		glauo.SetVersion(*i)
+	}
+	return glauo
+}
+
+// AddVersion adds i to the "version" field.
+func (glauo *GeneralLedgerAccountUpdateOne) AddVersion(i int) *GeneralLedgerAccountUpdateOne {
+	glauo.mutation.AddVersion(i)
 	return glauo
 }
 
@@ -883,6 +931,12 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := glauo.mutation.UpdatedAt(); ok {
 		_spec.SetField(generalledgeraccount.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := glauo.mutation.Version(); ok {
+		_spec.SetField(generalledgeraccount.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := glauo.mutation.AddedVersion(); ok {
+		_spec.AddField(generalledgeraccount.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := glauo.mutation.Status(); ok {
 		_spec.SetField(generalledgeraccount.FieldStatus, field.TypeEnum, value)

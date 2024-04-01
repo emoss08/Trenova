@@ -13,6 +13,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -30,13 +31,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accessorial_charges_business_units_business_unit",
-				Columns:    []*schema.Column{AccessorialChargesColumns[9]},
+				Columns:    []*schema.Column{AccessorialChargesColumns[10]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "accessorial_charges_organizations_organization",
-				Columns:    []*schema.Column{AccessorialChargesColumns[10]},
+				Columns:    []*schema.Column{AccessorialChargesColumns[11]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -45,7 +46,7 @@ var (
 			{
 				Name:    "accessorialcharge_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{AccessorialChargesColumns[4], AccessorialChargesColumns[10]},
+				Columns: []*schema.Column{AccessorialChargesColumns[5], AccessorialChargesColumns[11]},
 			},
 		},
 	}
@@ -191,6 +192,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -205,13 +207,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "charge_types_business_units_business_unit",
-				Columns:    []*schema.Column{ChargeTypesColumns[6]},
+				Columns:    []*schema.Column{ChargeTypesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "charge_types_organizations_organization",
-				Columns:    []*schema.Column{ChargeTypesColumns[7]},
+				Columns:    []*schema.Column{ChargeTypesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -220,7 +222,7 @@ var (
 			{
 				Name:    "chargetype_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{ChargeTypesColumns[4], ChargeTypesColumns[7]},
+				Columns: []*schema.Column{ChargeTypesColumns[5], ChargeTypesColumns[8]},
 			},
 		},
 	}
@@ -229,6 +231,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "severity", Type: field.TypeEnum, Enums: []string{"High", "Medium", "Low"}, Default: "Low", SchemaType: map[string]string{"postgres": "VARCHAR(6)", "sqlite3": "VARCHAR(6)"}},
@@ -244,13 +247,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "comment_types_business_units_business_unit",
-				Columns:    []*schema.Column{CommentTypesColumns[7]},
+				Columns:    []*schema.Column{CommentTypesColumns[8]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "comment_types_organizations_organization",
-				Columns:    []*schema.Column{CommentTypesColumns[8]},
+				Columns:    []*schema.Column{CommentTypesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -259,7 +262,7 @@ var (
 			{
 				Name:    "commenttype_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{CommentTypesColumns[4], CommentTypesColumns[8]},
+				Columns: []*schema.Column{CommentTypesColumns[5], CommentTypesColumns[9]},
 			},
 		},
 	}
@@ -268,6 +271,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "is_hazmat", Type: field.TypeBool, Default: false},
@@ -287,19 +291,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "commodities_business_units_business_unit",
-				Columns:    []*schema.Column{CommoditiesColumns[10]},
+				Columns:    []*schema.Column{CommoditiesColumns[11]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "commodities_organizations_organization",
-				Columns:    []*schema.Column{CommoditiesColumns[11]},
+				Columns:    []*schema.Column{CommoditiesColumns[12]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "commodities_hazardous_materials_hazardous_material",
-				Columns:    []*schema.Column{CommoditiesColumns[12]},
+				Columns:    []*schema.Column{CommoditiesColumns[13]},
 				RefColumns: []*schema.Column{HazardousMaterialsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
@@ -310,6 +314,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
@@ -331,19 +336,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "customers_business_units_business_unit",
-				Columns:    []*schema.Column{CustomersColumns[12]},
+				Columns:    []*schema.Column{CustomersColumns[13]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "customers_organizations_organization",
-				Columns:    []*schema.Column{CustomersColumns[13]},
+				Columns:    []*schema.Column{CustomersColumns[14]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "customers_us_states_state",
-				Columns:    []*schema.Column{CustomersColumns[14]},
+				Columns:    []*schema.Column{CustomersColumns[15]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -352,7 +357,7 @@ var (
 			{
 				Name:    "customer_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{CustomersColumns[4], CustomersColumns[13]},
+				Columns: []*schema.Column{CustomersColumns[5], CustomersColumns[14]},
 			},
 		},
 	}
@@ -361,6 +366,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -376,13 +382,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "delay_codes_business_units_business_unit",
-				Columns:    []*schema.Column{DelayCodesColumns[7]},
+				Columns:    []*schema.Column{DelayCodesColumns[8]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "delay_codes_organizations_organization",
-				Columns:    []*schema.Column{DelayCodesColumns[8]},
+				Columns:    []*schema.Column{DelayCodesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -391,7 +397,7 @@ var (
 			{
 				Name:    "delaycode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{DelayCodesColumns[4], DelayCodesColumns[8]},
+				Columns: []*schema.Column{DelayCodesColumns[5], DelayCodesColumns[9]},
 			},
 		},
 	}
@@ -440,6 +446,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -457,31 +464,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "division_codes_business_units_business_unit",
-				Columns:    []*schema.Column{DivisionCodesColumns[6]},
+				Columns:    []*schema.Column{DivisionCodesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "division_codes_organizations_organization",
-				Columns:    []*schema.Column{DivisionCodesColumns[7]},
+				Columns:    []*schema.Column{DivisionCodesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "division_codes_general_ledger_accounts_cash_account",
-				Columns:    []*schema.Column{DivisionCodesColumns[8]},
-				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "division_codes_general_ledger_accounts_ap_account",
 				Columns:    []*schema.Column{DivisionCodesColumns[9]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "division_codes_general_ledger_accounts_expense_account",
+				Symbol:     "division_codes_general_ledger_accounts_ap_account",
 				Columns:    []*schema.Column{DivisionCodesColumns[10]},
+				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "division_codes_general_ledger_accounts_expense_account",
+				Columns:    []*schema.Column{DivisionCodesColumns[11]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -490,7 +497,7 @@ var (
 			{
 				Name:    "divisioncode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{DivisionCodesColumns[4], DivisionCodesColumns[7]},
+				Columns: []*schema.Column{DivisionCodesColumns[5], DivisionCodesColumns[8]},
 			},
 		},
 	}
@@ -499,6 +506,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -513,13 +521,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "document_classifications_business_units_business_unit",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[6]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "document_classifications_organizations_organization",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[7]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -572,6 +580,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "email", Type: field.TypeString},
 		{Name: "protocol", Type: field.TypeEnum, Nullable: true, Enums: []string{"TLS", "SSL", "UNENCRYPTED"}, SchemaType: map[string]string{"postgres": "VARCHAR(11)", "sqlite3": "VARCHAR(11)"}},
@@ -591,13 +600,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "email_profiles_business_units_business_unit",
-				Columns:    []*schema.Column{EmailProfilesColumns[11]},
+				Columns:    []*schema.Column{EmailProfilesColumns[12]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "email_profiles_organizations_organization",
-				Columns:    []*schema.Column{EmailProfilesColumns[12]},
+				Columns:    []*schema.Column{EmailProfilesColumns[13]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -608,6 +617,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -622,13 +632,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "equipment_manufactuers_business_units_business_unit",
-				Columns:    []*schema.Column{EquipmentManufactuersColumns[6]},
+				Columns:    []*schema.Column{EquipmentManufactuersColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "equipment_manufactuers_organizations_organization",
-				Columns:    []*schema.Column{EquipmentManufactuersColumns[7]},
+				Columns:    []*schema.Column{EquipmentManufactuersColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -637,7 +647,7 @@ var (
 			{
 				Name:    "equipmentmanufactuer_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{EquipmentManufactuersColumns[4], EquipmentManufactuersColumns[7]},
+				Columns: []*schema.Column{EquipmentManufactuersColumns[5], EquipmentManufactuersColumns[8]},
 			},
 		},
 	}
@@ -646,6 +656,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 50},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -671,13 +682,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "equipment_types_business_units_business_unit",
-				Columns:    []*schema.Column{EquipmentTypesColumns[17]},
+				Columns:    []*schema.Column{EquipmentTypesColumns[18]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "equipment_types_organizations_organization",
-				Columns:    []*schema.Column{EquipmentTypesColumns[18]},
+				Columns:    []*schema.Column{EquipmentTypesColumns[19]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -686,7 +697,7 @@ var (
 			{
 				Name:    "equipmenttype_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{EquipmentTypesColumns[4], EquipmentTypesColumns[18]},
+				Columns: []*schema.Column{EquipmentTypesColumns[5], EquipmentTypesColumns[19]},
 			},
 		},
 	}
@@ -731,6 +742,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -749,19 +761,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "fleet_codes_business_units_business_unit",
-				Columns:    []*schema.Column{FleetCodesColumns[9]},
+				Columns:    []*schema.Column{FleetCodesColumns[10]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "fleet_codes_organizations_organization",
-				Columns:    []*schema.Column{FleetCodesColumns[10]},
+				Columns:    []*schema.Column{FleetCodesColumns[11]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "fleet_codes_users_manager",
-				Columns:    []*schema.Column{FleetCodesColumns[11]},
+				Columns:    []*schema.Column{FleetCodesColumns[12]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -770,7 +782,7 @@ var (
 			{
 				Name:    "fleetcode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{FleetCodesColumns[4], FleetCodesColumns[10]},
+				Columns: []*schema.Column{FleetCodesColumns[5], FleetCodesColumns[11]},
 			},
 		},
 	}
@@ -779,6 +791,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "account_number", Type: field.TypeString, Size: 7, SchemaType: map[string]string{"postgres": "VARCHAR(7)", "sqlite3": "VARCHAR(7)"}},
 		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"Asset", "Liability", "Equity", "Revenue", "Expense"}, SchemaType: map[string]string{"postgres": "VARCHAR(9)", "sqlite3": "VARCHAR(9)"}},
@@ -803,13 +816,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "general_ledger_accounts_business_units_business_unit",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[16]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "general_ledger_accounts_organizations_organization",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[18]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -818,7 +831,7 @@ var (
 			{
 				Name:    "generalledgeraccount_account_number_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{GeneralLedgerAccountsColumns[4], GeneralLedgerAccountsColumns[17]},
+				Columns: []*schema.Column{GeneralLedgerAccountsColumns[5], GeneralLedgerAccountsColumns[18]},
 			},
 		},
 	}
@@ -861,6 +874,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "hazard_class", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
@@ -879,13 +893,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "hazardous_materials_business_units_business_unit",
-				Columns:    []*schema.Column{HazardousMaterialsColumns[10]},
+				Columns:    []*schema.Column{HazardousMaterialsColumns[11]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "hazardous_materials_organizations_organization",
-				Columns:    []*schema.Column{HazardousMaterialsColumns[11]},
+				Columns:    []*schema.Column{HazardousMaterialsColumns[12]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -896,6 +910,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "class_a", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
 		{Name: "class_b", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
 		{Name: "segregation_type", Type: field.TypeEnum, Enums: []string{"NotAllowed", "AllowedWithConditions"}, Default: "NotAllowed", SchemaType: map[string]string{"postgres": "VARCHAR(21)", "sqlite3": "VARCHAR(21)"}},
@@ -910,13 +925,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "hazardous_material_segregations_business_units_business_unit",
-				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[6]},
+				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "hazardous_material_segregations_organizations_organization",
-				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[7]},
+				Columns:    []*schema.Column{HazardousMaterialSegregationsColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -925,7 +940,7 @@ var (
 			{
 				Name:    "hazardousmaterialsegregation_class_a_class_b_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{HazardousMaterialSegregationsColumns[3], HazardousMaterialSegregationsColumns[4], HazardousMaterialSegregationsColumns[7]},
+				Columns: []*schema.Column{HazardousMaterialSegregationsColumns[4], HazardousMaterialSegregationsColumns[5], HazardousMaterialSegregationsColumns[8]},
 			},
 		},
 	}
@@ -973,6 +988,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
@@ -987,13 +1003,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "location_categories_business_units_business_unit",
-				Columns:    []*schema.Column{LocationCategoriesColumns[6]},
+				Columns:    []*schema.Column{LocationCategoriesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "location_categories_organizations_organization",
-				Columns:    []*schema.Column{LocationCategoriesColumns[7]},
+				Columns:    []*schema.Column{LocationCategoriesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1002,7 +1018,7 @@ var (
 			{
 				Name:    "locationcategory_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{LocationCategoriesColumns[3], LocationCategoriesColumns[7]},
+				Columns: []*schema.Column{LocationCategoriesColumns[4], LocationCategoriesColumns[8]},
 			},
 		},
 	}
@@ -1038,6 +1054,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -1052,13 +1069,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "qualifier_codes_business_units_business_unit",
-				Columns:    []*schema.Column{QualifierCodesColumns[6]},
+				Columns:    []*schema.Column{QualifierCodesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "qualifier_codes_organizations_organization",
-				Columns:    []*schema.Column{QualifierCodesColumns[7]},
+				Columns:    []*schema.Column{QualifierCodesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1067,7 +1084,7 @@ var (
 			{
 				Name:    "qualifiercode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{QualifierCodesColumns[4], QualifierCodesColumns[7]},
+				Columns: []*schema.Column{QualifierCodesColumns[5], QualifierCodesColumns[8]},
 			},
 		},
 	}
@@ -1076,6 +1093,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "code_type", Type: field.TypeEnum, Enums: []string{"Voided", "Cancelled"}},
@@ -1091,13 +1109,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "reason_codes_business_units_business_unit",
-				Columns:    []*schema.Column{ReasonCodesColumns[7]},
+				Columns:    []*schema.Column{ReasonCodesColumns[8]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "reason_codes_organizations_organization",
-				Columns:    []*schema.Column{ReasonCodesColumns[8]},
+				Columns:    []*schema.Column{ReasonCodesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1106,7 +1124,7 @@ var (
 			{
 				Name:    "reasoncode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{ReasonCodesColumns[4], ReasonCodesColumns[8]},
+				Columns: []*schema.Column{ReasonCodesColumns[5], ReasonCodesColumns[9]},
 			},
 		},
 	}
@@ -1115,6 +1133,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -1131,25 +1150,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "revenue_codes_business_units_business_unit",
-				Columns:    []*schema.Column{RevenueCodesColumns[6]},
+				Columns:    []*schema.Column{RevenueCodesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "revenue_codes_organizations_organization",
-				Columns:    []*schema.Column{RevenueCodesColumns[7]},
+				Columns:    []*schema.Column{RevenueCodesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "revenue_codes_general_ledger_accounts_expense_account",
-				Columns:    []*schema.Column{RevenueCodesColumns[8]},
+				Columns:    []*schema.Column{RevenueCodesColumns[9]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "revenue_codes_general_ledger_accounts_revenue_account",
-				Columns:    []*schema.Column{RevenueCodesColumns[9]},
+				Columns:    []*schema.Column{RevenueCodesColumns[10]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1158,7 +1177,7 @@ var (
 			{
 				Name:    "revenuecode_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{RevenueCodesColumns[4], RevenueCodesColumns[7]},
+				Columns: []*schema.Column{RevenueCodesColumns[5], RevenueCodesColumns[8]},
 			},
 		},
 	}
@@ -1198,6 +1217,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -1212,13 +1232,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_types_business_units_business_unit",
-				Columns:    []*schema.Column{ServiceTypesColumns[6]},
+				Columns:    []*schema.Column{ServiceTypesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "service_types_organizations_organization",
-				Columns:    []*schema.Column{ServiceTypesColumns[7]},
+				Columns:    []*schema.Column{ServiceTypesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1227,7 +1247,7 @@ var (
 			{
 				Name:    "servicetype_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{ServiceTypesColumns[4], ServiceTypesColumns[7]},
+				Columns: []*schema.Column{ServiceTypesColumns[5], ServiceTypesColumns[8]},
 			},
 		},
 	}
@@ -1290,6 +1310,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -1304,13 +1325,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "shipment_types_business_units_business_unit",
-				Columns:    []*schema.Column{ShipmentTypesColumns[6]},
+				Columns:    []*schema.Column{ShipmentTypesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "shipment_types_organizations_organization",
-				Columns:    []*schema.Column{ShipmentTypesColumns[7]},
+				Columns:    []*schema.Column{ShipmentTypesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1319,7 +1340,7 @@ var (
 			{
 				Name:    "shipmenttype_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{ShipmentTypesColumns[4], ShipmentTypesColumns[7]},
+				Columns: []*schema.Column{ShipmentTypesColumns[5], ShipmentTypesColumns[8]},
 			},
 		},
 	}
@@ -1328,6 +1349,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "database_action", Type: field.TypeEnum, Enums: []string{"Insert", "Update", "Delete", "All"}, SchemaType: map[string]string{"postgres": "VARCHAR(6)", "sqlite3": "VARCHAR(6)"}},
@@ -1353,13 +1375,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "table_change_alerts_business_units_business_unit",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[17]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "table_change_alerts_organizations_organization",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[19]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1370,6 +1392,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
@@ -1384,13 +1407,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tags_business_units_business_unit",
-				Columns:    []*schema.Column{TagsColumns[6]},
+				Columns:    []*schema.Column{TagsColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tags_organizations_organization",
-				Columns:    []*schema.Column{TagsColumns[7]},
+				Columns:    []*schema.Column{TagsColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1399,7 +1422,7 @@ var (
 			{
 				Name:    "tag_name_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{TagsColumns[3], TagsColumns[7]},
+				Columns: []*schema.Column{TagsColumns[4], TagsColumns[8]},
 			},
 		},
 	}
@@ -1408,6 +1431,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "code", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
 		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
@@ -1433,49 +1457,49 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tractors_business_units_business_unit",
-				Columns:    []*schema.Column{TractorsColumns[11]},
+				Columns:    []*schema.Column{TractorsColumns[12]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_organizations_organization",
-				Columns:    []*schema.Column{TractorsColumns[12]},
+				Columns:    []*schema.Column{TractorsColumns[13]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_equipment_types_equipment_type",
-				Columns:    []*schema.Column{TractorsColumns[13]},
+				Columns:    []*schema.Column{TractorsColumns[14]},
 				RefColumns: []*schema.Column{EquipmentTypesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_equipment_manufactuers_equipment_manufacturer",
-				Columns:    []*schema.Column{TractorsColumns[14]},
+				Columns:    []*schema.Column{TractorsColumns[15]},
 				RefColumns: []*schema.Column{EquipmentManufactuersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_us_states_state",
-				Columns:    []*schema.Column{TractorsColumns[15]},
+				Columns:    []*schema.Column{TractorsColumns[16]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_fleet_codes_fleet_code",
-				Columns:    []*schema.Column{TractorsColumns[16]},
+				Columns:    []*schema.Column{TractorsColumns[17]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_workers_primary_tractor",
-				Columns:    []*schema.Column{TractorsColumns[17]},
+				Columns:    []*schema.Column{TractorsColumns[18]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "tractors_workers_secondary_tractor",
-				Columns:    []*schema.Column{TractorsColumns[18]},
+				Columns:    []*schema.Column{TractorsColumns[19]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1484,7 +1508,7 @@ var (
 			{
 				Name:    "tractor_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{TractorsColumns[3], TractorsColumns[12]},
+				Columns: []*schema.Column{TractorsColumns[4], TractorsColumns[13]},
 			},
 		},
 	}
@@ -1509,6 +1533,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString, Size: 30},
@@ -1532,13 +1557,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_business_units_business_unit",
-				Columns:    []*schema.Column{UsersColumns[15]},
+				Columns:    []*schema.Column{UsersColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "users_organizations_organization",
-				Columns:    []*schema.Column{UsersColumns[16]},
+				Columns:    []*schema.Column{UsersColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1547,7 +1572,7 @@ var (
 			{
 				Name:    "user_username_email",
 				Unique:  true,
-				Columns: []*schema.Column{UsersColumns[5], UsersColumns[7]},
+				Columns: []*schema.Column{UsersColumns[6], UsersColumns[8]},
 			},
 		},
 	}
@@ -1556,6 +1581,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "page_link", Type: field.TypeString, Unique: true},
 		{Name: "user_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -1569,19 +1595,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "user_favorites_users_user_favorites",
-				Columns:    []*schema.Column{UserFavoritesColumns[4]},
+				Columns:    []*schema.Column{UserFavoritesColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "user_favorites_business_units_business_unit",
-				Columns:    []*schema.Column{UserFavoritesColumns[5]},
+				Columns:    []*schema.Column{UserFavoritesColumns[6]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "user_favorites_organizations_organization",
-				Columns:    []*schema.Column{UserFavoritesColumns[6]},
+				Columns:    []*schema.Column{UserFavoritesColumns[7]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1592,6 +1618,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "profile_picture_url", Type: field.TypeString, Nullable: true},
@@ -1614,31 +1641,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workers_business_units_business_unit",
-				Columns:    []*schema.Column{WorkersColumns[11]},
+				Columns:    []*schema.Column{WorkersColumns[12]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_organizations_organization",
-				Columns:    []*schema.Column{WorkersColumns[12]},
+				Columns:    []*schema.Column{WorkersColumns[13]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_us_states_state",
-				Columns:    []*schema.Column{WorkersColumns[13]},
+				Columns:    []*schema.Column{WorkersColumns[14]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_fleet_codes_fleet_code",
-				Columns:    []*schema.Column{WorkersColumns[14]},
+				Columns:    []*schema.Column{WorkersColumns[15]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_users_manager",
-				Columns:    []*schema.Column{WorkersColumns[15]},
+				Columns:    []*schema.Column{WorkersColumns[16]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1647,12 +1674,12 @@ var (
 			{
 				Name:    "worker_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkersColumns[4], WorkersColumns[12]},
+				Columns: []*schema.Column{WorkersColumns[5], WorkersColumns[13]},
 			},
 			{
 				Name:    "worker_first_name_last_name",
 				Unique:  false,
-				Columns: []*schema.Column{WorkersColumns[7], WorkersColumns[8]},
+				Columns: []*schema.Column{WorkersColumns[8], WorkersColumns[9]},
 			},
 		},
 	}
@@ -1661,6 +1688,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
 		{Name: "entered_by", Type: field.TypeUUID},
 		{Name: "worker_id", Type: field.TypeUUID},
@@ -1676,25 +1704,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "worker_comments_workers_worker_comments",
-				Columns:    []*schema.Column{WorkerCommentsColumns[5]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[6]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "worker_comments_business_units_business_unit",
-				Columns:    []*schema.Column{WorkerCommentsColumns[6]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_comments_organizations_organization",
-				Columns:    []*schema.Column{WorkerCommentsColumns[7]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_comments_comment_types_comment_type",
-				Columns:    []*schema.Column{WorkerCommentsColumns[8]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[9]},
 				RefColumns: []*schema.Column{CommentTypesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1705,6 +1733,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
 		{Name: "phone", Type: field.TypeString},
@@ -1722,19 +1751,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "worker_contacts_workers_worker_contacts",
-				Columns:    []*schema.Column{WorkerContactsColumns[8]},
+				Columns:    []*schema.Column{WorkerContactsColumns[9]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "worker_contacts_business_units_business_unit",
-				Columns:    []*schema.Column{WorkerContactsColumns[9]},
+				Columns:    []*schema.Column{WorkerContactsColumns[10]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_contacts_organizations_organization",
-				Columns:    []*schema.Column{WorkerContactsColumns[10]},
+				Columns:    []*schema.Column{WorkerContactsColumns[11]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1745,6 +1774,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "race", Type: field.TypeString, Nullable: true},
 		{Name: "sex", Type: field.TypeString, Nullable: true},
 		{Name: "date_of_birth", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
@@ -1770,25 +1800,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "worker_profiles_workers_worker_profile",
-				Columns:    []*schema.Column{WorkerProfilesColumns[15]},
+				Columns:    []*schema.Column{WorkerProfilesColumns[16]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "worker_profiles_business_units_business_unit",
-				Columns:    []*schema.Column{WorkerProfilesColumns[16]},
+				Columns:    []*schema.Column{WorkerProfilesColumns[17]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_profiles_organizations_organization",
-				Columns:    []*schema.Column{WorkerProfilesColumns[17]},
+				Columns:    []*schema.Column{WorkerProfilesColumns[18]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_profiles_us_states_state",
-				Columns:    []*schema.Column{WorkerProfilesColumns[18]},
+				Columns:    []*schema.Column{WorkerProfilesColumns[19]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
