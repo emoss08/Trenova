@@ -34,6 +34,8 @@ type Tractor struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Code holds the value of the "code" field.
 	Code string `json:"code" validate:"required,max=50"`
 	// Status holds the value of the "status" field.
@@ -190,7 +192,7 @@ func (*Tractor) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case tractor.FieldLeased:
 			values[i] = new(sql.NullBool)
-		case tractor.FieldYear:
+		case tractor.FieldVersion, tractor.FieldYear:
 			values[i] = new(sql.NullInt64)
 		case tractor.FieldCode, tractor.FieldStatus, tractor.FieldLicensePlateNumber, tractor.FieldVin, tractor.FieldModel:
 			values[i] = new(sql.NullString)
@@ -242,6 +244,12 @@ func (t *Tractor) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				t.UpdatedAt = value.Time
+			}
+		case tractor.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				t.Version = int(value.Int64)
 			}
 		case tractor.FieldCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -418,6 +426,9 @@ func (t *Tractor) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", t.Version))
 	builder.WriteString(", ")
 	builder.WriteString("code=")
 	builder.WriteString(t.Code)

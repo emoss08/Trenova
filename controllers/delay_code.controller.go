@@ -48,7 +48,7 @@ func GetDelayCodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	delayCodes, count, err := services.NewDelayCodeOps(r.Context()).GetDelayCodes(limit, offset, orgID, buID)
+	delayCodes, count, err := services.NewDelayCodeOps().GetDelayCodes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,8 +96,7 @@ func CreateDelayCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createDelaycode, err := services.NewDelayCodeOps(r.Context()).
-		CreateDelayCode(newDelayCode)
+	createDelaycode, err := services.NewDelayCodeOps().CreateDelayCode(r.Context(), newDelayCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -123,7 +122,7 @@ func UpdateDelayCode(w http.ResponseWriter, r *http.Request) {
 
 	delayCodeData.ID = uuid.MustParse(delayCodeID)
 
-	delayCode, err := services.NewDelayCodeOps(r.Context()).UpdateDelayCode(delayCodeData)
+	delayCode, err := services.NewDelayCodeOps().UpdateDelayCode(r.Context(), delayCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

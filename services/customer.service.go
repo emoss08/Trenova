@@ -7,36 +7,40 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
 	"github.com/google/uuid"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 )
 
 type CustomerOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewCustomerOps creates a new customer service.
-func NewCustomerOps(ctx context.Context) *CustomerOps {
+func NewCustomerOps() *CustomerOps {
 	return &CustomerOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetCustomer gets the customer for an organization.
-func (r *CustomerOps) GetCustomers(limit, offset int, orgID, buID uuid.UUID) ([]*ent.Customer, int, error) {
-	customerCount, countErr := r.client.Customer.Query().Where(
+func (r *CustomerOps) GetCustomers(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.Customer, int, error) {
+	entityCount, countErr := r.client.Customer.Query().Where(
 		customer.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	customers, err := r.client.Customer.Query().
+	entities, err := r.client.Customer.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -44,57 +48,132 @@ func (r *CustomerOps) GetCustomers(limit, offset int, orgID, buID uuid.UUID) ([]
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return customers, customerCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateCustomer creates a new customer.
-func (r *CustomerOps) CreateCustomer(newCustomer ent.Customer) (*ent.Customer, error) {
-	customer, err := r.client.Customer.Create().
-		SetOrganizationID(newCustomer.OrganizationID).
-		SetBusinessUnitID(newCustomer.BusinessUnitID).
-		SetStatus(newCustomer.Status).
-		SetCode(newCustomer.Code).
-		SetName(newCustomer.Name).
-		SetAddressLine1(newCustomer.AddressLine1).
-		SetAddressLine2(newCustomer.AddressLine2).
-		SetCity(newCustomer.City).
-		SetStateID(newCustomer.StateID).
-		SetPostalCode(newCustomer.PostalCode).
-		SetHasCustomerPortal(newCustomer.HasCustomerPortal).
-		SetAutoMarkReadyToBill(newCustomer.AutoMarkReadyToBill).
-		Save(r.ctx)
+func (r *CustomerOps) CreateCustomer(ctx context.Context, newEntity ent.Customer) (*ent.Customer, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return customer, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.Customer.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetCode(newEntity.Code).
+		SetName(newEntity.Name).
+		SetAddressLine1(newEntity.AddressLine1).
+		SetAddressLine2(newEntity.AddressLine2).
+		SetCity(newEntity.City).
+		SetStateID(newEntity.StateID).
+		SetPostalCode(newEntity.PostalCode).
+		SetHasCustomerPortal(newEntity.HasCustomerPortal).
+		SetAutoMarkReadyToBill(newEntity.AutoMarkReadyToBill).
+		Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to create entity")
+	}
+
+	return createdEntity, nil
 }
 
 // UpdateCustomer updates a customer.
-func (r *CustomerOps) UpdateCustomer(customer ent.Customer) (*ent.Customer, error) {
-	// Start building the update operation
-	updateOp := r.client.Customer.UpdateOneID(customer.ID).
-		SetStatus(customer.Status).
-		SetCode(customer.Code).
-		SetName(customer.Name).
-		SetAddressLine1(customer.AddressLine1).
-		SetAddressLine2(customer.AddressLine2).
-		SetCity(customer.City).
-		SetStateID(customer.StateID).
-		SetPostalCode(customer.PostalCode).
-		SetHasCustomerPortal(customer.HasCustomerPortal).
-		SetAutoMarkReadyToBill(customer.AutoMarkReadyToBill)
-
-	// Execute the update operation
-	updatedCustomer, err := updateOp.Save(r.ctx)
+func (r *CustomerOps) UpdateCustomer(ctx context.Context, entity ent.Customer) (*ent.Customer, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updatedCustomer, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.Customer.Get(ctx, entity.ID)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
+	}
+
+	// Start building the update operation
+	updateOp := tx.Customer.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetName(entity.Name).
+		SetAddressLine1(entity.AddressLine1).
+		SetAddressLine2(entity.AddressLine2).
+		SetCity(entity.City).
+		SetStateID(entity.StateID).
+		SetPostalCode(entity.PostalCode).
+		SetHasCustomerPortal(entity.HasCustomerPortal).
+		SetAutoMarkReadyToBill(entity.AutoMarkReadyToBill).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

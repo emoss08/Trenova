@@ -64,6 +64,20 @@ func (ufc *UserFavoriteCreate) SetNillableUpdatedAt(t *time.Time) *UserFavoriteC
 	return ufc
 }
 
+// SetVersion sets the "version" field.
+func (ufc *UserFavoriteCreate) SetVersion(i int) *UserFavoriteCreate {
+	ufc.mutation.SetVersion(i)
+	return ufc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ufc *UserFavoriteCreate) SetNillableVersion(i *int) *UserFavoriteCreate {
+	if i != nil {
+		ufc.SetVersion(*i)
+	}
+	return ufc
+}
+
 // SetPageLink sets the "page_link" field.
 func (ufc *UserFavoriteCreate) SetPageLink(s string) *UserFavoriteCreate {
 	ufc.mutation.SetPageLink(s)
@@ -148,6 +162,10 @@ func (ufc *UserFavoriteCreate) defaults() {
 		v := userfavorite.DefaultUpdatedAt()
 		ufc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := ufc.mutation.Version(); !ok {
+		v := userfavorite.DefaultVersion
+		ufc.mutation.SetVersion(v)
+	}
 	if _, ok := ufc.mutation.ID(); !ok {
 		v := userfavorite.DefaultID()
 		ufc.mutation.SetID(v)
@@ -167,6 +185,9 @@ func (ufc *UserFavoriteCreate) check() error {
 	}
 	if _, ok := ufc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "UserFavorite.updated_at"`)}
+	}
+	if _, ok := ufc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "UserFavorite.version"`)}
 	}
 	if _, ok := ufc.mutation.PageLink(); !ok {
 		return &ValidationError{Name: "page_link", err: errors.New(`ent: missing required field "UserFavorite.page_link"`)}
@@ -230,6 +251,10 @@ func (ufc *UserFavoriteCreate) createSpec() (*UserFavorite, *sqlgraph.CreateSpec
 	if value, ok := ufc.mutation.UpdatedAt(); ok {
 		_spec.SetField(userfavorite.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := ufc.mutation.Version(); ok {
+		_spec.SetField(userfavorite.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := ufc.mutation.PageLink(); ok {
 		_spec.SetField(userfavorite.FieldPageLink, field.TypeString, value)

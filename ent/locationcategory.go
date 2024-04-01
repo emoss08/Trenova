@@ -28,6 +28,8 @@ type LocationCategory struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required"`
 	// Description holds the value of the "description" field.
@@ -78,6 +80,8 @@ func (*LocationCategory) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case locationcategory.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case locationcategory.FieldName, locationcategory.FieldDescription, locationcategory.FieldColor:
 			values[i] = new(sql.NullString)
 		case locationcategory.FieldCreatedAt, locationcategory.FieldUpdatedAt:
@@ -128,6 +132,12 @@ func (lc *LocationCategory) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				lc.UpdatedAt = value.Time
+			}
+		case locationcategory.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				lc.Version = int(value.Int64)
 			}
 		case locationcategory.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -204,6 +214,9 @@ func (lc *LocationCategory) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(lc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", lc.Version))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(lc.Name)

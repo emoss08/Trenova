@@ -36,6 +36,27 @@ func (tcau *TableChangeAlertUpdate) SetUpdatedAt(t time.Time) *TableChangeAlertU
 	return tcau
 }
 
+// SetVersion sets the "version" field.
+func (tcau *TableChangeAlertUpdate) SetVersion(i int) *TableChangeAlertUpdate {
+	tcau.mutation.ResetVersion()
+	tcau.mutation.SetVersion(i)
+	return tcau
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tcau *TableChangeAlertUpdate) SetNillableVersion(i *int) *TableChangeAlertUpdate {
+	if i != nil {
+		tcau.SetVersion(*i)
+	}
+	return tcau
+}
+
+// AddVersion adds i to the "version" field.
+func (tcau *TableChangeAlertUpdate) AddVersion(i int) *TableChangeAlertUpdate {
+	tcau.mutation.AddVersion(i)
+	return tcau
+}
+
 // SetStatus sets the "status" field.
 func (tcau *TableChangeAlertUpdate) SetStatus(t tablechangealert.Status) *TableChangeAlertUpdate {
 	tcau.mutation.SetStatus(t)
@@ -390,6 +411,12 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := tcau.mutation.UpdatedAt(); ok {
 		_spec.SetField(tablechangealert.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := tcau.mutation.Version(); ok {
+		_spec.SetField(tablechangealert.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tcau.mutation.AddedVersion(); ok {
+		_spec.AddField(tablechangealert.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := tcau.mutation.Status(); ok {
 		_spec.SetField(tablechangealert.FieldStatus, field.TypeEnum, value)
 	}
@@ -487,6 +514,27 @@ type TableChangeAlertUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (tcauo *TableChangeAlertUpdateOne) SetUpdatedAt(t time.Time) *TableChangeAlertUpdateOne {
 	tcauo.mutation.SetUpdatedAt(t)
+	return tcauo
+}
+
+// SetVersion sets the "version" field.
+func (tcauo *TableChangeAlertUpdateOne) SetVersion(i int) *TableChangeAlertUpdateOne {
+	tcauo.mutation.ResetVersion()
+	tcauo.mutation.SetVersion(i)
+	return tcauo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tcauo *TableChangeAlertUpdateOne) SetNillableVersion(i *int) *TableChangeAlertUpdateOne {
+	if i != nil {
+		tcauo.SetVersion(*i)
+	}
+	return tcauo
+}
+
+// AddVersion adds i to the "version" field.
+func (tcauo *TableChangeAlertUpdateOne) AddVersion(i int) *TableChangeAlertUpdateOne {
+	tcauo.mutation.AddVersion(i)
 	return tcauo
 }
 
@@ -873,6 +921,12 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if value, ok := tcauo.mutation.UpdatedAt(); ok {
 		_spec.SetField(tablechangealert.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := tcauo.mutation.Version(); ok {
+		_spec.SetField(tablechangealert.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := tcauo.mutation.AddedVersion(); ok {
+		_spec.AddField(tablechangealert.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := tcauo.mutation.Status(); ok {
 		_spec.SetField(tablechangealert.FieldStatus, field.TypeEnum, value)

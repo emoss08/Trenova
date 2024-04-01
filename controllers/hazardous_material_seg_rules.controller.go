@@ -48,8 +48,8 @@ func GetHazmatSegRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hazmatSegRules, count, err := services.NewHazardousMaterialSegregationOps(r.Context()).
-		GetHazmatSegRules(limit, offset, orgID, buID)
+	hazmatSegRules, count, err := services.NewHazardousMaterialSegregationOps().
+		GetHazmatSegRules(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -97,7 +97,7 @@ func CreateHazmatSegRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newRecord, err := services.NewHazardousMaterialSegregationOps(r.Context()).CreateHazmatSegRule(newHazmatSegRule)
+	newRecord, err := services.NewHazardousMaterialSegregationOps().CreateHazmatSegRule(r.Context(), newHazmatSegRule)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -123,7 +123,7 @@ func UpdateHazmatSegRule(w http.ResponseWriter, r *http.Request) {
 
 	hazmatSegRuleData.ID = uuid.MustParse(hazmatSegRuleID)
 
-	hazmatSegRule, err := services.NewHazardousMaterialSegregationOps(r.Context()).UpdateHazmatSegRule(hazmatSegRuleData)
+	hazmatSegRule, err := services.NewHazardousMaterialSegregationOps().UpdateHazmatSegRule(r.Context(), hazmatSegRuleData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

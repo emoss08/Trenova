@@ -46,16 +46,7 @@ function EmailProfileEditForm({
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
-    defaultValues: {
-      name: emailProfile.name,
-      email: emailProfile.email,
-      host: emailProfile.host,
-      port: emailProfile.port || undefined,
-      username: emailProfile.username,
-      password: emailProfile.password,
-      protocol: emailProfile.protocol,
-      isDefault: emailProfile.isDefault,
-    },
+    defaultValues: emailProfile,
   });
 
   const mutation = useCustomMutation<FormValues>(

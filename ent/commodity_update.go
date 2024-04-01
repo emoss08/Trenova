@@ -37,6 +37,27 @@ func (cu *CommodityUpdate) SetUpdatedAt(t time.Time) *CommodityUpdate {
 	return cu
 }
 
+// SetVersion sets the "version" field.
+func (cu *CommodityUpdate) SetVersion(i int) *CommodityUpdate {
+	cu.mutation.ResetVersion()
+	cu.mutation.SetVersion(i)
+	return cu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cu *CommodityUpdate) SetNillableVersion(i *int) *CommodityUpdate {
+	if i != nil {
+		cu.SetVersion(*i)
+	}
+	return cu
+}
+
+// AddVersion adds i to the "version" field.
+func (cu *CommodityUpdate) AddVersion(i int) *CommodityUpdate {
+	cu.mutation.AddVersion(i)
+	return cu
+}
+
 // SetStatus sets the "status" field.
 func (cu *CommodityUpdate) SetStatus(c commodity.Status) *CommodityUpdate {
 	cu.mutation.SetStatus(c)
@@ -287,6 +308,12 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.UpdatedAt(); ok {
 		_spec.SetField(commodity.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := cu.mutation.Version(); ok {
+		_spec.SetField(commodity.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := cu.mutation.AddedVersion(); ok {
+		_spec.AddField(commodity.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := cu.mutation.Status(); ok {
 		_spec.SetField(commodity.FieldStatus, field.TypeEnum, value)
 	}
@@ -380,6 +407,27 @@ type CommodityUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (cuo *CommodityUpdateOne) SetUpdatedAt(t time.Time) *CommodityUpdateOne {
 	cuo.mutation.SetUpdatedAt(t)
+	return cuo
+}
+
+// SetVersion sets the "version" field.
+func (cuo *CommodityUpdateOne) SetVersion(i int) *CommodityUpdateOne {
+	cuo.mutation.ResetVersion()
+	cuo.mutation.SetVersion(i)
+	return cuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cuo *CommodityUpdateOne) SetNillableVersion(i *int) *CommodityUpdateOne {
+	if i != nil {
+		cuo.SetVersion(*i)
+	}
+	return cuo
+}
+
+// AddVersion adds i to the "version" field.
+func (cuo *CommodityUpdateOne) AddVersion(i int) *CommodityUpdateOne {
+	cuo.mutation.AddVersion(i)
 	return cuo
 }
 
@@ -662,6 +710,12 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 	}
 	if value, ok := cuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(commodity.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := cuo.mutation.Version(); ok {
+		_spec.SetField(commodity.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := cuo.mutation.AddedVersion(); ok {
+		_spec.AddField(commodity.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := cuo.mutation.Status(); ok {
 		_spec.SetField(commodity.FieldStatus, field.TypeEnum, value)

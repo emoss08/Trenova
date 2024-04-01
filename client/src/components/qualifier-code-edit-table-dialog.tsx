@@ -47,11 +47,7 @@ function QualifierCodeEditForm({
 
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(qualifierCodeSchema),
-    defaultValues: {
-      status: qualifierCode.status,
-      code: qualifierCode.code,
-      description: qualifierCode.description,
-    },
+    defaultValues: qualifierCode,
   });
 
   const mutation = useCustomMutation<FormValues>(

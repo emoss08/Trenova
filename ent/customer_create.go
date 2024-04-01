@@ -64,6 +64,20 @@ func (cc *CustomerCreate) SetNillableUpdatedAt(t *time.Time) *CustomerCreate {
 	return cc
 }
 
+// SetVersion sets the "version" field.
+func (cc *CustomerCreate) SetVersion(i int) *CustomerCreate {
+	cc.mutation.SetVersion(i)
+	return cc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cc *CustomerCreate) SetNillableVersion(i *int) *CustomerCreate {
+	if i != nil {
+		cc.SetVersion(*i)
+	}
+	return cc
+}
+
 // SetStatus sets the "status" field.
 func (cc *CustomerCreate) SetStatus(c customer.Status) *CustomerCreate {
 	cc.mutation.SetStatus(c)
@@ -236,6 +250,10 @@ func (cc *CustomerCreate) defaults() error {
 		v := customer.DefaultUpdatedAt()
 		cc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := cc.mutation.Version(); !ok {
+		v := customer.DefaultVersion
+		cc.mutation.SetVersion(v)
+	}
 	if _, ok := cc.mutation.Status(); !ok {
 		v := customer.DefaultStatus
 		cc.mutation.SetStatus(v)
@@ -271,6 +289,9 @@ func (cc *CustomerCreate) check() error {
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Customer.updated_at"`)}
+	}
+	if _, ok := cc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Customer.version"`)}
 	}
 	if _, ok := cc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Customer.status"`)}
@@ -385,6 +406,10 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.UpdatedAt(); ok {
 		_spec.SetField(customer.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := cc.mutation.Version(); ok {
+		_spec.SetField(customer.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := cc.mutation.Status(); ok {
 		_spec.SetField(customer.FieldStatus, field.TypeEnum, value)

@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/servicetype"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -12,32 +16,34 @@ import (
 )
 
 type ServiceTypeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewServiceTypeOps creates a new service type service.
-func NewServiceTypeOps(ctx context.Context) *ServiceTypeOps {
+func NewServiceTypeOps() *ServiceTypeOps {
 	return &ServiceTypeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetServiceTypes gets the service type for an organization.
-func (r *ServiceTypeOps) GetServiceTypes(limit, offset int, orgID, buID uuid.UUID) ([]*ent.ServiceType, int, error) {
-	serviceTypeCount, countErr := r.client.ServiceType.Query().Where(
+func (r *ServiceTypeOps) GetServiceTypes(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.ServiceType, int, error) {
+	entityCount, countErr := r.client.ServiceType.Query().Where(
 		servicetype.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	serviceTypes, err := r.client.ServiceType.Query().
+	entities, err := r.client.ServiceType.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -45,43 +51,122 @@ func (r *ServiceTypeOps) GetServiceTypes(limit, offset int, orgID, buID uuid.UUI
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return serviceTypes, serviceTypeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateServiceType creates a new service type.
-func (r *ServiceTypeOps) CreateServiceType(newServiceType ent.ServiceType) (*ent.ServiceType, error) {
-	serviceType, err := r.client.ServiceType.Create().
-		SetOrganizationID(newServiceType.OrganizationID).
-		SetBusinessUnitID(newServiceType.BusinessUnitID).
-		SetStatus(newServiceType.Status).
-		SetCode(newServiceType.Code).
-		SetDescription(newServiceType.Description).
-		Save(r.ctx)
+func (r *ServiceTypeOps) CreateServiceType(
+	ctx context.Context, newEntity ent.ServiceType,
+) (*ent.ServiceType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.ServiceType.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetCode(newEntity.Code).
+		SetDescription(newEntity.Description).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return serviceType, nil
+	return createdEntity, nil
 }
 
 // UpdateServiceType updates a service type.
-func (r *ServiceTypeOps) UpdateServiceType(serviceType ent.ServiceType) (*ent.ServiceType, error) {
-	// Start building the update operation
-	updateOp := r.client.ServiceType.UpdateOneID(serviceType.ID).
-		SetStatus(serviceType.Status).
-		SetCode(serviceType.Code).
-		SetDescription(serviceType.Description)
-
-	// Execute the update operation
-	updateserviceType, err := updateOp.Save(r.ctx)
+func (r *ServiceTypeOps) UpdateServiceType(
+	ctx context.Context, entity ent.ServiceType,
+) (*ent.ServiceType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updateserviceType, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.ServiceType.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
+	}
+
+	// Start building the update operation
+	updateOp := tx.ServiceType.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetDescription(entity.Description).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

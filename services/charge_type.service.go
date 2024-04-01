@@ -7,36 +7,40 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/chargetype"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
 	"github.com/google/uuid"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 )
 
 type ChargeTypeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewChargeTypeOps creates a new commodity service.
-func NewChargeTypeOps(ctx context.Context) *ChargeTypeOps {
+func NewChargeTypeOps() *ChargeTypeOps {
 	return &ChargeTypeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetChargeTypes gets the charge types for an organization.
-func (r *ChargeTypeOps) GetChargeTypes(limit, offset int, orgID, buID uuid.UUID) ([]*ent.ChargeType, int, error) {
-	chargeTypeCount, countErr := r.client.ChargeType.Query().Where(
+func (r *ChargeTypeOps) GetChargeTypes(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.ChargeType, int, error) {
+	entityCount, countErr := r.client.ChargeType.Query().Where(
 		chargetype.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	chargeTypes, err := r.client.ChargeType.Query().
+	entities, err := r.client.ChargeType.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -44,43 +48,117 @@ func (r *ChargeTypeOps) GetChargeTypes(limit, offset int, orgID, buID uuid.UUID)
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return chargeTypes, chargeTypeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateChargeType creates a new charge type.
-func (r *ChargeTypeOps) CreateChargeType(newChargeType ent.ChargeType) (*ent.ChargeType, error) {
-	chargeType, err := r.client.ChargeType.Create().
+func (r *ChargeTypeOps) CreateChargeType(ctx context.Context, newChargeType ent.ChargeType) (*ent.ChargeType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.ChargeType.Create().
 		SetOrganizationID(newChargeType.OrganizationID).
 		SetBusinessUnitID(newChargeType.BusinessUnitID).
 		SetStatus(newChargeType.Status).
 		SetName(newChargeType.Name).
 		SetDescription(newChargeType.Description).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "failed to create charge type")
 	}
 
-	return chargeType, nil
+	return createdEntity, nil
 }
 
 // UpdateChargeType updates a charge type.
-func (r *ChargeTypeOps) UpdateChargeType(chargeType ent.ChargeType) (*ent.ChargeType, error) {
-	// Start building the update operation
-	updateOp := r.client.ChargeType.UpdateOneID(chargeType.ID).
-		SetStatus(chargeType.Status).
-		SetName(chargeType.Name).
-		SetDescription(chargeType.Description)
-
-	// Execute the update operation
-	updatedChargeType, err := updateOp.Save(r.ctx)
+func (r *ChargeTypeOps) UpdateChargeType(ctx context.Context, entity ent.ChargeType) (*ent.ChargeType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updatedChargeType, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.ChargeType.Get(ctx, entity.ID)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"name")
+	}
+	// Start building the update operation
+	updateOp := r.client.ChargeType.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetName(entity.Name).
+		SetDescription(entity.Description).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

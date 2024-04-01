@@ -69,8 +69,8 @@ const columns: ColumnDef<GeneralLedgerAccount>[] = [
     },
   },
   {
-    accessorKey: "description",
-    header: "Description",
+    accessorKey: "notes",
+    header: "Notes",
   },
 ];
 

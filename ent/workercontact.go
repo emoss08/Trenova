@@ -29,6 +29,8 @@ type WorkerContact struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// WorkerID holds the value of the "worker_id" field.
 	WorkerID uuid.UUID `json:"workerId" validate:"required"`
 	// Name holds the value of the "name" field.
@@ -100,6 +102,8 @@ func (*WorkerContact) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workercontact.FieldIsPrimary:
 			values[i] = new(sql.NullBool)
+		case workercontact.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case workercontact.FieldName, workercontact.FieldEmail, workercontact.FieldPhone, workercontact.FieldRelationship:
 			values[i] = new(sql.NullString)
 		case workercontact.FieldCreatedAt, workercontact.FieldUpdatedAt:
@@ -150,6 +154,12 @@ func (wc *WorkerContact) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				wc.UpdatedAt = value.Time
+			}
+		case workercontact.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				wc.Version = int(value.Int64)
 			}
 		case workercontact.FieldWorkerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -249,6 +259,9 @@ func (wc *WorkerContact) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(wc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", wc.Version))
 	builder.WriteString(", ")
 	builder.WriteString("worker_id=")
 	builder.WriteString(fmt.Sprintf("%v", wc.WorkerID))

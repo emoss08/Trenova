@@ -37,6 +37,27 @@ func (fcu *FleetCodeUpdate) SetUpdatedAt(t time.Time) *FleetCodeUpdate {
 	return fcu
 }
 
+// SetVersion sets the "version" field.
+func (fcu *FleetCodeUpdate) SetVersion(i int) *FleetCodeUpdate {
+	fcu.mutation.ResetVersion()
+	fcu.mutation.SetVersion(i)
+	return fcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (fcu *FleetCodeUpdate) SetNillableVersion(i *int) *FleetCodeUpdate {
+	if i != nil {
+		fcu.SetVersion(*i)
+	}
+	return fcu
+}
+
+// AddVersion adds i to the "version" field.
+func (fcu *FleetCodeUpdate) AddVersion(i int) *FleetCodeUpdate {
+	fcu.mutation.AddVersion(i)
+	return fcu
+}
+
 // SetStatus sets the "status" field.
 func (fcu *FleetCodeUpdate) SetStatus(f fleetcode.Status) *FleetCodeUpdate {
 	fcu.mutation.SetStatus(f)
@@ -280,6 +301,12 @@ func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := fcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(fleetcode.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := fcu.mutation.Version(); ok {
+		_spec.SetField(fleetcode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := fcu.mutation.AddedVersion(); ok {
+		_spec.AddField(fleetcode.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := fcu.mutation.Status(); ok {
 		_spec.SetField(fleetcode.FieldStatus, field.TypeEnum, value)
 	}
@@ -373,6 +400,27 @@ type FleetCodeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (fcuo *FleetCodeUpdateOne) SetUpdatedAt(t time.Time) *FleetCodeUpdateOne {
 	fcuo.mutation.SetUpdatedAt(t)
+	return fcuo
+}
+
+// SetVersion sets the "version" field.
+func (fcuo *FleetCodeUpdateOne) SetVersion(i int) *FleetCodeUpdateOne {
+	fcuo.mutation.ResetVersion()
+	fcuo.mutation.SetVersion(i)
+	return fcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (fcuo *FleetCodeUpdateOne) SetNillableVersion(i *int) *FleetCodeUpdateOne {
+	if i != nil {
+		fcuo.SetVersion(*i)
+	}
+	return fcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (fcuo *FleetCodeUpdateOne) AddVersion(i int) *FleetCodeUpdateOne {
+	fcuo.mutation.AddVersion(i)
 	return fcuo
 }
 
@@ -648,6 +696,12 @@ func (fcuo *FleetCodeUpdateOne) sqlSave(ctx context.Context) (_node *FleetCode, 
 	}
 	if value, ok := fcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(fleetcode.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := fcuo.mutation.Version(); ok {
+		_spec.SetField(fleetcode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := fcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(fleetcode.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := fcuo.mutation.Status(); ok {
 		_spec.SetField(fleetcode.FieldStatus, field.TypeEnum, value)

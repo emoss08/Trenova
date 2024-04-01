@@ -31,6 +31,8 @@ type WorkerProfile struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// WorkerID holds the value of the "worker_id" field.
 	WorkerID uuid.UUID `json:"workerId" validate:"required,uuid"`
 	// Race holds the value of the "race" field.
@@ -131,6 +133,8 @@ func (*WorkerProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workerprofile.FieldDateOfBirth, workerprofile.FieldLicenseExpirationDate, workerprofile.FieldHazmatExpirationDate, workerprofile.FieldHireDate, workerprofile.FieldTerminationDate, workerprofile.FieldPhysicalDueDate, workerprofile.FieldMedicalCertDate, workerprofile.FieldMvrDueDate:
 			values[i] = new(pgtype.Date)
+		case workerprofile.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case workerprofile.FieldRace, workerprofile.FieldSex, workerprofile.FieldLicenseNumber, workerprofile.FieldEndorsements:
 			values[i] = new(sql.NullString)
 		case workerprofile.FieldCreatedAt, workerprofile.FieldUpdatedAt:
@@ -181,6 +185,12 @@ func (wp *WorkerProfile) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				wp.UpdatedAt = value.Time
+			}
+		case workerprofile.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				wp.Version = int(value.Int64)
 			}
 		case workerprofile.FieldWorkerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -333,6 +343,9 @@ func (wp *WorkerProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(wp.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", wp.Version))
 	builder.WriteString(", ")
 	builder.WriteString("worker_id=")
 	builder.WriteString(fmt.Sprintf("%v", wp.WorkerID))

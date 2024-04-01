@@ -47,11 +47,7 @@ function EquipManuEditForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(equipManufacturerSchema),
-    defaultValues: {
-      status: equipManufacturer.status,
-      name: equipManufacturer.name,
-      description: equipManufacturer.description,
-    },
+    defaultValues: equipManufacturer,
   });
 
   const mutation = useCustomMutation<FormValues>(

@@ -76,6 +76,11 @@ func UpdatedAt(v time.Time) predicate.HazardousMaterial {
 	return predicate.HazardousMaterial(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldEQ(FieldVersion, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.HazardousMaterial {
 	return predicate.HazardousMaterial(sql.FieldEQ(FieldName, v))
@@ -219,6 +224,46 @@ func UpdatedAtLT(v time.Time) predicate.HazardousMaterial {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.HazardousMaterial {
 	return predicate.HazardousMaterial(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.HazardousMaterial {
+	return predicate.HazardousMaterial(sql.FieldLTE(FieldVersion, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

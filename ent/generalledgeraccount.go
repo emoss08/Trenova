@@ -29,6 +29,8 @@ type GeneralLedgerAccount struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status generalledgeraccount.Status `json:"status" validate:"required,oneof=A I"`
 	// AccountNumber holds the value of the "account_number" field.
@@ -118,6 +120,8 @@ func (*GeneralLedgerAccount) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case generalledgeraccount.FieldBalance, generalledgeraccount.FieldInterestRate:
 			values[i] = new(sql.NullFloat64)
+		case generalledgeraccount.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case generalledgeraccount.FieldStatus, generalledgeraccount.FieldAccountNumber, generalledgeraccount.FieldAccountType, generalledgeraccount.FieldCashFlowType, generalledgeraccount.FieldAccountSubType, generalledgeraccount.FieldAccountClass, generalledgeraccount.FieldNotes:
 			values[i] = new(sql.NullString)
 		case generalledgeraccount.FieldCreatedAt, generalledgeraccount.FieldUpdatedAt:
@@ -168,6 +172,12 @@ func (gla *GeneralLedgerAccount) assignValues(columns []string, values []any) er
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				gla.UpdatedAt = value.Time
+			}
+		case generalledgeraccount.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				gla.Version = int(value.Int64)
 			}
 		case generalledgeraccount.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -309,6 +319,9 @@ func (gla *GeneralLedgerAccount) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(gla.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", gla.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", gla.Status))

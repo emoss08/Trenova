@@ -64,6 +64,20 @@ func (cc *CommodityCreate) SetNillableUpdatedAt(t *time.Time) *CommodityCreate {
 	return cc
 }
 
+// SetVersion sets the "version" field.
+func (cc *CommodityCreate) SetVersion(i int) *CommodityCreate {
+	cc.mutation.SetVersion(i)
+	return cc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (cc *CommodityCreate) SetNillableVersion(i *int) *CommodityCreate {
+	if i != nil {
+		cc.SetVersion(*i)
+	}
+	return cc
+}
+
 // SetStatus sets the "status" field.
 func (cc *CommodityCreate) SetStatus(c commodity.Status) *CommodityCreate {
 	cc.mutation.SetStatus(c)
@@ -240,6 +254,10 @@ func (cc *CommodityCreate) defaults() {
 		v := commodity.DefaultUpdatedAt()
 		cc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := cc.mutation.Version(); !ok {
+		v := commodity.DefaultVersion
+		cc.mutation.SetVersion(v)
+	}
 	if _, ok := cc.mutation.Status(); !ok {
 		v := commodity.DefaultStatus
 		cc.mutation.SetStatus(v)
@@ -267,6 +285,9 @@ func (cc *CommodityCreate) check() error {
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Commodity.updated_at"`)}
+	}
+	if _, ok := cc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Commodity.version"`)}
 	}
 	if _, ok := cc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Commodity.status"`)}
@@ -335,6 +356,10 @@ func (cc *CommodityCreate) createSpec() (*Commodity, *sqlgraph.CreateSpec) {
 	if value, ok := cc.mutation.UpdatedAt(); ok {
 		_spec.SetField(commodity.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := cc.mutation.Version(); ok {
+		_spec.SetField(commodity.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := cc.mutation.Status(); ok {
 		_spec.SetField(commodity.FieldStatus, field.TypeEnum, value)

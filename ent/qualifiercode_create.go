@@ -63,6 +63,20 @@ func (qcc *QualifierCodeCreate) SetNillableUpdatedAt(t *time.Time) *QualifierCod
 	return qcc
 }
 
+// SetVersion sets the "version" field.
+func (qcc *QualifierCodeCreate) SetVersion(i int) *QualifierCodeCreate {
+	qcc.mutation.SetVersion(i)
+	return qcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qcc *QualifierCodeCreate) SetNillableVersion(i *int) *QualifierCodeCreate {
+	if i != nil {
+		qcc.SetVersion(*i)
+	}
+	return qcc
+}
+
 // SetStatus sets the "status" field.
 func (qcc *QualifierCodeCreate) SetStatus(q qualifiercode.Status) *QualifierCodeCreate {
 	qcc.mutation.SetStatus(q)
@@ -156,6 +170,10 @@ func (qcc *QualifierCodeCreate) defaults() {
 		v := qualifiercode.DefaultUpdatedAt()
 		qcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := qcc.mutation.Version(); !ok {
+		v := qualifiercode.DefaultVersion
+		qcc.mutation.SetVersion(v)
+	}
 	if _, ok := qcc.mutation.Status(); !ok {
 		v := qualifiercode.DefaultStatus
 		qcc.mutation.SetStatus(v)
@@ -179,6 +197,9 @@ func (qcc *QualifierCodeCreate) check() error {
 	}
 	if _, ok := qcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "QualifierCode.updated_at"`)}
+	}
+	if _, ok := qcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "QualifierCode.version"`)}
 	}
 	if _, ok := qcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "QualifierCode.status"`)}
@@ -252,6 +273,10 @@ func (qcc *QualifierCodeCreate) createSpec() (*QualifierCode, *sqlgraph.CreateSp
 	if value, ok := qcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(qualifiercode.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := qcc.mutation.Version(); ok {
+		_spec.SetField(qualifiercode.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := qcc.mutation.Status(); ok {
 		_spec.SetField(qualifiercode.FieldStatus, field.TypeEnum, value)

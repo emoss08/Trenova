@@ -63,6 +63,20 @@ func (ctc *ChargeTypeCreate) SetNillableUpdatedAt(t *time.Time) *ChargeTypeCreat
 	return ctc
 }
 
+// SetVersion sets the "version" field.
+func (ctc *ChargeTypeCreate) SetVersion(i int) *ChargeTypeCreate {
+	ctc.mutation.SetVersion(i)
+	return ctc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctc *ChargeTypeCreate) SetNillableVersion(i *int) *ChargeTypeCreate {
+	if i != nil {
+		ctc.SetVersion(*i)
+	}
+	return ctc
+}
+
 // SetStatus sets the "status" field.
 func (ctc *ChargeTypeCreate) SetStatus(c chargetype.Status) *ChargeTypeCreate {
 	ctc.mutation.SetStatus(c)
@@ -164,6 +178,10 @@ func (ctc *ChargeTypeCreate) defaults() {
 		v := chargetype.DefaultUpdatedAt()
 		ctc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := ctc.mutation.Version(); !ok {
+		v := chargetype.DefaultVersion
+		ctc.mutation.SetVersion(v)
+	}
 	if _, ok := ctc.mutation.Status(); !ok {
 		v := chargetype.DefaultStatus
 		ctc.mutation.SetStatus(v)
@@ -187,6 +205,9 @@ func (ctc *ChargeTypeCreate) check() error {
 	}
 	if _, ok := ctc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ChargeType.updated_at"`)}
+	}
+	if _, ok := ctc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "ChargeType.version"`)}
 	}
 	if _, ok := ctc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "ChargeType.status"`)}
@@ -252,6 +273,10 @@ func (ctc *ChargeTypeCreate) createSpec() (*ChargeType, *sqlgraph.CreateSpec) {
 	if value, ok := ctc.mutation.UpdatedAt(); ok {
 		_spec.SetField(chargetype.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := ctc.mutation.Version(); ok {
+		_spec.SetField(chargetype.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := ctc.mutation.Status(); ok {
 		_spec.SetField(chargetype.FieldStatus, field.TypeEnum, value)

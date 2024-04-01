@@ -38,6 +38,27 @@ func (wpu *WorkerProfileUpdate) SetUpdatedAt(t time.Time) *WorkerProfileUpdate {
 	return wpu
 }
 
+// SetVersion sets the "version" field.
+func (wpu *WorkerProfileUpdate) SetVersion(i int) *WorkerProfileUpdate {
+	wpu.mutation.ResetVersion()
+	wpu.mutation.SetVersion(i)
+	return wpu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wpu *WorkerProfileUpdate) SetNillableVersion(i *int) *WorkerProfileUpdate {
+	if i != nil {
+		wpu.SetVersion(*i)
+	}
+	return wpu
+}
+
+// AddVersion adds i to the "version" field.
+func (wpu *WorkerProfileUpdate) AddVersion(i int) *WorkerProfileUpdate {
+	wpu.mutation.AddVersion(i)
+	return wpu
+}
+
 // SetRace sets the "race" field.
 func (wpu *WorkerProfileUpdate) SetRace(s string) *WorkerProfileUpdate {
 	wpu.mutation.SetRace(s)
@@ -334,6 +355,12 @@ func (wpu *WorkerProfileUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := wpu.mutation.UpdatedAt(); ok {
 		_spec.SetField(workerprofile.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := wpu.mutation.Version(); ok {
+		_spec.SetField(workerprofile.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wpu.mutation.AddedVersion(); ok {
+		_spec.AddField(workerprofile.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := wpu.mutation.Race(); ok {
 		_spec.SetField(workerprofile.FieldRace, field.TypeString, value)
 	}
@@ -457,6 +484,27 @@ type WorkerProfileUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (wpuo *WorkerProfileUpdateOne) SetUpdatedAt(t time.Time) *WorkerProfileUpdateOne {
 	wpuo.mutation.SetUpdatedAt(t)
+	return wpuo
+}
+
+// SetVersion sets the "version" field.
+func (wpuo *WorkerProfileUpdateOne) SetVersion(i int) *WorkerProfileUpdateOne {
+	wpuo.mutation.ResetVersion()
+	wpuo.mutation.SetVersion(i)
+	return wpuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wpuo *WorkerProfileUpdateOne) SetNillableVersion(i *int) *WorkerProfileUpdateOne {
+	if i != nil {
+		wpuo.SetVersion(*i)
+	}
+	return wpuo
+}
+
+// AddVersion adds i to the "version" field.
+func (wpuo *WorkerProfileUpdateOne) AddVersion(i int) *WorkerProfileUpdateOne {
+	wpuo.mutation.AddVersion(i)
 	return wpuo
 }
 
@@ -785,6 +833,12 @@ func (wpuo *WorkerProfileUpdateOne) sqlSave(ctx context.Context) (_node *WorkerP
 	}
 	if value, ok := wpuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(workerprofile.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := wpuo.mutation.Version(); ok {
+		_spec.SetField(workerprofile.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wpuo.mutation.AddedVersion(); ok {
+		_spec.AddField(workerprofile.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := wpuo.mutation.Race(); ok {
 		_spec.SetField(workerprofile.FieldRace, field.TypeString, value)

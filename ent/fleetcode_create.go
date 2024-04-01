@@ -64,6 +64,20 @@ func (fcc *FleetCodeCreate) SetNillableUpdatedAt(t *time.Time) *FleetCodeCreate 
 	return fcc
 }
 
+// SetVersion sets the "version" field.
+func (fcc *FleetCodeCreate) SetVersion(i int) *FleetCodeCreate {
+	fcc.mutation.SetVersion(i)
+	return fcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (fcc *FleetCodeCreate) SetNillableVersion(i *int) *FleetCodeCreate {
+	if i != nil {
+		fcc.SetVersion(*i)
+	}
+	return fcc
+}
+
 // SetStatus sets the "status" field.
 func (fcc *FleetCodeCreate) SetStatus(f fleetcode.Status) *FleetCodeCreate {
 	fcc.mutation.SetStatus(f)
@@ -226,6 +240,10 @@ func (fcc *FleetCodeCreate) defaults() {
 		v := fleetcode.DefaultUpdatedAt()
 		fcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := fcc.mutation.Version(); !ok {
+		v := fleetcode.DefaultVersion
+		fcc.mutation.SetVersion(v)
+	}
 	if _, ok := fcc.mutation.Status(); !ok {
 		v := fleetcode.DefaultStatus
 		fcc.mutation.SetStatus(v)
@@ -249,6 +267,9 @@ func (fcc *FleetCodeCreate) check() error {
 	}
 	if _, ok := fcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "FleetCode.updated_at"`)}
+	}
+	if _, ok := fcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "FleetCode.version"`)}
 	}
 	if _, ok := fcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "FleetCode.status"`)}
@@ -314,6 +335,10 @@ func (fcc *FleetCodeCreate) createSpec() (*FleetCode, *sqlgraph.CreateSpec) {
 	if value, ok := fcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(fleetcode.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := fcc.mutation.Version(); ok {
+		_spec.SetField(fleetcode.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := fcc.mutation.Status(); ok {
 		_spec.SetField(fleetcode.FieldStatus, field.TypeEnum, value)

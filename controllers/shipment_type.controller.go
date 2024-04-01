@@ -48,7 +48,7 @@ func GetShipmentTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shipmentTypes, count, err := services.NewShipmentTypeOps(r.Context()).GetShipmentTypes(limit, offset, orgID, buID)
+	shipmentTypes, count, err := services.NewShipmentTypeOps().GetShipmentTypes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateShipmentType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createEquipType, err := services.NewShipmentTypeOps(r.Context()).CreateShipmentType(newShipmentType)
+	createEquipType, err := services.NewShipmentTypeOps().CreateShipmentType(r.Context(), newShipmentType)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateShipmentType(w http.ResponseWriter, r *http.Request) {
 
 	shipmentTypeData.ID = uuid.MustParse(shipTypeID)
 
-	shipmentType, err := services.NewShipmentTypeOps(r.Context()).UpdateShipmentType(shipmentTypeData)
+	shipmentType, err := services.NewShipmentTypeOps().UpdateShipmentType(r.Context(), shipmentTypeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

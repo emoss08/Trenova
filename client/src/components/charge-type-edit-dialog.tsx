@@ -42,11 +42,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(chargeTypeSchema),
-    defaultValues: {
-      status: chargeType.status,
-      name: chargeType.name,
-      description: chargeType.description,
-    },
+    defaultValues: chargeType,
   });
 
   const mutation = useCustomMutation<FormValues>(

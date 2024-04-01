@@ -29,6 +29,8 @@ type Customer struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status customer.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
@@ -108,6 +110,8 @@ func (*Customer) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case customer.FieldHasCustomerPortal, customer.FieldAutoMarkReadyToBill:
 			values[i] = new(sql.NullBool)
+		case customer.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case customer.FieldStatus, customer.FieldCode, customer.FieldName, customer.FieldAddressLine1, customer.FieldAddressLine2, customer.FieldCity, customer.FieldPostalCode:
 			values[i] = new(sql.NullString)
 		case customer.FieldCreatedAt, customer.FieldUpdatedAt:
@@ -158,6 +162,12 @@ func (c *Customer) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				c.UpdatedAt = value.Time
+			}
+		case customer.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				c.Version = int(value.Int64)
 			}
 		case customer.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -281,6 +291,9 @@ func (c *Customer) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(c.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", c.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", c.Status))

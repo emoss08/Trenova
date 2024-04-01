@@ -35,6 +35,27 @@ func (dcu *DelayCodeUpdate) SetUpdatedAt(t time.Time) *DelayCodeUpdate {
 	return dcu
 }
 
+// SetVersion sets the "version" field.
+func (dcu *DelayCodeUpdate) SetVersion(i int) *DelayCodeUpdate {
+	dcu.mutation.ResetVersion()
+	dcu.mutation.SetVersion(i)
+	return dcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcu *DelayCodeUpdate) SetNillableVersion(i *int) *DelayCodeUpdate {
+	if i != nil {
+		dcu.SetVersion(*i)
+	}
+	return dcu
+}
+
+// AddVersion adds i to the "version" field.
+func (dcu *DelayCodeUpdate) AddVersion(i int) *DelayCodeUpdate {
+	dcu.mutation.AddVersion(i)
+	return dcu
+}
+
 // SetStatus sets the "status" field.
 func (dcu *DelayCodeUpdate) SetStatus(d delaycode.Status) *DelayCodeUpdate {
 	dcu.mutation.SetStatus(d)
@@ -186,6 +207,12 @@ func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := dcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(delaycode.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := dcu.mutation.Version(); ok {
+		_spec.SetField(delaycode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcu.mutation.AddedVersion(); ok {
+		_spec.AddField(delaycode.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := dcu.mutation.Status(); ok {
 		_spec.SetField(delaycode.FieldStatus, field.TypeEnum, value)
 	}
@@ -229,6 +256,27 @@ type DelayCodeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (dcuo *DelayCodeUpdateOne) SetUpdatedAt(t time.Time) *DelayCodeUpdateOne {
 	dcuo.mutation.SetUpdatedAt(t)
+	return dcuo
+}
+
+// SetVersion sets the "version" field.
+func (dcuo *DelayCodeUpdateOne) SetVersion(i int) *DelayCodeUpdateOne {
+	dcuo.mutation.ResetVersion()
+	dcuo.mutation.SetVersion(i)
+	return dcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcuo *DelayCodeUpdateOne) SetNillableVersion(i *int) *DelayCodeUpdateOne {
+	if i != nil {
+		dcuo.SetVersion(*i)
+	}
+	return dcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (dcuo *DelayCodeUpdateOne) AddVersion(i int) *DelayCodeUpdateOne {
+	dcuo.mutation.AddVersion(i)
 	return dcuo
 }
 
@@ -412,6 +460,12 @@ func (dcuo *DelayCodeUpdateOne) sqlSave(ctx context.Context) (_node *DelayCode, 
 	}
 	if value, ok := dcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(delaycode.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := dcuo.mutation.Version(); ok {
+		_spec.SetField(delaycode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(delaycode.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := dcuo.mutation.Status(); ok {
 		_spec.SetField(delaycode.FieldStatus, field.TypeEnum, value)

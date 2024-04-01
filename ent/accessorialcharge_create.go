@@ -63,6 +63,20 @@ func (acc *AccessorialChargeCreate) SetNillableUpdatedAt(t *time.Time) *Accessor
 	return acc
 }
 
+// SetVersion sets the "version" field.
+func (acc *AccessorialChargeCreate) SetVersion(i int) *AccessorialChargeCreate {
+	acc.mutation.SetVersion(i)
+	return acc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (acc *AccessorialChargeCreate) SetNillableVersion(i *int) *AccessorialChargeCreate {
+	if i != nil {
+		acc.SetVersion(*i)
+	}
+	return acc
+}
+
 // SetStatus sets the "status" field.
 func (acc *AccessorialChargeCreate) SetStatus(a accessorialcharge.Status) *AccessorialChargeCreate {
 	acc.mutation.SetStatus(a)
@@ -198,6 +212,10 @@ func (acc *AccessorialChargeCreate) defaults() {
 		v := accessorialcharge.DefaultUpdatedAt()
 		acc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := acc.mutation.Version(); !ok {
+		v := accessorialcharge.DefaultVersion
+		acc.mutation.SetVersion(v)
+	}
 	if _, ok := acc.mutation.Status(); !ok {
 		v := accessorialcharge.DefaultStatus
 		acc.mutation.SetStatus(v)
@@ -229,6 +247,9 @@ func (acc *AccessorialChargeCreate) check() error {
 	}
 	if _, ok := acc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "AccessorialCharge.updated_at"`)}
+	}
+	if _, ok := acc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "AccessorialCharge.version"`)}
 	}
 	if _, ok := acc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "AccessorialCharge.status"`)}
@@ -308,6 +329,10 @@ func (acc *AccessorialChargeCreate) createSpec() (*AccessorialCharge, *sqlgraph.
 	if value, ok := acc.mutation.UpdatedAt(); ok {
 		_spec.SetField(accessorialcharge.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := acc.mutation.Version(); ok {
+		_spec.SetField(accessorialcharge.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := acc.mutation.Status(); ok {
 		_spec.SetField(accessorialcharge.FieldStatus, field.TypeEnum, value)

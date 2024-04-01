@@ -72,6 +72,10 @@ func init() {
 	accessorialcharge.DefaultUpdatedAt = accessorialchargeDescUpdatedAt.Default.(func() time.Time)
 	// accessorialcharge.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	accessorialcharge.UpdateDefaultUpdatedAt = accessorialchargeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// accessorialchargeDescVersion is the schema descriptor for version field.
+	accessorialchargeDescVersion := accessorialchargeMixinFields0[5].Descriptor()
+	// accessorialcharge.DefaultVersion holds the default value on creation for the version field.
+	accessorialcharge.DefaultVersion = accessorialchargeDescVersion.Default.(int)
 	// accessorialchargeDescCode is the schema descriptor for code field.
 	accessorialchargeDescCode := accessorialchargeFields[1].Descriptor()
 	// accessorialcharge.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -284,6 +288,10 @@ func init() {
 	chargetype.DefaultUpdatedAt = chargetypeDescUpdatedAt.Default.(func() time.Time)
 	// chargetype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	chargetype.UpdateDefaultUpdatedAt = chargetypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// chargetypeDescVersion is the schema descriptor for version field.
+	chargetypeDescVersion := chargetypeMixinFields0[5].Descriptor()
+	// chargetype.DefaultVersion holds the default value on creation for the version field.
+	chargetype.DefaultVersion = chargetypeDescVersion.Default.(int)
 	// chargetypeDescName is the schema descriptor for name field.
 	chargetypeDescName := chargetypeFields[1].Descriptor()
 	// chargetype.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -321,6 +329,10 @@ func init() {
 	commenttype.DefaultUpdatedAt = commenttypeDescUpdatedAt.Default.(func() time.Time)
 	// commenttype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	commenttype.UpdateDefaultUpdatedAt = commenttypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// commenttypeDescVersion is the schema descriptor for version field.
+	commenttypeDescVersion := commenttypeMixinFields0[5].Descriptor()
+	// commenttype.DefaultVersion holds the default value on creation for the version field.
+	commenttype.DefaultVersion = commenttypeDescVersion.Default.(int)
 	// commenttypeDescName is the schema descriptor for name field.
 	commenttypeDescName := commenttypeFields[1].Descriptor()
 	// commenttype.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -358,6 +370,10 @@ func init() {
 	commodity.DefaultUpdatedAt = commodityDescUpdatedAt.Default.(func() time.Time)
 	// commodity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	commodity.UpdateDefaultUpdatedAt = commodityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// commodityDescVersion is the schema descriptor for version field.
+	commodityDescVersion := commodityMixinFields0[5].Descriptor()
+	// commodity.DefaultVersion holds the default value on creation for the version field.
+	commodity.DefaultVersion = commodityDescVersion.Default.(int)
 	// commodityDescName is the schema descriptor for name field.
 	commodityDescName := commodityFields[1].Descriptor()
 	// commodity.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -401,6 +417,10 @@ func init() {
 	customer.DefaultUpdatedAt = customerDescUpdatedAt.Default.(func() time.Time)
 	// customer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	customer.UpdateDefaultUpdatedAt = customerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customerDescVersion is the schema descriptor for version field.
+	customerDescVersion := customerMixinFields0[5].Descriptor()
+	// customer.DefaultVersion holds the default value on creation for the version field.
+	customer.DefaultVersion = customerDescVersion.Default.(int)
 	// customerDescCode is the schema descriptor for code field.
 	customerDescCode := customerFields[1].Descriptor()
 	// customer.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -522,6 +542,10 @@ func init() {
 	delaycode.DefaultUpdatedAt = delaycodeDescUpdatedAt.Default.(func() time.Time)
 	// delaycode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	delaycode.UpdateDefaultUpdatedAt = delaycodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// delaycodeDescVersion is the schema descriptor for version field.
+	delaycodeDescVersion := delaycodeMixinFields0[5].Descriptor()
+	// delaycode.DefaultVersion holds the default value on creation for the version field.
+	delaycode.DefaultVersion = delaycodeDescVersion.Default.(int)
 	// delaycodeDescCode is the schema descriptor for code field.
 	delaycodeDescCode := delaycodeFields[1].Descriptor()
 	// delaycode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -624,6 +648,10 @@ func init() {
 	divisioncode.DefaultUpdatedAt = divisioncodeDescUpdatedAt.Default.(func() time.Time)
 	// divisioncode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	divisioncode.UpdateDefaultUpdatedAt = divisioncodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// divisioncodeDescVersion is the schema descriptor for version field.
+	divisioncodeDescVersion := divisioncodeMixinFields0[5].Descriptor()
+	// divisioncode.DefaultVersion holds the default value on creation for the version field.
+	divisioncode.DefaultVersion = divisioncodeDescVersion.Default.(int)
 	// divisioncodeDescCode is the schema descriptor for code field.
 	divisioncodeDescCode := divisioncodeFields[1].Descriptor()
 	// divisioncode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -665,6 +693,10 @@ func init() {
 	documentclassification.DefaultUpdatedAt = documentclassificationDescUpdatedAt.Default.(func() time.Time)
 	// documentclassification.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	documentclassification.UpdateDefaultUpdatedAt = documentclassificationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// documentclassificationDescVersion is the schema descriptor for version field.
+	documentclassificationDescVersion := documentclassificationMixinFields0[5].Descriptor()
+	// documentclassification.DefaultVersion holds the default value on creation for the version field.
+	documentclassification.DefaultVersion = documentclassificationDescVersion.Default.(int)
 	// documentclassificationDescName is the schema descriptor for name field.
 	documentclassificationDescName := documentclassificationFields[1].Descriptor()
 	// documentclassification.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -709,6 +741,10 @@ func init() {
 	emailprofile.DefaultUpdatedAt = emailprofileDescUpdatedAt.Default.(func() time.Time)
 	// emailprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	emailprofile.UpdateDefaultUpdatedAt = emailprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// emailprofileDescVersion is the schema descriptor for version field.
+	emailprofileDescVersion := emailprofileMixinFields0[5].Descriptor()
+	// emailprofile.DefaultVersion holds the default value on creation for the version field.
+	emailprofile.DefaultVersion = emailprofileDescVersion.Default.(int)
 	// emailprofileDescName is the schema descriptor for name field.
 	emailprofileDescName := emailprofileFields[0].Descriptor()
 	// emailprofile.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -740,6 +776,10 @@ func init() {
 	equipmentmanufactuer.DefaultUpdatedAt = equipmentmanufactuerDescUpdatedAt.Default.(func() time.Time)
 	// equipmentmanufactuer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	equipmentmanufactuer.UpdateDefaultUpdatedAt = equipmentmanufactuerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// equipmentmanufactuerDescVersion is the schema descriptor for version field.
+	equipmentmanufactuerDescVersion := equipmentmanufactuerMixinFields0[5].Descriptor()
+	// equipmentmanufactuer.DefaultVersion holds the default value on creation for the version field.
+	equipmentmanufactuer.DefaultVersion = equipmentmanufactuerDescVersion.Default.(int)
 	// equipmentmanufactuerDescName is the schema descriptor for name field.
 	equipmentmanufactuerDescName := equipmentmanufactuerFields[1].Descriptor()
 	// equipmentmanufactuer.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -763,6 +803,10 @@ func init() {
 	equipmenttype.DefaultUpdatedAt = equipmenttypeDescUpdatedAt.Default.(func() time.Time)
 	// equipmenttype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	equipmenttype.UpdateDefaultUpdatedAt = equipmenttypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// equipmenttypeDescVersion is the schema descriptor for version field.
+	equipmenttypeDescVersion := equipmenttypeMixinFields0[5].Descriptor()
+	// equipmenttype.DefaultVersion holds the default value on creation for the version field.
+	equipmenttype.DefaultVersion = equipmenttypeDescVersion.Default.(int)
 	// equipmenttypeDescName is the schema descriptor for name field.
 	equipmenttypeDescName := equipmenttypeFields[1].Descriptor()
 	// equipmenttype.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -839,6 +883,10 @@ func init() {
 	fleetcode.DefaultUpdatedAt = fleetcodeDescUpdatedAt.Default.(func() time.Time)
 	// fleetcode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	fleetcode.UpdateDefaultUpdatedAt = fleetcodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// fleetcodeDescVersion is the schema descriptor for version field.
+	fleetcodeDescVersion := fleetcodeMixinFields0[5].Descriptor()
+	// fleetcode.DefaultVersion holds the default value on creation for the version field.
+	fleetcode.DefaultVersion = fleetcodeDescVersion.Default.(int)
 	// fleetcodeDescCode is the schema descriptor for code field.
 	fleetcodeDescCode := fleetcodeFields[1].Descriptor()
 	// fleetcode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -876,6 +924,10 @@ func init() {
 	generalledgeraccount.DefaultUpdatedAt = generalledgeraccountDescUpdatedAt.Default.(func() time.Time)
 	// generalledgeraccount.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	generalledgeraccount.UpdateDefaultUpdatedAt = generalledgeraccountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// generalledgeraccountDescVersion is the schema descriptor for version field.
+	generalledgeraccountDescVersion := generalledgeraccountMixinFields0[5].Descriptor()
+	// generalledgeraccount.DefaultVersion holds the default value on creation for the version field.
+	generalledgeraccount.DefaultVersion = generalledgeraccountDescVersion.Default.(int)
 	// generalledgeraccountDescAccountNumber is the schema descriptor for account_number field.
 	generalledgeraccountDescAccountNumber := generalledgeraccountFields[1].Descriptor()
 	// generalledgeraccount.AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
@@ -960,6 +1012,10 @@ func init() {
 	hazardousmaterial.DefaultUpdatedAt = hazardousmaterialDescUpdatedAt.Default.(func() time.Time)
 	// hazardousmaterial.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	hazardousmaterial.UpdateDefaultUpdatedAt = hazardousmaterialDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// hazardousmaterialDescVersion is the schema descriptor for version field.
+	hazardousmaterialDescVersion := hazardousmaterialMixinFields0[5].Descriptor()
+	// hazardousmaterial.DefaultVersion holds the default value on creation for the version field.
+	hazardousmaterial.DefaultVersion = hazardousmaterialDescVersion.Default.(int)
 	// hazardousmaterialDescName is the schema descriptor for name field.
 	hazardousmaterialDescName := hazardousmaterialFields[1].Descriptor()
 	// hazardousmaterial.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -997,6 +1053,10 @@ func init() {
 	hazardousmaterialsegregation.DefaultUpdatedAt = hazardousmaterialsegregationDescUpdatedAt.Default.(func() time.Time)
 	// hazardousmaterialsegregation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	hazardousmaterialsegregation.UpdateDefaultUpdatedAt = hazardousmaterialsegregationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// hazardousmaterialsegregationDescVersion is the schema descriptor for version field.
+	hazardousmaterialsegregationDescVersion := hazardousmaterialsegregationMixinFields0[5].Descriptor()
+	// hazardousmaterialsegregation.DefaultVersion holds the default value on creation for the version field.
+	hazardousmaterialsegregation.DefaultVersion = hazardousmaterialsegregationDescVersion.Default.(int)
 	// hazardousmaterialsegregationDescID is the schema descriptor for id field.
 	hazardousmaterialsegregationDescID := hazardousmaterialsegregationMixinFields0[0].Descriptor()
 	// hazardousmaterialsegregation.DefaultID holds the default value on creation for the id field.
@@ -1071,6 +1131,10 @@ func init() {
 	locationcategory.DefaultUpdatedAt = locationcategoryDescUpdatedAt.Default.(func() time.Time)
 	// locationcategory.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	locationcategory.UpdateDefaultUpdatedAt = locationcategoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// locationcategoryDescVersion is the schema descriptor for version field.
+	locationcategoryDescVersion := locationcategoryMixinFields0[5].Descriptor()
+	// locationcategory.DefaultVersion holds the default value on creation for the version field.
+	locationcategory.DefaultVersion = locationcategoryDescVersion.Default.(int)
 	// locationcategoryDescName is the schema descriptor for name field.
 	locationcategoryDescName := locationcategoryFields[0].Descriptor()
 	// locationcategory.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -1139,6 +1203,10 @@ func init() {
 	qualifiercode.DefaultUpdatedAt = qualifiercodeDescUpdatedAt.Default.(func() time.Time)
 	// qualifiercode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	qualifiercode.UpdateDefaultUpdatedAt = qualifiercodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// qualifiercodeDescVersion is the schema descriptor for version field.
+	qualifiercodeDescVersion := qualifiercodeMixinFields0[5].Descriptor()
+	// qualifiercode.DefaultVersion holds the default value on creation for the version field.
+	qualifiercode.DefaultVersion = qualifiercodeDescVersion.Default.(int)
 	// qualifiercodeDescCode is the schema descriptor for code field.
 	qualifiercodeDescCode := qualifiercodeFields[1].Descriptor()
 	// qualifiercode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1180,6 +1248,10 @@ func init() {
 	reasoncode.DefaultUpdatedAt = reasoncodeDescUpdatedAt.Default.(func() time.Time)
 	// reasoncode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	reasoncode.UpdateDefaultUpdatedAt = reasoncodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// reasoncodeDescVersion is the schema descriptor for version field.
+	reasoncodeDescVersion := reasoncodeMixinFields0[5].Descriptor()
+	// reasoncode.DefaultVersion holds the default value on creation for the version field.
+	reasoncode.DefaultVersion = reasoncodeDescVersion.Default.(int)
 	// reasoncodeDescCode is the schema descriptor for code field.
 	reasoncodeDescCode := reasoncodeFields[1].Descriptor()
 	// reasoncode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1206,6 +1278,10 @@ func init() {
 	revenuecode.DefaultUpdatedAt = revenuecodeDescUpdatedAt.Default.(func() time.Time)
 	// revenuecode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	revenuecode.UpdateDefaultUpdatedAt = revenuecodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// revenuecodeDescVersion is the schema descriptor for version field.
+	revenuecodeDescVersion := revenuecodeMixinFields0[5].Descriptor()
+	// revenuecode.DefaultVersion holds the default value on creation for the version field.
+	revenuecode.DefaultVersion = revenuecodeDescVersion.Default.(int)
 	// revenuecodeDescCode is the schema descriptor for code field.
 	revenuecodeDescCode := revenuecodeFields[1].Descriptor()
 	// revenuecode.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1270,6 +1346,10 @@ func init() {
 	servicetype.DefaultUpdatedAt = servicetypeDescUpdatedAt.Default.(func() time.Time)
 	// servicetype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	servicetype.UpdateDefaultUpdatedAt = servicetypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// servicetypeDescVersion is the schema descriptor for version field.
+	servicetypeDescVersion := servicetypeMixinFields0[5].Descriptor()
+	// servicetype.DefaultVersion holds the default value on creation for the version field.
+	servicetype.DefaultVersion = servicetypeDescVersion.Default.(int)
 	// servicetypeDescCode is the schema descriptor for code field.
 	servicetypeDescCode := servicetypeFields[1].Descriptor()
 	// servicetype.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1380,6 +1460,10 @@ func init() {
 	shipmenttype.DefaultUpdatedAt = shipmenttypeDescUpdatedAt.Default.(func() time.Time)
 	// shipmenttype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	shipmenttype.UpdateDefaultUpdatedAt = shipmenttypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmenttypeDescVersion is the schema descriptor for version field.
+	shipmenttypeDescVersion := shipmenttypeMixinFields0[5].Descriptor()
+	// shipmenttype.DefaultVersion holds the default value on creation for the version field.
+	shipmenttype.DefaultVersion = shipmenttypeDescVersion.Default.(int)
 	// shipmenttypeDescCode is the schema descriptor for code field.
 	shipmenttypeDescCode := shipmenttypeFields[1].Descriptor()
 	// shipmenttype.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1419,6 +1503,10 @@ func init() {
 	tablechangealert.DefaultUpdatedAt = tablechangealertDescUpdatedAt.Default.(func() time.Time)
 	// tablechangealert.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tablechangealert.UpdateDefaultUpdatedAt = tablechangealertDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tablechangealertDescVersion is the schema descriptor for version field.
+	tablechangealertDescVersion := tablechangealertMixinFields0[5].Descriptor()
+	// tablechangealert.DefaultVersion holds the default value on creation for the version field.
+	tablechangealert.DefaultVersion = tablechangealertDescVersion.Default.(int)
 	// tablechangealertDescName is the schema descriptor for name field.
 	tablechangealertDescName := tablechangealertFields[1].Descriptor()
 	// tablechangealert.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -1454,6 +1542,10 @@ func init() {
 	tag.DefaultUpdatedAt = tagDescUpdatedAt.Default.(func() time.Time)
 	// tag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tag.UpdateDefaultUpdatedAt = tagDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tagDescVersion is the schema descriptor for version field.
+	tagDescVersion := tagMixinFields0[5].Descriptor()
+	// tag.DefaultVersion holds the default value on creation for the version field.
+	tag.DefaultVersion = tagDescVersion.Default.(int)
 	// tagDescName is the schema descriptor for name field.
 	tagDescName := tagFields[0].Descriptor()
 	// tag.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -1481,6 +1573,10 @@ func init() {
 	tractor.DefaultUpdatedAt = tractorDescUpdatedAt.Default.(func() time.Time)
 	// tractor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tractor.UpdateDefaultUpdatedAt = tractorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tractorDescVersion is the schema descriptor for version field.
+	tractorDescVersion := tractorMixinFields0[5].Descriptor()
+	// tractor.DefaultVersion holds the default value on creation for the version field.
+	tractor.DefaultVersion = tractorDescVersion.Default.(int)
 	// tractorDescCode is the schema descriptor for code field.
 	tractorDescCode := tractorFields[0].Descriptor()
 	// tractor.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1573,6 +1669,10 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescVersion is the schema descriptor for version field.
+	userDescVersion := userMixinFields0[5].Descriptor()
+	// user.DefaultVersion holds the default value on creation for the version field.
+	user.DefaultVersion = userDescVersion.Default.(int)
 	// userDescName is the schema descriptor for name field.
 	userDescName := userFields[1].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -1630,6 +1730,10 @@ func init() {
 	userfavorite.DefaultUpdatedAt = userfavoriteDescUpdatedAt.Default.(func() time.Time)
 	// userfavorite.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	userfavorite.UpdateDefaultUpdatedAt = userfavoriteDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userfavoriteDescVersion is the schema descriptor for version field.
+	userfavoriteDescVersion := userfavoriteMixinFields0[5].Descriptor()
+	// userfavorite.DefaultVersion holds the default value on creation for the version field.
+	userfavorite.DefaultVersion = userfavoriteDescVersion.Default.(int)
 	// userfavoriteDescPageLink is the schema descriptor for page_link field.
 	userfavoriteDescPageLink := userfavoriteFields[0].Descriptor()
 	// userfavorite.PageLinkValidator is a validator for the "page_link" field. It is called by the builders before save.
@@ -1653,6 +1757,10 @@ func init() {
 	worker.DefaultUpdatedAt = workerDescUpdatedAt.Default.(func() time.Time)
 	// worker.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	worker.UpdateDefaultUpdatedAt = workerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workerDescVersion is the schema descriptor for version field.
+	workerDescVersion := workerMixinFields0[5].Descriptor()
+	// worker.DefaultVersion holds the default value on creation for the version field.
+	worker.DefaultVersion = workerDescVersion.Default.(int)
 	// workerDescCode is the schema descriptor for code field.
 	workerDescCode := workerFields[1].Descriptor()
 	// worker.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -1702,6 +1810,10 @@ func init() {
 	workercomment.DefaultUpdatedAt = workercommentDescUpdatedAt.Default.(func() time.Time)
 	// workercomment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workercomment.UpdateDefaultUpdatedAt = workercommentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workercommentDescVersion is the schema descriptor for version field.
+	workercommentDescVersion := workercommentMixinFields0[5].Descriptor()
+	// workercomment.DefaultVersion holds the default value on creation for the version field.
+	workercomment.DefaultVersion = workercommentDescVersion.Default.(int)
 	// workercommentDescComment is the schema descriptor for comment field.
 	workercommentDescComment := workercommentFields[2].Descriptor()
 	// workercomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
@@ -1725,6 +1837,10 @@ func init() {
 	workercontact.DefaultUpdatedAt = workercontactDescUpdatedAt.Default.(func() time.Time)
 	// workercontact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workercontact.UpdateDefaultUpdatedAt = workercontactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workercontactDescVersion is the schema descriptor for version field.
+	workercontactDescVersion := workercontactMixinFields0[5].Descriptor()
+	// workercontact.DefaultVersion holds the default value on creation for the version field.
+	workercontact.DefaultVersion = workercontactDescVersion.Default.(int)
 	// workercontactDescName is the schema descriptor for name field.
 	workercontactDescName := workercontactFields[1].Descriptor()
 	// workercontact.NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -1762,6 +1878,10 @@ func init() {
 	workerprofile.DefaultUpdatedAt = workerprofileDescUpdatedAt.Default.(func() time.Time)
 	// workerprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workerprofile.UpdateDefaultUpdatedAt = workerprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// workerprofileDescVersion is the schema descriptor for version field.
+	workerprofileDescVersion := workerprofileMixinFields0[5].Descriptor()
+	// workerprofile.DefaultVersion holds the default value on creation for the version field.
+	workerprofile.DefaultVersion = workerprofileDescVersion.Default.(int)
 	// workerprofileDescLicenseNumber is the schema descriptor for license_number field.
 	workerprofileDescLicenseNumber := workerprofileFields[4].Descriptor()
 	// workerprofile.LicenseNumberValidator is a validator for the "license_number" field. It is called by the builders before save.

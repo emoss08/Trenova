@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/equipmenttype"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -12,32 +16,34 @@ import (
 )
 
 type EquipmentTypeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewEquipmentTypeOps creates a new equipment type service.
-func NewEquipmentTypeOps(ctx context.Context) *EquipmentTypeOps {
+func NewEquipmentTypeOps() *EquipmentTypeOps {
 	return &EquipmentTypeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetEquipmentTypes gets the equipment type for an organization.
-func (r *EquipmentTypeOps) GetEquipmentTypes(limit, offset int, orgID, buID uuid.UUID) ([]*ent.EquipmentType, int, error) {
-	equipTypeCount, countErr := r.client.EquipmentType.Query().Where(
+func (r *EquipmentTypeOps) GetEquipmentTypes(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.EquipmentType, int, error) {
+	entityCount, countErr := r.client.EquipmentType.Query().Where(
 		equipmenttype.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	equipmentTypes, err := r.client.EquipmentType.Query().
+	entities, err := r.client.EquipmentType.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -45,65 +51,144 @@ func (r *EquipmentTypeOps) GetEquipmentTypes(limit, offset int, orgID, buID uuid
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return equipmentTypes, equipTypeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateEquipmentType creates a new equipment type.
-func (r *EquipmentTypeOps) CreateEquipmentType(newEquipType ent.EquipmentType) (*ent.EquipmentType, error) {
-	equipmentType, err := r.client.EquipmentType.Create().
-		SetOrganizationID(newEquipType.OrganizationID).
-		SetBusinessUnitID(newEquipType.BusinessUnitID).
-		SetStatus(newEquipType.Status).
-		SetName(newEquipType.Name).
-		SetDescription(newEquipType.Description).
-		SetCostPerMile(newEquipType.CostPerMile).
-		SetEquipmentClass(newEquipType.EquipmentClass).
-		SetFixedCost(newEquipType.FixedCost).
-		SetVariableCost(newEquipType.VariableCost).
-		SetHeight(newEquipType.Height).
-		SetLength(newEquipType.Length).
-		SetWidth(newEquipType.Width).
-		SetWeight(newEquipType.Weight).
-		SetColor(newEquipType.Color).
-		SetIdlingFuelUsage(newEquipType.IdlingFuelUsage).
-		SetExemptFromTolls(newEquipType.ExemptFromTolls).
-		Save(r.ctx)
+func (r *EquipmentTypeOps) CreateEquipmentType(
+	ctx context.Context, newEntity ent.EquipmentType,
+) (*ent.EquipmentType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return equipmentType, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.EquipmentType.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetName(newEntity.Name).
+		SetDescription(newEntity.Description).
+		SetCostPerMile(newEntity.CostPerMile).
+		SetEquipmentClass(newEntity.EquipmentClass).
+		SetFixedCost(newEntity.FixedCost).
+		SetVariableCost(newEntity.VariableCost).
+		SetHeight(newEntity.Height).
+		SetLength(newEntity.Length).
+		SetWidth(newEntity.Width).
+		SetWeight(newEntity.Weight).
+		SetColor(newEntity.Color).
+		SetIdlingFuelUsage(newEntity.IdlingFuelUsage).
+		SetExemptFromTolls(newEntity.ExemptFromTolls).
+		Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to create entity")
+	}
+
+	return createdEntity, nil
 }
 
 // UpdateEquipmentType updates a equipment type.
-func (r *EquipmentTypeOps) UpdateEquipmentType(equipmentType ent.EquipmentType) (*ent.EquipmentType, error) {
-	// Start building the update operation
-	updateOp := r.client.EquipmentType.UpdateOneID(equipmentType.ID).
-		SetStatus(equipmentType.Status).
-		SetName(equipmentType.Name).
-		SetDescription(equipmentType.Description).
-		SetCostPerMile(equipmentType.CostPerMile).
-		SetEquipmentClass(equipmentType.EquipmentClass).
-		SetFixedCost(equipmentType.FixedCost).
-		SetVariableCost(equipmentType.VariableCost).
-		SetHeight(equipmentType.Height).
-		SetLength(equipmentType.Length).
-		SetWidth(equipmentType.Width).
-		SetWeight(equipmentType.Weight).
-		SetColor(equipmentType.Color).
-		SetIdlingFuelUsage(equipmentType.IdlingFuelUsage).
-		SetExemptFromTolls(equipmentType.ExemptFromTolls)
-
-	// Execute the update operation
-	updatedEquipType, err := updateOp.Save(r.ctx)
+func (r *EquipmentTypeOps) UpdateEquipmentType(
+	ctx context.Context, entity ent.EquipmentType,
+) (*ent.EquipmentType, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updatedEquipType, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.EquipmentType.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"name")
+	}
+
+	// Start building the update operation
+	updateOp := tx.EquipmentType.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetName(entity.Name).
+		SetDescription(entity.Description).
+		SetCostPerMile(entity.CostPerMile).
+		SetEquipmentClass(entity.EquipmentClass).
+		SetFixedCost(entity.FixedCost).
+		SetVariableCost(entity.VariableCost).
+		SetHeight(entity.Height).
+		SetLength(entity.Length).
+		SetWidth(entity.Width).
+		SetWeight(entity.Weight).
+		SetColor(entity.Color).
+		SetIdlingFuelUsage(entity.IdlingFuelUsage).
+		SetExemptFromTolls(entity.ExemptFromTolls).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

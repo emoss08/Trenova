@@ -12,26 +12,24 @@ import (
 
 // AccountingControlOps is the service for accounting control settings.
 type AccountingControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewAccountingControlOps creates a new accounting control service.
-func NewAccountingControlOps(ctx context.Context) *AccountingControlOps {
+func NewAccountingControlOps() *AccountingControlOps {
 	return &AccountingControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetAccountingControl gets the accounting control settings for an organization.
-func (r *AccountingControlOps) GetAccountingControl(orgID, buID uuid.UUID) (*ent.AccountingControl, error) {
+func (r *AccountingControlOps) GetAccountingControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.AccountingControl, error) {
 	accountingControl, err := r.client.AccountingControl.Query().Where(
 		accountingcontrol.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *AccountingControlOps) GetAccountingControl(orgID, buID uuid.UUID) (*ent
 }
 
 // UpdateAccountingControl updates the accounting control settings for an organization.
-func (r *AccountingControlOps) UpdateAccountingControl(ac ent.AccountingControl) (*ent.AccountingControl, error) {
+func (r *AccountingControlOps) UpdateAccountingControl(ctx context.Context, ac ent.AccountingControl) (*ent.AccountingControl, error) {
 	updatedAC, err := r.client.AccountingControl.
 		UpdateOneID(ac.ID).
 		SetRecThreshold(ac.RecThreshold).
@@ -54,12 +52,10 @@ func (r *AccountingControlOps) UpdateAccountingControl(ac ent.AccountingControl)
 		SetNillableCriticalProcesses(ac.CriticalProcesses).
 		SetNillableDefaultRevAccountID(ac.DefaultRevAccountID).
 		SetNillableDefaultExpAccountID(ac.DefaultExpAccountID).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return updatedAC, nil
 }
-
-

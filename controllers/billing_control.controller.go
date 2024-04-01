@@ -32,7 +32,7 @@ func GetBillingControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	billingControl, err := services.NewBillingControlOps(r.Context()).GetBillingControl(orgID, buID)
+	billingControl, err := services.NewBillingControlOps().GetBillingControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -58,7 +58,7 @@ func UpdateBillingControl(w http.ResponseWriter, r *http.Request) {
 
 	bControlData.ID = uuid.MustParse(billingControlID)
 
-	billingControl, err := services.NewBillingControlOps(r.Context()).UpdateBillingControl(bControlData)
+	billingControl, err := services.NewBillingControlOps().UpdateBillingControl(r.Context(), bControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

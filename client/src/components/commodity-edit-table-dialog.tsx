@@ -46,16 +46,7 @@ function CommodityEditForm({
   const { control, reset, handleSubmit, watch, setValue } =
     useForm<CommodityFormValues>({
       resolver: yupResolver(commoditySchema),
-      defaultValues: {
-        status: commodity.status,
-        name: commodity.name,
-        description: commodity?.description,
-        minTemp: commodity?.minTemp,
-        maxTemp: commodity?.maxTemp,
-        unitOfMeasure: commodity?.unitOfMeasure,
-        hazardousMaterialId: commodity.hazardousMaterialId,
-        isHazmat: commodity?.isHazmat,
-      },
+      defaultValues: commodity,
     });
 
   const mutation = useCustomMutation<CommodityFormValues>(

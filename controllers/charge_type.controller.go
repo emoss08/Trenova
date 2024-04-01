@@ -48,7 +48,7 @@ func GetChargeTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chargeTypes, count, err := services.NewChargeTypeOps(r.Context()).GetChargeTypes(limit, offset, orgID, buID)
+	chargeTypes, count, err := services.NewChargeTypeOps().GetChargeTypes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateChargeType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createChargeType, err := services.NewChargeTypeOps(r.Context()).CreateChargeType(newChargeType)
+	createChargeType, err := services.NewChargeTypeOps().CreateChargeType(r.Context(), newChargeType)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateChargeType(w http.ResponseWriter, r *http.Request) {
 
 	chargeTypeData.ID = uuid.MustParse(chargeTypeID)
 
-	commodity, err := services.NewChargeTypeOps(r.Context()).UpdateChargeType(chargeTypeData)
+	commodity, err := services.NewChargeTypeOps().UpdateChargeType(r.Context(), chargeTypeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

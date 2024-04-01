@@ -37,6 +37,27 @@ func (dcu *DivisionCodeUpdate) SetUpdatedAt(t time.Time) *DivisionCodeUpdate {
 	return dcu
 }
 
+// SetVersion sets the "version" field.
+func (dcu *DivisionCodeUpdate) SetVersion(i int) *DivisionCodeUpdate {
+	dcu.mutation.ResetVersion()
+	dcu.mutation.SetVersion(i)
+	return dcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcu *DivisionCodeUpdate) SetNillableVersion(i *int) *DivisionCodeUpdate {
+	if i != nil {
+		dcu.SetVersion(*i)
+	}
+	return dcu
+}
+
+// AddVersion adds i to the "version" field.
+func (dcu *DivisionCodeUpdate) AddVersion(i int) *DivisionCodeUpdate {
+	dcu.mutation.AddVersion(i)
+	return dcu
+}
+
 // SetStatus sets the "status" field.
 func (dcu *DivisionCodeUpdate) SetStatus(d divisioncode.Status) *DivisionCodeUpdate {
 	dcu.mutation.SetStatus(d)
@@ -260,6 +281,12 @@ func (dcu *DivisionCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := dcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(divisioncode.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := dcu.mutation.Version(); ok {
+		_spec.SetField(divisioncode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcu.mutation.AddedVersion(); ok {
+		_spec.AddField(divisioncode.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := dcu.mutation.Status(); ok {
 		_spec.SetField(divisioncode.FieldStatus, field.TypeEnum, value)
 	}
@@ -381,6 +408,27 @@ type DivisionCodeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (dcuo *DivisionCodeUpdateOne) SetUpdatedAt(t time.Time) *DivisionCodeUpdateOne {
 	dcuo.mutation.SetUpdatedAt(t)
+	return dcuo
+}
+
+// SetVersion sets the "version" field.
+func (dcuo *DivisionCodeUpdateOne) SetVersion(i int) *DivisionCodeUpdateOne {
+	dcuo.mutation.ResetVersion()
+	dcuo.mutation.SetVersion(i)
+	return dcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcuo *DivisionCodeUpdateOne) SetNillableVersion(i *int) *DivisionCodeUpdateOne {
+	if i != nil {
+		dcuo.SetVersion(*i)
+	}
+	return dcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (dcuo *DivisionCodeUpdateOne) AddVersion(i int) *DivisionCodeUpdateOne {
+	dcuo.mutation.AddVersion(i)
 	return dcuo
 }
 
@@ -636,6 +684,12 @@ func (dcuo *DivisionCodeUpdateOne) sqlSave(ctx context.Context) (_node *Division
 	}
 	if value, ok := dcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(divisioncode.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := dcuo.mutation.Version(); ok {
+		_spec.SetField(divisioncode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(divisioncode.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := dcuo.mutation.Status(); ok {
 		_spec.SetField(divisioncode.FieldStatus, field.TypeEnum, value)

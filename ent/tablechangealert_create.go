@@ -64,6 +64,20 @@ func (tcac *TableChangeAlertCreate) SetNillableUpdatedAt(t *time.Time) *TableCha
 	return tcac
 }
 
+// SetVersion sets the "version" field.
+func (tcac *TableChangeAlertCreate) SetVersion(i int) *TableChangeAlertCreate {
+	tcac.mutation.SetVersion(i)
+	return tcac
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tcac *TableChangeAlertCreate) SetNillableVersion(i *int) *TableChangeAlertCreate {
+	if i != nil {
+		tcac.SetVersion(*i)
+	}
+	return tcac
+}
+
 // SetStatus sets the "status" field.
 func (tcac *TableChangeAlertCreate) SetStatus(t tablechangealert.Status) *TableChangeAlertCreate {
 	tcac.mutation.SetStatus(t)
@@ -295,6 +309,10 @@ func (tcac *TableChangeAlertCreate) defaults() error {
 		v := tablechangealert.DefaultUpdatedAt()
 		tcac.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tcac.mutation.Version(); !ok {
+		v := tablechangealert.DefaultVersion
+		tcac.mutation.SetVersion(v)
+	}
 	if _, ok := tcac.mutation.Status(); !ok {
 		v := tablechangealert.DefaultStatus
 		tcac.mutation.SetStatus(v)
@@ -322,6 +340,9 @@ func (tcac *TableChangeAlertCreate) check() error {
 	}
 	if _, ok := tcac.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "TableChangeAlert.updated_at"`)}
+	}
+	if _, ok := tcac.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "TableChangeAlert.version"`)}
 	}
 	if _, ok := tcac.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "TableChangeAlert.status"`)}
@@ -418,6 +439,10 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.UpdatedAt(); ok {
 		_spec.SetField(tablechangealert.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := tcac.mutation.Version(); ok {
+		_spec.SetField(tablechangealert.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := tcac.mutation.Status(); ok {
 		_spec.SetField(tablechangealert.FieldStatus, field.TypeEnum, value)

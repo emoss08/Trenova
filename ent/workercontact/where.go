@@ -76,6 +76,11 @@ func UpdatedAt(v time.Time) predicate.WorkerContact {
 	return predicate.WorkerContact(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldEQ(FieldVersion, v))
+}
+
 // WorkerID applies equality check predicate on the "worker_id" field. It's identical to WorkerIDEQ.
 func WorkerID(v uuid.UUID) predicate.WorkerContact {
 	return predicate.WorkerContact(sql.FieldEQ(FieldWorkerID, v))
@@ -224,6 +229,46 @@ func UpdatedAtLT(v time.Time) predicate.WorkerContact {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.WorkerContact {
 	return predicate.WorkerContact(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.WorkerContact {
+	return predicate.WorkerContact(sql.FieldLTE(FieldVersion, v))
 }
 
 // WorkerIDEQ applies the EQ predicate on the "worker_id" field.

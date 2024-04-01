@@ -35,6 +35,27 @@ func (qcu *QualifierCodeUpdate) SetUpdatedAt(t time.Time) *QualifierCodeUpdate {
 	return qcu
 }
 
+// SetVersion sets the "version" field.
+func (qcu *QualifierCodeUpdate) SetVersion(i int) *QualifierCodeUpdate {
+	qcu.mutation.ResetVersion()
+	qcu.mutation.SetVersion(i)
+	return qcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qcu *QualifierCodeUpdate) SetNillableVersion(i *int) *QualifierCodeUpdate {
+	if i != nil {
+		qcu.SetVersion(*i)
+	}
+	return qcu
+}
+
+// AddVersion adds i to the "version" field.
+func (qcu *QualifierCodeUpdate) AddVersion(i int) *QualifierCodeUpdate {
+	qcu.mutation.AddVersion(i)
+	return qcu
+}
+
 // SetStatus sets the "status" field.
 func (qcu *QualifierCodeUpdate) SetStatus(q qualifiercode.Status) *QualifierCodeUpdate {
 	qcu.mutation.SetStatus(q)
@@ -165,6 +186,12 @@ func (qcu *QualifierCodeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := qcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(qualifiercode.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := qcu.mutation.Version(); ok {
+		_spec.SetField(qualifiercode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := qcu.mutation.AddedVersion(); ok {
+		_spec.AddField(qualifiercode.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := qcu.mutation.Status(); ok {
 		_spec.SetField(qualifiercode.FieldStatus, field.TypeEnum, value)
 	}
@@ -199,6 +226,27 @@ type QualifierCodeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (qcuo *QualifierCodeUpdateOne) SetUpdatedAt(t time.Time) *QualifierCodeUpdateOne {
 	qcuo.mutation.SetUpdatedAt(t)
+	return qcuo
+}
+
+// SetVersion sets the "version" field.
+func (qcuo *QualifierCodeUpdateOne) SetVersion(i int) *QualifierCodeUpdateOne {
+	qcuo.mutation.ResetVersion()
+	qcuo.mutation.SetVersion(i)
+	return qcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qcuo *QualifierCodeUpdateOne) SetNillableVersion(i *int) *QualifierCodeUpdateOne {
+	if i != nil {
+		qcuo.SetVersion(*i)
+	}
+	return qcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (qcuo *QualifierCodeUpdateOne) AddVersion(i int) *QualifierCodeUpdateOne {
+	qcuo.mutation.AddVersion(i)
 	return qcuo
 }
 
@@ -361,6 +409,12 @@ func (qcuo *QualifierCodeUpdateOne) sqlSave(ctx context.Context) (_node *Qualifi
 	}
 	if value, ok := qcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(qualifiercode.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := qcuo.mutation.Version(); ok {
+		_spec.SetField(qualifiercode.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := qcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(qualifiercode.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := qcuo.mutation.Status(); ok {
 		_spec.SetField(qualifiercode.FieldStatus, field.TypeEnum, value)

@@ -48,7 +48,7 @@ func GetReasonCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reasonCode, count, err := services.NewReasonCodeOps(r.Context()).GetReasonCode(limit, offset, orgID, buID)
+	reasonCode, count, err := services.NewReasonCodeOps().GetReasonCode(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateReasonCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createReasonCode, err := services.NewReasonCodeOps(r.Context()).CreateReasonCode(newReasonCode)
+	createReasonCode, err := services.NewReasonCodeOps().CreateReasonCode(r.Context(), newReasonCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateReasonCode(w http.ResponseWriter, r *http.Request) {
 
 	reasonCodeData.ID = uuid.MustParse(reasonCodeID)
 
-	reasonCode, err := services.NewReasonCodeOps(r.Context()).UpdateReasonCode(reasonCodeData)
+	reasonCode, err := services.NewReasonCodeOps().UpdateReasonCode(r.Context(), reasonCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

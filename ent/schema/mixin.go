@@ -58,6 +58,9 @@ func (BaseMixin) Fields() []ent.Field {
 			Default(time.Now).
 			UpdateDefault(time.Now).
 			StructTag(`json:"updatedAt"`),
+		field.Int("version").
+			Default(1).
+			StructTag(`json:"version" validate:"omitempty"`),
 	}
 }
 

@@ -44,11 +44,7 @@ export function LCEditForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(formSchema),
-    defaultValues: {
-      name: locationCategory.name,
-      description: locationCategory.description,
-      color: locationCategory.color,
-    },
+    defaultValues: locationCategory,
   });
 
   const mutation = useCustomMutation<FormValues>(

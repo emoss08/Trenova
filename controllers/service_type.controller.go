@@ -48,7 +48,7 @@ func GetServiceTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceTypes, count, err := services.NewServiceTypeOps(r.Context()).GetServiceTypes(limit, offset, orgID, buID)
+	serviceTypes, count, err := services.NewServiceTypeOps().GetServiceTypes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateServiceType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createServiceType, err := services.NewServiceTypeOps(r.Context()).CreateServiceType(newServiceType)
+	createServiceType, err := services.NewServiceTypeOps().CreateServiceType(r.Context(), newServiceType)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateServiceType(w http.ResponseWriter, r *http.Request) {
 
 	serviceTypeData.ID = uuid.MustParse(serviceTypeID)
 
-	serviceType, err := services.NewServiceTypeOps(r.Context()).UpdateServiceType(serviceTypeData)
+	serviceType, err := services.NewServiceTypeOps().UpdateServiceType(r.Context(), serviceTypeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

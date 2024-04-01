@@ -28,6 +28,8 @@ type Tag struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
@@ -89,6 +91,8 @@ func (*Tag) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case tag.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case tag.FieldName, tag.FieldDescription, tag.FieldColor:
 			values[i] = new(sql.NullString)
 		case tag.FieldCreatedAt, tag.FieldUpdatedAt:
@@ -139,6 +143,12 @@ func (t *Tag) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				t.UpdatedAt = value.Time
+			}
+		case tag.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				t.Version = int(value.Int64)
 			}
 		case tag.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -220,6 +230,9 @@ func (t *Tag) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", t.Version))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)

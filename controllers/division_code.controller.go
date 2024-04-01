@@ -48,7 +48,7 @@ func GetDivisionCodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	divisionCodes, count, err := services.NewDivisionCodeOps(r.Context()).GetDivisionCodes(limit, offset, orgID, buID)
+	divisionCodes, count, err := services.NewDivisionCodeOps().GetDivisionCodes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateDivisionCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createDivisionCode, err := services.NewDivisionCodeOps(r.Context()).CreateDivisionCode(newDivisionCode)
+	createDivisionCode, err := services.NewDivisionCodeOps().CreateDivisionCode(r.Context(), newDivisionCode)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateDivisionCode(w http.ResponseWriter, r *http.Request) {
 
 	divisionCodeData.ID = uuid.MustParse(divisionCodeID)
 
-	divisionCode, err := services.NewDivisionCodeOps(r.Context()).UpdateDivisionCode(divisionCodeData)
+	divisionCode, err := services.NewDivisionCodeOps().UpdateDivisionCode(r.Context(), divisionCodeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

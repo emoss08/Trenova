@@ -50,14 +50,7 @@ export function DCEditForm({
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),
-    defaultValues: {
-      status: divisionCode.status,
-      code: divisionCode.code,
-      description: divisionCode.description,
-      expenseAccount: divisionCode?.expenseAccount || "",
-      cashAccount: divisionCode?.cashAccount || "",
-      apAccount: divisionCode?.apAccount || "",
-    },
+    defaultValues: divisionCode,
   });
 
   const mutation = useCustomMutation<FormValues>(

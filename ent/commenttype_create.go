@@ -63,6 +63,20 @@ func (ctc *CommentTypeCreate) SetNillableUpdatedAt(t *time.Time) *CommentTypeCre
 	return ctc
 }
 
+// SetVersion sets the "version" field.
+func (ctc *CommentTypeCreate) SetVersion(i int) *CommentTypeCreate {
+	ctc.mutation.SetVersion(i)
+	return ctc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctc *CommentTypeCreate) SetNillableVersion(i *int) *CommentTypeCreate {
+	if i != nil {
+		ctc.SetVersion(*i)
+	}
+	return ctc
+}
+
 // SetStatus sets the "status" field.
 func (ctc *CommentTypeCreate) SetStatus(c commenttype.Status) *CommentTypeCreate {
 	ctc.mutation.SetStatus(c)
@@ -178,6 +192,10 @@ func (ctc *CommentTypeCreate) defaults() {
 		v := commenttype.DefaultUpdatedAt()
 		ctc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := ctc.mutation.Version(); !ok {
+		v := commenttype.DefaultVersion
+		ctc.mutation.SetVersion(v)
+	}
 	if _, ok := ctc.mutation.Status(); !ok {
 		v := commenttype.DefaultStatus
 		ctc.mutation.SetStatus(v)
@@ -205,6 +223,9 @@ func (ctc *CommentTypeCreate) check() error {
 	}
 	if _, ok := ctc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "CommentType.updated_at"`)}
+	}
+	if _, ok := ctc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "CommentType.version"`)}
 	}
 	if _, ok := ctc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "CommentType.status"`)}
@@ -278,6 +299,10 @@ func (ctc *CommentTypeCreate) createSpec() (*CommentType, *sqlgraph.CreateSpec) 
 	if value, ok := ctc.mutation.UpdatedAt(); ok {
 		_spec.SetField(commenttype.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := ctc.mutation.Version(); ok {
+		_spec.SetField(commenttype.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := ctc.mutation.Status(); ok {
 		_spec.SetField(commenttype.FieldStatus, field.TypeEnum, value)

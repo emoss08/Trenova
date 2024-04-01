@@ -66,6 +66,20 @@ func (wpc *WorkerProfileCreate) SetNillableUpdatedAt(t *time.Time) *WorkerProfil
 	return wpc
 }
 
+// SetVersion sets the "version" field.
+func (wpc *WorkerProfileCreate) SetVersion(i int) *WorkerProfileCreate {
+	wpc.mutation.SetVersion(i)
+	return wpc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wpc *WorkerProfileCreate) SetNillableVersion(i *int) *WorkerProfileCreate {
+	if i != nil {
+		wpc.SetVersion(*i)
+	}
+	return wpc
+}
+
 // SetWorkerID sets the "worker_id" field.
 func (wpc *WorkerProfileCreate) SetWorkerID(u uuid.UUID) *WorkerProfileCreate {
 	wpc.mutation.SetWorkerID(u)
@@ -265,6 +279,10 @@ func (wpc *WorkerProfileCreate) defaults() error {
 		v := workerprofile.DefaultUpdatedAt()
 		wpc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := wpc.mutation.Version(); !ok {
+		v := workerprofile.DefaultVersion
+		wpc.mutation.SetVersion(v)
+	}
 	if _, ok := wpc.mutation.Endorsements(); !ok {
 		v := workerprofile.DefaultEndorsements
 		wpc.mutation.SetEndorsements(v)
@@ -292,6 +310,9 @@ func (wpc *WorkerProfileCreate) check() error {
 	}
 	if _, ok := wpc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "WorkerProfile.updated_at"`)}
+	}
+	if _, ok := wpc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "WorkerProfile.version"`)}
 	}
 	if _, ok := wpc.mutation.WorkerID(); !ok {
 		return &ValidationError{Name: "worker_id", err: errors.New(`ent: missing required field "WorkerProfile.worker_id"`)}
@@ -366,6 +387,10 @@ func (wpc *WorkerProfileCreate) createSpec() (*WorkerProfile, *sqlgraph.CreateSp
 	if value, ok := wpc.mutation.UpdatedAt(); ok {
 		_spec.SetField(workerprofile.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := wpc.mutation.Version(); ok {
+		_spec.SetField(workerprofile.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := wpc.mutation.Race(); ok {
 		_spec.SetField(workerprofile.FieldRace, field.TypeString, value)

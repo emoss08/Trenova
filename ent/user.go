@@ -17,7 +17,7 @@ import (
 
 // User is the model entity for the User schema.
 type User struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// BusinessUnitID holds the value of the "business_unit_id" field.
@@ -28,6 +28,8 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status user.Status `json:"status,omitempty"`
 	// Name holds the value of the "name" field.
@@ -35,7 +37,7 @@ type User struct {
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Password holds the value of the "password" field.
-	Password string `json:"-"`
+	Password string `json:"-" validate:"-"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Timezone holds the value of the "timezone" field.
@@ -109,6 +111,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldIsAdmin, user.FieldIsSuperAdmin:
 			values[i] = new(sql.NullBool)
+		case user.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case user.FieldStatus, user.FieldName, user.FieldUsername, user.FieldPassword, user.FieldEmail, user.FieldTimezone, user.FieldProfilePicURL, user.FieldThumbnailURL, user.FieldPhoneNumber:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldLastLogin:
@@ -159,6 +163,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				u.UpdatedAt = value.Time
+			}
+		case user.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				u.Version = int(value.Int64)
 			}
 		case user.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -296,6 +306,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", u.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", u.Status))

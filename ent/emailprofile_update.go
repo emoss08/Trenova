@@ -35,6 +35,27 @@ func (epu *EmailProfileUpdate) SetUpdatedAt(t time.Time) *EmailProfileUpdate {
 	return epu
 }
 
+// SetVersion sets the "version" field.
+func (epu *EmailProfileUpdate) SetVersion(i int) *EmailProfileUpdate {
+	epu.mutation.ResetVersion()
+	epu.mutation.SetVersion(i)
+	return epu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (epu *EmailProfileUpdate) SetNillableVersion(i *int) *EmailProfileUpdate {
+	if i != nil {
+		epu.SetVersion(*i)
+	}
+	return epu
+}
+
+// AddVersion adds i to the "version" field.
+func (epu *EmailProfileUpdate) AddVersion(i int) *EmailProfileUpdate {
+	epu.mutation.AddVersion(i)
+	return epu
+}
+
 // SetName sets the "name" field.
 func (epu *EmailProfileUpdate) SetName(s string) *EmailProfileUpdate {
 	epu.mutation.SetName(s)
@@ -278,6 +299,12 @@ func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := epu.mutation.UpdatedAt(); ok {
 		_spec.SetField(emailprofile.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := epu.mutation.Version(); ok {
+		_spec.SetField(emailprofile.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := epu.mutation.AddedVersion(); ok {
+		_spec.AddField(emailprofile.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := epu.mutation.Name(); ok {
 		_spec.SetField(emailprofile.FieldName, field.TypeString, value)
 	}
@@ -345,6 +372,27 @@ type EmailProfileUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (epuo *EmailProfileUpdateOne) SetUpdatedAt(t time.Time) *EmailProfileUpdateOne {
 	epuo.mutation.SetUpdatedAt(t)
+	return epuo
+}
+
+// SetVersion sets the "version" field.
+func (epuo *EmailProfileUpdateOne) SetVersion(i int) *EmailProfileUpdateOne {
+	epuo.mutation.ResetVersion()
+	epuo.mutation.SetVersion(i)
+	return epuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (epuo *EmailProfileUpdateOne) SetNillableVersion(i *int) *EmailProfileUpdateOne {
+	if i != nil {
+		epuo.SetVersion(*i)
+	}
+	return epuo
+}
+
+// AddVersion adds i to the "version" field.
+func (epuo *EmailProfileUpdateOne) AddVersion(i int) *EmailProfileUpdateOne {
+	epuo.mutation.AddVersion(i)
 	return epuo
 }
 
@@ -620,6 +668,12 @@ func (epuo *EmailProfileUpdateOne) sqlSave(ctx context.Context) (_node *EmailPro
 	}
 	if value, ok := epuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(emailprofile.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := epuo.mutation.Version(); ok {
+		_spec.SetField(emailprofile.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := epuo.mutation.AddedVersion(); ok {
+		_spec.AddField(emailprofile.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := epuo.mutation.Name(); ok {
 		_spec.SetField(emailprofile.FieldName, field.TypeString, value)

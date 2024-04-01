@@ -43,6 +43,27 @@ func (wu *WorkerUpdate) SetUpdatedAt(t time.Time) *WorkerUpdate {
 	return wu
 }
 
+// SetVersion sets the "version" field.
+func (wu *WorkerUpdate) SetVersion(i int) *WorkerUpdate {
+	wu.mutation.ResetVersion()
+	wu.mutation.SetVersion(i)
+	return wu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableVersion(i *int) *WorkerUpdate {
+	if i != nil {
+		wu.SetVersion(*i)
+	}
+	return wu
+}
+
+// AddVersion adds i to the "version" field.
+func (wu *WorkerUpdate) AddVersion(i int) *WorkerUpdate {
+	wu.mutation.AddVersion(i)
+	return wu
+}
+
 // SetStatus sets the "status" field.
 func (wu *WorkerUpdate) SetStatus(w worker.Status) *WorkerUpdate {
 	wu.mutation.SetStatus(w)
@@ -516,6 +537,12 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := wu.mutation.UpdatedAt(); ok {
 		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := wu.mutation.Version(); ok {
+		_spec.SetField(worker.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wu.mutation.AddedVersion(); ok {
+		_spec.AddField(worker.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := wu.mutation.Status(); ok {
 		_spec.SetField(worker.FieldStatus, field.TypeEnum, value)
 	}
@@ -838,6 +865,27 @@ type WorkerUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (wuo *WorkerUpdateOne) SetUpdatedAt(t time.Time) *WorkerUpdateOne {
 	wuo.mutation.SetUpdatedAt(t)
+	return wuo
+}
+
+// SetVersion sets the "version" field.
+func (wuo *WorkerUpdateOne) SetVersion(i int) *WorkerUpdateOne {
+	wuo.mutation.ResetVersion()
+	wuo.mutation.SetVersion(i)
+	return wuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableVersion(i *int) *WorkerUpdateOne {
+	if i != nil {
+		wuo.SetVersion(*i)
+	}
+	return wuo
+}
+
+// AddVersion adds i to the "version" field.
+func (wuo *WorkerUpdateOne) AddVersion(i int) *WorkerUpdateOne {
+	wuo.mutation.AddVersion(i)
 	return wuo
 }
 
@@ -1343,6 +1391,12 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 	}
 	if value, ok := wuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(worker.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := wuo.mutation.Version(); ok {
+		_spec.SetField(worker.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := wuo.mutation.AddedVersion(); ok {
+		_spec.AddField(worker.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := wuo.mutation.Status(); ok {
 		_spec.SetField(worker.FieldStatus, field.TypeEnum, value)

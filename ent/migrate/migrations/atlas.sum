@@ -1,4 +1,4 @@
-h1:CJy/N4wwzZ1N4zTLqW4SDBlvYu5eq/e8ON0O0Qd4xfE=
+h1:z4XINL2qs5A0iz8gREbkCMJU/7yHAYvfe/Vv2xVBU8E=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -91,3 +91,7 @@ h1:CJy/N4wwzZ1N4zTLqW4SDBlvYu5eq/e8ON0O0Qd4xfE=
 20240330171657_alter_tags.sql h1:F2y/S40NEHGbVdsiur7PycRu1E9ETiTgzQafuCGcuGo=
 20240330173808_alter_gl_account.sql h1:qNVSNPJnfaBi/K+fGfR3HaRI4EzFSt3V7ZFsNEu/eEU=
 20240330183347_alter_gl_account.sql h1:9aWggXREl200N2ufZzkhCWiEb72JbEXpG7JGI8jJb9c=
+20240331042352_alter_comment_type.sql h1:b11sJw5R65hW83Suh03k3wkQgY+Gn9vUpXlI6Q7U03M=
+20240331044635_alter_comment_type.sql h1:06ZkltBupN9Gb8SddrWJxaK8QIpucxUBvv3x/dDN+sw=
+20240331045440_add_version.sql h1:Jfjthh8ISbAwpopjB/1Zk2pjrOvSkP5K5GDELxktWuM=
+20240331045630_add_version.sql h1:Mw7RRmZbk9jUlEWfvY7lkJhnMMuE5vkANmucjhRBRv0=

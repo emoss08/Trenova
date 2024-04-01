@@ -48,7 +48,7 @@ func GetTableChangeAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tableChangeAlerts, count, err := services.NewTableChangeAlertOps(r.Context()).GetTableChangeAlerts(limit, offset, orgID, buID)
+	tableChangeAlerts, count, err := services.NewTableChangeAlertOps().GetTableChangeAlerts(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateTableChangeALert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createTableChangeAlert, err := services.NewTableChangeAlertOps(r.Context()).CreateTableChangeAlert(newTableChangeAlert)
+	createTableChangeAlert, err := services.NewTableChangeAlertOps().CreateTableChangeAlert(r.Context(), newTableChangeAlert)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateTableChangeAlert(w http.ResponseWriter, r *http.Request) {
 
 	tableChangeAlertData.ID = uuid.MustParse(tableChangeAlertID)
 
-	serviceType, err := services.NewTableChangeAlertOps(r.Context()).UpdateTableChangeAlert(tableChangeAlertData)
+	serviceType, err := services.NewTableChangeAlertOps().UpdateTableChangeAlert(r.Context(), tableChangeAlertData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)
@@ -135,7 +135,7 @@ func UpdateTableChangeAlert(w http.ResponseWriter, r *http.Request) {
 
 // GetTableNames gets the table names for an organization.
 func GetTableNames(w http.ResponseWriter, r *http.Request) {
-	tableChangeAlerts, count, err := services.NewTableChangeAlertOps(r.Context()).GetTableNames()
+	tableChangeAlerts, count, err := services.NewTableChangeAlertOps().GetTableNames(r.Context())
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -153,7 +153,7 @@ func GetTableNames(w http.ResponseWriter, r *http.Request) {
 
 // GetTopicNames get the topic names for an organization.
 func GetTopicNames(w http.ResponseWriter, r *http.Request) {
-	topicNames, count, err := services.NewTableChangeAlertOps(r.Context()).GetTopicNames()
+	topicNames, count, err := services.NewTableChangeAlertOps().GetTopicNames()
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

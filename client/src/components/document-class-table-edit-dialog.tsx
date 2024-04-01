@@ -47,10 +47,7 @@ function DocumentClassEditForm({
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(documentClassSchema),
-    defaultValues: {
-      name: documentClass.name,
-      description: documentClass.description,
-    },
+    defaultValues: documentClass,
   });
 
   const mutation = useCustomMutation<FormValues>(

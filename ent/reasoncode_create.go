@@ -63,6 +63,20 @@ func (rcc *ReasonCodeCreate) SetNillableUpdatedAt(t *time.Time) *ReasonCodeCreat
 	return rcc
 }
 
+// SetVersion sets the "version" field.
+func (rcc *ReasonCodeCreate) SetVersion(i int) *ReasonCodeCreate {
+	rcc.mutation.SetVersion(i)
+	return rcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (rcc *ReasonCodeCreate) SetNillableVersion(i *int) *ReasonCodeCreate {
+	if i != nil {
+		rcc.SetVersion(*i)
+	}
+	return rcc
+}
+
 // SetStatus sets the "status" field.
 func (rcc *ReasonCodeCreate) SetStatus(r reasoncode.Status) *ReasonCodeCreate {
 	rcc.mutation.SetStatus(r)
@@ -170,6 +184,10 @@ func (rcc *ReasonCodeCreate) defaults() {
 		v := reasoncode.DefaultUpdatedAt()
 		rcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := rcc.mutation.Version(); !ok {
+		v := reasoncode.DefaultVersion
+		rcc.mutation.SetVersion(v)
+	}
 	if _, ok := rcc.mutation.Status(); !ok {
 		v := reasoncode.DefaultStatus
 		rcc.mutation.SetStatus(v)
@@ -193,6 +211,9 @@ func (rcc *ReasonCodeCreate) check() error {
 	}
 	if _, ok := rcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ReasonCode.updated_at"`)}
+	}
+	if _, ok := rcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "ReasonCode.version"`)}
 	}
 	if _, ok := rcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "ReasonCode.status"`)}
@@ -266,6 +287,10 @@ func (rcc *ReasonCodeCreate) createSpec() (*ReasonCode, *sqlgraph.CreateSpec) {
 	if value, ok := rcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(reasoncode.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := rcc.mutation.Version(); ok {
+		_spec.SetField(reasoncode.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := rcc.mutation.Status(); ok {
 		_spec.SetField(reasoncode.FieldStatus, field.TypeEnum, value)

@@ -48,7 +48,7 @@ func GetCommentTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentTypes, count, err := services.NewCommentTypeOps(r.Context()).GetCommentTypes(limit, offset, orgID, buID)
+	commentTypes, count, err := services.NewCommentTypeOps().GetCommentTypes(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateCommentType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createCommentType, err := services.NewCommentTypeOps(r.Context()).CreateCommentType(newCommentType)
+	createCommentType, err := services.NewCommentTypeOps().CreateCommentType(r.Context(), newCommentType)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateCommentType(w http.ResponseWriter, r *http.Request) {
 
 	commentTypeData.ID = uuid.MustParse(commentTypeID)
 
-	commentType, err := services.NewCommentTypeOps(r.Context()).UpdateCommentType(commentTypeData)
+	commentType, err := services.NewCommentTypeOps().UpdateCommentType(r.Context(), commentTypeData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

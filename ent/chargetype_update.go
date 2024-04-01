@@ -35,6 +35,27 @@ func (ctu *ChargeTypeUpdate) SetUpdatedAt(t time.Time) *ChargeTypeUpdate {
 	return ctu
 }
 
+// SetVersion sets the "version" field.
+func (ctu *ChargeTypeUpdate) SetVersion(i int) *ChargeTypeUpdate {
+	ctu.mutation.ResetVersion()
+	ctu.mutation.SetVersion(i)
+	return ctu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctu *ChargeTypeUpdate) SetNillableVersion(i *int) *ChargeTypeUpdate {
+	if i != nil {
+		ctu.SetVersion(*i)
+	}
+	return ctu
+}
+
+// AddVersion adds i to the "version" field.
+func (ctu *ChargeTypeUpdate) AddVersion(i int) *ChargeTypeUpdate {
+	ctu.mutation.AddVersion(i)
+	return ctu
+}
+
 // SetStatus sets the "status" field.
 func (ctu *ChargeTypeUpdate) SetStatus(c chargetype.Status) *ChargeTypeUpdate {
 	ctu.mutation.SetStatus(c)
@@ -166,6 +187,12 @@ func (ctu *ChargeTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ctu.mutation.UpdatedAt(); ok {
 		_spec.SetField(chargetype.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := ctu.mutation.Version(); ok {
+		_spec.SetField(chargetype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ctu.mutation.AddedVersion(); ok {
+		_spec.AddField(chargetype.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := ctu.mutation.Status(); ok {
 		_spec.SetField(chargetype.FieldStatus, field.TypeEnum, value)
 	}
@@ -203,6 +230,27 @@ type ChargeTypeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (ctuo *ChargeTypeUpdateOne) SetUpdatedAt(t time.Time) *ChargeTypeUpdateOne {
 	ctuo.mutation.SetUpdatedAt(t)
+	return ctuo
+}
+
+// SetVersion sets the "version" field.
+func (ctuo *ChargeTypeUpdateOne) SetVersion(i int) *ChargeTypeUpdateOne {
+	ctuo.mutation.ResetVersion()
+	ctuo.mutation.SetVersion(i)
+	return ctuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (ctuo *ChargeTypeUpdateOne) SetNillableVersion(i *int) *ChargeTypeUpdateOne {
+	if i != nil {
+		ctuo.SetVersion(*i)
+	}
+	return ctuo
+}
+
+// AddVersion adds i to the "version" field.
+func (ctuo *ChargeTypeUpdateOne) AddVersion(i int) *ChargeTypeUpdateOne {
+	ctuo.mutation.AddVersion(i)
 	return ctuo
 }
 
@@ -366,6 +414,12 @@ func (ctuo *ChargeTypeUpdateOne) sqlSave(ctx context.Context) (_node *ChargeType
 	}
 	if value, ok := ctuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(chargetype.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := ctuo.mutation.Version(); ok {
+		_spec.SetField(chargetype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := ctuo.mutation.AddedVersion(); ok {
+		_spec.AddField(chargetype.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := ctuo.mutation.Status(); ok {
 		_spec.SetField(chargetype.FieldStatus, field.TypeEnum, value)

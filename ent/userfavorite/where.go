@@ -76,6 +76,11 @@ func UpdatedAt(v time.Time) predicate.UserFavorite {
 	return predicate.UserFavorite(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldEQ(FieldVersion, v))
+}
+
 // PageLink applies equality check predicate on the "page_link" field. It's identical to PageLinkEQ.
 func PageLink(v string) predicate.UserFavorite {
 	return predicate.UserFavorite(sql.FieldEQ(FieldPageLink, v))
@@ -204,6 +209,46 @@ func UpdatedAtLT(v time.Time) predicate.UserFavorite {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.UserFavorite {
 	return predicate.UserFavorite(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.UserFavorite {
+	return predicate.UserFavorite(sql.FieldLTE(FieldVersion, v))
 }
 
 // PageLinkEQ applies the EQ predicate on the "page_link" field.

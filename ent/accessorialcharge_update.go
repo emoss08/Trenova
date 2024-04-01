@@ -35,6 +35,27 @@ func (acu *AccessorialChargeUpdate) SetUpdatedAt(t time.Time) *AccessorialCharge
 	return acu
 }
 
+// SetVersion sets the "version" field.
+func (acu *AccessorialChargeUpdate) SetVersion(i int) *AccessorialChargeUpdate {
+	acu.mutation.ResetVersion()
+	acu.mutation.SetVersion(i)
+	return acu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (acu *AccessorialChargeUpdate) SetNillableVersion(i *int) *AccessorialChargeUpdate {
+	if i != nil {
+		acu.SetVersion(*i)
+	}
+	return acu
+}
+
+// AddVersion adds i to the "version" field.
+func (acu *AccessorialChargeUpdate) AddVersion(i int) *AccessorialChargeUpdate {
+	acu.mutation.AddVersion(i)
+	return acu
+}
+
 // SetStatus sets the "status" field.
 func (acu *AccessorialChargeUpdate) SetStatus(a accessorialcharge.Status) *AccessorialChargeUpdate {
 	acu.mutation.SetStatus(a)
@@ -220,6 +241,12 @@ func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := acu.mutation.UpdatedAt(); ok {
 		_spec.SetField(accessorialcharge.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := acu.mutation.Version(); ok {
+		_spec.SetField(accessorialcharge.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := acu.mutation.AddedVersion(); ok {
+		_spec.AddField(accessorialcharge.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := acu.mutation.Status(); ok {
 		_spec.SetField(accessorialcharge.FieldStatus, field.TypeEnum, value)
 	}
@@ -269,6 +296,27 @@ type AccessorialChargeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (acuo *AccessorialChargeUpdateOne) SetUpdatedAt(t time.Time) *AccessorialChargeUpdateOne {
 	acuo.mutation.SetUpdatedAt(t)
+	return acuo
+}
+
+// SetVersion sets the "version" field.
+func (acuo *AccessorialChargeUpdateOne) SetVersion(i int) *AccessorialChargeUpdateOne {
+	acuo.mutation.ResetVersion()
+	acuo.mutation.SetVersion(i)
+	return acuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (acuo *AccessorialChargeUpdateOne) SetNillableVersion(i *int) *AccessorialChargeUpdateOne {
+	if i != nil {
+		acuo.SetVersion(*i)
+	}
+	return acuo
+}
+
+// AddVersion adds i to the "version" field.
+func (acuo *AccessorialChargeUpdateOne) AddVersion(i int) *AccessorialChargeUpdateOne {
+	acuo.mutation.AddVersion(i)
 	return acuo
 }
 
@@ -486,6 +534,12 @@ func (acuo *AccessorialChargeUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	}
 	if value, ok := acuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(accessorialcharge.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := acuo.mutation.Version(); ok {
+		_spec.SetField(accessorialcharge.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := acuo.mutation.AddedVersion(); ok {
+		_spec.AddField(accessorialcharge.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := acuo.mutation.Status(); ok {
 		_spec.SetField(accessorialcharge.FieldStatus, field.TypeEnum, value)

@@ -48,7 +48,7 @@ func GetCustomers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customers, count, err := services.NewCustomerOps(r.Context()).GetCustomers(limit, offset, orgID, buID)
+	customers, count, err := services.NewCustomerOps().GetCustomers(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createCustomer, err := services.NewCustomerOps(r.Context()).CreateCustomer(newCustomer)
+	createCustomer, err := services.NewCustomerOps().CreateCustomer(r.Context(), newCustomer)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateCustomer(w http.ResponseWriter, r *http.Request) {
 
 	customerData.ID = uuid.MustParse(customerID)
 
-	customer, err := services.NewCustomerOps(r.Context()).UpdateCustomer(customerData)
+	customer, err := services.NewCustomerOps().UpdateCustomer(r.Context(), customerData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

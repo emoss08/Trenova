@@ -65,6 +65,20 @@ func (wcc *WorkerCommentCreate) SetNillableUpdatedAt(t *time.Time) *WorkerCommen
 	return wcc
 }
 
+// SetVersion sets the "version" field.
+func (wcc *WorkerCommentCreate) SetVersion(i int) *WorkerCommentCreate {
+	wcc.mutation.SetVersion(i)
+	return wcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (wcc *WorkerCommentCreate) SetNillableVersion(i *int) *WorkerCommentCreate {
+	if i != nil {
+		wcc.SetVersion(*i)
+	}
+	return wcc
+}
+
 // SetWorkerID sets the "worker_id" field.
 func (wcc *WorkerCommentCreate) SetWorkerID(u uuid.UUID) *WorkerCommentCreate {
 	wcc.mutation.SetWorkerID(u)
@@ -166,6 +180,10 @@ func (wcc *WorkerCommentCreate) defaults() {
 		v := workercomment.DefaultUpdatedAt()
 		wcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := wcc.mutation.Version(); !ok {
+		v := workercomment.DefaultVersion
+		wcc.mutation.SetVersion(v)
+	}
 	if _, ok := wcc.mutation.ID(); !ok {
 		v := workercomment.DefaultID()
 		wcc.mutation.SetID(v)
@@ -185,6 +203,9 @@ func (wcc *WorkerCommentCreate) check() error {
 	}
 	if _, ok := wcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "WorkerComment.updated_at"`)}
+	}
+	if _, ok := wcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "WorkerComment.version"`)}
 	}
 	if _, ok := wcc.mutation.WorkerID(); !ok {
 		return &ValidationError{Name: "worker_id", err: errors.New(`ent: missing required field "WorkerComment.worker_id"`)}
@@ -257,6 +278,10 @@ func (wcc *WorkerCommentCreate) createSpec() (*WorkerComment, *sqlgraph.CreateSp
 	if value, ok := wcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(workercomment.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := wcc.mutation.Version(); ok {
+		_spec.SetField(workercomment.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := wcc.mutation.Comment(); ok {
 		_spec.SetField(workercomment.FieldComment, field.TypeString, value)

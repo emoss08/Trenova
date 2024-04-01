@@ -69,6 +69,20 @@ func (tc *TractorCreate) SetNillableUpdatedAt(t *time.Time) *TractorCreate {
 	return tc
 }
 
+// SetVersion sets the "version" field.
+func (tc *TractorCreate) SetVersion(i int) *TractorCreate {
+	tc.mutation.SetVersion(i)
+	return tc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (tc *TractorCreate) SetNillableVersion(i *int) *TractorCreate {
+	if i != nil {
+		tc.SetVersion(*i)
+	}
+	return tc
+}
+
 // SetCode sets the "code" field.
 func (tc *TractorCreate) SetCode(s string) *TractorCreate {
 	tc.mutation.SetCode(s)
@@ -338,6 +352,10 @@ func (tc *TractorCreate) defaults() error {
 		v := tractor.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tc.mutation.Version(); !ok {
+		v := tractor.DefaultVersion
+		tc.mutation.SetVersion(v)
+	}
 	if _, ok := tc.mutation.Status(); !ok {
 		v := tractor.DefaultStatus
 		tc.mutation.SetStatus(v)
@@ -369,6 +387,9 @@ func (tc *TractorCreate) check() error {
 	}
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tractor.updated_at"`)}
+	}
+	if _, ok := tc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Tractor.version"`)}
 	}
 	if _, ok := tc.mutation.Code(); !ok {
 		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "Tractor.code"`)}
@@ -464,6 +485,10 @@ func (tc *TractorCreate) createSpec() (*Tractor, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.UpdatedAt(); ok {
 		_spec.SetField(tractor.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := tc.mutation.Version(); ok {
+		_spec.SetField(tractor.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := tc.mutation.Code(); ok {
 		_spec.SetField(tractor.FieldCode, field.TypeString, value)

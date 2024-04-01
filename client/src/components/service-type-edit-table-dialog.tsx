@@ -43,11 +43,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
 
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(serviceTypeSchema),
-    defaultValues: {
-      status: serviceType.status,
-      code: serviceType.code,
-      description: serviceType?.description || "",
-    },
+    defaultValues: serviceType,
   });
 
   const mutation = useCustomMutation<FormValues>(

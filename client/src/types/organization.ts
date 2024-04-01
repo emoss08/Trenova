@@ -149,6 +149,7 @@ export type GoogleAPIFormValues = Omit<
  * */
 export type BaseModel = {
   organizationId: string;
+  version: number;
   createdAt: string;
   updatedAt: string;
 };

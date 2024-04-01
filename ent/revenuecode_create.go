@@ -64,6 +64,20 @@ func (rcc *RevenueCodeCreate) SetNillableUpdatedAt(t *time.Time) *RevenueCodeCre
 	return rcc
 }
 
+// SetVersion sets the "version" field.
+func (rcc *RevenueCodeCreate) SetVersion(i int) *RevenueCodeCreate {
+	rcc.mutation.SetVersion(i)
+	return rcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (rcc *RevenueCodeCreate) SetNillableVersion(i *int) *RevenueCodeCreate {
+	if i != nil {
+		rcc.SetVersion(*i)
+	}
+	return rcc
+}
+
 // SetStatus sets the "status" field.
 func (rcc *RevenueCodeCreate) SetStatus(r revenuecode.Status) *RevenueCodeCreate {
 	rcc.mutation.SetStatus(r)
@@ -203,6 +217,10 @@ func (rcc *RevenueCodeCreate) defaults() error {
 		v := revenuecode.DefaultUpdatedAt()
 		rcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := rcc.mutation.Version(); !ok {
+		v := revenuecode.DefaultVersion
+		rcc.mutation.SetVersion(v)
+	}
 	if _, ok := rcc.mutation.Status(); !ok {
 		v := revenuecode.DefaultStatus
 		rcc.mutation.SetStatus(v)
@@ -230,6 +248,9 @@ func (rcc *RevenueCodeCreate) check() error {
 	}
 	if _, ok := rcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "RevenueCode.updated_at"`)}
+	}
+	if _, ok := rcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "RevenueCode.version"`)}
 	}
 	if _, ok := rcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "RevenueCode.status"`)}
@@ -303,6 +324,10 @@ func (rcc *RevenueCodeCreate) createSpec() (*RevenueCode, *sqlgraph.CreateSpec) 
 	if value, ok := rcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(revenuecode.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := rcc.mutation.Version(); ok {
+		_spec.SetField(revenuecode.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := rcc.mutation.Status(); ok {
 		_spec.SetField(revenuecode.FieldStatus, field.TypeEnum, value)

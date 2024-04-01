@@ -35,6 +35,27 @@ func (stu *ShipmentTypeUpdate) SetUpdatedAt(t time.Time) *ShipmentTypeUpdate {
 	return stu
 }
 
+// SetVersion sets the "version" field.
+func (stu *ShipmentTypeUpdate) SetVersion(i int) *ShipmentTypeUpdate {
+	stu.mutation.ResetVersion()
+	stu.mutation.SetVersion(i)
+	return stu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (stu *ShipmentTypeUpdate) SetNillableVersion(i *int) *ShipmentTypeUpdate {
+	if i != nil {
+		stu.SetVersion(*i)
+	}
+	return stu
+}
+
+// AddVersion adds i to the "version" field.
+func (stu *ShipmentTypeUpdate) AddVersion(i int) *ShipmentTypeUpdate {
+	stu.mutation.AddVersion(i)
+	return stu
+}
+
 // SetStatus sets the "status" field.
 func (stu *ShipmentTypeUpdate) SetStatus(s shipmenttype.Status) *ShipmentTypeUpdate {
 	stu.mutation.SetStatus(s)
@@ -166,6 +187,12 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := stu.mutation.UpdatedAt(); ok {
 		_spec.SetField(shipmenttype.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := stu.mutation.Version(); ok {
+		_spec.SetField(shipmenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := stu.mutation.AddedVersion(); ok {
+		_spec.AddField(shipmenttype.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := stu.mutation.Status(); ok {
 		_spec.SetField(shipmenttype.FieldStatus, field.TypeEnum, value)
 	}
@@ -203,6 +230,27 @@ type ShipmentTypeUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (stuo *ShipmentTypeUpdateOne) SetUpdatedAt(t time.Time) *ShipmentTypeUpdateOne {
 	stuo.mutation.SetUpdatedAt(t)
+	return stuo
+}
+
+// SetVersion sets the "version" field.
+func (stuo *ShipmentTypeUpdateOne) SetVersion(i int) *ShipmentTypeUpdateOne {
+	stuo.mutation.ResetVersion()
+	stuo.mutation.SetVersion(i)
+	return stuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (stuo *ShipmentTypeUpdateOne) SetNillableVersion(i *int) *ShipmentTypeUpdateOne {
+	if i != nil {
+		stuo.SetVersion(*i)
+	}
+	return stuo
+}
+
+// AddVersion adds i to the "version" field.
+func (stuo *ShipmentTypeUpdateOne) AddVersion(i int) *ShipmentTypeUpdateOne {
+	stuo.mutation.AddVersion(i)
 	return stuo
 }
 
@@ -366,6 +414,12 @@ func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 	}
 	if value, ok := stuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(shipmenttype.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := stuo.mutation.Version(); ok {
+		_spec.SetField(shipmenttype.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := stuo.mutation.AddedVersion(); ok {
+		_spec.AddField(shipmenttype.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := stuo.mutation.Status(); ok {
 		_spec.SetField(shipmenttype.FieldStatus, field.TypeEnum, value)

@@ -25,6 +25,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
@@ -70,6 +72,7 @@ var Columns = []string{
 	FieldOrganizationID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldVersion,
 	FieldName,
 	FieldEmail,
 	FieldProtocol,
@@ -103,6 +106,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion int
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
@@ -163,6 +168,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

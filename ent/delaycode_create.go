@@ -63,6 +63,20 @@ func (dcc *DelayCodeCreate) SetNillableUpdatedAt(t *time.Time) *DelayCodeCreate 
 	return dcc
 }
 
+// SetVersion sets the "version" field.
+func (dcc *DelayCodeCreate) SetVersion(i int) *DelayCodeCreate {
+	dcc.mutation.SetVersion(i)
+	return dcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcc *DelayCodeCreate) SetNillableVersion(i *int) *DelayCodeCreate {
+	if i != nil {
+		dcc.SetVersion(*i)
+	}
+	return dcc
+}
+
 // SetStatus sets the "status" field.
 func (dcc *DelayCodeCreate) SetStatus(d delaycode.Status) *DelayCodeCreate {
 	dcc.mutation.SetStatus(d)
@@ -178,6 +192,10 @@ func (dcc *DelayCodeCreate) defaults() {
 		v := delaycode.DefaultUpdatedAt()
 		dcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dcc.mutation.Version(); !ok {
+		v := delaycode.DefaultVersion
+		dcc.mutation.SetVersion(v)
+	}
 	if _, ok := dcc.mutation.Status(); !ok {
 		v := delaycode.DefaultStatus
 		dcc.mutation.SetStatus(v)
@@ -201,6 +219,9 @@ func (dcc *DelayCodeCreate) check() error {
 	}
 	if _, ok := dcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "DelayCode.updated_at"`)}
+	}
+	if _, ok := dcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "DelayCode.version"`)}
 	}
 	if _, ok := dcc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "DelayCode.status"`)}
@@ -266,6 +287,10 @@ func (dcc *DelayCodeCreate) createSpec() (*DelayCode, *sqlgraph.CreateSpec) {
 	if value, ok := dcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(delaycode.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := dcc.mutation.Version(); ok {
+		_spec.SetField(delaycode.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := dcc.mutation.Status(); ok {
 		_spec.SetField(delaycode.FieldStatus, field.TypeEnum, value)

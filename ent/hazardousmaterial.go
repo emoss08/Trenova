@@ -28,6 +28,8 @@ type HazardousMaterial struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status hazardousmaterial.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
@@ -86,6 +88,8 @@ func (*HazardousMaterial) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case hazardousmaterial.FieldVersion:
+			values[i] = new(sql.NullInt64)
 		case hazardousmaterial.FieldStatus, hazardousmaterial.FieldName, hazardousmaterial.FieldHazardClass, hazardousmaterial.FieldErgNumber, hazardousmaterial.FieldDescription, hazardousmaterial.FieldPackingGroup, hazardousmaterial.FieldProperShippingName:
 			values[i] = new(sql.NullString)
 		case hazardousmaterial.FieldCreatedAt, hazardousmaterial.FieldUpdatedAt:
@@ -136,6 +140,12 @@ func (hm *HazardousMaterial) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				hm.UpdatedAt = value.Time
+			}
+		case hazardousmaterial.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				hm.Version = int(value.Int64)
 			}
 		case hazardousmaterial.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -236,6 +246,9 @@ func (hm *HazardousMaterial) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(hm.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", hm.Version))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", hm.Status))

@@ -48,7 +48,7 @@ func GetDocumentClassifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	documentClassifications, count, err := services.NewDocumentClassificationOps(r.Context()).GetDocumentClassification(limit, offset, orgID, buID)
+	documentClassifications, count, err := services.NewDocumentClassificationOps().GetDocumentClassification(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateDocumentClassification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createDocumentClassification, err := services.NewDocumentClassificationOps(r.Context()).CreateDocumentClassification(newDocClass)
+	createDocumentClassification, err := services.NewDocumentClassificationOps().CreateDocumentClassification(r.Context(), newDocClass)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateDocumentClassification(w http.ResponseWriter, r *http.Request) {
 
 	docClassData.ID = uuid.MustParse(docClassID)
 
-	documentClassification, err := services.NewDocumentClassificationOps(r.Context()).UpdateDocumentClassification(docClassData)
+	documentClassification, err := services.NewDocumentClassificationOps().UpdateDocumentClassification(r.Context(), docClassData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

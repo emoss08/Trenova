@@ -48,7 +48,7 @@ func GetTractors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tractors, count, err := services.NewTractorOps(r.Context()).GetTractors(limit, offset, orgID, buID)
+	tractors, count, err := services.NewTractorOps().GetTractors(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateTractor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newRecord, err := services.NewTractorOps(r.Context()).CreateTractor(newTractor)
+	newRecord, err := services.NewTractorOps().CreateTractor(r.Context(), newTractor)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateTractor(w http.ResponseWriter, r *http.Request) {
 
 	tractorData.ID = uuid.MustParse(tractorID)
 
-	tractor, err := services.NewTractorOps(r.Context()).UpdateTractor(tractorData)
+	tractor, err := services.NewTractorOps().UpdateTractor(r.Context(), tractorData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

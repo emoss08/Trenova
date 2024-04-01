@@ -47,8 +47,7 @@ func GetLocationCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	locationCategories, count, err := services.NewLocationCategoryOps(r.Context()).
-		GetLocationCategories(limit, offset, orgID, buID)
+	locationCategories, count, err := services.NewLocationCategoryOps().GetLocationCategories(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,8 +95,7 @@ func CreateLocationCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createLocationCategory, err := services.NewLocationCategoryOps(r.Context()).
-		CreateLocationCategory(newLocationCategory)
+	createLocationCategory, err := services.NewLocationCategoryOps().CreateLocationCategory(r.Context(), newLocationCategory)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -123,8 +121,7 @@ func UpdateLocationCategory(w http.ResponseWriter, r *http.Request) {
 
 	locationCategoryData.ID = uuid.MustParse(locationCategoryID)
 
-	locationCategory, err := services.NewLocationCategoryOps(r.Context()).
-		UpdateLocationCategory(locationCategoryData)
+	locationCategory, err := services.NewLocationCategoryOps().UpdateLocationCategory(r.Context(), locationCategoryData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

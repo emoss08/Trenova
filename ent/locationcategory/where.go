@@ -76,6 +76,11 @@ func UpdatedAt(v time.Time) predicate.LocationCategory {
 	return predicate.LocationCategory(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldEQ(FieldVersion, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.LocationCategory {
 	return predicate.LocationCategory(sql.FieldEQ(FieldName, v))
@@ -209,6 +214,46 @@ func UpdatedAtLT(v time.Time) predicate.LocationCategory {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.LocationCategory {
 	return predicate.LocationCategory(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int) predicate.LocationCategory {
+	return predicate.LocationCategory(sql.FieldLTE(FieldVersion, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

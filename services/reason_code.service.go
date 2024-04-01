@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/reasoncode"
+	"github.com/emoss08/trenova/tools"
+	"github.com/emoss08/trenova/tools/logger"
+	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/emoss08/trenova/database"
 	"github.com/emoss08/trenova/ent"
@@ -12,32 +16,34 @@ import (
 )
 
 type ReasonCodeOps struct {
-	ctx    context.Context
 	client *ent.Client
+	logger *logrus.Logger
 }
 
 // NewReasonCodeOps creates a new reason code service.
-func NewReasonCodeOps(ctx context.Context) *ReasonCodeOps {
+func NewReasonCodeOps() *ReasonCodeOps {
 	return &ReasonCodeOps{
-		ctx:    ctx,
 		client: database.GetClient(),
+		logger: logger.GetLogger(),
 	}
 }
 
 // GetReasonCode gets the reason code for an organization.
-func (r *ReasonCodeOps) GetReasonCode(limit, offset int, orgID, buID uuid.UUID) ([]*ent.ReasonCode, int, error) {
-	reasonCodeCount, countErr := r.client.ReasonCode.Query().Where(
+func (r *ReasonCodeOps) GetReasonCode(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.ReasonCode, int, error) {
+	entityCount, countErr := r.client.ReasonCode.Query().Where(
 		reasoncode.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Count(r.ctx)
+	).Count(ctx)
 
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	reasonCodes, err := r.client.ReasonCode.Query().
+	entities, err := r.client.ReasonCode.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -45,45 +51,124 @@ func (r *ReasonCodeOps) GetReasonCode(limit, offset int, orgID, buID uuid.UUID) 
 				organization.IDEQ(orgID),
 				organization.BusinessUnitIDEQ(buID),
 			),
-		).All(r.ctx)
+		).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return reasonCodes, reasonCodeCount, nil
+	return entities, entityCount, nil
 }
 
 // CreateReasonCode creates a new reason code.
-func (r *ReasonCodeOps) CreateReasonCode(newReasonCode ent.ReasonCode) (*ent.ReasonCode, error) {
-	reasonCode, err := r.client.ReasonCode.Create().
-		SetOrganizationID(newReasonCode.OrganizationID).
-		SetBusinessUnitID(newReasonCode.BusinessUnitID).
-		SetStatus(newReasonCode.Status).
-		SetCode(newReasonCode.Code).
-		SetCodeType(newReasonCode.CodeType).
-		SetDescription(newReasonCode.Description).
-		Save(r.ctx)
+func (r *ReasonCodeOps) CreateReasonCode(
+	ctx context.Context, newEntity ent.ReasonCode,
+) (*ent.ReasonCode, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	createdEntity, err := tx.ReasonCode.Create().
+		SetOrganizationID(newEntity.OrganizationID).
+		SetBusinessUnitID(newEntity.BusinessUnitID).
+		SetStatus(newEntity.Status).
+		SetCode(newEntity.Code).
+		SetCodeType(newEntity.CodeType).
+		SetDescription(newEntity.Description).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return reasonCode, nil
+	return createdEntity, nil
 }
 
 // UpdateReasonCode updates a reason code.
-func (r *ReasonCodeOps) UpdateReasonCode(reasonCode ent.ReasonCode) (*ent.ReasonCode, error) {
-	// Start building the update operation
-	updateOp := r.client.ReasonCode.UpdateOneID(reasonCode.ID).
-		SetStatus(reasonCode.Status).
-		SetCode(reasonCode.Code).
-		SetCodeType(reasonCode.CodeType).
-		SetDescription(reasonCode.Description)
-
-	// Execute the update operation
-	updateReasonCode, err := updateOp.Save(r.ctx)
+func (r *ReasonCodeOps) UpdateReasonCode(
+	ctx context.Context, entity ent.ReasonCode,
+) (*ent.ReasonCode, error) {
+	// Begin a new transaction
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
-		return nil, err
+		wrappedErr := eris.Wrap(err, "failed to start transaction")
+		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		return nil, wrappedErr
 	}
 
-	return updateReasonCode, nil
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+			panic(v)
+		}
+		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+			}
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				wrappedErr := eris.Wrap(err, "failed to commit transaction")
+				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+			}
+		}
+	}()
+
+	current, err := tx.ReasonCode.Get(ctx, entity.ID) // Get the current entity.
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
+		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		return nil, wrappedErr
+	}
+
+	// Check if the version matches.
+	if current.Version != entity.Version {
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
+	}
+
+	// Start building the update operation
+	updateOp := tx.ReasonCode.UpdateOneID(entity.ID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetCodeType(entity.CodeType).
+		SetDescription(entity.Description).
+		SetVersion(entity.Version + 1) // Increment the version
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }

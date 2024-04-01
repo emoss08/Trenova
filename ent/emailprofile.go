@@ -17,7 +17,7 @@ import (
 
 // EmailProfile is the model entity for the EmailProfile schema.
 type EmailProfile struct {
-	config `json:"-"`
+	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// BusinessUnitID holds the value of the "business_unit_id" field.
@@ -28,6 +28,8 @@ type EmailProfile struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
@@ -41,7 +43,7 @@ type EmailProfile struct {
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Password holds the value of the "password" field.
-	Password string `json:"-"`
+	Password string `json:"-" validate:"-"`
 	// IsDefault holds the value of the "is_default" field.
 	IsDefault bool `json:"isDefault"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -90,7 +92,7 @@ func (*EmailProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case emailprofile.FieldIsDefault:
 			values[i] = new(sql.NullBool)
-		case emailprofile.FieldPort:
+		case emailprofile.FieldVersion, emailprofile.FieldPort:
 			values[i] = new(sql.NullInt64)
 		case emailprofile.FieldName, emailprofile.FieldEmail, emailprofile.FieldProtocol, emailprofile.FieldHost, emailprofile.FieldUsername, emailprofile.FieldPassword:
 			values[i] = new(sql.NullString)
@@ -142,6 +144,12 @@ func (ep *EmailProfile) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ep.UpdatedAt = value.Time
+			}
+		case emailprofile.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				ep.Version = int(value.Int64)
 			}
 		case emailprofile.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -248,6 +256,9 @@ func (ep *EmailProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ep.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", ep.Version))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(ep.Name)

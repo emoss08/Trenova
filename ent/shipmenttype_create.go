@@ -63,6 +63,20 @@ func (stc *ShipmentTypeCreate) SetNillableUpdatedAt(t *time.Time) *ShipmentTypeC
 	return stc
 }
 
+// SetVersion sets the "version" field.
+func (stc *ShipmentTypeCreate) SetVersion(i int) *ShipmentTypeCreate {
+	stc.mutation.SetVersion(i)
+	return stc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (stc *ShipmentTypeCreate) SetNillableVersion(i *int) *ShipmentTypeCreate {
+	if i != nil {
+		stc.SetVersion(*i)
+	}
+	return stc
+}
+
 // SetStatus sets the "status" field.
 func (stc *ShipmentTypeCreate) SetStatus(s shipmenttype.Status) *ShipmentTypeCreate {
 	stc.mutation.SetStatus(s)
@@ -164,6 +178,10 @@ func (stc *ShipmentTypeCreate) defaults() {
 		v := shipmenttype.DefaultUpdatedAt()
 		stc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := stc.mutation.Version(); !ok {
+		v := shipmenttype.DefaultVersion
+		stc.mutation.SetVersion(v)
+	}
 	if _, ok := stc.mutation.Status(); !ok {
 		v := shipmenttype.DefaultStatus
 		stc.mutation.SetStatus(v)
@@ -187,6 +205,9 @@ func (stc *ShipmentTypeCreate) check() error {
 	}
 	if _, ok := stc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ShipmentType.updated_at"`)}
+	}
+	if _, ok := stc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "ShipmentType.version"`)}
 	}
 	if _, ok := stc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "ShipmentType.status"`)}
@@ -252,6 +273,10 @@ func (stc *ShipmentTypeCreate) createSpec() (*ShipmentType, *sqlgraph.CreateSpec
 	if value, ok := stc.mutation.UpdatedAt(); ok {
 		_spec.SetField(shipmenttype.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := stc.mutation.Version(); ok {
+		_spec.SetField(shipmenttype.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := stc.mutation.Status(); ok {
 		_spec.SetField(shipmenttype.FieldStatus, field.TypeEnum, value)

@@ -48,7 +48,7 @@ func GetCommodities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commodities, count, err := services.NewCommodityOps(r.Context()).GetCommodities(limit, offset, orgID, buID)
+	commodities, count, err := services.NewCommodityOps().GetCommodities(r.Context(), limit, offset, orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -96,7 +96,7 @@ func CreateCommodity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createCommodity, err := services.NewCommodityOps(r.Context()).CreateCommodity(newCommodity)
+	createCommodity, err := services.NewCommodityOps().CreateCommodity(r.Context(), newCommodity)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -122,7 +122,7 @@ func UpdateCommodity(w http.ResponseWriter, r *http.Request) {
 
 	commodityData.ID = uuid.MustParse(commodityID)
 
-	commodity, err := services.NewCommodityOps(r.Context()).UpdateCommodity(commodityData)
+	commodity, err := services.NewCommodityOps().UpdateCommodity(r.Context(), commodityData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)

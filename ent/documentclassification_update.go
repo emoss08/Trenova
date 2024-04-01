@@ -35,6 +35,27 @@ func (dcu *DocumentClassificationUpdate) SetUpdatedAt(t time.Time) *DocumentClas
 	return dcu
 }
 
+// SetVersion sets the "version" field.
+func (dcu *DocumentClassificationUpdate) SetVersion(i int) *DocumentClassificationUpdate {
+	dcu.mutation.ResetVersion()
+	dcu.mutation.SetVersion(i)
+	return dcu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcu *DocumentClassificationUpdate) SetNillableVersion(i *int) *DocumentClassificationUpdate {
+	if i != nil {
+		dcu.SetVersion(*i)
+	}
+	return dcu
+}
+
+// AddVersion adds i to the "version" field.
+func (dcu *DocumentClassificationUpdate) AddVersion(i int) *DocumentClassificationUpdate {
+	dcu.mutation.AddVersion(i)
+	return dcu
+}
+
 // SetStatus sets the "status" field.
 func (dcu *DocumentClassificationUpdate) SetStatus(d documentclassification.Status) *DocumentClassificationUpdate {
 	dcu.mutation.SetStatus(d)
@@ -166,6 +187,12 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 	if value, ok := dcu.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := dcu.mutation.Version(); ok {
+		_spec.SetField(documentclassification.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcu.mutation.AddedVersion(); ok {
+		_spec.AddField(documentclassification.FieldVersion, field.TypeInt, value)
+	}
 	if value, ok := dcu.mutation.Status(); ok {
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
 	}
@@ -203,6 +230,27 @@ type DocumentClassificationUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (dcuo *DocumentClassificationUpdateOne) SetUpdatedAt(t time.Time) *DocumentClassificationUpdateOne {
 	dcuo.mutation.SetUpdatedAt(t)
+	return dcuo
+}
+
+// SetVersion sets the "version" field.
+func (dcuo *DocumentClassificationUpdateOne) SetVersion(i int) *DocumentClassificationUpdateOne {
+	dcuo.mutation.ResetVersion()
+	dcuo.mutation.SetVersion(i)
+	return dcuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (dcuo *DocumentClassificationUpdateOne) SetNillableVersion(i *int) *DocumentClassificationUpdateOne {
+	if i != nil {
+		dcuo.SetVersion(*i)
+	}
+	return dcuo
+}
+
+// AddVersion adds i to the "version" field.
+func (dcuo *DocumentClassificationUpdateOne) AddVersion(i int) *DocumentClassificationUpdateOne {
+	dcuo.mutation.AddVersion(i)
 	return dcuo
 }
 
@@ -366,6 +414,12 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 	}
 	if value, ok := dcuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentclassification.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := dcuo.mutation.Version(); ok {
+		_spec.SetField(documentclassification.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := dcuo.mutation.AddedVersion(); ok {
+		_spec.AddField(documentclassification.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := dcuo.mutation.Status(); ok {
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)

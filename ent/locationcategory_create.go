@@ -63,6 +63,20 @@ func (lcc *LocationCategoryCreate) SetNillableUpdatedAt(t *time.Time) *LocationC
 	return lcc
 }
 
+// SetVersion sets the "version" field.
+func (lcc *LocationCategoryCreate) SetVersion(i int) *LocationCategoryCreate {
+	lcc.mutation.SetVersion(i)
+	return lcc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (lcc *LocationCategoryCreate) SetNillableVersion(i *int) *LocationCategoryCreate {
+	if i != nil {
+		lcc.SetVersion(*i)
+	}
+	return lcc
+}
+
 // SetName sets the "name" field.
 func (lcc *LocationCategoryCreate) SetName(s string) *LocationCategoryCreate {
 	lcc.mutation.SetName(s)
@@ -164,6 +178,10 @@ func (lcc *LocationCategoryCreate) defaults() {
 		v := locationcategory.DefaultUpdatedAt()
 		lcc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := lcc.mutation.Version(); !ok {
+		v := locationcategory.DefaultVersion
+		lcc.mutation.SetVersion(v)
+	}
 	if _, ok := lcc.mutation.ID(); !ok {
 		v := locationcategory.DefaultID()
 		lcc.mutation.SetID(v)
@@ -183,6 +201,9 @@ func (lcc *LocationCategoryCreate) check() error {
 	}
 	if _, ok := lcc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "LocationCategory.updated_at"`)}
+	}
+	if _, ok := lcc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "LocationCategory.version"`)}
 	}
 	if _, ok := lcc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "LocationCategory.name"`)}
@@ -240,6 +261,10 @@ func (lcc *LocationCategoryCreate) createSpec() (*LocationCategory, *sqlgraph.Cr
 	if value, ok := lcc.mutation.UpdatedAt(); ok {
 		_spec.SetField(locationcategory.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := lcc.mutation.Version(); ok {
+		_spec.SetField(locationcategory.FieldVersion, field.TypeInt, value)
+		_node.Version = value
 	}
 	if value, ok := lcc.mutation.Name(); ok {
 		_spec.SetField(locationcategory.FieldName, field.TypeString, value)
