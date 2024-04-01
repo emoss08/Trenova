@@ -30,8 +30,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
-import { EquipmentManufacturerFormValues as FormValues } from "@/types/equipment";
-import { TableSheetProps } from "@/types/tables";
+import { type EquipmentManufacturerFormValues as FormValues } from "@/types/equipment";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

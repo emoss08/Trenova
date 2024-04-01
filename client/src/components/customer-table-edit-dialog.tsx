@@ -29,8 +29,11 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { Customer, CustomerFormValues as FormValues } from "@/types/customer";
-import { TableSheetProps } from "@/types/tables";
+import {
+  CustomerFormValues as FormValues,
+  type Customer,
+} from "@/types/customer";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";

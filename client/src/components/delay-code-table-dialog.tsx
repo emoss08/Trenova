@@ -31,8 +31,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
-import { DelayCodeFormValues } from "@/types/dispatch";
-import { TableSheetProps } from "@/types/tables";
+import { type DelayCodeFormValues } from "@/types/dispatch";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

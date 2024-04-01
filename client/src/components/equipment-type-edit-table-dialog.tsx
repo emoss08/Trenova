@@ -29,15 +29,15 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   EquipmentType,
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { EquipTypeForm } from "./equip-type-table-dialog";
+import { EquipTypeForm } from "./equipment-type-table-dialog";
 
 function EquipTypeEditForm({
   equipType,

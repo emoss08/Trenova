@@ -30,7 +30,7 @@ import {
 import { cn, truncateText } from "@/lib/utils";
 import { useCustomerFormStore } from "@/stores/CustomerStore";
 import { useTableStore } from "@/stores/TableStore";
-import { Customer } from "@/types/customer";
+import { type Customer } from "@/types/customer";
 import {
   faPerson,
   faRoadCircleXmark,

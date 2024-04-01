@@ -25,8 +25,8 @@ import {
 import { BoolStatusBadge } from "@/components/common/table/data-table-components";
 import { EmailProfileDialog } from "@/components/email-profile-table-dialog";
 import { EmailProfileTableEditDialog } from "@/components/email-profile-table-edit-dialog";
-import { EmailProfile } from "@/types/organization";
-import { ColumnDef } from "@tanstack/react-table";
+import { type EmailProfile } from "@/types/organization";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<EmailProfile>[] = [
   {

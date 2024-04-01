@@ -110,14 +110,14 @@ function NotificationButton({
             size="icon"
             variant="outline"
             aria-expanded={open}
-            className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative size-8"
           >
             <FontAwesomeIcon icon={faBell} className="size-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
-                <span className="relative inline-flex size-2.5 rounded-full bg-green-600 ring-1 ring-background"></span>
+                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-green-600 ring-1"></span>
               </span>
             )}
           </Button>
@@ -144,16 +144,16 @@ function NotificationContent({
   return (
     <>
       {notificationsLoading ? (
-        <div className="flex flex-col space-y-2 border-b border-accent px-4 py-2">
+        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">
               <Skeleton className="h-4 w-20" />
             </h4>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               <Skeleton className="h-4 w-20" />
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             <Skeleton className="h-4 w-20" />
           </p>
         </div>
@@ -331,7 +331,7 @@ export function NotificationMenu() {
         </span>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 bg-popover p-3"
+        className="bg-popover w-80 p-3"
         sideOffset={10}
         alignOffset={-40}
         align="end"

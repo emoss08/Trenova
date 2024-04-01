@@ -30,8 +30,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
-import { ChargeTypeFormValues as FormValues } from "@/types/billing";
-import { TableSheetProps } from "@/types/tables";
+import { type ChargeTypeFormValues as FormValues } from "@/types/billing";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

@@ -28,9 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { locationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
-import { LocationCategoryFormValues as FormValues } from "@/types/location";
-import { TableSheetProps } from "@/types/tables";
+import { LocationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
+import { type LocationCategoryFormValues as FormValues } from "@/types/location";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

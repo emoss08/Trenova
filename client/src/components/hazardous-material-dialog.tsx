@@ -33,8 +33,8 @@ import {
   statusChoices,
 } from "@/lib/choices";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
-import { HazardousMaterialFormValues as FormValues } from "@/types/commodities";
-import { TableSheetProps } from "@/types/tables";
+import { type HazardousMaterialFormValues as FormValues } from "@/types/commodities";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

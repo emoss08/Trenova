@@ -23,7 +23,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useRouteControl } from "@/hooks/useQueries";
 import { distanceMethodChoices, routeDistanceUnitChoices } from "@/lib/choices";
 import { routeControlSchema } from "@/lib/validations/RouteSchema";
-import {
+import type {
   RouteControlFormValues,
   RouteControl as RouteControlType,
 } from "@/types/route";

@@ -26,7 +26,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGoogleAPI } from "@/hooks/useQueries";
 import { routeDistanceUnitChoices, routeModelChoices } from "@/lib/choices";
 import { googleAPISchema } from "@/lib/validations/OrganizationSchema";
-import {
+import type {
   GoogleAPIFormValues,
   GoogleAPI as GoogleAPIType,
 } from "@/types/organization";

@@ -18,8 +18,8 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 
 type ErrorBoundaryState = {
-  hasError: boolean;
   error?: Error;
+  hasError: boolean;
   errorInfo?: ErrorInfo;
 };
 

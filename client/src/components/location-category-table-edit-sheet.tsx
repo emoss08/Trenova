@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
-import { locationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
+import { LocationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   LocationCategoryFormValues as FormValues,
   LocationCategory,
 } from "@/types/location";

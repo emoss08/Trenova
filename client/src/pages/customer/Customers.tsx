@@ -14,37 +14,29 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { Checkbox } from "@/components/common/fields/checkbox";
+
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ServiceTypeEditDialog } from "@/components/service-type-edit-table-dialog";
-import { ServiceTypeDialog } from "@/components/service-type-table-dialog";
-import { tableStatusChoices } from "@/lib/choices";
-import { truncateText } from "@/lib/utils";
-import { ServiceType } from "@/types/shipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
+import { CustomerTableSheet } from "@/components/customer-table-dialog";
+import { CustomerTableEditSheet } from "@/components/customer-table-edit-dialog";
+import { CustomerTableSub } from "@/components/customer-table-sub";
+import { type Customer } from "@/types/customer";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 
-const columns: ColumnDef<ServiceType>[] = [
+const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
+  return <CustomerTableSub row={row} />;
+};
+
+const columns: ColumnDef<Customer>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        className="translate-y-[2px]"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="translate-y-[2px]"
-      />
-    ),
+    id: "expander",
+    footer: (props) => props.column.id,
+    header: () => null,
+    cell: ({ row }) => {
+      return <DataTableColumnExpand row={row} />;
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -68,33 +60,45 @@ const columns: ColumnDef<ServiceType>[] = [
     },
   },
   {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 30),
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
   },
-];
-
-const filters: FilterConfig<ServiceType>[] = [
   {
-    columnName: "status",
-    title: "Status",
-    options: tableStatusChoices,
+    accessorKey: "totalShipments",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Total Shipments" />
+    ),
+  },
+  {
+    accessorKey: "lastShipDate",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Last Ship Date" />
+    ),
+  },
+  {
+    accessorKey: "lastBillDate",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Last Bill Date" />
+    ),
   },
 ];
 
-export default function ServiceTypes() {
+export default function Customers() {
   return (
     <DataTable
-      queryKey="service-type-table-data"
+      queryKey="customers-table-data"
       columns={columns}
-      link="/service-types/"
-      name="Service Types"
-      exportModelName="ServiceType"
+      link="/customers/"
+      name="Customers"
+      exportModelName="Customer"
       filterColumn="code"
-      tableFacetedFilters={filters}
-      TableSheet={ServiceTypeDialog}
-      TableEditSheet={ServiceTypeEditDialog}
-      addPermissionName="add_servicetype"
+      renderSubComponent={renderSubComponent}
+      getRowCanExpand={() => true}
+      TableSheet={CustomerTableSheet}
+      TableEditSheet={CustomerTableEditSheet}
+      addPermissionName="add_customer"
     />
   );
 }

@@ -29,9 +29,9 @@ import {
 } from "@/components/ui/tooltip";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText, upperFirst } from "@/lib/utils";
-import { Location } from "@/types/location";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef, Row } from "@tanstack/react-table";
+import { type Location } from "@/types/location";
+import { type FilterConfig } from "@/types/tables";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { Suspense, lazy } from "react";
 
 const LocationChart = lazy(

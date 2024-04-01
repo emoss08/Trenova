@@ -29,8 +29,11 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { GLAccountFormValues, GeneralLedgerAccount } from "@/types/accounting";
-import { TableSheetProps } from "@/types/tables";
+import type {
+  GLAccountFormValues,
+  GeneralLedgerAccount,
+} from "@/types/accounting";
+import type { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

@@ -19,15 +19,15 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { HazardousMaterialDialog } from "@/components/hazardous-material-dialog";
-import { HazardousMaterialEditDialog } from "@/components/hazardous-material-edit-dialog";
+import { ShipmentTypeDialog } from "@/components/shipment-type-table-dialog";
+import { ShipmentTypeEditDialog } from "@/components/shipment-type-table-edit-dialog";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
-import { HazardousMaterial } from "@/types/commodities";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ShipmentType } from "@/types/shipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<HazardousMaterial>[] = [
+const columns: ColumnDef<ShipmentType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -60,9 +60,9 @@ const columns: ColumnDef<HazardousMaterial>[] = [
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -71,15 +71,11 @@ const columns: ColumnDef<HazardousMaterial>[] = [
   {
     accessorKey: "description",
     header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 25),
-  },
-  {
-    accessorKey: "packingGroup",
-    header: "Packing Group",
+    cell: ({ row }) => truncateText(row.original.description as string, 30),
   },
 ];
 
-const filters: FilterConfig<HazardousMaterial>[] = [
+const filters: FilterConfig<ShipmentType>[] = [
   {
     columnName: "status",
     title: "Status",
@@ -87,19 +83,19 @@ const filters: FilterConfig<HazardousMaterial>[] = [
   },
 ];
 
-export default function HazardousMaterials() {
+export default function ServiceTypes() {
   return (
     <DataTable
-      queryKey="hazardous-material-table-data"
+      addPermissionName="add_shipmenttype"
+      queryKey="shipment-type-table-data"
       columns={columns}
-      link="/hazardous-materials/"
-      name="Hazardous Material"
-      exportModelName="HazardousMaterial"
-      filterColumn="name"
+      link="/shipment-types/"
+      name="Shipment Types"
+      exportModelName="ShipmentType"
+      filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={HazardousMaterialDialog}
-      TableEditSheet={HazardousMaterialEditDialog}
-      addPermissionName="add_hazardousmaterial"
+      TableSheet={ShipmentTypeDialog}
+      TableEditSheet={ShipmentTypeEditDialog}
     />
   );
 }

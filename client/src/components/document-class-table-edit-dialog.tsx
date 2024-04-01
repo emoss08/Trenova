@@ -19,11 +19,11 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { documentClassSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   DocumentClassification,
   DocumentClassificationFormValues as FormValues,
 } from "@/types/billing";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

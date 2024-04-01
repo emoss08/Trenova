@@ -35,8 +35,8 @@ import {
   yesAndNoBooleanChoices,
 } from "@/lib/choices";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
-import { CommodityFormValues as FormValues } from "@/types/commodities";
-import { TableSheetProps } from "@/types/tables";
+import { type CommodityFormValues as FormValues } from "@/types/commodities";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React, { useEffect } from "react";
 import { Control, useForm } from "react-hook-form";

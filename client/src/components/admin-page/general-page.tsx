@@ -22,7 +22,10 @@ import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { timezoneChoices } from "@/lib/choices";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
-import { Organization, OrganizationFormValues } from "@/types/organization";
+import type {
+  Organization,
+  OrganizationFormValues,
+} from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

@@ -29,11 +29,11 @@ import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   TableChangeAlert,
   TableChangeAlertFormValues,
 } from "@/types/organization";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";

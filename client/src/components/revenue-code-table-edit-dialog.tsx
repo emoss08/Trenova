@@ -29,7 +29,7 @@ import { useGLAccounts } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   RevenueCodeFormValues as FormValues,
   RevenueCode,
 } from "@/types/accounting";

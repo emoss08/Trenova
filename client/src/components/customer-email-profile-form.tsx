@@ -16,7 +16,7 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
-import { CustomerFormValues as FormValues } from "@/types/customer";
+import { type CustomerFormValues as FormValues } from "@/types/customer";
 import { useFormContext } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
 

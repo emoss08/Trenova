@@ -29,8 +29,11 @@ import { formatDate } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { TrailerFormValues as FormValues, Trailer } from "@/types/equipment";
-import { TableSheetProps } from "@/types/tables";
+import type {
+  TrailerFormValues as FormValues,
+  Trailer,
+} from "@/types/equipment";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

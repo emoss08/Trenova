@@ -28,7 +28,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
+import type { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

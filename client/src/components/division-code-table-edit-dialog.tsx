@@ -29,11 +29,11 @@ import { useGLAccounts } from "@/hooks/useQueries";
 import { formatDate } from "@/lib/date";
 import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   DivisionCode,
   DivisionCodeFormValues as FormValues,
 } from "@/types/accounting";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

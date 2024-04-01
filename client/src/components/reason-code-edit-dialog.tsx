@@ -28,11 +28,11 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   ReasonCodeFormValues as FormValues,
   ReasonCode,
 } from "@/types/shipment";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

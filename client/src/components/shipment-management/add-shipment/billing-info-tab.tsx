@@ -26,7 +26,7 @@ const ChargeInformation = lazy(() => import("./cards/charge-info"));
 export default function BillingInfoTab() {
   return (
     <div className="grid grid-cols-1 gap-y-8">
-      <Suspense fallback={<Skeleton className="h-[100vh] w-full" />}>
+      <Suspense fallback={<Skeleton className="h-screen w-full" />}>
         <CustomerInformation />
         <ShipmentInformation />
         <RateCalcInformation />

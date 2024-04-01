@@ -15,11 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-
 import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,14 +25,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   CommentType,
   CommentTypeFormValues as FormValues,
 } from "@/types/dispatch";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);

@@ -23,8 +23,8 @@ import {
   useUSStates,
 } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
-import { LocationFormValues as FormValues } from "@/types/location";
-import { Control } from "react-hook-form";
+import { type LocationFormValues as FormValues } from "@/types/location";
+import { type Control } from "react-hook-form";
 import { TextareaField } from "../common/fields/textarea";
 
 export function LocationInfoForm({

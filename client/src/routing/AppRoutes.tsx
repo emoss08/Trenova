@@ -28,7 +28,9 @@ const LocationCategoryPage = lazy(
   () => import("../pages/dispatch/LocationCategories"),
 );
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
-const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
+const GLAccountsPage = lazy(
+  () => import("../pages/accounting/GeneralLedgerAccounts"),
+);
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const UserPreferencesPage = lazy(
   () => import("../pages/users/UserPreferences"),
@@ -74,9 +76,9 @@ const TableChangeAlertPage = lazy(
 const DataRetentionPage = lazy(() => import("../pages/admin/DataRetention"));
 
 // Commodity Pages
-const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
+const CommodityPage = lazy(() => import("../pages/commodities/Commodities"));
 const HazardousMaterialPage = lazy(
-  () => import("../pages/commodities/HazardousMaterial"),
+  () => import("../pages/commodities/HazardousMaterials"),
 );
 
 // Other Pages
@@ -85,27 +87,29 @@ const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges"),
 );
-const CustomerPage = lazy(() => import("../pages/customer/Customer"));
-const WorkerPage = lazy(() => import("../pages/worker/Worker"));
+const CustomerPage = lazy(() => import("../pages/customer/Customers"));
+const WorkerPage = lazy(() => import("../pages/worker/Workers"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
-const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCode"));
-const CommentTypePage = lazy(() => import("../pages/dispatch/CommentType"));
-const ShipmentManagementPage = lazy(() => import("../pages/shipment/Shipment"));
+const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCodes"));
+const CommentTypePage = lazy(() => import("../pages/dispatch/CommentTypes"));
+const ShipmentManagementPage = lazy(
+  () => import("../pages/shipment/Shipments"),
+);
 const EquipmentTypePage = lazy(
-  () => import("../pages/equipment/EquipmentType"),
+  () => import("../pages/equipment/EquipmentTypes"),
 );
 const EquipmentManufacturerPage = lazy(
-  () => import("../pages/equipment/EquipmentManufacturer"),
+  () => import("../pages/equipment/EquipmentManufacturers"),
 );
-const ServiceTypePage = lazy(() => import("../pages/shipment/ServiceType"));
-const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCode"));
-const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCode"));
-const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentType"));
-const LocationPage = lazy(() => import("../pages/dispatch/Location"));
-const TrailerPage = lazy(() => import("../pages/equipment/Trailer"));
-const TractorPage = lazy(() => import("../pages/equipment/Tractor"));
+const ServiceTypePage = lazy(() => import("../pages/shipment/ServiceTypes"));
+const QualifierCodePage = lazy(() => import("../pages/stop/QualifierCodes"));
+const ReasonCodePage = lazy(() => import("../pages/shipment/ReasonCodes"));
+const ShipmentTypePage = lazy(() => import("../pages/shipment/ShipmentTypes"));
+const LocationPage = lazy(() => import("../pages/dispatch/Locations"));
+const TrailerPage = lazy(() => import("../pages/equipment/Trailers"));
+const TractorPage = lazy(() => import("../pages/equipment/Tractors"));
 const DocumentClassPage = lazy(
-  () => import("../pages/billing/DocumentClassification"),
+  () => import("../pages/billing/DocumentClassifications"),
 );
 const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 

@@ -35,11 +35,11 @@ import {
 } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
-import { TableChangeAlertFormValues as FormValues } from "@/types/organization";
-import { TableSheetProps } from "@/types/tables";
+import { type TableChangeAlertFormValues as FormValues } from "@/types/organization";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { Control, UseFormWatch, useForm } from "react-hook-form";
+import { UseFormWatch, useForm, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { InputField } from "./common/fields/input";
 import { SelectInput } from "./common/fields/select-input";

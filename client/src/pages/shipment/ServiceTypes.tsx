@@ -14,20 +14,19 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ShipmentTypeDialog } from "@/components/ship-type-table-dialog";
-import { ShipmentTypeEditDialog } from "@/components/ship-type-table-edit-dialog";
+import { ServiceTypeEditDialog } from "@/components/service-type-edit-table-dialog";
+import { ServiceTypeDialog } from "@/components/service-type-table-dialog";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
-import { ShipmentType } from "@/types/shipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ServiceType } from "@/types/shipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<ShipmentType>[] = [
+const columns: ColumnDef<ServiceType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -75,7 +74,7 @@ const columns: ColumnDef<ShipmentType>[] = [
   },
 ];
 
-const filters: FilterConfig<ShipmentType>[] = [
+const filters: FilterConfig<ServiceType>[] = [
   {
     columnName: "status",
     title: "Status",
@@ -86,16 +85,16 @@ const filters: FilterConfig<ShipmentType>[] = [
 export default function ServiceTypes() {
   return (
     <DataTable
-      addPermissionName="add_shipmenttype"
-      queryKey="shipment-type-table-data"
+      queryKey="service-type-table-data"
       columns={columns}
-      link="/shipment-types/"
-      name="Shipment Types"
-      exportModelName="ShipmentType"
+      link="/service-types/"
+      name="Service Types"
+      exportModelName="ServiceType"
       filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={ShipmentTypeDialog}
-      TableEditSheet={ShipmentTypeEditDialog}
+      TableSheet={ServiceTypeDialog}
+      TableEditSheet={ServiceTypeEditDialog}
+      addPermissionName="add_servicetype"
     />
   );
 }

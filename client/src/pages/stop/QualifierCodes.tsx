@@ -14,19 +14,20 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { ReasonCodeEditDialog } from "@/components/reason-code-edit-dialog";
-import { ReasonCodeDialog } from "@/components/reason-code-table-dialog";
+import { QualifierCodeEditDialog } from "@/components/qualifier-code-edit-table-dialog";
+import { QualifierCodeDialog } from "@/components/qualifier-code-table-dialog";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
-import { ReasonCode } from "@/types/shipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type QualifierCode } from "@/types/stop";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<ReasonCode>[] = [
+const columns: ColumnDef<QualifierCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -58,6 +59,7 @@ const columns: ColumnDef<ReasonCode>[] = [
       return value.includes(row.getValue(id));
     },
   },
+
   {
     accessorKey: "code",
     header: ({ column }) => (
@@ -74,7 +76,7 @@ const columns: ColumnDef<ReasonCode>[] = [
   },
 ];
 
-const filters: FilterConfig<ReasonCode>[] = [
+const filters: FilterConfig<QualifierCode>[] = [
   {
     columnName: "status",
     title: "Status",
@@ -82,19 +84,19 @@ const filters: FilterConfig<ReasonCode>[] = [
   },
 ];
 
-export default function ReasonCodes() {
+export default function QualifierCodes() {
   return (
     <DataTable
-      queryKey="reason-code-table-data"
+      queryKey="qualifier-code-table-data"
       columns={columns}
-      link="/reason-codes/"
-      name="Reason Codes"
-      exportModelName="ReasonCode"
+      link="/qualifier-codes/"
+      name="Qualifier Codes"
+      exportModelName="QualifierCode"
       filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={ReasonCodeDialog}
-      TableEditSheet={ReasonCodeEditDialog}
-      addPermissionName="add_reasoncode"
+      TableSheet={QualifierCodeDialog}
+      TableEditSheet={QualifierCodeEditDialog}
+      addPermissionName="add_qualifiercode"
     />
   );
 }

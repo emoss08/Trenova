@@ -25,9 +25,9 @@ import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText, USDollarFormat } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
-import { FilterConfig } from "@/types/tables";
+import { type FilterConfig } from "@/types/tables";
 import { fuelMethodChoices } from "@/utils/apps/billing";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 
 function DetentionBadge({ isDetention }: { isDetention: boolean }) {
   return (

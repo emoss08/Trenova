@@ -22,8 +22,8 @@ import { StatusBadge } from "@/components/common/table/data-table-components";
 import { RevenueCodeDialog } from "@/components/revenue-code-table-dialog";
 import { RevenueCodeTableEditDialog } from "@/components/revenue-code-table-edit-dialog";
 import { truncateText } from "@/lib/utils";
-import { RevenueCode } from "@/types/accounting";
-import { ColumnDef } from "@tanstack/react-table";
+import { type RevenueCode } from "@/types/accounting";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<RevenueCode>[] = [
   {
