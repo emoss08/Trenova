@@ -17,7 +17,7 @@
 
 import { InputField } from "@/components/common/fields/input";
 import { useDocumentClass } from "@/hooks/useQueries";
-import { CustomerFormValues } from "@/types/customer";
+import { type CustomerFormValues } from "@/types/customer";
 import { useFormContext } from "react-hook-form";
 import { SelectInput } from "./common/fields/select-input";
 

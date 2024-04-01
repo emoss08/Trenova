@@ -18,15 +18,15 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { EquipManuDialog } from "@/components/eqiup-manu-table-dialog";
-import { EquipMenuEditDialog } from "@/components/equip-manu-edit-table-dialog";
+import { ReasonCodeEditDialog } from "@/components/reason-code-edit-dialog";
+import { ReasonCodeDialog } from "@/components/reason-code-table-dialog";
 import { tableStatusChoices } from "@/lib/choices";
 import { truncateText } from "@/lib/utils";
-import { EquipmentManufacturer } from "@/types/equipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ReasonCode } from "@/types/shipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<EquipmentManufacturer>[] = [
+const columns: ColumnDef<ReasonCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -59,9 +59,9 @@ const columns: ColumnDef<EquipmentManufacturer>[] = [
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -74,7 +74,7 @@ const columns: ColumnDef<EquipmentManufacturer>[] = [
   },
 ];
 
-const filters: FilterConfig<EquipmentManufacturer>[] = [
+const filters: FilterConfig<ReasonCode>[] = [
   {
     columnName: "status",
     title: "Status",
@@ -82,19 +82,19 @@ const filters: FilterConfig<EquipmentManufacturer>[] = [
   },
 ];
 
-export default function EquipmentManufacturers() {
+export default function ReasonCodes() {
   return (
     <DataTable
-      addPermissionName="add_equipmentmanufacturer"
-      queryKey="equipment-manufacturer-table-data"
+      queryKey="reason-code-table-data"
       columns={columns}
-      link="/equipment-manufacturers/"
-      name="Equip. Manufacturers"
-      exportModelName="EqquipmentManufacturer"
-      filterColumn="name"
+      link="/reason-codes/"
+      name="Reason Codes"
+      exportModelName="ReasonCode"
+      filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={EquipManuDialog}
-      TableEditSheet={EquipMenuEditDialog}
+      TableSheet={ReasonCodeDialog}
+      TableEditSheet={ReasonCodeEditDialog}
+      addPermissionName="add_reasoncode"
     />
   );
 }

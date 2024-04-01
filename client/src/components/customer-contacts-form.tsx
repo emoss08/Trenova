@@ -20,7 +20,7 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { statusChoices } from "@/lib/choices";
-import { CustomerFormValues as FormValues } from "@/types/customer";
+import { type CustomerFormValues as FormValues } from "@/types/customer";
 import { faPerson } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
@@ -72,7 +72,7 @@ export function CustomerContactForm() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="my-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
+                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -176,10 +176,10 @@ export function CustomerContactForm() {
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <FontAwesomeIcon
               icon={faPerson}
-              className="size-10 text-foreground"
+              className="text-foreground size-10"
             />
-            <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
-            <p className="mb-4 mt-2 text-sm text-muted-foreground">
+            <h3 className="mt-4 text-lg font-semibold">No Contacts added</h3>
+            <p className="text-muted-foreground mb-4 mt-2 text-sm">
               You have not added any contacts. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddContact}>

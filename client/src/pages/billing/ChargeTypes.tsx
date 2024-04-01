@@ -22,9 +22,9 @@ import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { tableStatusChoices } from "@/lib/choices";
-import { ChargeType } from "@/types/billing";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ChargeType } from "@/types/billing";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<ChargeType>[] = [
   {

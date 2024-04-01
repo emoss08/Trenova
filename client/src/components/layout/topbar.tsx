@@ -22,7 +22,7 @@ export function RainbowTopBar() {
 
   return (
     <div
-      className={`h-1 bg-rainbow-gradient-light bg-200% ${
+      className={`bg-rainbow-gradient-light bg-200% h-1 ${
         isRainbowAnimationActive ? "animate-rainbow-flow" : ""
       }`}
     />

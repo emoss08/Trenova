@@ -25,7 +25,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useDispatchControl } from "@/hooks/useQueries";
 import { serviceIncidentControlChoices } from "@/lib/choices";
 import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
-import {
+import type {
   DispatchControlFormValues,
   DispatchControl as DispatchControlType,
 } from "@/types/dispatch";

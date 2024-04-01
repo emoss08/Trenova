@@ -19,7 +19,10 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { FleetCode, FleetCodeFormValues as FormValues } from "@/types/dispatch";
+import type {
+  FleetCode,
+  FleetCodeFormValues as FormValues,
+} from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";

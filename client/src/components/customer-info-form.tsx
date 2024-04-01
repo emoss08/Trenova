@@ -19,7 +19,7 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { useUsers, useUSStates } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
-import { CustomerFormValues as FormValues } from "@/types/customer";
+import { type CustomerFormValues as FormValues } from "@/types/customer";
 import { useFormContext } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
 

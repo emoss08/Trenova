@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useBillingControl } from "@/hooks/useQueries";
 import { billingControlSchema } from "@/lib/validations/BillingSchema";
-import {
+import type {
   BillingControlFormValues,
   BillingControl as BillingControlType,
 } from "@/types/billing";

@@ -37,13 +37,13 @@ import {
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  TrailerFormValues as FormValues,
   equipmentStatusChoices,
+  type TrailerFormValues as FormValues,
 } from "@/types/equipment";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { Control, useForm } from "react-hook-form";
+import { useForm, type Control } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "./ui/form";
 import { Separator } from "./ui/separator";
 
@@ -54,11 +54,7 @@ export function TrailerForm({
   control: Control<FormValues>;
   open: boolean;
 }) {
-  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(
-    "TRAILER",
-    100,
-    open,
-  );
+  const { selectEquipmentType, isLoading, isError } = useEquipmentTypes(100);
 
   const {
     selectEquipManufacturers,
@@ -301,7 +297,7 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     resolver: yupResolver(trailerSchema),
     defaultValues: {
       code: "",
-      status: "A",
+      status: "Available",
       equipmentType: "",
       manufacturer: "",
       make: "",

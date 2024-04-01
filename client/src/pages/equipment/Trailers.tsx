@@ -15,28 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { CommodityDialog } from "@/components/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { StatusBadge } from "@/components/common/table/data-table-components";
+import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
+import { TrailerDialog } from "@/components/trailer-table-dialog";
+import { TrailerEditDialog } from "@/components/trailer-table-edit-dialog";
 import { Badge } from "@/components/ui/badge";
-import { tableStatusChoices, yesAndNoChoices } from "@/lib/choices";
-import { truncateText } from "@/lib/utils";
-import { Commodity } from "@/types/commodities";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { equipmentStatusChoices, type Trailer } from "@/types/equipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
+function LastInspectionDate({ lastInspection }: { lastInspection?: string }) {
   return (
-    <Badge variant={isHazmat ? "active" : "inactive"}>
-      {isHazmat ? "Yes" : "No"}
+    <Badge variant={lastInspection ? "active" : "inactive"}>
+      {lastInspection || "Never"}
     </Badge>
   );
 }
-
-const columns: ColumnDef<Commodity>[] = [
+const columns: ColumnDef<Trailer>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -63,70 +60,67 @@ const columns: ColumnDef<Commodity>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <EquipmentStatusBadge status={row.getValue("status")} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 25),
-  },
-  {
-    id: "temp_range",
-    accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
-    header: "Temperature Range",
-    cell: ({ row, column }) => {
-      return row.original?.minTemp && row.original?.maxTemp
-        ? row.getValue(column.id)
-        : "N/A";
-    },
-  },
-  {
-    accessorKey: "isHazmat",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Is Hazmat" />
-    ),
-    cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazmat} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
+  },
+  {
+    accessorKey: "equipTypeName",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Equipment Type" />
+    ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "timesUsed",
+    header: "Times Used",
+    cell: ({ row }) =>
+      row.original.timesUsed === 0
+        ? "Never Used"
+        : `Used ${row.original.timesUsed} times`,
+  },
+  {
+    accessorKey: "lastInspection",
+    header: "Last Inspection Date",
+    cell: ({ row }) => (
+      <LastInspectionDate lastInspection={row.getValue("lastInspection")} />
+    ),
   },
 ];
 
-const filters: FilterConfig<Commodity>[] = [
+const filters: FilterConfig<Trailer>[] = [
   {
     columnName: "status",
     title: "Status",
-    options: tableStatusChoices,
-  },
-  {
-    columnName: "isHazmat",
-    title: "Is Hazmat",
-    options: yesAndNoChoices,
+    options: equipmentStatusChoices,
   },
 ];
 
-export default function CommodityPage() {
+export default function TrailerPage() {
   return (
     <DataTable
-      queryKey="commodity-table-data"
+      queryKey="trailer-table-data"
       columns={columns}
-      link="/commodities/"
-      name="Commodity"
-      exportModelName="Commodity"
-      filterColumn="name"
+      link="/trailers/"
+      name="Trailer"
+      exportModelName="Trailer"
+      filterColumn="code"
       tableFacetedFilters={filters}
-      TableSheet={CommodityDialog}
-      TableEditSheet={CommodityEditDialog}
-      addPermissionName="add_commodity"
+      TableSheet={TrailerDialog}
+      TableEditSheet={TrailerEditDialog}
+      addPermissionName="add_trailer"
     />
   );
 }

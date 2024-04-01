@@ -24,7 +24,7 @@ import {
 } from "@/types/location";
 import * as yup from "yup";
 
-export const locationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues> =
+export const LocationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues> =
   yup.object().shape({
     name: yup
       .string()
@@ -40,14 +40,14 @@ export const locationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues
       .notRequired(),
   });
 
-const locationCommentSchema: yup.ObjectSchema<LocationCommentFormValues> = yup
+const LocationCommentSchema: yup.ObjectSchema<LocationCommentFormValues> = yup
   .object()
   .shape({
     commentType: yup.string().required("Comment Type is required"),
     comment: yup.string().required("Comment is required"),
   });
 
-const locationContactSchema: yup.ObjectSchema<LocationContactFormValues> = yup
+const LocationContactSchema: yup.ObjectSchema<LocationContactFormValues> = yup
   .object()
   .shape({
     name: yup.string().required("Name is required"),
@@ -82,7 +82,7 @@ const locationContactSchema: yup.ObjectSchema<LocationContactFormValues> = yup
       ),
   });
 
-export const locationSchema: yup.ObjectSchema<LocationFormValues> = yup
+export const LocationSchema: yup.ObjectSchema<LocationFormValues> = yup
   .object()
   .shape({
     status: yup.string<StatusChoiceProps>().required("Status is required"),
@@ -102,6 +102,6 @@ export const locationSchema: yup.ObjectSchema<LocationFormValues> = yup
     city: yup.string().required("City is required"),
     state: yup.string().required("State is required"),
     zipCode: yup.string().required("Zip Code is required"),
-    locationComments: yup.array().of(locationCommentSchema).notRequired(),
-    locationContacts: yup.array().of(locationContactSchema).notRequired(),
+    locationComments: yup.array().of(LocationCommentSchema).notRequired(),
+    locationContacts: yup.array().of(LocationContactSchema).notRequired(),
   });

@@ -30,10 +30,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { locationSchema } from "@/lib/validations/LocationSchema";
+import { LocationSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { LocationFormValues as FormValues, Location } from "@/types/location";
-import { TableSheetProps } from "@/types/tables";
+import type {
+  LocationFormValues as FormValues,
+  Location,
+} from "@/types/location";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,22 +54,8 @@ export function LocationEditForm({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(locationSchema),
-    defaultValues: {
-      status: location.status,
-      code: location.code,
-      locationCategory: location?.locationCategory || "",
-      name: location.name,
-      depot: location?.depot || "",
-      addressLine1: location.addressLine1,
-      addressLine2: location?.addressLine2 || "",
-      city: location.city,
-      state: location.state,
-      zipCode: location.zipCode,
-      locationComments: location.locationComments,
-      locationContacts: location.locationContacts,
-      description: location.description,
-    },
+    resolver: yupResolver(LocationSchema),
+    defaultValues: location,
   });
 
   const mutation = useCustomMutation<FormValues>(

@@ -29,7 +29,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   AccessorialCharge,
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";

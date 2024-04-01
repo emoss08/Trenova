@@ -18,7 +18,7 @@
 import { InternalLink } from "@/components/ui/link";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
-import { QueryKeyWithParams } from "@/types";
+import { type QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
 import { faPaperPlane } from "@fortawesome/pro-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -32,8 +32,7 @@ import { Separator } from "../ui/separator";
 
 function PersonalInformation({ user }: { user: User }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const avatarSrc =
-    user.thumbnailUrl || `https://avatar.vercel.sh/${user.email}`;
+  const avatarSrc = `https://avatar.vercel.sh/${user.email}`;
 
   type UserSettingFormValues = {
     email: string;

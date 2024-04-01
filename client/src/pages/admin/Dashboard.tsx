@@ -17,9 +17,9 @@
 
 import AdminLayout from "@/components/admin-page/layout";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
-import { Organization } from "@/types/organization";
-import { lazy } from "react";
 import { useUserOrganization } from "@/hooks/useQueries";
+import { type Organization } from "@/types/organization";
+import { lazy } from "react";
 
 const GeneralPage = lazy(() => import("@/components/admin-page/general-page"));
 

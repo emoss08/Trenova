@@ -30,8 +30,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
-import { ShipmentTypeFormValues as FormValues } from "@/types/shipment";
-import { TableSheetProps } from "@/types/tables";
+import { type ShipmentTypeFormValues as FormValues } from "@/types/shipment";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

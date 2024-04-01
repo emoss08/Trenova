@@ -15,16 +15,28 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CommodityDialog } from "@/components/commodity-dialog";
+import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { BoolStatusBadge } from "@/components/common/table/data-table-components";
-import { Worker } from "@/types/worker";
-import { ColumnDef } from "@tanstack/react-table";
-import { CommodityDialog } from "@/components/commodity-dialog";
-import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { Badge } from "@/components/ui/badge";
+import { tableStatusChoices, yesAndNoChoices } from "@/lib/choices";
+import { truncateText } from "@/lib/utils";
+import { type Commodity } from "@/types/commodities";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<Worker>[] = [
+function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
+  return (
+    <Badge variant={isHazmat ? "active" : "inactive"}>
+      {isHazmat ? "Yes" : "No"}
+    </Badge>
+  );
+}
+
+const columns: ColumnDef<Commodity>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -47,36 +59,74 @@ const columns: ColumnDef<Worker>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "isActive",
+    accessorKey: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Is Active?" />
+      <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <BoolStatusBadge status={row.original.isActive} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
     accessorKey: "name",
-    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 25),
+  },
+  {
+    id: "temp_range",
+    accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
+    header: "Temperature Range",
+    cell: ({ row, column }) => {
+      return row.original?.minTemp && row.original?.maxTemp
+        ? row.getValue(column.id)
+        : "N/A";
+    },
+  },
+  {
+    accessorKey: "isHazmat",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Is Hazmat" />
+    ),
+    cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazmat} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
 ];
 
-export default function WorkerPage() {
+const filters: FilterConfig<Commodity>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+  {
+    columnName: "isHazmat",
+    title: "Is Hazmat",
+    options: yesAndNoChoices,
+  },
+];
+
+export default function CommodityPage() {
   return (
     <DataTable
-      queryKey="worker-table-data"
+      queryKey="commodity-table-data"
       columns={columns}
-      link="/workers/"
-      name="Worker"
-      exportModelName="Worker"
+      link="/commodities/"
+      name="Commodity"
+      exportModelName="Commodity"
       filterColumn="name"
+      tableFacetedFilters={filters}
       TableSheet={CommodityDialog}
       TableEditSheet={CommodityEditDialog}
-      addPermissionName="add_worker"
+      addPermissionName="add_commodity"
     />
   );
 }

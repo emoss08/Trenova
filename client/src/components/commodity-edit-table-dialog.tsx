@@ -29,7 +29,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
-import { Commodity, CommodityFormValues } from "@/types/commodities";
+import type { Commodity, CommodityFormValues } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";

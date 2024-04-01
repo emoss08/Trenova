@@ -15,17 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CommodityDialog } from "@/components/commodity-dialog";
+import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
-import { TractorDialog } from "@/components/tractor-table-dialog";
-import { TractorTableEditSheet } from "@/components/tractor-table-edit-dialog";
-import { equipmentStatusChoices, Tractor } from "@/types/equipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { BoolStatusBadge } from "@/components/common/table/data-table-components";
+import { type Worker } from "@/types/worker";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<Tractor>[] = [
+const columns: ColumnDef<Worker>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -48,68 +47,36 @@ const columns: ColumnDef<Tractor>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
+    accessorKey: "isActive",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
+      <DataTableColumnHeader column={column} title="Is Active?" />
     ),
-    cell: ({ row }) => <EquipmentStatusBadge status={row.getValue("status")} />,
+    cell: ({ row }) => <BoolStatusBadge status={row.original.isActive} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: "code",
+    accessorKey: "name",
+    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Code" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
-  {
-    accessorFn: (row) => `${row.edges?.equipmentType?.code}`,
-    header: "Equipment Type",
-    cell: ({ row }) => {
-      if (row.original.edges?.equipmentType?.color) {
-        return (
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
-            <div
-              className={"mx-2 size-2 rounded-xl"}
-              style={{
-                backgroundColor: row.original.edges?.equipmentType?.color,
-              }}
-            />
-            {row.original.edges?.equipmentType?.code}
-          </div>
-        );
-      } else {
-        return row.original.edges?.equipmentType?.code;
-      }
-    },
   },
 ];
 
-const filters: FilterConfig<Tractor>[] = [
-  {
-    columnName: "status",
-    title: "Status",
-    options: equipmentStatusChoices,
-  },
-];
-
-export default function TractorPage() {
+export default function WorkerPage() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="worker-table-data"
       columns={columns}
-      link="/tractors/"
-      name="Tractor"
-      exportModelName="Tractor"
-      filterColumn="code"
-      tableFacetedFilters={filters}
-      TableSheet={TractorDialog}
-      TableEditSheet={TractorTableEditSheet}
-      addPermissionName="add_tractor"
+      link="/workers/"
+      name="Worker"
+      exportModelName="Worker"
+      filterColumn="name"
+      TableSheet={CommodityDialog}
+      TableEditSheet={CommodityEditDialog}
+      addPermissionName="add_worker"
     />
   );
 }

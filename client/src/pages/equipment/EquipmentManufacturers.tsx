@@ -14,19 +14,19 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
-import { CommentTypeDialog } from "@/components/comment-type-table-dialog";
-import { CommentTypeEditSheet } from "@/components/comment-type-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { EquipManuDialog } from "@/components/eqiupment-manufacturer-table-dialog";
+import { EquipMenuEditDialog } from "@/components/equipment-manufacturer-edit-table-dialog";
 import { tableStatusChoices } from "@/lib/choices";
-import { CommentType } from "@/types/dispatch";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { truncateText } from "@/lib/utils";
+import { type EquipmentManufacturer } from "@/types/equipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<CommentType>[] = [
+const columns: ColumnDef<EquipmentManufacturer>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -63,14 +63,18 @@ const columns: ColumnDef<CommentType>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "description",
     header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 30),
   },
 ];
 
-const filters: FilterConfig<CommentType>[] = [
+const filters: FilterConfig<EquipmentManufacturer>[] = [
   {
     columnName: "status",
     title: "Status",
@@ -78,19 +82,19 @@ const filters: FilterConfig<CommentType>[] = [
   },
 ];
 
-export default function CommentTypes() {
+export default function EquipmentManufacturers() {
   return (
     <DataTable
-      addPermissionName="add_commenttype"
-      queryKey="comment-types-table-data"
+      addPermissionName="add_equipmentmanufacturer"
+      queryKey="equipment-manufacturer-table-data"
       columns={columns}
-      link="/comment-types/"
-      name="Comment Types"
-      exportModelName="CommentType"
+      link="/equipment-manufacturers/"
+      name="Equip. Manufacturers"
+      exportModelName="EqquipmentManufacturer"
       filterColumn="name"
       tableFacetedFilters={filters}
-      TableSheet={CommentTypeDialog}
-      TableEditSheet={CommentTypeEditSheet}
+      TableSheet={EquipManuDialog}
+      TableEditSheet={EquipMenuEditDialog}
     />
   );
 }

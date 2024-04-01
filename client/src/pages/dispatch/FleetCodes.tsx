@@ -19,15 +19,13 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { EquipTypeEditSheet } from "@/components/equip-type-edit-table-dialog";
-import { EquipTypeDialog } from "@/components/equip-type-table-dialog";
-import { equipmentClassChoices, tableStatusChoices } from "@/lib/choices";
+import { FleetCodeDialog } from "@/components/fleet-code-table-dialog";
+import { FleetCodeEditDialog } from "@/components/fleet-code-table-edit-dialog";
 import { truncateText } from "@/lib/utils";
-import { EquipmentType } from "@/types/equipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type FleetCode } from "@/types/dispatch";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<EquipmentType>[] = [
+const columns: ColumnDef<FleetCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -60,71 +58,30 @@ const columns: ColumnDef<EquipmentType>[] = [
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="Code" />
     ),
-    cell: ({ row }) => {
-      if (row.original.color) {
-        return (
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
-            <div
-              className={"mx-2 size-2 rounded-xl"}
-              style={{ backgroundColor: row.original.color }}
-            />
-            {row.original.code}
-          </div>
-        );
-      } else {
-        return row.original.code;
-      }
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: "description",
     header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 30),
-  },
-  {
-    accessorKey: "equipmentClass",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Equip. Class" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    cell: ({ row }) => truncateText(row.original.description as string, 50),
   },
 ];
 
-const filters: FilterConfig<EquipmentType>[] = [
-  {
-    columnName: "status",
-    title: "Status",
-    options: tableStatusChoices,
-  },
-  {
-    columnName: "equipmentClass",
-    title: "Equip. Class",
-    options: equipmentClassChoices,
-  },
-];
-
-export default function EquipmentTypes() {
+export default function FleetCodes() {
   return (
     <DataTable
-      queryKey="equipment-type-table-data"
+      addPermissionName="add_fleetcode"
+      queryKey="fleet-code-table-data"
       columns={columns}
-      link="/equipment-types/"
-      name="Equip. Types"
-      exportModelName="EquipmentType"
-      filterColumn="name"
-      tableFacetedFilters={filters}
-      TableSheet={EquipTypeDialog}
-      TableEditSheet={EquipTypeEditSheet}
-      addPermissionName="add_equipmenttype"
+      link="/fleet-codes/"
+      name="Fleet Codes"
+      exportModelName="FleetCode"
+      filterColumn="code"
+      TableSheet={FleetCodeDialog}
+      TableEditSheet={FleetCodeEditDialog}
     />
   );
 }

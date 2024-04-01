@@ -31,8 +31,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
-import { AccessorialChargeFormValues as FormValues } from "@/types/billing";
-import { TableSheetProps } from "@/types/tables";
+import { type AccessorialChargeFormValues as FormValues } from "@/types/billing";
+import { type TableSheetProps } from "@/types/tables";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";

@@ -36,8 +36,8 @@ import {
 } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
-import { GLAccountFormValues } from "@/types/accounting";
-import { TableSheetProps } from "@/types/tables";
+import { type GLAccountFormValues } from "@/types/accounting";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
 import React from "react";

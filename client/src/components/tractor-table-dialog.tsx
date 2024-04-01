@@ -37,14 +37,13 @@ import {
 import { cleanObject } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import {
-  TractorFormValues as FormValues,
   equipmentStatusChoices,
+  type TractorFormValues as FormValues,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { Control, useForm } from "react-hook-form";
-
+import { useForm, type Control } from "react-hook-form";
 import { DatepickerField } from "./common/fields/date-picker";
 import { Form, FormControl, FormGroup } from "./ui/form";
 import { Separator } from "./ui/separator";

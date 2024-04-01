@@ -25,7 +25,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useInvoiceControl } from "@/hooks/useQueries";
 import { dateFormatChoices } from "@/lib/choices";
 import { invoiceControlSchema } from "@/lib/validations/InvoicingSchema";
-import {
+import type {
   InvoiceControlFormValues,
   InvoiceControl as InvoiceControlType,
 } from "@/types/invoicing";

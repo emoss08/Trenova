@@ -44,7 +44,7 @@ import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 import { useTheme } from "@/components/ui/theme-provider";
 import { useLogout } from "@/hooks/useLogout";
 import { TOAST_STYLE } from "@/lib/constants";
-import { ThemeOptions } from "@/types";
+import { type ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";

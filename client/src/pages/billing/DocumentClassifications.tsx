@@ -18,10 +18,10 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { DocumentClassification } from "@/types/billing";
-import { ColumnDef } from "@tanstack/react-table";
 import { DocumentClassDialog } from "@/components/document-class-table-dialog";
 import { DocumentClassEditDialog } from "@/components/document-class-table-edit-dialog";
+import { DocumentClassification } from "@/types/billing";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<DocumentClassification>[] = [
   {

@@ -15,28 +15,36 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { CommentTypeDialog } from "@/components/comment-type-table-dialog";
+import { CommentTypeEditSheet } from "@/components/comment-type-table-edit-dialog";
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
-import { Customer } from "@/types/customer";
-import { ColumnDef, Row } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { CustomerTableSheet } from "@/components/customer-table-dialog";
-import { CustomerTableEditSheet } from "@/components/customer-table-edit-dialog";
-import { CustomerTableSub } from "@/components/customer-table-sub";
+import { tableStatusChoices } from "@/lib/choices";
+import { type CommentType } from "@/types/dispatch";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
-  return <CustomerTableSub row={row} />;
-};
-
-const columns: ColumnDef<Customer>[] = [
+const columns: ColumnDef<CommentType>[] = [
   {
-    id: "expander",
-    footer: (props) => props.column.id,
-    header: () => null,
-    cell: ({ row }) => {
-      return <DataTableColumnExpand row={row} />;
-    },
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
     enableSorting: false,
     enableHiding: false,
   },
@@ -51,54 +59,38 @@ const columns: ColumnDef<Customer>[] = [
     },
   },
   {
-    accessorKey: "code",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Code" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
-  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
   {
-    accessorKey: "totalShipments",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Total Shipments" />
-    ),
-  },
-  {
-    accessorKey: "lastShipDate",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Ship Date" />
-    ),
-  },
-  {
-    accessorKey: "lastBillDate",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Bill Date" />
-    ),
+    accessorKey: "description",
+    header: "Description",
   },
 ];
 
-export default function Customers() {
+const filters: FilterConfig<CommentType>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: tableStatusChoices,
+  },
+];
+
+export default function CommentTypes() {
   return (
     <DataTable
-      queryKey="customers-table-data"
+      addPermissionName="add_commenttype"
+      queryKey="comment-types-table-data"
       columns={columns}
-      link="/customers/"
-      name="Customers"
-      exportModelName="Customer"
-      filterColumn="code"
-      renderSubComponent={renderSubComponent}
-      getRowCanExpand={() => true}
-      TableSheet={CustomerTableSheet}
-      TableEditSheet={CustomerTableEditSheet}
-      addPermissionName="add_customer"
+      link="/comment-types/"
+      name="Comment Types"
+      exportModelName="CommentType"
+      filterColumn="name"
+      tableFacetedFilters={filters}
+      TableSheet={CommentTypeDialog}
+      TableEditSheet={CommentTypeEditSheet}
     />
   );
 }

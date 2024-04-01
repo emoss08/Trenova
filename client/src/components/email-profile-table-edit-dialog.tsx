@@ -28,7 +28,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   EmailProfile,
   EmailProfileFormValues as FormValues,
 } from "@/types/organization";

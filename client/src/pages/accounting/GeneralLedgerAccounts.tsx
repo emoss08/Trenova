@@ -23,9 +23,9 @@ import { GeneralLedgerAccountTableEditSheet } from "@/components/general-ledger-
 import { GeneralLedgerAccountTableSheet } from "@/components/general-ledger-account-table-sheet";
 import { GLAccountTableSub } from "@/components/general-ledger-account-table-sub";
 import { tableAccountTypeChoices, tableStatusChoices } from "@/lib/choices";
-import { GeneralLedgerAccount } from "@/types/accounting";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type GeneralLedgerAccount } from "@/types/accounting";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const renderSubComponent = () => {
   // const original = row.original;

@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useEmailControl, useEmailProfiles } from "@/hooks/useQueries";
 import { emailControlSchema } from "@/lib/validations/OrganizationSchema";
-import {
+import type {
   EmailControlFormValues,
   EmailControl as EmailControlType,
 } from "@/types/organization";

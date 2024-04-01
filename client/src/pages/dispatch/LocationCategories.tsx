@@ -21,8 +21,8 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { LCTableEditDialog } from "@/components/location-category-table-edit-sheet";
 import { LocationCategoryTableSheet } from "@/components/location-category-table-sheet";
 import { truncateText } from "@/lib/utils";
-import { LocationCategory } from "@/types/location";
-import { ColumnDef } from "@tanstack/react-table";
+import { type LocationCategory } from "@/types/location";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<LocationCategory>[] = [
   {

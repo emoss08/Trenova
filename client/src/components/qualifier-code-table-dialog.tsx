@@ -30,8 +30,8 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
 import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
-import { QualifierCodeFormValues as FormValues } from "@/types/stop";
-import { TableSheetProps } from "@/types/tables";
+import { type QualifierCodeFormValues as FormValues } from "@/types/stop";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";

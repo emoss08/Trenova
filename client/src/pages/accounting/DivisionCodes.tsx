@@ -22,8 +22,8 @@ import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DivisionCodeDialog } from "@/components/division-code-table-dialog";
 import { DivisionCodeTableEditDialog } from "@/components/division-code-table-edit-dialog";
 import { tableStatusChoices } from "@/lib/choices";
-import { DivisionCode } from "@/types/accounting";
-import { FilterConfig } from "@/types/tables";
+import { type DivisionCode } from "@/types/accounting";
+import { type FilterConfig } from "@/types/tables";
 import { type ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<DivisionCode>[] = [

@@ -18,22 +18,16 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
-import { Badge } from "@/components/ui/badge";
-import { equipmentStatusChoices, Trailer } from "@/types/equipment";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
-import { TrailerDialog } from "@/components/trailer-table-dialog";
-import { TrailerEditDialog } from "@/components/trailer-table-edit-dialog";
+import { StatusBadge } from "@/components/common/table/data-table-components";
+import { HazardousMaterialDialog } from "@/components/hazardous-material-dialog";
+import { HazardousMaterialEditDialog } from "@/components/hazardous-material-edit-dialog";
+import { tableStatusChoices } from "@/lib/choices";
+import { truncateText } from "@/lib/utils";
+import { type HazardousMaterial } from "@/types/commodities";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-function LastInspectionDate({ lastInspection }: { lastInspection?: string }) {
-  return (
-    <Badge variant={lastInspection ? "active" : "inactive"}>
-      {lastInspection || "Never"}
-    </Badge>
-  );
-}
-const columns: ColumnDef<Trailer>[] = [
+const columns: ColumnDef<HazardousMaterial>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -60,67 +54,52 @@ const columns: ColumnDef<Trailer>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <EquipmentStatusBadge status={row.getValue("status")} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: "code",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Code" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
   },
   {
-    accessorKey: "equipTypeName",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Equipment Type" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => truncateText(row.original.description as string, 25),
   },
   {
-    accessorKey: "timesUsed",
-    header: "Times Used",
-    cell: ({ row }) =>
-      row.original.timesUsed === 0
-        ? "Never Used"
-        : `Used ${row.original.timesUsed} times`,
-  },
-  {
-    accessorKey: "lastInspection",
-    header: "Last Inspection Date",
-    cell: ({ row }) => (
-      <LastInspectionDate lastInspection={row.getValue("lastInspection")} />
-    ),
+    accessorKey: "packingGroup",
+    header: "Packing Group",
   },
 ];
 
-const filters: FilterConfig<Trailer>[] = [
+const filters: FilterConfig<HazardousMaterial>[] = [
   {
     columnName: "status",
     title: "Status",
-    options: equipmentStatusChoices,
+    options: tableStatusChoices,
   },
 ];
 
-export default function TrailerPage() {
+export default function HazardousMaterials() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="hazardous-material-table-data"
       columns={columns}
-      link="/trailers/"
-      name="Trailer"
-      exportModelName="Trailer"
-      filterColumn="code"
+      link="/hazardous-materials/"
+      name="Hazardous Material"
+      exportModelName="HazardousMaterial"
+      filterColumn="name"
       tableFacetedFilters={filters}
-      TableSheet={TrailerDialog}
-      TableEditSheet={TrailerEditDialog}
-      addPermissionName="add_trailer"
+      TableSheet={HazardousMaterialDialog}
+      TableEditSheet={HazardousMaterialEditDialog}
+      addPermissionName="add_hazardousmaterial"
     />
   );
 }

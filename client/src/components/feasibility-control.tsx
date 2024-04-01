@@ -23,7 +23,7 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useFeasibilityControl } from "@/hooks/useQueries";
 import { feasibilityOperatorChoices } from "@/lib/choices";
 import { feasibilityControlSchema } from "@/lib/validations/DispatchSchema";
-import {
+import type {
   FeasibilityToolControlFormValues,
   FeasibilityToolControl as FeasibilityToolControlType,
 } from "@/types/dispatch";

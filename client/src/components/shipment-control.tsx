@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { shipmentControlSchema } from "@/lib/validations/ShipmentSchema";
-import {
+import type {
   ShipmentControlFormValues,
   ShipmentControl as ShipmentControlType,
 } from "@/types/shipment";

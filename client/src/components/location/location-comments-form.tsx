@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { LocationFormValues as FormValues } from "@/types/location";
-import { Control, useFieldArray } from "react-hook-form";
+import { type LocationFormValues as FormValues } from "@/types/location";
+import { useFieldArray, type Control } from "react-hook-form";
 
 import { useCommentTypes } from "@/hooks/useQueries";
 import { faOctagonExclamation } from "@fortawesome/pro-duotone-svg-icons";

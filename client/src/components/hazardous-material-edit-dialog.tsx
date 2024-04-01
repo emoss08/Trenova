@@ -28,10 +28,9 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
-import {
+import type {
   HazardousMaterialFormValues as FormValues,
   HazardousMaterial,
-  HazardousMaterialFormValues,
 } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
@@ -64,7 +63,7 @@ function HazardousMaterialEditForm({
     reset,
   );
 
-  const onSubmit = (values: HazardousMaterialFormValues) => {
+  const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     mutation.mutate(values);
   };

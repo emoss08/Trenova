@@ -30,9 +30,9 @@ import {
   sourceChoices,
   tableStatusChoices,
 } from "@/lib/choices";
-import { TableChangeAlert } from "@/types/organization";
-import { FilterConfig } from "@/types/tables";
-import { ColumnDef } from "@tanstack/react-table";
+import { type TableChangeAlert } from "@/types/organization";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
 const actionColor = (color: string) => {
   switch (color) {

@@ -18,14 +18,14 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { StatusBadge } from "@/components/common/table/data-table-components";
-import { FleetCodeDialog } from "@/components/fleet-code-table-dialog";
-import { FleetCodeEditDialog } from "@/components/fleet-code-table-edit-dialog";
-import { truncateText } from "@/lib/utils";
-import { FleetCode } from "@/types/dispatch";
-import { ColumnDef } from "@tanstack/react-table";
+import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
+import { TractorDialog } from "@/components/tractor-table-dialog";
+import { TractorTableEditSheet } from "@/components/tractor-table-edit-dialog";
+import { equipmentStatusChoices, type Tractor } from "@/types/equipment";
+import { type FilterConfig } from "@/types/tables";
+import { type ColumnDef } from "@tanstack/react-table";
 
-const columns: ColumnDef<FleetCode>[] = [
+const columns: ColumnDef<Tractor>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -52,7 +52,7 @@ const columns: ColumnDef<FleetCode>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <EquipmentStatusBadge status={row.getValue("status")} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -62,26 +62,54 @@ const columns: ColumnDef<FleetCode>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Code" />
     ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 50),
+    accessorFn: (row) => `${row.edges?.equipmentType?.code}`,
+    header: "Equipment Type",
+    cell: ({ row }) => {
+      if (row.original.edges?.equipmentType?.color) {
+        return (
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{
+                backgroundColor: row.original.edges?.equipmentType?.color,
+              }}
+            />
+            {row.original.edges?.equipmentType?.code}
+          </div>
+        );
+      } else {
+        return row.original.edges?.equipmentType?.code;
+      }
+    },
   },
 ];
 
-export default function FleetCodes() {
+const filters: FilterConfig<Tractor>[] = [
+  {
+    columnName: "status",
+    title: "Status",
+    options: equipmentStatusChoices,
+  },
+];
+
+export default function TractorPage() {
   return (
     <DataTable
-      addPermissionName="add_fleetcode"
-      queryKey="fleet-code-table-data"
+      queryKey="trailer-table-data"
       columns={columns}
-      link="/fleet-codes/"
-      name="Fleet Codes"
-      exportModelName="FleetCode"
+      link="/tractors/"
+      name="Tractor"
+      exportModelName="Tractor"
       filterColumn="code"
-      TableSheet={FleetCodeDialog}
-      TableEditSheet={FleetCodeEditDialog}
+      tableFacetedFilters={filters}
+      TableSheet={TractorDialog}
+      TableEditSheet={TractorTableEditSheet}
+      addPermissionName="add_tractor"
     />
   );
 }

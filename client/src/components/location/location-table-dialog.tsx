@@ -29,9 +29,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
-import { locationSchema } from "@/lib/validations/LocationSchema";
-import { LocationFormValues as FormValues } from "@/types/location";
-import { TableSheetProps } from "@/types/tables";
+import { LocationSchema } from "@/lib/validations/LocationSchema";
+import { type LocationFormValues as FormValues } from "@/types/location";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -41,7 +41,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { control, reset, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(locationSchema),
+    resolver: yupResolver(LocationSchema),
     defaultValues: {
       status: "A",
       code: "",

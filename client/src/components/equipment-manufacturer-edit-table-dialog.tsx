@@ -15,6 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,43 +29,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
-import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
+import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-  ShipmentTypeFormValues as FormValues,
-  ShipmentType,
-} from "@/types/shipment";
+  EquipmentManufacturer,
+  EquipmentManufacturerFormValues as FormValues,
+} from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { ShipmentTypeForm } from "./ship-type-table-dialog";
+import { EquipManuForm } from "./eqiupment-manufacturer-table-dialog";
 
-function ShipmentTypeEditForm({
-  shipmentType,
+function EquipManuEditForm({
+  equipManufacturer,
 }: {
-  shipmentType: ShipmentType;
+  equipManufacturer: EquipmentManufacturer;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(shipmentTypeSchema),
-    defaultValues: shipmentType,
+  const { control, reset, handleSubmit } = useForm<FormValues>({
+    resolver: yupResolver(equipManufacturerSchema),
+    defaultValues: equipManufacturer,
   });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     {
       method: "PUT",
-      path: `/shipment-types/${shipmentType.id}/`,
-      successMessage: "Shipment Type updated successfully.",
-      queryKeysToInvalidate: ["shipment-type-table-data"],
+      path: `/equipment-manufacturers/${equipManufacturer.id}/`,
+      successMessage: "Equip. Manufacturer updated successfully.",
+      queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
       closeModal: true,
-      errorMessage: "Failed to update shipment type.",
+      errorMessage: "Failed to create update equip. manufacturer.",
     },
     () => setIsSubmitting(false),
+    reset,
   );
 
   const onSubmit = (values: FormValues) => {
@@ -69,11 +70,8 @@ function ShipmentTypeEditForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex h-full flex-col overflow-y-auto"
-    >
-      <ShipmentTypeForm control={control} />
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <EquipManuForm control={control} />
       <DialogFooter className="mt-6">
         <Button type="submit" isLoading={isSubmitting}>
           Save
@@ -83,25 +81,26 @@ function ShipmentTypeEditForm({
   );
 }
 
-export function ShipmentTypeEditDialog({
-  onOpenChange,
-  open,
-}: TableSheetProps) {
-  const [shipmentType] = useTableStore.use("currentRecord") as ShipmentType[];
-
-  if (!shipmentType) return null;
+export function EquipMenuEditDialog({ onOpenChange, open }: TableSheetProps) {
+  const [equipManufacturer] = useTableStore.use(
+    "currentRecord",
+  ) as EquipmentManufacturer[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{shipmentType && shipmentType.code}</DialogTitle>
+          <DialogTitle>
+            {equipManufacturer && equipManufacturer.name}
+          </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Last updated on&nbsp;
-          {shipmentType && formatDate(shipmentType.updatedAt)}
+          Last updated on{" "}
+          {equipManufacturer && formatDate(equipManufacturer.updatedAt)}
         </DialogDescription>
-        {shipmentType && <ShipmentTypeEditForm shipmentType={shipmentType} />}
+        {equipManufacturer && (
+          <EquipManuEditForm equipManufacturer={equipManufacturer} />
+        )}
       </DialogContent>
     </Dialog>
   );

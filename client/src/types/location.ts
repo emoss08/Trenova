@@ -28,7 +28,7 @@ export interface LocationCategory extends BaseModel {
 
 export type LocationCategoryFormValues = Omit<
   LocationCategory,
-  "organizationId" | "createdAt" | "updatedAt" | "id"
+  "organizationId" | "createdAt" | "updatedAt" | "id" | "version"
 >;
 
 export interface LocationComment extends BaseModel {
@@ -50,6 +50,7 @@ export type LocationCommentFormValues = Omit<
   | "enteredBy"
   | "commentTypeName"
   | "enteredByUsername"
+  | "version"
 >;
 
 export interface LocationContact extends BaseModel {
@@ -63,7 +64,7 @@ export interface LocationContact extends BaseModel {
 
 export type LocationContactFormValues = Omit<
   LocationContact,
-  "organizationId" | "createdAt" | "updatedAt" | "id" | "location"
+  "organizationId" | "createdAt" | "updatedAt" | "id" | "location" | "version"
 >;
 
 export interface Location extends BaseModel {
@@ -107,6 +108,7 @@ export type LocationFormValues = Omit<
   | "placeId"
   | "createdAt"
   | "updatedAt"
+  | "version"
 > & {
   locationComments?: LocationCommentFormValues[] | null;
   locationContacts?: LocationContactFormValues[] | null;
