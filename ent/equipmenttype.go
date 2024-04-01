@@ -32,8 +32,8 @@ type EquipmentType struct {
 	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status equipmenttype.Status `json:"status" validate:"required,oneof=A I"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name" validate:"required,max=50"`
+	// Code holds the value of the "code" field.
+	Code string `json:"code" validate:"required,max=50"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description" validate:"omitempty"`
 	// CostPerMile holds the value of the "cost_per_mile" field.
@@ -108,7 +108,7 @@ func (*EquipmentType) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case equipmenttype.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case equipmenttype.FieldStatus, equipmenttype.FieldName, equipmenttype.FieldDescription, equipmenttype.FieldEquipmentClass, equipmenttype.FieldColor:
+		case equipmenttype.FieldStatus, equipmenttype.FieldCode, equipmenttype.FieldDescription, equipmenttype.FieldEquipmentClass, equipmenttype.FieldColor:
 			values[i] = new(sql.NullString)
 		case equipmenttype.FieldCreatedAt, equipmenttype.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -171,11 +171,11 @@ func (et *EquipmentType) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				et.Status = equipmenttype.Status(value.String)
 			}
-		case equipmenttype.FieldName:
+		case equipmenttype.FieldCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field code", values[i])
 			} else if value.Valid {
-				et.Name = value.String
+				et.Code = value.String
 			}
 		case equipmenttype.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -313,8 +313,8 @@ func (et *EquipmentType) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", et.Status))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(et.Name)
+	builder.WriteString("code=")
+	builder.WriteString(et.Code)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(et.Description)

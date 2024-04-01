@@ -468,8 +468,12 @@ export type CodeTypeProps = "Voided" | "Cancelled";
  * @returns An array of code type choices.
  */
 export const codeTypeChoices = [
-  { value: "Voided", label: "Voided" },
-  { value: "Cancelled", label: "Cancelled" },
+  { value: "Voided", label: "Voided", color: "#b9ac1c" },
+  {
+    value: "Cancelled",
+    label: "Cancelled",
+    color: "#b91c1c",
+  },
 ] satisfies ReadonlyArray<IChoiceProps<CodeTypeProps>>;
 
 /**

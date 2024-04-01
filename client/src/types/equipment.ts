@@ -24,7 +24,7 @@ import { Worker } from "./worker";
 export interface EquipmentType extends BaseModel {
   id: string;
   status: StatusChoiceProps;
-  name: string;
+  code: string;
   description?: string;
   costPerMile?: number;
   equipmentClass: EquipmentClassChoiceProps;
@@ -41,7 +41,12 @@ export interface EquipmentType extends BaseModel {
 
 export type EquipmentTypeFormValues = Omit<
   EquipmentType,
-  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
 >;
 
 export interface EquipmentManufacturer extends BaseModel {
@@ -158,6 +163,7 @@ export type TractorFormValues = Omit<
   | "createdAt"
   | "updatedAt"
   | "edges"
+  | "version"
 >;
 
 export type EquipmentClass = "TRACTOR" | "TRAILER";

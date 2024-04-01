@@ -97,7 +97,7 @@ func (r *EquipmentTypeOps) CreateEquipmentType(
 		SetOrganizationID(newEntity.OrganizationID).
 		SetBusinessUnitID(newEntity.BusinessUnitID).
 		SetStatus(newEntity.Status).
-		SetName(newEntity.Name).
+		SetCode(newEntity.Code).
 		SetDescription(newEntity.Description).
 		SetCostPerMile(newEntity.CostPerMile).
 		SetEquipmentClass(newEntity.EquipmentClass).
@@ -163,13 +163,13 @@ func (r *EquipmentTypeOps) UpdateEquipmentType(
 	if current.Version != entity.Version {
 		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
 			"syncError",
-			"name")
+			"code")
 	}
 
 	// Start building the update operation
 	updateOp := tx.EquipmentType.UpdateOneID(entity.ID).
 		SetStatus(entity.Status).
-		SetName(entity.Name).
+		SetCode(entity.Code).
 		SetDescription(entity.Description).
 		SetCostPerMile(entity.CostPerMile).
 		SetEquipmentClass(entity.EquipmentClass).

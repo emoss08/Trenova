@@ -91,9 +91,9 @@ func (etc *EquipmentTypeCreate) SetNillableStatus(e *equipmenttype.Status) *Equi
 	return etc
 }
 
-// SetName sets the "name" field.
-func (etc *EquipmentTypeCreate) SetName(s string) *EquipmentTypeCreate {
-	etc.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (etc *EquipmentTypeCreate) SetCode(s string) *EquipmentTypeCreate {
+	etc.mutation.SetCode(s)
 	return etc
 }
 
@@ -379,12 +379,12 @@ func (etc *EquipmentTypeCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.status": %w`, err)}
 		}
 	}
-	if _, ok := etc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "EquipmentType.name"`)}
+	if _, ok := etc.mutation.Code(); !ok {
+		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "EquipmentType.code"`)}
 	}
-	if v, ok := etc.mutation.Name(); ok {
-		if err := equipmenttype.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.name": %w`, err)}
+	if v, ok := etc.mutation.Code(); ok {
+		if err := equipmenttype.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.code": %w`, err)}
 		}
 	}
 	if _, ok := etc.mutation.EquipmentClass(); !ok {
@@ -455,9 +455,9 @@ func (etc *EquipmentTypeCreate) createSpec() (*EquipmentType, *sqlgraph.CreateSp
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := etc.mutation.Name(); ok {
-		_spec.SetField(equipmenttype.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := etc.mutation.Code(); ok {
+		_spec.SetField(equipmenttype.FieldCode, field.TypeString, value)
+		_node.Code = value
 	}
 	if value, ok := etc.mutation.Description(); ok {
 		_spec.SetField(equipmenttype.FieldDescription, field.TypeString, value)

@@ -67,7 +67,7 @@ const columns: ColumnDef<Tractor>[] = [
     },
   },
   {
-    accessorFn: (row) => `${row.edges?.equipmentType?.name}`,
+    accessorFn: (row) => `${row.edges?.equipmentType?.code}`,
     header: "Equipment Type",
     cell: ({ row }) => {
       if (row.original.edges?.equipmentType?.color) {
@@ -79,11 +79,11 @@ const columns: ColumnDef<Tractor>[] = [
                 backgroundColor: row.original.edges?.equipmentType?.color,
               }}
             />
-            {row.original.edges?.equipmentType?.name}
+            {row.original.edges?.equipmentType?.code}
           </div>
         );
       } else {
-        return row.original.edges?.equipmentType?.name;
+        return row.original.edges?.equipmentType?.code;
       }
     },
   },

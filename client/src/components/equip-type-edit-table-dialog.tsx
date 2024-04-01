@@ -103,7 +103,7 @@ export function EquipTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{equipType && equipType.name}</SheetTitle>
+          <SheetTitle>{equipType && equipType.code}</SheetTitle>
           <SheetDescription>
             Last updated on {equipType && formatDate(equipType.updatedAt)}
           </SheetDescription>
