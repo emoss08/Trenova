@@ -72,11 +72,11 @@ const columns: ColumnDef<EquipmentType>[] = [
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: row.original.color }}
             />
-            {row.original.name}
+            {row.original.code}
           </div>
         );
       } else {
-        return row.original.name;
+        return row.original.code;
       }
     },
     filterFn: (row, id, value) => {

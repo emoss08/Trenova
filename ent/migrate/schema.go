@@ -658,7 +658,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
-		{Name: "name", Type: field.TypeString, Size: 50},
+		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "cost_per_mile", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
 		{Name: "equipment_class", Type: field.TypeEnum, Enums: []string{"Undefined", "Car", "Van", "Pickup", "Straight", "Tractor", "Trailer", "Container", "Chassis", "Other"}, Default: "Undefined", SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
@@ -695,7 +695,7 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "equipmenttype_name_organization_id",
+				Name:    "equipmenttype_code_organization_id",
 				Unique:  true,
 				Columns: []*schema.Column{EquipmentTypesColumns[5], EquipmentTypesColumns[19]},
 			},

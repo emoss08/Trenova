@@ -807,18 +807,18 @@ func init() {
 	equipmenttypeDescVersion := equipmenttypeMixinFields0[5].Descriptor()
 	// equipmenttype.DefaultVersion holds the default value on creation for the version field.
 	equipmenttype.DefaultVersion = equipmenttypeDescVersion.Default.(int)
-	// equipmenttypeDescName is the schema descriptor for name field.
-	equipmenttypeDescName := equipmenttypeFields[1].Descriptor()
-	// equipmenttype.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	equipmenttype.NameValidator = func() func(string) error {
-		validators := equipmenttypeDescName.Validators
+	// equipmenttypeDescCode is the schema descriptor for code field.
+	equipmenttypeDescCode := equipmenttypeFields[1].Descriptor()
+	// equipmenttype.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	equipmenttype.CodeValidator = func() func(string) error {
+		validators := equipmenttypeDescCode.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
 		}
-		return func(name string) error {
+		return func(code string) error {
 			for _, fn := range fns {
-				if err := fn(name); err != nil {
+				if err := fn(code); err != nil {
 					return err
 				}
 			}

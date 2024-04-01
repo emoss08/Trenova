@@ -16832,7 +16832,7 @@ type EquipmentTypeMutation struct {
 	version              *int
 	addversion           *int
 	status               *equipmenttype.Status
-	name                 *string
+	code                 *string
 	description          *string
 	cost_per_mile        *float64
 	addcost_per_mile     *float64
@@ -17203,40 +17203,40 @@ func (m *EquipmentTypeMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetName sets the "name" field.
-func (m *EquipmentTypeMutation) SetName(s string) {
-	m.name = &s
+// SetCode sets the "code" field.
+func (m *EquipmentTypeMutation) SetCode(s string) {
+	m.code = &s
 }
 
-// Name returns the value of the "name" field in the mutation.
-func (m *EquipmentTypeMutation) Name() (r string, exists bool) {
-	v := m.name
+// Code returns the value of the "code" field in the mutation.
+func (m *EquipmentTypeMutation) Code() (r string, exists bool) {
+	v := m.code
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the EquipmentType entity.
+// OldCode returns the old "code" field's value of the EquipmentType entity.
 // If the EquipmentType object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EquipmentTypeMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *EquipmentTypeMutation) OldCode(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
+		return v, errors.New("OldCode requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
 	}
-	return oldValue.Name, nil
+	return oldValue.Code, nil
 }
 
-// ResetName resets all changes to the "name" field.
-func (m *EquipmentTypeMutation) ResetName() {
-	m.name = nil
+// ResetCode resets all changes to the "code" field.
+func (m *EquipmentTypeMutation) ResetCode() {
+	m.code = nil
 }
 
 // SetDescription sets the "description" field.
@@ -18076,8 +18076,8 @@ func (m *EquipmentTypeMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, equipmenttype.FieldStatus)
 	}
-	if m.name != nil {
-		fields = append(fields, equipmenttype.FieldName)
+	if m.code != nil {
+		fields = append(fields, equipmenttype.FieldCode)
 	}
 	if m.description != nil {
 		fields = append(fields, equipmenttype.FieldDescription)
@@ -18135,8 +18135,8 @@ func (m *EquipmentTypeMutation) Field(name string) (ent.Value, bool) {
 		return m.Version()
 	case equipmenttype.FieldStatus:
 		return m.Status()
-	case equipmenttype.FieldName:
-		return m.Name()
+	case equipmenttype.FieldCode:
+		return m.Code()
 	case equipmenttype.FieldDescription:
 		return m.Description()
 	case equipmenttype.FieldCostPerMile:
@@ -18182,8 +18182,8 @@ func (m *EquipmentTypeMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldVersion(ctx)
 	case equipmenttype.FieldStatus:
 		return m.OldStatus(ctx)
-	case equipmenttype.FieldName:
-		return m.OldName(ctx)
+	case equipmenttype.FieldCode:
+		return m.OldCode(ctx)
 	case equipmenttype.FieldDescription:
 		return m.OldDescription(ctx)
 	case equipmenttype.FieldCostPerMile:
@@ -18259,12 +18259,12 @@ func (m *EquipmentTypeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
-	case equipmenttype.FieldName:
+	case equipmenttype.FieldCode:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetName(v)
+		m.SetCode(v)
 		return nil
 	case equipmenttype.FieldDescription:
 		v, ok := value.(string)
@@ -18591,8 +18591,8 @@ func (m *EquipmentTypeMutation) ResetField(name string) error {
 	case equipmenttype.FieldStatus:
 		m.ResetStatus()
 		return nil
-	case equipmenttype.FieldName:
-		m.ResetName()
+	case equipmenttype.FieldCode:
+		m.ResetCode()
 		return nil
 	case equipmenttype.FieldDescription:
 		m.ResetDescription()

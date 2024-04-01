@@ -435,7 +435,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			equipmenttype.FieldUpdatedAt:       {Type: field.TypeTime, Column: equipmenttype.FieldUpdatedAt},
 			equipmenttype.FieldVersion:         {Type: field.TypeInt, Column: equipmenttype.FieldVersion},
 			equipmenttype.FieldStatus:          {Type: field.TypeEnum, Column: equipmenttype.FieldStatus},
-			equipmenttype.FieldName:            {Type: field.TypeString, Column: equipmenttype.FieldName},
+			equipmenttype.FieldCode:            {Type: field.TypeString, Column: equipmenttype.FieldCode},
 			equipmenttype.FieldDescription:     {Type: field.TypeString, Column: equipmenttype.FieldDescription},
 			equipmenttype.FieldCostPerMile:     {Type: field.TypeFloat64, Column: equipmenttype.FieldCostPerMile},
 			equipmenttype.FieldEquipmentClass:  {Type: field.TypeEnum, Column: equipmenttype.FieldEquipmentClass},
@@ -4677,9 +4677,9 @@ func (f *EquipmentTypeFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(equipmenttype.FieldStatus))
 }
 
-// WhereName applies the entql string predicate on the name field.
-func (f *EquipmentTypeFilter) WhereName(p entql.StringP) {
-	f.Where(p.Field(equipmenttype.FieldName))
+// WhereCode applies the entql string predicate on the code field.
+func (f *EquipmentTypeFilter) WhereCode(p entql.StringP) {
+	f.Where(p.Field(equipmenttype.FieldCode))
 }
 
 // WhereDescription applies the entql string predicate on the description field.

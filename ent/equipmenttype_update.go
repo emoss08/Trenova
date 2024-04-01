@@ -70,16 +70,16 @@ func (etu *EquipmentTypeUpdate) SetNillableStatus(e *equipmenttype.Status) *Equi
 	return etu
 }
 
-// SetName sets the "name" field.
-func (etu *EquipmentTypeUpdate) SetName(s string) *EquipmentTypeUpdate {
-	etu.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (etu *EquipmentTypeUpdate) SetCode(s string) *EquipmentTypeUpdate {
+	etu.mutation.SetCode(s)
 	return etu
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (etu *EquipmentTypeUpdate) SetNillableName(s *string) *EquipmentTypeUpdate {
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (etu *EquipmentTypeUpdate) SetNillableCode(s *string) *EquipmentTypeUpdate {
 	if s != nil {
-		etu.SetName(*s)
+		etu.SetCode(*s)
 	}
 	return etu
 }
@@ -416,9 +416,9 @@ func (etu *EquipmentTypeUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.status": %w`, err)}
 		}
 	}
-	if v, ok := etu.mutation.Name(); ok {
-		if err := equipmenttype.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.name": %w`, err)}
+	if v, ok := etu.mutation.Code(); ok {
+		if err := equipmenttype.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.code": %w`, err)}
 		}
 	}
 	if v, ok := etu.mutation.EquipmentClass(); ok {
@@ -465,8 +465,8 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := etu.mutation.Status(); ok {
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := etu.mutation.Name(); ok {
-		_spec.SetField(equipmenttype.FieldName, field.TypeString, value)
+	if value, ok := etu.mutation.Code(); ok {
+		_spec.SetField(equipmenttype.FieldCode, field.TypeString, value)
 	}
 	if value, ok := etu.mutation.Description(); ok {
 		_spec.SetField(equipmenttype.FieldDescription, field.TypeString, value)
@@ -621,16 +621,16 @@ func (etuo *EquipmentTypeUpdateOne) SetNillableStatus(e *equipmenttype.Status) *
 	return etuo
 }
 
-// SetName sets the "name" field.
-func (etuo *EquipmentTypeUpdateOne) SetName(s string) *EquipmentTypeUpdateOne {
-	etuo.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (etuo *EquipmentTypeUpdateOne) SetCode(s string) *EquipmentTypeUpdateOne {
+	etuo.mutation.SetCode(s)
 	return etuo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (etuo *EquipmentTypeUpdateOne) SetNillableName(s *string) *EquipmentTypeUpdateOne {
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (etuo *EquipmentTypeUpdateOne) SetNillableCode(s *string) *EquipmentTypeUpdateOne {
 	if s != nil {
-		etuo.SetName(*s)
+		etuo.SetCode(*s)
 	}
 	return etuo
 }
@@ -980,9 +980,9 @@ func (etuo *EquipmentTypeUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.status": %w`, err)}
 		}
 	}
-	if v, ok := etuo.mutation.Name(); ok {
-		if err := equipmenttype.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.name": %w`, err)}
+	if v, ok := etuo.mutation.Code(); ok {
+		if err := equipmenttype.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "EquipmentType.code": %w`, err)}
 		}
 	}
 	if v, ok := etuo.mutation.EquipmentClass(); ok {
@@ -1046,8 +1046,8 @@ func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Equipme
 	if value, ok := etuo.mutation.Status(); ok {
 		_spec.SetField(equipmenttype.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := etuo.mutation.Name(); ok {
-		_spec.SetField(equipmenttype.FieldName, field.TypeString, value)
+	if value, ok := etuo.mutation.Code(); ok {
+		_spec.SetField(equipmenttype.FieldCode, field.TypeString, value)
 	}
 	if value, ok := etuo.mutation.Description(); ok {
 		_spec.SetField(equipmenttype.FieldDescription, field.TypeString, value)

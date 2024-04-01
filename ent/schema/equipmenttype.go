@@ -19,10 +19,14 @@ func (EquipmentType) Fields() []ent.Field {
 			Values("A", "I").
 			Default("A").
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
-		field.String("name").
+		field.String("code").
 			NotEmpty().
-			MaxLen(50).
-			StructTag(`json:"name" validate:"required,max=50"`),
+			MaxLen(10).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(10)",
+				dialect.SQLite:   "VARCHAR(10)",
+			}).
+			StructTag(`json:"code" validate:"required,max=50"`),
 		field.Text("description").
 			Optional().
 			StructTag(`json:"description" validate:"omitempty"`),
@@ -118,8 +122,8 @@ func (EquipmentType) Mixin() []ent.Mixin {
 // Indexes of the EquipmentType.
 func (EquipmentType) Indexes() []ent.Index {
 	return []ent.Index{
-		// Ensure the name is unique for the organization.
-		index.Fields("name", "organization_id").
+		// Ensure the code is unique for the organization.
+		index.Fields("code", "organization_id").
 			Unique(),
 	}
 }

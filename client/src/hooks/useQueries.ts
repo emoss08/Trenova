@@ -341,7 +341,7 @@ export function useEquipmentTypes(limit: number = 100, show?: boolean) {
   const selectEquipmentType =
     (data as EquipmentType[])?.map((item: EquipmentType) => ({
       value: item.id,
-      label: item.name,
+      label: item.code,
     })) || [];
 
   return { selectEquipmentType, isLoading, isError, isFetched };

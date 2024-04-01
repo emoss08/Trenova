@@ -61,13 +61,13 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
           <InputField
             control={control}
             rules={{ required: true }}
-            name="name"
-            label="Name"
+            name="code"
+            label="Code"
             autoCapitalize="none"
             autoCorrect="off"
             type="text"
-            placeholder="Name"
-            description="Name for the Equipment Type"
+            placeholder="Code"
+            description="Code for the Equipment Type"
           />
         </FormControl>
       </FormGroup>
@@ -194,7 +194,7 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
     resolver: yupResolver(equipmentTypeSchema),
     defaultValues: {
       status: "A",
-      name: "",
+      code: "",
       description: "",
       costPerMile: undefined,
       equipmentClass: "Undefined",

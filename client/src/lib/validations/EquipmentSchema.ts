@@ -43,9 +43,9 @@ Yup.addMethod<StringSchema>(
 export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    name: Yup.string()
-      .required("Name is required")
-      .max(50, "Name cannot be more than 50 characters"),
+    code: Yup.string()
+      .required("Code is required")
+      .max(10, "Code cannot be more than 50 characters"),
     description: Yup.string(),
     costPerMile: Yup.number().transform((value) =>
       Number.isNaN(value) ? undefined : value,

@@ -28,8 +28,8 @@ const (
 	FieldVersion = "version"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
+	// FieldCode holds the string denoting the code field in the database.
+	FieldCode = "code"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldCostPerMile holds the string denoting the cost_per_mile field in the database.
@@ -85,7 +85,7 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldVersion,
 	FieldStatus,
-	FieldName,
+	FieldCode,
 	FieldDescription,
 	FieldCostPerMile,
 	FieldEquipmentClass,
@@ -119,8 +119,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	CodeValidator func(string) error
 	// DefaultExemptFromTolls holds the default value on creation for the "exempt_from_tolls" field.
 	DefaultExemptFromTolls bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -225,9 +225,9 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
+// ByCode orders the results by the code field.
+func ByCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCode, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.
