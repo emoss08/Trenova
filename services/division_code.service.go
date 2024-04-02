@@ -105,7 +105,7 @@ func (r *DivisionCodeOps) CreateDivisionCode(ctx context.Context, newEntity ent.
 	return createdEntity, nil
 }
 
-// UpdateDivisionCode updates a divison code.
+// UpdateDivisionCode updates a division code.
 func (r *DivisionCodeOps) UpdateDivisionCode(ctx context.Context, entity ent.DivisionCode) (*ent.DivisionCode, error) {
 	// Begin a new transaction
 	tx, err := r.client.Tx(ctx)
