@@ -243,7 +243,7 @@ func (r *WorkerOps) UpdateWorker(entity WorkerUpdateRequest) (*ent.Worker, error
 		}
 	}
 
-	// If the worker manager is nil, clear the assocation.
+	// If the worker manager is nil, clear the association.
 	if entity.ManagerID == nil {
 		updateOp = updateOp.ClearManager()
 	}

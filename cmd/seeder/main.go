@@ -77,7 +77,7 @@ func main() {
 
 	// Check if the organization already exists.
 	org, err := client.Organization.Query().Where(organization.And(
-		organization.NameEQ("Trenova Transporation"),
+		organization.NameEQ("Trenova Transportation"),
 		organization.ScacCodeEQ("TREN"),
 	)).Only(ctx)
 	switch {
@@ -85,7 +85,7 @@ func main() {
 	case ent.IsNotFound(err):
 		org, err = client.Organization.
 			Create().
-			SetName("Trenova Transporation").
+			SetName("Trenova Transportation").
 			SetScacCode("TREN").
 			SetBusinessUnit(bu).
 			Save(ctx)
