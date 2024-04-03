@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
+	"github.com/emoss08/trenova/ent/trailer"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -151,6 +152,7 @@ func checkColumn(table, column string) error {
 			tablechangealert.Table:             tablechangealert.ValidColumn,
 			tag.Table:                          tag.ValidColumn,
 			tractor.Table:                      tractor.ValidColumn,
+			trailer.Table:                      trailer.ValidColumn,
 			usstate.Table:                      usstate.ValidColumn,
 			user.Table:                         user.ValidColumn,
 			userfavorite.Table:                 userfavorite.ValidColumn,

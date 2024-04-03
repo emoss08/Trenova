@@ -496,7 +496,7 @@ export function useUSStates(show?: boolean, limit?: number) {
   // Create an array of objects with value and label for each state
   const selectUSStates =
     (data as USStates[])?.map((state) => ({
-      value: state.abbreviation,
+      value: state.id,
       label: state.name,
     })) || [];
 

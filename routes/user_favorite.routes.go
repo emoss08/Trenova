@@ -5,7 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// RegisterUserFavoritesRoutes registers the user favorites routes
+// RegisterUserFavoritesRoutes registers the user favorites routes.
 func registerUserFavoritesRoutes(r chi.Router) {
 	r.Route("/user-favorites", func(r chi.Router) {
 		r.Get("/", controllers.GetUserFavorites)

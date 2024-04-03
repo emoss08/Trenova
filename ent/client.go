@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
+	"github.com/emoss08/trenova/ent/trailer"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -140,6 +141,8 @@ type Client struct {
 	Tag *TagClient
 	// Tractor is the client for interacting with the Tractor builders.
 	Tractor *TractorClient
+	// Trailer is the client for interacting with the Trailer builders.
+	Trailer *TrailerClient
 	// UsState is the client for interacting with the UsState builders.
 	UsState *UsStateClient
 	// User is the client for interacting with the User builders.
@@ -201,6 +204,7 @@ func (c *Client) init() {
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
 	c.Tag = NewTagClient(c.config)
 	c.Tractor = NewTractorClient(c.config)
+	c.Trailer = NewTrailerClient(c.config)
 	c.UsState = NewUsStateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserFavorite = NewUserFavoriteClient(c.config)
@@ -336,6 +340,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
 		Tag:                          NewTagClient(cfg),
 		Tractor:                      NewTractorClient(cfg),
+		Trailer:                      NewTrailerClient(cfg),
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
@@ -398,6 +403,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
 		Tag:                          NewTagClient(cfg),
 		Tractor:                      NewTractorClient(cfg),
+		Trailer:                      NewTrailerClient(cfg),
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
@@ -442,8 +448,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
 		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
 		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
-		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState,
+		c.User, c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact,
+		c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -461,8 +468,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
 		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
 		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
-		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState,
+		c.User, c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact,
+		c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -543,6 +551,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Tag.mutate(ctx, m)
 	case *TractorMutation:
 		return c.Tractor.mutate(ctx, m)
+	case *TrailerMutation:
+		return c.Trailer.mutate(ctx, m)
 	case *UsStateMutation:
 		return c.UsState.mutate(ctx, m)
 	case *UserMutation:
@@ -6939,6 +6949,252 @@ func (c *TractorClient) mutate(ctx context.Context, m *TractorMutation) (Value, 
 	}
 }
 
+// TrailerClient is a client for the Trailer schema.
+type TrailerClient struct {
+	config
+}
+
+// NewTrailerClient returns a client for the Trailer from the given config.
+func NewTrailerClient(c config) *TrailerClient {
+	return &TrailerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `trailer.Hooks(f(g(h())))`.
+func (c *TrailerClient) Use(hooks ...Hook) {
+	c.hooks.Trailer = append(c.hooks.Trailer, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `trailer.Intercept(f(g(h())))`.
+func (c *TrailerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Trailer = append(c.inters.Trailer, interceptors...)
+}
+
+// Create returns a builder for creating a Trailer entity.
+func (c *TrailerClient) Create() *TrailerCreate {
+	mutation := newTrailerMutation(c.config, OpCreate)
+	return &TrailerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Trailer entities.
+func (c *TrailerClient) CreateBulk(builders ...*TrailerCreate) *TrailerCreateBulk {
+	return &TrailerCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TrailerClient) MapCreateBulk(slice any, setFunc func(*TrailerCreate, int)) *TrailerCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TrailerCreateBulk{err: fmt.Errorf("calling to TrailerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TrailerCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TrailerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Trailer.
+func (c *TrailerClient) Update() *TrailerUpdate {
+	mutation := newTrailerMutation(c.config, OpUpdate)
+	return &TrailerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TrailerClient) UpdateOne(t *Trailer) *TrailerUpdateOne {
+	mutation := newTrailerMutation(c.config, OpUpdateOne, withTrailer(t))
+	return &TrailerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TrailerClient) UpdateOneID(id uuid.UUID) *TrailerUpdateOne {
+	mutation := newTrailerMutation(c.config, OpUpdateOne, withTrailerID(id))
+	return &TrailerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Trailer.
+func (c *TrailerClient) Delete() *TrailerDelete {
+	mutation := newTrailerMutation(c.config, OpDelete)
+	return &TrailerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TrailerClient) DeleteOne(t *Trailer) *TrailerDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TrailerClient) DeleteOneID(id uuid.UUID) *TrailerDeleteOne {
+	builder := c.Delete().Where(trailer.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TrailerDeleteOne{builder}
+}
+
+// Query returns a query builder for Trailer.
+func (c *TrailerClient) Query() *TrailerQuery {
+	return &TrailerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTrailer},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Trailer entity by its id.
+func (c *TrailerClient) Get(ctx context.Context, id uuid.UUID) (*Trailer, error) {
+	return c.Query().Where(trailer.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TrailerClient) GetX(ctx context.Context, id uuid.UUID) *Trailer {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Trailer.
+func (c *TrailerClient) QueryBusinessUnit(t *Trailer) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.BusinessUnitTable, trailer.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Trailer.
+func (c *TrailerClient) QueryOrganization(t *Trailer) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.OrganizationTable, trailer.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEquipmentType queries the equipment_type edge of a Trailer.
+func (c *TrailerClient) QueryEquipmentType(t *Trailer) *EquipmentTypeQuery {
+	query := (&EquipmentTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(equipmenttype.Table, equipmenttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.EquipmentTypeTable, trailer.EquipmentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEquipmentManufacturer queries the equipment_manufacturer edge of a Trailer.
+func (c *TrailerClient) QueryEquipmentManufacturer(t *Trailer) *EquipmentManufactuerQuery {
+	query := (&EquipmentManufactuerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(equipmentmanufactuer.Table, equipmentmanufactuer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.EquipmentManufacturerTable, trailer.EquipmentManufacturerColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryState queries the state edge of a Trailer.
+func (c *TrailerClient) QueryState(t *Trailer) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.StateTable, trailer.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRegistrationState queries the registration_state edge of a Trailer.
+func (c *TrailerClient) QueryRegistrationState(t *Trailer) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.RegistrationStateTable, trailer.RegistrationStateColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFleetCode queries the fleet_code edge of a Trailer.
+func (c *TrailerClient) QueryFleetCode(t *Trailer) *FleetCodeQuery {
+	query := (&FleetCodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(trailer.Table, trailer.FieldID, id),
+			sqlgraph.To(fleetcode.Table, fleetcode.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, trailer.FleetCodeTable, trailer.FleetCodeColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TrailerClient) Hooks() []Hook {
+	hooks := c.hooks.Trailer
+	return append(hooks[:len(hooks):len(hooks)], trailer.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *TrailerClient) Interceptors() []Interceptor {
+	return c.inters.Trailer
+}
+
+func (c *TrailerClient) mutate(ctx context.Context, m *TrailerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TrailerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TrailerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TrailerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TrailerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Trailer mutation op: %q", m.Op())
+	}
+}
+
 // UsStateClient is a client for the UsState schema.
 type UsStateClient struct {
 	config
@@ -8313,7 +8569,7 @@ type (
 		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
 		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
 		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite, Worker,
+		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite, Worker,
 		WorkerComment, WorkerContact, WorkerProfile []ent.Hook
 	}
 	inters struct {
@@ -8324,7 +8580,7 @@ type (
 		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
 		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
 		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, Tractor, UsState, User, UserFavorite, Worker,
+		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite, Worker,
 		WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
 	}
 )

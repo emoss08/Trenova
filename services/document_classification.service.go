@@ -155,7 +155,6 @@ func (r *DocumentClassificationOps) UpdateDocumentClassification(ctx context.Con
 		SetDescription(entity.Description).
 		SetVersion(entity.Version + 1) // Increment the version
 
-
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {

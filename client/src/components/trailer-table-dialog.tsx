@@ -14,7 +14,6 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -34,7 +33,7 @@ import {
   useFleetCodes,
   useUSStates,
 } from "@/hooks/useQueries";
-import { cleanObject, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
   equipmentStatusChoices,
@@ -107,7 +106,7 @@ export function TrailerForm({
       <FormGroup>
         <FormControl>
           <SelectInput
-            name="equipmentType"
+            name="equipmentTypeId"
             rules={{ required: true }}
             control={control}
             label="Equip. Type"
@@ -124,7 +123,7 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="manufacturer"
+            name="equipmentManufacturerId"
             control={control}
             label="Manufacturer"
             options={selectEquipManufacturers}
@@ -136,17 +135,6 @@ export function TrailerForm({
             hasPopoutWindow
             popoutLink="/equipment/equipment-manufacturers/"
             popoutLinkLabel="Equipment Manufacturer"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="make"
-            label="Make"
-            placeholder="Make"
-            autoCapitalize="none"
-            autoCorrect="off"
-            description="Specify the manufacturer of the trailer."
           />
         </FormControl>
         <FormControl>
@@ -175,7 +163,7 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <InputField
-            name="vinNumber"
+            name="vin"
             control={control}
             label="Vin Number"
             placeholder="Vin Number"
@@ -186,8 +174,9 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="fleetCode"
+            name="fleetCodeId"
             control={control}
+            rules={{ required: true }}
             label="Fleet Code"
             options={selectFleetCodes}
             isFetchError={isFleetCodeError}
@@ -197,20 +186,6 @@ export function TrailerForm({
             hasPopoutWindow
             popoutLink="/dispatch/fleet-codes/"
             popoutLinkLabel="Fleet Code"
-            isClearable
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="state"
-            control={control}
-            label="State"
-            options={selectUSStates}
-            isFetchError={isStateError}
-            isLoading={isStatesLoading}
-            placeholder="Select State"
-            description="Choose the state where the trailer is primarily operated or registered.."
-            isClearable={false}
           />
         </FormControl>
         <FormControl>
@@ -226,7 +201,7 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="licensePlateState"
+            name="stateId"
             control={control}
             label="License Plate State"
             options={selectUSStates}
@@ -238,7 +213,7 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <DatepickerField
-            name="lastInspection"
+            name="lastInspectionDate"
             control={control}
             label="Last Inspection"
             placeholder="Last Inspection Date"
@@ -258,7 +233,7 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="registrationState"
+            name="registrationStateId"
             control={control}
             label="Registration State"
             options={selectUSStates}
@@ -270,19 +245,11 @@ export function TrailerForm({
         </FormControl>
         <FormControl>
           <DatepickerField
-            name="registrationExpiration"
+            name="registrationExpirationDate"
             control={control}
             placeholder="Registration Expiration Date"
             label="Registration Expiration"
             description="Choose the date when the current registration of the trailer expires."
-          />
-        </FormControl>
-        <FormControl className="mt-5">
-          <CheckboxInput
-            control={control}
-            label="Is Leased?"
-            name="isLeased"
-            description="Indicate whether the trailer is leased."
           />
         </FormControl>
       </FormGroup>
@@ -298,20 +265,18 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       code: "",
       status: "Available",
-      equipmentType: "",
-      manufacturer: "",
-      make: "",
+      equipmentTypeId: "",
+      equipmentManufacturerId: "",
       model: "",
       year: undefined,
-      vinNumber: "",
-      fleetCode: "",
+      vin: "",
+      fleetCodeId: "",
       licensePlateNumber: "",
-      lastInspection: undefined,
-      state: "",
-      isLeased: false,
+      lastInspectionDate: undefined,
+      stateId: "",
       registrationNumber: "",
-      registrationState: "",
-      registrationExpiration: "",
+      registrationStateId: "",
+      registrationExpirationDate: "",
     },
   });
 
@@ -331,10 +296,8 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
   );
 
   const onSubmit = (values: FormValues) => {
-    const cleanedValues = cleanObject(values);
-
     setIsSubmitting(true);
-    mutation.mutate(cleanedValues);
+    mutation.mutate(values);
   };
 
   return (

@@ -100,34 +100,37 @@ export interface Trailer extends BaseModel {
   id: string;
   code: string;
   status: EquipmentStatus;
-  equipmentType: string;
-  manufacturer?: string;
-  make?: string;
+  equipmentTypeId: string;
+  equipmentManufacturerId?: string | null;
   model?: string;
-  year?: number;
-  vinNumber?: string;
-  fleetCode?: string;
-  state?: string;
+  year?: number | null;
+  vin?: string;
+  fleetCodeId: string;
+  stateId?: string | null;
   licensePlateNumber?: string;
-  licensePlateState?: string;
-  lastInspection?: string;
+  lastInspectionDate?: string;
   registrationNumber?: string;
-  registrationState?: string;
-  registrationExpiration?: string;
-  isLeased: boolean;
-  timesUsed: number;
-  equipTypeName: string;
+  registrationStateId?: string | null;
+  registrationExpirationDate?: string | null;
+  edges?: {
+    equipmentType?: EquipmentType;
+    equipmentManufacturer?: EquipmentManufacturer;
+    primaryWorker?: Worker;
+    secondaryWorker?: Worker;
+    fleetCode?: FleetCode;
+  };
 }
 
 export type TrailerFormValues = Omit<
   Trailer,
   | "id"
-  | "timesUsed"
+  | "organizationId"
+  | "businessUnitId"
+  | "version"
+  | "edges"
   | "equipTypeName"
-  | "organization"
-  | "businessUnit"
-  | "created"
-  | "modified"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 export interface Tractor extends BaseModel {

@@ -75,27 +75,31 @@ const columns: ColumnDef<Trailer>[] = [
     },
   },
   {
-    accessorKey: "equipTypeName",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Equipment Type" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+    accessorFn: (row) => `${row.edges?.equipmentType?.code}`,
+    header: "Equipment Type",
+    cell: ({ row }) => {
+      if (row.original.edges?.equipmentType?.color) {
+        return (
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{
+                backgroundColor: row.original.edges?.equipmentType?.color,
+              }}
+            />
+            {row.original.edges?.equipmentType?.code}
+          </div>
+        );
+      } else {
+        return row.original.edges?.equipmentType?.code;
+      }
     },
   },
   {
-    accessorKey: "timesUsed",
-    header: "Times Used",
-    cell: ({ row }) =>
-      row.original.timesUsed === 0
-        ? "Never Used"
-        : `Used ${row.original.timesUsed} times`,
-  },
-  {
-    accessorKey: "lastInspection",
+    accessorKey: "lastInspectionDate",
     header: "Last Inspection Date",
     cell: ({ row }) => (
-      <LastInspectionDate lastInspection={row.getValue("lastInspection")} />
+      <LastInspectionDate lastInspection={row.getValue("lastInspectionDate")} />
     ),
   },
 ];

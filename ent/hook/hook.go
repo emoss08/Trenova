@@ -441,6 +441,18 @@ func (f TractorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TractorMutation", m)
 }
 
+// The TrailerFunc type is an adapter to allow the use of ordinary
+// function as Trailer mutator.
+type TrailerFunc func(context.Context, *ent.TrailerMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TrailerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TrailerMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TrailerMutation", m)
+}
+
 // The UsStateFunc type is an adapter to allow the use of ordinary
 // function as UsState mutator.
 type UsStateFunc func(context.Context, *ent.UsStateMutation) (ent.Value, error)

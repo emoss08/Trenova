@@ -27,7 +27,7 @@ func NewCustomerOps() *CustomerOps {
 	}
 }
 
-// GetCustomer gets the customer for an organization.
+// GetCustomers gets the customer for an organization.
 func (r *CustomerOps) GetCustomers(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.Customer, int, error) {
 	entityCount, countErr := r.client.Customer.Query().Where(
 		customer.HasOrganizationWith(

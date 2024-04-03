@@ -1512,6 +1512,86 @@ var (
 			},
 		},
 	}
+	// TrailersColumns holds the columns for the "trailers" table.
+	TrailersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "code", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
+		{Name: "vin", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "model", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "year", Type: field.TypeInt16, Nullable: true},
+		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "last_inspection_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "registration_number", Type: field.TypeString, Nullable: true},
+		{Name: "registration_expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "equipment_type_id", Type: field.TypeUUID},
+		{Name: "equipment_manufacturer_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "registration_state_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "fleet_code_id", Type: field.TypeUUID},
+	}
+	// TrailersTable holds the schema information for the "trailers" table.
+	TrailersTable = &schema.Table{
+		Name:       "trailers",
+		Columns:    TrailersColumns,
+		PrimaryKey: []*schema.Column{TrailersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "trailers_business_units_business_unit",
+				Columns:    []*schema.Column{TrailersColumns[13]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_organizations_organization",
+				Columns:    []*schema.Column{TrailersColumns[14]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_equipment_types_equipment_type",
+				Columns:    []*schema.Column{TrailersColumns[15]},
+				RefColumns: []*schema.Column{EquipmentTypesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_equipment_manufactuers_equipment_manufacturer",
+				Columns:    []*schema.Column{TrailersColumns[16]},
+				RefColumns: []*schema.Column{EquipmentManufactuersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_us_states_state",
+				Columns:    []*schema.Column{TrailersColumns[17]},
+				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_us_states_registration_state",
+				Columns:    []*schema.Column{TrailersColumns[18]},
+				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "trailers_fleet_codes_fleet_code",
+				Columns:    []*schema.Column{TrailersColumns[19]},
+				RefColumns: []*schema.Column{FleetCodesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "trailer_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{TrailersColumns[4], TrailersColumns[14]},
+			},
+		},
+	}
 	// UsStatesColumns holds the columns for the "us_states" table.
 	UsStatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1887,6 +1967,7 @@ var (
 		TableChangeAlertsTable,
 		TagsTable,
 		TractorsTable,
+		TrailersTable,
 		UsStatesTable,
 		UsersTable,
 		UserFavoritesTable,
@@ -1985,6 +2066,13 @@ func init() {
 	TractorsTable.ForeignKeys[5].RefTable = FleetCodesTable
 	TractorsTable.ForeignKeys[6].RefTable = WorkersTable
 	TractorsTable.ForeignKeys[7].RefTable = WorkersTable
+	TrailersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	TrailersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	TrailersTable.ForeignKeys[2].RefTable = EquipmentTypesTable
+	TrailersTable.ForeignKeys[3].RefTable = EquipmentManufactuersTable
+	TrailersTable.ForeignKeys[4].RefTable = UsStatesTable
+	TrailersTable.ForeignKeys[5].RefTable = UsStatesTable
+	TrailersTable.ForeignKeys[6].RefTable = FleetCodesTable
 	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
