@@ -16,21 +16,21 @@ import (
 )
 
 type AccessorialChargeOps struct {
-	client *ent.Client
-	logger *logrus.Logger
+	Client *ent.Client
+	Logger *logrus.Logger
 }
 
 // NewAccessorialChargeOps creates a new accessorial charge service.
 func NewAccessorialChargeOps() *AccessorialChargeOps {
 	return &AccessorialChargeOps{
-		client: database.GetClient(),
-		logger: logger.GetLogger(),
+		Client: database.GetClient(),
+		Logger: logger.GetLogger(),
 	}
 }
 
 // GetAccessorialCharges gets the accessorial charges for an organization.
 func (r *AccessorialChargeOps) GetAccessorialCharges(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.AccessorialCharge, int, error) {
-	entityCount, countErr := r.client.AccessorialCharge.Query().Where(
+	entityCount, countErr := r.Client.AccessorialCharge.Query().Where(
 		accessorialcharge.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
@@ -41,7 +41,7 @@ func (r *AccessorialChargeOps) GetAccessorialCharges(ctx context.Context, limit,
 		return nil, 0, countErr
 	}
 
-	entities, err := r.client.AccessorialCharge.Query().
+	entities, err := r.Client.AccessorialCharge.Query().
 		Limit(limit).
 		Offset(offset).
 		Where(
@@ -60,10 +60,10 @@ func (r *AccessorialChargeOps) GetAccessorialCharges(ctx context.Context, limit,
 // CreateAccessorialCharge creates a new accessorial charge.
 func (r *AccessorialChargeOps) CreateAccessorialCharge(ctx context.Context, newEntity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
 	// Begin a new transaction
-	tx, err := r.client.Tx(ctx)
+	tx, err := r.Client.Tx(ctx)
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		r.Logger.WithField("error", wrappedErr).Error("failed to start transaction")
 		return nil, wrappedErr
 	}
 
@@ -72,19 +72,19 @@ func (r *AccessorialChargeOps) CreateAccessorialCharge(ctx context.Context, newE
 		if v := recover(); v != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
 			}
 			panic(v)
 		}
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
 			}
 		} else {
 			if commitErr := tx.Commit(); commitErr != nil {
 				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to commit transaction")
 			}
 		}
 	}()
@@ -109,10 +109,10 @@ func (r *AccessorialChargeOps) CreateAccessorialCharge(ctx context.Context, newE
 // UpdateAccessorialCharge updates a accessorial charge.
 func (r *AccessorialChargeOps) UpdateAccessorialCharge(ctx context.Context, entity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
 	// Begin a new transaction
-	tx, err := r.client.Tx(ctx)
+	tx, err := r.Client.Tx(ctx)
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
+		r.Logger.WithField("error", wrappedErr).Error("failed to start transaction")
 		return nil, wrappedErr
 	}
 
@@ -121,19 +121,19 @@ func (r *AccessorialChargeOps) UpdateAccessorialCharge(ctx context.Context, enti
 		if v := recover(); v != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
 			}
 			panic(v)
 		}
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
 			}
 		} else {
 			if commitErr := tx.Commit(); commitErr != nil {
 				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
+				r.Logger.WithField("error", wrappedErr).Error("failed to commit transaction")
 			}
 		}
 	}()
@@ -141,7 +141,7 @@ func (r *AccessorialChargeOps) UpdateAccessorialCharge(ctx context.Context, enti
 	current, err := tx.AccessorialCharge.Get(ctx, entity.ID)
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
-		r.logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
+		r.Logger.WithField("error", wrappedErr).Error("failed to retrieve requested entity")
 		return nil, wrappedErr
 	}
 

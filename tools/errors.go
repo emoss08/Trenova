@@ -13,8 +13,6 @@ func ResponseWithError(w http.ResponseWriter, statusCode int, data any) {
 	if err != nil {
 		return
 	}
-
-	return
 }
 
 func ResponseWithJSON(w http.ResponseWriter, statusCode int, data any) {

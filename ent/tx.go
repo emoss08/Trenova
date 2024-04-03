@@ -86,6 +86,8 @@ type Tx struct {
 	Tag *TagClient
 	// Tractor is the client for interacting with the Tractor builders.
 	Tractor *TractorClient
+	// Trailer is the client for interacting with the Trailer builders.
+	Trailer *TrailerClient
 	// UsState is the client for interacting with the UsState builders.
 	UsState *UsStateClient
 	// User is the client for interacting with the User builders.
@@ -267,6 +269,7 @@ func (tx *Tx) init() {
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)
 	tx.Tractor = NewTractorClient(tx.config)
+	tx.Trailer = NewTrailerClient(tx.config)
 	tx.UsState = NewUsStateClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)

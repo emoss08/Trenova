@@ -114,6 +114,9 @@ type Tag func(*sql.Selector)
 // Tractor is the predicate function for tractor builders.
 type Tractor func(*sql.Selector)
 
+// Trailer is the predicate function for trailer builders.
+type Trailer func(*sql.Selector)
+
 // UsState is the predicate function for usstate builders.
 type UsState func(*sql.Selector)
 

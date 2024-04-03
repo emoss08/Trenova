@@ -975,6 +975,30 @@ func (f TractorMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutatio
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.TractorMutation", m)
 }
 
+// The TrailerQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type TrailerQueryRuleFunc func(context.Context, *ent.TrailerQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f TrailerQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.TrailerQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.TrailerQuery", q)
+}
+
+// The TrailerMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type TrailerMutationRuleFunc func(context.Context, *ent.TrailerMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f TrailerMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.TrailerMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.TrailerMutation", m)
+}
+
 // The UsStateQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type UsStateQueryRuleFunc func(context.Context, *ent.UsStateQuery) error
@@ -1250,6 +1274,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.TractorQuery:
 		return q.Filter(), nil
+	case *ent.TrailerQuery:
+		return q.Filter(), nil
 	case *ent.UsStateQuery:
 		return q.Filter(), nil
 	case *ent.UserQuery:
@@ -1342,6 +1368,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.TagMutation:
 		return m.Filter(), nil
 	case *ent.TractorMutation:
+		return m.Filter(), nil
+	case *ent.TrailerMutation:
 		return m.Filter(), nil
 	case *ent.UsStateMutation:
 		return m.Filter(), nil

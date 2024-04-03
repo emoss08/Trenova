@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
+	"github.com/emoss08/trenova/ent/trailer"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -1615,6 +1616,61 @@ func init() {
 	tractorDescID := tractorMixinFields0[0].Descriptor()
 	// tractor.DefaultID holds the default value on creation for the id field.
 	tractor.DefaultID = tractorDescID.Default.(func() uuid.UUID)
+	trailerMixin := schema.Trailer{}.Mixin()
+	trailerHooks := schema.Trailer{}.Hooks()
+	trailer.Hooks[0] = trailerHooks[0]
+	trailerMixinFields0 := trailerMixin[0].Fields()
+	_ = trailerMixinFields0
+	trailerFields := schema.Trailer{}.Fields()
+	_ = trailerFields
+	// trailerDescCreatedAt is the schema descriptor for created_at field.
+	trailerDescCreatedAt := trailerMixinFields0[3].Descriptor()
+	// trailer.DefaultCreatedAt holds the default value on creation for the created_at field.
+	trailer.DefaultCreatedAt = trailerDescCreatedAt.Default.(func() time.Time)
+	// trailerDescUpdatedAt is the schema descriptor for updated_at field.
+	trailerDescUpdatedAt := trailerMixinFields0[4].Descriptor()
+	// trailer.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	trailer.DefaultUpdatedAt = trailerDescUpdatedAt.Default.(func() time.Time)
+	// trailer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	trailer.UpdateDefaultUpdatedAt = trailerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// trailerDescVersion is the schema descriptor for version field.
+	trailerDescVersion := trailerMixinFields0[5].Descriptor()
+	// trailer.DefaultVersion holds the default value on creation for the version field.
+	trailer.DefaultVersion = trailerDescVersion.Default.(int)
+	// trailerDescCode is the schema descriptor for code field.
+	trailerDescCode := trailerFields[0].Descriptor()
+	// trailer.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	trailer.CodeValidator = func() func(string) error {
+		validators := trailerDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// trailerDescModel is the schema descriptor for model field.
+	trailerDescModel := trailerFields[5].Descriptor()
+	// trailer.ModelValidator is a validator for the "model" field. It is called by the builders before save.
+	trailer.ModelValidator = trailerDescModel.Validators[0].(func(string) error)
+	// trailerDescYear is the schema descriptor for year field.
+	trailerDescYear := trailerFields[6].Descriptor()
+	// trailer.YearValidator is a validator for the "year" field. It is called by the builders before save.
+	trailer.YearValidator = trailerDescYear.Validators[0].(func(int16) error)
+	// trailerDescLicensePlateNumber is the schema descriptor for license_plate_number field.
+	trailerDescLicensePlateNumber := trailerFields[7].Descriptor()
+	// trailer.LicensePlateNumberValidator is a validator for the "license_plate_number" field. It is called by the builders before save.
+	trailer.LicensePlateNumberValidator = trailerDescLicensePlateNumber.Validators[0].(func(string) error)
+	// trailerDescID is the schema descriptor for id field.
+	trailerDescID := trailerMixinFields0[0].Descriptor()
+	// trailer.DefaultID holds the default value on creation for the id field.
+	trailer.DefaultID = trailerDescID.Default.(func() uuid.UUID)
 	usstateMixin := schema.UsState{}.Mixin()
 	usstateMixinFields0 := usstateMixin[0].Fields()
 	_ = usstateMixinFields0

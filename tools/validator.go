@@ -149,52 +149,48 @@ func validatePhoneNumber(fl validator.FieldLevel) bool {
 	return phonenumbers.IsValidNumber(num)
 }
 
+// preCompile the regular expression to avoid repeated compilation.
+var fieldErrorRegex = regexp.MustCompile(`field "(.+?)\.(.+?)": (.+)`)
+
 // CreateDBErrorResponse formats a database error into a structured response.
-//
-// This is a little bit of a hack, but it's a good way to handle database errors in a consistent way.
 func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 	var details []types.ValidationErrorDetail
 
-	// Print out the type of the error
-	log.Printf("Error type: %T", err)
-
-	if ent.IsValidationError(err) {
-		re := regexp.MustCompile(`field "(.+?)\.(.+?)": (.+)`)
-		matches := re.FindStringSubmatch(err.Error())
-
-		if len(matches) > 3 {
+	switch {
+	case ent.IsValidationError(err):
+		matches := fieldErrorRegex.FindStringSubmatch(err.Error())
+		if len(matches) >= 4 {
 			field := toCamelCase(matches[2]) // Apply camel casing to the field name.
 			detail := matches[3]
-
 			details = append(details, types.ValidationErrorDetail{
 				Code:   "validationError",
 				Detail: detail,
 				Attr:   field,
 			})
 		}
-		return types.ValidationErrorResponse{
-			Type:   "validationError",
-			Errors: details,
+	case IsValidationError(err):
+		if validationError, ok := err.(*ValidationError); ok {
+			return validationError.Response
 		}
-	} else if IsValidationError(err) {
-		// Directly return the Response from ValidationError
-		validationError := err.(*ValidationError)
-		return validationError.Response
-	} else {
-		// Handle other types of errors
+	default:
+		detail := "An unexpected error occurred"
+		if err != nil {
+			detail = err.Error()
+		}
 		details = append(details, types.ValidationErrorDetail{
 			Code:   "databaseError",
-			Detail: err.Error(),
+			Detail: detail,
 			Attr:   "databaseError",
 		})
-		return types.ValidationErrorResponse{
-			Type:   "databaseError",
-			Errors: details,
-		}
+	}
+
+	return types.ValidationErrorResponse{
+		Type:   "databaseError",
+		Errors: details,
 	}
 }
 
-// toCamelCase converts strings to camel case (handling special cases for your field naming convention)
+// toCamelCase converts strings to camel case (handling special cases for your field naming convention.
 func toCamelCase(s string) string {
 	caser := cases.Title(language.AmericanEnglish)
 

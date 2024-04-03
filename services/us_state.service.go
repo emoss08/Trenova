@@ -12,7 +12,7 @@ type UsStateOps struct {
 	client *ent.Client
 }
 
-// NewUsStateOps creates a new us state service.
+// NewUsStateOps creates a new US State service.
 func NewUsStateOps(ctx context.Context) *UsStateOps {
 	return &UsStateOps{
 		ctx:    ctx,

@@ -165,7 +165,6 @@ func (Tractor) Hooks() []ent.Hook {
 			func(next ent.Mutator) ent.Mutator {
 				// Hook to ensure the primary and seconaary workers are not the same.
 				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
-					// if the primary or the secondary worker is nil, no need to check.
 					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
 						return next.Mutate(ctx, m)
 					}

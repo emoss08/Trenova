@@ -12,19 +12,19 @@ import (
 
 // AccountingControlOps is the service for accounting control settings.
 type AccountingControlOps struct {
-	client *ent.Client
+	Client *ent.Client
 }
 
 // NewAccountingControlOps creates a new accounting control service.
 func NewAccountingControlOps() *AccountingControlOps {
 	return &AccountingControlOps{
-		client: database.GetClient(),
+		Client: database.GetClient(),
 	}
 }
 
 // GetAccountingControl gets the accounting control settings for an organization.
 func (r *AccountingControlOps) GetAccountingControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.AccountingControl, error) {
-	accountingControl, err := r.client.AccountingControl.Query().Where(
+	accountingControl, err := r.Client.AccountingControl.Query().Where(
 		accountingcontrol.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
@@ -39,7 +39,7 @@ func (r *AccountingControlOps) GetAccountingControl(ctx context.Context, orgID, 
 
 // UpdateAccountingControl updates the accounting control settings for an organization.
 func (r *AccountingControlOps) UpdateAccountingControl(ctx context.Context, ac ent.AccountingControl) (*ent.AccountingControl, error) {
-	updatedAC, err := r.client.AccountingControl.
+	updatedAC, err := r.Client.AccountingControl.
 		UpdateOneID(ac.ID).
 		SetRecThreshold(ac.RecThreshold).
 		SetRecThresholdAction(ac.RecThresholdAction).

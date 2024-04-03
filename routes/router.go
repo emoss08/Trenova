@@ -157,6 +157,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Tag Routes
 			registerTagRouter(r)
+
+			// Register Trailer Routes
+			registerTrailerRouter(r)
 		})
 	})
 

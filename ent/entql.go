@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
+	"github.com/emoss08/trenova/ent/trailer"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -56,7 +57,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 43)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 44)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   accessorialcharge.Table,
@@ -922,6 +923,38 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[36] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   trailer.Table,
+			Columns: trailer.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: trailer.FieldID,
+			},
+		},
+		Type: "Trailer",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			trailer.FieldBusinessUnitID:             {Type: field.TypeUUID, Column: trailer.FieldBusinessUnitID},
+			trailer.FieldOrganizationID:             {Type: field.TypeUUID, Column: trailer.FieldOrganizationID},
+			trailer.FieldCreatedAt:                  {Type: field.TypeTime, Column: trailer.FieldCreatedAt},
+			trailer.FieldUpdatedAt:                  {Type: field.TypeTime, Column: trailer.FieldUpdatedAt},
+			trailer.FieldVersion:                    {Type: field.TypeInt, Column: trailer.FieldVersion},
+			trailer.FieldCode:                       {Type: field.TypeString, Column: trailer.FieldCode},
+			trailer.FieldStatus:                     {Type: field.TypeEnum, Column: trailer.FieldStatus},
+			trailer.FieldEquipmentTypeID:            {Type: field.TypeUUID, Column: trailer.FieldEquipmentTypeID},
+			trailer.FieldVin:                        {Type: field.TypeString, Column: trailer.FieldVin},
+			trailer.FieldEquipmentManufacturerID:    {Type: field.TypeUUID, Column: trailer.FieldEquipmentManufacturerID},
+			trailer.FieldModel:                      {Type: field.TypeString, Column: trailer.FieldModel},
+			trailer.FieldYear:                       {Type: field.TypeInt16, Column: trailer.FieldYear},
+			trailer.FieldLicensePlateNumber:         {Type: field.TypeString, Column: trailer.FieldLicensePlateNumber},
+			trailer.FieldStateID:                    {Type: field.TypeUUID, Column: trailer.FieldStateID},
+			trailer.FieldFleetCodeID:                {Type: field.TypeUUID, Column: trailer.FieldFleetCodeID},
+			trailer.FieldLastInspectionDate:         {Type: field.TypeOther, Column: trailer.FieldLastInspectionDate},
+			trailer.FieldRegistrationNumber:         {Type: field.TypeString, Column: trailer.FieldRegistrationNumber},
+			trailer.FieldRegistrationStateID:        {Type: field.TypeUUID, Column: trailer.FieldRegistrationStateID},
+			trailer.FieldRegistrationExpirationDate: {Type: field.TypeOther, Column: trailer.FieldRegistrationExpirationDate},
+		},
+	}
+	graph.Nodes[37] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   usstate.Table,
 			Columns: usstate.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -939,7 +972,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			usstate.FieldCountryIso3:  {Type: field.TypeString, Column: usstate.FieldCountryIso3},
 		},
 	}
-	graph.Nodes[37] = &sqlgraph.Node{
+	graph.Nodes[38] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -969,7 +1002,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldLastLogin:      {Type: field.TypeTime, Column: user.FieldLastLogin},
 		},
 	}
-	graph.Nodes[38] = &sqlgraph.Node{
+	graph.Nodes[39] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userfavorite.Table,
 			Columns: userfavorite.Columns,
@@ -989,7 +1022,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userfavorite.FieldUserID:         {Type: field.TypeUUID, Column: userfavorite.FieldUserID},
 		},
 	}
-	graph.Nodes[39] = &sqlgraph.Node{
+	graph.Nodes[40] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   worker.Table,
 			Columns: worker.Columns,
@@ -1018,7 +1051,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldManagerID:         {Type: field.TypeUUID, Column: worker.FieldManagerID},
 		},
 	}
-	graph.Nodes[40] = &sqlgraph.Node{
+	graph.Nodes[41] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercomment.Table,
 			Columns: workercomment.Columns,
@@ -1040,7 +1073,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldEnteredBy:      {Type: field.TypeUUID, Column: workercomment.FieldEnteredBy},
 		},
 	}
-	graph.Nodes[41] = &sqlgraph.Node{
+	graph.Nodes[42] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercontact.Table,
 			Columns: workercontact.Columns,
@@ -1064,7 +1097,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercontact.FieldIsPrimary:      {Type: field.TypeBool, Column: workercontact.FieldIsPrimary},
 		},
 	}
-	graph.Nodes[42] = &sqlgraph.Node{
+	graph.Nodes[43] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workerprofile.Table,
 			Columns: workerprofile.Columns,
@@ -2282,6 +2315,90 @@ var schemaGraph = func() *sqlgraph.Schema {
 			Bidi:    false,
 		},
 		"Tractor",
+		"FleetCode",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.BusinessUnitTable,
+			Columns: []string{trailer.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.OrganizationTable,
+			Columns: []string{trailer.OrganizationColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"Organization",
+	)
+	graph.MustAddE(
+		"equipment_type",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.EquipmentTypeTable,
+			Columns: []string{trailer.EquipmentTypeColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"EquipmentType",
+	)
+	graph.MustAddE(
+		"equipment_manufacturer",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.EquipmentManufacturerTable,
+			Columns: []string{trailer.EquipmentManufacturerColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"EquipmentManufactuer",
+	)
+	graph.MustAddE(
+		"state",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.StateTable,
+			Columns: []string{trailer.StateColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"UsState",
+	)
+	graph.MustAddE(
+		"registration_state",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.RegistrationStateTable,
+			Columns: []string{trailer.RegistrationStateColumn},
+			Bidi:    false,
+		},
+		"Trailer",
+		"UsState",
+	)
+	graph.MustAddE(
+		"fleet_code",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.FleetCodeTable,
+			Columns: []string{trailer.FleetCodeColumn},
+			Bidi:    false,
+		},
+		"Trailer",
 		"FleetCode",
 	)
 	graph.MustAddE(
@@ -7419,6 +7536,239 @@ func (f *TractorFilter) WhereHasFleetCodeWith(preds ...predicate.FleetCode) {
 }
 
 // addPredicate implements the predicateAdder interface.
+func (tq *TrailerQuery) addPredicate(pred func(s *sql.Selector)) {
+	tq.predicates = append(tq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the TrailerQuery builder.
+func (tq *TrailerQuery) Filter() *TrailerFilter {
+	return &TrailerFilter{config: tq.config, predicateAdder: tq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *TrailerMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the TrailerMutation builder.
+func (m *TrailerMutation) Filter() *TrailerFilter {
+	return &TrailerFilter{config: m.config, predicateAdder: m}
+}
+
+// TrailerFilter provides a generic filtering capability at runtime for TrailerQuery.
+type TrailerFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *TrailerFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *TrailerFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *TrailerFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *TrailerFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *TrailerFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(trailer.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *TrailerFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(trailer.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *TrailerFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(trailer.FieldVersion))
+}
+
+// WhereCode applies the entql string predicate on the code field.
+func (f *TrailerFilter) WhereCode(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldCode))
+}
+
+// WhereStatus applies the entql string predicate on the status field.
+func (f *TrailerFilter) WhereStatus(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldStatus))
+}
+
+// WhereEquipmentTypeID applies the entql [16]byte predicate on the equipment_type_id field.
+func (f *TrailerFilter) WhereEquipmentTypeID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldEquipmentTypeID))
+}
+
+// WhereVin applies the entql string predicate on the vin field.
+func (f *TrailerFilter) WhereVin(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldVin))
+}
+
+// WhereEquipmentManufacturerID applies the entql [16]byte predicate on the equipment_manufacturer_id field.
+func (f *TrailerFilter) WhereEquipmentManufacturerID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldEquipmentManufacturerID))
+}
+
+// WhereModel applies the entql string predicate on the model field.
+func (f *TrailerFilter) WhereModel(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldModel))
+}
+
+// WhereYear applies the entql int16 predicate on the year field.
+func (f *TrailerFilter) WhereYear(p entql.Int16P) {
+	f.Where(p.Field(trailer.FieldYear))
+}
+
+// WhereLicensePlateNumber applies the entql string predicate on the license_plate_number field.
+func (f *TrailerFilter) WhereLicensePlateNumber(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldLicensePlateNumber))
+}
+
+// WhereStateID applies the entql [16]byte predicate on the state_id field.
+func (f *TrailerFilter) WhereStateID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldStateID))
+}
+
+// WhereFleetCodeID applies the entql [16]byte predicate on the fleet_code_id field.
+func (f *TrailerFilter) WhereFleetCodeID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldFleetCodeID))
+}
+
+// WhereLastInspectionDate applies the entql other predicate on the last_inspection_date field.
+func (f *TrailerFilter) WhereLastInspectionDate(p entql.OtherP) {
+	f.Where(p.Field(trailer.FieldLastInspectionDate))
+}
+
+// WhereRegistrationNumber applies the entql string predicate on the registration_number field.
+func (f *TrailerFilter) WhereRegistrationNumber(p entql.StringP) {
+	f.Where(p.Field(trailer.FieldRegistrationNumber))
+}
+
+// WhereRegistrationStateID applies the entql [16]byte predicate on the registration_state_id field.
+func (f *TrailerFilter) WhereRegistrationStateID(p entql.ValueP) {
+	f.Where(p.Field(trailer.FieldRegistrationStateID))
+}
+
+// WhereRegistrationExpirationDate applies the entql other predicate on the registration_expiration_date field.
+func (f *TrailerFilter) WhereRegistrationExpirationDate(p entql.OtherP) {
+	f.Where(p.Field(trailer.FieldRegistrationExpirationDate))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *TrailerFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *TrailerFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasEquipmentType applies a predicate to check if query has an edge equipment_type.
+func (f *TrailerFilter) WhereHasEquipmentType() {
+	f.Where(entql.HasEdge("equipment_type"))
+}
+
+// WhereHasEquipmentTypeWith applies a predicate to check if query has an edge equipment_type with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasEquipmentTypeWith(preds ...predicate.EquipmentType) {
+	f.Where(entql.HasEdgeWith("equipment_type", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasEquipmentManufacturer applies a predicate to check if query has an edge equipment_manufacturer.
+func (f *TrailerFilter) WhereHasEquipmentManufacturer() {
+	f.Where(entql.HasEdge("equipment_manufacturer"))
+}
+
+// WhereHasEquipmentManufacturerWith applies a predicate to check if query has an edge equipment_manufacturer with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasEquipmentManufacturerWith(preds ...predicate.EquipmentManufactuer) {
+	f.Where(entql.HasEdgeWith("equipment_manufacturer", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasState applies a predicate to check if query has an edge state.
+func (f *TrailerFilter) WhereHasState() {
+	f.Where(entql.HasEdge("state"))
+}
+
+// WhereHasStateWith applies a predicate to check if query has an edge state with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasStateWith(preds ...predicate.UsState) {
+	f.Where(entql.HasEdgeWith("state", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasRegistrationState applies a predicate to check if query has an edge registration_state.
+func (f *TrailerFilter) WhereHasRegistrationState() {
+	f.Where(entql.HasEdge("registration_state"))
+}
+
+// WhereHasRegistrationStateWith applies a predicate to check if query has an edge registration_state with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasRegistrationStateWith(preds ...predicate.UsState) {
+	f.Where(entql.HasEdgeWith("registration_state", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasFleetCode applies a predicate to check if query has an edge fleet_code.
+func (f *TrailerFilter) WhereHasFleetCode() {
+	f.Where(entql.HasEdge("fleet_code"))
+}
+
+// WhereHasFleetCodeWith applies a predicate to check if query has an edge fleet_code with a given conditions (other predicates).
+func (f *TrailerFilter) WhereHasFleetCodeWith(preds ...predicate.FleetCode) {
+	f.Where(entql.HasEdgeWith("fleet_code", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (usq *UsStateQuery) addPredicate(pred func(s *sql.Selector)) {
 	usq.predicates = append(usq.predicates, pred)
 }
@@ -7447,7 +7797,7 @@ type UsStateFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UsStateFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7517,7 +7867,7 @@ type UserFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7684,7 +8034,7 @@ type UserFavoriteFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFavoriteFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7801,7 +8151,7 @@ type WorkerFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8061,7 +8411,7 @@ type WorkerCommentFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerCommentFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8202,7 +8552,7 @@ type WorkerContactFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerContactFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8339,7 +8689,7 @@ type WorkerProfileFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerProfileFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[43].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

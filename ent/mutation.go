@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
+	"github.com/emoss08/trenova/ent/trailer"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/emoss08/trenova/ent/usstate"
@@ -104,6 +105,7 @@ const (
 	TypeTableChangeAlert             = "TableChangeAlert"
 	TypeTag                          = "Tag"
 	TypeTractor                      = "Tractor"
+	TypeTrailer                      = "Trailer"
 	TypeUsState                      = "UsState"
 	TypeUser                         = "User"
 	TypeUserFavorite                 = "UserFavorite"
@@ -40550,6 +40552,1903 @@ func (m *TractorMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Tractor edge %s", name)
+}
+
+// TrailerMutation represents an operation that mutates the Trailer nodes in the graph.
+type TrailerMutation struct {
+	config
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	version                       *int
+	addversion                    *int
+	code                          *string
+	status                        *trailer.Status
+	vin                           *string
+	model                         *string
+	year                          *int16
+	addyear                       *int16
+	license_plate_number          *string
+	last_inspection_date          **pgtype.Date
+	registration_number           *string
+	registration_expiration_date  **pgtype.Date
+	clearedFields                 map[string]struct{}
+	business_unit                 *uuid.UUID
+	clearedbusiness_unit          bool
+	organization                  *uuid.UUID
+	clearedorganization           bool
+	equipment_type                *uuid.UUID
+	clearedequipment_type         bool
+	equipment_manufacturer        *uuid.UUID
+	clearedequipment_manufacturer bool
+	state                         *uuid.UUID
+	clearedstate                  bool
+	registration_state            *uuid.UUID
+	clearedregistration_state     bool
+	fleet_code                    *uuid.UUID
+	clearedfleet_code             bool
+	done                          bool
+	oldValue                      func(context.Context) (*Trailer, error)
+	predicates                    []predicate.Trailer
+}
+
+var _ ent.Mutation = (*TrailerMutation)(nil)
+
+// trailerOption allows management of the mutation configuration using functional options.
+type trailerOption func(*TrailerMutation)
+
+// newTrailerMutation creates new mutation for the Trailer entity.
+func newTrailerMutation(c config, op Op, opts ...trailerOption) *TrailerMutation {
+	m := &TrailerMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTrailer,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTrailerID sets the ID field of the mutation.
+func withTrailerID(id uuid.UUID) trailerOption {
+	return func(m *TrailerMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Trailer
+		)
+		m.oldValue = func(ctx context.Context) (*Trailer, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Trailer.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTrailer sets the old Trailer of the mutation.
+func withTrailer(node *Trailer) trailerOption {
+	return func(m *TrailerMutation) {
+		m.oldValue = func(context.Context) (*Trailer, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TrailerMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TrailerMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Trailer entities.
+func (m *TrailerMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TrailerMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TrailerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Trailer.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *TrailerMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *TrailerMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *TrailerMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *TrailerMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *TrailerMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *TrailerMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TrailerMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TrailerMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TrailerMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TrailerMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TrailerMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TrailerMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *TrailerMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *TrailerMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *TrailerMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *TrailerMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *TrailerMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetCode sets the "code" field.
+func (m *TrailerMutation) SetCode(s string) {
+	m.code = &s
+}
+
+// Code returns the value of the "code" field in the mutation.
+func (m *TrailerMutation) Code() (r string, exists bool) {
+	v := m.code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCode returns the old "code" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
+	}
+	return oldValue.Code, nil
+}
+
+// ResetCode resets all changes to the "code" field.
+func (m *TrailerMutation) ResetCode() {
+	m.code = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *TrailerMutation) SetStatus(t trailer.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TrailerMutation) Status() (r trailer.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldStatus(ctx context.Context) (v trailer.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TrailerMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetEquipmentTypeID sets the "equipment_type_id" field.
+func (m *TrailerMutation) SetEquipmentTypeID(u uuid.UUID) {
+	m.equipment_type = &u
+}
+
+// EquipmentTypeID returns the value of the "equipment_type_id" field in the mutation.
+func (m *TrailerMutation) EquipmentTypeID() (r uuid.UUID, exists bool) {
+	v := m.equipment_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEquipmentTypeID returns the old "equipment_type_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldEquipmentTypeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEquipmentTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEquipmentTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEquipmentTypeID: %w", err)
+	}
+	return oldValue.EquipmentTypeID, nil
+}
+
+// ResetEquipmentTypeID resets all changes to the "equipment_type_id" field.
+func (m *TrailerMutation) ResetEquipmentTypeID() {
+	m.equipment_type = nil
+}
+
+// SetVin sets the "vin" field.
+func (m *TrailerMutation) SetVin(s string) {
+	m.vin = &s
+}
+
+// Vin returns the value of the "vin" field in the mutation.
+func (m *TrailerMutation) Vin() (r string, exists bool) {
+	v := m.vin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVin returns the old "vin" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldVin(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVin: %w", err)
+	}
+	return oldValue.Vin, nil
+}
+
+// ClearVin clears the value of the "vin" field.
+func (m *TrailerMutation) ClearVin() {
+	m.vin = nil
+	m.clearedFields[trailer.FieldVin] = struct{}{}
+}
+
+// VinCleared returns if the "vin" field was cleared in this mutation.
+func (m *TrailerMutation) VinCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldVin]
+	return ok
+}
+
+// ResetVin resets all changes to the "vin" field.
+func (m *TrailerMutation) ResetVin() {
+	m.vin = nil
+	delete(m.clearedFields, trailer.FieldVin)
+}
+
+// SetEquipmentManufacturerID sets the "equipment_manufacturer_id" field.
+func (m *TrailerMutation) SetEquipmentManufacturerID(u uuid.UUID) {
+	m.equipment_manufacturer = &u
+}
+
+// EquipmentManufacturerID returns the value of the "equipment_manufacturer_id" field in the mutation.
+func (m *TrailerMutation) EquipmentManufacturerID() (r uuid.UUID, exists bool) {
+	v := m.equipment_manufacturer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEquipmentManufacturerID returns the old "equipment_manufacturer_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldEquipmentManufacturerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEquipmentManufacturerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEquipmentManufacturerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEquipmentManufacturerID: %w", err)
+	}
+	return oldValue.EquipmentManufacturerID, nil
+}
+
+// ClearEquipmentManufacturerID clears the value of the "equipment_manufacturer_id" field.
+func (m *TrailerMutation) ClearEquipmentManufacturerID() {
+	m.equipment_manufacturer = nil
+	m.clearedFields[trailer.FieldEquipmentManufacturerID] = struct{}{}
+}
+
+// EquipmentManufacturerIDCleared returns if the "equipment_manufacturer_id" field was cleared in this mutation.
+func (m *TrailerMutation) EquipmentManufacturerIDCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldEquipmentManufacturerID]
+	return ok
+}
+
+// ResetEquipmentManufacturerID resets all changes to the "equipment_manufacturer_id" field.
+func (m *TrailerMutation) ResetEquipmentManufacturerID() {
+	m.equipment_manufacturer = nil
+	delete(m.clearedFields, trailer.FieldEquipmentManufacturerID)
+}
+
+// SetModel sets the "model" field.
+func (m *TrailerMutation) SetModel(s string) {
+	m.model = &s
+}
+
+// Model returns the value of the "model" field in the mutation.
+func (m *TrailerMutation) Model() (r string, exists bool) {
+	v := m.model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModel returns the old "model" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldModel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModel: %w", err)
+	}
+	return oldValue.Model, nil
+}
+
+// ClearModel clears the value of the "model" field.
+func (m *TrailerMutation) ClearModel() {
+	m.model = nil
+	m.clearedFields[trailer.FieldModel] = struct{}{}
+}
+
+// ModelCleared returns if the "model" field was cleared in this mutation.
+func (m *TrailerMutation) ModelCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldModel]
+	return ok
+}
+
+// ResetModel resets all changes to the "model" field.
+func (m *TrailerMutation) ResetModel() {
+	m.model = nil
+	delete(m.clearedFields, trailer.FieldModel)
+}
+
+// SetYear sets the "year" field.
+func (m *TrailerMutation) SetYear(i int16) {
+	m.year = &i
+	m.addyear = nil
+}
+
+// Year returns the value of the "year" field in the mutation.
+func (m *TrailerMutation) Year() (r int16, exists bool) {
+	v := m.year
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldYear returns the old "year" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldYear(ctx context.Context) (v *int16, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldYear is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldYear requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldYear: %w", err)
+	}
+	return oldValue.Year, nil
+}
+
+// AddYear adds i to the "year" field.
+func (m *TrailerMutation) AddYear(i int16) {
+	if m.addyear != nil {
+		*m.addyear += i
+	} else {
+		m.addyear = &i
+	}
+}
+
+// AddedYear returns the value that was added to the "year" field in this mutation.
+func (m *TrailerMutation) AddedYear() (r int16, exists bool) {
+	v := m.addyear
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearYear clears the value of the "year" field.
+func (m *TrailerMutation) ClearYear() {
+	m.year = nil
+	m.addyear = nil
+	m.clearedFields[trailer.FieldYear] = struct{}{}
+}
+
+// YearCleared returns if the "year" field was cleared in this mutation.
+func (m *TrailerMutation) YearCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldYear]
+	return ok
+}
+
+// ResetYear resets all changes to the "year" field.
+func (m *TrailerMutation) ResetYear() {
+	m.year = nil
+	m.addyear = nil
+	delete(m.clearedFields, trailer.FieldYear)
+}
+
+// SetLicensePlateNumber sets the "license_plate_number" field.
+func (m *TrailerMutation) SetLicensePlateNumber(s string) {
+	m.license_plate_number = &s
+}
+
+// LicensePlateNumber returns the value of the "license_plate_number" field in the mutation.
+func (m *TrailerMutation) LicensePlateNumber() (r string, exists bool) {
+	v := m.license_plate_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicensePlateNumber returns the old "license_plate_number" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldLicensePlateNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicensePlateNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicensePlateNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicensePlateNumber: %w", err)
+	}
+	return oldValue.LicensePlateNumber, nil
+}
+
+// ClearLicensePlateNumber clears the value of the "license_plate_number" field.
+func (m *TrailerMutation) ClearLicensePlateNumber() {
+	m.license_plate_number = nil
+	m.clearedFields[trailer.FieldLicensePlateNumber] = struct{}{}
+}
+
+// LicensePlateNumberCleared returns if the "license_plate_number" field was cleared in this mutation.
+func (m *TrailerMutation) LicensePlateNumberCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldLicensePlateNumber]
+	return ok
+}
+
+// ResetLicensePlateNumber resets all changes to the "license_plate_number" field.
+func (m *TrailerMutation) ResetLicensePlateNumber() {
+	m.license_plate_number = nil
+	delete(m.clearedFields, trailer.FieldLicensePlateNumber)
+}
+
+// SetStateID sets the "state_id" field.
+func (m *TrailerMutation) SetStateID(u uuid.UUID) {
+	m.state = &u
+}
+
+// StateID returns the value of the "state_id" field in the mutation.
+func (m *TrailerMutation) StateID() (r uuid.UUID, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStateID returns the old "state_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldStateID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStateID: %w", err)
+	}
+	return oldValue.StateID, nil
+}
+
+// ClearStateID clears the value of the "state_id" field.
+func (m *TrailerMutation) ClearStateID() {
+	m.state = nil
+	m.clearedFields[trailer.FieldStateID] = struct{}{}
+}
+
+// StateIDCleared returns if the "state_id" field was cleared in this mutation.
+func (m *TrailerMutation) StateIDCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldStateID]
+	return ok
+}
+
+// ResetStateID resets all changes to the "state_id" field.
+func (m *TrailerMutation) ResetStateID() {
+	m.state = nil
+	delete(m.clearedFields, trailer.FieldStateID)
+}
+
+// SetFleetCodeID sets the "fleet_code_id" field.
+func (m *TrailerMutation) SetFleetCodeID(u uuid.UUID) {
+	m.fleet_code = &u
+}
+
+// FleetCodeID returns the value of the "fleet_code_id" field in the mutation.
+func (m *TrailerMutation) FleetCodeID() (r uuid.UUID, exists bool) {
+	v := m.fleet_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFleetCodeID returns the old "fleet_code_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldFleetCodeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFleetCodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFleetCodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFleetCodeID: %w", err)
+	}
+	return oldValue.FleetCodeID, nil
+}
+
+// ResetFleetCodeID resets all changes to the "fleet_code_id" field.
+func (m *TrailerMutation) ResetFleetCodeID() {
+	m.fleet_code = nil
+}
+
+// SetLastInspectionDate sets the "last_inspection_date" field.
+func (m *TrailerMutation) SetLastInspectionDate(pg *pgtype.Date) {
+	m.last_inspection_date = &pg
+}
+
+// LastInspectionDate returns the value of the "last_inspection_date" field in the mutation.
+func (m *TrailerMutation) LastInspectionDate() (r *pgtype.Date, exists bool) {
+	v := m.last_inspection_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastInspectionDate returns the old "last_inspection_date" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldLastInspectionDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastInspectionDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastInspectionDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastInspectionDate: %w", err)
+	}
+	return oldValue.LastInspectionDate, nil
+}
+
+// ClearLastInspectionDate clears the value of the "last_inspection_date" field.
+func (m *TrailerMutation) ClearLastInspectionDate() {
+	m.last_inspection_date = nil
+	m.clearedFields[trailer.FieldLastInspectionDate] = struct{}{}
+}
+
+// LastInspectionDateCleared returns if the "last_inspection_date" field was cleared in this mutation.
+func (m *TrailerMutation) LastInspectionDateCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldLastInspectionDate]
+	return ok
+}
+
+// ResetLastInspectionDate resets all changes to the "last_inspection_date" field.
+func (m *TrailerMutation) ResetLastInspectionDate() {
+	m.last_inspection_date = nil
+	delete(m.clearedFields, trailer.FieldLastInspectionDate)
+}
+
+// SetRegistrationNumber sets the "registration_number" field.
+func (m *TrailerMutation) SetRegistrationNumber(s string) {
+	m.registration_number = &s
+}
+
+// RegistrationNumber returns the value of the "registration_number" field in the mutation.
+func (m *TrailerMutation) RegistrationNumber() (r string, exists bool) {
+	v := m.registration_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegistrationNumber returns the old "registration_number" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldRegistrationNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegistrationNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegistrationNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegistrationNumber: %w", err)
+	}
+	return oldValue.RegistrationNumber, nil
+}
+
+// ClearRegistrationNumber clears the value of the "registration_number" field.
+func (m *TrailerMutation) ClearRegistrationNumber() {
+	m.registration_number = nil
+	m.clearedFields[trailer.FieldRegistrationNumber] = struct{}{}
+}
+
+// RegistrationNumberCleared returns if the "registration_number" field was cleared in this mutation.
+func (m *TrailerMutation) RegistrationNumberCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldRegistrationNumber]
+	return ok
+}
+
+// ResetRegistrationNumber resets all changes to the "registration_number" field.
+func (m *TrailerMutation) ResetRegistrationNumber() {
+	m.registration_number = nil
+	delete(m.clearedFields, trailer.FieldRegistrationNumber)
+}
+
+// SetRegistrationStateID sets the "registration_state_id" field.
+func (m *TrailerMutation) SetRegistrationStateID(u uuid.UUID) {
+	m.registration_state = &u
+}
+
+// RegistrationStateID returns the value of the "registration_state_id" field in the mutation.
+func (m *TrailerMutation) RegistrationStateID() (r uuid.UUID, exists bool) {
+	v := m.registration_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegistrationStateID returns the old "registration_state_id" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldRegistrationStateID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegistrationStateID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegistrationStateID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegistrationStateID: %w", err)
+	}
+	return oldValue.RegistrationStateID, nil
+}
+
+// ClearRegistrationStateID clears the value of the "registration_state_id" field.
+func (m *TrailerMutation) ClearRegistrationStateID() {
+	m.registration_state = nil
+	m.clearedFields[trailer.FieldRegistrationStateID] = struct{}{}
+}
+
+// RegistrationStateIDCleared returns if the "registration_state_id" field was cleared in this mutation.
+func (m *TrailerMutation) RegistrationStateIDCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldRegistrationStateID]
+	return ok
+}
+
+// ResetRegistrationStateID resets all changes to the "registration_state_id" field.
+func (m *TrailerMutation) ResetRegistrationStateID() {
+	m.registration_state = nil
+	delete(m.clearedFields, trailer.FieldRegistrationStateID)
+}
+
+// SetRegistrationExpirationDate sets the "registration_expiration_date" field.
+func (m *TrailerMutation) SetRegistrationExpirationDate(pg *pgtype.Date) {
+	m.registration_expiration_date = &pg
+}
+
+// RegistrationExpirationDate returns the value of the "registration_expiration_date" field in the mutation.
+func (m *TrailerMutation) RegistrationExpirationDate() (r *pgtype.Date, exists bool) {
+	v := m.registration_expiration_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegistrationExpirationDate returns the old "registration_expiration_date" field's value of the Trailer entity.
+// If the Trailer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TrailerMutation) OldRegistrationExpirationDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegistrationExpirationDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegistrationExpirationDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegistrationExpirationDate: %w", err)
+	}
+	return oldValue.RegistrationExpirationDate, nil
+}
+
+// ClearRegistrationExpirationDate clears the value of the "registration_expiration_date" field.
+func (m *TrailerMutation) ClearRegistrationExpirationDate() {
+	m.registration_expiration_date = nil
+	m.clearedFields[trailer.FieldRegistrationExpirationDate] = struct{}{}
+}
+
+// RegistrationExpirationDateCleared returns if the "registration_expiration_date" field was cleared in this mutation.
+func (m *TrailerMutation) RegistrationExpirationDateCleared() bool {
+	_, ok := m.clearedFields[trailer.FieldRegistrationExpirationDate]
+	return ok
+}
+
+// ResetRegistrationExpirationDate resets all changes to the "registration_expiration_date" field.
+func (m *TrailerMutation) ResetRegistrationExpirationDate() {
+	m.registration_expiration_date = nil
+	delete(m.clearedFields, trailer.FieldRegistrationExpirationDate)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *TrailerMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[trailer.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *TrailerMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *TrailerMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *TrailerMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[trailer.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *TrailerMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *TrailerMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
+func (m *TrailerMutation) ClearEquipmentType() {
+	m.clearedequipment_type = true
+	m.clearedFields[trailer.FieldEquipmentTypeID] = struct{}{}
+}
+
+// EquipmentTypeCleared reports if the "equipment_type" edge to the EquipmentType entity was cleared.
+func (m *TrailerMutation) EquipmentTypeCleared() bool {
+	return m.clearedequipment_type
+}
+
+// EquipmentTypeIDs returns the "equipment_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EquipmentTypeID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) EquipmentTypeIDs() (ids []uuid.UUID) {
+	if id := m.equipment_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEquipmentType resets all changes to the "equipment_type" edge.
+func (m *TrailerMutation) ResetEquipmentType() {
+	m.equipment_type = nil
+	m.clearedequipment_type = false
+}
+
+// ClearEquipmentManufacturer clears the "equipment_manufacturer" edge to the EquipmentManufactuer entity.
+func (m *TrailerMutation) ClearEquipmentManufacturer() {
+	m.clearedequipment_manufacturer = true
+	m.clearedFields[trailer.FieldEquipmentManufacturerID] = struct{}{}
+}
+
+// EquipmentManufacturerCleared reports if the "equipment_manufacturer" edge to the EquipmentManufactuer entity was cleared.
+func (m *TrailerMutation) EquipmentManufacturerCleared() bool {
+	return m.EquipmentManufacturerIDCleared() || m.clearedequipment_manufacturer
+}
+
+// EquipmentManufacturerIDs returns the "equipment_manufacturer" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EquipmentManufacturerID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) EquipmentManufacturerIDs() (ids []uuid.UUID) {
+	if id := m.equipment_manufacturer; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEquipmentManufacturer resets all changes to the "equipment_manufacturer" edge.
+func (m *TrailerMutation) ResetEquipmentManufacturer() {
+	m.equipment_manufacturer = nil
+	m.clearedequipment_manufacturer = false
+}
+
+// ClearState clears the "state" edge to the UsState entity.
+func (m *TrailerMutation) ClearState() {
+	m.clearedstate = true
+	m.clearedFields[trailer.FieldStateID] = struct{}{}
+}
+
+// StateCleared reports if the "state" edge to the UsState entity was cleared.
+func (m *TrailerMutation) StateCleared() bool {
+	return m.StateIDCleared() || m.clearedstate
+}
+
+// StateIDs returns the "state" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StateID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) StateIDs() (ids []uuid.UUID) {
+	if id := m.state; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetState resets all changes to the "state" edge.
+func (m *TrailerMutation) ResetState() {
+	m.state = nil
+	m.clearedstate = false
+}
+
+// ClearRegistrationState clears the "registration_state" edge to the UsState entity.
+func (m *TrailerMutation) ClearRegistrationState() {
+	m.clearedregistration_state = true
+	m.clearedFields[trailer.FieldRegistrationStateID] = struct{}{}
+}
+
+// RegistrationStateCleared reports if the "registration_state" edge to the UsState entity was cleared.
+func (m *TrailerMutation) RegistrationStateCleared() bool {
+	return m.RegistrationStateIDCleared() || m.clearedregistration_state
+}
+
+// RegistrationStateIDs returns the "registration_state" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RegistrationStateID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) RegistrationStateIDs() (ids []uuid.UUID) {
+	if id := m.registration_state; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRegistrationState resets all changes to the "registration_state" edge.
+func (m *TrailerMutation) ResetRegistrationState() {
+	m.registration_state = nil
+	m.clearedregistration_state = false
+}
+
+// ClearFleetCode clears the "fleet_code" edge to the FleetCode entity.
+func (m *TrailerMutation) ClearFleetCode() {
+	m.clearedfleet_code = true
+	m.clearedFields[trailer.FieldFleetCodeID] = struct{}{}
+}
+
+// FleetCodeCleared reports if the "fleet_code" edge to the FleetCode entity was cleared.
+func (m *TrailerMutation) FleetCodeCleared() bool {
+	return m.clearedfleet_code
+}
+
+// FleetCodeIDs returns the "fleet_code" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FleetCodeID instead. It exists only for internal usage by the builders.
+func (m *TrailerMutation) FleetCodeIDs() (ids []uuid.UUID) {
+	if id := m.fleet_code; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFleetCode resets all changes to the "fleet_code" edge.
+func (m *TrailerMutation) ResetFleetCode() {
+	m.fleet_code = nil
+	m.clearedfleet_code = false
+}
+
+// Where appends a list predicates to the TrailerMutation builder.
+func (m *TrailerMutation) Where(ps ...predicate.Trailer) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TrailerMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TrailerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Trailer, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TrailerMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TrailerMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Trailer).
+func (m *TrailerMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TrailerMutation) Fields() []string {
+	fields := make([]string, 0, 19)
+	if m.business_unit != nil {
+		fields = append(fields, trailer.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, trailer.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, trailer.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, trailer.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, trailer.FieldVersion)
+	}
+	if m.code != nil {
+		fields = append(fields, trailer.FieldCode)
+	}
+	if m.status != nil {
+		fields = append(fields, trailer.FieldStatus)
+	}
+	if m.equipment_type != nil {
+		fields = append(fields, trailer.FieldEquipmentTypeID)
+	}
+	if m.vin != nil {
+		fields = append(fields, trailer.FieldVin)
+	}
+	if m.equipment_manufacturer != nil {
+		fields = append(fields, trailer.FieldEquipmentManufacturerID)
+	}
+	if m.model != nil {
+		fields = append(fields, trailer.FieldModel)
+	}
+	if m.year != nil {
+		fields = append(fields, trailer.FieldYear)
+	}
+	if m.license_plate_number != nil {
+		fields = append(fields, trailer.FieldLicensePlateNumber)
+	}
+	if m.state != nil {
+		fields = append(fields, trailer.FieldStateID)
+	}
+	if m.fleet_code != nil {
+		fields = append(fields, trailer.FieldFleetCodeID)
+	}
+	if m.last_inspection_date != nil {
+		fields = append(fields, trailer.FieldLastInspectionDate)
+	}
+	if m.registration_number != nil {
+		fields = append(fields, trailer.FieldRegistrationNumber)
+	}
+	if m.registration_state != nil {
+		fields = append(fields, trailer.FieldRegistrationStateID)
+	}
+	if m.registration_expiration_date != nil {
+		fields = append(fields, trailer.FieldRegistrationExpirationDate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TrailerMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case trailer.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case trailer.FieldOrganizationID:
+		return m.OrganizationID()
+	case trailer.FieldCreatedAt:
+		return m.CreatedAt()
+	case trailer.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case trailer.FieldVersion:
+		return m.Version()
+	case trailer.FieldCode:
+		return m.Code()
+	case trailer.FieldStatus:
+		return m.Status()
+	case trailer.FieldEquipmentTypeID:
+		return m.EquipmentTypeID()
+	case trailer.FieldVin:
+		return m.Vin()
+	case trailer.FieldEquipmentManufacturerID:
+		return m.EquipmentManufacturerID()
+	case trailer.FieldModel:
+		return m.Model()
+	case trailer.FieldYear:
+		return m.Year()
+	case trailer.FieldLicensePlateNumber:
+		return m.LicensePlateNumber()
+	case trailer.FieldStateID:
+		return m.StateID()
+	case trailer.FieldFleetCodeID:
+		return m.FleetCodeID()
+	case trailer.FieldLastInspectionDate:
+		return m.LastInspectionDate()
+	case trailer.FieldRegistrationNumber:
+		return m.RegistrationNumber()
+	case trailer.FieldRegistrationStateID:
+		return m.RegistrationStateID()
+	case trailer.FieldRegistrationExpirationDate:
+		return m.RegistrationExpirationDate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TrailerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case trailer.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case trailer.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case trailer.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case trailer.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case trailer.FieldVersion:
+		return m.OldVersion(ctx)
+	case trailer.FieldCode:
+		return m.OldCode(ctx)
+	case trailer.FieldStatus:
+		return m.OldStatus(ctx)
+	case trailer.FieldEquipmentTypeID:
+		return m.OldEquipmentTypeID(ctx)
+	case trailer.FieldVin:
+		return m.OldVin(ctx)
+	case trailer.FieldEquipmentManufacturerID:
+		return m.OldEquipmentManufacturerID(ctx)
+	case trailer.FieldModel:
+		return m.OldModel(ctx)
+	case trailer.FieldYear:
+		return m.OldYear(ctx)
+	case trailer.FieldLicensePlateNumber:
+		return m.OldLicensePlateNumber(ctx)
+	case trailer.FieldStateID:
+		return m.OldStateID(ctx)
+	case trailer.FieldFleetCodeID:
+		return m.OldFleetCodeID(ctx)
+	case trailer.FieldLastInspectionDate:
+		return m.OldLastInspectionDate(ctx)
+	case trailer.FieldRegistrationNumber:
+		return m.OldRegistrationNumber(ctx)
+	case trailer.FieldRegistrationStateID:
+		return m.OldRegistrationStateID(ctx)
+	case trailer.FieldRegistrationExpirationDate:
+		return m.OldRegistrationExpirationDate(ctx)
+	}
+	return nil, fmt.Errorf("unknown Trailer field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TrailerMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case trailer.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case trailer.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case trailer.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case trailer.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case trailer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case trailer.FieldCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCode(v)
+		return nil
+	case trailer.FieldStatus:
+		v, ok := value.(trailer.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case trailer.FieldEquipmentTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEquipmentTypeID(v)
+		return nil
+	case trailer.FieldVin:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVin(v)
+		return nil
+	case trailer.FieldEquipmentManufacturerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEquipmentManufacturerID(v)
+		return nil
+	case trailer.FieldModel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModel(v)
+		return nil
+	case trailer.FieldYear:
+		v, ok := value.(int16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetYear(v)
+		return nil
+	case trailer.FieldLicensePlateNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicensePlateNumber(v)
+		return nil
+	case trailer.FieldStateID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStateID(v)
+		return nil
+	case trailer.FieldFleetCodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFleetCodeID(v)
+		return nil
+	case trailer.FieldLastInspectionDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastInspectionDate(v)
+		return nil
+	case trailer.FieldRegistrationNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegistrationNumber(v)
+		return nil
+	case trailer.FieldRegistrationStateID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegistrationStateID(v)
+		return nil
+	case trailer.FieldRegistrationExpirationDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegistrationExpirationDate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TrailerMutation) AddedFields() []string {
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, trailer.FieldVersion)
+	}
+	if m.addyear != nil {
+		fields = append(fields, trailer.FieldYear)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TrailerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case trailer.FieldVersion:
+		return m.AddedVersion()
+	case trailer.FieldYear:
+		return m.AddedYear()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TrailerMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case trailer.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	case trailer.FieldYear:
+		v, ok := value.(int16)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddYear(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TrailerMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(trailer.FieldVin) {
+		fields = append(fields, trailer.FieldVin)
+	}
+	if m.FieldCleared(trailer.FieldEquipmentManufacturerID) {
+		fields = append(fields, trailer.FieldEquipmentManufacturerID)
+	}
+	if m.FieldCleared(trailer.FieldModel) {
+		fields = append(fields, trailer.FieldModel)
+	}
+	if m.FieldCleared(trailer.FieldYear) {
+		fields = append(fields, trailer.FieldYear)
+	}
+	if m.FieldCleared(trailer.FieldLicensePlateNumber) {
+		fields = append(fields, trailer.FieldLicensePlateNumber)
+	}
+	if m.FieldCleared(trailer.FieldStateID) {
+		fields = append(fields, trailer.FieldStateID)
+	}
+	if m.FieldCleared(trailer.FieldLastInspectionDate) {
+		fields = append(fields, trailer.FieldLastInspectionDate)
+	}
+	if m.FieldCleared(trailer.FieldRegistrationNumber) {
+		fields = append(fields, trailer.FieldRegistrationNumber)
+	}
+	if m.FieldCleared(trailer.FieldRegistrationStateID) {
+		fields = append(fields, trailer.FieldRegistrationStateID)
+	}
+	if m.FieldCleared(trailer.FieldRegistrationExpirationDate) {
+		fields = append(fields, trailer.FieldRegistrationExpirationDate)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TrailerMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TrailerMutation) ClearField(name string) error {
+	switch name {
+	case trailer.FieldVin:
+		m.ClearVin()
+		return nil
+	case trailer.FieldEquipmentManufacturerID:
+		m.ClearEquipmentManufacturerID()
+		return nil
+	case trailer.FieldModel:
+		m.ClearModel()
+		return nil
+	case trailer.FieldYear:
+		m.ClearYear()
+		return nil
+	case trailer.FieldLicensePlateNumber:
+		m.ClearLicensePlateNumber()
+		return nil
+	case trailer.FieldStateID:
+		m.ClearStateID()
+		return nil
+	case trailer.FieldLastInspectionDate:
+		m.ClearLastInspectionDate()
+		return nil
+	case trailer.FieldRegistrationNumber:
+		m.ClearRegistrationNumber()
+		return nil
+	case trailer.FieldRegistrationStateID:
+		m.ClearRegistrationStateID()
+		return nil
+	case trailer.FieldRegistrationExpirationDate:
+		m.ClearRegistrationExpirationDate()
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TrailerMutation) ResetField(name string) error {
+	switch name {
+	case trailer.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case trailer.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case trailer.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case trailer.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case trailer.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case trailer.FieldCode:
+		m.ResetCode()
+		return nil
+	case trailer.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case trailer.FieldEquipmentTypeID:
+		m.ResetEquipmentTypeID()
+		return nil
+	case trailer.FieldVin:
+		m.ResetVin()
+		return nil
+	case trailer.FieldEquipmentManufacturerID:
+		m.ResetEquipmentManufacturerID()
+		return nil
+	case trailer.FieldModel:
+		m.ResetModel()
+		return nil
+	case trailer.FieldYear:
+		m.ResetYear()
+		return nil
+	case trailer.FieldLicensePlateNumber:
+		m.ResetLicensePlateNumber()
+		return nil
+	case trailer.FieldStateID:
+		m.ResetStateID()
+		return nil
+	case trailer.FieldFleetCodeID:
+		m.ResetFleetCodeID()
+		return nil
+	case trailer.FieldLastInspectionDate:
+		m.ResetLastInspectionDate()
+		return nil
+	case trailer.FieldRegistrationNumber:
+		m.ResetRegistrationNumber()
+		return nil
+	case trailer.FieldRegistrationStateID:
+		m.ResetRegistrationStateID()
+		return nil
+	case trailer.FieldRegistrationExpirationDate:
+		m.ResetRegistrationExpirationDate()
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TrailerMutation) AddedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.business_unit != nil {
+		edges = append(edges, trailer.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, trailer.EdgeOrganization)
+	}
+	if m.equipment_type != nil {
+		edges = append(edges, trailer.EdgeEquipmentType)
+	}
+	if m.equipment_manufacturer != nil {
+		edges = append(edges, trailer.EdgeEquipmentManufacturer)
+	}
+	if m.state != nil {
+		edges = append(edges, trailer.EdgeState)
+	}
+	if m.registration_state != nil {
+		edges = append(edges, trailer.EdgeRegistrationState)
+	}
+	if m.fleet_code != nil {
+		edges = append(edges, trailer.EdgeFleetCode)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TrailerMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case trailer.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeEquipmentType:
+		if id := m.equipment_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeEquipmentManufacturer:
+		if id := m.equipment_manufacturer; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeState:
+		if id := m.state; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeRegistrationState:
+		if id := m.registration_state; id != nil {
+			return []ent.Value{*id}
+		}
+	case trailer.EdgeFleetCode:
+		if id := m.fleet_code; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TrailerMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 7)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TrailerMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TrailerMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.clearedbusiness_unit {
+		edges = append(edges, trailer.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, trailer.EdgeOrganization)
+	}
+	if m.clearedequipment_type {
+		edges = append(edges, trailer.EdgeEquipmentType)
+	}
+	if m.clearedequipment_manufacturer {
+		edges = append(edges, trailer.EdgeEquipmentManufacturer)
+	}
+	if m.clearedstate {
+		edges = append(edges, trailer.EdgeState)
+	}
+	if m.clearedregistration_state {
+		edges = append(edges, trailer.EdgeRegistrationState)
+	}
+	if m.clearedfleet_code {
+		edges = append(edges, trailer.EdgeFleetCode)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TrailerMutation) EdgeCleared(name string) bool {
+	switch name {
+	case trailer.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case trailer.EdgeOrganization:
+		return m.clearedorganization
+	case trailer.EdgeEquipmentType:
+		return m.clearedequipment_type
+	case trailer.EdgeEquipmentManufacturer:
+		return m.clearedequipment_manufacturer
+	case trailer.EdgeState:
+		return m.clearedstate
+	case trailer.EdgeRegistrationState:
+		return m.clearedregistration_state
+	case trailer.EdgeFleetCode:
+		return m.clearedfleet_code
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TrailerMutation) ClearEdge(name string) error {
+	switch name {
+	case trailer.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case trailer.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case trailer.EdgeEquipmentType:
+		m.ClearEquipmentType()
+		return nil
+	case trailer.EdgeEquipmentManufacturer:
+		m.ClearEquipmentManufacturer()
+		return nil
+	case trailer.EdgeState:
+		m.ClearState()
+		return nil
+	case trailer.EdgeRegistrationState:
+		m.ClearRegistrationState()
+		return nil
+	case trailer.EdgeFleetCode:
+		m.ClearFleetCode()
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TrailerMutation) ResetEdge(name string) error {
+	switch name {
+	case trailer.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case trailer.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case trailer.EdgeEquipmentType:
+		m.ResetEquipmentType()
+		return nil
+	case trailer.EdgeEquipmentManufacturer:
+		m.ResetEquipmentManufacturer()
+		return nil
+	case trailer.EdgeState:
+		m.ResetState()
+		return nil
+	case trailer.EdgeRegistrationState:
+		m.ResetRegistrationState()
+		return nil
+	case trailer.EdgeFleetCode:
+		m.ResetFleetCode()
+		return nil
+	}
+	return fmt.Errorf("unknown Trailer edge %s", name)
 }
 
 // UsStateMutation represents an operation that mutates the UsState nodes in the graph.

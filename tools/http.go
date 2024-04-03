@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/emoss08/trenova/tools/logger"
 	"github.com/emoss08/trenova/tools/session"
 	"github.com/goccy/go-json"
+	"github.com/rotisserie/eris"
 
 	"github.com/google/uuid"
 )
@@ -34,6 +36,7 @@ func init() {
 // ParseBodyAndValidate parses the request body into the given struct and validates it using the given validator.
 // If the body is invalid, it writes a 400 response with the validation error.
 func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body any) error {
+	log := logger.GetLogger()
 	if err := ParseBody(r, body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
@@ -44,13 +47,21 @@ func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body any) erro
 		w.WriteHeader(http.StatusBadRequest)
 
 		var validationErr *ValidationError
-		if errors.As(err, &validationErr) {
-			json.NewEncoder(w).Encode(validationErr.Response)
-		} else {
+		switch {
+		case errors.As(err, &validationErr):
+			encodeErr := json.NewEncoder(w).Encode(validationErr.Response)
+			if encodeErr != nil {
+				wrappedErr := eris.Wrap(encodeErr, "Error encoding validation error response")
+				log.WithError(wrappedErr).Error("Error encoding validation error response")
+			}
+		default:
 			// Generic error response
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			genericErr := json.NewEncoder(w).Encode(map[string]string{"error": eris.Cause(err).Error()})
+			if genericErr != nil {
+				wrappedErr := eris.Wrap(genericErr, "Error encoding generic error response")
+				log.WithError(wrappedErr).Error("Error encoding generic error response")
+			}
 		}
-		return err
 	}
 
 	return nil
