@@ -1144,7 +1144,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "email_address", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true, Size: 15, SchemaType: map[string]string{"postgres": "VARCHAR(15)", "sqlite3": "VARCHAR(15)"}},
-		{Name: "location_id", Type: field.TypeUUID, Unique: true},
+		{Name: "location_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}

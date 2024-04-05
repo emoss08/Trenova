@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcomment"
+	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/tools"
 	"github.com/emoss08/trenova/tools/logger"
 	"github.com/rotisserie/eris"
@@ -38,6 +40,7 @@ type LocationRequest struct {
 	PlaceID            string                `json:"placeId" validate:"omitempty,max=255"`
 	IsGeocoded         bool                  `json:"isGeocoded"`
 	Comments           []ent.LocationComment `json:"comments" validate:"omitempty,dive"`
+	Contacts           []ent.LocationContact `json:"contacts" validate:"omitempty,dive"`
 }
 
 type LocationUpdateRequest struct {
@@ -46,15 +49,15 @@ type LocationUpdateRequest struct {
 }
 
 type LocationOps struct {
-	client *ent.Client
-	logger *logrus.Logger
+	Client *ent.Client
+	Logger *logrus.Logger
 }
 
 // NewLocationOps creates a new locations service.
 func NewLocationOps() *LocationOps {
 	return &LocationOps{
-		client: database.GetClient(),
-		logger: logger.GetLogger(),
+		Client: database.GetClient(),
+		Logger: logger.GetLogger(),
 	}
 }
 
@@ -62,7 +65,7 @@ func NewLocationOps() *LocationOps {
 func (r *LocationOps) GetLocations(
 	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
 ) ([]*ent.Location, int, error) {
-	entityCount, countErr := r.client.Location.Query().Where(
+	entityCount, countErr := r.Client.Location.Query().Where(
 		location.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
@@ -73,13 +76,18 @@ func (r *LocationOps) GetLocations(
 		return nil, 0, countErr
 	}
 
-	entities, err := r.client.Location.Query().
+	entities, err := r.Client.Location.Query().
 		Limit(limit).
 		WithLocationCategory().
 		WithComments().
 		WithContacts().
 		WithState().
 		Offset(offset).
+		Order(
+			location.ByName(
+				sql.OrderDesc(),
+			),
+		).
 		Where(
 			location.HasOrganizationWith(
 				organization.IDEQ(orgID),
@@ -99,7 +107,7 @@ func (r *LocationOps) CreateLocation(
 ) (*ent.Location, error) {
 	var createdEntity *ent.Location
 
-	err := tools.WithTx(ctx, r.client, func(tx *ent.Tx) error {
+	err := tools.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
 		createdEntity, err = r.createLocationEntity(ctx, tx, newEntity)
 		if err != nil {
@@ -109,6 +117,13 @@ func (r *LocationOps) CreateLocation(
 		// If comments are provided, create them and associate them with the location
 		if len(newEntity.Comments) > 0 {
 			if err = r.createLocationComments(ctx, tx, createdEntity.ID, newEntity); err != nil {
+				return err
+			}
+		}
+
+		// If locations are provided, create them and associate them with the location
+		if len(newEntity.Contacts) > 0 {
+			if err = r.createLocationContact(ctx, tx, createdEntity.ID, newEntity); err != nil {
 				return err
 			}
 		}
@@ -154,7 +169,7 @@ func (r *LocationOps) createLocationComments(
 			Save(ctx)
 		if err != nil {
 			wrappedError := eris.Wrap(err, "failed to create comment")
-			r.logger.WithField("error", wrappedError).Error("failed to create comment")
+			r.Logger.WithField("error", wrappedError).Error("failed to create comment")
 			return wrappedError
 		}
 	}
@@ -166,10 +181,14 @@ func (r *LocationOps) createLocationComments(
 func (r *LocationOps) UpdateLocation(ctx context.Context, entity LocationUpdateRequest) (*ent.Location, error) {
 	var updatedEntity *ent.Location
 
-	err := tools.WithTx(ctx, r.client, func(tx *ent.Tx) error {
+	err := tools.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
 		updatedEntity, err = r.updateLocationEntity(ctx, tx, entity)
 		if err != nil {
+			return err
+		}
+
+		if err = r.syncContacts(ctx, tx, entity, updatedEntity); err != nil {
 			return err
 		}
 
@@ -182,14 +201,18 @@ func (r *LocationOps) UpdateLocation(ctx context.Context, entity LocationUpdateR
 	return updatedEntity, nil
 }
 
-func (r *LocationOps) updateLocationEntity(ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest) (*ent.Location, error) {
+func (r *LocationOps) updateLocationEntity(
+	ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest,
+) (*ent.Location, error) {
 	current, err := tx.Location.Get(ctx, entity.ID)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to retrieve requested entity")
 	}
 
 	if current.Version != entity.Version {
-		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again", "syncError", "code")
+		return nil, tools.NewValidationError("This record has been updated by another user. Please refresh and try again",
+			"syncError",
+			"code")
 	}
 
 	return tx.Location.UpdateOneID(entity.ID).
@@ -206,8 +229,12 @@ func (r *LocationOps) updateLocationEntity(ctx context.Context, tx *ent.Tx, enti
 		Save(ctx)
 }
 
-func (r *LocationOps) syncComments(ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, updatedEntity *ent.Location) error {
-	existingComments, err := tx.Location.QueryComments(updatedEntity).Where(locationcomment.HasLocationWith(location.IDEQ(entity.ID))).All(ctx)
+func (r *LocationOps) syncComments(
+	ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, updatedEntity *ent.Location,
+) error {
+	existingComments, err := tx.Location.QueryComments(updatedEntity).Where(
+		locationcomment.HasLocationWith(location.IDEQ(entity.ID)),
+	).All(ctx)
 	if err != nil {
 		return eris.Wrap(err, "failed to fetch existing comments")
 	}
@@ -221,7 +248,9 @@ func (r *LocationOps) syncComments(ctx context.Context, tx *ent.Tx, entity Locat
 	return r.updateOrCreateComments(ctx, tx, entity)
 }
 
-func (r *LocationOps) deleteUnmatchedComments(ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, existingComments []*ent.LocationComment) error {
+func (r *LocationOps) deleteUnmatchedComments(
+	ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, existingComments []*ent.LocationComment,
+) error {
 	commentPresent := make(map[uuid.UUID]bool)
 	for _, comment := range entity.Comments {
 		if comment.ID != uuid.Nil {
@@ -233,7 +262,7 @@ func (r *LocationOps) deleteUnmatchedComments(ctx context.Context, tx *ent.Tx, e
 		if !commentPresent[existingComment.ID] {
 			if err := tx.LocationComment.DeleteOneID(existingComment.ID).Exec(ctx); err != nil {
 				wrappedErr := eris.Wrap(err, "failed to delete comment")
-				r.logger.WithField("error", wrappedErr).Error("failed to delete comment")
+				r.Logger.WithField("error", wrappedErr).Error("failed to delete comment")
 				return wrappedErr
 			}
 		}
@@ -251,7 +280,7 @@ func (r *LocationOps) updateOrCreateComments(ctx context.Context, tx *ent.Tx, en
 				SetCommentTypeID(comment.CommentTypeID).
 				Save(ctx); err != nil {
 				wrappedErr := eris.Wrap(err, "failed to update comment")
-				r.logger.WithField("error", wrappedErr).Error("failed to update comment")
+				r.Logger.WithField("error", wrappedErr).Error("failed to update comment")
 				return wrappedErr
 			}
 		} else {
@@ -264,7 +293,104 @@ func (r *LocationOps) updateOrCreateComments(ctx context.Context, tx *ent.Tx, en
 				SetCommentTypeID(comment.CommentTypeID).
 				Save(ctx); err != nil {
 				wrappedErr := eris.Wrap(err, "failed to create comment")
-				r.logger.WithField("error", wrappedErr).Error("failed to create comment")
+				r.Logger.WithField("error", wrappedErr).Error("failed to create comment")
+				return wrappedErr
+			}
+		}
+	}
+
+	return nil
+}
+
+// createLocationContact create a location contact entity.
+func (r *LocationOps) createLocationContact(
+	ctx context.Context, tx *ent.Tx, locationID uuid.UUID, newEntity LocationRequest,
+) error {
+	for _, contact := range newEntity.Contacts {
+		_, err := tx.LocationContact.Create().
+			SetLocationID(locationID).
+			SetBusinessUnitID(newEntity.BusinessUnitID).
+			SetOrganizationID(newEntity.OrganizationID).
+			SetLocationID(locationID).
+			SetName(contact.Name).
+			SetEmailAddress(contact.EmailAddress).
+			SetPhoneNumber(contact.PhoneNumber).
+			Save(ctx)
+		if err != nil {
+			wrappedError := eris.Wrap(err, "failed to create contact")
+			r.Logger.WithField("error", wrappedError).Error("failed to create contact")
+			return wrappedError
+		}
+	}
+
+	return nil
+}
+
+func (r *LocationOps) syncContacts(
+	ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, updatedEntity *ent.Location,
+) error {
+	existingContacts, err := tx.Location.QueryContacts(updatedEntity).Where(
+		locationcontact.HasLocationWith(location.IDEQ(entity.ID)),
+	).All(ctx)
+	if err != nil {
+		return eris.Wrap(err, "failed to fetch existing contacts")
+	}
+
+	// Delete unmatched contacts
+	if err = r.deleteUnmatchedContacts(ctx, tx, entity, existingContacts); err != nil {
+		return err
+	}
+
+	// Update or create new contacts
+	return r.updateOrCreateContacts(ctx, tx, entity)
+}
+
+func (r *LocationOps) deleteUnmatchedContacts(
+	ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest, existingContacts []*ent.LocationContact,
+) error {
+	contactPresent := make(map[uuid.UUID]bool)
+	for _, contact := range entity.Contacts {
+		if contact.ID != uuid.Nil {
+			contactPresent[contact.ID] = true
+		}
+	}
+
+	for _, existingContact := range existingContacts {
+		if !contactPresent[existingContact.ID] {
+			if err := tx.LocationComment.DeleteOneID(existingContact.ID).Exec(ctx); err != nil {
+				wrappedErr := eris.Wrap(err, "failed to delete contact")
+				r.Logger.WithField("error", wrappedErr).Error("failed to delete contact")
+				return wrappedErr
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *LocationOps) updateOrCreateContacts(ctx context.Context, tx *ent.Tx, entity LocationUpdateRequest) error {
+	for _, contact := range entity.Contacts {
+		if contact.ID != uuid.Nil {
+			if _, err := tx.LocationContact.UpdateOneID(contact.ID).
+				SetName(contact.Name).
+				SetEmailAddress(contact.EmailAddress).
+				SetPhoneNumber(contact.PhoneNumber).
+				Save(ctx); err != nil {
+				wrappedErr := eris.Wrap(err, "failed to update contact")
+				r.Logger.WithField("error", wrappedErr).Error("failed to update contact")
+				return wrappedErr
+			}
+		} else {
+			if _, err := tx.LocationContact.Create().
+				SetLocationID(entity.ID).
+				SetBusinessUnitID(entity.BusinessUnitID).
+				SetOrganizationID(entity.OrganizationID).
+				SetName(contact.Name).
+				SetEmailAddress(contact.EmailAddress).
+				SetPhoneNumber(contact.PhoneNumber).
+				Save(ctx); err != nil {
+				wrappedErr := eris.Wrap(err, "failed to create contact")
+				r.Logger.WithField("error", wrappedErr).Error("failed to create contact")
 				return wrappedErr
 			}
 		}

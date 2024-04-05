@@ -1967,7 +1967,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 	graph.MustAddE(
 		"contacts",
 		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},
@@ -2087,7 +2087,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 	graph.MustAddE(
 		"location",
 		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},

@@ -125,7 +125,6 @@ func (Location) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("contacts", LocationContact.Type).
 			StructTag(`json:"contacts"`).
-			Annotations(entsql.OnDelete(entsql.Cascade)).
-			Unique(),
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }

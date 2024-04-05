@@ -26890,7 +26890,8 @@ type LocationMutation struct {
 	comments                 map[uuid.UUID]struct{}
 	removedcomments          map[uuid.UUID]struct{}
 	clearedcomments          bool
-	contacts                 *uuid.UUID
+	contacts                 map[uuid.UUID]struct{}
+	removedcontacts          map[uuid.UUID]struct{}
 	clearedcontacts          bool
 	done                     bool
 	oldValue                 func(context.Context) (*Location, error)
@@ -27987,9 +27988,14 @@ func (m *LocationMutation) ResetComments() {
 	m.removedcomments = nil
 }
 
-// SetContactsID sets the "contacts" edge to the LocationContact entity by id.
-func (m *LocationMutation) SetContactsID(id uuid.UUID) {
-	m.contacts = &id
+// AddContactIDs adds the "contacts" edge to the LocationContact entity by ids.
+func (m *LocationMutation) AddContactIDs(ids ...uuid.UUID) {
+	if m.contacts == nil {
+		m.contacts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.contacts[ids[i]] = struct{}{}
+	}
 }
 
 // ClearContacts clears the "contacts" edge to the LocationContact entity.
@@ -28002,20 +28008,29 @@ func (m *LocationMutation) ContactsCleared() bool {
 	return m.clearedcontacts
 }
 
-// ContactsID returns the "contacts" edge ID in the mutation.
-func (m *LocationMutation) ContactsID() (id uuid.UUID, exists bool) {
-	if m.contacts != nil {
-		return *m.contacts, true
+// RemoveContactIDs removes the "contacts" edge to the LocationContact entity by IDs.
+func (m *LocationMutation) RemoveContactIDs(ids ...uuid.UUID) {
+	if m.removedcontacts == nil {
+		m.removedcontacts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.contacts, ids[i])
+		m.removedcontacts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedContacts returns the removed IDs of the "contacts" edge to the LocationContact entity.
+func (m *LocationMutation) RemovedContactsIDs() (ids []uuid.UUID) {
+	for id := range m.removedcontacts {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // ContactsIDs returns the "contacts" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ContactsID instead. It exists only for internal usage by the builders.
 func (m *LocationMutation) ContactsIDs() (ids []uuid.UUID) {
-	if id := m.contacts; id != nil {
-		ids = append(ids, *id)
+	for id := range m.contacts {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -28024,6 +28039,7 @@ func (m *LocationMutation) ContactsIDs() (ids []uuid.UUID) {
 func (m *LocationMutation) ResetContacts() {
 	m.contacts = nil
 	m.clearedcontacts = false
+	m.removedcontacts = nil
 }
 
 // Where appends a list predicates to the LocationMutation builder.
@@ -28592,9 +28608,11 @@ func (m *LocationMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case location.EdgeContacts:
-		if id := m.contacts; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.contacts))
+		for id := range m.contacts {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -28604,6 +28622,9 @@ func (m *LocationMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 6)
 	if m.removedcomments != nil {
 		edges = append(edges, location.EdgeComments)
+	}
+	if m.removedcontacts != nil {
+		edges = append(edges, location.EdgeContacts)
 	}
 	return edges
 }
@@ -28615,6 +28636,12 @@ func (m *LocationMutation) RemovedIDs(name string) []ent.Value {
 	case location.EdgeComments:
 		ids := make([]ent.Value, 0, len(m.removedcomments))
 		for id := range m.removedcomments {
+			ids = append(ids, id)
+		}
+		return ids
+	case location.EdgeContacts:
+		ids := make([]ent.Value, 0, len(m.removedcontacts))
+		for id := range m.removedcontacts {
 			ids = append(ids, id)
 		}
 		return ids
@@ -28681,9 +28708,6 @@ func (m *LocationMutation) ClearEdge(name string) error {
 		return nil
 	case location.EdgeState:
 		m.ClearState()
-		return nil
-	case location.EdgeContacts:
-		m.ClearContacts()
 		return nil
 	}
 	return fmt.Errorf("unknown Location unique edge %s", name)

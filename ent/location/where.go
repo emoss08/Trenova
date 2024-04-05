@@ -1156,7 +1156,7 @@ func HasContacts() predicate.Location {
 	return predicate.Location(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, ContactsTable, ContactsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

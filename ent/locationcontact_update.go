@@ -246,7 +246,7 @@ func (lcu *LocationContactUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if lcu.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},
@@ -259,7 +259,7 @@ func (lcu *LocationContactUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if nodes := lcu.mutation.LocationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},
@@ -540,7 +540,7 @@ func (lcuo *LocationContactUpdateOne) sqlSave(ctx context.Context) (_node *Locat
 	}
 	if lcuo.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},
@@ -553,7 +553,7 @@ func (lcuo *LocationContactUpdateOne) sqlSave(ctx context.Context) (_node *Locat
 	}
 	if nodes := lcuo.mutation.LocationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},

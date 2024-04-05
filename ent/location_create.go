@@ -278,23 +278,19 @@ func (lc *LocationCreate) AddComments(l ...*LocationComment) *LocationCreate {
 	return lc.AddCommentIDs(ids...)
 }
 
-// SetContactsID sets the "contacts" edge to the LocationContact entity by ID.
-func (lc *LocationCreate) SetContactsID(id uuid.UUID) *LocationCreate {
-	lc.mutation.SetContactsID(id)
+// AddContactIDs adds the "contacts" edge to the LocationContact entity by IDs.
+func (lc *LocationCreate) AddContactIDs(ids ...uuid.UUID) *LocationCreate {
+	lc.mutation.AddContactIDs(ids...)
 	return lc
 }
 
-// SetNillableContactsID sets the "contacts" edge to the LocationContact entity by ID if the given value is not nil.
-func (lc *LocationCreate) SetNillableContactsID(id *uuid.UUID) *LocationCreate {
-	if id != nil {
-		lc = lc.SetContactsID(*id)
+// AddContacts adds the "contacts" edges to the LocationContact entity.
+func (lc *LocationCreate) AddContacts(l ...*LocationContact) *LocationCreate {
+	ids := make([]uuid.UUID, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
 	}
-	return lc
-}
-
-// SetContacts sets the "contacts" edge to the LocationContact entity.
-func (lc *LocationCreate) SetContacts(l *LocationContact) *LocationCreate {
-	return lc.SetContactsID(l.ID)
+	return lc.AddContactIDs(ids...)
 }
 
 // Mutation returns the LocationMutation object of the builder.
@@ -629,7 +625,7 @@ func (lc *LocationCreate) createSpec() (*Location, *sqlgraph.CreateSpec) {
 	}
 	if nodes := lc.mutation.ContactsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},

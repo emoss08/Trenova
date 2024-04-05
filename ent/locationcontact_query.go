@@ -123,7 +123,7 @@ func (lcq *LocationContactQuery) QueryLocation() *LocationQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(locationcontact.Table, locationcontact.FieldID, selector),
 			sqlgraph.To(location.Table, location.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, locationcontact.LocationTable, locationcontact.LocationColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, locationcontact.LocationTable, locationcontact.LocationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(lcq.driver.Dialect(), step)
 		return fromU, nil
