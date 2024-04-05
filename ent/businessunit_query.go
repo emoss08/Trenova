@@ -20,14 +20,15 @@ import (
 // BusinessUnitQuery is the builder for querying BusinessUnit entities.
 type BusinessUnitQuery struct {
 	config
-	ctx               *QueryContext
-	order             []businessunit.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.BusinessUnit
-	withPrev          *BusinessUnitQuery
-	withNext          *BusinessUnitQuery
-	withOrganizations *OrganizationQuery
-	modifiers         []func(*sql.Selector)
+	ctx                    *QueryContext
+	order                  []businessunit.OrderOption
+	inters                 []Interceptor
+	predicates             []predicate.BusinessUnit
+	withPrev               *BusinessUnitQuery
+	withNext               *BusinessUnitQuery
+	withOrganizations      *OrganizationQuery
+	modifiers              []func(*sql.Selector)
+	withNamedOrganizations map[string]*OrganizationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -488,6 +489,13 @@ func (buq *BusinessUnitQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 			return nil, err
 		}
 	}
+	for name, query := range buq.withNamedOrganizations {
+		if err := buq.loadOrganizations(ctx, query, nodes,
+			func(n *BusinessUnit) { n.appendNamedOrganizations(name) },
+			func(n *BusinessUnit, e *Organization) { n.appendNamedOrganizations(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -678,6 +686,20 @@ func (buq *BusinessUnitQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (buq *BusinessUnitQuery) Modify(modifiers ...func(s *sql.Selector)) *BusinessUnitSelect {
 	buq.modifiers = append(buq.modifiers, modifiers...)
 	return buq.Select()
+}
+
+// WithNamedOrganizations tells the query-builder to eager-load the nodes that are connected to the "organizations"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (buq *BusinessUnitQuery) WithNamedOrganizations(name string, opts ...func(*OrganizationQuery)) *BusinessUnitQuery {
+	query := (&OrganizationClient{config: buq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if buq.withNamedOrganizations == nil {
+		buq.withNamedOrganizations = make(map[string]*OrganizationQuery)
+	}
+	buq.withNamedOrganizations[name] = query
+	return buq
 }
 
 // BusinessUnitGroupBy is the group-by builder for BusinessUnit entities.

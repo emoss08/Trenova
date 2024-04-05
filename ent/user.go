@@ -70,7 +70,8 @@ type UserEdges struct {
 	UserFavorites []*UserFavorite `json:"user_favorites,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes        [3]bool
+	namedUserFavorites map[string][]*UserFavorite
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -350,6 +351,30 @@ func (u *User) String() string {
 	}
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedUserFavorites returns the UserFavorites named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedUserFavorites(name string) ([]*UserFavorite, error) {
+	if u.Edges.namedUserFavorites == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedUserFavorites[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedUserFavorites(name string, edges ...*UserFavorite) {
+	if u.Edges.namedUserFavorites == nil {
+		u.Edges.namedUserFavorites = make(map[string][]*UserFavorite)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedUserFavorites[name] = []*UserFavorite{}
+	} else {
+		u.Edges.namedUserFavorites[name] = append(u.Edges.namedUserFavorites[name], edges...)
+	}
 }
 
 // Users is a parsable slice of User.

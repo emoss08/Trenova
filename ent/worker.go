@@ -87,7 +87,9 @@ type WorkerEdges struct {
 	WorkerContacts []*WorkerContact `json:"worker_contacts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [10]bool
+	loadedTypes         [10]bool
+	namedWorkerComments map[string][]*WorkerComment
+	namedWorkerContacts map[string][]*WorkerContact
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -472,6 +474,54 @@ func (w *Worker) String() string {
 	}
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedWorkerComments returns the WorkerComments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (w *Worker) NamedWorkerComments(name string) ([]*WorkerComment, error) {
+	if w.Edges.namedWorkerComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := w.Edges.namedWorkerComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (w *Worker) appendNamedWorkerComments(name string, edges ...*WorkerComment) {
+	if w.Edges.namedWorkerComments == nil {
+		w.Edges.namedWorkerComments = make(map[string][]*WorkerComment)
+	}
+	if len(edges) == 0 {
+		w.Edges.namedWorkerComments[name] = []*WorkerComment{}
+	} else {
+		w.Edges.namedWorkerComments[name] = append(w.Edges.namedWorkerComments[name], edges...)
+	}
+}
+
+// NamedWorkerContacts returns the WorkerContacts named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (w *Worker) NamedWorkerContacts(name string) ([]*WorkerContact, error) {
+	if w.Edges.namedWorkerContacts == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := w.Edges.namedWorkerContacts[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (w *Worker) appendNamedWorkerContacts(name string, edges ...*WorkerContact) {
+	if w.Edges.namedWorkerContacts == nil {
+		w.Edges.namedWorkerContacts = make(map[string][]*WorkerContact)
+	}
+	if len(edges) == 0 {
+		w.Edges.namedWorkerContacts[name] = []*WorkerContact{}
+	} else {
+		w.Edges.namedWorkerContacts[name] = append(w.Edges.namedWorkerContacts[name], edges...)
+	}
 }
 
 // Workers is a parsable slice of Worker.

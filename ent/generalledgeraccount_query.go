@@ -30,6 +30,7 @@ type GeneralLedgerAccountQuery struct {
 	withOrganization *OrganizationQuery
 	withTags         *TagQuery
 	modifiers        []func(*sql.Selector)
+	withNamedTags    map[string]*TagQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -490,6 +491,13 @@ func (glaq *GeneralLedgerAccountQuery) sqlAll(ctx context.Context, hooks ...quer
 			return nil, err
 		}
 	}
+	for name, query := range glaq.withNamedTags {
+		if err := glaq.loadTags(ctx, query, nodes,
+			func(n *GeneralLedgerAccount) { n.appendNamedTags(name) },
+			func(n *GeneralLedgerAccount, e *Tag) { n.appendNamedTags(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -710,6 +718,20 @@ func (glaq *GeneralLedgerAccountQuery) sqlQuery(ctx context.Context) *sql.Select
 func (glaq *GeneralLedgerAccountQuery) Modify(modifiers ...func(s *sql.Selector)) *GeneralLedgerAccountSelect {
 	glaq.modifiers = append(glaq.modifiers, modifiers...)
 	return glaq.Select()
+}
+
+// WithNamedTags tells the query-builder to eager-load the nodes that are connected to the "tags"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (glaq *GeneralLedgerAccountQuery) WithNamedTags(name string, opts ...func(*TagQuery)) *GeneralLedgerAccountQuery {
+	query := (&TagClient{config: glaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if glaq.withNamedTags == nil {
+		glaq.withNamedTags = make(map[string]*TagQuery)
+	}
+	glaq.withNamedTags[name] = query
+	return glaq
 }
 
 // GeneralLedgerAccountGroupBy is the group-by builder for GeneralLedgerAccount entities.

@@ -77,7 +77,8 @@ type BusinessUnitEdges struct {
 	Organizations []*Organization `json:"organizations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes        [3]bool
+	namedOrganizations map[string][]*Organization
 }
 
 // PrevOrErr returns the Prev value or an error if the edge
@@ -428,6 +429,30 @@ func (bu *BusinessUnit) String() string {
 	}
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedOrganizations returns the Organizations named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (bu *BusinessUnit) NamedOrganizations(name string) ([]*Organization, error) {
+	if bu.Edges.namedOrganizations == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := bu.Edges.namedOrganizations[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (bu *BusinessUnit) appendNamedOrganizations(name string, edges ...*Organization) {
+	if bu.Edges.namedOrganizations == nil {
+		bu.Edges.namedOrganizations = make(map[string][]*Organization)
+	}
+	if len(edges) == 0 {
+		bu.Edges.namedOrganizations[name] = []*Organization{}
+	} else {
+		bu.Edges.namedOrganizations[name] = append(bu.Edges.namedOrganizations[name], edges...)
+	}
 }
 
 // BusinessUnits is a parsable slice of BusinessUnit.

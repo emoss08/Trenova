@@ -28,21 +28,23 @@ import (
 // WorkerQuery is the builder for querying Worker entities.
 type WorkerQuery struct {
 	config
-	ctx                  *QueryContext
-	order                []worker.OrderOption
-	inters               []Interceptor
-	predicates           []predicate.Worker
-	withBusinessUnit     *BusinessUnitQuery
-	withOrganization     *OrganizationQuery
-	withState            *UsStateQuery
-	withFleetCode        *FleetCodeQuery
-	withManager          *UserQuery
-	withPrimaryTractor   *TractorQuery
-	withSecondaryTractor *TractorQuery
-	withWorkerProfile    *WorkerProfileQuery
-	withWorkerComments   *WorkerCommentQuery
-	withWorkerContacts   *WorkerContactQuery
-	modifiers            []func(*sql.Selector)
+	ctx                     *QueryContext
+	order                   []worker.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.Worker
+	withBusinessUnit        *BusinessUnitQuery
+	withOrganization        *OrganizationQuery
+	withState               *UsStateQuery
+	withFleetCode           *FleetCodeQuery
+	withManager             *UserQuery
+	withPrimaryTractor      *TractorQuery
+	withSecondaryTractor    *TractorQuery
+	withWorkerProfile       *WorkerProfileQuery
+	withWorkerComments      *WorkerCommentQuery
+	withWorkerContacts      *WorkerContactQuery
+	modifiers               []func(*sql.Selector)
+	withNamedWorkerComments map[string]*WorkerCommentQuery
+	withNamedWorkerContacts map[string]*WorkerContactQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -791,6 +793,20 @@ func (wq *WorkerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Worke
 			return nil, err
 		}
 	}
+	for name, query := range wq.withNamedWorkerComments {
+		if err := wq.loadWorkerComments(ctx, query, nodes,
+			func(n *Worker) { n.appendNamedWorkerComments(name) },
+			func(n *Worker, e *WorkerComment) { n.appendNamedWorkerComments(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range wq.withNamedWorkerContacts {
+		if err := wq.loadWorkerContacts(ctx, query, nodes,
+			func(n *Worker) { n.appendNamedWorkerContacts(name) },
+			func(n *Worker, e *WorkerContact) { n.appendNamedWorkerContacts(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -1199,6 +1215,34 @@ func (wq *WorkerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (wq *WorkerQuery) Modify(modifiers ...func(s *sql.Selector)) *WorkerSelect {
 	wq.modifiers = append(wq.modifiers, modifiers...)
 	return wq.Select()
+}
+
+// WithNamedWorkerComments tells the query-builder to eager-load the nodes that are connected to the "worker_comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithNamedWorkerComments(name string, opts ...func(*WorkerCommentQuery)) *WorkerQuery {
+	query := (&WorkerCommentClient{config: wq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if wq.withNamedWorkerComments == nil {
+		wq.withNamedWorkerComments = make(map[string]*WorkerCommentQuery)
+	}
+	wq.withNamedWorkerComments[name] = query
+	return wq
+}
+
+// WithNamedWorkerContacts tells the query-builder to eager-load the nodes that are connected to the "worker_contacts"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (wq *WorkerQuery) WithNamedWorkerContacts(name string, opts ...func(*WorkerContactQuery)) *WorkerQuery {
+	query := (&WorkerContactClient{config: wq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if wq.withNamedWorkerContacts == nil {
+		wq.withNamedWorkerContacts = make(map[string]*WorkerContactQuery)
+	}
+	wq.withNamedWorkerContacts[name] = query
+	return wq
 }
 
 // WorkerGroupBy is the group-by builder for Worker entities.

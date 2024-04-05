@@ -52,7 +52,8 @@ type TagEdges struct {
 	GeneralLedgerAccount []*GeneralLedgerAccount `json:"general_ledger_account,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes               [3]bool
+	namedGeneralLedgerAccount map[string][]*GeneralLedgerAccount
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -244,6 +245,30 @@ func (t *Tag) String() string {
 	builder.WriteString(t.Color)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedGeneralLedgerAccount returns the GeneralLedgerAccount named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (t *Tag) NamedGeneralLedgerAccount(name string) ([]*GeneralLedgerAccount, error) {
+	if t.Edges.namedGeneralLedgerAccount == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := t.Edges.namedGeneralLedgerAccount[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (t *Tag) appendNamedGeneralLedgerAccount(name string, edges ...*GeneralLedgerAccount) {
+	if t.Edges.namedGeneralLedgerAccount == nil {
+		t.Edges.namedGeneralLedgerAccount = make(map[string][]*GeneralLedgerAccount)
+	}
+	if len(edges) == 0 {
+		t.Edges.namedGeneralLedgerAccount[name] = []*GeneralLedgerAccount{}
+	} else {
+		t.Edges.namedGeneralLedgerAccount[name] = append(t.Edges.namedGeneralLedgerAccount[name], edges...)
+	}
 }
 
 // Tags is a parsable slice of Tag.

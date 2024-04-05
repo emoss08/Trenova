@@ -82,7 +82,9 @@ type LocationEdges struct {
 	Contacts []*LocationContact `json:"contacts"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes   [6]bool
+	namedComments map[string][]*LocationComment
+	namedContacts map[string][]*LocationContact
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -428,6 +430,54 @@ func (l *Location) String() string {
 	builder.WriteString(fmt.Sprintf("%v", l.IsGeocoded))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedComments returns the Comments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedComments(name string) ([]*LocationComment, error) {
+	if l.Edges.namedComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedComments(name string, edges ...*LocationComment) {
+	if l.Edges.namedComments == nil {
+		l.Edges.namedComments = make(map[string][]*LocationComment)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedComments[name] = []*LocationComment{}
+	} else {
+		l.Edges.namedComments[name] = append(l.Edges.namedComments[name], edges...)
+	}
+}
+
+// NamedContacts returns the Contacts named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedContacts(name string) ([]*LocationContact, error) {
+	if l.Edges.namedContacts == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedContacts[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedContacts(name string, edges ...*LocationContact) {
+	if l.Edges.namedContacts == nil {
+		l.Edges.namedContacts = make(map[string][]*LocationContact)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedContacts[name] = []*LocationContact{}
+	} else {
+		l.Edges.namedContacts[name] = append(l.Edges.namedContacts[name], edges...)
+	}
 }
 
 // Locations is a parsable slice of Location.

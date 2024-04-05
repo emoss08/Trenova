@@ -22,14 +22,15 @@ import (
 // TagQuery is the builder for querying Tag entities.
 type TagQuery struct {
 	config
-	ctx                      *QueryContext
-	order                    []tag.OrderOption
-	inters                   []Interceptor
-	predicates               []predicate.Tag
-	withBusinessUnit         *BusinessUnitQuery
-	withOrganization         *OrganizationQuery
-	withGeneralLedgerAccount *GeneralLedgerAccountQuery
-	modifiers                []func(*sql.Selector)
+	ctx                           *QueryContext
+	order                         []tag.OrderOption
+	inters                        []Interceptor
+	predicates                    []predicate.Tag
+	withBusinessUnit              *BusinessUnitQuery
+	withOrganization              *OrganizationQuery
+	withGeneralLedgerAccount      *GeneralLedgerAccountQuery
+	modifiers                     []func(*sql.Selector)
+	withNamedGeneralLedgerAccount map[string]*GeneralLedgerAccountQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -492,6 +493,13 @@ func (tq *TagQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tag, err
 			return nil, err
 		}
 	}
+	for name, query := range tq.withNamedGeneralLedgerAccount {
+		if err := tq.loadGeneralLedgerAccount(ctx, query, nodes,
+			func(n *Tag) { n.appendNamedGeneralLedgerAccount(name) },
+			func(n *Tag, e *GeneralLedgerAccount) { n.appendNamedGeneralLedgerAccount(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -712,6 +720,20 @@ func (tq *TagQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (tq *TagQuery) Modify(modifiers ...func(s *sql.Selector)) *TagSelect {
 	tq.modifiers = append(tq.modifiers, modifiers...)
 	return tq.Select()
+}
+
+// WithNamedGeneralLedgerAccount tells the query-builder to eager-load the nodes that are connected to the "general_ledger_account"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (tq *TagQuery) WithNamedGeneralLedgerAccount(name string, opts ...func(*GeneralLedgerAccountQuery)) *TagQuery {
+	query := (&GeneralLedgerAccountClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if tq.withNamedGeneralLedgerAccount == nil {
+		tq.withNamedGeneralLedgerAccount = make(map[string]*GeneralLedgerAccountQuery)
+	}
+	tq.withNamedGeneralLedgerAccount[name] = query
+	return tq
 }
 
 // TagGroupBy is the group-by builder for Tag entities.

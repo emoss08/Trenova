@@ -22,14 +22,15 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx               *QueryContext
-	order             []user.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.User
-	withBusinessUnit  *BusinessUnitQuery
-	withOrganization  *OrganizationQuery
-	withUserFavorites *UserFavoriteQuery
-	modifiers         []func(*sql.Selector)
+	ctx                    *QueryContext
+	order                  []user.OrderOption
+	inters                 []Interceptor
+	predicates             []predicate.User
+	withBusinessUnit       *BusinessUnitQuery
+	withOrganization       *OrganizationQuery
+	withUserFavorites      *UserFavoriteQuery
+	modifiers              []func(*sql.Selector)
+	withNamedUserFavorites map[string]*UserFavoriteQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -490,6 +491,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	for name, query := range uq.withNamedUserFavorites {
+		if err := uq.loadUserFavorites(ctx, query, nodes,
+			func(n *User) { n.appendNamedUserFavorites(name) },
+			func(n *User, e *UserFavorite) { n.appendNamedUserFavorites(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -679,6 +687,20 @@ func (uq *UserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (uq *UserQuery) Modify(modifiers ...func(s *sql.Selector)) *UserSelect {
 	uq.modifiers = append(uq.modifiers, modifiers...)
 	return uq.Select()
+}
+
+// WithNamedUserFavorites tells the query-builder to eager-load the nodes that are connected to the "user_favorites"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedUserFavorites(name string, opts ...func(*UserFavoriteQuery)) *UserQuery {
+	query := (&UserFavoriteClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedUserFavorites == nil {
+		uq.withNamedUserFavorites = make(map[string]*UserFavoriteQuery)
+	}
+	uq.withNamedUserFavorites[name] = query
+	return uq
 }
 
 // UserGroupBy is the group-by builder for User entities.
