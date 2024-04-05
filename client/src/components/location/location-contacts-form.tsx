@@ -21,6 +21,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useFieldArray, type Control } from "react-hook-form";
 import { InputField } from "../common/fields/input";
 import { Button } from "../ui/button";
+import { Form, FormControl, FormGroup } from "../ui/form";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function LocationContactForm({
   control,
@@ -34,66 +36,46 @@ export function LocationContactForm({
   });
 
   const handleAddContact = () => {
-    append({ name: "", email: "", phone: "", fax: "" });
+    append({ name: "", emailAddress: "", phoneNumber: "" });
   };
 
   return (
-    <div className="flex size-full flex-col">
+    <Form className="flex size-full flex-col">
       {fields.length > 0 ? (
         <>
-          <div className="max-h-[600px] overflow-y-auto">
+          <ScrollArea className="h-[70vh] p-4">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="my-4 grid grid-cols-3 gap-2 border-b pb-2"
-              >
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`contacts.${index}.name`}
-                      label="Name"
-                      placeholder="Name"
-                      description="Enter the full name of the primary contact for this location."
-                      rules={{ required: true }}
-                    />
-                  </div>
-                </div>
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`contacts.${index}.email`}
-                      label="Email"
-                      placeholder="Email"
-                      description="Provide the email address for direct communication with the location's contact."
-                    />
-                  </div>
-                </div>
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`contacts.${index}.phone`}
-                      label="Phone"
-                      placeholder="Phone"
-                      description="Input the telephone number for reaching the location's contact."
-                    />
-                  </div>
-                </div>
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <InputField
-                      control={control}
-                      name={`contacts.${index}.fax`}
-                      label="Fax"
-                      placeholder="Fax"
-                      description="If applicable, list the fax number associated with the location's contact."
-                    />
-                  </div>
-                </div>
-                <div className="mt-6 flex max-w-sm flex-col justify-between gap-1">
-                  <div className="min-h-[4em]">
+              <FormGroup key={field.id} className="border-b pb-2">
+                <FormControl>
+                  <InputField
+                    control={control}
+                    name={`contacts.${index}.name`}
+                    label="Name"
+                    placeholder="Name"
+                    description="Enter the full name of the primary contact for this location."
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <InputField
+                    control={control}
+                    name={`contacts.${index}.emailAddress`}
+                    label="Email Address"
+                    placeholder="Email Address"
+                    description="Provide the email address for direct communication with the location's contact."
+                  />
+                </FormControl>
+                <FormControl>
+                  <InputField
+                    control={control}
+                    name={`contacts.${index}.phoneNumber`}
+                    label="Phone"
+                    placeholder="Phone"
+                    description="Input the telephone number for reaching the location's contact."
+                  />
+                </FormControl>
+                <div className="flex max-w-sm flex-col justify-between gap-1">
+                  <div className="min-h-[2em]">
                     <Button
                       size="sm"
                       className="bg-background hover:bg-background text-red-600 hover:text-red-700"
@@ -104,13 +86,13 @@ export function LocationContactForm({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </FormGroup>
             ))}
-          </div>
+          </ScrollArea>
           <Button
             type="button"
             size="sm"
-            className="mb-10 w-[200px]"
+            className="my-4 w-[200px]"
             onClick={handleAddContact}
           >
             Add Another Contact
@@ -127,6 +109,6 @@ export function LocationContactForm({
           </Button>
         </div>
       )}
-    </div>
+    </Form>
   );
 }

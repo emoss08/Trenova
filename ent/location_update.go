@@ -332,23 +332,19 @@ func (lu *LocationUpdate) AddComments(l ...*LocationComment) *LocationUpdate {
 	return lu.AddCommentIDs(ids...)
 }
 
-// SetContactsID sets the "contacts" edge to the LocationContact entity by ID.
-func (lu *LocationUpdate) SetContactsID(id uuid.UUID) *LocationUpdate {
-	lu.mutation.SetContactsID(id)
+// AddContactIDs adds the "contacts" edge to the LocationContact entity by IDs.
+func (lu *LocationUpdate) AddContactIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.AddContactIDs(ids...)
 	return lu
 }
 
-// SetNillableContactsID sets the "contacts" edge to the LocationContact entity by ID if the given value is not nil.
-func (lu *LocationUpdate) SetNillableContactsID(id *uuid.UUID) *LocationUpdate {
-	if id != nil {
-		lu = lu.SetContactsID(*id)
+// AddContacts adds the "contacts" edges to the LocationContact entity.
+func (lu *LocationUpdate) AddContacts(l ...*LocationContact) *LocationUpdate {
+	ids := make([]uuid.UUID, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
 	}
-	return lu
-}
-
-// SetContacts sets the "contacts" edge to the LocationContact entity.
-func (lu *LocationUpdate) SetContacts(l *LocationContact) *LocationUpdate {
-	return lu.SetContactsID(l.ID)
+	return lu.AddContactIDs(ids...)
 }
 
 // Mutation returns the LocationMutation object of the builder.
@@ -389,10 +385,25 @@ func (lu *LocationUpdate) RemoveComments(l ...*LocationComment) *LocationUpdate 
 	return lu.RemoveCommentIDs(ids...)
 }
 
-// ClearContacts clears the "contacts" edge to the LocationContact entity.
+// ClearContacts clears all "contacts" edges to the LocationContact entity.
 func (lu *LocationUpdate) ClearContacts() *LocationUpdate {
 	lu.mutation.ClearContacts()
 	return lu
+}
+
+// RemoveContactIDs removes the "contacts" edge to LocationContact entities by IDs.
+func (lu *LocationUpdate) RemoveContactIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.RemoveContactIDs(ids...)
+	return lu
+}
+
+// RemoveContacts removes "contacts" edges to LocationContact entities.
+func (lu *LocationUpdate) RemoveContacts(l ...*LocationContact) *LocationUpdate {
+	ids := make([]uuid.UUID, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return lu.RemoveContactIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -674,7 +685,7 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if lu.mutation.ContactsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},
@@ -685,9 +696,25 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := lu.mutation.RemovedContactsIDs(); len(nodes) > 0 && !lu.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.ContactsTable,
+			Columns: []string{location.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(locationcontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := lu.mutation.ContactsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},
@@ -1021,23 +1048,19 @@ func (luo *LocationUpdateOne) AddComments(l ...*LocationComment) *LocationUpdate
 	return luo.AddCommentIDs(ids...)
 }
 
-// SetContactsID sets the "contacts" edge to the LocationContact entity by ID.
-func (luo *LocationUpdateOne) SetContactsID(id uuid.UUID) *LocationUpdateOne {
-	luo.mutation.SetContactsID(id)
+// AddContactIDs adds the "contacts" edge to the LocationContact entity by IDs.
+func (luo *LocationUpdateOne) AddContactIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.AddContactIDs(ids...)
 	return luo
 }
 
-// SetNillableContactsID sets the "contacts" edge to the LocationContact entity by ID if the given value is not nil.
-func (luo *LocationUpdateOne) SetNillableContactsID(id *uuid.UUID) *LocationUpdateOne {
-	if id != nil {
-		luo = luo.SetContactsID(*id)
+// AddContacts adds the "contacts" edges to the LocationContact entity.
+func (luo *LocationUpdateOne) AddContacts(l ...*LocationContact) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
 	}
-	return luo
-}
-
-// SetContacts sets the "contacts" edge to the LocationContact entity.
-func (luo *LocationUpdateOne) SetContacts(l *LocationContact) *LocationUpdateOne {
-	return luo.SetContactsID(l.ID)
+	return luo.AddContactIDs(ids...)
 }
 
 // Mutation returns the LocationMutation object of the builder.
@@ -1078,10 +1101,25 @@ func (luo *LocationUpdateOne) RemoveComments(l ...*LocationComment) *LocationUpd
 	return luo.RemoveCommentIDs(ids...)
 }
 
-// ClearContacts clears the "contacts" edge to the LocationContact entity.
+// ClearContacts clears all "contacts" edges to the LocationContact entity.
 func (luo *LocationUpdateOne) ClearContacts() *LocationUpdateOne {
 	luo.mutation.ClearContacts()
 	return luo
+}
+
+// RemoveContactIDs removes the "contacts" edge to LocationContact entities by IDs.
+func (luo *LocationUpdateOne) RemoveContactIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.RemoveContactIDs(ids...)
+	return luo
+}
+
+// RemoveContacts removes "contacts" edges to LocationContact entities.
+func (luo *LocationUpdateOne) RemoveContacts(l ...*LocationContact) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return luo.RemoveContactIDs(ids...)
 }
 
 // Where appends a list predicates to the LocationUpdate builder.
@@ -1393,7 +1431,7 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 	}
 	if luo.mutation.ContactsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},
@@ -1404,9 +1442,25 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := luo.mutation.RemovedContactsIDs(); len(nodes) > 0 && !luo.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.ContactsTable,
+			Columns: []string{location.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(locationcontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := luo.mutation.ContactsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   location.ContactsTable,
 			Columns: []string{location.ContactsColumn},

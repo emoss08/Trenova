@@ -36,6 +36,7 @@ type LocationResponse struct {
 	PlaceID            string                `json:"placeId" validate:"omitempty,max=255"`
 	IsGeocoded         bool                  `json:"isGeocoded"`
 	Comments           []ent.LocationComment `json:"comments"`
+	Contacts           []ent.LocationContact `json:"contacts"`
 	Edges              ent.LocationEdges     `json:"edges"`
 }
 
@@ -94,6 +95,12 @@ func GetLocations(w http.ResponseWriter, r *http.Request) {
 			comments[j] = *comment
 		}
 
+		// Directly assign the comments form the location objects
+		contacts := make([]ent.LocationContact, len(location.Edges.Contacts))
+		for k, contact := range location.Edges.Contacts {
+			contacts[k] = *contact
+		}
+
 		// Response for the location
 		responses[i] = LocationResponse{
 			ID:                 location.ID,
@@ -117,6 +124,7 @@ func GetLocations(w http.ResponseWriter, r *http.Request) {
 			PlaceID:            location.PlaceID,
 			IsGeocoded:         location.IsGeocoded,
 			Comments:           comments,
+			Contacts:           contacts,
 			Edges:              location.Edges,
 		}
 	}

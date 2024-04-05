@@ -32,13 +32,13 @@ type LocationContact struct {
 	// Version holds the value of the "version" field.
 	Version int `json:"version" validate:"omitempty"`
 	// LocationID holds the value of the "location_id" field.
-	LocationID uuid.UUID `json:"locationId" validate:"required"`
+	LocationID uuid.UUID `json:"locationId" validate:"omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required"`
 	// EmailAddress holds the value of the "email_address" field.
 	EmailAddress string `json:"emailAddress" validate:"omitempty,email"`
 	// PhoneNumber holds the value of the "phone_number" field.
-	PhoneNumber string `json:"phoneNumber" validate:"omitempty,phone"`
+	PhoneNumber string `json:"phoneNumber" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LocationContactQuery when eager-loading is set.
 	Edges        LocationContactEdges `json:"edges"`

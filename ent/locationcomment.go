@@ -47,11 +47,6 @@ type LocationComment struct {
 	selectValues sql.SelectValues
 }
 
-// Error implements error.
-func (lc *LocationComment) Error() string {
-	panic("unimplemented")
-}
-
 // LocationCommentEdges holds the relations/edges for other nodes in the graph.
 type LocationCommentEdges struct {
 	// BusinessUnit holds the value of the business_unit edge.

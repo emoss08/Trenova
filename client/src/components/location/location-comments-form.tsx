@@ -25,6 +25,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SelectInput } from "../common/fields/select-input";
 import { TextareaField } from "../common/fields/textarea";
 import { Button } from "../ui/button";
+import { Form, FormControl, FormGroup } from "../ui/form";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function LocationCommentForm({
   control,
@@ -49,45 +51,38 @@ export function LocationCommentForm({
   } = useCommentTypes();
 
   return (
-    <div className="flex size-full flex-col">
+    <Form className="flex size-full flex-col">
       {fields.length > 0 ? (
         <>
-          <div className="max-h-[600px] overflow-y-auto">
+          <ScrollArea className="h-[70vh] p-4">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="my-4 grid grid-cols-1 gap-2 border-b pb-2"
-              >
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <SelectInput
-                      rules={{ required: true }}
-                      name={`comments.${index}.commentTypeId`}
-                      control={control}
-                      label="Comment Type"
-                      options={selectCommentTypes}
-                      isLoading={isCommentTypeLoading}
-                      isFetchError={isCommentTypeError}
-                      placeholder="Comment Type"
-                      description="Specify the category of the comment from the available options."
-                      popoutLink="/dispatch/comment-types/"
-                      hasPopoutWindow
-                      popoutLinkLabel="Comment Type"
-                    />
-                  </div>
-                </div>
-                <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                  <div className="min-h-[4em]">
-                    <TextareaField
-                      rules={{ required: true }}
-                      name={`comments.${index}.comment`}
-                      control={control}
-                      label="Comment"
-                      placeholder="Comment"
-                      description="Provide detailed remarks or observations relevant to the account."
-                    />
-                  </div>
-                </div>
+              <FormGroup key={field.id} className="border-b pb-2">
+                <FormControl className="col-span-full">
+                  <SelectInput
+                    rules={{ required: true }}
+                    name={`comments.${index}.commentTypeId`}
+                    control={control}
+                    label="Comment Type"
+                    options={selectCommentTypes}
+                    isLoading={isCommentTypeLoading}
+                    isFetchError={isCommentTypeError}
+                    placeholder="Comment Type"
+                    description="Specify the category of the comment from the available options."
+                    popoutLink="/dispatch/comment-types/"
+                    hasPopoutWindow
+                    popoutLinkLabel="Comment Type"
+                  />
+                </FormControl>
+                <FormControl className="col-span-full">
+                  <TextareaField
+                    rules={{ required: true }}
+                    name={`comments.${index}.comment`}
+                    control={control}
+                    label="Comment"
+                    placeholder="Comment"
+                    description="Provide detailed remarks or observations relevant to the account."
+                  />
+                </FormControl>
                 <div className="flex max-w-sm flex-col justify-between gap-1">
                   <div className="min-h-[2em]">
                     <Button
@@ -100,13 +95,13 @@ export function LocationCommentForm({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </FormGroup>
             ))}
-          </div>
+          </ScrollArea>
           <Button
             type="button"
             size="sm"
-            className="mb-10 w-[200px]"
+            className="my-4 w-[200px]"
             onClick={handleAddContact}
           >
             Add Another Comment
@@ -123,6 +118,6 @@ export function LocationCommentForm({
           </Button>
         </div>
       )}
-    </div>
+    </Form>
   );
 }

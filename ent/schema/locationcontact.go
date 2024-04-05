@@ -16,8 +16,9 @@ type LocationContact struct {
 // Fields of the LocationContact.
 func (LocationContact) Fields() []ent.Field {
 	return []ent.Field{
+		// ID will be set in the service layer.
 		field.UUID("location_id", uuid.UUID{}).
-			StructTag(`json:"locationId" validate:"required"`),
+			StructTag(`json:"locationId" validate:"omitempty"`),
 		field.String("name").
 			NotEmpty().
 			StructTag(`json:"name" validate:"required"`),
@@ -31,7 +32,7 @@ func (LocationContact) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(15)",
 				dialect.SQLite:   "VARCHAR(15)",
 			}).
-			StructTag(`json:"phoneNumber" validate:"omitempty,phone"`),
+			StructTag(`json:"phoneNumber" validate:"omitempty"`),
 	}
 }
 

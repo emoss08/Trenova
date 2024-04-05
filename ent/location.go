@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcategory"
-	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
@@ -80,7 +79,7 @@ type LocationEdges struct {
 	// Comments holds the value of the comments edge.
 	Comments []*LocationComment `json:"comments"`
 	// Contacts holds the value of the contacts edge.
-	Contacts *LocationContact `json:"contacts"`
+	Contacts []*LocationContact `json:"contacts"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [6]bool
@@ -140,12 +139,10 @@ func (e LocationEdges) CommentsOrErr() ([]*LocationComment, error) {
 }
 
 // ContactsOrErr returns the Contacts value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e LocationEdges) ContactsOrErr() (*LocationContact, error) {
-	if e.Contacts != nil {
+// was not loaded in eager-loading.
+func (e LocationEdges) ContactsOrErr() ([]*LocationContact, error) {
+	if e.loadedTypes[5] {
 		return e.Contacts, nil
-	} else if e.loadedTypes[5] {
-		return nil, &NotFoundError{label: locationcontact.Label}
 	}
 	return nil, &NotLoadedError{edge: "contacts"}
 }

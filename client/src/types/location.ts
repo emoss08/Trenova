@@ -50,9 +50,8 @@ export interface LocationContact extends BaseModel {
   id: string;
   location: string;
   name: string;
-  email?: string | null;
-  phone?: string | null;
-  fax?: string | null;
+  emailAddress?: string;
+  phoneNumber?: string;
 }
 
 export type LocationContactFormValues = Omit<

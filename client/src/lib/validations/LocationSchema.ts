@@ -52,24 +52,9 @@ const LocationContactSchema: yup.ObjectSchema<LocationContactFormValues> = yup
   .object()
   .shape({
     name: yup.string().required("Name is required"),
-    email: yup.string().email().notRequired(),
-    phone: yup
+    emailAddress: yup.string().email(),
+    phoneNumber: yup
       .string()
-      .notRequired()
-      .test(
-        "phone_number_format",
-        "Phone number must be in the format (xxx) xxx-xxxx",
-        (value) => {
-          if (!value) {
-            return true;
-          } // if the string is null or undefined, skip the test
-          const regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-          return regex.test(value); // apply the regex test if string exists
-        },
-      ),
-    fax: yup
-      .string()
-      .notRequired()
       .test(
         "phone_number_format",
         "Phone number must be in the format (xxx) xxx-xxxx",

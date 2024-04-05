@@ -4781,7 +4781,7 @@ func (c *LocationClient) QueryContacts(l *Location) *LocationContactQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(location.Table, location.FieldID, id),
 			sqlgraph.To(locationcontact.Table, locationcontact.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, location.ContactsTable, location.ContactsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.ContactsTable, location.ContactsColumn),
 		)
 		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
 		return fromV, nil
@@ -5340,7 +5340,7 @@ func (c *LocationContactClient) QueryLocation(lc *LocationContact) *LocationQuer
 		step := sqlgraph.NewStep(
 			sqlgraph.From(locationcontact.Table, locationcontact.FieldID, id),
 			sqlgraph.To(location.Table, location.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, locationcontact.LocationTable, locationcontact.LocationColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, locationcontact.LocationTable, locationcontact.LocationColumn),
 		)
 		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
 		return fromV, nil

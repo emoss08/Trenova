@@ -196,7 +196,7 @@ func (lq *LocationQuery) QueryContacts() *LocationContactQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(location.Table, location.FieldID, selector),
 			sqlgraph.To(locationcontact.Table, locationcontact.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, location.ContactsTable, location.ContactsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.ContactsTable, location.ContactsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
 		return fromU, nil
@@ -614,8 +614,9 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 		}
 	}
 	if query := lq.withContacts; query != nil {
-		if err := lq.loadContacts(ctx, query, nodes, nil,
-			func(n *Location, e *LocationContact) { n.Edges.Contacts = e }); err != nil {
+		if err := lq.loadContacts(ctx, query, nodes,
+			func(n *Location) { n.Edges.Contacts = []*LocationContact{} },
+			func(n *Location, e *LocationContact) { n.Edges.Contacts = append(n.Edges.Contacts, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -777,6 +778,9 @@ func (lq *LocationQuery) loadContacts(ctx context.Context, query *LocationContac
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
 	}
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(locationcontact.FieldLocationID)

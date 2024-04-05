@@ -337,7 +337,7 @@ func (lcc *LocationContactCreate) createSpec() (*LocationContact, *sqlgraph.Crea
 	}
 	if nodes := lcc.mutation.LocationIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   locationcontact.LocationTable,
 			Columns: []string{locationcontact.LocationColumn},

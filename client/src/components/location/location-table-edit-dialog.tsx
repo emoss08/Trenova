@@ -83,6 +83,12 @@ export function LocationEditForm({
       locationId: location.id,
     }));
 
+    values.contacts = values.contacts ?? [];
+    values.contacts = values.contacts.map((contact) => ({
+      ...contact,
+      locationId: location.id,
+    }));
+
     console.info("LocationEditForm.onSubmit", values);
 
     mutation.mutate(values);

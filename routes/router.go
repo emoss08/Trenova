@@ -5,25 +5,24 @@ import (
 	"github.com/go-chi/chi/v5"
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/henvic/httpretty"
 )
 
 func InitializeRouter() *chi.Mux {
 	r := chi.NewRouter()
 
-	logger := &httpretty.Logger{
-		Time:           true,
-		TLS:            true,
-		RequestHeader:  true,
-		RequestBody:    true,
-		ResponseHeader: true,
-		ResponseBody:   true,
-		Colors:         true,
-	}
+	// logger := &httpretty.Logger{
+	// 	Time:           true,
+	// 	TLS:            true,
+	// 	RequestHeader:  true,
+	// 	RequestBody:    true,
+	// 	ResponseHeader: true,
+	// 	ResponseBody:   true,
+	// 	Colors:         true,
+	// }
 
 	r.Use(chi_middleware.RequestID)
 	r.Use(chi_middleware.RealIP)
-	r.Use(logger.Middleware)
+	r.Use(chi_middleware.Logger)
 	r.Use(chi_middleware.Compress(5))
 	r.Use(chi_middleware.Recoverer)
 	r.Use(chi_middleware.StripSlashes)

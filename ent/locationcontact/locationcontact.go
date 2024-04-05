@@ -196,6 +196,6 @@ func newLocationStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LocationInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, true, LocationTable, LocationColumn),
+		sqlgraph.Edge(sqlgraph.M2O, true, LocationTable, LocationColumn),
 	)
 }

@@ -346,10 +346,17 @@ func ByComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByContactsField orders the results by contacts field.
-func ByContactsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByContactsCount orders the results by contacts count.
+func ByContactsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newContactsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newContactsStep(), opts...)
+	}
+}
+
+// ByContacts orders the results by contacts terms.
+func ByContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newContactsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -391,6 +398,6 @@ func newContactsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ContactsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, ContactsTable, ContactsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
 	)
 }
