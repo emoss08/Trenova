@@ -74,6 +74,7 @@ type GeneralLedgerAccountEdges struct {
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
+	namedTags   map[string][]*Tag
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -365,6 +366,30 @@ func (gla *GeneralLedgerAccount) String() string {
 	builder.WriteString(fmt.Sprintf("%v", gla.IsReconciled))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedTags returns the Tags named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (gla *GeneralLedgerAccount) NamedTags(name string) ([]*Tag, error) {
+	if gla.Edges.namedTags == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := gla.Edges.namedTags[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (gla *GeneralLedgerAccount) appendNamedTags(name string, edges ...*Tag) {
+	if gla.Edges.namedTags == nil {
+		gla.Edges.namedTags = make(map[string][]*Tag)
+	}
+	if len(edges) == 0 {
+		gla.Edges.namedTags[name] = []*Tag{}
+	} else {
+		gla.Edges.namedTags[name] = append(gla.Edges.namedTags[name], edges...)
+	}
 }
 
 // GeneralLedgerAccounts is a parsable slice of GeneralLedgerAccount.

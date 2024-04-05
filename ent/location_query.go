@@ -36,6 +36,8 @@ type LocationQuery struct {
 	withComments         *LocationCommentQuery
 	withContacts         *LocationContactQuery
 	modifiers            []func(*sql.Selector)
+	withNamedComments    map[string]*LocationCommentQuery
+	withNamedContacts    map[string]*LocationContactQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -620,6 +622,20 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 			return nil, err
 		}
 	}
+	for name, query := range lq.withNamedComments {
+		if err := lq.loadComments(ctx, query, nodes,
+			func(n *Location) { n.appendNamedComments(name) },
+			func(n *Location, e *LocationComment) { n.appendNamedComments(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedContacts {
+		if err := lq.loadContacts(ctx, query, nodes,
+			func(n *Location) { n.appendNamedContacts(name) },
+			func(n *Location, e *LocationContact) { n.appendNamedContacts(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -906,6 +922,34 @@ func (lq *LocationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (lq *LocationQuery) Modify(modifiers ...func(s *sql.Selector)) *LocationSelect {
 	lq.modifiers = append(lq.modifiers, modifiers...)
 	return lq.Select()
+}
+
+// WithNamedComments tells the query-builder to eager-load the nodes that are connected to the "comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedComments(name string, opts ...func(*LocationCommentQuery)) *LocationQuery {
+	query := (&LocationCommentClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedComments == nil {
+		lq.withNamedComments = make(map[string]*LocationCommentQuery)
+	}
+	lq.withNamedComments[name] = query
+	return lq
+}
+
+// WithNamedContacts tells the query-builder to eager-load the nodes that are connected to the "contacts"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedContacts(name string, opts ...func(*LocationContactQuery)) *LocationQuery {
+	query := (&LocationContactClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedContacts == nil {
+		lq.withNamedContacts = make(map[string]*LocationContactQuery)
+	}
+	lq.withNamedContacts[name] = query
+	return lq
 }
 
 // LocationGroupBy is the group-by builder for Location entities.
