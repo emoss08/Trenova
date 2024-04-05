@@ -28,7 +28,10 @@ import (
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
+	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcategory"
+	"github.com/emoss08/trenova/ent/locationcomment"
+	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
@@ -1117,6 +1120,117 @@ func init() {
 	invoicecontrolDescID := invoicecontrolMixinFields0[0].Descriptor()
 	// invoicecontrol.DefaultID holds the default value on creation for the id field.
 	invoicecontrol.DefaultID = invoicecontrolDescID.Default.(func() uuid.UUID)
+	locationMixin := schema.Location{}.Mixin()
+	locationMixinFields0 := locationMixin[0].Fields()
+	_ = locationMixinFields0
+	locationFields := schema.Location{}.Fields()
+	_ = locationFields
+	// locationDescCreatedAt is the schema descriptor for created_at field.
+	locationDescCreatedAt := locationMixinFields0[3].Descriptor()
+	// location.DefaultCreatedAt holds the default value on creation for the created_at field.
+	location.DefaultCreatedAt = locationDescCreatedAt.Default.(func() time.Time)
+	// locationDescUpdatedAt is the schema descriptor for updated_at field.
+	locationDescUpdatedAt := locationMixinFields0[4].Descriptor()
+	// location.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	location.DefaultUpdatedAt = locationDescUpdatedAt.Default.(func() time.Time)
+	// location.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	location.UpdateDefaultUpdatedAt = locationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// locationDescVersion is the schema descriptor for version field.
+	locationDescVersion := locationMixinFields0[5].Descriptor()
+	// location.DefaultVersion holds the default value on creation for the version field.
+	location.DefaultVersion = locationDescVersion.Default.(int)
+	// locationDescCode is the schema descriptor for code field.
+	locationDescCode := locationFields[1].Descriptor()
+	// location.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	location.CodeValidator = func() func(string) error {
+		validators := locationDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// locationDescName is the schema descriptor for name field.
+	locationDescName := locationFields[3].Descriptor()
+	// location.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	location.NameValidator = locationDescName.Validators[0].(func(string) error)
+	// locationDescAddressLine1 is the schema descriptor for address_line_1 field.
+	locationDescAddressLine1 := locationFields[5].Descriptor()
+	// location.AddressLine1Validator is a validator for the "address_line_1" field. It is called by the builders before save.
+	location.AddressLine1Validator = func() func(string) error {
+		validators := locationDescAddressLine1.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(address_line_1 string) error {
+			for _, fn := range fns {
+				if err := fn(address_line_1); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// locationDescAddressLine2 is the schema descriptor for address_line_2 field.
+	locationDescAddressLine2 := locationFields[6].Descriptor()
+	// location.AddressLine2Validator is a validator for the "address_line_2" field. It is called by the builders before save.
+	location.AddressLine2Validator = locationDescAddressLine2.Validators[0].(func(string) error)
+	// locationDescCity is the schema descriptor for city field.
+	locationDescCity := locationFields[7].Descriptor()
+	// location.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	location.CityValidator = func() func(string) error {
+		validators := locationDescCity.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(city string) error {
+			for _, fn := range fns {
+				if err := fn(city); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// locationDescPostalCode is the schema descriptor for postal_code field.
+	locationDescPostalCode := locationFields[9].Descriptor()
+	// location.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
+	location.PostalCodeValidator = func() func(string) error {
+		validators := locationDescPostalCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(postal_code string) error {
+			for _, fn := range fns {
+				if err := fn(postal_code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// locationDescPlaceID is the schema descriptor for place_id field.
+	locationDescPlaceID := locationFields[12].Descriptor()
+	// location.PlaceIDValidator is a validator for the "place_id" field. It is called by the builders before save.
+	location.PlaceIDValidator = locationDescPlaceID.Validators[0].(func(string) error)
+	// locationDescIsGeocoded is the schema descriptor for is_geocoded field.
+	locationDescIsGeocoded := locationFields[13].Descriptor()
+	// location.DefaultIsGeocoded holds the default value on creation for the is_geocoded field.
+	location.DefaultIsGeocoded = locationDescIsGeocoded.Default.(bool)
+	// locationDescID is the schema descriptor for id field.
+	locationDescID := locationMixinFields0[0].Descriptor()
+	// location.DefaultID holds the default value on creation for the id field.
+	location.DefaultID = locationDescID.Default.(func() uuid.UUID)
 	locationcategoryMixin := schema.LocationCategory{}.Mixin()
 	locationcategoryMixinFields0 := locationcategoryMixin[0].Fields()
 	_ = locationcategoryMixinFields0
@@ -1158,6 +1272,64 @@ func init() {
 	locationcategoryDescID := locationcategoryMixinFields0[0].Descriptor()
 	// locationcategory.DefaultID holds the default value on creation for the id field.
 	locationcategory.DefaultID = locationcategoryDescID.Default.(func() uuid.UUID)
+	locationcommentMixin := schema.LocationComment{}.Mixin()
+	locationcommentMixinFields0 := locationcommentMixin[0].Fields()
+	_ = locationcommentMixinFields0
+	locationcommentFields := schema.LocationComment{}.Fields()
+	_ = locationcommentFields
+	// locationcommentDescCreatedAt is the schema descriptor for created_at field.
+	locationcommentDescCreatedAt := locationcommentMixinFields0[3].Descriptor()
+	// locationcomment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	locationcomment.DefaultCreatedAt = locationcommentDescCreatedAt.Default.(func() time.Time)
+	// locationcommentDescUpdatedAt is the schema descriptor for updated_at field.
+	locationcommentDescUpdatedAt := locationcommentMixinFields0[4].Descriptor()
+	// locationcomment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	locationcomment.DefaultUpdatedAt = locationcommentDescUpdatedAt.Default.(func() time.Time)
+	// locationcomment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	locationcomment.UpdateDefaultUpdatedAt = locationcommentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// locationcommentDescVersion is the schema descriptor for version field.
+	locationcommentDescVersion := locationcommentMixinFields0[5].Descriptor()
+	// locationcomment.DefaultVersion holds the default value on creation for the version field.
+	locationcomment.DefaultVersion = locationcommentDescVersion.Default.(int)
+	// locationcommentDescComment is the schema descriptor for comment field.
+	locationcommentDescComment := locationcommentFields[3].Descriptor()
+	// locationcomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
+	locationcomment.CommentValidator = locationcommentDescComment.Validators[0].(func(string) error)
+	// locationcommentDescID is the schema descriptor for id field.
+	locationcommentDescID := locationcommentMixinFields0[0].Descriptor()
+	// locationcomment.DefaultID holds the default value on creation for the id field.
+	locationcomment.DefaultID = locationcommentDescID.Default.(func() uuid.UUID)
+	locationcontactMixin := schema.LocationContact{}.Mixin()
+	locationcontactMixinFields0 := locationcontactMixin[0].Fields()
+	_ = locationcontactMixinFields0
+	locationcontactFields := schema.LocationContact{}.Fields()
+	_ = locationcontactFields
+	// locationcontactDescCreatedAt is the schema descriptor for created_at field.
+	locationcontactDescCreatedAt := locationcontactMixinFields0[3].Descriptor()
+	// locationcontact.DefaultCreatedAt holds the default value on creation for the created_at field.
+	locationcontact.DefaultCreatedAt = locationcontactDescCreatedAt.Default.(func() time.Time)
+	// locationcontactDescUpdatedAt is the schema descriptor for updated_at field.
+	locationcontactDescUpdatedAt := locationcontactMixinFields0[4].Descriptor()
+	// locationcontact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	locationcontact.DefaultUpdatedAt = locationcontactDescUpdatedAt.Default.(func() time.Time)
+	// locationcontact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	locationcontact.UpdateDefaultUpdatedAt = locationcontactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// locationcontactDescVersion is the schema descriptor for version field.
+	locationcontactDescVersion := locationcontactMixinFields0[5].Descriptor()
+	// locationcontact.DefaultVersion holds the default value on creation for the version field.
+	locationcontact.DefaultVersion = locationcontactDescVersion.Default.(int)
+	// locationcontactDescName is the schema descriptor for name field.
+	locationcontactDescName := locationcontactFields[1].Descriptor()
+	// locationcontact.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	locationcontact.NameValidator = locationcontactDescName.Validators[0].(func(string) error)
+	// locationcontactDescPhoneNumber is the schema descriptor for phone_number field.
+	locationcontactDescPhoneNumber := locationcontactFields[3].Descriptor()
+	// locationcontact.PhoneNumberValidator is a validator for the "phone_number" field. It is called by the builders before save.
+	locationcontact.PhoneNumberValidator = locationcontactDescPhoneNumber.Validators[0].(func(string) error)
+	// locationcontactDescID is the schema descriptor for id field.
+	locationcontactDescID := locationcontactMixinFields0[0].Descriptor()
+	// locationcontact.DefaultID holds the default value on creation for the id field.
+	locationcontact.DefaultID = locationcontactDescID.Default.(func() uuid.UUID)
 	organizationMixin := schema.Organization{}.Mixin()
 	organizationMixinFields0 := organizationMixin[0].Fields()
 	_ = organizationMixinFields0

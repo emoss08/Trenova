@@ -26,7 +26,10 @@ import (
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
+	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcategory"
+	"github.com/emoss08/trenova/ent/locationcomment"
+	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/qualifiercode"
@@ -57,7 +60,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 44)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 47)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   accessorialcharge.Table,
@@ -625,6 +628,38 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[23] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   location.Table,
+			Columns: location.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: location.FieldID,
+			},
+		},
+		Type: "Location",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			location.FieldBusinessUnitID:     {Type: field.TypeUUID, Column: location.FieldBusinessUnitID},
+			location.FieldOrganizationID:     {Type: field.TypeUUID, Column: location.FieldOrganizationID},
+			location.FieldCreatedAt:          {Type: field.TypeTime, Column: location.FieldCreatedAt},
+			location.FieldUpdatedAt:          {Type: field.TypeTime, Column: location.FieldUpdatedAt},
+			location.FieldVersion:            {Type: field.TypeInt, Column: location.FieldVersion},
+			location.FieldStatus:             {Type: field.TypeEnum, Column: location.FieldStatus},
+			location.FieldCode:               {Type: field.TypeString, Column: location.FieldCode},
+			location.FieldLocationCategoryID: {Type: field.TypeUUID, Column: location.FieldLocationCategoryID},
+			location.FieldName:               {Type: field.TypeString, Column: location.FieldName},
+			location.FieldDescription:        {Type: field.TypeString, Column: location.FieldDescription},
+			location.FieldAddressLine1:       {Type: field.TypeString, Column: location.FieldAddressLine1},
+			location.FieldAddressLine2:       {Type: field.TypeString, Column: location.FieldAddressLine2},
+			location.FieldCity:               {Type: field.TypeString, Column: location.FieldCity},
+			location.FieldStateID:            {Type: field.TypeUUID, Column: location.FieldStateID},
+			location.FieldPostalCode:         {Type: field.TypeString, Column: location.FieldPostalCode},
+			location.FieldLongitude:          {Type: field.TypeFloat64, Column: location.FieldLongitude},
+			location.FieldLatitude:           {Type: field.TypeFloat64, Column: location.FieldLatitude},
+			location.FieldPlaceID:            {Type: field.TypeString, Column: location.FieldPlaceID},
+			location.FieldIsGeocoded:         {Type: field.TypeBool, Column: location.FieldIsGeocoded},
+		},
+	}
+	graph.Nodes[24] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   locationcategory.Table,
 			Columns: locationcategory.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -644,7 +679,51 @@ var schemaGraph = func() *sqlgraph.Schema {
 			locationcategory.FieldColor:          {Type: field.TypeString, Column: locationcategory.FieldColor},
 		},
 	}
-	graph.Nodes[24] = &sqlgraph.Node{
+	graph.Nodes[25] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   locationcomment.Table,
+			Columns: locationcomment.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: locationcomment.FieldID,
+			},
+		},
+		Type: "LocationComment",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			locationcomment.FieldBusinessUnitID: {Type: field.TypeUUID, Column: locationcomment.FieldBusinessUnitID},
+			locationcomment.FieldOrganizationID: {Type: field.TypeUUID, Column: locationcomment.FieldOrganizationID},
+			locationcomment.FieldCreatedAt:      {Type: field.TypeTime, Column: locationcomment.FieldCreatedAt},
+			locationcomment.FieldUpdatedAt:      {Type: field.TypeTime, Column: locationcomment.FieldUpdatedAt},
+			locationcomment.FieldVersion:        {Type: field.TypeInt, Column: locationcomment.FieldVersion},
+			locationcomment.FieldLocationID:     {Type: field.TypeUUID, Column: locationcomment.FieldLocationID},
+			locationcomment.FieldUserID:         {Type: field.TypeUUID, Column: locationcomment.FieldUserID},
+			locationcomment.FieldCommentTypeID:  {Type: field.TypeUUID, Column: locationcomment.FieldCommentTypeID},
+			locationcomment.FieldComment:        {Type: field.TypeString, Column: locationcomment.FieldComment},
+		},
+	}
+	graph.Nodes[26] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   locationcontact.Table,
+			Columns: locationcontact.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: locationcontact.FieldID,
+			},
+		},
+		Type: "LocationContact",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			locationcontact.FieldBusinessUnitID: {Type: field.TypeUUID, Column: locationcontact.FieldBusinessUnitID},
+			locationcontact.FieldOrganizationID: {Type: field.TypeUUID, Column: locationcontact.FieldOrganizationID},
+			locationcontact.FieldCreatedAt:      {Type: field.TypeTime, Column: locationcontact.FieldCreatedAt},
+			locationcontact.FieldUpdatedAt:      {Type: field.TypeTime, Column: locationcontact.FieldUpdatedAt},
+			locationcontact.FieldVersion:        {Type: field.TypeInt, Column: locationcontact.FieldVersion},
+			locationcontact.FieldLocationID:     {Type: field.TypeUUID, Column: locationcontact.FieldLocationID},
+			locationcontact.FieldName:           {Type: field.TypeString, Column: locationcontact.FieldName},
+			locationcontact.FieldEmailAddress:   {Type: field.TypeString, Column: locationcontact.FieldEmailAddress},
+			locationcontact.FieldPhoneNumber:    {Type: field.TypeString, Column: locationcontact.FieldPhoneNumber},
+		},
+	}
+	graph.Nodes[27] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   organization.Table,
 			Columns: organization.Columns,
@@ -666,7 +745,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			organization.FieldTimezone:       {Type: field.TypeEnum, Column: organization.FieldTimezone},
 		},
 	}
-	graph.Nodes[25] = &sqlgraph.Node{
+	graph.Nodes[28] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   qualifiercode.Table,
 			Columns: qualifiercode.Columns,
@@ -687,7 +766,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			qualifiercode.FieldDescription:    {Type: field.TypeString, Column: qualifiercode.FieldDescription},
 		},
 	}
-	graph.Nodes[26] = &sqlgraph.Node{
+	graph.Nodes[29] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   reasoncode.Table,
 			Columns: reasoncode.Columns,
@@ -709,7 +788,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			reasoncode.FieldDescription:    {Type: field.TypeString, Column: reasoncode.FieldDescription},
 		},
 	}
-	graph.Nodes[27] = &sqlgraph.Node{
+	graph.Nodes[30] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   revenuecode.Table,
 			Columns: revenuecode.Columns,
@@ -732,7 +811,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			revenuecode.FieldRevenueAccountID: {Type: field.TypeUUID, Column: revenuecode.FieldRevenueAccountID},
 		},
 	}
-	graph.Nodes[28] = &sqlgraph.Node{
+	graph.Nodes[31] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   routecontrol.Table,
 			Columns: routecontrol.Columns,
@@ -750,7 +829,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			routecontrol.FieldGenerateRoutes: {Type: field.TypeBool, Column: routecontrol.FieldGenerateRoutes},
 		},
 	}
-	graph.Nodes[29] = &sqlgraph.Node{
+	graph.Nodes[32] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   servicetype.Table,
 			Columns: servicetype.Columns,
@@ -771,7 +850,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			servicetype.FieldDescription:    {Type: field.TypeString, Column: servicetype.FieldDescription},
 		},
 	}
-	graph.Nodes[30] = &sqlgraph.Node{
+	graph.Nodes[33] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   session.Table,
 			Columns: session.Columns,
@@ -788,7 +867,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			session.FieldExpiresAt: {Type: field.TypeTime, Column: session.FieldExpiresAt},
 		},
 	}
-	graph.Nodes[31] = &sqlgraph.Node{
+	graph.Nodes[34] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   shipmentcontrol.Table,
 			Columns: shipmentcontrol.Columns,
@@ -815,7 +894,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			shipmentcontrol.FieldEnforceHazmatSegRules:    {Type: field.TypeBool, Column: shipmentcontrol.FieldEnforceHazmatSegRules},
 		},
 	}
-	graph.Nodes[32] = &sqlgraph.Node{
+	graph.Nodes[35] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   shipmenttype.Table,
 			Columns: shipmenttype.Columns,
@@ -836,7 +915,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			shipmenttype.FieldDescription:    {Type: field.TypeString, Column: shipmenttype.FieldDescription},
 		},
 	}
-	graph.Nodes[33] = &sqlgraph.Node{
+	graph.Nodes[36] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tablechangealert.Table,
 			Columns: tablechangealert.Columns,
@@ -868,7 +947,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldExpirationDate:  {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
 		},
 	}
-	graph.Nodes[34] = &sqlgraph.Node{
+	graph.Nodes[37] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tag.Table,
 			Columns: tag.Columns,
@@ -889,7 +968,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tag.FieldColor:          {Type: field.TypeString, Column: tag.FieldColor},
 		},
 	}
-	graph.Nodes[35] = &sqlgraph.Node{
+	graph.Nodes[38] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tractor.Table,
 			Columns: tractor.Columns,
@@ -921,7 +1000,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tractor.FieldFleetCodeID:             {Type: field.TypeUUID, Column: tractor.FieldFleetCodeID},
 		},
 	}
-	graph.Nodes[36] = &sqlgraph.Node{
+	graph.Nodes[39] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   trailer.Table,
 			Columns: trailer.Columns,
@@ -953,7 +1032,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			trailer.FieldRegistrationExpirationDate: {Type: field.TypeOther, Column: trailer.FieldRegistrationExpirationDate},
 		},
 	}
-	graph.Nodes[37] = &sqlgraph.Node{
+	graph.Nodes[40] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   usstate.Table,
 			Columns: usstate.Columns,
@@ -972,7 +1051,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			usstate.FieldCountryIso3:  {Type: field.TypeString, Column: usstate.FieldCountryIso3},
 		},
 	}
-	graph.Nodes[38] = &sqlgraph.Node{
+	graph.Nodes[41] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -1002,7 +1081,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldLastLogin:      {Type: field.TypeTime, Column: user.FieldLastLogin},
 		},
 	}
-	graph.Nodes[39] = &sqlgraph.Node{
+	graph.Nodes[42] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userfavorite.Table,
 			Columns: userfavorite.Columns,
@@ -1022,7 +1101,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userfavorite.FieldUserID:         {Type: field.TypeUUID, Column: userfavorite.FieldUserID},
 		},
 	}
-	graph.Nodes[40] = &sqlgraph.Node{
+	graph.Nodes[43] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   worker.Table,
 			Columns: worker.Columns,
@@ -1051,7 +1130,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldManagerID:         {Type: field.TypeUUID, Column: worker.FieldManagerID},
 		},
 	}
-	graph.Nodes[41] = &sqlgraph.Node{
+	graph.Nodes[44] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercomment.Table,
 			Columns: workercomment.Columns,
@@ -1073,7 +1152,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldEnteredBy:      {Type: field.TypeUUID, Column: workercomment.FieldEnteredBy},
 		},
 	}
-	graph.Nodes[42] = &sqlgraph.Node{
+	graph.Nodes[45] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercontact.Table,
 			Columns: workercontact.Columns,
@@ -1097,7 +1176,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercontact.FieldIsPrimary:      {Type: field.TypeBool, Column: workercontact.FieldIsPrimary},
 		},
 	}
-	graph.Nodes[43] = &sqlgraph.Node{
+	graph.Nodes[46] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workerprofile.Table,
 			Columns: workerprofile.Columns,
@@ -1830,6 +1909,78 @@ var schemaGraph = func() *sqlgraph.Schema {
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
+			Table:   location.BusinessUnitTable,
+			Columns: []string{location.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.OrganizationTable,
+			Columns: []string{location.OrganizationColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"Organization",
+	)
+	graph.MustAddE(
+		"location_category",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.LocationCategoryTable,
+			Columns: []string{location.LocationCategoryColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"LocationCategory",
+	)
+	graph.MustAddE(
+		"state",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.StateTable,
+			Columns: []string{location.StateColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"UsState",
+	)
+	graph.MustAddE(
+		"comments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.CommentsTable,
+			Columns: []string{location.CommentsColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"LocationComment",
+	)
+	graph.MustAddE(
+		"contacts",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   location.ContactsTable,
+			Columns: []string{location.ContactsColumn},
+			Bidi:    false,
+		},
+		"Location",
+		"LocationContact",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
 			Table:   locationcategory.BusinessUnitTable,
 			Columns: []string{locationcategory.BusinessUnitColumn},
 			Bidi:    false,
@@ -1848,6 +1999,102 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"LocationCategory",
 		"Organization",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.BusinessUnitTable,
+			Columns: []string{locationcomment.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"LocationComment",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.OrganizationTable,
+			Columns: []string{locationcomment.OrganizationColumn},
+			Bidi:    false,
+		},
+		"LocationComment",
+		"Organization",
+	)
+	graph.MustAddE(
+		"location",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   locationcomment.LocationTable,
+			Columns: []string{locationcomment.LocationColumn},
+			Bidi:    false,
+		},
+		"LocationComment",
+		"Location",
+	)
+	graph.MustAddE(
+		"user",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.UserTable,
+			Columns: []string{locationcomment.UserColumn},
+			Bidi:    false,
+		},
+		"LocationComment",
+		"User",
+	)
+	graph.MustAddE(
+		"comment_type",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.CommentTypeTable,
+			Columns: []string{locationcomment.CommentTypeColumn},
+			Bidi:    false,
+		},
+		"LocationComment",
+		"CommentType",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.BusinessUnitTable,
+			Columns: []string{locationcontact.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"LocationContact",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.OrganizationTable,
+			Columns: []string{locationcontact.OrganizationColumn},
+			Bidi:    false,
+		},
+		"LocationContact",
+		"Organization",
+	)
+	graph.MustAddE(
+		"location",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   locationcontact.LocationTable,
+			Columns: []string{locationcontact.LocationColumn},
+			Bidi:    false,
+		},
+		"LocationContact",
+		"Location",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -5797,6 +6044,225 @@ func (f *InvoiceControlFilter) WhereHasBusinessUnitWith(preds ...predicate.Busin
 }
 
 // addPredicate implements the predicateAdder interface.
+func (lq *LocationQuery) addPredicate(pred func(s *sql.Selector)) {
+	lq.predicates = append(lq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the LocationQuery builder.
+func (lq *LocationQuery) Filter() *LocationFilter {
+	return &LocationFilter{config: lq.config, predicateAdder: lq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *LocationMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the LocationMutation builder.
+func (m *LocationMutation) Filter() *LocationFilter {
+	return &LocationFilter{config: m.config, predicateAdder: m}
+}
+
+// LocationFilter provides a generic filtering capability at runtime for LocationQuery.
+type LocationFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *LocationFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[23].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *LocationFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(location.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *LocationFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(location.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *LocationFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(location.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *LocationFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(location.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *LocationFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(location.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *LocationFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(location.FieldVersion))
+}
+
+// WhereStatus applies the entql string predicate on the status field.
+func (f *LocationFilter) WhereStatus(p entql.StringP) {
+	f.Where(p.Field(location.FieldStatus))
+}
+
+// WhereCode applies the entql string predicate on the code field.
+func (f *LocationFilter) WhereCode(p entql.StringP) {
+	f.Where(p.Field(location.FieldCode))
+}
+
+// WhereLocationCategoryID applies the entql [16]byte predicate on the location_category_id field.
+func (f *LocationFilter) WhereLocationCategoryID(p entql.ValueP) {
+	f.Where(p.Field(location.FieldLocationCategoryID))
+}
+
+// WhereName applies the entql string predicate on the name field.
+func (f *LocationFilter) WhereName(p entql.StringP) {
+	f.Where(p.Field(location.FieldName))
+}
+
+// WhereDescription applies the entql string predicate on the description field.
+func (f *LocationFilter) WhereDescription(p entql.StringP) {
+	f.Where(p.Field(location.FieldDescription))
+}
+
+// WhereAddressLine1 applies the entql string predicate on the address_line_1 field.
+func (f *LocationFilter) WhereAddressLine1(p entql.StringP) {
+	f.Where(p.Field(location.FieldAddressLine1))
+}
+
+// WhereAddressLine2 applies the entql string predicate on the address_line_2 field.
+func (f *LocationFilter) WhereAddressLine2(p entql.StringP) {
+	f.Where(p.Field(location.FieldAddressLine2))
+}
+
+// WhereCity applies the entql string predicate on the city field.
+func (f *LocationFilter) WhereCity(p entql.StringP) {
+	f.Where(p.Field(location.FieldCity))
+}
+
+// WhereStateID applies the entql [16]byte predicate on the state_id field.
+func (f *LocationFilter) WhereStateID(p entql.ValueP) {
+	f.Where(p.Field(location.FieldStateID))
+}
+
+// WherePostalCode applies the entql string predicate on the postal_code field.
+func (f *LocationFilter) WherePostalCode(p entql.StringP) {
+	f.Where(p.Field(location.FieldPostalCode))
+}
+
+// WhereLongitude applies the entql float64 predicate on the longitude field.
+func (f *LocationFilter) WhereLongitude(p entql.Float64P) {
+	f.Where(p.Field(location.FieldLongitude))
+}
+
+// WhereLatitude applies the entql float64 predicate on the latitude field.
+func (f *LocationFilter) WhereLatitude(p entql.Float64P) {
+	f.Where(p.Field(location.FieldLatitude))
+}
+
+// WherePlaceID applies the entql string predicate on the place_id field.
+func (f *LocationFilter) WherePlaceID(p entql.StringP) {
+	f.Where(p.Field(location.FieldPlaceID))
+}
+
+// WhereIsGeocoded applies the entql bool predicate on the is_geocoded field.
+func (f *LocationFilter) WhereIsGeocoded(p entql.BoolP) {
+	f.Where(p.Field(location.FieldIsGeocoded))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *LocationFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *LocationFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasLocationCategory applies a predicate to check if query has an edge location_category.
+func (f *LocationFilter) WhereHasLocationCategory() {
+	f.Where(entql.HasEdge("location_category"))
+}
+
+// WhereHasLocationCategoryWith applies a predicate to check if query has an edge location_category with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasLocationCategoryWith(preds ...predicate.LocationCategory) {
+	f.Where(entql.HasEdgeWith("location_category", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasState applies a predicate to check if query has an edge state.
+func (f *LocationFilter) WhereHasState() {
+	f.Where(entql.HasEdge("state"))
+}
+
+// WhereHasStateWith applies a predicate to check if query has an edge state with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasStateWith(preds ...predicate.UsState) {
+	f.Where(entql.HasEdgeWith("state", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasComments applies a predicate to check if query has an edge comments.
+func (f *LocationFilter) WhereHasComments() {
+	f.Where(entql.HasEdge("comments"))
+}
+
+// WhereHasCommentsWith applies a predicate to check if query has an edge comments with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasCommentsWith(preds ...predicate.LocationComment) {
+	f.Where(entql.HasEdgeWith("comments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasContacts applies a predicate to check if query has an edge contacts.
+func (f *LocationFilter) WhereHasContacts() {
+	f.Where(entql.HasEdge("contacts"))
+}
+
+// WhereHasContactsWith applies a predicate to check if query has an edge contacts with a given conditions (other predicates).
+func (f *LocationFilter) WhereHasContactsWith(preds ...predicate.LocationContact) {
+	f.Where(entql.HasEdgeWith("contacts", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (lcq *LocationCategoryQuery) addPredicate(pred func(s *sql.Selector)) {
 	lcq.predicates = append(lcq.predicates, pred)
 }
@@ -5825,7 +6291,7 @@ type LocationCategoryFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *LocationCategoryFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[23].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[24].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -5905,6 +6371,288 @@ func (f *LocationCategoryFilter) WhereHasOrganizationWith(preds ...predicate.Org
 }
 
 // addPredicate implements the predicateAdder interface.
+func (lcq *LocationCommentQuery) addPredicate(pred func(s *sql.Selector)) {
+	lcq.predicates = append(lcq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the LocationCommentQuery builder.
+func (lcq *LocationCommentQuery) Filter() *LocationCommentFilter {
+	return &LocationCommentFilter{config: lcq.config, predicateAdder: lcq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *LocationCommentMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the LocationCommentMutation builder.
+func (m *LocationCommentMutation) Filter() *LocationCommentFilter {
+	return &LocationCommentFilter{config: m.config, predicateAdder: m}
+}
+
+// LocationCommentFilter provides a generic filtering capability at runtime for LocationCommentQuery.
+type LocationCommentFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *LocationCommentFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[25].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *LocationCommentFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *LocationCommentFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *LocationCommentFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *LocationCommentFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(locationcomment.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *LocationCommentFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(locationcomment.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *LocationCommentFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(locationcomment.FieldVersion))
+}
+
+// WhereLocationID applies the entql [16]byte predicate on the location_id field.
+func (f *LocationCommentFilter) WhereLocationID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldLocationID))
+}
+
+// WhereUserID applies the entql [16]byte predicate on the user_id field.
+func (f *LocationCommentFilter) WhereUserID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldUserID))
+}
+
+// WhereCommentTypeID applies the entql [16]byte predicate on the comment_type_id field.
+func (f *LocationCommentFilter) WhereCommentTypeID(p entql.ValueP) {
+	f.Where(p.Field(locationcomment.FieldCommentTypeID))
+}
+
+// WhereComment applies the entql string predicate on the comment field.
+func (f *LocationCommentFilter) WhereComment(p entql.StringP) {
+	f.Where(p.Field(locationcomment.FieldComment))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *LocationCommentFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *LocationCommentFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *LocationCommentFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *LocationCommentFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasLocation applies a predicate to check if query has an edge location.
+func (f *LocationCommentFilter) WhereHasLocation() {
+	f.Where(entql.HasEdge("location"))
+}
+
+// WhereHasLocationWith applies a predicate to check if query has an edge location with a given conditions (other predicates).
+func (f *LocationCommentFilter) WhereHasLocationWith(preds ...predicate.Location) {
+	f.Where(entql.HasEdgeWith("location", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasUser applies a predicate to check if query has an edge user.
+func (f *LocationCommentFilter) WhereHasUser() {
+	f.Where(entql.HasEdge("user"))
+}
+
+// WhereHasUserWith applies a predicate to check if query has an edge user with a given conditions (other predicates).
+func (f *LocationCommentFilter) WhereHasUserWith(preds ...predicate.User) {
+	f.Where(entql.HasEdgeWith("user", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasCommentType applies a predicate to check if query has an edge comment_type.
+func (f *LocationCommentFilter) WhereHasCommentType() {
+	f.Where(entql.HasEdge("comment_type"))
+}
+
+// WhereHasCommentTypeWith applies a predicate to check if query has an edge comment_type with a given conditions (other predicates).
+func (f *LocationCommentFilter) WhereHasCommentTypeWith(preds ...predicate.CommentType) {
+	f.Where(entql.HasEdgeWith("comment_type", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
+func (lcq *LocationContactQuery) addPredicate(pred func(s *sql.Selector)) {
+	lcq.predicates = append(lcq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the LocationContactQuery builder.
+func (lcq *LocationContactQuery) Filter() *LocationContactFilter {
+	return &LocationContactFilter{config: lcq.config, predicateAdder: lcq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *LocationContactMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the LocationContactMutation builder.
+func (m *LocationContactMutation) Filter() *LocationContactFilter {
+	return &LocationContactFilter{config: m.config, predicateAdder: m}
+}
+
+// LocationContactFilter provides a generic filtering capability at runtime for LocationContactQuery.
+type LocationContactFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *LocationContactFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[26].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *LocationContactFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(locationcontact.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *LocationContactFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(locationcontact.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *LocationContactFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(locationcontact.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *LocationContactFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(locationcontact.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *LocationContactFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(locationcontact.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *LocationContactFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(locationcontact.FieldVersion))
+}
+
+// WhereLocationID applies the entql [16]byte predicate on the location_id field.
+func (f *LocationContactFilter) WhereLocationID(p entql.ValueP) {
+	f.Where(p.Field(locationcontact.FieldLocationID))
+}
+
+// WhereName applies the entql string predicate on the name field.
+func (f *LocationContactFilter) WhereName(p entql.StringP) {
+	f.Where(p.Field(locationcontact.FieldName))
+}
+
+// WhereEmailAddress applies the entql string predicate on the email_address field.
+func (f *LocationContactFilter) WhereEmailAddress(p entql.StringP) {
+	f.Where(p.Field(locationcontact.FieldEmailAddress))
+}
+
+// WherePhoneNumber applies the entql string predicate on the phone_number field.
+func (f *LocationContactFilter) WherePhoneNumber(p entql.StringP) {
+	f.Where(p.Field(locationcontact.FieldPhoneNumber))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *LocationContactFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *LocationContactFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *LocationContactFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *LocationContactFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasLocation applies a predicate to check if query has an edge location.
+func (f *LocationContactFilter) WhereHasLocation() {
+	f.Where(entql.HasEdge("location"))
+}
+
+// WhereHasLocationWith applies a predicate to check if query has an edge location with a given conditions (other predicates).
+func (f *LocationContactFilter) WhereHasLocationWith(preds ...predicate.Location) {
+	f.Where(entql.HasEdgeWith("location", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (oq *OrganizationQuery) addPredicate(pred func(s *sql.Selector)) {
 	oq.predicates = append(oq.predicates, pred)
 }
@@ -5933,7 +6681,7 @@ type OrganizationFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *OrganizationFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[24].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[27].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6158,7 +6906,7 @@ type QualifierCodeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *QualifierCodeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[25].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[28].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6266,7 +7014,7 @@ type ReasonCodeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ReasonCodeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[26].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[29].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6379,7 +7127,7 @@ type RevenueCodeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *RevenueCodeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[27].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[30].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6525,7 +7273,7 @@ type RouteControlFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *RouteControlFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[28].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[31].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6618,7 +7366,7 @@ type ServiceTypeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ServiceTypeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[29].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[32].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6726,7 +7474,7 @@ type SessionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *SessionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[30].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[33].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6786,7 +7534,7 @@ type ShipmentControlFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ShipmentControlFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[31].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[34].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -6924,7 +7672,7 @@ type ShipmentTypeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ShipmentTypeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[32].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[35].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7032,7 +7780,7 @@ type TableChangeAlertFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TableChangeAlertFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[33].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7195,7 +7943,7 @@ type TagFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TagFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[34].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7317,7 +8065,7 @@ type TractorFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TractorFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[35].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7564,7 +8312,7 @@ type TrailerFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TrailerFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[36].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7797,7 +8545,7 @@ type UsStateFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UsStateFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -7867,7 +8615,7 @@ type UserFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8034,7 +8782,7 @@ type UserFavoriteFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFavoriteFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8151,7 +8899,7 @@ type WorkerFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[43].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8411,7 +9159,7 @@ type WorkerCommentFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerCommentFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[44].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8552,7 +9300,7 @@ type WorkerContactFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerContactFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[45].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8689,7 +9437,7 @@ type WorkerProfileFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerProfileFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[43].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[46].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

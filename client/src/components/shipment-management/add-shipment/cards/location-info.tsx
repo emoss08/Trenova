@@ -46,14 +46,14 @@ function LocationSection({
   return (
     <div className="flex-1">
       <div className="flex flex-col">
-        <div className="rounded-md border border-border">
-          <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+        <div className="border-border rounded-md border">
+          <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
             <TitleWithTooltip
               title={t(`card.${section}.label`)}
               tooltip={t(`card.${section}.description`)}
             />
           </div>
-          <div className="grid grid-cols-1 gap-y-4 bg-card p-4">
+          <div className="bg-card grid grid-cols-1 gap-y-4 p-4">
             <div className="col-span-3">
               <SelectInput
                 name={`${section}Location`}
@@ -161,7 +161,7 @@ export default function LocationInformation({
         if (selectedOriginLocation) {
           setValue(
             "originAddress",
-            `${selectedOriginLocation.addressLine1}, ${selectedOriginLocation.city}, ${selectedOriginLocation.state} ${selectedOriginLocation.zipCode}`,
+            `${selectedOriginLocation.addressLine1}, ${selectedOriginLocation.city}, ${selectedOriginLocation.stateId} ${selectedOriginLocation.postalCode}`,
           );
         }
       }
@@ -184,7 +184,7 @@ export default function LocationInformation({
         if (selectedDestinationLocation) {
           setValue(
             "destinationAddress",
-            `${selectedDestinationLocation.addressLine1}, ${selectedDestinationLocation.city}, ${selectedDestinationLocation.state} ${selectedDestinationLocation.zipCode}`,
+            `${selectedDestinationLocation.addressLine1}, ${selectedDestinationLocation.city}, ${selectedDestinationLocation.stateId} ${selectedDestinationLocation.postalCode}`,
           );
         }
       }

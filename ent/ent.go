@@ -35,7 +35,10 @@ import (
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
+	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcategory"
+	"github.com/emoss08/trenova/ent/locationcomment"
+	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
@@ -139,7 +142,10 @@ func checkColumn(table, column string) error {
 			hazardousmaterial.Table:            hazardousmaterial.ValidColumn,
 			hazardousmaterialsegregation.Table: hazardousmaterialsegregation.ValidColumn,
 			invoicecontrol.Table:               invoicecontrol.ValidColumn,
+			location.Table:                     location.ValidColumn,
 			locationcategory.Table:             locationcategory.ValidColumn,
+			locationcomment.Table:              locationcomment.ValidColumn,
+			locationcontact.Table:              locationcontact.ValidColumn,
 			organization.Table:                 organization.ValidColumn,
 			qualifiercode.Table:                qualifiercode.ValidColumn,
 			reasoncode.Table:                   reasoncode.ValidColumn,

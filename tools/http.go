@@ -1,12 +1,14 @@
 package tools
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/tools/logger"
 	"github.com/emoss08/trenova/tools/session"
 	"github.com/goccy/go-json"
@@ -54,6 +56,7 @@ func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body any) erro
 				wrappedErr := eris.Wrap(encodeErr, "Error encoding validation error response")
 				log.WithError(wrappedErr).Error("Error encoding validation error response")
 			}
+			return validationErr
 		default:
 			// Generic error response
 			genericErr := json.NewEncoder(w).Encode(map[string]string{"error": eris.Cause(err).Error()})
@@ -61,6 +64,7 @@ func ParseBodyAndValidate(w http.ResponseWriter, r *http.Request, body any) erro
 				wrappedErr := eris.Wrap(genericErr, "Error encoding generic error response")
 				log.WithError(wrappedErr).Error("Error encoding generic error response")
 			}
+			return err
 		}
 	}
 
@@ -100,4 +104,38 @@ func GetSessionDetails(r *http.Request, store *session.Store) (uuid.UUID, uuid.U
 	buID, buOk := session.Values["businessUnitID"].(uuid.UUID)
 
 	return userID, orgID, buID, userOk && orgOk && buOk
+}
+
+func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) error {
+	tx, err := client.Tx(ctx)
+	if err != nil {
+		wrappedErr := eris.Wrap(err, "Failed to start transaction")
+		return wrappedErr
+	}
+
+	// Ensure the transaction is either committed or rolled back
+	defer func() {
+		if v := recover(); v != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				wrappedErr := eris.Wrap(rollbackErr, "Failed to rollback transaction")
+				log.Printf("Failed to rollback transaction: %v", wrappedErr)
+			}
+			panic(v)
+		}
+	}()
+
+	if err = fn(tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			err = eris.Wrap(err, "Failed to rollback transaction")
+			log.Printf("Failed to rollback transaction: %v", err)
+		}
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		err = eris.Wrap(err, "Failed to commit transaction")
+		log.Printf("Failed to commit transaction: %v", err)
+		return err
+	}
+
+	return nil
 }

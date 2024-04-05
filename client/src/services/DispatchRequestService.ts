@@ -28,7 +28,7 @@ import {
  * @returns A promise that resolves to a string representation of the latest rate number.
  */
 export async function getNewRateNumber(): Promise<string> {
-  const response = await axios.get("/rates/get_new_rate_number/");
+  const response = await axios.get("/rates/get-new-rate-number/");
   return response.data.rateNumber;
 }
 
@@ -46,11 +46,7 @@ export async function getFeasibilityControl(): Promise<FeasibilityToolControl> {
  * @returns A promise that resolves to a CommentType object.
  */
 export async function getCommentTypes(): Promise<CommentType[]> {
-  const response = await axios.get("/comment_types/", {
-    params: {
-      status: "A",
-    },
-  });
+  const response = await axios.get("/comment-types/");
   return response.data.results;
 }
 

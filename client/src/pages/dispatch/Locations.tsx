@@ -21,14 +21,8 @@ import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { LocationTableSheet } from "@/components/location/location-table-dialog";
 import { LocationTableEditSheet } from "@/components/location/location-table-edit-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { tableStatusChoices } from "@/lib/choices";
-import { truncateText, upperFirst } from "@/lib/utils";
+import { upperFirst } from "@/lib/utils";
 import { type Location } from "@/types/location";
 import { type FilterConfig } from "@/types/tables";
 import type { ColumnDef, Row } from "@tanstack/react-table";
@@ -45,35 +39,6 @@ const renderSubComponent = ({ row }: { row: Row<Location> }) => {
     </Suspense>
   );
 };
-
-function LocationColor({
-  color,
-  locationName,
-  locationCategoryName,
-}: {
-  color: string;
-  locationName: string;
-  locationCategoryName?: string;
-}) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
-            <div
-              className={"mx-2 size-2 rounded-xl"}
-              style={{ backgroundColor: color }}
-            />
-            {locationName}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent align="start">
-          {locationCategoryName && <p>{locationCategoryName}</p>}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 const columns: ColumnDef<Location>[] = [
   {
@@ -101,17 +66,31 @@ const columns: ColumnDef<Location>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    id: "locationCategory",
+    accessorFn: (row) => row.edges?.locationCategory?.name,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Location Category" />
+    ),
     cell: ({ row }) => {
-      if (row.original.locationColor) {
+      if (row.original.edges?.locationCategory?.color) {
         return (
-          <LocationColor
-            color={row.original.locationColor}
-            locationName={row.original.name}
-            locationCategoryName={row.original.locationCategoryName as string}
-          />
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{
+                backgroundColor: row.original.edges?.locationCategory?.color,
+              }}
+            />
+            {row.getValue("locationCategory")}
+          </div>
         );
       } else {
-        return row.original.name;
+        return row.getValue("locationCategory");
       }
     },
     filterFn: (row, id, value) => {
@@ -119,38 +98,16 @@ const columns: ColumnDef<Location>[] = [
     },
   },
   {
-    accessorKey: "locationCategoryName",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Location Category" />
-    ),
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
-  {
+    accessorFn: (row) =>
+      `${row.addressLine1} ${row.addressLine2} ${row.city} ${row.edges?.state?.name}`,
     accessorKey: "location",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Location" />
+      <DataTableColumnHeader column={column} title="Full Address" />
     ),
     cell: ({ row }) =>
-      `${upperFirst(row.original.city)}, ${row.original.state}`,
-  },
-
-  {
-    accessorKey: "pickupCount",
-    header: "Total Pickups",
-  },
-  {
-    accessorKey: "waitTimeAvg",
-    header: "Avg. Wait Time (mins)",
-    cell: ({ row }) => {
-      return row.original.waitTimeAvg && row.original.waitTimeAvg.toFixed(1);
-    },
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => truncateText(row.original.description as string, 50),
+      `${row.original.addressLine1}, ${row.original.addressLine2} ${upperFirst(
+        row.original.city,
+      )}, ${row.original.edges?.state?.name} ${row.original.postalCode}`,
   },
 ];
 

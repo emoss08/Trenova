@@ -663,6 +663,30 @@ func (f InvoiceControlMutationRuleFunc) EvalMutation(ctx context.Context, m ent.
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.InvoiceControlMutation", m)
 }
 
+// The LocationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type LocationQueryRuleFunc func(context.Context, *ent.LocationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f LocationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.LocationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.LocationQuery", q)
+}
+
+// The LocationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type LocationMutationRuleFunc func(context.Context, *ent.LocationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f LocationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.LocationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.LocationMutation", m)
+}
+
 // The LocationCategoryQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type LocationCategoryQueryRuleFunc func(context.Context, *ent.LocationCategoryQuery) error
@@ -685,6 +709,54 @@ func (f LocationCategoryMutationRuleFunc) EvalMutation(ctx context.Context, m en
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.LocationCategoryMutation", m)
+}
+
+// The LocationCommentQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type LocationCommentQueryRuleFunc func(context.Context, *ent.LocationCommentQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f LocationCommentQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.LocationCommentQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.LocationCommentQuery", q)
+}
+
+// The LocationCommentMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type LocationCommentMutationRuleFunc func(context.Context, *ent.LocationCommentMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f LocationCommentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.LocationCommentMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.LocationCommentMutation", m)
+}
+
+// The LocationContactQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type LocationContactQueryRuleFunc func(context.Context, *ent.LocationContactQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f LocationContactQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.LocationContactQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.LocationContactQuery", q)
+}
+
+// The LocationContactMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type LocationContactMutationRuleFunc func(context.Context, *ent.LocationContactMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f LocationContactMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.LocationContactMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.LocationContactMutation", m)
 }
 
 // The OrganizationQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -1248,7 +1320,13 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.InvoiceControlQuery:
 		return q.Filter(), nil
+	case *ent.LocationQuery:
+		return q.Filter(), nil
 	case *ent.LocationCategoryQuery:
+		return q.Filter(), nil
+	case *ent.LocationCommentQuery:
+		return q.Filter(), nil
+	case *ent.LocationContactQuery:
 		return q.Filter(), nil
 	case *ent.OrganizationQuery:
 		return q.Filter(), nil
@@ -1343,7 +1421,13 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.InvoiceControlMutation:
 		return m.Filter(), nil
+	case *ent.LocationMutation:
+		return m.Filter(), nil
 	case *ent.LocationCategoryMutation:
+		return m.Filter(), nil
+	case *ent.LocationCommentMutation:
+		return m.Filter(), nil
+	case *ent.LocationContactMutation:
 		return m.Filter(), nil
 	case *ent.OrganizationMutation:
 		return m.Filter(), nil

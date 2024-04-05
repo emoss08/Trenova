@@ -983,6 +983,68 @@ var (
 			},
 		},
 	}
+	// LocationsColumns holds the columns for the "locations" table.
+	LocationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "code", Type: field.TypeString, Size: 10},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "address_line_1", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "city", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "postal_code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "longitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "latitude", Type: field.TypeFloat64, Nullable: true},
+		{Name: "place_id", Type: field.TypeString, Nullable: true, Size: 255, SchemaType: map[string]string{"postgres": "VARCHAR(255)", "sqlite3": "VARCHAR(255)"}},
+		{Name: "is_geocoded", Type: field.TypeBool, Default: false},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "location_category_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "state_id", Type: field.TypeUUID},
+	}
+	// LocationsTable holds the schema information for the "locations" table.
+	LocationsTable = &schema.Table{
+		Name:       "locations",
+		Columns:    LocationsColumns,
+		PrimaryKey: []*schema.Column{LocationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "locations_business_units_business_unit",
+				Columns:    []*schema.Column{LocationsColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "locations_organizations_organization",
+				Columns:    []*schema.Column{LocationsColumns[17]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "locations_location_categories_location_category",
+				Columns:    []*schema.Column{LocationsColumns[18]},
+				RefColumns: []*schema.Column{LocationCategoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "locations_us_states_state",
+				Columns:    []*schema.Column{LocationsColumns[19]},
+				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "location_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{LocationsColumns[5], LocationsColumns[17]},
+			},
+		},
+	}
 	// LocationCategoriesColumns holds the columns for the "location_categories" table.
 	LocationCategoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1019,6 +1081,96 @@ var (
 				Name:    "locationcategory_name_organization_id",
 				Unique:  true,
 				Columns: []*schema.Column{LocationCategoriesColumns[4], LocationCategoriesColumns[8]},
+			},
+		},
+	}
+	// LocationCommentsColumns holds the columns for the "location_comments" table.
+	LocationCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "comment", Type: field.TypeString, Size: 2147483647},
+		{Name: "location_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "comment_type_id", Type: field.TypeUUID},
+	}
+	// LocationCommentsTable holds the schema information for the "location_comments" table.
+	LocationCommentsTable = &schema.Table{
+		Name:       "location_comments",
+		Columns:    LocationCommentsColumns,
+		PrimaryKey: []*schema.Column{LocationCommentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "location_comments_locations_comments",
+				Columns:    []*schema.Column{LocationCommentsColumns[5]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "location_comments_business_units_business_unit",
+				Columns:    []*schema.Column{LocationCommentsColumns[6]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "location_comments_organizations_organization",
+				Columns:    []*schema.Column{LocationCommentsColumns[7]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "location_comments_users_user",
+				Columns:    []*schema.Column{LocationCommentsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "location_comments_comment_types_comment_type",
+				Columns:    []*schema.Column{LocationCommentsColumns[9]},
+				RefColumns: []*schema.Column{CommentTypesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// LocationContactsColumns holds the columns for the "location_contacts" table.
+	LocationContactsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "name", Type: field.TypeString},
+		{Name: "email_address", Type: field.TypeString, Nullable: true},
+		{Name: "phone_number", Type: field.TypeString, Nullable: true, Size: 15, SchemaType: map[string]string{"postgres": "VARCHAR(15)", "sqlite3": "VARCHAR(15)"}},
+		{Name: "location_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// LocationContactsTable holds the schema information for the "location_contacts" table.
+	LocationContactsTable = &schema.Table{
+		Name:       "location_contacts",
+		Columns:    LocationContactsColumns,
+		PrimaryKey: []*schema.Column{LocationContactsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "location_contacts_locations_contacts",
+				Columns:    []*schema.Column{LocationContactsColumns[7]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "location_contacts_business_units_business_unit",
+				Columns:    []*schema.Column{LocationContactsColumns[8]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "location_contacts_organizations_organization",
+				Columns:    []*schema.Column{LocationContactsColumns[9]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -1954,7 +2106,10 @@ var (
 		HazardousMaterialsTable,
 		HazardousMaterialSegregationsTable,
 		InvoiceControlsTable,
+		LocationsTable,
 		LocationCategoriesTable,
+		LocationCommentsTable,
+		LocationContactsTable,
 		OrganizationsTable,
 		QualifierCodesTable,
 		ReasonCodesTable,
@@ -2035,8 +2190,20 @@ func init() {
 	HazardousMaterialSegregationsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	InvoiceControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	LocationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	LocationsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	LocationsTable.ForeignKeys[2].RefTable = LocationCategoriesTable
+	LocationsTable.ForeignKeys[3].RefTable = UsStatesTable
 	LocationCategoriesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	LocationCategoriesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	LocationCommentsTable.ForeignKeys[0].RefTable = LocationsTable
+	LocationCommentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	LocationCommentsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	LocationCommentsTable.ForeignKeys[3].RefTable = UsersTable
+	LocationCommentsTable.ForeignKeys[4].RefTable = CommentTypesTable
+	LocationContactsTable.ForeignKeys[0].RefTable = LocationsTable
+	LocationContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	LocationContactsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable

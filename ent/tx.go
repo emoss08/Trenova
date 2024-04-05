@@ -60,8 +60,14 @@ type Tx struct {
 	HazardousMaterialSegregation *HazardousMaterialSegregationClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
+	// Location is the client for interacting with the Location builders.
+	Location *LocationClient
 	// LocationCategory is the client for interacting with the LocationCategory builders.
 	LocationCategory *LocationCategoryClient
+	// LocationComment is the client for interacting with the LocationComment builders.
+	LocationComment *LocationCommentClient
+	// LocationContact is the client for interacting with the LocationContact builders.
+	LocationContact *LocationContactClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
@@ -256,7 +262,10 @@ func (tx *Tx) init() {
 	tx.HazardousMaterial = NewHazardousMaterialClient(tx.config)
 	tx.HazardousMaterialSegregation = NewHazardousMaterialSegregationClient(tx.config)
 	tx.InvoiceControl = NewInvoiceControlClient(tx.config)
+	tx.Location = NewLocationClient(tx.config)
 	tx.LocationCategory = NewLocationCategoryClient(tx.config)
+	tx.LocationComment = NewLocationCommentClient(tx.config)
+	tx.LocationContact = NewLocationContactClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.QualifierCode = NewQualifierCodeClient(tx.config)
 	tx.ReasonCode = NewReasonCodeClient(tx.config)

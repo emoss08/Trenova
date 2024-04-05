@@ -40,24 +40,23 @@ import { LocationCommentForm } from "./location-comments-form";
 export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit, formState } = useForm<FormValues>({
     resolver: yupResolver(LocationSchema),
     defaultValues: {
       status: "A",
       code: "",
-      locationCategory: "",
+      locationCategoryId: "",
       name: "",
-      depot: "",
       addressLine1: "",
       addressLine2: "",
       city: "",
-      state: "",
-      zipCode: "",
-      locationComments: [],
-      locationContacts: [],
+      stateId: "",
+      postalCode: "",
       description: "",
     },
   });
+
+  console.log("Erros", formState.errors);
 
   const mutation = useCustomMutation<FormValues>(
     control,

@@ -43,8 +43,9 @@ export const LocationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues
 const LocationCommentSchema: yup.ObjectSchema<LocationCommentFormValues> = yup
   .object()
   .shape({
-    commentType: yup.string().required("Comment Type is required"),
+    commentTypeId: yup.string().required("Comment Type is required"),
     comment: yup.string().required("Comment is required"),
+    userId: yup.string().required("User is required"),
   });
 
 const LocationContactSchema: yup.ObjectSchema<LocationContactFormValues> = yup
@@ -90,18 +91,17 @@ export const LocationSchema: yup.ObjectSchema<LocationFormValues> = yup
       .string()
       .max(10, "Code cannot be more than 10 characters")
       .required("Code is required"),
-    locationCategory: yup.string().optional(),
+    locationCategoryId: yup.string().nullable(),
     name: yup
       .string()
       .required("Name is required")
       .max(100, "Name cannot be more than 255 characters"),
-    depot: yup.string().optional(),
-    description: yup.string().notRequired(),
+    description: yup.string(),
     addressLine1: yup.string().required("Address Line 1 is required"),
-    addressLine2: yup.string().notRequired(),
+    addressLine2: yup.string(),
     city: yup.string().required("City is required"),
-    state: yup.string().required("State is required"),
-    zipCode: yup.string().required("Zip Code is required"),
-    locationComments: yup.array().of(LocationCommentSchema).notRequired(),
-    locationContacts: yup.array().of(LocationContactSchema).notRequired(),
+    stateId: yup.string().required("State is required"),
+    postalCode: yup.string().required("Zip Code is required"),
+    comments: yup.array().of(LocationCommentSchema).notRequired(),
+    contacts: yup.array().of(LocationContactSchema).notRequired(),
   });
