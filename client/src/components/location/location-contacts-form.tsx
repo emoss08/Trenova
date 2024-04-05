@@ -16,10 +16,10 @@
  */
 
 import { type LocationFormValues as FormValues } from "@/types/location";
-import { useFieldArray, type Control } from "react-hook-form";
-import { InputField } from "../common/fields/input";
 import { faOctagonExclamation } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useFieldArray, type Control } from "react-hook-form";
+import { InputField } from "../common/fields/input";
 import { Button } from "../ui/button";
 
 export function LocationContactForm({
@@ -29,7 +29,7 @@ export function LocationContactForm({
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "locationContacts",
+    name: "contacts",
     keyName: "id",
   });
 
@@ -51,7 +51,7 @@ export function LocationContactForm({
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
-                      name={`locationContacts.${index}.name`}
+                      name={`contacts.${index}.name`}
                       label="Name"
                       placeholder="Name"
                       description="Enter the full name of the primary contact for this location."
@@ -63,7 +63,7 @@ export function LocationContactForm({
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
-                      name={`locationContacts.${index}.email`}
+                      name={`contacts.${index}.email`}
                       label="Email"
                       placeholder="Email"
                       description="Provide the email address for direct communication with the location's contact."
@@ -74,7 +74,7 @@ export function LocationContactForm({
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
-                      name={`locationContacts.${index}.phone`}
+                      name={`contacts.${index}.phone`}
                       label="Phone"
                       placeholder="Phone"
                       description="Input the telephone number for reaching the location's contact."
@@ -85,7 +85,7 @@ export function LocationContactForm({
                   <div className="min-h-[4em]">
                     <InputField
                       control={control}
-                      name={`locationContacts.${index}.fax`}
+                      name={`contacts.${index}.fax`}
                       label="Fax"
                       placeholder="Fax"
                       description="If applicable, list the fax number associated with the location's contact."

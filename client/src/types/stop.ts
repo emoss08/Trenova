@@ -52,7 +52,7 @@ export interface Stop extends BaseModel {
 
 export type StopFormValues = Omit<
   Stop,
-  "id" | "organization" | "created" | "modified" | "movement"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "movement" | "version"
 >;
 
 export interface StopComment extends BaseModel {

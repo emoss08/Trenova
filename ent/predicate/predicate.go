@@ -75,8 +75,17 @@ type HazardousMaterialSegregation func(*sql.Selector)
 // InvoiceControl is the predicate function for invoicecontrol builders.
 type InvoiceControl func(*sql.Selector)
 
+// Location is the predicate function for location builders.
+type Location func(*sql.Selector)
+
 // LocationCategory is the predicate function for locationcategory builders.
 type LocationCategory func(*sql.Selector)
+
+// LocationComment is the predicate function for locationcomment builders.
+type LocationComment func(*sql.Selector)
+
+// LocationContact is the predicate function for locationcontact builders.
+type LocationContact func(*sql.Selector)
 
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)

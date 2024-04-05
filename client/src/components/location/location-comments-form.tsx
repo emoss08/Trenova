@@ -19,6 +19,7 @@ import { type LocationFormValues as FormValues } from "@/types/location";
 import { useFieldArray, type Control } from "react-hook-form";
 
 import { useCommentTypes } from "@/hooks/useQueries";
+import { useUserStore } from "@/stores/AuthStore";
 import { faOctagonExclamation } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SelectInput } from "../common/fields/select-input";
@@ -30,14 +31,15 @@ export function LocationCommentForm({
 }: {
   control: Control<FormValues>;
 }) {
+  const user = useUserStore.get("user");
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "locationComments",
+    name: "comments",
     keyName: "id",
   });
 
   const handleAddContact = () => {
-    append({ commentType: "", comment: "" });
+    append({ commentTypeId: "", comment: "", userId: user.id });
   };
 
   const {
@@ -60,7 +62,7 @@ export function LocationCommentForm({
                   <div className="min-h-[4em]">
                     <SelectInput
                       rules={{ required: true }}
-                      name={`locationComments.${index}.commentType`}
+                      name={`comments.${index}.commentTypeId`}
                       control={control}
                       label="Comment Type"
                       options={selectCommentTypes}
@@ -78,7 +80,7 @@ export function LocationCommentForm({
                   <div className="min-h-[4em]">
                     <TextareaField
                       rules={{ required: true }}
-                      name={`locationComments.${index}.comment`}
+                      name={`comments.${index}.comment`}
                       control={control}
                       label="Comment"
                       placeholder="Comment"

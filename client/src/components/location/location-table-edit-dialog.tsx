@@ -75,6 +75,16 @@ export function LocationEditForm({
 
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
+
+    // For each comment append the location id value
+    values.comments = values.comments ?? [];
+    values.comments = values.comments.map((comment) => ({
+      ...comment,
+      locationId: location.id,
+    }));
+
+    console.info("LocationEditForm.onSubmit", values);
+
     mutation.mutate(values);
   };
 

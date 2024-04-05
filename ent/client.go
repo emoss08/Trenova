@@ -39,7 +39,10 @@ import (
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
+	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcategory"
+	"github.com/emoss08/trenova/ent/locationcomment"
+	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
@@ -115,8 +118,14 @@ type Client struct {
 	HazardousMaterialSegregation *HazardousMaterialSegregationClient
 	// InvoiceControl is the client for interacting with the InvoiceControl builders.
 	InvoiceControl *InvoiceControlClient
+	// Location is the client for interacting with the Location builders.
+	Location *LocationClient
 	// LocationCategory is the client for interacting with the LocationCategory builders.
 	LocationCategory *LocationCategoryClient
+	// LocationComment is the client for interacting with the LocationComment builders.
+	LocationComment *LocationCommentClient
+	// LocationContact is the client for interacting with the LocationContact builders.
+	LocationContact *LocationContactClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
@@ -191,7 +200,10 @@ func (c *Client) init() {
 	c.HazardousMaterial = NewHazardousMaterialClient(c.config)
 	c.HazardousMaterialSegregation = NewHazardousMaterialSegregationClient(c.config)
 	c.InvoiceControl = NewInvoiceControlClient(c.config)
+	c.Location = NewLocationClient(c.config)
 	c.LocationCategory = NewLocationCategoryClient(c.config)
+	c.LocationComment = NewLocationCommentClient(c.config)
+	c.LocationContact = NewLocationContactClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.QualifierCode = NewQualifierCodeClient(c.config)
 	c.ReasonCode = NewReasonCodeClient(c.config)
@@ -327,7 +339,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		HazardousMaterial:            NewHazardousMaterialClient(cfg),
 		HazardousMaterialSegregation: NewHazardousMaterialSegregationClient(cfg),
 		InvoiceControl:               NewInvoiceControlClient(cfg),
+		Location:                     NewLocationClient(cfg),
 		LocationCategory:             NewLocationCategoryClient(cfg),
+		LocationComment:              NewLocationCommentClient(cfg),
+		LocationContact:              NewLocationContactClient(cfg),
 		Organization:                 NewOrganizationClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
@@ -390,7 +405,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		HazardousMaterial:            NewHazardousMaterialClient(cfg),
 		HazardousMaterialSegregation: NewHazardousMaterialSegregationClient(cfg),
 		InvoiceControl:               NewInvoiceControlClient(cfg),
+		Location:                     NewLocationClient(cfg),
 		LocationCategory:             NewLocationCategoryClient(cfg),
+		LocationComment:              NewLocationCommentClient(cfg),
+		LocationContact:              NewLocationContactClient(cfg),
 		Organization:                 NewOrganizationClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
@@ -446,11 +464,11 @@ func (c *Client) Use(hooks ...Hook) {
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
 		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
-		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
-		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
-		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState,
-		c.User, c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact,
-		c.WorkerProfile,
+		c.Location, c.LocationCategory, c.LocationComment, c.LocationContact,
+		c.Organization, c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl,
+		c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
+		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -466,11 +484,11 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
 		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
-		c.LocationCategory, c.Organization, c.QualifierCode, c.ReasonCode,
-		c.RevenueCode, c.RouteControl, c.ServiceType, c.Session, c.ShipmentControl,
-		c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState,
-		c.User, c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact,
-		c.WorkerProfile,
+		c.Location, c.LocationCategory, c.LocationComment, c.LocationContact,
+		c.Organization, c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl,
+		c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
+		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -525,8 +543,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.HazardousMaterialSegregation.mutate(ctx, m)
 	case *InvoiceControlMutation:
 		return c.InvoiceControl.mutate(ctx, m)
+	case *LocationMutation:
+		return c.Location.mutate(ctx, m)
 	case *LocationCategoryMutation:
 		return c.LocationCategory.mutate(ctx, m)
+	case *LocationCommentMutation:
+		return c.LocationComment.mutate(ctx, m)
+	case *LocationContactMutation:
+		return c.LocationContact.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *QualifierCodeMutation:
@@ -4561,6 +4585,235 @@ func (c *InvoiceControlClient) mutate(ctx context.Context, m *InvoiceControlMuta
 	}
 }
 
+// LocationClient is a client for the Location schema.
+type LocationClient struct {
+	config
+}
+
+// NewLocationClient returns a client for the Location from the given config.
+func NewLocationClient(c config) *LocationClient {
+	return &LocationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `location.Hooks(f(g(h())))`.
+func (c *LocationClient) Use(hooks ...Hook) {
+	c.hooks.Location = append(c.hooks.Location, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `location.Intercept(f(g(h())))`.
+func (c *LocationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Location = append(c.inters.Location, interceptors...)
+}
+
+// Create returns a builder for creating a Location entity.
+func (c *LocationClient) Create() *LocationCreate {
+	mutation := newLocationMutation(c.config, OpCreate)
+	return &LocationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Location entities.
+func (c *LocationClient) CreateBulk(builders ...*LocationCreate) *LocationCreateBulk {
+	return &LocationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LocationClient) MapCreateBulk(slice any, setFunc func(*LocationCreate, int)) *LocationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LocationCreateBulk{err: fmt.Errorf("calling to LocationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LocationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LocationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Location.
+func (c *LocationClient) Update() *LocationUpdate {
+	mutation := newLocationMutation(c.config, OpUpdate)
+	return &LocationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LocationClient) UpdateOne(l *Location) *LocationUpdateOne {
+	mutation := newLocationMutation(c.config, OpUpdateOne, withLocation(l))
+	return &LocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LocationClient) UpdateOneID(id uuid.UUID) *LocationUpdateOne {
+	mutation := newLocationMutation(c.config, OpUpdateOne, withLocationID(id))
+	return &LocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Location.
+func (c *LocationClient) Delete() *LocationDelete {
+	mutation := newLocationMutation(c.config, OpDelete)
+	return &LocationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LocationClient) DeleteOne(l *Location) *LocationDeleteOne {
+	return c.DeleteOneID(l.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LocationClient) DeleteOneID(id uuid.UUID) *LocationDeleteOne {
+	builder := c.Delete().Where(location.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LocationDeleteOne{builder}
+}
+
+// Query returns a query builder for Location.
+func (c *LocationClient) Query() *LocationQuery {
+	return &LocationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLocation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Location entity by its id.
+func (c *LocationClient) Get(ctx context.Context, id uuid.UUID) (*Location, error) {
+	return c.Query().Where(location.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LocationClient) GetX(ctx context.Context, id uuid.UUID) *Location {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Location.
+func (c *LocationClient) QueryBusinessUnit(l *Location) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, location.BusinessUnitTable, location.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Location.
+func (c *LocationClient) QueryOrganization(l *Location) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, location.OrganizationTable, location.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLocationCategory queries the location_category edge of a Location.
+func (c *LocationClient) QueryLocationCategory(l *Location) *LocationCategoryQuery {
+	query := (&LocationCategoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(locationcategory.Table, locationcategory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, location.LocationCategoryTable, location.LocationCategoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryState queries the state edge of a Location.
+func (c *LocationClient) QueryState(l *Location) *UsStateQuery {
+	query := (&UsStateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(usstate.Table, usstate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, location.StateTable, location.StateColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryComments queries the comments edge of a Location.
+func (c *LocationClient) QueryComments(l *Location) *LocationCommentQuery {
+	query := (&LocationCommentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(locationcomment.Table, locationcomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.CommentsTable, location.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryContacts queries the contacts edge of a Location.
+func (c *LocationClient) QueryContacts(l *Location) *LocationContactQuery {
+	query := (&LocationContactClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(locationcontact.Table, locationcontact.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, location.ContactsTable, location.ContactsColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LocationClient) Hooks() []Hook {
+	return c.hooks.Location
+}
+
+// Interceptors returns the client interceptors.
+func (c *LocationClient) Interceptors() []Interceptor {
+	return c.inters.Location
+}
+
+func (c *LocationClient) mutate(ctx context.Context, m *LocationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LocationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LocationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LocationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Location mutation op: %q", m.Op())
+	}
+}
+
 // LocationCategoryClient is a client for the LocationCategory schema.
 type LocationCategoryClient struct {
 	config
@@ -4723,6 +4976,400 @@ func (c *LocationCategoryClient) mutate(ctx context.Context, m *LocationCategory
 		return (&LocationCategoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown LocationCategory mutation op: %q", m.Op())
+	}
+}
+
+// LocationCommentClient is a client for the LocationComment schema.
+type LocationCommentClient struct {
+	config
+}
+
+// NewLocationCommentClient returns a client for the LocationComment from the given config.
+func NewLocationCommentClient(c config) *LocationCommentClient {
+	return &LocationCommentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `locationcomment.Hooks(f(g(h())))`.
+func (c *LocationCommentClient) Use(hooks ...Hook) {
+	c.hooks.LocationComment = append(c.hooks.LocationComment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `locationcomment.Intercept(f(g(h())))`.
+func (c *LocationCommentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LocationComment = append(c.inters.LocationComment, interceptors...)
+}
+
+// Create returns a builder for creating a LocationComment entity.
+func (c *LocationCommentClient) Create() *LocationCommentCreate {
+	mutation := newLocationCommentMutation(c.config, OpCreate)
+	return &LocationCommentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LocationComment entities.
+func (c *LocationCommentClient) CreateBulk(builders ...*LocationCommentCreate) *LocationCommentCreateBulk {
+	return &LocationCommentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LocationCommentClient) MapCreateBulk(slice any, setFunc func(*LocationCommentCreate, int)) *LocationCommentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LocationCommentCreateBulk{err: fmt.Errorf("calling to LocationCommentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LocationCommentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LocationCommentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LocationComment.
+func (c *LocationCommentClient) Update() *LocationCommentUpdate {
+	mutation := newLocationCommentMutation(c.config, OpUpdate)
+	return &LocationCommentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LocationCommentClient) UpdateOne(lc *LocationComment) *LocationCommentUpdateOne {
+	mutation := newLocationCommentMutation(c.config, OpUpdateOne, withLocationComment(lc))
+	return &LocationCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LocationCommentClient) UpdateOneID(id uuid.UUID) *LocationCommentUpdateOne {
+	mutation := newLocationCommentMutation(c.config, OpUpdateOne, withLocationCommentID(id))
+	return &LocationCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LocationComment.
+func (c *LocationCommentClient) Delete() *LocationCommentDelete {
+	mutation := newLocationCommentMutation(c.config, OpDelete)
+	return &LocationCommentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LocationCommentClient) DeleteOne(lc *LocationComment) *LocationCommentDeleteOne {
+	return c.DeleteOneID(lc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LocationCommentClient) DeleteOneID(id uuid.UUID) *LocationCommentDeleteOne {
+	builder := c.Delete().Where(locationcomment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LocationCommentDeleteOne{builder}
+}
+
+// Query returns a query builder for LocationComment.
+func (c *LocationCommentClient) Query() *LocationCommentQuery {
+	return &LocationCommentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLocationComment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LocationComment entity by its id.
+func (c *LocationCommentClient) Get(ctx context.Context, id uuid.UUID) (*LocationComment, error) {
+	return c.Query().Where(locationcomment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LocationCommentClient) GetX(ctx context.Context, id uuid.UUID) *LocationComment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a LocationComment.
+func (c *LocationCommentClient) QueryBusinessUnit(lc *LocationComment) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcomment.Table, locationcomment.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcomment.BusinessUnitTable, locationcomment.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a LocationComment.
+func (c *LocationCommentClient) QueryOrganization(lc *LocationComment) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcomment.Table, locationcomment.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcomment.OrganizationTable, locationcomment.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLocation queries the location edge of a LocationComment.
+func (c *LocationCommentClient) QueryLocation(lc *LocationComment) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcomment.Table, locationcomment.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, locationcomment.LocationTable, locationcomment.LocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a LocationComment.
+func (c *LocationCommentClient) QueryUser(lc *LocationComment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcomment.Table, locationcomment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcomment.UserTable, locationcomment.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommentType queries the comment_type edge of a LocationComment.
+func (c *LocationCommentClient) QueryCommentType(lc *LocationComment) *CommentTypeQuery {
+	query := (&CommentTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcomment.Table, locationcomment.FieldID, id),
+			sqlgraph.To(commenttype.Table, commenttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcomment.CommentTypeTable, locationcomment.CommentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LocationCommentClient) Hooks() []Hook {
+	return c.hooks.LocationComment
+}
+
+// Interceptors returns the client interceptors.
+func (c *LocationCommentClient) Interceptors() []Interceptor {
+	return c.inters.LocationComment
+}
+
+func (c *LocationCommentClient) mutate(ctx context.Context, m *LocationCommentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LocationCommentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LocationCommentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LocationCommentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LocationCommentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LocationComment mutation op: %q", m.Op())
+	}
+}
+
+// LocationContactClient is a client for the LocationContact schema.
+type LocationContactClient struct {
+	config
+}
+
+// NewLocationContactClient returns a client for the LocationContact from the given config.
+func NewLocationContactClient(c config) *LocationContactClient {
+	return &LocationContactClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `locationcontact.Hooks(f(g(h())))`.
+func (c *LocationContactClient) Use(hooks ...Hook) {
+	c.hooks.LocationContact = append(c.hooks.LocationContact, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `locationcontact.Intercept(f(g(h())))`.
+func (c *LocationContactClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LocationContact = append(c.inters.LocationContact, interceptors...)
+}
+
+// Create returns a builder for creating a LocationContact entity.
+func (c *LocationContactClient) Create() *LocationContactCreate {
+	mutation := newLocationContactMutation(c.config, OpCreate)
+	return &LocationContactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LocationContact entities.
+func (c *LocationContactClient) CreateBulk(builders ...*LocationContactCreate) *LocationContactCreateBulk {
+	return &LocationContactCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LocationContactClient) MapCreateBulk(slice any, setFunc func(*LocationContactCreate, int)) *LocationContactCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LocationContactCreateBulk{err: fmt.Errorf("calling to LocationContactClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LocationContactCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LocationContactCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LocationContact.
+func (c *LocationContactClient) Update() *LocationContactUpdate {
+	mutation := newLocationContactMutation(c.config, OpUpdate)
+	return &LocationContactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LocationContactClient) UpdateOne(lc *LocationContact) *LocationContactUpdateOne {
+	mutation := newLocationContactMutation(c.config, OpUpdateOne, withLocationContact(lc))
+	return &LocationContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LocationContactClient) UpdateOneID(id uuid.UUID) *LocationContactUpdateOne {
+	mutation := newLocationContactMutation(c.config, OpUpdateOne, withLocationContactID(id))
+	return &LocationContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LocationContact.
+func (c *LocationContactClient) Delete() *LocationContactDelete {
+	mutation := newLocationContactMutation(c.config, OpDelete)
+	return &LocationContactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LocationContactClient) DeleteOne(lc *LocationContact) *LocationContactDeleteOne {
+	return c.DeleteOneID(lc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LocationContactClient) DeleteOneID(id uuid.UUID) *LocationContactDeleteOne {
+	builder := c.Delete().Where(locationcontact.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LocationContactDeleteOne{builder}
+}
+
+// Query returns a query builder for LocationContact.
+func (c *LocationContactClient) Query() *LocationContactQuery {
+	return &LocationContactQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLocationContact},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LocationContact entity by its id.
+func (c *LocationContactClient) Get(ctx context.Context, id uuid.UUID) (*LocationContact, error) {
+	return c.Query().Where(locationcontact.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LocationContactClient) GetX(ctx context.Context, id uuid.UUID) *LocationContact {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a LocationContact.
+func (c *LocationContactClient) QueryBusinessUnit(lc *LocationContact) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcontact.Table, locationcontact.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcontact.BusinessUnitTable, locationcontact.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a LocationContact.
+func (c *LocationContactClient) QueryOrganization(lc *LocationContact) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcontact.Table, locationcontact.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, locationcontact.OrganizationTable, locationcontact.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLocation queries the location edge of a LocationContact.
+func (c *LocationContactClient) QueryLocation(lc *LocationContact) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := lc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(locationcontact.Table, locationcontact.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, locationcontact.LocationTable, locationcontact.LocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(lc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LocationContactClient) Hooks() []Hook {
+	return c.hooks.LocationContact
+}
+
+// Interceptors returns the client interceptors.
+func (c *LocationContactClient) Interceptors() []Interceptor {
+	return c.inters.LocationContact
+}
+
+func (c *LocationContactClient) mutate(ctx context.Context, m *LocationContactMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LocationContactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LocationContactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LocationContactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LocationContactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LocationContact mutation op: %q", m.Op())
 	}
 }
 
@@ -8567,10 +9214,11 @@ type (
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
 		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
-		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
-		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite, Worker,
-		WorkerComment, WorkerContact, WorkerProfile []ent.Hook
+		Location, LocationCategory, LocationComment, LocationContact, Organization,
+		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
+		ShipmentControl, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
+		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,
+		WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
@@ -8578,10 +9226,11 @@ type (
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
 		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
 		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
-		LocationCategory, Organization, QualifierCode, ReasonCode, RevenueCode,
-		RouteControl, ServiceType, Session, ShipmentControl, ShipmentType,
-		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite, Worker,
-		WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
+		Location, LocationCategory, LocationComment, LocationContact, Organization,
+		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
+		ShipmentControl, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
+		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,
+		WorkerProfile []ent.Interceptor
 	}
 )
 

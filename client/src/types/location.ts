@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { User } from "@/types/accounts";
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
 
@@ -33,24 +32,18 @@ export type LocationCategoryFormValues = Omit<
 
 export interface LocationComment extends BaseModel {
   id: string;
-  location: string;
-  commentType: string;
-  commentTypeName: string;
+  locationId: string;
+  // Comment Type ID.
+  commentTypeId: string;
+  // The actual comment.
   comment: string;
-  enteredBy: User;
+  // User that entered the comment.
+  userId: string;
 }
 
 export type LocationCommentFormValues = Omit<
   LocationComment,
-  | "organizationId"
-  | "createdAt"
-  | "updatedAt"
-  | "id"
-  | "location"
-  | "enteredBy"
-  | "commentTypeName"
-  | "enteredByUsername"
-  | "version"
+  "organizationId" | "createdAt" | "updatedAt" | "id" | "locationId" | "version"
 >;
 
 export interface LocationContact extends BaseModel {
@@ -72,24 +65,23 @@ export interface Location extends BaseModel {
   name: string;
   code: string;
   status: StatusChoiceProps;
-  locationCategory?: string | null;
-  depot?: string | null;
-  description?: string | null;
+  locationCategoryId?: string | null;
+  description?: string;
   addressLine1: string;
-  addressLine2?: string | null;
+  addressLine2?: string;
   city: string;
-  state: string;
-  zipCode: string;
-  longitude?: number | null;
-  latitude?: number | null;
+  stateId: string;
+  postalCode: string;
+  longitude?: number;
+  latitude?: number;
   placeId?: string;
   isGeocoded: boolean;
-  locationColor?: string | null;
-  locationCategoryName?: string | null;
-  pickupCount: number;
-  waitTimeAvg: number;
-  locationComments: LocationComment[];
-  locationContacts: LocationContact[];
+  edges?: {
+    locationCategory?: LocationCategory;
+    state?: USStates;
+    comments: LocationComment[];
+    contacts: LocationContact[];
+  };
 }
 
 export type LocationFormValues = Omit<
@@ -98,28 +90,23 @@ export type LocationFormValues = Omit<
   | "id"
   | "longitude"
   | "latitude"
-  | "locationColor"
-  | "locationCategoryName"
-  | "pickupCount"
-  | "waitTimeAvg"
-  | "locationContacts"
-  | "locationComments"
   | "isGeocoded"
   | "placeId"
   | "createdAt"
   | "updatedAt"
+  | "edges"
   | "version"
 > & {
-  locationComments?: LocationCommentFormValues[] | null;
-  locationContacts?: LocationContactFormValues[] | null;
+  comments?: LocationCommentFormValues[] | null;
+  contacts?: LocationContactFormValues[] | null;
 };
 
 export type USStates = {
   id: string;
   name: string;
   abbreviation: string;
-  country_name: string;
-  county_iso3: string;
+  countryName: string;
+  countryIso3: string;
 };
 
 export type GoogleAutoCompleteResult = {

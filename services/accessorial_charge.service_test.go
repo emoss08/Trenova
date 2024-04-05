@@ -30,6 +30,11 @@ func TestAccessorialChargeOps_GetAccessorialCharges(t *testing.T) {
 		enttest.WithOptions(ent.Log(t.Log)),
 	)
 	defer client.Close()
+	ctx := context.Background()
+	// Run the auto migration tool.
+	if err := client.Schema.Create(ctx); err != nil {
+		t.Fatalf("failed creating schema resources: %v", err)
+	}
 
 	// Populate the database with test data.
 	bu, err := client.BusinessUnit.Create().

@@ -58,11 +58,7 @@ export async function getLocationPickupData(
  * @returns A promise that resolves to an array of location categories.
  */
 export async function getLocationCategories(): Promise<LocationCategory[]> {
-  const response = await axios.get("/location_categories/", {
-    params: {
-      limit: "all",
-    },
-  });
+  const response = await axios.get("/location-categories/");
   return response.data.results;
 }
 

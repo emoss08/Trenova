@@ -16,8 +16,8 @@
  */
 
 import { API_URL } from "@/lib/constants";
-import axios from "axios";
 import { generateIdempotencyKey } from "@/lib/utils";
+import axios from "axios";
 
 /**
  * Axios request interceptor.
