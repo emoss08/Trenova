@@ -123,7 +123,7 @@ func (r *LocationOps) CreateLocation(
 
 		// If locations are provided, create them and associate them with the location
 		if len(newEntity.Contacts) > 0 {
-			if err = r.createLocationContact(ctx, tx, createdEntity.ID, newEntity); err != nil {
+			if err = r.createLocationContacts(ctx, tx, createdEntity.ID, newEntity); err != nil {
 				return err
 			}
 		}
@@ -168,8 +168,8 @@ func (r *LocationOps) createLocationComments(
 			SetCommentTypeID(comment.CommentTypeID).
 			Save(ctx)
 		if err != nil {
-			wrappedError := eris.Wrap(err, "failed to create comment")
-			r.Logger.WithField("error", wrappedError).Error("failed to create comment")
+			wrappedError := eris.Wrap(err, "failed to create location comment")
+			r.Logger.WithField("error", wrappedError).Error("failed to create location comment")
 			return wrappedError
 		}
 	}
@@ -303,7 +303,7 @@ func (r *LocationOps) updateOrCreateComments(ctx context.Context, tx *ent.Tx, en
 }
 
 // createLocationContact create a location contact entity.
-func (r *LocationOps) createLocationContact(
+func (r *LocationOps) createLocationContacts(
 	ctx context.Context, tx *ent.Tx, locationID uuid.UUID, newEntity LocationRequest,
 ) error {
 	for _, contact := range newEntity.Contacts {
@@ -311,7 +311,6 @@ func (r *LocationOps) createLocationContact(
 			SetLocationID(locationID).
 			SetBusinessUnitID(newEntity.BusinessUnitID).
 			SetOrganizationID(newEntity.OrganizationID).
-			SetLocationID(locationID).
 			SetName(contact.Name).
 			SetEmailAddress(contact.EmailAddress).
 			SetPhoneNumber(contact.PhoneNumber).
