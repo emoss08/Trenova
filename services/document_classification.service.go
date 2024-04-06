@@ -59,44 +59,26 @@ func (r *DocumentClassificationOps) GetDocumentClassification(ctx context.Contex
 
 // CreateDocumentClassification creates a new document classification.
 func (r *DocumentClassificationOps) CreateDocumentClassification(ctx context.Context, newEntity ent.DocumentClassification) (*ent.DocumentClassification, error) {
-	// Begin a new transaction
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
-		return nil, wrappedErr
-	}
+	var createdEntity *ent.DocumentClassification
 
-	// Ensure the transaction is either committed or rolled back
-	defer func() {
-		if v := recover(); v != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-			panic(v)
-		}
+	err := tools.WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		var err error
+		createdEntity, err = tx.DocumentClassification.Create().
+			SetOrganizationID(newEntity.OrganizationID).
+			SetBusinessUnitID(newEntity.BusinessUnitID).
+			SetStatus(newEntity.Status).
+			SetCode(newEntity.Code).
+			SetDescription(newEntity.Description).
+			SetColor(newEntity.Color).
+			Save(ctx)
 		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
-			}
+			return err
 		}
-	}()
 
-	createdEntity, err := tx.DocumentClassification.Create().
-		SetOrganizationID(newEntity.OrganizationID).
-		SetBusinessUnitID(newEntity.BusinessUnitID).
-		SetName(newEntity.Name).
-		SetDescription(newEntity.Description).
-		Save(ctx)
+		return nil
+	})
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -151,8 +133,10 @@ func (r *DocumentClassificationOps) UpdateDocumentClassification(ctx context.Con
 	// Start building the update operation
 	updateOp := tx.DocumentClassification.
 		UpdateOneID(entity.ID).
-		SetName(entity.Name).
+		SetCode(entity.Code).
 		SetDescription(entity.Description).
+		SetStatus(entity.Status).
+		SetColor(entity.Color).
 		SetVersion(entity.Version + 1) // Increment the version
 
 	// Execute the update operation
