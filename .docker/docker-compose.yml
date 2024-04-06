@@ -90,22 +90,23 @@ services:
     volumes:
       - redis_data:/data
 
-  trenova_rabbitmq:
-    image: rabbitmq:3-management
-    container_name: trenova-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+  trenova-minio:
+    image: quay.io/minio/minio:RELEASE.2024-03-15T01-07-19Z
+    command: server --console-address ":9001" http://minio{1...4}/data{1...2}
     expose:
-      - "5672"
-      - "15672"
+      - "9000"
+      - "9001"
     environment:
-      - RABBITMQ_DEFAULT_USER=trenova # This is just for local development
-      - RABBITMQ_DEFAULT_PASS=trenova # This is just for local development
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     restart: always
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
-  rabbitmq_data: {}
   redis_data: {}
   kafka_data: {}
+  minio_data:
