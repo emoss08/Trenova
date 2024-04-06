@@ -508,8 +508,9 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "name", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -521,15 +522,22 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "document_classifications_business_units_business_unit",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[7]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "document_classifications_organizations_organization",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "documentclassification_code_organization_id",
+				Unique:  true,
+				Columns: []*schema.Column{DocumentClassificationsColumns[5], DocumentClassificationsColumns[9]},
 			},
 		},
 	}
@@ -1922,11 +1930,11 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
-		{Name: "entered_by", Type: field.TypeUUID},
 		{Name: "worker_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "comment_type_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
 	}
 	// WorkerCommentsTable holds the schema information for the "worker_comments" table.
 	WorkerCommentsTable = &schema.Table{
@@ -1936,27 +1944,33 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "worker_comments_workers_worker_comments",
-				Columns:    []*schema.Column{WorkerCommentsColumns[6]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[5]},
 				RefColumns: []*schema.Column{WorkersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "worker_comments_business_units_business_unit",
-				Columns:    []*schema.Column{WorkerCommentsColumns[7]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[6]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_comments_organizations_organization",
-				Columns:    []*schema.Column{WorkerCommentsColumns[8]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[7]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "worker_comments_comment_types_comment_type",
-				Columns:    []*schema.Column{WorkerCommentsColumns[9]},
+				Columns:    []*schema.Column{WorkerCommentsColumns[8]},
 				RefColumns: []*schema.Column{CommentTypesColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "worker_comments_users_user",
+				Columns:    []*schema.Column{WorkerCommentsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -2254,6 +2268,7 @@ func init() {
 	WorkerCommentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerCommentsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	WorkerCommentsTable.ForeignKeys[3].RefTable = CommentTypesTable
+	WorkerCommentsTable.ForeignKeys[4].RefTable = UsersTable
 	WorkerContactsTable.ForeignKeys[0].RefTable = WorkersTable
 	WorkerContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerContactsTable.ForeignKeys[2].RefTable = OrganizationsTable

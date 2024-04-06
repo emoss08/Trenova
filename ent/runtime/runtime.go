@@ -683,6 +683,8 @@ func init() {
 	// divisioncode.DefaultID holds the default value on creation for the id field.
 	divisioncode.DefaultID = divisioncodeDescID.Default.(func() uuid.UUID)
 	documentclassificationMixin := schema.DocumentClassification{}.Mixin()
+	documentclassificationHooks := schema.DocumentClassification{}.Hooks()
+	documentclassification.Hooks[0] = documentclassificationHooks[0]
 	documentclassificationMixinFields0 := documentclassificationMixin[0].Fields()
 	_ = documentclassificationMixinFields0
 	documentclassificationFields := schema.DocumentClassification{}.Fields()
@@ -701,10 +703,10 @@ func init() {
 	documentclassificationDescVersion := documentclassificationMixinFields0[5].Descriptor()
 	// documentclassification.DefaultVersion holds the default value on creation for the version field.
 	documentclassification.DefaultVersion = documentclassificationDescVersion.Default.(int)
-	// documentclassificationDescName is the schema descriptor for name field.
-	documentclassificationDescName := documentclassificationFields[1].Descriptor()
-	// documentclassification.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	documentclassification.NameValidator = documentclassificationDescName.Validators[0].(func(string) error)
+	// documentclassificationDescCode is the schema descriptor for code field.
+	documentclassificationDescCode := documentclassificationFields[1].Descriptor()
+	// documentclassification.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	documentclassification.CodeValidator = documentclassificationDescCode.Validators[0].(func(string) error)
 	// documentclassificationDescID is the schema descriptor for id field.
 	documentclassificationDescID := documentclassificationMixinFields0[0].Descriptor()
 	// documentclassification.DefaultID holds the default value on creation for the id field.
@@ -2043,7 +2045,7 @@ func init() {
 	// workercomment.DefaultVersion holds the default value on creation for the version field.
 	workercomment.DefaultVersion = workercommentDescVersion.Default.(int)
 	// workercommentDescComment is the schema descriptor for comment field.
-	workercommentDescComment := workercommentFields[2].Descriptor()
+	workercommentDescComment := workercommentFields[3].Descriptor()
 	// workercomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
 	workercomment.CommentValidator = workercommentDescComment.Validators[0].(func(string) error)
 	// workercommentDescID is the schema descriptor for id field.

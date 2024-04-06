@@ -354,8 +354,9 @@ var schemaGraph = func() *sqlgraph.Schema {
 			documentclassification.FieldUpdatedAt:      {Type: field.TypeTime, Column: documentclassification.FieldUpdatedAt},
 			documentclassification.FieldVersion:        {Type: field.TypeInt, Column: documentclassification.FieldVersion},
 			documentclassification.FieldStatus:         {Type: field.TypeEnum, Column: documentclassification.FieldStatus},
-			documentclassification.FieldName:           {Type: field.TypeString, Column: documentclassification.FieldName},
+			documentclassification.FieldCode:           {Type: field.TypeString, Column: documentclassification.FieldCode},
 			documentclassification.FieldDescription:    {Type: field.TypeString, Column: documentclassification.FieldDescription},
+			documentclassification.FieldColor:          {Type: field.TypeString, Column: documentclassification.FieldColor},
 		},
 	}
 	graph.Nodes[12] = &sqlgraph.Node{
@@ -1148,8 +1149,8 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldVersion:        {Type: field.TypeInt, Column: workercomment.FieldVersion},
 			workercomment.FieldWorkerID:       {Type: field.TypeUUID, Column: workercomment.FieldWorkerID},
 			workercomment.FieldCommentTypeID:  {Type: field.TypeUUID, Column: workercomment.FieldCommentTypeID},
+			workercomment.FieldUserID:         {Type: field.TypeUUID, Column: workercomment.FieldUserID},
 			workercomment.FieldComment:        {Type: field.TypeString, Column: workercomment.FieldComment},
-			workercomment.FieldEnteredBy:      {Type: field.TypeUUID, Column: workercomment.FieldEnteredBy},
 		},
 	}
 	graph.Nodes[45] = &sqlgraph.Node{
@@ -2889,6 +2890,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"CommentType",
 	)
 	graph.MustAddE(
+		"user",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.UserTable,
+			Columns: []string{workercomment.UserColumn},
+			Bidi:    false,
+		},
+		"WorkerComment",
+		"User",
+	)
+	graph.MustAddE(
 		"business_unit",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -4576,14 +4589,19 @@ func (f *DocumentClassificationFilter) WhereStatus(p entql.StringP) {
 	f.Where(p.Field(documentclassification.FieldStatus))
 }
 
-// WhereName applies the entql string predicate on the name field.
-func (f *DocumentClassificationFilter) WhereName(p entql.StringP) {
-	f.Where(p.Field(documentclassification.FieldName))
+// WhereCode applies the entql string predicate on the code field.
+func (f *DocumentClassificationFilter) WhereCode(p entql.StringP) {
+	f.Where(p.Field(documentclassification.FieldCode))
 }
 
 // WhereDescription applies the entql string predicate on the description field.
 func (f *DocumentClassificationFilter) WhereDescription(p entql.StringP) {
 	f.Where(p.Field(documentclassification.FieldDescription))
+}
+
+// WhereColor applies the entql string predicate on the color field.
+func (f *DocumentClassificationFilter) WhereColor(p entql.StringP) {
+	f.Where(p.Field(documentclassification.FieldColor))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
@@ -9205,14 +9223,14 @@ func (f *WorkerCommentFilter) WhereCommentTypeID(p entql.ValueP) {
 	f.Where(p.Field(workercomment.FieldCommentTypeID))
 }
 
+// WhereUserID applies the entql [16]byte predicate on the user_id field.
+func (f *WorkerCommentFilter) WhereUserID(p entql.ValueP) {
+	f.Where(p.Field(workercomment.FieldUserID))
+}
+
 // WhereComment applies the entql string predicate on the comment field.
 func (f *WorkerCommentFilter) WhereComment(p entql.StringP) {
 	f.Where(p.Field(workercomment.FieldComment))
-}
-
-// WhereEnteredBy applies the entql [16]byte predicate on the entered_by field.
-func (f *WorkerCommentFilter) WhereEnteredBy(p entql.ValueP) {
-	f.Where(p.Field(workercomment.FieldEnteredBy))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
@@ -9265,6 +9283,20 @@ func (f *WorkerCommentFilter) WhereHasCommentType() {
 // WhereHasCommentTypeWith applies a predicate to check if query has an edge comment_type with a given conditions (other predicates).
 func (f *WorkerCommentFilter) WhereHasCommentTypeWith(preds ...predicate.CommentType) {
 	f.Where(entql.HasEdgeWith("comment_type", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasUser applies a predicate to check if query has an edge user.
+func (f *WorkerCommentFilter) WhereHasUser() {
+	f.Where(entql.HasEdge("user"))
+}
+
+// WhereHasUserWith applies a predicate to check if query has an edge user with a given conditions (other predicates).
+func (f *WorkerCommentFilter) WhereHasUserWith(preds ...predicate.User) {
+	f.Where(entql.HasEdgeWith("user", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}

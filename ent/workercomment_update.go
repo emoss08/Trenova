@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
 	"github.com/google/uuid"
@@ -87,6 +88,20 @@ func (wcu *WorkerCommentUpdate) SetNillableCommentTypeID(u *uuid.UUID) *WorkerCo
 	return wcu
 }
 
+// SetUserID sets the "user_id" field.
+func (wcu *WorkerCommentUpdate) SetUserID(u uuid.UUID) *WorkerCommentUpdate {
+	wcu.mutation.SetUserID(u)
+	return wcu
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (wcu *WorkerCommentUpdate) SetNillableUserID(u *uuid.UUID) *WorkerCommentUpdate {
+	if u != nil {
+		wcu.SetUserID(*u)
+	}
+	return wcu
+}
+
 // SetComment sets the "comment" field.
 func (wcu *WorkerCommentUpdate) SetComment(s string) *WorkerCommentUpdate {
 	wcu.mutation.SetComment(s)
@@ -101,20 +116,6 @@ func (wcu *WorkerCommentUpdate) SetNillableComment(s *string) *WorkerCommentUpda
 	return wcu
 }
 
-// SetEnteredBy sets the "entered_by" field.
-func (wcu *WorkerCommentUpdate) SetEnteredBy(u uuid.UUID) *WorkerCommentUpdate {
-	wcu.mutation.SetEnteredBy(u)
-	return wcu
-}
-
-// SetNillableEnteredBy sets the "entered_by" field if the given value is not nil.
-func (wcu *WorkerCommentUpdate) SetNillableEnteredBy(u *uuid.UUID) *WorkerCommentUpdate {
-	if u != nil {
-		wcu.SetEnteredBy(*u)
-	}
-	return wcu
-}
-
 // SetWorker sets the "worker" edge to the Worker entity.
 func (wcu *WorkerCommentUpdate) SetWorker(w *Worker) *WorkerCommentUpdate {
 	return wcu.SetWorkerID(w.ID)
@@ -123,6 +124,11 @@ func (wcu *WorkerCommentUpdate) SetWorker(w *Worker) *WorkerCommentUpdate {
 // SetCommentType sets the "comment_type" edge to the CommentType entity.
 func (wcu *WorkerCommentUpdate) SetCommentType(c *CommentType) *WorkerCommentUpdate {
 	return wcu.SetCommentTypeID(c.ID)
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (wcu *WorkerCommentUpdate) SetUser(u *User) *WorkerCommentUpdate {
+	return wcu.SetUserID(u.ID)
 }
 
 // Mutation returns the WorkerCommentMutation object of the builder.
@@ -139,6 +145,12 @@ func (wcu *WorkerCommentUpdate) ClearWorker() *WorkerCommentUpdate {
 // ClearCommentType clears the "comment_type" edge to the CommentType entity.
 func (wcu *WorkerCommentUpdate) ClearCommentType() *WorkerCommentUpdate {
 	wcu.mutation.ClearCommentType()
+	return wcu
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (wcu *WorkerCommentUpdate) ClearUser() *WorkerCommentUpdate {
+	wcu.mutation.ClearUser()
 	return wcu
 }
 
@@ -197,6 +209,9 @@ func (wcu *WorkerCommentUpdate) check() error {
 	if _, ok := wcu.mutation.CommentTypeID(); wcu.mutation.CommentTypeCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "WorkerComment.comment_type"`)
 	}
+	if _, ok := wcu.mutation.UserID(); wcu.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "WorkerComment.user"`)
+	}
 	return nil
 }
 
@@ -229,9 +244,6 @@ func (wcu *WorkerCommentUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := wcu.mutation.Comment(); ok {
 		_spec.SetField(workercomment.FieldComment, field.TypeString, value)
-	}
-	if value, ok := wcu.mutation.EnteredBy(); ok {
-		_spec.SetField(workercomment.FieldEnteredBy, field.TypeUUID, value)
 	}
 	if wcu.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -284,6 +296,35 @@ func (wcu *WorkerCommentUpdate) sqlSave(ctx context.Context) (n int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commenttype.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if wcu.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.UserTable,
+			Columns: []string{workercomment.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wcu.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.UserTable,
+			Columns: []string{workercomment.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -368,6 +409,20 @@ func (wcuo *WorkerCommentUpdateOne) SetNillableCommentTypeID(u *uuid.UUID) *Work
 	return wcuo
 }
 
+// SetUserID sets the "user_id" field.
+func (wcuo *WorkerCommentUpdateOne) SetUserID(u uuid.UUID) *WorkerCommentUpdateOne {
+	wcuo.mutation.SetUserID(u)
+	return wcuo
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (wcuo *WorkerCommentUpdateOne) SetNillableUserID(u *uuid.UUID) *WorkerCommentUpdateOne {
+	if u != nil {
+		wcuo.SetUserID(*u)
+	}
+	return wcuo
+}
+
 // SetComment sets the "comment" field.
 func (wcuo *WorkerCommentUpdateOne) SetComment(s string) *WorkerCommentUpdateOne {
 	wcuo.mutation.SetComment(s)
@@ -382,20 +437,6 @@ func (wcuo *WorkerCommentUpdateOne) SetNillableComment(s *string) *WorkerComment
 	return wcuo
 }
 
-// SetEnteredBy sets the "entered_by" field.
-func (wcuo *WorkerCommentUpdateOne) SetEnteredBy(u uuid.UUID) *WorkerCommentUpdateOne {
-	wcuo.mutation.SetEnteredBy(u)
-	return wcuo
-}
-
-// SetNillableEnteredBy sets the "entered_by" field if the given value is not nil.
-func (wcuo *WorkerCommentUpdateOne) SetNillableEnteredBy(u *uuid.UUID) *WorkerCommentUpdateOne {
-	if u != nil {
-		wcuo.SetEnteredBy(*u)
-	}
-	return wcuo
-}
-
 // SetWorker sets the "worker" edge to the Worker entity.
 func (wcuo *WorkerCommentUpdateOne) SetWorker(w *Worker) *WorkerCommentUpdateOne {
 	return wcuo.SetWorkerID(w.ID)
@@ -404,6 +445,11 @@ func (wcuo *WorkerCommentUpdateOne) SetWorker(w *Worker) *WorkerCommentUpdateOne
 // SetCommentType sets the "comment_type" edge to the CommentType entity.
 func (wcuo *WorkerCommentUpdateOne) SetCommentType(c *CommentType) *WorkerCommentUpdateOne {
 	return wcuo.SetCommentTypeID(c.ID)
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (wcuo *WorkerCommentUpdateOne) SetUser(u *User) *WorkerCommentUpdateOne {
+	return wcuo.SetUserID(u.ID)
 }
 
 // Mutation returns the WorkerCommentMutation object of the builder.
@@ -420,6 +466,12 @@ func (wcuo *WorkerCommentUpdateOne) ClearWorker() *WorkerCommentUpdateOne {
 // ClearCommentType clears the "comment_type" edge to the CommentType entity.
 func (wcuo *WorkerCommentUpdateOne) ClearCommentType() *WorkerCommentUpdateOne {
 	wcuo.mutation.ClearCommentType()
+	return wcuo
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (wcuo *WorkerCommentUpdateOne) ClearUser() *WorkerCommentUpdateOne {
+	wcuo.mutation.ClearUser()
 	return wcuo
 }
 
@@ -491,6 +543,9 @@ func (wcuo *WorkerCommentUpdateOne) check() error {
 	if _, ok := wcuo.mutation.CommentTypeID(); wcuo.mutation.CommentTypeCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "WorkerComment.comment_type"`)
 	}
+	if _, ok := wcuo.mutation.UserID(); wcuo.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "WorkerComment.user"`)
+	}
 	return nil
 }
 
@@ -540,9 +595,6 @@ func (wcuo *WorkerCommentUpdateOne) sqlSave(ctx context.Context) (_node *WorkerC
 	}
 	if value, ok := wcuo.mutation.Comment(); ok {
 		_spec.SetField(workercomment.FieldComment, field.TypeString, value)
-	}
-	if value, ok := wcuo.mutation.EnteredBy(); ok {
-		_spec.SetField(workercomment.FieldEnteredBy, field.TypeUUID, value)
 	}
 	if wcuo.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -595,6 +647,35 @@ func (wcuo *WorkerCommentUpdateOne) sqlSave(ctx context.Context) (_node *WorkerC
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commenttype.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if wcuo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.UserTable,
+			Columns: []string{workercomment.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wcuo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercomment.UserTable,
+			Columns: []string{workercomment.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

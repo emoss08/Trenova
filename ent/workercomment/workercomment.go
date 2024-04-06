@@ -29,10 +29,10 @@ const (
 	FieldWorkerID = "worker_id"
 	// FieldCommentTypeID holds the string denoting the comment_type_id field in the database.
 	FieldCommentTypeID = "comment_type_id"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
 	// FieldComment holds the string denoting the comment field in the database.
 	FieldComment = "comment"
-	// FieldEnteredBy holds the string denoting the entered_by field in the database.
-	FieldEnteredBy = "entered_by"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -41,6 +41,8 @@ const (
 	EdgeWorker = "worker"
 	// EdgeCommentType holds the string denoting the comment_type edge name in mutations.
 	EdgeCommentType = "comment_type"
+	// EdgeUser holds the string denoting the user edge name in mutations.
+	EdgeUser = "user"
 	// Table holds the table name of the workercomment in the database.
 	Table = "worker_comments"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -71,6 +73,13 @@ const (
 	CommentTypeInverseTable = "comment_types"
 	// CommentTypeColumn is the table column denoting the comment_type relation/edge.
 	CommentTypeColumn = "comment_type_id"
+	// UserTable is the table that holds the user relation/edge.
+	UserTable = "worker_comments"
+	// UserInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UserInverseTable = "users"
+	// UserColumn is the table column denoting the user relation/edge.
+	UserColumn = "user_id"
 )
 
 // Columns holds all SQL columns for workercomment fields.
@@ -83,8 +92,8 @@ var Columns = []string{
 	FieldVersion,
 	FieldWorkerID,
 	FieldCommentTypeID,
+	FieldUserID,
 	FieldComment,
-	FieldEnteredBy,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -155,14 +164,14 @@ func ByCommentTypeID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCommentTypeID, opts...).ToFunc()
 }
 
+// ByUserID orders the results by the user_id field.
+func ByUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
 // ByComment orders the results by the comment field.
 func ByComment(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldComment, opts...).ToFunc()
-}
-
-// ByEnteredBy orders the results by the entered_by field.
-func ByEnteredBy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEnteredBy, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.
@@ -192,6 +201,13 @@ func ByCommentTypeField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCommentTypeStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByUserField orders the results by user field.
+func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -218,5 +234,12 @@ func newCommentTypeStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CommentTypeInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, CommentTypeTable, CommentTypeColumn),
+	)
+}
+func newUserStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, UserTable, UserColumn),
 	)
 }

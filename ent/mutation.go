@@ -13090,8 +13090,9 @@ type DocumentClassificationMutation struct {
 	version              *int
 	addversion           *int
 	status               *documentclassification.Status
-	name                 *string
+	code                 *string
 	description          *string
+	color                *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -13442,40 +13443,40 @@ func (m *DocumentClassificationMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetName sets the "name" field.
-func (m *DocumentClassificationMutation) SetName(s string) {
-	m.name = &s
+// SetCode sets the "code" field.
+func (m *DocumentClassificationMutation) SetCode(s string) {
+	m.code = &s
 }
 
-// Name returns the value of the "name" field in the mutation.
-func (m *DocumentClassificationMutation) Name() (r string, exists bool) {
-	v := m.name
+// Code returns the value of the "code" field in the mutation.
+func (m *DocumentClassificationMutation) Code() (r string, exists bool) {
+	v := m.code
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the DocumentClassification entity.
+// OldCode returns the old "code" field's value of the DocumentClassification entity.
 // If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DocumentClassificationMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *DocumentClassificationMutation) OldCode(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
+		return v, errors.New("OldCode requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
 	}
-	return oldValue.Name, nil
+	return oldValue.Code, nil
 }
 
-// ResetName resets all changes to the "name" field.
-func (m *DocumentClassificationMutation) ResetName() {
-	m.name = nil
+// ResetCode resets all changes to the "code" field.
+func (m *DocumentClassificationMutation) ResetCode() {
+	m.code = nil
 }
 
 // SetDescription sets the "description" field.
@@ -13525,6 +13526,55 @@ func (m *DocumentClassificationMutation) DescriptionCleared() bool {
 func (m *DocumentClassificationMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, documentclassification.FieldDescription)
+}
+
+// SetColor sets the "color" field.
+func (m *DocumentClassificationMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *DocumentClassificationMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the DocumentClassification entity.
+// If the DocumentClassification object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentClassificationMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ClearColor clears the value of the "color" field.
+func (m *DocumentClassificationMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[documentclassification.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *DocumentClassificationMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[documentclassification.FieldColor]
+	return ok
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *DocumentClassificationMutation) ResetColor() {
+	m.color = nil
+	delete(m.clearedFields, documentclassification.FieldColor)
 }
 
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
@@ -13615,7 +13665,7 @@ func (m *DocumentClassificationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DocumentClassificationMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.business_unit != nil {
 		fields = append(fields, documentclassification.FieldBusinessUnitID)
 	}
@@ -13634,11 +13684,14 @@ func (m *DocumentClassificationMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, documentclassification.FieldStatus)
 	}
-	if m.name != nil {
-		fields = append(fields, documentclassification.FieldName)
+	if m.code != nil {
+		fields = append(fields, documentclassification.FieldCode)
 	}
 	if m.description != nil {
 		fields = append(fields, documentclassification.FieldDescription)
+	}
+	if m.color != nil {
+		fields = append(fields, documentclassification.FieldColor)
 	}
 	return fields
 }
@@ -13660,10 +13713,12 @@ func (m *DocumentClassificationMutation) Field(name string) (ent.Value, bool) {
 		return m.Version()
 	case documentclassification.FieldStatus:
 		return m.Status()
-	case documentclassification.FieldName:
-		return m.Name()
+	case documentclassification.FieldCode:
+		return m.Code()
 	case documentclassification.FieldDescription:
 		return m.Description()
+	case documentclassification.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -13685,10 +13740,12 @@ func (m *DocumentClassificationMutation) OldField(ctx context.Context, name stri
 		return m.OldVersion(ctx)
 	case documentclassification.FieldStatus:
 		return m.OldStatus(ctx)
-	case documentclassification.FieldName:
-		return m.OldName(ctx)
+	case documentclassification.FieldCode:
+		return m.OldCode(ctx)
 	case documentclassification.FieldDescription:
 		return m.OldDescription(ctx)
+	case documentclassification.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown DocumentClassification field %s", name)
 }
@@ -13740,12 +13797,12 @@ func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) 
 		}
 		m.SetStatus(v)
 		return nil
-	case documentclassification.FieldName:
+	case documentclassification.FieldCode:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetName(v)
+		m.SetCode(v)
 		return nil
 	case documentclassification.FieldDescription:
 		v, ok := value.(string)
@@ -13753,6 +13810,13 @@ func (m *DocumentClassificationMutation) SetField(name string, value ent.Value) 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case documentclassification.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
 		return nil
 	}
 	return fmt.Errorf("unknown DocumentClassification field %s", name)
@@ -13802,6 +13866,9 @@ func (m *DocumentClassificationMutation) ClearedFields() []string {
 	if m.FieldCleared(documentclassification.FieldDescription) {
 		fields = append(fields, documentclassification.FieldDescription)
 	}
+	if m.FieldCleared(documentclassification.FieldColor) {
+		fields = append(fields, documentclassification.FieldColor)
+	}
 	return fields
 }
 
@@ -13818,6 +13885,9 @@ func (m *DocumentClassificationMutation) ClearField(name string) error {
 	switch name {
 	case documentclassification.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case documentclassification.FieldColor:
+		m.ClearColor()
 		return nil
 	}
 	return fmt.Errorf("unknown DocumentClassification nullable field %s", name)
@@ -13845,11 +13915,14 @@ func (m *DocumentClassificationMutation) ResetField(name string) error {
 	case documentclassification.FieldStatus:
 		m.ResetStatus()
 		return nil
-	case documentclassification.FieldName:
-		m.ResetName()
+	case documentclassification.FieldCode:
+		m.ResetCode()
 		return nil
 	case documentclassification.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case documentclassification.FieldColor:
+		m.ResetColor()
 		return nil
 	}
 	return fmt.Errorf("unknown DocumentClassification field %s", name)
@@ -51192,7 +51265,6 @@ type WorkerCommentMutation struct {
 	version              *int
 	addversion           *int
 	comment              *string
-	entered_by           *uuid.UUID
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -51202,6 +51274,8 @@ type WorkerCommentMutation struct {
 	clearedworker        bool
 	comment_type         *uuid.UUID
 	clearedcomment_type  bool
+	user                 *uuid.UUID
+	cleareduser          bool
 	done                 bool
 	oldValue             func(context.Context) (*WorkerComment, error)
 	predicates           []predicate.WorkerComment
@@ -51583,6 +51657,42 @@ func (m *WorkerCommentMutation) ResetCommentTypeID() {
 	m.comment_type = nil
 }
 
+// SetUserID sets the "user_id" field.
+func (m *WorkerCommentMutation) SetUserID(u uuid.UUID) {
+	m.user = &u
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *WorkerCommentMutation) UserID() (r uuid.UUID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the WorkerComment entity.
+// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerCommentMutation) OldUserID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *WorkerCommentMutation) ResetUserID() {
+	m.user = nil
+}
+
 // SetComment sets the "comment" field.
 func (m *WorkerCommentMutation) SetComment(s string) {
 	m.comment = &s
@@ -51617,42 +51727,6 @@ func (m *WorkerCommentMutation) OldComment(ctx context.Context) (v string, err e
 // ResetComment resets all changes to the "comment" field.
 func (m *WorkerCommentMutation) ResetComment() {
 	m.comment = nil
-}
-
-// SetEnteredBy sets the "entered_by" field.
-func (m *WorkerCommentMutation) SetEnteredBy(u uuid.UUID) {
-	m.entered_by = &u
-}
-
-// EnteredBy returns the value of the "entered_by" field in the mutation.
-func (m *WorkerCommentMutation) EnteredBy() (r uuid.UUID, exists bool) {
-	v := m.entered_by
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEnteredBy returns the old "entered_by" field's value of the WorkerComment entity.
-// If the WorkerComment object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *WorkerCommentMutation) OldEnteredBy(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEnteredBy is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEnteredBy requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEnteredBy: %w", err)
-	}
-	return oldValue.EnteredBy, nil
-}
-
-// ResetEnteredBy resets all changes to the "entered_by" field.
-func (m *WorkerCommentMutation) ResetEnteredBy() {
-	m.entered_by = nil
 }
 
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
@@ -51763,6 +51837,33 @@ func (m *WorkerCommentMutation) ResetCommentType() {
 	m.clearedcomment_type = false
 }
 
+// ClearUser clears the "user" edge to the User entity.
+func (m *WorkerCommentMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[workercomment.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *WorkerCommentMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *WorkerCommentMutation) UserIDs() (ids []uuid.UUID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *WorkerCommentMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
 // Where appends a list predicates to the WorkerCommentMutation builder.
 func (m *WorkerCommentMutation) Where(ps ...predicate.WorkerComment) {
 	m.predicates = append(m.predicates, ps...)
@@ -51819,11 +51920,11 @@ func (m *WorkerCommentMutation) Fields() []string {
 	if m.comment_type != nil {
 		fields = append(fields, workercomment.FieldCommentTypeID)
 	}
+	if m.user != nil {
+		fields = append(fields, workercomment.FieldUserID)
+	}
 	if m.comment != nil {
 		fields = append(fields, workercomment.FieldComment)
-	}
-	if m.entered_by != nil {
-		fields = append(fields, workercomment.FieldEnteredBy)
 	}
 	return fields
 }
@@ -51847,10 +51948,10 @@ func (m *WorkerCommentMutation) Field(name string) (ent.Value, bool) {
 		return m.WorkerID()
 	case workercomment.FieldCommentTypeID:
 		return m.CommentTypeID()
+	case workercomment.FieldUserID:
+		return m.UserID()
 	case workercomment.FieldComment:
 		return m.Comment()
-	case workercomment.FieldEnteredBy:
-		return m.EnteredBy()
 	}
 	return nil, false
 }
@@ -51874,10 +51975,10 @@ func (m *WorkerCommentMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldWorkerID(ctx)
 	case workercomment.FieldCommentTypeID:
 		return m.OldCommentTypeID(ctx)
+	case workercomment.FieldUserID:
+		return m.OldUserID(ctx)
 	case workercomment.FieldComment:
 		return m.OldComment(ctx)
-	case workercomment.FieldEnteredBy:
-		return m.OldEnteredBy(ctx)
 	}
 	return nil, fmt.Errorf("unknown WorkerComment field %s", name)
 }
@@ -51936,19 +52037,19 @@ func (m *WorkerCommentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCommentTypeID(v)
 		return nil
+	case workercomment.FieldUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
 	case workercomment.FieldComment:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetComment(v)
-		return nil
-	case workercomment.FieldEnteredBy:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEnteredBy(v)
 		return nil
 	}
 	return fmt.Errorf("unknown WorkerComment field %s", name)
@@ -52035,11 +52136,11 @@ func (m *WorkerCommentMutation) ResetField(name string) error {
 	case workercomment.FieldCommentTypeID:
 		m.ResetCommentTypeID()
 		return nil
+	case workercomment.FieldUserID:
+		m.ResetUserID()
+		return nil
 	case workercomment.FieldComment:
 		m.ResetComment()
-		return nil
-	case workercomment.FieldEnteredBy:
-		m.ResetEnteredBy()
 		return nil
 	}
 	return fmt.Errorf("unknown WorkerComment field %s", name)
@@ -52047,7 +52148,7 @@ func (m *WorkerCommentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkerCommentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.business_unit != nil {
 		edges = append(edges, workercomment.EdgeBusinessUnit)
 	}
@@ -52059,6 +52160,9 @@ func (m *WorkerCommentMutation) AddedEdges() []string {
 	}
 	if m.comment_type != nil {
 		edges = append(edges, workercomment.EdgeCommentType)
+	}
+	if m.user != nil {
+		edges = append(edges, workercomment.EdgeUser)
 	}
 	return edges
 }
@@ -52083,13 +52187,17 @@ func (m *WorkerCommentMutation) AddedIDs(name string) []ent.Value {
 		if id := m.comment_type; id != nil {
 			return []ent.Value{*id}
 		}
+	case workercomment.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkerCommentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	return edges
 }
 
@@ -52101,7 +52209,7 @@ func (m *WorkerCommentMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkerCommentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedbusiness_unit {
 		edges = append(edges, workercomment.EdgeBusinessUnit)
 	}
@@ -52113,6 +52221,9 @@ func (m *WorkerCommentMutation) ClearedEdges() []string {
 	}
 	if m.clearedcomment_type {
 		edges = append(edges, workercomment.EdgeCommentType)
+	}
+	if m.cleareduser {
+		edges = append(edges, workercomment.EdgeUser)
 	}
 	return edges
 }
@@ -52129,6 +52240,8 @@ func (m *WorkerCommentMutation) EdgeCleared(name string) bool {
 		return m.clearedworker
 	case workercomment.EdgeCommentType:
 		return m.clearedcomment_type
+	case workercomment.EdgeUser:
+		return m.cleareduser
 	}
 	return false
 }
@@ -52149,6 +52262,9 @@ func (m *WorkerCommentMutation) ClearEdge(name string) error {
 	case workercomment.EdgeCommentType:
 		m.ClearCommentType()
 		return nil
+	case workercomment.EdgeUser:
+		m.ClearUser()
+		return nil
 	}
 	return fmt.Errorf("unknown WorkerComment unique edge %s", name)
 }
@@ -52168,6 +52284,9 @@ func (m *WorkerCommentMutation) ResetEdge(name string) error {
 		return nil
 	case workercomment.EdgeCommentType:
 		m.ResetCommentType()
+		return nil
+	case workercomment.EdgeUser:
+		m.ResetUser()
 		return nil
 	}
 	return fmt.Errorf("unknown WorkerComment edge %s", name)

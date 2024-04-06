@@ -2682,7 +2682,8 @@ func (c *DocumentClassificationClient) QueryOrganization(dc *DocumentClassificat
 
 // Hooks returns the client hooks.
 func (c *DocumentClassificationClient) Hooks() []Hook {
-	return c.hooks.DocumentClassification
+	hooks := c.hooks.DocumentClassification
+	return append(hooks[:len(hooks):len(hooks)], documentclassification.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -8795,6 +8796,22 @@ func (c *WorkerCommentClient) QueryCommentType(wc *WorkerComment) *CommentTypeQu
 			sqlgraph.From(workercomment.Table, workercomment.FieldID, id),
 			sqlgraph.To(commenttype.Table, commenttype.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.CommentTypeTable, workercomment.CommentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a WorkerComment.
+func (c *WorkerCommentClient) QueryUser(wc *WorkerComment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := wc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercomment.Table, workercomment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.UserTable, workercomment.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(wc.driver.Dialect(), step)
 		return fromV, nil

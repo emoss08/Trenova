@@ -91,9 +91,9 @@ func (dcc *DocumentClassificationCreate) SetNillableStatus(d *documentclassifica
 	return dcc
 }
 
-// SetName sets the "name" field.
-func (dcc *DocumentClassificationCreate) SetName(s string) *DocumentClassificationCreate {
-	dcc.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (dcc *DocumentClassificationCreate) SetCode(s string) *DocumentClassificationCreate {
+	dcc.mutation.SetCode(s)
 	return dcc
 }
 
@@ -107,6 +107,20 @@ func (dcc *DocumentClassificationCreate) SetDescription(s string) *DocumentClass
 func (dcc *DocumentClassificationCreate) SetNillableDescription(s *string) *DocumentClassificationCreate {
 	if s != nil {
 		dcc.SetDescription(*s)
+	}
+	return dcc
+}
+
+// SetColor sets the "color" field.
+func (dcc *DocumentClassificationCreate) SetColor(s string) *DocumentClassificationCreate {
+	dcc.mutation.SetColor(s)
+	return dcc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcc *DocumentClassificationCreate) SetNillableColor(s *string) *DocumentClassificationCreate {
+	if s != nil {
+		dcc.SetColor(*s)
 	}
 	return dcc
 }
@@ -142,7 +156,9 @@ func (dcc *DocumentClassificationCreate) Mutation() *DocumentClassificationMutat
 
 // Save creates the DocumentClassification in the database.
 func (dcc *DocumentClassificationCreate) Save(ctx context.Context) (*DocumentClassification, error) {
-	dcc.defaults()
+	if err := dcc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, dcc.sqlSave, dcc.mutation, dcc.hooks)
 }
 
@@ -169,12 +185,18 @@ func (dcc *DocumentClassificationCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (dcc *DocumentClassificationCreate) defaults() {
+func (dcc *DocumentClassificationCreate) defaults() error {
 	if _, ok := dcc.mutation.CreatedAt(); !ok {
+		if documentclassification.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized documentclassification.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := documentclassification.DefaultCreatedAt()
 		dcc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := dcc.mutation.UpdatedAt(); !ok {
+		if documentclassification.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized documentclassification.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := documentclassification.DefaultUpdatedAt()
 		dcc.mutation.SetUpdatedAt(v)
 	}
@@ -187,9 +209,13 @@ func (dcc *DocumentClassificationCreate) defaults() {
 		dcc.mutation.SetStatus(v)
 	}
 	if _, ok := dcc.mutation.ID(); !ok {
+		if documentclassification.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized documentclassification.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := documentclassification.DefaultID()
 		dcc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -217,12 +243,12 @@ func (dcc *DocumentClassificationCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
 		}
 	}
-	if _, ok := dcc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "DocumentClassification.name"`)}
+	if _, ok := dcc.mutation.Code(); !ok {
+		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "DocumentClassification.code"`)}
 	}
-	if v, ok := dcc.mutation.Name(); ok {
-		if err := documentclassification.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.name": %w`, err)}
+	if v, ok := dcc.mutation.Code(); ok {
+		if err := documentclassification.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.code": %w`, err)}
 		}
 	}
 	if _, ok := dcc.mutation.BusinessUnitID(); !ok {
@@ -282,13 +308,17 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := dcc.mutation.Name(); ok {
-		_spec.SetField(documentclassification.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := dcc.mutation.Code(); ok {
+		_spec.SetField(documentclassification.FieldCode, field.TypeString, value)
+		_node.Code = value
 	}
 	if value, ok := dcc.mutation.Description(); ok {
 		_spec.SetField(documentclassification.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := dcc.mutation.Color(); ok {
+		_spec.SetField(documentclassification.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := dcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
