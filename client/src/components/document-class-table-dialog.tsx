@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
@@ -28,12 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { statusChoices } from "@/lib/choices";
 import { documentClassSchema } from "@/lib/validations/BillingSchema";
 import { type DocumentClassificationFormValues as FormValues } from "@/types/billing";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { GradientPicker } from "./common/fields/color-field";
+import { SelectInput } from "./common/fields/select-input";
 
 export function DocumentClassForm({
   control,
@@ -42,29 +28,45 @@ export function DocumentClassForm({
 }) {
   return (
     <Form>
-      <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
-        <FormControl className="w-full">
+      <FormGroup className="lg:grid-cols-2">
+        <FormControl>
+          <SelectInput
+            name="status"
+            rules={{ required: true }}
+            control={control}
+            label="Status"
+            options={statusChoices}
+            placeholder="Select Status"
+            description="Status of the Delay code"
+            isClearable={false}
+          />
+        </FormControl>
+        <FormControl>
           <InputField
             control={control}
             rules={{ required: true }}
-            name="name"
-            label="Name"
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder="Name"
-            autoComplete="name"
+            name="code"
+            label="Code"
+            placeholder="Code"
             description="Enter a unique identifier for the document classification."
             maxLength={10}
           />
         </FormControl>
-        <FormControl className="w-full">
+        <FormControl className="col-span-full">
           <TextareaField
             name="description"
             control={control}
             label="Description"
             placeholder="Description"
             description="Description of the document classification."
+          />
+        </FormControl>
+        <FormControl className="col-span-full">
+          <GradientPicker
+            name="color"
+            label="Color"
+            description="Color Code of the Location Category"
+            control={control}
           />
         </FormControl>
       </FormGroup>
@@ -78,8 +80,10 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(documentClassSchema),
     defaultValues: {
-      name: "",
+      status: "A",
+      code: "",
       description: "",
+      color: "",
     },
   });
 
