@@ -43,7 +43,12 @@ export interface DispatchControl extends BaseModel {
 
 export type DispatchControlFormValues = Omit<
   DispatchControl,
-  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
 >;
 
 export interface DelayCode extends BaseModel {
@@ -56,7 +61,12 @@ export interface DelayCode extends BaseModel {
 
 export type DelayCodeFormValues = Omit<
   DelayCode,
-  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
 >;
 
 export interface FleetCode extends BaseModel {
@@ -72,7 +82,12 @@ export interface FleetCode extends BaseModel {
 
 export type FleetCodeFormValues = Omit<
   FleetCode,
-  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
 >;
 
 export interface CommentType extends BaseModel {
@@ -85,7 +100,12 @@ export interface CommentType extends BaseModel {
 
 export type CommentTypeFormValues = Omit<
   CommentType,
-  "organizationId" | "businessUnit" | "createdAt" | "updatedAt" | "id"
+  | "organizationId"
+  | "businessUnit"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
 >;
 
 export interface Rate extends BaseModel {

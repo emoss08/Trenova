@@ -17,72 +17,60 @@
 import { InputField } from "@/components/common/fields/input";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { WorkerSortOptions } from "@/components/shipment-management/map-view/shipment-map-filter";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useFleetCodes, useUsers } from "@/hooks/useQueries";
-import { DEBOUNCE_DELAY } from "@/lib/constants";
-import { getDispatchControl } from "@/services/OrganizationRequestService";
-import { getWorkers } from "@/services/WorkerRequestService";
-import { QueryKeys } from "@/types";
+import {
+  useDispatchControl,
+  useFleetCodes,
+  useWorkers,
+} from "@/hooks/useQueries";
+import { StatusChoiceProps } from "@/types";
 import { DispatchControl } from "@/types/dispatch";
 import { Worker } from "@/types/worker";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { WorkerList, WorkerListSkeleton } from "./worker-list";
 
 type WorkerSearchForm = {
   searchQuery: string;
-  fleetFilter: string;
+  fleetCodeId: string;
+  status: StatusChoiceProps;
 };
 
 export function ShipmentMapAside() {
-  const queryClient = useQueryClient();
-  const { control, watch } = useForm<WorkerSearchForm>({
+  const { control } = useForm<WorkerSearchForm>({
     defaultValues: {
       searchQuery: "",
-      fleetFilter: "",
+      fleetCodeId: "",
+      status: "A",
     },
   });
 
-  const searchQuery = watch("searchQuery");
+  // const searchQuery = watch("searchQuery");
 
-  const debouncedSearchQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
+  // const debouncedSearchQuery = useDebounce(searchQuery, DEBOUNCE_DELAY);
 
   const {
     selectFleetCodes,
     isLoading: isFleetCodesLoading,
     isError: isFleetCodeError,
   } = useFleetCodes();
-  const {
-    selectUsersData,
-    isLoading: isUsersLoading,
-    isError: isUserError,
-  } = useUsers();
+
+  // const {
+  //   selectUsersData,
+  //   isLoading: isUsersLoading,
+  //   isError: isUserError,
+  // } = useUsers();
+
   const {
     data: dispatchControlData,
     isLoading: isDispatchControlDataLoading,
     isError: isDispatchControlError,
-  } = useQuery({
-    queryKey: ["dispatchControl"] as QueryKeys,
-    queryFn: async () => getDispatchControl(),
-    initialData: (): DispatchControl[] | undefined =>
-      queryClient.getQueryData(["dispatchControl"]),
-    staleTime: Infinity,
-  });
+  } = useDispatchControl();
+
   const {
     data: workersData,
     isLoading: isWorkersLoading,
     isError: isWorkerError,
-  } = useQuery({
-    queryKey: ["workersList", debouncedSearchQuery],
-    queryFn: async () => getWorkers(100, debouncedSearchQuery),
-    initialData: (): Worker[] | undefined =>
-      queryClient.getQueryData(["workersList", debouncedSearchQuery]),
-    staleTime: Infinity,
-  });
-
-  // Store first element of dispatchControlData in variable
-  const dispatchControlDataArray = dispatchControlData?.[0];
+  } = useWorkers();
 
   const sortOptions = [
     {
@@ -105,12 +93,12 @@ export function ShipmentMapAside() {
       options: selectFleetCodes,
       loading: isFleetCodesLoading,
     },
-    {
-      id: "manager",
-      title: "Manager",
-      options: selectUsersData,
-      loading: isUsersLoading,
-    },
+    // {
+    //   id: "manager",
+    //   title: "Manager",
+    //   options: selectUsersData,
+    //   loading: isUsersLoading,
+    // },
 
     {
       id: "endorsements",
@@ -137,13 +125,9 @@ export function ShipmentMapAside() {
   ];
 
   const isLoading =
-    isFleetCodesLoading ||
-    isUsersLoading ||
-    isDispatchControlDataLoading ||
-    isWorkersLoading;
+    isFleetCodesLoading || isDispatchControlDataLoading || isWorkersLoading;
 
-  const isError =
-    isFleetCodeError || isUserError || isDispatchControlError || isWorkerError;
+  const isError = isFleetCodeError || isDispatchControlError || isWorkerError;
 
   if (isError) {
     return (
@@ -156,7 +140,7 @@ export function ShipmentMapAside() {
   }
 
   return (
-    <aside className="w-96 rounded-md border border-border bg-card p-4">
+    <aside className="border-border bg-card w-96 rounded-md border p-4">
       {isLoading ? (
         <WorkerListSkeleton />
       ) : (
@@ -167,14 +151,14 @@ export function ShipmentMapAside() {
             control={control}
             placeholder="Search Workers..."
             icon={
-              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
             }
           />
           {/* Worker Sort Options */}
           <WorkerSortOptions sortOptions={sortOptions} />
           {/* Worker List */}
           <WorkerList
-            dispatchControlData={dispatchControlDataArray as DispatchControl}
+            dispatchControlData={dispatchControlData as DispatchControl}
             workersData={workersData as Worker[]}
           />
         </>

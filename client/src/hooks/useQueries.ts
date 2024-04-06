@@ -76,7 +76,7 @@ import {
   getUsers,
 } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import type { QueryKeyWithParams, QueryKeys } from "@/types";
+import type { QueryKeyWithParams, QueryKeys, StatusChoiceProps } from "@/types";
 import type {
   GeneralLedgerAccount,
   RevenueCode,
@@ -316,7 +316,7 @@ export function useDocumentClass(show?: boolean) {
   const selectDocumentClassData =
     (data as DocumentClassification[])?.map((item: DocumentClassification) => ({
       value: item.id,
-      label: item.name,
+      label: item.code,
     })) || [];
 
   return { selectDocumentClassData, isLoading, isError, isFetched };
@@ -597,11 +597,25 @@ export function useEquipManufacturers(show?: boolean, limit: number = 100) {
  * Get Workers for select options
  * @param show - show or hide the query
  * @param limit - limit the number of results
+ * @param status - status of the workers.
+ * @fleetCodeId - id of the fleet code.
  */
-export function useWorkers(show?: boolean, limit: number = 100) {
+export function useWorkers(
+  show?: boolean,
+  searchQuery?: string,
+  fleetCodeId?: string,
+  status: StatusChoiceProps = "A",
+  limit: number = 100,
+) {
   const { data, isError, isLoading } = useQuery({
-    queryKey: ["workers", limit] as QueryKeyWithParams<"workers", [number]>,
-    queryFn: async () => getWorkers(limit),
+    queryKey: [
+      "workers",
+      limit,
+      status,
+      searchQuery,
+      fleetCodeId,
+    ] as QueryKeyWithParams<"workers", [number, string, string, string]>,
+    queryFn: async () => getWorkers(searchQuery, fleetCodeId, limit, status),
     enabled: show,
   });
 
