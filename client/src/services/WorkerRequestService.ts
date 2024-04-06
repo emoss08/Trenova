@@ -26,14 +26,16 @@ import { Worker } from "@/types/worker";
  * @returns {Promise<Worker[]>} A promise that resolves to an array of workers.
  */
 export async function getWorkers(
-  limit: number = 100,
   searchQuery?: string,
   fleetFilter?: string,
+  limit: number = 100,
+  status?: string,
 ): Promise<Worker[]> {
   const response = await axios.get("/workers/", {
     params: {
       limit,
       search: searchQuery,
+      status: status,
       fleet_code: fleetFilter,
     },
   });

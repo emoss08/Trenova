@@ -32,12 +32,8 @@ export const LocationCategorySchema: yup.ObjectSchema<LocationCategoryFormValues
       .max(100, "Name cannot be more than 100 characters"),
     description: yup
       .string()
-      .max(500, "Description cannot be more than 500 characters")
-      .notRequired(),
-    color: yup
-      .string()
-      .max(100, "Color cannot be more than 100 characters")
-      .notRequired(),
+      .max(500, "Description cannot be more than 500 characters"),
+    color: yup.string().max(100, "Color cannot be more than 100 characters"),
   });
 
 const LocationCommentSchema: yup.ObjectSchema<LocationCommentFormValues> = yup

@@ -17,12 +17,14 @@
 
 import { StatusChoiceProps } from "@/types/index";
 import { BaseModel } from "@/types/organization";
+import { User } from "./accounts";
+import { CommentType } from "./dispatch";
 
 export interface LocationCategory extends BaseModel {
   id: string;
   name: string;
-  description?: string | null;
-  color?: string | null;
+  description?: string;
+  color?: string;
 }
 
 export type LocationCategoryFormValues = Omit<
@@ -39,11 +41,21 @@ export interface LocationComment extends BaseModel {
   comment: string;
   // User that entered the comment.
   userId: string;
+  edges?: {
+    user: User;
+    commentType: CommentType;
+  };
 }
 
 export type LocationCommentFormValues = Omit<
   LocationComment,
-  "organizationId" | "createdAt" | "updatedAt" | "id" | "locationId" | "version"
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "locationId"
+  | "edges"
+  | "version"
 >;
 
 export interface LocationContact extends BaseModel {

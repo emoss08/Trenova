@@ -130,11 +130,11 @@ export function ShipmentAsideMenus({
           control={control}
           placeholder="Search Shipments..."
           icon={
-            <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
+            <MagnifyingGlassIcon className="text-muted-foreground size-4" />
           }
         />
       </div>
-      <p className="mb-4 text-sm font-semibold text-muted-foreground">
+      <p className="text-muted-foreground mb-4 text-sm font-semibold">
         Filter Shipments
       </p>
       <FilterOptions setValue={setValue} searchQuery={searchQuery} />
