@@ -70,16 +70,16 @@ func (dcu *DocumentClassificationUpdate) SetNillableStatus(d *documentclassifica
 	return dcu
 }
 
-// SetName sets the "name" field.
-func (dcu *DocumentClassificationUpdate) SetName(s string) *DocumentClassificationUpdate {
-	dcu.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (dcu *DocumentClassificationUpdate) SetCode(s string) *DocumentClassificationUpdate {
+	dcu.mutation.SetCode(s)
 	return dcu
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (dcu *DocumentClassificationUpdate) SetNillableName(s *string) *DocumentClassificationUpdate {
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (dcu *DocumentClassificationUpdate) SetNillableCode(s *string) *DocumentClassificationUpdate {
 	if s != nil {
-		dcu.SetName(*s)
+		dcu.SetCode(*s)
 	}
 	return dcu
 }
@@ -104,6 +104,26 @@ func (dcu *DocumentClassificationUpdate) ClearDescription() *DocumentClassificat
 	return dcu
 }
 
+// SetColor sets the "color" field.
+func (dcu *DocumentClassificationUpdate) SetColor(s string) *DocumentClassificationUpdate {
+	dcu.mutation.SetColor(s)
+	return dcu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcu *DocumentClassificationUpdate) SetNillableColor(s *string) *DocumentClassificationUpdate {
+	if s != nil {
+		dcu.SetColor(*s)
+	}
+	return dcu
+}
+
+// ClearColor clears the value of the "color" field.
+func (dcu *DocumentClassificationUpdate) ClearColor() *DocumentClassificationUpdate {
+	dcu.mutation.ClearColor()
+	return dcu
+}
+
 // Mutation returns the DocumentClassificationMutation object of the builder.
 func (dcu *DocumentClassificationUpdate) Mutation() *DocumentClassificationMutation {
 	return dcu.mutation
@@ -111,7 +131,9 @@ func (dcu *DocumentClassificationUpdate) Mutation() *DocumentClassificationMutat
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (dcu *DocumentClassificationUpdate) Save(ctx context.Context) (int, error) {
-	dcu.defaults()
+	if err := dcu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, dcu.sqlSave, dcu.mutation, dcu.hooks)
 }
 
@@ -138,11 +160,15 @@ func (dcu *DocumentClassificationUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (dcu *DocumentClassificationUpdate) defaults() {
+func (dcu *DocumentClassificationUpdate) defaults() error {
 	if _, ok := dcu.mutation.UpdatedAt(); !ok {
+		if documentclassification.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized documentclassification.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := documentclassification.UpdateDefaultUpdatedAt()
 		dcu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -152,9 +178,9 @@ func (dcu *DocumentClassificationUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
 		}
 	}
-	if v, ok := dcu.mutation.Name(); ok {
-		if err := documentclassification.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.name": %w`, err)}
+	if v, ok := dcu.mutation.Code(); ok {
+		if err := documentclassification.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.code": %w`, err)}
 		}
 	}
 	if _, ok := dcu.mutation.BusinessUnitID(); dcu.mutation.BusinessUnitCleared() && !ok {
@@ -196,14 +222,20 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 	if value, ok := dcu.mutation.Status(); ok {
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := dcu.mutation.Name(); ok {
-		_spec.SetField(documentclassification.FieldName, field.TypeString, value)
+	if value, ok := dcu.mutation.Code(); ok {
+		_spec.SetField(documentclassification.FieldCode, field.TypeString, value)
 	}
 	if value, ok := dcu.mutation.Description(); ok {
 		_spec.SetField(documentclassification.FieldDescription, field.TypeString, value)
 	}
 	if dcu.mutation.DescriptionCleared() {
 		_spec.ClearField(documentclassification.FieldDescription, field.TypeString)
+	}
+	if value, ok := dcu.mutation.Color(); ok {
+		_spec.SetField(documentclassification.FieldColor, field.TypeString, value)
+	}
+	if dcu.mutation.ColorCleared() {
+		_spec.ClearField(documentclassification.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
@@ -268,16 +300,16 @@ func (dcuo *DocumentClassificationUpdateOne) SetNillableStatus(d *documentclassi
 	return dcuo
 }
 
-// SetName sets the "name" field.
-func (dcuo *DocumentClassificationUpdateOne) SetName(s string) *DocumentClassificationUpdateOne {
-	dcuo.mutation.SetName(s)
+// SetCode sets the "code" field.
+func (dcuo *DocumentClassificationUpdateOne) SetCode(s string) *DocumentClassificationUpdateOne {
+	dcuo.mutation.SetCode(s)
 	return dcuo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (dcuo *DocumentClassificationUpdateOne) SetNillableName(s *string) *DocumentClassificationUpdateOne {
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (dcuo *DocumentClassificationUpdateOne) SetNillableCode(s *string) *DocumentClassificationUpdateOne {
 	if s != nil {
-		dcuo.SetName(*s)
+		dcuo.SetCode(*s)
 	}
 	return dcuo
 }
@@ -302,6 +334,26 @@ func (dcuo *DocumentClassificationUpdateOne) ClearDescription() *DocumentClassif
 	return dcuo
 }
 
+// SetColor sets the "color" field.
+func (dcuo *DocumentClassificationUpdateOne) SetColor(s string) *DocumentClassificationUpdateOne {
+	dcuo.mutation.SetColor(s)
+	return dcuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcuo *DocumentClassificationUpdateOne) SetNillableColor(s *string) *DocumentClassificationUpdateOne {
+	if s != nil {
+		dcuo.SetColor(*s)
+	}
+	return dcuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (dcuo *DocumentClassificationUpdateOne) ClearColor() *DocumentClassificationUpdateOne {
+	dcuo.mutation.ClearColor()
+	return dcuo
+}
+
 // Mutation returns the DocumentClassificationMutation object of the builder.
 func (dcuo *DocumentClassificationUpdateOne) Mutation() *DocumentClassificationMutation {
 	return dcuo.mutation
@@ -322,7 +374,9 @@ func (dcuo *DocumentClassificationUpdateOne) Select(field string, fields ...stri
 
 // Save executes the query and returns the updated DocumentClassification entity.
 func (dcuo *DocumentClassificationUpdateOne) Save(ctx context.Context) (*DocumentClassification, error) {
-	dcuo.defaults()
+	if err := dcuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, dcuo.sqlSave, dcuo.mutation, dcuo.hooks)
 }
 
@@ -349,11 +403,15 @@ func (dcuo *DocumentClassificationUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (dcuo *DocumentClassificationUpdateOne) defaults() {
+func (dcuo *DocumentClassificationUpdateOne) defaults() error {
 	if _, ok := dcuo.mutation.UpdatedAt(); !ok {
+		if documentclassification.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized documentclassification.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := documentclassification.UpdateDefaultUpdatedAt()
 		dcuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -363,9 +421,9 @@ func (dcuo *DocumentClassificationUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.status": %w`, err)}
 		}
 	}
-	if v, ok := dcuo.mutation.Name(); ok {
-		if err := documentclassification.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.name": %w`, err)}
+	if v, ok := dcuo.mutation.Code(); ok {
+		if err := documentclassification.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "DocumentClassification.code": %w`, err)}
 		}
 	}
 	if _, ok := dcuo.mutation.BusinessUnitID(); dcuo.mutation.BusinessUnitCleared() && !ok {
@@ -424,14 +482,20 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 	if value, ok := dcuo.mutation.Status(); ok {
 		_spec.SetField(documentclassification.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := dcuo.mutation.Name(); ok {
-		_spec.SetField(documentclassification.FieldName, field.TypeString, value)
+	if value, ok := dcuo.mutation.Code(); ok {
+		_spec.SetField(documentclassification.FieldCode, field.TypeString, value)
 	}
 	if value, ok := dcuo.mutation.Description(); ok {
 		_spec.SetField(documentclassification.FieldDescription, field.TypeString, value)
 	}
 	if dcuo.mutation.DescriptionCleared() {
 		_spec.ClearField(documentclassification.FieldDescription, field.TypeString)
+	}
+	if value, ok := dcuo.mutation.Color(); ok {
+		_spec.SetField(documentclassification.FieldColor, field.TypeString, value)
+	}
+	if dcuo.mutation.ColorCleared() {
+		_spec.ClearField(documentclassification.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DocumentClassification{config: dcuo.config}

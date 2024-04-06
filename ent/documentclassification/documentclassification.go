@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -28,10 +29,12 @@ const (
 	FieldVersion = "version"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
+	// FieldCode holds the string denoting the code field in the database.
+	FieldCode = "code"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -63,8 +66,9 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldVersion,
 	FieldStatus,
-	FieldName,
+	FieldCode,
 	FieldDescription,
+	FieldColor,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -77,7 +81,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/emoss08/trenova/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -86,8 +96,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	CodeValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -156,14 +166,19 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
+// ByCode orders the results by the code field.
+func ByCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCode, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByColor orders the results by the color field.
+func ByColor(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldColor, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
 	"github.com/google/uuid"
@@ -30,6 +31,7 @@ type WorkerCommentQuery struct {
 	withOrganization *OrganizationQuery
 	withWorker       *WorkerQuery
 	withCommentType  *CommentTypeQuery
+	withUser         *UserQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -148,6 +150,28 @@ func (wcq *WorkerCommentQuery) QueryCommentType() *CommentTypeQuery {
 			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
 			sqlgraph.To(commenttype.Table, commenttype.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.CommentTypeTable, workercomment.CommentTypeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUser chains the current query on the "user" edge.
+func (wcq *WorkerCommentQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: wcq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := wcq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := wcq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workercomment.Table, workercomment.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workercomment.UserTable, workercomment.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(wcq.driver.Dialect(), step)
 		return fromU, nil
@@ -351,6 +375,7 @@ func (wcq *WorkerCommentQuery) Clone() *WorkerCommentQuery {
 		withOrganization: wcq.withOrganization.Clone(),
 		withWorker:       wcq.withWorker.Clone(),
 		withCommentType:  wcq.withCommentType.Clone(),
+		withUser:         wcq.withUser.Clone(),
 		// clone intermediate query.
 		sql:  wcq.sql.Clone(),
 		path: wcq.path,
@@ -398,6 +423,17 @@ func (wcq *WorkerCommentQuery) WithCommentType(opts ...func(*CommentTypeQuery)) 
 		opt(query)
 	}
 	wcq.withCommentType = query
+	return wcq
+}
+
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (wcq *WorkerCommentQuery) WithUser(opts ...func(*UserQuery)) *WorkerCommentQuery {
+	query := (&UserClient{config: wcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	wcq.withUser = query
 	return wcq
 }
 
@@ -479,11 +515,12 @@ func (wcq *WorkerCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	var (
 		nodes       = []*WorkerComment{}
 		_spec       = wcq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			wcq.withBusinessUnit != nil,
 			wcq.withOrganization != nil,
 			wcq.withWorker != nil,
 			wcq.withCommentType != nil,
+			wcq.withUser != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -528,6 +565,12 @@ func (wcq *WorkerCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	if query := wcq.withCommentType; query != nil {
 		if err := wcq.loadCommentType(ctx, query, nodes, nil,
 			func(n *WorkerComment, e *CommentType) { n.Edges.CommentType = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := wcq.withUser; query != nil {
+		if err := wcq.loadUser(ctx, query, nodes, nil,
+			func(n *WorkerComment, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -650,6 +693,35 @@ func (wcq *WorkerCommentQuery) loadCommentType(ctx context.Context, query *Comme
 	}
 	return nil
 }
+func (wcq *WorkerCommentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*WorkerComment, init func(*WorkerComment), assign func(*WorkerComment, *User)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*WorkerComment)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (wcq *WorkerCommentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := wcq.querySpec()
@@ -690,6 +762,9 @@ func (wcq *WorkerCommentQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if wcq.withCommentType != nil {
 			_spec.Node.AddColumnOnce(workercomment.FieldCommentTypeID)
+		}
+		if wcq.withUser != nil {
+			_spec.Node.AddColumnOnce(workercomment.FieldUserID)
 		}
 	}
 	if ps := wcq.predicates; len(ps) > 0 {

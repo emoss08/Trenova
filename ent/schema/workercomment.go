@@ -20,11 +20,11 @@ func (WorkerComment) Fields() []ent.Field {
 			StructTag(`json:"workerId" validate:"required"`),
 		field.UUID("comment_type_id", uuid.UUID{}).
 			StructTag(`json:"commentTypeId" validate:"required"`),
+		field.UUID("user_id", uuid.UUID{}).
+			StructTag(`json:"userId" validate:"required"`),
 		field.Text("comment").
 			NotEmpty().
 			StructTag(`json:"comment" validate:"omitempty"`),
-		field.UUID("entered_by", uuid.UUID{}).
-			StructTag(`json:"enteredBy" validate:"required"`),
 	}
 }
 
@@ -49,6 +49,10 @@ func (WorkerComment) Edges() []ent.Edge {
 			Field("comment_type_id").
 			StructTag(`json:"commentType"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Required().
+			Unique(),
+		edge.To("user", User.Type).
+			Field("user_id").
 			Required().
 			Unique(),
 	}

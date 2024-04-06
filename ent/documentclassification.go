@@ -32,10 +32,12 @@ type DocumentClassification struct {
 	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status documentclassification.Status `json:"status" validate:"required,oneof=A I"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name" validate:"required,max=10"`
+	// Code holds the value of the "code" field.
+	Code string `json:"code" validate:"required,max=10"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DocumentClassificationQuery when eager-loading is set.
 	Edges        DocumentClassificationEdges `json:"edges"`
@@ -82,7 +84,7 @@ func (*DocumentClassification) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case documentclassification.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case documentclassification.FieldStatus, documentclassification.FieldName, documentclassification.FieldDescription:
+		case documentclassification.FieldStatus, documentclassification.FieldCode, documentclassification.FieldDescription, documentclassification.FieldColor:
 			values[i] = new(sql.NullString)
 		case documentclassification.FieldCreatedAt, documentclassification.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -145,17 +147,23 @@ func (dc *DocumentClassification) assignValues(columns []string, values []any) e
 			} else if value.Valid {
 				dc.Status = documentclassification.Status(value.String)
 			}
-		case documentclassification.FieldName:
+		case documentclassification.FieldCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field code", values[i])
 			} else if value.Valid {
-				dc.Name = value.String
+				dc.Code = value.String
 			}
 		case documentclassification.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				dc.Description = value.String
+			}
+		case documentclassification.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				dc.Color = value.String
 			}
 		default:
 			dc.selectValues.Set(columns[i], values[i])
@@ -221,11 +229,14 @@ func (dc *DocumentClassification) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", dc.Status))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(dc.Name)
+	builder.WriteString("code=")
+	builder.WriteString(dc.Code)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(dc.Description)
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(dc.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -81,14 +81,19 @@ func Version(v int) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldEQ(FieldVersion, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldEQ(FieldName, v))
+// Code applies equality check predicate on the "code" field. It's identical to CodeEQ.
+func Code(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEQ(FieldCode, v))
 }
 
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldEQ(FieldDescription, v))
+}
+
+// Color applies equality check predicate on the "color" field. It's identical to ColorEQ.
+func Color(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEQ(FieldColor, v))
 }
 
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
@@ -271,69 +276,69 @@ func StatusNotIn(vs ...Status) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldEQ(FieldName, v))
+// CodeEQ applies the EQ predicate on the "code" field.
+func CodeEQ(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEQ(FieldCode, v))
 }
 
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldNEQ(FieldName, v))
+// CodeNEQ applies the NEQ predicate on the "code" field.
+func CodeNEQ(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNEQ(FieldCode, v))
 }
 
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldIn(FieldName, vs...))
+// CodeIn applies the In predicate on the "code" field.
+func CodeIn(vs ...string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldIn(FieldCode, vs...))
 }
 
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldNotIn(FieldName, vs...))
+// CodeNotIn applies the NotIn predicate on the "code" field.
+func CodeNotIn(vs ...string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNotIn(FieldCode, vs...))
 }
 
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldGT(FieldName, v))
+// CodeGT applies the GT predicate on the "code" field.
+func CodeGT(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldGT(FieldCode, v))
 }
 
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldGTE(FieldName, v))
+// CodeGTE applies the GTE predicate on the "code" field.
+func CodeGTE(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldGTE(FieldCode, v))
 }
 
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldLT(FieldName, v))
+// CodeLT applies the LT predicate on the "code" field.
+func CodeLT(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldLT(FieldCode, v))
 }
 
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldLTE(FieldName, v))
+// CodeLTE applies the LTE predicate on the "code" field.
+func CodeLTE(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldLTE(FieldCode, v))
 }
 
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldContains(FieldName, v))
+// CodeContains applies the Contains predicate on the "code" field.
+func CodeContains(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldContains(FieldCode, v))
 }
 
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldHasPrefix(FieldName, v))
+// CodeHasPrefix applies the HasPrefix predicate on the "code" field.
+func CodeHasPrefix(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldHasPrefix(FieldCode, v))
 }
 
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldHasSuffix(FieldName, v))
+// CodeHasSuffix applies the HasSuffix predicate on the "code" field.
+func CodeHasSuffix(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldHasSuffix(FieldCode, v))
 }
 
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldEqualFold(FieldName, v))
+// CodeEqualFold applies the EqualFold predicate on the "code" field.
+func CodeEqualFold(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEqualFold(FieldCode, v))
 }
 
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.DocumentClassification {
-	return predicate.DocumentClassification(sql.FieldContainsFold(FieldName, v))
+// CodeContainsFold applies the ContainsFold predicate on the "code" field.
+func CodeContainsFold(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldContainsFold(FieldCode, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.
@@ -409,6 +414,81 @@ func DescriptionEqualFold(v string) predicate.DocumentClassification {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// ColorEQ applies the EQ predicate on the "color" field.
+func ColorEQ(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEQ(FieldColor, v))
+}
+
+// ColorNEQ applies the NEQ predicate on the "color" field.
+func ColorNEQ(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNEQ(FieldColor, v))
+}
+
+// ColorIn applies the In predicate on the "color" field.
+func ColorIn(vs ...string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldIn(FieldColor, vs...))
+}
+
+// ColorNotIn applies the NotIn predicate on the "color" field.
+func ColorNotIn(vs ...string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNotIn(FieldColor, vs...))
+}
+
+// ColorGT applies the GT predicate on the "color" field.
+func ColorGT(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldGT(FieldColor, v))
+}
+
+// ColorGTE applies the GTE predicate on the "color" field.
+func ColorGTE(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldGTE(FieldColor, v))
+}
+
+// ColorLT applies the LT predicate on the "color" field.
+func ColorLT(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldLT(FieldColor, v))
+}
+
+// ColorLTE applies the LTE predicate on the "color" field.
+func ColorLTE(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldLTE(FieldColor, v))
+}
+
+// ColorContains applies the Contains predicate on the "color" field.
+func ColorContains(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldContains(FieldColor, v))
+}
+
+// ColorHasPrefix applies the HasPrefix predicate on the "color" field.
+func ColorHasPrefix(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldHasPrefix(FieldColor, v))
+}
+
+// ColorHasSuffix applies the HasSuffix predicate on the "color" field.
+func ColorHasSuffix(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldHasSuffix(FieldColor, v))
+}
+
+// ColorIsNil applies the IsNil predicate on the "color" field.
+func ColorIsNil() predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldIsNull(FieldColor))
+}
+
+// ColorNotNil applies the NotNil predicate on the "color" field.
+func ColorNotNil() predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldNotNull(FieldColor))
+}
+
+// ColorEqualFold applies the EqualFold predicate on the "color" field.
+func ColorEqualFold(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldEqualFold(FieldColor, v))
+}
+
+// ColorContainsFold applies the ContainsFold predicate on the "color" field.
+func ColorContainsFold(v string) predicate.DocumentClassification {
+	return predicate.DocumentClassification(sql.FieldContainsFold(FieldColor, v))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
