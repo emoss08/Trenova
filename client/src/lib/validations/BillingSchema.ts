@@ -55,12 +55,15 @@ export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =
 
 export const documentClassSchema: ObjectSchema<DocumentClassificationFormValues> =
   Yup.object().shape({
-    name: Yup.string()
-      .max(10, "Name must be less than 10 characters.")
-      .required("Name is required"),
-    description: Yup.string()
-      .max(100, "Description must be less than 100 characters.")
-      .notRequired(),
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    code: Yup.string()
+      .max(10, "Code must be less than 10 characters.")
+      .required("Code is required"),
+    description: Yup.string().max(
+      100,
+      "Description must be less than 100 characters.",
+    ),
+    color: Yup.string().max(100, "Color cannot be more than 100 characters"),
   });
 
 export const billingControlSchema: ObjectSchema<BillingControlFormValues> =
