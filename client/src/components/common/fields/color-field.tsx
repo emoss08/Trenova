@@ -46,15 +46,36 @@ export function GradientPicker<TFieldValues extends FieldValues>({
 
   // Define the solid colors array
   const solids = [
-    "#E2E2E2",
-    "#ff75c3",
-    "#ffa647",
-    "#ffe83f",
-    "#9fff5b",
-    "#70e2ff",
-    "#cd93ff",
-    "#09203f",
-    "#ff7575",
+    "#E2E2E2", // Light gray
+    "#ff75c3", // Bright pink
+    "#ffa647", // Vibrant orange
+    "#ffe83f", // Bright yellow
+    "#9fff5b", // Vibrant green
+    "#70e2ff", // Light blue
+    "#cd93ff", // Soft purple
+    "#09203f", // Dark blue-grey
+    "#ff7575", // Soft red
+    "#b284be", // Periwinkle
+    "#ff7f50", // Coral
+    "#deb887", // Burlywood
+    "#5f9ea0", // Cadet blue
+    "#ffd700", // Gold
+    "#6a5acd", // Slate blue
+    "#ff4500", // Orange red
+    "#2e8b57", // Sea green
+    "#4682b4", // Steel blue
+    "#d2691e", // Chocolate (new)
+    "#6495ed", // Cornflower blue (new)
+    "#dc143c", // Crimson (new)
+    "#008b8b", // Dark cyan (new)
+    "#b8860b", // Dark goldenrod (new)
+    "#006400", // Dark green (new)
+    "#8b008b", // Dark magenta (new)
+    "#556b2f", // Dark olive green (new)
+    "#ff8c00", // Dark orange (new)
+    "#9932cc", // Dark orchid (new)
+    "#8b0000", // Dark red (new)
+    "#e9967a", // Dark salmon (new)
   ];
 
   // Handler to update the field value
