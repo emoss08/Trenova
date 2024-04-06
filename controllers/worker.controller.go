@@ -29,6 +29,8 @@ func GetWorkers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fleetCodeID := uuid.MustParse(r.URL.Query().Get("fleet_code_id"))
+
 	orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 	buID, buOK := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
 
@@ -47,7 +49,9 @@ func GetWorkers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workers, count, err := services.NewWorkerOps(r.Context()).GetWorkers(limit, offset, orgID, buID)
+	workers, count, err := services.NewWorkerOps().GetWorkers(
+		r.Context(), limit, offset, orgID, buID, fleetCodeID,
+	)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -95,7 +99,7 @@ func CreateWorker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newRecord, err := services.NewWorkerOps(r.Context()).CreateWorker(newWorker)
+	newRecord, err := services.NewWorkerOps().CreateWorker(r.Context(), newWorker)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -121,7 +125,7 @@ func UpdateWorker(w http.ResponseWriter, r *http.Request) {
 
 	workerData.ID = uuid.MustParse(workerID)
 
-	tractor, err := services.NewWorkerOps(r.Context()).UpdateWorker(workerData)
+	tractor, err := services.NewWorkerOps().UpdateWorker(r.Context(), workerData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusBadRequest, errorResponse)
