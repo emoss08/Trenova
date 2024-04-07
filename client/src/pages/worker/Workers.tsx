@@ -20,7 +20,7 @@ import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { BoolStatusBadge } from "@/components/common/table/data-table-components";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { type Worker } from "@/types/worker";
 import { type ColumnDef } from "@tanstack/react-table";
 
@@ -47,14 +47,26 @@ const columns: ColumnDef<Worker>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "isActive",
+    accessorKey: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Is Active?" />
+      <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ row }) => <BoolStatusBadge status={row.original.isActive} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
+  },
+  {
+    accessorKey: "code",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Code" />
+    ),
+  },
+  {
+    accessorKey: "workerType",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Worker Type" />
+    ),
   },
   {
     accessorKey: "name",

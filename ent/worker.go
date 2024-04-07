@@ -47,8 +47,12 @@ type Worker struct {
 	FirstName string `json:"firstName" validate:"required,max=255"`
 	// LastName holds the value of the "last_name" field.
 	LastName string `json:"lastName" validate:"required,max=255"`
+	// AddressLine1 holds the value of the "address_line_1" field.
+	AddressLine1 string `json:"addressLine1" validate:"required,max=150"`
+	// AddressLine2 holds the value of the "address_line_2" field.
+	AddressLine2 string `json:"addressLine2" validate:"omitempty,max=150"`
 	// City holds the value of the "city" field.
-	City string `json:"city" validate:"omitempty,max=255"`
+	City string `json:"city" validate:"required,max=150"`
 	// PostalCode holds the value of the "postal_code" field.
 	PostalCode string `json:"postalCode" validate:"omitempty,max=10"`
 	// StateID holds the value of the "state_id" field.
@@ -207,7 +211,7 @@ func (*Worker) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case worker.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case worker.FieldStatus, worker.FieldCode, worker.FieldProfilePictureURL, worker.FieldWorkerType, worker.FieldFirstName, worker.FieldLastName, worker.FieldCity, worker.FieldPostalCode:
+		case worker.FieldStatus, worker.FieldCode, worker.FieldProfilePictureURL, worker.FieldWorkerType, worker.FieldFirstName, worker.FieldLastName, worker.FieldAddressLine1, worker.FieldAddressLine2, worker.FieldCity, worker.FieldPostalCode:
 			values[i] = new(sql.NullString)
 		case worker.FieldCreatedAt, worker.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -299,6 +303,18 @@ func (w *Worker) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field last_name", values[i])
 			} else if value.Valid {
 				w.LastName = value.String
+			}
+		case worker.FieldAddressLine1:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field address_line_1", values[i])
+			} else if value.Valid {
+				w.AddressLine1 = value.String
+			}
+		case worker.FieldAddressLine2:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field address_line_2", values[i])
+			} else if value.Valid {
+				w.AddressLine2 = value.String
 			}
 		case worker.FieldCity:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -451,6 +467,12 @@ func (w *Worker) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_name=")
 	builder.WriteString(w.LastName)
+	builder.WriteString(", ")
+	builder.WriteString("address_line_1=")
+	builder.WriteString(w.AddressLine1)
+	builder.WriteString(", ")
+	builder.WriteString("address_line_2=")
+	builder.WriteString(w.AddressLine2)
 	builder.WriteString(", ")
 	builder.WriteString("city=")
 	builder.WriteString(w.City)

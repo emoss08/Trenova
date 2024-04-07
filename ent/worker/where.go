@@ -101,6 +101,16 @@ func LastName(v string) predicate.Worker {
 	return predicate.Worker(sql.FieldEQ(FieldLastName, v))
 }
 
+// AddressLine1 applies equality check predicate on the "address_line_1" field. It's identical to AddressLine1EQ.
+func AddressLine1(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldAddressLine1, v))
+}
+
+// AddressLine2 applies equality check predicate on the "address_line_2" field. It's identical to AddressLine2EQ.
+func AddressLine2(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldAddressLine2, v))
+}
+
 // City applies equality check predicate on the "city" field. It's identical to CityEQ.
 func City(v string) predicate.Worker {
 	return predicate.Worker(sql.FieldEQ(FieldCity, v))
@@ -594,6 +604,156 @@ func LastNameEqualFold(v string) predicate.Worker {
 // LastNameContainsFold applies the ContainsFold predicate on the "last_name" field.
 func LastNameContainsFold(v string) predicate.Worker {
 	return predicate.Worker(sql.FieldContainsFold(FieldLastName, v))
+}
+
+// AddressLine1EQ applies the EQ predicate on the "address_line_1" field.
+func AddressLine1EQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldAddressLine1, v))
+}
+
+// AddressLine1NEQ applies the NEQ predicate on the "address_line_1" field.
+func AddressLine1NEQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldNEQ(FieldAddressLine1, v))
+}
+
+// AddressLine1In applies the In predicate on the "address_line_1" field.
+func AddressLine1In(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldIn(FieldAddressLine1, vs...))
+}
+
+// AddressLine1NotIn applies the NotIn predicate on the "address_line_1" field.
+func AddressLine1NotIn(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldNotIn(FieldAddressLine1, vs...))
+}
+
+// AddressLine1GT applies the GT predicate on the "address_line_1" field.
+func AddressLine1GT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGT(FieldAddressLine1, v))
+}
+
+// AddressLine1GTE applies the GTE predicate on the "address_line_1" field.
+func AddressLine1GTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGTE(FieldAddressLine1, v))
+}
+
+// AddressLine1LT applies the LT predicate on the "address_line_1" field.
+func AddressLine1LT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLT(FieldAddressLine1, v))
+}
+
+// AddressLine1LTE applies the LTE predicate on the "address_line_1" field.
+func AddressLine1LTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLTE(FieldAddressLine1, v))
+}
+
+// AddressLine1Contains applies the Contains predicate on the "address_line_1" field.
+func AddressLine1Contains(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContains(FieldAddressLine1, v))
+}
+
+// AddressLine1HasPrefix applies the HasPrefix predicate on the "address_line_1" field.
+func AddressLine1HasPrefix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasPrefix(FieldAddressLine1, v))
+}
+
+// AddressLine1HasSuffix applies the HasSuffix predicate on the "address_line_1" field.
+func AddressLine1HasSuffix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasSuffix(FieldAddressLine1, v))
+}
+
+// AddressLine1IsNil applies the IsNil predicate on the "address_line_1" field.
+func AddressLine1IsNil() predicate.Worker {
+	return predicate.Worker(sql.FieldIsNull(FieldAddressLine1))
+}
+
+// AddressLine1NotNil applies the NotNil predicate on the "address_line_1" field.
+func AddressLine1NotNil() predicate.Worker {
+	return predicate.Worker(sql.FieldNotNull(FieldAddressLine1))
+}
+
+// AddressLine1EqualFold applies the EqualFold predicate on the "address_line_1" field.
+func AddressLine1EqualFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEqualFold(FieldAddressLine1, v))
+}
+
+// AddressLine1ContainsFold applies the ContainsFold predicate on the "address_line_1" field.
+func AddressLine1ContainsFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContainsFold(FieldAddressLine1, v))
+}
+
+// AddressLine2EQ applies the EQ predicate on the "address_line_2" field.
+func AddressLine2EQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldAddressLine2, v))
+}
+
+// AddressLine2NEQ applies the NEQ predicate on the "address_line_2" field.
+func AddressLine2NEQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldNEQ(FieldAddressLine2, v))
+}
+
+// AddressLine2In applies the In predicate on the "address_line_2" field.
+func AddressLine2In(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldIn(FieldAddressLine2, vs...))
+}
+
+// AddressLine2NotIn applies the NotIn predicate on the "address_line_2" field.
+func AddressLine2NotIn(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldNotIn(FieldAddressLine2, vs...))
+}
+
+// AddressLine2GT applies the GT predicate on the "address_line_2" field.
+func AddressLine2GT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGT(FieldAddressLine2, v))
+}
+
+// AddressLine2GTE applies the GTE predicate on the "address_line_2" field.
+func AddressLine2GTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGTE(FieldAddressLine2, v))
+}
+
+// AddressLine2LT applies the LT predicate on the "address_line_2" field.
+func AddressLine2LT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLT(FieldAddressLine2, v))
+}
+
+// AddressLine2LTE applies the LTE predicate on the "address_line_2" field.
+func AddressLine2LTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLTE(FieldAddressLine2, v))
+}
+
+// AddressLine2Contains applies the Contains predicate on the "address_line_2" field.
+func AddressLine2Contains(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContains(FieldAddressLine2, v))
+}
+
+// AddressLine2HasPrefix applies the HasPrefix predicate on the "address_line_2" field.
+func AddressLine2HasPrefix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasPrefix(FieldAddressLine2, v))
+}
+
+// AddressLine2HasSuffix applies the HasSuffix predicate on the "address_line_2" field.
+func AddressLine2HasSuffix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasSuffix(FieldAddressLine2, v))
+}
+
+// AddressLine2IsNil applies the IsNil predicate on the "address_line_2" field.
+func AddressLine2IsNil() predicate.Worker {
+	return predicate.Worker(sql.FieldIsNull(FieldAddressLine2))
+}
+
+// AddressLine2NotNil applies the NotNil predicate on the "address_line_2" field.
+func AddressLine2NotNil() predicate.Worker {
+	return predicate.Worker(sql.FieldNotNull(FieldAddressLine2))
+}
+
+// AddressLine2EqualFold applies the EqualFold predicate on the "address_line_2" field.
+func AddressLine2EqualFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEqualFold(FieldAddressLine2, v))
+}
+
+// AddressLine2ContainsFold applies the ContainsFold predicate on the "address_line_2" field.
+func AddressLine2ContainsFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContainsFold(FieldAddressLine2, v))
 }
 
 // CityEQ applies the EQ predicate on the "city" field.

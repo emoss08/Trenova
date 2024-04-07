@@ -26,6 +26,8 @@ type WorkerRequest struct {
 	WorkerType        worker.WorkerType `json:"workerType" validate:"required,oneof=Employee Contractor"`
 	FirstName         string            `json:"firstName" validate:"required,max=255"`
 	LastName          string            `json:"lastName" validate:"required,max=255"`
+	AddressLine1      string            `json:"addressLine1" validate:"required,max=150"`
+	AddressLine2      string            `json:"addressLine2" validate:"omitempty,max=150"`
 	City              string            `json:"city" validate:"omitempty,max=255"`
 	PostalCode        string            `json:"postalCode" validate:"omitempty,max=10"`
 	StateID           *uuid.UUID        `json:"stateId" validate:"omitempty,uuid"`
@@ -57,7 +59,7 @@ func NewWorkerOps() *WorkerOps {
 
 // GetWorkers gets the workers for an organization.
 func (r *WorkerOps) GetWorkers(
-	ctx context.Context, limit, offset int, orgID, buID uuid.UUID, fleetCodeID uuid.UUID,
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
 ) ([]*ent.Worker, int, error) {
 	query := r.client.Worker.Query().Where(
 		worker.HasOrganizationWith(
@@ -66,19 +68,19 @@ func (r *WorkerOps) GetWorkers(
 		),
 	)
 
-	// Add conditions based on query params.
-	if fleetCodeID != uuid.Nil {
-		query = query.Where(
-			worker.FleetCodeID(fleetCodeID),
-		)
-	}
-
 	entityCount, countErr := query.Count(ctx)
 	if countErr != nil {
 		return nil, 0, countErr
 	}
 
-	entities, err := query.Limit(limit).Offset(offset).All(ctx)
+	entities, err := query.
+		WithFleetCode().
+		WithManager().
+		WithState().
+		WithPrimaryTractor().
+		WithSecondaryTractor().
+		Limit(limit).
+		Offset(offset).All(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -105,14 +107,14 @@ func (r *WorkerOps) CreateWorker(ctx context.Context, newEntity WorkerRequest) (
 		// If comments are provided, create them and associate them with the location.
 		if len(newEntity.Comments) > 0 {
 			if err = r.createWorkerComments(ctx, tx, createdEntity.ID, newEntity); err != nil {
-				return nil
+				return err
 			}
 		}
 
 		// If contacts are provided, create them and associate them with the location.
 		if len(newEntity.Contacts) > 0 {
 			if err = r.createWorkerContacts(ctx, tx, createdEntity.ID, newEntity); err != nil {
-				return nil
+				return err
 			}
 		}
 
@@ -137,6 +139,8 @@ func (r *WorkerOps) createWorkerEntity(
 		SetWorkerType(newEntity.WorkerType).
 		SetFirstName(newEntity.FirstName).
 		SetLastName(newEntity.LastName).
+		SetAddressLine1(newEntity.AddressLine1).
+		SetAddressLine2(newEntity.AddressLine2).
 		SetCity(newEntity.City).
 		SetPostalCode(newEntity.PostalCode).
 		SetNillableStateID(newEntity.StateID).
@@ -172,7 +176,7 @@ func (r *WorkerOps) createWorkerComments(
 	ctx context.Context, tx *ent.Tx, workerID uuid.UUID, newEntity WorkerRequest,
 ) error {
 	for _, comment := range newEntity.Comments {
-		_, err := r.client.WorkerComment.Create().
+		_, err := tx.WorkerComment.Create().
 			SetOrganizationID(newEntity.OrganizationID).
 			SetBusinessUnitID(newEntity.BusinessUnitID).
 			SetWorkerID(workerID).
@@ -194,7 +198,7 @@ func (r *WorkerOps) createWorkerContacts(
 	ctx context.Context, tx *ent.Tx, workerID uuid.UUID, newEntity WorkerRequest,
 ) error {
 	for _, contact := range newEntity.Contacts {
-		_, err := r.client.WorkerContact.Create().
+		_, err := tx.WorkerContact.Create().
 			SetWorkerID(workerID).
 			SetName(contact.Name).
 			SetEmail(contact.Email).
@@ -231,15 +235,6 @@ func (r *WorkerOps) UpdateWorker(ctx context.Context, entity WorkerUpdateRequest
 			}
 		}
 
-		// If the worker manager is nil, clear the association.
-		if entity.ManagerID == nil {
-			updatedEntity.Update().ClearManager()
-		}
-		// If the fleet code ID is nil, clear the association.
-		if entity.FleetCodeID == nil {
-			updatedEntity.Update().ClearFleetCode()
-		}
-
 		if err = r.syncContacts(ctx, tx, entity, updatedEntity); err != nil {
 			return err
 		}
@@ -267,20 +262,39 @@ func (r *WorkerOps) updateWorkerEntity(
 			"code")
 	}
 
-	return tx.Worker.UpdateOneID(entity.ID).
+	// Start building the update operation
+	updateOp := tx.Worker.UpdateOneID(entity.ID).
 		SetCode(entity.Code).
 		SetStatus(entity.Status).
 		SetProfilePictureURL(entity.ProfilePictureURL).
 		SetWorkerType(entity.WorkerType).
 		SetFirstName(entity.FirstName).
 		SetLastName(entity.LastName).
+		SetAddressLine1(entity.AddressLine1).
+		SetAddressLine2(entity.AddressLine2).
 		SetCity(entity.City).
 		SetPostalCode(entity.PostalCode).
 		SetNillableStateID(entity.StateID).
 		SetNillableFleetCodeID(entity.FleetCodeID).
 		SetNillableManagerID(entity.ManagerID).
-		SetVersion(entity.Version + 1). // Increment the version
-		Save(ctx)
+		SetVersion(entity.Version + 1)
+
+	// If the worker manager is nil, clear the association.
+	if entity.ManagerID == nil {
+		updateOp = updateOp.ClearManager()
+	}
+	// If the fleet code ID is nil, clear the association.
+	if entity.FleetCodeID == nil {
+		updateOp = updateOp.ClearFleetCode()
+	}
+
+	// Execute the update operation
+	updatedEntity, err := updateOp.Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to update entity")
+	}
+
+	return updatedEntity, nil
 }
 
 func (r *WorkerOps) updateWorkerProfileEntity(
@@ -363,8 +377,8 @@ func (r *WorkerOps) updateOrCreateComments(ctx context.Context, tx *ent.Tx, enti
 			if _, err := tx.WorkerComment.UpdateOneID(comment.ID).
 				SetCommentTypeID(comment.CommentTypeID).
 				SetComment(comment.Comment).
-				SetVersion(comment.Version + 1). // Increment the version
 				SetUserID(comment.UserID).
+				SetVersion(comment.Version + 1). // Increment the version
 				Save(ctx); err != nil {
 				wrappedErr := eris.Wrap(err, "failed to update worker comment")
 				r.logger.WithField("error", wrappedErr).Error("failed to update worker comment")

@@ -20,7 +20,6 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
 import { type QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
-import { faPaperPlane } from "@fortawesome/pro-solid-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -161,13 +160,7 @@ function PersonalInformation({ user }: { user: User }) {
             </div>
           </div>
           <div className="mt-8 flex">
-            <Button
-              type="submit"
-              variant="expandIcon"
-              icon={faPaperPlane}
-              isLoading={isSubmitting}
-              iconPlacement="right"
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               Save Changes
             </Button>
           </div>

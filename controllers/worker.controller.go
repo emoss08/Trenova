@@ -29,7 +29,20 @@ func GetWorkers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fleetCodeID := uuid.MustParse(r.URL.Query().Get("fleet_code_id"))
+	// fleetCodeID, err := uuid.Parse(r.URL.Query().Get("fleet_code_id"))
+	// if err != nil {
+	// 	tools.ResponseWithError(w, http.StatusInternalServerError, types.ValidationErrorResponse{
+	// 		Type: "internalError",
+	// 		Errors: []types.ValidationErrorDetail{
+	// 			{
+	// 				Code:   "internalError",
+	// 				Detail: "Fleet code given is not a valid uuid. Please try again.",
+	// 				Attr:   "fleetCodeID",
+	// 			},
+	// 		},
+	// 	})
+	// 	return
+	// }
 
 	orgID, ok := r.Context().Value(middleware.ContextKeyOrgID).(uuid.UUID)
 	buID, buOK := r.Context().Value(middleware.ContextKeyBuID).(uuid.UUID)
@@ -50,7 +63,7 @@ func GetWorkers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	workers, count, err := services.NewWorkerOps().GetWorkers(
-		r.Context(), limit, offset, orgID, buID, fleetCodeID,
+		r.Context(), limit, offset, orgID, buID,
 	)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)

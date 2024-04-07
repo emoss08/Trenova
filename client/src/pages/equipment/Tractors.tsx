@@ -17,7 +17,10 @@
 
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
-import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import {
+  DataTableColumnHeader,
+  DataTableTooltipColumnHeader,
+} from "@/components/common/table/data-table-column-header";
 import { EquipmentStatusBadge } from "@/components/common/table/data-table-components";
 import { TractorDialog } from "@/components/tractor-table-dialog";
 import { TractorTableEditSheet } from "@/components/tractor-table-edit-dialog";
@@ -85,6 +88,23 @@ const columns: ColumnDef<Tractor>[] = [
       } else {
         return row.original.edges?.equipmentType?.code;
       }
+    },
+  },
+  {
+    id: "assignedTo",
+    accessorFn: (row) =>
+      `${row.edges?.primaryWorker?.firstName} ${row.edges?.primaryWorker?.lastName} `,
+    header: () => (
+      <DataTableTooltipColumnHeader
+        title="Assigned Worker"
+        tooltip="The Primary worker assigned to this tractor."
+      />
+    ),
+    cell: ({ row }) => {
+      return row.getValue("assignedTo");
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
     },
   },
 ];

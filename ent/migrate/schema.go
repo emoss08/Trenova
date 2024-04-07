@@ -1865,7 +1865,9 @@ var (
 		{Name: "worker_type", Type: field.TypeEnum, Enums: []string{"Employee", "Contractor"}, Default: "Employee"},
 		{Name: "first_name", Type: field.TypeString},
 		{Name: "last_name", Type: field.TypeString},
-		{Name: "city", Type: field.TypeString, Nullable: true},
+		{Name: "address_line_1", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "city", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "postal_code", Type: field.TypeString, Nullable: true, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
@@ -1881,31 +1883,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workers_business_units_business_unit",
-				Columns:    []*schema.Column{WorkersColumns[12]},
+				Columns:    []*schema.Column{WorkersColumns[14]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_organizations_organization",
-				Columns:    []*schema.Column{WorkersColumns[13]},
+				Columns:    []*schema.Column{WorkersColumns[15]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_us_states_state",
-				Columns:    []*schema.Column{WorkersColumns[14]},
+				Columns:    []*schema.Column{WorkersColumns[16]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_fleet_codes_fleet_code",
-				Columns:    []*schema.Column{WorkersColumns[15]},
+				Columns:    []*schema.Column{WorkersColumns[17]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_users_manager",
-				Columns:    []*schema.Column{WorkersColumns[16]},
+				Columns:    []*schema.Column{WorkersColumns[18]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1914,7 +1916,7 @@ var (
 			{
 				Name:    "worker_code_organization_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkersColumns[5], WorkersColumns[13]},
+				Columns: []*schema.Column{WorkersColumns[5], WorkersColumns[15]},
 			},
 			{
 				Name:    "worker_first_name_last_name",

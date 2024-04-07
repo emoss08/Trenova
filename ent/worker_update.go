@@ -154,6 +154,46 @@ func (wu *WorkerUpdate) SetNillableLastName(s *string) *WorkerUpdate {
 	return wu
 }
 
+// SetAddressLine1 sets the "address_line_1" field.
+func (wu *WorkerUpdate) SetAddressLine1(s string) *WorkerUpdate {
+	wu.mutation.SetAddressLine1(s)
+	return wu
+}
+
+// SetNillableAddressLine1 sets the "address_line_1" field if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableAddressLine1(s *string) *WorkerUpdate {
+	if s != nil {
+		wu.SetAddressLine1(*s)
+	}
+	return wu
+}
+
+// ClearAddressLine1 clears the value of the "address_line_1" field.
+func (wu *WorkerUpdate) ClearAddressLine1() *WorkerUpdate {
+	wu.mutation.ClearAddressLine1()
+	return wu
+}
+
+// SetAddressLine2 sets the "address_line_2" field.
+func (wu *WorkerUpdate) SetAddressLine2(s string) *WorkerUpdate {
+	wu.mutation.SetAddressLine2(s)
+	return wu
+}
+
+// SetNillableAddressLine2 sets the "address_line_2" field if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableAddressLine2(s *string) *WorkerUpdate {
+	if s != nil {
+		wu.SetAddressLine2(*s)
+	}
+	return wu
+}
+
+// ClearAddressLine2 clears the value of the "address_line_2" field.
+func (wu *WorkerUpdate) ClearAddressLine2() *WorkerUpdate {
+	wu.mutation.ClearAddressLine2()
+	return wu
+}
+
 // SetCity sets the "city" field.
 func (wu *WorkerUpdate) SetCity(s string) *WorkerUpdate {
 	wu.mutation.SetCity(s)
@@ -502,6 +542,21 @@ func (wu *WorkerUpdate) check() error {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Worker.last_name": %w`, err)}
 		}
 	}
+	if v, ok := wu.mutation.AddressLine1(); ok {
+		if err := worker.AddressLine1Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_1", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_1": %w`, err)}
+		}
+	}
+	if v, ok := wu.mutation.AddressLine2(); ok {
+		if err := worker.AddressLine2Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_2", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_2": %w`, err)}
+		}
+	}
+	if v, ok := wu.mutation.City(); ok {
+		if err := worker.CityValidator(v); err != nil {
+			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Worker.city": %w`, err)}
+		}
+	}
 	if v, ok := wu.mutation.PostalCode(); ok {
 		if err := worker.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Worker.postal_code": %w`, err)}
@@ -563,6 +618,18 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := wu.mutation.LastName(); ok {
 		_spec.SetField(worker.FieldLastName, field.TypeString, value)
+	}
+	if value, ok := wu.mutation.AddressLine1(); ok {
+		_spec.SetField(worker.FieldAddressLine1, field.TypeString, value)
+	}
+	if wu.mutation.AddressLine1Cleared() {
+		_spec.ClearField(worker.FieldAddressLine1, field.TypeString)
+	}
+	if value, ok := wu.mutation.AddressLine2(); ok {
+		_spec.SetField(worker.FieldAddressLine2, field.TypeString, value)
+	}
+	if wu.mutation.AddressLine2Cleared() {
+		_spec.ClearField(worker.FieldAddressLine2, field.TypeString)
 	}
 	if value, ok := wu.mutation.City(); ok {
 		_spec.SetField(worker.FieldCity, field.TypeString, value)
@@ -979,6 +1046,46 @@ func (wuo *WorkerUpdateOne) SetNillableLastName(s *string) *WorkerUpdateOne {
 	return wuo
 }
 
+// SetAddressLine1 sets the "address_line_1" field.
+func (wuo *WorkerUpdateOne) SetAddressLine1(s string) *WorkerUpdateOne {
+	wuo.mutation.SetAddressLine1(s)
+	return wuo
+}
+
+// SetNillableAddressLine1 sets the "address_line_1" field if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableAddressLine1(s *string) *WorkerUpdateOne {
+	if s != nil {
+		wuo.SetAddressLine1(*s)
+	}
+	return wuo
+}
+
+// ClearAddressLine1 clears the value of the "address_line_1" field.
+func (wuo *WorkerUpdateOne) ClearAddressLine1() *WorkerUpdateOne {
+	wuo.mutation.ClearAddressLine1()
+	return wuo
+}
+
+// SetAddressLine2 sets the "address_line_2" field.
+func (wuo *WorkerUpdateOne) SetAddressLine2(s string) *WorkerUpdateOne {
+	wuo.mutation.SetAddressLine2(s)
+	return wuo
+}
+
+// SetNillableAddressLine2 sets the "address_line_2" field if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableAddressLine2(s *string) *WorkerUpdateOne {
+	if s != nil {
+		wuo.SetAddressLine2(*s)
+	}
+	return wuo
+}
+
+// ClearAddressLine2 clears the value of the "address_line_2" field.
+func (wuo *WorkerUpdateOne) ClearAddressLine2() *WorkerUpdateOne {
+	wuo.mutation.ClearAddressLine2()
+	return wuo
+}
+
 // SetCity sets the "city" field.
 func (wuo *WorkerUpdateOne) SetCity(s string) *WorkerUpdateOne {
 	wuo.mutation.SetCity(s)
@@ -1340,6 +1447,21 @@ func (wuo *WorkerUpdateOne) check() error {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Worker.last_name": %w`, err)}
 		}
 	}
+	if v, ok := wuo.mutation.AddressLine1(); ok {
+		if err := worker.AddressLine1Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_1", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_1": %w`, err)}
+		}
+	}
+	if v, ok := wuo.mutation.AddressLine2(); ok {
+		if err := worker.AddressLine2Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_2", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_2": %w`, err)}
+		}
+	}
+	if v, ok := wuo.mutation.City(); ok {
+		if err := worker.CityValidator(v); err != nil {
+			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Worker.city": %w`, err)}
+		}
+	}
 	if v, ok := wuo.mutation.PostalCode(); ok {
 		if err := worker.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Worker.postal_code": %w`, err)}
@@ -1418,6 +1540,18 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 	}
 	if value, ok := wuo.mutation.LastName(); ok {
 		_spec.SetField(worker.FieldLastName, field.TypeString, value)
+	}
+	if value, ok := wuo.mutation.AddressLine1(); ok {
+		_spec.SetField(worker.FieldAddressLine1, field.TypeString, value)
+	}
+	if wuo.mutation.AddressLine1Cleared() {
+		_spec.ClearField(worker.FieldAddressLine1, field.TypeString)
+	}
+	if value, ok := wuo.mutation.AddressLine2(); ok {
+		_spec.SetField(worker.FieldAddressLine2, field.TypeString, value)
+	}
+	if wuo.mutation.AddressLine2Cleared() {
+		_spec.ClearField(worker.FieldAddressLine2, field.TypeString)
 	}
 	if value, ok := wuo.mutation.City(); ok {
 		_spec.SetField(worker.FieldCity, field.TypeString, value)

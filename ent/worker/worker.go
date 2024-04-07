@@ -38,6 +38,10 @@ const (
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
+	// FieldAddressLine1 holds the string denoting the address_line_1 field in the database.
+	FieldAddressLine1 = "address_line_1"
+	// FieldAddressLine2 holds the string denoting the address_line_2 field in the database.
+	FieldAddressLine2 = "address_line_2"
 	// FieldCity holds the string denoting the city field in the database.
 	FieldCity = "city"
 	// FieldPostalCode holds the string denoting the postal_code field in the database.
@@ -156,6 +160,8 @@ var Columns = []string{
 	FieldWorkerType,
 	FieldFirstName,
 	FieldLastName,
+	FieldAddressLine1,
+	FieldAddressLine2,
 	FieldCity,
 	FieldPostalCode,
 	FieldStateID,
@@ -188,6 +194,12 @@ var (
 	FirstNameValidator func(string) error
 	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	LastNameValidator func(string) error
+	// AddressLine1Validator is a validator for the "address_line_1" field. It is called by the builders before save.
+	AddressLine1Validator func(string) error
+	// AddressLine2Validator is a validator for the "address_line_2" field. It is called by the builders before save.
+	AddressLine2Validator func(string) error
+	// CityValidator is a validator for the "city" field. It is called by the builders before save.
+	CityValidator func(string) error
 	// PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
 	PostalCodeValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
@@ -307,6 +319,16 @@ func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 // ByLastName orders the results by the last_name field.
 func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastName, opts...).ToFunc()
+}
+
+// ByAddressLine1 orders the results by the address_line_1 field.
+func ByAddressLine1(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAddressLine1, opts...).ToFunc()
+}
+
+// ByAddressLine2 orders the results by the address_line_2 field.
+func ByAddressLine2(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAddressLine2, opts...).ToFunc()
 }
 
 // ByCity orders the results by the city field.

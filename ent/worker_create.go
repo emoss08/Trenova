@@ -144,6 +144,34 @@ func (wc *WorkerCreate) SetLastName(s string) *WorkerCreate {
 	return wc
 }
 
+// SetAddressLine1 sets the "address_line_1" field.
+func (wc *WorkerCreate) SetAddressLine1(s string) *WorkerCreate {
+	wc.mutation.SetAddressLine1(s)
+	return wc
+}
+
+// SetNillableAddressLine1 sets the "address_line_1" field if the given value is not nil.
+func (wc *WorkerCreate) SetNillableAddressLine1(s *string) *WorkerCreate {
+	if s != nil {
+		wc.SetAddressLine1(*s)
+	}
+	return wc
+}
+
+// SetAddressLine2 sets the "address_line_2" field.
+func (wc *WorkerCreate) SetAddressLine2(s string) *WorkerCreate {
+	wc.mutation.SetAddressLine2(s)
+	return wc
+}
+
+// SetNillableAddressLine2 sets the "address_line_2" field if the given value is not nil.
+func (wc *WorkerCreate) SetNillableAddressLine2(s *string) *WorkerCreate {
+	if s != nil {
+		wc.SetAddressLine2(*s)
+	}
+	return wc
+}
+
 // SetCity sets the "city" field.
 func (wc *WorkerCreate) SetCity(s string) *WorkerCreate {
 	wc.mutation.SetCity(s)
@@ -458,6 +486,21 @@ func (wc *WorkerCreate) check() error {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Worker.last_name": %w`, err)}
 		}
 	}
+	if v, ok := wc.mutation.AddressLine1(); ok {
+		if err := worker.AddressLine1Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_1", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_1": %w`, err)}
+		}
+	}
+	if v, ok := wc.mutation.AddressLine2(); ok {
+		if err := worker.AddressLine2Validator(v); err != nil {
+			return &ValidationError{Name: "address_line_2", err: fmt.Errorf(`ent: validator failed for field "Worker.address_line_2": %w`, err)}
+		}
+	}
+	if v, ok := wc.mutation.City(); ok {
+		if err := worker.CityValidator(v); err != nil {
+			return &ValidationError{Name: "city", err: fmt.Errorf(`ent: validator failed for field "Worker.city": %w`, err)}
+		}
+	}
 	if v, ok := wc.mutation.PostalCode(); ok {
 		if err := worker.PostalCodeValidator(v); err != nil {
 			return &ValidationError{Name: "postal_code", err: fmt.Errorf(`ent: validator failed for field "Worker.postal_code": %w`, err)}
@@ -539,6 +582,14 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	if value, ok := wc.mutation.LastName(); ok {
 		_spec.SetField(worker.FieldLastName, field.TypeString, value)
 		_node.LastName = value
+	}
+	if value, ok := wc.mutation.AddressLine1(); ok {
+		_spec.SetField(worker.FieldAddressLine1, field.TypeString, value)
+		_node.AddressLine1 = value
+	}
+	if value, ok := wc.mutation.AddressLine2(); ok {
+		_spec.SetField(worker.FieldAddressLine2, field.TypeString, value)
+		_node.AddressLine2 = value
 	}
 	if value, ok := wc.mutation.City(); ok {
 		_spec.SetField(worker.FieldCity, field.TypeString, value)
