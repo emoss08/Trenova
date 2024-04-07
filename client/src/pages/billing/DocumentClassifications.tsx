@@ -18,6 +18,7 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
+import { StatusBadge } from "@/components/common/table/data-table-components";
 import { DocumentClassDialog } from "@/components/document-class-table-dialog";
 import { DocumentClassEditDialog } from "@/components/document-class-table-edit-dialog";
 import { DocumentClassification } from "@/types/billing";
@@ -44,6 +45,16 @@ const columns: ColumnDef<DocumentClassification>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "code",

@@ -1,14 +1,6 @@
 import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
@@ -20,6 +12,16 @@ import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import { SelectInput } from "./common/fields/select-input";
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 
 export function DocumentClassForm({
   control,
@@ -107,24 +109,31 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Document Classification</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>Create New Document Classification</CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>
           Please fill out the form below to create a new Document
           Classification.
-        </DialogDescription>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DocumentClassForm control={control} />
-          <DialogFooter className="mt-6">
-            <Button type="submit" isLoading={isSubmitting}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </CredenzaDescription>
+        <CredenzaBody>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DocumentClassForm control={control} />
+            <CredenzaFooter>
+              <CredenzaClose asChild>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </CredenzaClose>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Changes
+              </Button>
+            </CredenzaFooter>
+          </form>
+        </CredenzaBody>
+      </CredenzaContent>
+    </Credenza>
   );
 }

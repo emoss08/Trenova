@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
@@ -29,13 +12,15 @@ import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-table-dialog";
 import { Button } from "./ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 
 function FleetCodeEditForm({
   fleetCode,
@@ -70,14 +55,21 @@ function FleetCodeEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <FleetCodeForm control={control} open={open} />
-      <DialogFooter className="mt-6">
-        <Button type="submit" isLoading={isSubmitting}>
-          Save
-        </Button>
-      </DialogFooter>
-    </form>
+    <CredenzaBody>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FleetCodeForm control={control} open={open} />
+        <CredenzaFooter>
+          <CredenzaClose asChild>
+            <Button variant="outline" type="button">
+              Cancel
+            </Button>
+          </CredenzaClose>
+          <Button type="submit" isLoading={isSubmitting}>
+            Save Changes
+          </Button>
+        </CredenzaFooter>
+      </form>
+    </CredenzaBody>
   );
 }
 
@@ -93,17 +85,17 @@ export function FleetCodeEditDialog({
   if (!fleetCode) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{fleetCode && fleetCode.code}</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>{fleetCode && fleetCode.code} </CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>
           Last updated on&nbsp;
           {fleetCode && formatDate(fleetCode.updatedAt)}
-        </DialogDescription>
+        </CredenzaDescription>
         {fleetCode && <FleetCodeEditForm fleetCode={fleetCode} open={open} />}
-      </DialogContent>
-    </Dialog>
+      </CredenzaContent>
+    </Credenza>
   );
 }

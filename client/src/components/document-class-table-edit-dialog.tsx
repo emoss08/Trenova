@@ -31,13 +31,15 @@ import { useForm } from "react-hook-form";
 import { DocumentClassForm } from "./document-class-table-dialog";
 import { Button } from "./ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 
 function DocumentClassEditForm({
   documentClass,
@@ -70,14 +72,21 @@ function DocumentClassEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <DocumentClassForm control={control} />
-      <DialogFooter className="mt-6">
-        <Button type="submit" isLoading={isSubmitting}>
-          Save
-        </Button>
-      </DialogFooter>
-    </form>
+    <CredenzaBody>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <DocumentClassForm control={control} />
+        <CredenzaFooter>
+          <CredenzaClose asChild>
+            <Button variant="outline" type="button">
+              Cancel
+            </Button>
+          </CredenzaClose>
+          <Button type="submit" isLoading={isSubmitting}>
+            Save Changes
+          </Button>
+        </CredenzaFooter>
+      </form>
+    </CredenzaBody>
   );
 }
 
@@ -90,18 +99,18 @@ export function DocumentClassEditDialog({
   ) as DocumentClassification[];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{documentClass && documentClass.name}</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>{documentClass && documentClass.code} </CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>
           Last updated on {documentClass && formatDate(documentClass.updatedAt)}
-        </DialogDescription>
+        </CredenzaDescription>
         {documentClass && (
           <DocumentClassEditForm documentClass={documentClass} />
         )}
-      </DialogContent>
-    </Dialog>
+      </CredenzaContent>
+    </Credenza>
   );
 }
