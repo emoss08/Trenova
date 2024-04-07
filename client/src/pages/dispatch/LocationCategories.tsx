@@ -18,8 +18,8 @@
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import { LCTableEditDialog } from "@/components/location-category-table-edit-sheet";
-import { LocationCategoryTableSheet } from "@/components/location-category-table-sheet";
+import { LocationCategoryDialog } from "@/components/location-category-table-dialog";
+import { LocationCategoryEditDialog } from "@/components/location-category-table-edit-dialog";
 import { truncateText } from "@/lib/utils";
 import { type LocationCategory } from "@/types/location";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -83,8 +83,8 @@ export default function LocationCategories() {
       name="Location Category"
       exportModelName="LocationCategory"
       filterColumn="name"
-      TableSheet={LocationCategoryTableSheet}
-      TableEditSheet={LCTableEditDialog}
+      TableSheet={LocationCategoryDialog}
+      TableEditSheet={LocationCategoryEditDialog}
       addPermissionName="add_locationcategory"
     />
   );

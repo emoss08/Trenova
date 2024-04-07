@@ -15,14 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { LocationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
@@ -34,7 +26,17 @@ import type {
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { LCForm } from "./location-category-table-sheet";
+import { LCForm } from "./location-category-table-dialog";
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 
 export function LCEditForm({
   locationCategory,
@@ -68,18 +70,25 @@ export function LCEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <LCForm control={control} />
-      <DialogFooter className="mt-6">
-        <Button type="submit" isLoading={isSubmitting}>
-          Save
-        </Button>
-      </DialogFooter>
-    </form>
+    <CredenzaBody>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <LCForm control={control} />
+        <CredenzaFooter>
+          <CredenzaClose asChild>
+            <Button variant="outline" type="button">
+              Cancel
+            </Button>
+          </CredenzaClose>
+          <Button type="submit" isLoading={isSubmitting}>
+            Save Changes
+          </Button>
+        </CredenzaFooter>
+      </form>
+    </CredenzaBody>
   );
 }
 
-export function LCTableEditDialog({
+export function LocationCategoryEditDialog({
   open,
   onOpenChange,
 }: {
@@ -93,17 +102,19 @@ export function LCTableEditDialog({
   if (!locationCategory) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{locationCategory && locationCategory.name}</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>
+            {locationCategory && locationCategory.name}
+          </CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>
           Last updated on&nbsp;
           {locationCategory && formatDate(locationCategory.updatedAt)}
-        </DialogDescription>
+        </CredenzaDescription>
         {locationCategory && <LCEditForm locationCategory={locationCategory} />}
-      </DialogContent>
-    </Dialog>
+      </CredenzaContent>
+    </Credenza>
   );
 }

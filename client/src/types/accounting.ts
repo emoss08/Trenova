@@ -32,9 +32,9 @@ export interface DivisionCode extends BaseModel {
   status: StatusChoiceProps;
   code: string;
   description: string;
-  apAccount?: string | null;
-  cashAccount?: string | null;
-  expenseAccount?: string | null;
+  apAccountId?: string | null;
+  cashAccountId?: string | null;
+  expenseAccountId?: string | null;
 }
 
 export interface Tag extends BaseModel {
@@ -47,7 +47,7 @@ export type TagFormValues = Pick<Tag, "id">;
 
 export type DivisionCodeFormValues = Omit<
   DivisionCode,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 /** Types for General Ledger Accounts */
@@ -85,6 +85,7 @@ export type GLAccountFormValues = Omit<
   | "openingBalance"
   | "closingBalance"
   | "balance"
+  | "version"
 >;
 
 /** Types for Revenue Codes */
@@ -103,7 +104,7 @@ export interface RevenueCode extends BaseModel {
 
 export type RevenueCodeFormValues = Omit<
   RevenueCode,
-  "id" | "organizationId" | "createdAt" | "updatedAt" | "edges"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "edges" | "version"
 >;
 
 /** Types for Accounting Control */
@@ -126,5 +127,5 @@ export interface AccountingControl extends BaseModel {
 
 export type AccountingControlFormValues = Omit<
   AccountingControl,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;

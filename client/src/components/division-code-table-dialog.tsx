@@ -1,32 +1,7 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
@@ -37,6 +12,16 @@ import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function DCForm({
@@ -92,7 +77,7 @@ export function DCForm({
       <FormGroup className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <FormControl>
           <SelectInput
-            name="cashAccount"
+            name="cashAccountId"
             control={control}
             label="Cash Account"
             options={glAccounts}
@@ -108,7 +93,7 @@ export function DCForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="apAccount"
+            name="apAccountId"
             control={control}
             label="AP Account"
             options={glAccounts}
@@ -124,7 +109,7 @@ export function DCForm({
         </FormControl>
         <FormControl>
           <SelectInput
-            name="expenseAccount"
+            name="expenseAccountId"
             control={control}
             label="Expense Account"
             options={glAccounts}
@@ -151,9 +136,9 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
       status: "A",
       code: "",
       description: "",
-      expenseAccount: "",
-      cashAccount: "",
-      apAccount: "",
+      expenseAccountId: "",
+      cashAccountId: "",
+      apAccountId: "",
     },
   });
 
@@ -179,28 +164,35 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Division Code</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>Create New Division Code</CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>
           Please fill out the form below to create a new Division Code.
-        </DialogDescription>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DCForm
-            control={control}
-            glAccounts={selectGLAccounts}
-            isLoading={isLoading}
-            isError={isError}
-          />
-          <DialogFooter className="mt-6">
-            <Button type="submit" isLoading={isSubmitting}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </CredenzaDescription>
+        <CredenzaBody>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DCForm
+              control={control}
+              glAccounts={selectGLAccounts}
+              isLoading={isLoading}
+              isError={isError}
+            />
+            <CredenzaFooter>
+              <CredenzaClose asChild>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </CredenzaClose>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Changes
+              </Button>
+            </CredenzaFooter>
+          </form>
+        </CredenzaBody>
+      </CredenzaContent>
+    </Credenza>
   );
 }

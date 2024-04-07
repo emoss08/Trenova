@@ -58,37 +58,28 @@ func (r *DivisionCodeOps) GetDivisionCodes(ctx context.Context, limit, offset in
 
 // CreateDivisionCode creates a new division code.
 func (r *DivisionCodeOps) CreateDivisionCode(ctx context.Context, newEntity ent.DivisionCode) (*ent.DivisionCode, error) {
-	// Begin a new transaction
-	tx, err := r.client.Tx(ctx)
+	var createdEntity *ent.DivisionCode
+
+	err := tools.WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		var err error
+		createdEntity, err = r.createDivisionCodeEntity(ctx, tx, newEntity)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
-		return nil, wrappedErr
+		return nil, err
 	}
 
-	// Ensure the transaction is either committed or rolled back
-	defer func() {
-		if v := recover(); v != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-			panic(v)
-		}
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
-			}
-		}
-	}()
+	return createdEntity, nil
+}
 
-	createdEntity, err := tx.DivisionCode.Create().
+func (r *DivisionCodeOps) createDivisionCodeEntity(
+	ctx context.Context, tx *ent.Tx, newEntity ent.DivisionCode,
+) (*ent.DivisionCode, error) {
+	return tx.DivisionCode.Create().
 		SetOrganizationID(newEntity.OrganizationID).
 		SetBusinessUnitID(newEntity.BusinessUnitID).
 		SetStatus(newEntity.Status).
@@ -98,45 +89,31 @@ func (r *DivisionCodeOps) CreateDivisionCode(ctx context.Context, newEntity ent.
 		SetNillableCashAccountID(newEntity.CashAccountID).
 		SetNillableExpenseAccountID(newEntity.ExpenseAccountID).
 		Save(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
-	}
-
-	return createdEntity, nil
 }
 
 // UpdateDivisionCode updates a division code.
 func (r *DivisionCodeOps) UpdateDivisionCode(ctx context.Context, entity ent.DivisionCode) (*ent.DivisionCode, error) {
-	// Begin a new transaction
-	tx, err := r.client.Tx(ctx)
+	var updatedEntity *ent.DivisionCode
+
+	err := tools.WithTx(ctx, r.client, func(tx *ent.Tx) error {
+		var err error
+		updatedEntity, err = r.updateDivisionCodeEntity(ctx, tx, entity)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.logger.WithField("error", wrappedErr).Error("failed to start transaction")
-		return nil, wrappedErr
+		return nil, err
 	}
 
-	// Ensure the transaction is either committed or rolled back
-	defer func() {
-		if v := recover(); v != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-			panic(v)
-		}
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to rollback transaction")
-			}
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.logger.WithField("error", wrappedErr).Error("failed to commit transaction")
-			}
-		}
-	}()
+	return updatedEntity, nil
+}
 
+func (r *DivisionCodeOps) updateDivisionCodeEntity(
+	ctx context.Context, tx *ent.Tx, entity ent.DivisionCode,
+) (*ent.DivisionCode, error) {
 	current, err := tx.DivisionCode.Get(ctx, entity.ID)
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
