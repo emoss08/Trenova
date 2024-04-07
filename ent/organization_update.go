@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
@@ -153,6 +154,21 @@ func (ou *OrganizationUpdate) SetNillableTimezone(o *organization.Timezone) *Org
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (ou *OrganizationUpdate) SetBusinessUnit(b *BusinessUnit) *OrganizationUpdate {
 	return ou.SetBusinessUnitID(b.ID)
+}
+
+// AddOrganizationFeatureFlagIDs adds the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by IDs.
+func (ou *OrganizationUpdate) AddOrganizationFeatureFlagIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.AddOrganizationFeatureFlagIDs(ids...)
+	return ou
+}
+
+// AddOrganizationFeatureFlag adds the "organization_feature_flag" edges to the OrganizationFeatureFlag entity.
+func (ou *OrganizationUpdate) AddOrganizationFeatureFlag(o ...*OrganizationFeatureFlag) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ou.AddOrganizationFeatureFlagIDs(ids...)
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
@@ -335,6 +351,27 @@ func (ou *OrganizationUpdate) Mutation() *OrganizationMutation {
 func (ou *OrganizationUpdate) ClearBusinessUnit() *OrganizationUpdate {
 	ou.mutation.ClearBusinessUnit()
 	return ou
+}
+
+// ClearOrganizationFeatureFlag clears all "organization_feature_flag" edges to the OrganizationFeatureFlag entity.
+func (ou *OrganizationUpdate) ClearOrganizationFeatureFlag() *OrganizationUpdate {
+	ou.mutation.ClearOrganizationFeatureFlag()
+	return ou
+}
+
+// RemoveOrganizationFeatureFlagIDs removes the "organization_feature_flag" edge to OrganizationFeatureFlag entities by IDs.
+func (ou *OrganizationUpdate) RemoveOrganizationFeatureFlagIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.RemoveOrganizationFeatureFlagIDs(ids...)
+	return ou
+}
+
+// RemoveOrganizationFeatureFlag removes "organization_feature_flag" edges to OrganizationFeatureFlag entities.
+func (ou *OrganizationUpdate) RemoveOrganizationFeatureFlag(o ...*OrganizationFeatureFlag) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ou.RemoveOrganizationFeatureFlagIDs(ids...)
 }
 
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
@@ -524,6 +561,51 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.OrganizationFeatureFlagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.RemovedOrganizationFeatureFlagIDs(); len(nodes) > 0 && !ou.mutation.OrganizationFeatureFlagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.OrganizationFeatureFlagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -929,6 +1011,21 @@ func (ouo *OrganizationUpdateOne) SetBusinessUnit(b *BusinessUnit) *Organization
 	return ouo.SetBusinessUnitID(b.ID)
 }
 
+// AddOrganizationFeatureFlagIDs adds the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by IDs.
+func (ouo *OrganizationUpdateOne) AddOrganizationFeatureFlagIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.AddOrganizationFeatureFlagIDs(ids...)
+	return ouo
+}
+
+// AddOrganizationFeatureFlag adds the "organization_feature_flag" edges to the OrganizationFeatureFlag entity.
+func (ouo *OrganizationUpdateOne) AddOrganizationFeatureFlag(o ...*OrganizationFeatureFlag) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ouo.AddOrganizationFeatureFlagIDs(ids...)
+}
+
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
 func (ouo *OrganizationUpdateOne) SetAccountingControlID(id uuid.UUID) *OrganizationUpdateOne {
 	ouo.mutation.SetAccountingControlID(id)
@@ -1109,6 +1206,27 @@ func (ouo *OrganizationUpdateOne) Mutation() *OrganizationMutation {
 func (ouo *OrganizationUpdateOne) ClearBusinessUnit() *OrganizationUpdateOne {
 	ouo.mutation.ClearBusinessUnit()
 	return ouo
+}
+
+// ClearOrganizationFeatureFlag clears all "organization_feature_flag" edges to the OrganizationFeatureFlag entity.
+func (ouo *OrganizationUpdateOne) ClearOrganizationFeatureFlag() *OrganizationUpdateOne {
+	ouo.mutation.ClearOrganizationFeatureFlag()
+	return ouo
+}
+
+// RemoveOrganizationFeatureFlagIDs removes the "organization_feature_flag" edge to OrganizationFeatureFlag entities by IDs.
+func (ouo *OrganizationUpdateOne) RemoveOrganizationFeatureFlagIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.RemoveOrganizationFeatureFlagIDs(ids...)
+	return ouo
+}
+
+// RemoveOrganizationFeatureFlag removes "organization_feature_flag" edges to OrganizationFeatureFlag entities.
+func (ouo *OrganizationUpdateOne) RemoveOrganizationFeatureFlag(o ...*OrganizationFeatureFlag) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return ouo.RemoveOrganizationFeatureFlagIDs(ids...)
 }
 
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
@@ -1328,6 +1446,51 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.OrganizationFeatureFlagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.RemovedOrganizationFeatureFlagIDs(); len(nodes) > 0 && !ouo.mutation.OrganizationFeatureFlagCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.OrganizationFeatureFlagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

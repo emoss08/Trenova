@@ -109,7 +109,13 @@ export type FeatureFlag = {
   enabled: boolean;
   beta: boolean;
   preview: string;
-  paidOnly: boolean;
+};
+
+export type OrganizationFeatureFlag = {
+  isEnabled: boolean;
+  edges: {
+    featureFlag: FeatureFlag;
+  };
 };
 
 export type GoogleAPI = BaseModel & {

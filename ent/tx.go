@@ -48,6 +48,8 @@ type Tx struct {
 	EquipmentType *EquipmentTypeClient
 	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
 	FeasibilityToolControl *FeasibilityToolControlClient
+	// FeatureFlag is the client for interacting with the FeatureFlag builders.
+	FeatureFlag *FeatureFlagClient
 	// FleetCode is the client for interacting with the FleetCode builders.
 	FleetCode *FleetCodeClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
@@ -70,6 +72,8 @@ type Tx struct {
 	LocationContact *LocationContactClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
+	// OrganizationFeatureFlag is the client for interacting with the OrganizationFeatureFlag builders.
+	OrganizationFeatureFlag *OrganizationFeatureFlagClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
 	// ReasonCode is the client for interacting with the ReasonCode builders.
@@ -256,6 +260,7 @@ func (tx *Tx) init() {
 	tx.EquipmentManufactuer = NewEquipmentManufactuerClient(tx.config)
 	tx.EquipmentType = NewEquipmentTypeClient(tx.config)
 	tx.FeasibilityToolControl = NewFeasibilityToolControlClient(tx.config)
+	tx.FeatureFlag = NewFeatureFlagClient(tx.config)
 	tx.FleetCode = NewFleetCodeClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
 	tx.GoogleApi = NewGoogleApiClient(tx.config)
@@ -267,6 +272,7 @@ func (tx *Tx) init() {
 	tx.LocationComment = NewLocationCommentClient(tx.config)
 	tx.LocationContact = NewLocationContactClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
+	tx.OrganizationFeatureFlag = NewOrganizationFeatureFlagClient(tx.config)
 	tx.QualifierCode = NewQualifierCodeClient(tx.config)
 	tx.ReasonCode = NewReasonCodeClient(tx.config)
 	tx.RevenueCode = NewRevenueCodeClient(tx.config)

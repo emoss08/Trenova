@@ -524,6 +524,29 @@ func HasBusinessUnitWith(preds ...predicate.BusinessUnit) predicate.Organization
 	})
 }
 
+// HasOrganizationFeatureFlag applies the HasEdge predicate on the "organization_feature_flag" edge.
+func HasOrganizationFeatureFlag() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, OrganizationFeatureFlagTable, OrganizationFeatureFlagColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOrganizationFeatureFlagWith applies the HasEdge predicate on the "organization_feature_flag" edge with a given conditions (other predicates).
+func HasOrganizationFeatureFlagWith(preds ...predicate.OrganizationFeatureFlag) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newOrganizationFeatureFlagStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasAccountingControl applies the HasEdge predicate on the "accounting_control" edge.
 func HasAccountingControl() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {

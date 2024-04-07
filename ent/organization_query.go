@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
@@ -29,21 +30,23 @@ import (
 // OrganizationQuery is the builder for querying Organization entities.
 type OrganizationQuery struct {
 	config
-	ctx                        *QueryContext
-	order                      []organization.OrderOption
-	inters                     []Interceptor
-	predicates                 []predicate.Organization
-	withBusinessUnit           *BusinessUnitQuery
-	withAccountingControl      *AccountingControlQuery
-	withBillingControl         *BillingControlQuery
-	withDispatchControl        *DispatchControlQuery
-	withFeasibilityToolControl *FeasibilityToolControlQuery
-	withInvoiceControl         *InvoiceControlQuery
-	withRouteControl           *RouteControlQuery
-	withShipmentControl        *ShipmentControlQuery
-	withEmailControl           *EmailControlQuery
-	withGoogleAPI              *GoogleApiQuery
-	modifiers                  []func(*sql.Selector)
+	ctx                              *QueryContext
+	order                            []organization.OrderOption
+	inters                           []Interceptor
+	predicates                       []predicate.Organization
+	withBusinessUnit                 *BusinessUnitQuery
+	withOrganizationFeatureFlag      *OrganizationFeatureFlagQuery
+	withAccountingControl            *AccountingControlQuery
+	withBillingControl               *BillingControlQuery
+	withDispatchControl              *DispatchControlQuery
+	withFeasibilityToolControl       *FeasibilityToolControlQuery
+	withInvoiceControl               *InvoiceControlQuery
+	withRouteControl                 *RouteControlQuery
+	withShipmentControl              *ShipmentControlQuery
+	withEmailControl                 *EmailControlQuery
+	withGoogleAPI                    *GoogleApiQuery
+	modifiers                        []func(*sql.Selector)
+	withNamedOrganizationFeatureFlag map[string]*OrganizationFeatureFlagQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -95,6 +98,28 @@ func (oq *OrganizationQuery) QueryBusinessUnit() *BusinessUnitQuery {
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(businessunit.Table, businessunit.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, organization.BusinessUnitTable, organization.BusinessUnitColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOrganizationFeatureFlag chains the current query on the "organization_feature_flag" edge.
+func (oq *OrganizationQuery) QueryOrganizationFeatureFlag() *OrganizationFeatureFlagQuery {
+	query := (&OrganizationFeatureFlagClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(organizationfeatureflag.Table, organizationfeatureflag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, organization.OrganizationFeatureFlagTable, organization.OrganizationFeatureFlagColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -487,21 +512,22 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		return nil
 	}
 	return &OrganizationQuery{
-		config:                     oq.config,
-		ctx:                        oq.ctx.Clone(),
-		order:                      append([]organization.OrderOption{}, oq.order...),
-		inters:                     append([]Interceptor{}, oq.inters...),
-		predicates:                 append([]predicate.Organization{}, oq.predicates...),
-		withBusinessUnit:           oq.withBusinessUnit.Clone(),
-		withAccountingControl:      oq.withAccountingControl.Clone(),
-		withBillingControl:         oq.withBillingControl.Clone(),
-		withDispatchControl:        oq.withDispatchControl.Clone(),
-		withFeasibilityToolControl: oq.withFeasibilityToolControl.Clone(),
-		withInvoiceControl:         oq.withInvoiceControl.Clone(),
-		withRouteControl:           oq.withRouteControl.Clone(),
-		withShipmentControl:        oq.withShipmentControl.Clone(),
-		withEmailControl:           oq.withEmailControl.Clone(),
-		withGoogleAPI:              oq.withGoogleAPI.Clone(),
+		config:                      oq.config,
+		ctx:                         oq.ctx.Clone(),
+		order:                       append([]organization.OrderOption{}, oq.order...),
+		inters:                      append([]Interceptor{}, oq.inters...),
+		predicates:                  append([]predicate.Organization{}, oq.predicates...),
+		withBusinessUnit:            oq.withBusinessUnit.Clone(),
+		withOrganizationFeatureFlag: oq.withOrganizationFeatureFlag.Clone(),
+		withAccountingControl:       oq.withAccountingControl.Clone(),
+		withBillingControl:          oq.withBillingControl.Clone(),
+		withDispatchControl:         oq.withDispatchControl.Clone(),
+		withFeasibilityToolControl:  oq.withFeasibilityToolControl.Clone(),
+		withInvoiceControl:          oq.withInvoiceControl.Clone(),
+		withRouteControl:            oq.withRouteControl.Clone(),
+		withShipmentControl:         oq.withShipmentControl.Clone(),
+		withEmailControl:            oq.withEmailControl.Clone(),
+		withGoogleAPI:               oq.withGoogleAPI.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -516,6 +542,17 @@ func (oq *OrganizationQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery)) 
 		opt(query)
 	}
 	oq.withBusinessUnit = query
+	return oq
+}
+
+// WithOrganizationFeatureFlag tells the query-builder to eager-load the nodes that are connected to
+// the "organization_feature_flag" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithOrganizationFeatureFlag(opts ...func(*OrganizationFeatureFlagQuery)) *OrganizationQuery {
+	query := (&OrganizationFeatureFlagClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withOrganizationFeatureFlag = query
 	return oq
 }
 
@@ -696,8 +733,9 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*Organization{}
 		_spec       = oq.querySpec()
-		loadedTypes = [10]bool{
+		loadedTypes = [11]bool{
 			oq.withBusinessUnit != nil,
+			oq.withOrganizationFeatureFlag != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
 			oq.withDispatchControl != nil,
@@ -733,6 +771,15 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := oq.withBusinessUnit; query != nil {
 		if err := oq.loadBusinessUnit(ctx, query, nodes, nil,
 			func(n *Organization, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withOrganizationFeatureFlag; query != nil {
+		if err := oq.loadOrganizationFeatureFlag(ctx, query, nodes,
+			func(n *Organization) { n.Edges.OrganizationFeatureFlag = []*OrganizationFeatureFlag{} },
+			func(n *Organization, e *OrganizationFeatureFlag) {
+				n.Edges.OrganizationFeatureFlag = append(n.Edges.OrganizationFeatureFlag, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -790,6 +837,13 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	for name, query := range oq.withNamedOrganizationFeatureFlag {
+		if err := oq.loadOrganizationFeatureFlag(ctx, query, nodes,
+			func(n *Organization) { n.appendNamedOrganizationFeatureFlag(name) },
+			func(n *Organization, e *OrganizationFeatureFlag) { n.appendNamedOrganizationFeatureFlag(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -819,6 +873,36 @@ func (oq *OrganizationQuery) loadBusinessUnit(ctx context.Context, query *Busine
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadOrganizationFeatureFlag(ctx context.Context, query *OrganizationFeatureFlagQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *OrganizationFeatureFlag)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(organizationfeatureflag.FieldOrganizationID)
+	}
+	query.Where(predicate.OrganizationFeatureFlag(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.OrganizationFeatureFlagColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.OrganizationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -1169,6 +1253,20 @@ func (oq *OrganizationQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (oq *OrganizationQuery) Modify(modifiers ...func(s *sql.Selector)) *OrganizationSelect {
 	oq.modifiers = append(oq.modifiers, modifiers...)
 	return oq.Select()
+}
+
+// WithNamedOrganizationFeatureFlag tells the query-builder to eager-load the nodes that are connected to the "organization_feature_flag"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithNamedOrganizationFeatureFlag(name string, opts ...func(*OrganizationFeatureFlagQuery)) *OrganizationQuery {
+	query := (&OrganizationFeatureFlagClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if oq.withNamedOrganizationFeatureFlag == nil {
+		oq.withNamedOrganizationFeatureFlag = make(map[string]*OrganizationFeatureFlagQuery)
+	}
+	oq.withNamedOrganizationFeatureFlag[name] = query
+	return oq
 }
 
 // OrganizationGroupBy is the group-by builder for Organization entities.

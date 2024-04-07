@@ -10,39 +10,33 @@ import {
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatDate } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
-import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
-import type {
-  TrailerFormValues as FormValues,
-  Trailer,
-} from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
-import { yupResolver } from "@hookform/resolvers/yup";
+import type { WorkerFormValues as FormValues, Worker } from "@/types/worker";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { TrailerForm } from "./trailer-table-dialog";
 
-function TrailerEditForm({
-  trailer,
+function WorkerEditForm({
+  worker,
   open,
   onOpenChange,
 }: {
-  trailer: Trailer;
+  worker: Worker;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit } = useForm<FormValues>({
-    resolver: yupResolver(trailerSchema),
-    defaultValues: trailer,
+    // resolver: yupResolver(trailerSchema),
+    defaultValues: worker,
   });
 
   const mutation = useCustomMutation<FormValues>(
     control,
     {
       method: "PUT",
-      path: `/trailers/${trailer.id}/`,
+      path: `/worker/${worker.id}/`,
       successMessage: "Trailer updated successfully.",
       queryKeysToInvalidate: ["trailer-table-data"],
       additionalInvalidateQueries: ["trailers"],
@@ -64,7 +58,7 @@ function TrailerEditForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex h-full flex-col overflow-y-auto"
     >
-      <TrailerForm control={control} open={open} />
+      {/* <TrailerForm control={control} open={open} /> */}
       <SheetFooter className="mb-12">
         <Button
           type="reset"
@@ -82,10 +76,10 @@ function TrailerEditForm({
   );
 }
 
-export function TrailerEditDialog({ onOpenChange, open }: TableSheetProps) {
-  const [trailer] = useTableStore.use("currentRecord") as Trailer[];
+export function WorkerEditDialog({ onOpenChange, open }: TableSheetProps) {
+  const [worker] = useTableStore.use("currentRecord") as Worker[];
 
-  if (!trailer) {
+  if (!worker) {
     return null;
   }
 
@@ -93,14 +87,14 @@ export function TrailerEditDialog({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{trailer && trailer.code}</SheetTitle>
+          <SheetTitle>{worker && worker.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {trailer && formatDate(trailer.updatedAt)}
+            Last updated on {worker && formatDate(worker.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {trailer && (
-          <TrailerEditForm
-            trailer={trailer}
+        {worker && (
+          <WorkerEditForm
+            worker={worker}
             open={open}
             onOpenChange={onOpenChange}
           />

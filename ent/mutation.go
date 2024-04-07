@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
@@ -39,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcomment"
 	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
@@ -89,6 +91,7 @@ const (
 	TypeEquipmentManufactuer         = "EquipmentManufactuer"
 	TypeEquipmentType                = "EquipmentType"
 	TypeFeasibilityToolControl       = "FeasibilityToolControl"
+	TypeFeatureFlag                  = "FeatureFlag"
 	TypeFleetCode                    = "FleetCode"
 	TypeGeneralLedgerAccount         = "GeneralLedgerAccount"
 	TypeGoogleApi                    = "GoogleApi"
@@ -100,6 +103,7 @@ const (
 	TypeLocationComment              = "LocationComment"
 	TypeLocationContact              = "LocationContact"
 	TypeOrganization                 = "Organization"
+	TypeOrganizationFeatureFlag      = "OrganizationFeatureFlag"
 	TypeQualifierCode                = "QualifierCode"
 	TypeReasonCode                   = "ReasonCode"
 	TypeRevenueCode                  = "RevenueCode"
@@ -19886,6 +19890,777 @@ func (m *FeasibilityToolControlMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown FeasibilityToolControl edge %s", name)
 }
 
+// FeatureFlagMutation represents an operation that mutates the FeatureFlag nodes in the graph.
+type FeatureFlagMutation struct {
+	config
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	name                             *string
+	code                             *string
+	beta                             *bool
+	description                      *string
+	preview_picture_url              *string
+	clearedFields                    map[string]struct{}
+	organization_feature_flag        map[uuid.UUID]struct{}
+	removedorganization_feature_flag map[uuid.UUID]struct{}
+	clearedorganization_feature_flag bool
+	done                             bool
+	oldValue                         func(context.Context) (*FeatureFlag, error)
+	predicates                       []predicate.FeatureFlag
+}
+
+var _ ent.Mutation = (*FeatureFlagMutation)(nil)
+
+// featureflagOption allows management of the mutation configuration using functional options.
+type featureflagOption func(*FeatureFlagMutation)
+
+// newFeatureFlagMutation creates new mutation for the FeatureFlag entity.
+func newFeatureFlagMutation(c config, op Op, opts ...featureflagOption) *FeatureFlagMutation {
+	m := &FeatureFlagMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeFeatureFlag,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withFeatureFlagID sets the ID field of the mutation.
+func withFeatureFlagID(id uuid.UUID) featureflagOption {
+	return func(m *FeatureFlagMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *FeatureFlag
+		)
+		m.oldValue = func(ctx context.Context) (*FeatureFlag, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().FeatureFlag.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withFeatureFlag sets the old FeatureFlag of the mutation.
+func withFeatureFlag(node *FeatureFlag) featureflagOption {
+	return func(m *FeatureFlagMutation) {
+		m.oldValue = func(context.Context) (*FeatureFlag, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m FeatureFlagMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m FeatureFlagMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of FeatureFlag entities.
+func (m *FeatureFlagMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *FeatureFlagMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *FeatureFlagMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().FeatureFlag.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *FeatureFlagMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *FeatureFlagMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *FeatureFlagMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *FeatureFlagMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *FeatureFlagMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *FeatureFlagMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *FeatureFlagMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *FeatureFlagMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *FeatureFlagMutation) ResetName() {
+	m.name = nil
+}
+
+// SetCode sets the "code" field.
+func (m *FeatureFlagMutation) SetCode(s string) {
+	m.code = &s
+}
+
+// Code returns the value of the "code" field in the mutation.
+func (m *FeatureFlagMutation) Code() (r string, exists bool) {
+	v := m.code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCode returns the old "code" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCode: %w", err)
+	}
+	return oldValue.Code, nil
+}
+
+// ResetCode resets all changes to the "code" field.
+func (m *FeatureFlagMutation) ResetCode() {
+	m.code = nil
+}
+
+// SetBeta sets the "beta" field.
+func (m *FeatureFlagMutation) SetBeta(b bool) {
+	m.beta = &b
+}
+
+// Beta returns the value of the "beta" field in the mutation.
+func (m *FeatureFlagMutation) Beta() (r bool, exists bool) {
+	v := m.beta
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBeta returns the old "beta" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldBeta(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBeta is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBeta requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBeta: %w", err)
+	}
+	return oldValue.Beta, nil
+}
+
+// ResetBeta resets all changes to the "beta" field.
+func (m *FeatureFlagMutation) ResetBeta() {
+	m.beta = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *FeatureFlagMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *FeatureFlagMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *FeatureFlagMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetPreviewPictureURL sets the "preview_picture_url" field.
+func (m *FeatureFlagMutation) SetPreviewPictureURL(s string) {
+	m.preview_picture_url = &s
+}
+
+// PreviewPictureURL returns the value of the "preview_picture_url" field in the mutation.
+func (m *FeatureFlagMutation) PreviewPictureURL() (r string, exists bool) {
+	v := m.preview_picture_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreviewPictureURL returns the old "preview_picture_url" field's value of the FeatureFlag entity.
+// If the FeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FeatureFlagMutation) OldPreviewPictureURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreviewPictureURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreviewPictureURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreviewPictureURL: %w", err)
+	}
+	return oldValue.PreviewPictureURL, nil
+}
+
+// ClearPreviewPictureURL clears the value of the "preview_picture_url" field.
+func (m *FeatureFlagMutation) ClearPreviewPictureURL() {
+	m.preview_picture_url = nil
+	m.clearedFields[featureflag.FieldPreviewPictureURL] = struct{}{}
+}
+
+// PreviewPictureURLCleared returns if the "preview_picture_url" field was cleared in this mutation.
+func (m *FeatureFlagMutation) PreviewPictureURLCleared() bool {
+	_, ok := m.clearedFields[featureflag.FieldPreviewPictureURL]
+	return ok
+}
+
+// ResetPreviewPictureURL resets all changes to the "preview_picture_url" field.
+func (m *FeatureFlagMutation) ResetPreviewPictureURL() {
+	m.preview_picture_url = nil
+	delete(m.clearedFields, featureflag.FieldPreviewPictureURL)
+}
+
+// AddOrganizationFeatureFlagIDs adds the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by ids.
+func (m *FeatureFlagMutation) AddOrganizationFeatureFlagIDs(ids ...uuid.UUID) {
+	if m.organization_feature_flag == nil {
+		m.organization_feature_flag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.organization_feature_flag[ids[i]] = struct{}{}
+	}
+}
+
+// ClearOrganizationFeatureFlag clears the "organization_feature_flag" edge to the OrganizationFeatureFlag entity.
+func (m *FeatureFlagMutation) ClearOrganizationFeatureFlag() {
+	m.clearedorganization_feature_flag = true
+}
+
+// OrganizationFeatureFlagCleared reports if the "organization_feature_flag" edge to the OrganizationFeatureFlag entity was cleared.
+func (m *FeatureFlagMutation) OrganizationFeatureFlagCleared() bool {
+	return m.clearedorganization_feature_flag
+}
+
+// RemoveOrganizationFeatureFlagIDs removes the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by IDs.
+func (m *FeatureFlagMutation) RemoveOrganizationFeatureFlagIDs(ids ...uuid.UUID) {
+	if m.removedorganization_feature_flag == nil {
+		m.removedorganization_feature_flag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.organization_feature_flag, ids[i])
+		m.removedorganization_feature_flag[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedOrganizationFeatureFlag returns the removed IDs of the "organization_feature_flag" edge to the OrganizationFeatureFlag entity.
+func (m *FeatureFlagMutation) RemovedOrganizationFeatureFlagIDs() (ids []uuid.UUID) {
+	for id := range m.removedorganization_feature_flag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// OrganizationFeatureFlagIDs returns the "organization_feature_flag" edge IDs in the mutation.
+func (m *FeatureFlagMutation) OrganizationFeatureFlagIDs() (ids []uuid.UUID) {
+	for id := range m.organization_feature_flag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetOrganizationFeatureFlag resets all changes to the "organization_feature_flag" edge.
+func (m *FeatureFlagMutation) ResetOrganizationFeatureFlag() {
+	m.organization_feature_flag = nil
+	m.clearedorganization_feature_flag = false
+	m.removedorganization_feature_flag = nil
+}
+
+// Where appends a list predicates to the FeatureFlagMutation builder.
+func (m *FeatureFlagMutation) Where(ps ...predicate.FeatureFlag) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the FeatureFlagMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *FeatureFlagMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.FeatureFlag, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *FeatureFlagMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *FeatureFlagMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (FeatureFlag).
+func (m *FeatureFlagMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *FeatureFlagMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.created_at != nil {
+		fields = append(fields, featureflag.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, featureflag.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, featureflag.FieldName)
+	}
+	if m.code != nil {
+		fields = append(fields, featureflag.FieldCode)
+	}
+	if m.beta != nil {
+		fields = append(fields, featureflag.FieldBeta)
+	}
+	if m.description != nil {
+		fields = append(fields, featureflag.FieldDescription)
+	}
+	if m.preview_picture_url != nil {
+		fields = append(fields, featureflag.FieldPreviewPictureURL)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *FeatureFlagMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case featureflag.FieldCreatedAt:
+		return m.CreatedAt()
+	case featureflag.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case featureflag.FieldName:
+		return m.Name()
+	case featureflag.FieldCode:
+		return m.Code()
+	case featureflag.FieldBeta:
+		return m.Beta()
+	case featureflag.FieldDescription:
+		return m.Description()
+	case featureflag.FieldPreviewPictureURL:
+		return m.PreviewPictureURL()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *FeatureFlagMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case featureflag.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case featureflag.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case featureflag.FieldName:
+		return m.OldName(ctx)
+	case featureflag.FieldCode:
+		return m.OldCode(ctx)
+	case featureflag.FieldBeta:
+		return m.OldBeta(ctx)
+	case featureflag.FieldDescription:
+		return m.OldDescription(ctx)
+	case featureflag.FieldPreviewPictureURL:
+		return m.OldPreviewPictureURL(ctx)
+	}
+	return nil, fmt.Errorf("unknown FeatureFlag field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FeatureFlagMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case featureflag.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case featureflag.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case featureflag.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case featureflag.FieldCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCode(v)
+		return nil
+	case featureflag.FieldBeta:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBeta(v)
+		return nil
+	case featureflag.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case featureflag.FieldPreviewPictureURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreviewPictureURL(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FeatureFlag field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *FeatureFlagMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *FeatureFlagMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FeatureFlagMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown FeatureFlag numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *FeatureFlagMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(featureflag.FieldPreviewPictureURL) {
+		fields = append(fields, featureflag.FieldPreviewPictureURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *FeatureFlagMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *FeatureFlagMutation) ClearField(name string) error {
+	switch name {
+	case featureflag.FieldPreviewPictureURL:
+		m.ClearPreviewPictureURL()
+		return nil
+	}
+	return fmt.Errorf("unknown FeatureFlag nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *FeatureFlagMutation) ResetField(name string) error {
+	switch name {
+	case featureflag.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case featureflag.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case featureflag.FieldName:
+		m.ResetName()
+		return nil
+	case featureflag.FieldCode:
+		m.ResetCode()
+		return nil
+	case featureflag.FieldBeta:
+		m.ResetBeta()
+		return nil
+	case featureflag.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case featureflag.FieldPreviewPictureURL:
+		m.ResetPreviewPictureURL()
+		return nil
+	}
+	return fmt.Errorf("unknown FeatureFlag field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *FeatureFlagMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.organization_feature_flag != nil {
+		edges = append(edges, featureflag.EdgeOrganizationFeatureFlag)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *FeatureFlagMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case featureflag.EdgeOrganizationFeatureFlag:
+		ids := make([]ent.Value, 0, len(m.organization_feature_flag))
+		for id := range m.organization_feature_flag {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *FeatureFlagMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedorganization_feature_flag != nil {
+		edges = append(edges, featureflag.EdgeOrganizationFeatureFlag)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *FeatureFlagMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case featureflag.EdgeOrganizationFeatureFlag:
+		ids := make([]ent.Value, 0, len(m.removedorganization_feature_flag))
+		for id := range m.removedorganization_feature_flag {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *FeatureFlagMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedorganization_feature_flag {
+		edges = append(edges, featureflag.EdgeOrganizationFeatureFlag)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *FeatureFlagMutation) EdgeCleared(name string) bool {
+	switch name {
+	case featureflag.EdgeOrganizationFeatureFlag:
+		return m.clearedorganization_feature_flag
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *FeatureFlagMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown FeatureFlag unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *FeatureFlagMutation) ResetEdge(name string) error {
+	switch name {
+	case featureflag.EdgeOrganizationFeatureFlag:
+		m.ResetOrganizationFeatureFlag()
+		return nil
+	}
+	return fmt.Errorf("unknown FeatureFlag edge %s", name)
+}
+
 // FleetCodeMutation represents an operation that mutates the FleetCode nodes in the graph.
 type FleetCodeMutation struct {
 	config
@@ -31727,41 +32502,44 @@ func (m *LocationContactMutation) ResetEdge(name string) error {
 // OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
 type OrganizationMutation struct {
 	config
-	op                              Op
-	typ                             string
-	id                              *uuid.UUID
-	created_at                      *time.Time
-	updated_at                      *time.Time
-	name                            *string
-	scac_code                       *string
-	dot_number                      *string
-	logo_url                        *string
-	org_type                        *organization.OrgType
-	timezone                        *organization.Timezone
-	clearedFields                   map[string]struct{}
-	business_unit                   *uuid.UUID
-	clearedbusiness_unit            bool
-	accounting_control              *uuid.UUID
-	clearedaccounting_control       bool
-	billing_control                 *uuid.UUID
-	clearedbilling_control          bool
-	dispatch_control                *uuid.UUID
-	cleareddispatch_control         bool
-	feasibility_tool_control        *uuid.UUID
-	clearedfeasibility_tool_control bool
-	invoice_control                 *uuid.UUID
-	clearedinvoice_control          bool
-	route_control                   *uuid.UUID
-	clearedroute_control            bool
-	shipment_control                *uuid.UUID
-	clearedshipment_control         bool
-	email_control                   *uuid.UUID
-	clearedemail_control            bool
-	google_api                      *uuid.UUID
-	clearedgoogle_api               bool
-	done                            bool
-	oldValue                        func(context.Context) (*Organization, error)
-	predicates                      []predicate.Organization
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	name                             *string
+	scac_code                        *string
+	dot_number                       *string
+	logo_url                         *string
+	org_type                         *organization.OrgType
+	timezone                         *organization.Timezone
+	clearedFields                    map[string]struct{}
+	business_unit                    *uuid.UUID
+	clearedbusiness_unit             bool
+	organization_feature_flag        map[uuid.UUID]struct{}
+	removedorganization_feature_flag map[uuid.UUID]struct{}
+	clearedorganization_feature_flag bool
+	accounting_control               *uuid.UUID
+	clearedaccounting_control        bool
+	billing_control                  *uuid.UUID
+	clearedbilling_control           bool
+	dispatch_control                 *uuid.UUID
+	cleareddispatch_control          bool
+	feasibility_tool_control         *uuid.UUID
+	clearedfeasibility_tool_control  bool
+	invoice_control                  *uuid.UUID
+	clearedinvoice_control           bool
+	route_control                    *uuid.UUID
+	clearedroute_control             bool
+	shipment_control                 *uuid.UUID
+	clearedshipment_control          bool
+	email_control                    *uuid.UUID
+	clearedemail_control             bool
+	google_api                       *uuid.UUID
+	clearedgoogle_api                bool
+	done                             bool
+	oldValue                         func(context.Context) (*Organization, error)
+	predicates                       []predicate.Organization
 }
 
 var _ ent.Mutation = (*OrganizationMutation)(nil)
@@ -32230,6 +33008,60 @@ func (m *OrganizationMutation) BusinessUnitIDs() (ids []uuid.UUID) {
 func (m *OrganizationMutation) ResetBusinessUnit() {
 	m.business_unit = nil
 	m.clearedbusiness_unit = false
+}
+
+// AddOrganizationFeatureFlagIDs adds the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by ids.
+func (m *OrganizationMutation) AddOrganizationFeatureFlagIDs(ids ...uuid.UUID) {
+	if m.organization_feature_flag == nil {
+		m.organization_feature_flag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.organization_feature_flag[ids[i]] = struct{}{}
+	}
+}
+
+// ClearOrganizationFeatureFlag clears the "organization_feature_flag" edge to the OrganizationFeatureFlag entity.
+func (m *OrganizationMutation) ClearOrganizationFeatureFlag() {
+	m.clearedorganization_feature_flag = true
+}
+
+// OrganizationFeatureFlagCleared reports if the "organization_feature_flag" edge to the OrganizationFeatureFlag entity was cleared.
+func (m *OrganizationMutation) OrganizationFeatureFlagCleared() bool {
+	return m.clearedorganization_feature_flag
+}
+
+// RemoveOrganizationFeatureFlagIDs removes the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by IDs.
+func (m *OrganizationMutation) RemoveOrganizationFeatureFlagIDs(ids ...uuid.UUID) {
+	if m.removedorganization_feature_flag == nil {
+		m.removedorganization_feature_flag = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.organization_feature_flag, ids[i])
+		m.removedorganization_feature_flag[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedOrganizationFeatureFlag returns the removed IDs of the "organization_feature_flag" edge to the OrganizationFeatureFlag entity.
+func (m *OrganizationMutation) RemovedOrganizationFeatureFlagIDs() (ids []uuid.UUID) {
+	for id := range m.removedorganization_feature_flag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// OrganizationFeatureFlagIDs returns the "organization_feature_flag" edge IDs in the mutation.
+func (m *OrganizationMutation) OrganizationFeatureFlagIDs() (ids []uuid.UUID) {
+	for id := range m.organization_feature_flag {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetOrganizationFeatureFlag resets all changes to the "organization_feature_flag" edge.
+func (m *OrganizationMutation) ResetOrganizationFeatureFlag() {
+	m.organization_feature_flag = nil
+	m.clearedorganization_feature_flag = false
+	m.removedorganization_feature_flag = nil
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by id.
@@ -32861,9 +33693,12 @@ func (m *OrganizationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
+	}
+	if m.organization_feature_flag != nil {
+		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
 	}
 	if m.accounting_control != nil {
 		edges = append(edges, organization.EdgeAccountingControl)
@@ -32903,6 +33738,12 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 		if id := m.business_unit; id != nil {
 			return []ent.Value{*id}
 		}
+	case organization.EdgeOrganizationFeatureFlag:
+		ids := make([]ent.Value, 0, len(m.organization_feature_flag))
+		for id := range m.organization_feature_flag {
+			ids = append(ids, id)
+		}
+		return ids
 	case organization.EdgeAccountingControl:
 		if id := m.accounting_control; id != nil {
 			return []ent.Value{*id}
@@ -32945,21 +33786,35 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
+	if m.removedorganization_feature_flag != nil {
+		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case organization.EdgeOrganizationFeatureFlag:
+		ids := make([]ent.Value, 0, len(m.removedorganization_feature_flag))
+		for id := range m.removedorganization_feature_flag {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
+	}
+	if m.clearedorganization_feature_flag {
+		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
 	}
 	if m.clearedaccounting_control {
 		edges = append(edges, organization.EdgeAccountingControl)
@@ -32997,6 +33852,8 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 	switch name {
 	case organization.EdgeBusinessUnit:
 		return m.clearedbusiness_unit
+	case organization.EdgeOrganizationFeatureFlag:
+		return m.clearedorganization_feature_flag
 	case organization.EdgeAccountingControl:
 		return m.clearedaccounting_control
 	case organization.EdgeBillingControl:
@@ -33064,6 +33921,9 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 	case organization.EdgeBusinessUnit:
 		m.ResetBusinessUnit()
 		return nil
+	case organization.EdgeOrganizationFeatureFlag:
+		m.ResetOrganizationFeatureFlag()
+		return nil
 	case organization.EdgeAccountingControl:
 		m.ResetAccountingControl()
 		return nil
@@ -33093,6 +33953,654 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Organization edge %s", name)
+}
+
+// OrganizationFeatureFlagMutation represents an operation that mutates the OrganizationFeatureFlag nodes in the graph.
+type OrganizationFeatureFlagMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	created_at          *time.Time
+	updated_at          *time.Time
+	is_enabled          *bool
+	clearedFields       map[string]struct{}
+	feature_flag        *uuid.UUID
+	clearedfeature_flag bool
+	organization        *uuid.UUID
+	clearedorganization bool
+	done                bool
+	oldValue            func(context.Context) (*OrganizationFeatureFlag, error)
+	predicates          []predicate.OrganizationFeatureFlag
+}
+
+var _ ent.Mutation = (*OrganizationFeatureFlagMutation)(nil)
+
+// organizationfeatureflagOption allows management of the mutation configuration using functional options.
+type organizationfeatureflagOption func(*OrganizationFeatureFlagMutation)
+
+// newOrganizationFeatureFlagMutation creates new mutation for the OrganizationFeatureFlag entity.
+func newOrganizationFeatureFlagMutation(c config, op Op, opts ...organizationfeatureflagOption) *OrganizationFeatureFlagMutation {
+	m := &OrganizationFeatureFlagMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeOrganizationFeatureFlag,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withOrganizationFeatureFlagID sets the ID field of the mutation.
+func withOrganizationFeatureFlagID(id uuid.UUID) organizationfeatureflagOption {
+	return func(m *OrganizationFeatureFlagMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *OrganizationFeatureFlag
+		)
+		m.oldValue = func(ctx context.Context) (*OrganizationFeatureFlag, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().OrganizationFeatureFlag.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withOrganizationFeatureFlag sets the old OrganizationFeatureFlag of the mutation.
+func withOrganizationFeatureFlag(node *OrganizationFeatureFlag) organizationfeatureflagOption {
+	return func(m *OrganizationFeatureFlagMutation) {
+		m.oldValue = func(context.Context) (*OrganizationFeatureFlag, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m OrganizationFeatureFlagMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m OrganizationFeatureFlagMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of OrganizationFeatureFlag entities.
+func (m *OrganizationFeatureFlagMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *OrganizationFeatureFlagMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *OrganizationFeatureFlagMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().OrganizationFeatureFlag.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *OrganizationFeatureFlagMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *OrganizationFeatureFlagMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the OrganizationFeatureFlag entity.
+// If the OrganizationFeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationFeatureFlagMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *OrganizationFeatureFlagMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *OrganizationFeatureFlagMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *OrganizationFeatureFlagMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the OrganizationFeatureFlag entity.
+// If the OrganizationFeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationFeatureFlagMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *OrganizationFeatureFlagMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *OrganizationFeatureFlagMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *OrganizationFeatureFlagMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the OrganizationFeatureFlag entity.
+// If the OrganizationFeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationFeatureFlagMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *OrganizationFeatureFlagMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetFeatureFlagID sets the "feature_flag_id" field.
+func (m *OrganizationFeatureFlagMutation) SetFeatureFlagID(u uuid.UUID) {
+	m.feature_flag = &u
+}
+
+// FeatureFlagID returns the value of the "feature_flag_id" field in the mutation.
+func (m *OrganizationFeatureFlagMutation) FeatureFlagID() (r uuid.UUID, exists bool) {
+	v := m.feature_flag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFeatureFlagID returns the old "feature_flag_id" field's value of the OrganizationFeatureFlag entity.
+// If the OrganizationFeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationFeatureFlagMutation) OldFeatureFlagID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFeatureFlagID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFeatureFlagID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFeatureFlagID: %w", err)
+	}
+	return oldValue.FeatureFlagID, nil
+}
+
+// ResetFeatureFlagID resets all changes to the "feature_flag_id" field.
+func (m *OrganizationFeatureFlagMutation) ResetFeatureFlagID() {
+	m.feature_flag = nil
+}
+
+// SetIsEnabled sets the "is_enabled" field.
+func (m *OrganizationFeatureFlagMutation) SetIsEnabled(b bool) {
+	m.is_enabled = &b
+}
+
+// IsEnabled returns the value of the "is_enabled" field in the mutation.
+func (m *OrganizationFeatureFlagMutation) IsEnabled() (r bool, exists bool) {
+	v := m.is_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsEnabled returns the old "is_enabled" field's value of the OrganizationFeatureFlag entity.
+// If the OrganizationFeatureFlag object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationFeatureFlagMutation) OldIsEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsEnabled: %w", err)
+	}
+	return oldValue.IsEnabled, nil
+}
+
+// ResetIsEnabled resets all changes to the "is_enabled" field.
+func (m *OrganizationFeatureFlagMutation) ResetIsEnabled() {
+	m.is_enabled = nil
+}
+
+// ClearFeatureFlag clears the "feature_flag" edge to the FeatureFlag entity.
+func (m *OrganizationFeatureFlagMutation) ClearFeatureFlag() {
+	m.clearedfeature_flag = true
+	m.clearedFields[organizationfeatureflag.FieldFeatureFlagID] = struct{}{}
+}
+
+// FeatureFlagCleared reports if the "feature_flag" edge to the FeatureFlag entity was cleared.
+func (m *OrganizationFeatureFlagMutation) FeatureFlagCleared() bool {
+	return m.clearedfeature_flag
+}
+
+// FeatureFlagIDs returns the "feature_flag" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FeatureFlagID instead. It exists only for internal usage by the builders.
+func (m *OrganizationFeatureFlagMutation) FeatureFlagIDs() (ids []uuid.UUID) {
+	if id := m.feature_flag; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFeatureFlag resets all changes to the "feature_flag" edge.
+func (m *OrganizationFeatureFlagMutation) ResetFeatureFlag() {
+	m.feature_flag = nil
+	m.clearedfeature_flag = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *OrganizationFeatureFlagMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[organizationfeatureflag.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *OrganizationFeatureFlagMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *OrganizationFeatureFlagMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *OrganizationFeatureFlagMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// Where appends a list predicates to the OrganizationFeatureFlagMutation builder.
+func (m *OrganizationFeatureFlagMutation) Where(ps ...predicate.OrganizationFeatureFlag) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the OrganizationFeatureFlagMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *OrganizationFeatureFlagMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.OrganizationFeatureFlag, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *OrganizationFeatureFlagMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *OrganizationFeatureFlagMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (OrganizationFeatureFlag).
+func (m *OrganizationFeatureFlagMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *OrganizationFeatureFlagMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, organizationfeatureflag.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, organizationfeatureflag.FieldUpdatedAt)
+	}
+	if m.organization != nil {
+		fields = append(fields, organizationfeatureflag.FieldOrganizationID)
+	}
+	if m.feature_flag != nil {
+		fields = append(fields, organizationfeatureflag.FieldFeatureFlagID)
+	}
+	if m.is_enabled != nil {
+		fields = append(fields, organizationfeatureflag.FieldIsEnabled)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *OrganizationFeatureFlagMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case organizationfeatureflag.FieldCreatedAt:
+		return m.CreatedAt()
+	case organizationfeatureflag.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case organizationfeatureflag.FieldOrganizationID:
+		return m.OrganizationID()
+	case organizationfeatureflag.FieldFeatureFlagID:
+		return m.FeatureFlagID()
+	case organizationfeatureflag.FieldIsEnabled:
+		return m.IsEnabled()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *OrganizationFeatureFlagMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case organizationfeatureflag.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case organizationfeatureflag.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case organizationfeatureflag.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case organizationfeatureflag.FieldFeatureFlagID:
+		return m.OldFeatureFlagID(ctx)
+	case organizationfeatureflag.FieldIsEnabled:
+		return m.OldIsEnabled(ctx)
+	}
+	return nil, fmt.Errorf("unknown OrganizationFeatureFlag field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrganizationFeatureFlagMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case organizationfeatureflag.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case organizationfeatureflag.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case organizationfeatureflag.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case organizationfeatureflag.FieldFeatureFlagID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFeatureFlagID(v)
+		return nil
+	case organizationfeatureflag.FieldIsEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsEnabled(v)
+		return nil
+	}
+	return fmt.Errorf("unknown OrganizationFeatureFlag field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *OrganizationFeatureFlagMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *OrganizationFeatureFlagMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *OrganizationFeatureFlagMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown OrganizationFeatureFlag numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *OrganizationFeatureFlagMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *OrganizationFeatureFlagMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *OrganizationFeatureFlagMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown OrganizationFeatureFlag nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *OrganizationFeatureFlagMutation) ResetField(name string) error {
+	switch name {
+	case organizationfeatureflag.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case organizationfeatureflag.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case organizationfeatureflag.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case organizationfeatureflag.FieldFeatureFlagID:
+		m.ResetFeatureFlagID()
+		return nil
+	case organizationfeatureflag.FieldIsEnabled:
+		m.ResetIsEnabled()
+		return nil
+	}
+	return fmt.Errorf("unknown OrganizationFeatureFlag field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *OrganizationFeatureFlagMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.feature_flag != nil {
+		edges = append(edges, organizationfeatureflag.EdgeFeatureFlag)
+	}
+	if m.organization != nil {
+		edges = append(edges, organizationfeatureflag.EdgeOrganization)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *OrganizationFeatureFlagMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case organizationfeatureflag.EdgeFeatureFlag:
+		if id := m.feature_flag; id != nil {
+			return []ent.Value{*id}
+		}
+	case organizationfeatureflag.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *OrganizationFeatureFlagMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *OrganizationFeatureFlagMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *OrganizationFeatureFlagMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedfeature_flag {
+		edges = append(edges, organizationfeatureflag.EdgeFeatureFlag)
+	}
+	if m.clearedorganization {
+		edges = append(edges, organizationfeatureflag.EdgeOrganization)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *OrganizationFeatureFlagMutation) EdgeCleared(name string) bool {
+	switch name {
+	case organizationfeatureflag.EdgeFeatureFlag:
+		return m.clearedfeature_flag
+	case organizationfeatureflag.EdgeOrganization:
+		return m.clearedorganization
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *OrganizationFeatureFlagMutation) ClearEdge(name string) error {
+	switch name {
+	case organizationfeatureflag.EdgeFeatureFlag:
+		m.ClearFeatureFlag()
+		return nil
+	case organizationfeatureflag.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown OrganizationFeatureFlag unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *OrganizationFeatureFlagMutation) ResetEdge(name string) error {
+	switch name {
+	case organizationfeatureflag.EdgeFeatureFlag:
+		m.ResetFeatureFlag()
+		return nil
+	case organizationfeatureflag.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	}
+	return fmt.Errorf("unknown OrganizationFeatureFlag edge %s", name)
 }
 
 // QualifierCodeMutation represents an operation that mutates the QualifierCode nodes in the graph.

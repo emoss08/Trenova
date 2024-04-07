@@ -56,6 +56,8 @@ type Organization struct {
 type OrganizationEdges struct {
 	// BusinessUnit holds the value of the business_unit edge.
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
+	// OrganizationFeatureFlag holds the value of the organization_feature_flag edge.
+	OrganizationFeatureFlag []*OrganizationFeatureFlag `json:"organization_feature_flag,omitempty"`
 	// AccountingControl holds the value of the accounting_control edge.
 	AccountingControl *AccountingControl `json:"accounting_control,omitempty"`
 	// BillingControl holds the value of the billing_control edge.
@@ -76,7 +78,8 @@ type OrganizationEdges struct {
 	GoogleAPI *GoogleApi `json:"google_api,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [10]bool
+	loadedTypes                  [11]bool
+	namedOrganizationFeatureFlag map[string][]*OrganizationFeatureFlag
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -90,12 +93,21 @@ func (e OrganizationEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
 	return nil, &NotLoadedError{edge: "business_unit"}
 }
 
+// OrganizationFeatureFlagOrErr returns the OrganizationFeatureFlag value or an error if the edge
+// was not loaded in eager-loading.
+func (e OrganizationEdges) OrganizationFeatureFlagOrErr() ([]*OrganizationFeatureFlag, error) {
+	if e.loadedTypes[1] {
+		return e.OrganizationFeatureFlag, nil
+	}
+	return nil, &NotLoadedError{edge: "organization_feature_flag"}
+}
+
 // AccountingControlOrErr returns the AccountingControl value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e OrganizationEdges) AccountingControlOrErr() (*AccountingControl, error) {
 	if e.AccountingControl != nil {
 		return e.AccountingControl, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: accountingcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "accounting_control"}
@@ -106,7 +118,7 @@ func (e OrganizationEdges) AccountingControlOrErr() (*AccountingControl, error) 
 func (e OrganizationEdges) BillingControlOrErr() (*BillingControl, error) {
 	if e.BillingControl != nil {
 		return e.BillingControl, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: billingcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "billing_control"}
@@ -117,7 +129,7 @@ func (e OrganizationEdges) BillingControlOrErr() (*BillingControl, error) {
 func (e OrganizationEdges) DispatchControlOrErr() (*DispatchControl, error) {
 	if e.DispatchControl != nil {
 		return e.DispatchControl, nil
-	} else if e.loadedTypes[3] {
+	} else if e.loadedTypes[4] {
 		return nil, &NotFoundError{label: dispatchcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "dispatch_control"}
@@ -128,7 +140,7 @@ func (e OrganizationEdges) DispatchControlOrErr() (*DispatchControl, error) {
 func (e OrganizationEdges) FeasibilityToolControlOrErr() (*FeasibilityToolControl, error) {
 	if e.FeasibilityToolControl != nil {
 		return e.FeasibilityToolControl, nil
-	} else if e.loadedTypes[4] {
+	} else if e.loadedTypes[5] {
 		return nil, &NotFoundError{label: feasibilitytoolcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "feasibility_tool_control"}
@@ -139,7 +151,7 @@ func (e OrganizationEdges) FeasibilityToolControlOrErr() (*FeasibilityToolContro
 func (e OrganizationEdges) InvoiceControlOrErr() (*InvoiceControl, error) {
 	if e.InvoiceControl != nil {
 		return e.InvoiceControl, nil
-	} else if e.loadedTypes[5] {
+	} else if e.loadedTypes[6] {
 		return nil, &NotFoundError{label: invoicecontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "invoice_control"}
@@ -150,7 +162,7 @@ func (e OrganizationEdges) InvoiceControlOrErr() (*InvoiceControl, error) {
 func (e OrganizationEdges) RouteControlOrErr() (*RouteControl, error) {
 	if e.RouteControl != nil {
 		return e.RouteControl, nil
-	} else if e.loadedTypes[6] {
+	} else if e.loadedTypes[7] {
 		return nil, &NotFoundError{label: routecontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "route_control"}
@@ -161,7 +173,7 @@ func (e OrganizationEdges) RouteControlOrErr() (*RouteControl, error) {
 func (e OrganizationEdges) ShipmentControlOrErr() (*ShipmentControl, error) {
 	if e.ShipmentControl != nil {
 		return e.ShipmentControl, nil
-	} else if e.loadedTypes[7] {
+	} else if e.loadedTypes[8] {
 		return nil, &NotFoundError{label: shipmentcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "shipment_control"}
@@ -172,7 +184,7 @@ func (e OrganizationEdges) ShipmentControlOrErr() (*ShipmentControl, error) {
 func (e OrganizationEdges) EmailControlOrErr() (*EmailControl, error) {
 	if e.EmailControl != nil {
 		return e.EmailControl, nil
-	} else if e.loadedTypes[8] {
+	} else if e.loadedTypes[9] {
 		return nil, &NotFoundError{label: emailcontrol.Label}
 	}
 	return nil, &NotLoadedError{edge: "email_control"}
@@ -183,7 +195,7 @@ func (e OrganizationEdges) EmailControlOrErr() (*EmailControl, error) {
 func (e OrganizationEdges) GoogleAPIOrErr() (*GoogleApi, error) {
 	if e.GoogleAPI != nil {
 		return e.GoogleAPI, nil
-	} else if e.loadedTypes[9] {
+	} else if e.loadedTypes[10] {
 		return nil, &NotFoundError{label: googleapi.Label}
 	}
 	return nil, &NotLoadedError{edge: "google_api"}
@@ -294,6 +306,11 @@ func (o *Organization) QueryBusinessUnit() *BusinessUnitQuery {
 	return NewOrganizationClient(o.config).QueryBusinessUnit(o)
 }
 
+// QueryOrganizationFeatureFlag queries the "organization_feature_flag" edge of the Organization entity.
+func (o *Organization) QueryOrganizationFeatureFlag() *OrganizationFeatureFlagQuery {
+	return NewOrganizationClient(o.config).QueryOrganizationFeatureFlag(o)
+}
+
 // QueryAccountingControl queries the "accounting_control" edge of the Organization entity.
 func (o *Organization) QueryAccountingControl() *AccountingControlQuery {
 	return NewOrganizationClient(o.config).QueryAccountingControl(o)
@@ -392,6 +409,30 @@ func (o *Organization) String() string {
 	builder.WriteString(fmt.Sprintf("%v", o.Timezone))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedOrganizationFeatureFlag returns the OrganizationFeatureFlag named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (o *Organization) NamedOrganizationFeatureFlag(name string) ([]*OrganizationFeatureFlag, error) {
+	if o.Edges.namedOrganizationFeatureFlag == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := o.Edges.namedOrganizationFeatureFlag[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (o *Organization) appendNamedOrganizationFeatureFlag(name string, edges ...*OrganizationFeatureFlag) {
+	if o.Edges.namedOrganizationFeatureFlag == nil {
+		o.Edges.namedOrganizationFeatureFlag = make(map[string][]*OrganizationFeatureFlag)
+	}
+	if len(edges) == 0 {
+		o.Edges.namedOrganizationFeatureFlag[name] = []*OrganizationFeatureFlag{}
+	} else {
+		o.Edges.namedOrganizationFeatureFlag[name] = append(o.Edges.namedOrganizationFeatureFlag[name], edges...)
+	}
 }
 
 // Organizations is a parsable slice of Organization.

@@ -37,11 +37,19 @@ export interface Worker extends BaseModel {
   thumbnail?: string;
   enteredBy: string;
   profile: WorkerProfile;
-  contacts: WorkerContact[];
-  comments: WorkerComment[];
-  timeAway: WorkerTimeAway[];
+
   currentHos?: WorkerHOS | null;
+  edges: {
+    contacts: WorkerContact[];
+    comments: WorkerComment[];
+    timeAway: WorkerTimeAway[];
+  };
 }
+
+export type WorkerFormValues = Omit<
+  Worker,
+  "organizationId" | "createdAt" | "updatedAt" | "id" | "version" | "edges"
+>;
 
 export interface WorkerProfile extends BaseModel {
   worker: string;
