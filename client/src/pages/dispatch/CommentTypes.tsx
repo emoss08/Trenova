@@ -21,10 +21,22 @@ import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
+import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/choices";
 import { type CommentType } from "@/types/dispatch";
 import { type FilterConfig } from "@/types/tables";
 import { type ColumnDef } from "@tanstack/react-table";
+
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case "High":
+      return "inactive";
+    case "Medium":
+      return "info";
+    default:
+      return "active";
+  }
+};
 
 const columns: ColumnDef<CommentType>[] = [
   {
@@ -63,6 +75,22 @@ const columns: ColumnDef<CommentType>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
+  },
+  {
+    accessorKey: "severity",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Severity" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <Badge
+          className="px-2.5 py-0.5 text-xs"
+          variant={getSeverityColor(row.original.severity)}
+        >
+          {row.original.severity}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "description",

@@ -1,31 +1,7 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
   hazardousClassChoices,
@@ -39,6 +15,16 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 import { Form, FormControl, FormGroup } from "./ui/form";
 
 export function HazardousMaterialForm({
@@ -76,17 +62,15 @@ export function HazardousMaterialForm({
             description={t("fields.name.description")}
           />
         </FormControl>
-      </FormGroup>
-      <div className="my-2 grid w-full items-center gap-0.5">
-        <TextareaField
-          name="description"
-          control={control}
-          label={t("fields.description.label")}
-          placeholder={t("fields.description.placeholder")}
-          description={t("fields.description.description")}
-        />
-      </div>
-      <FormGroup className="grid gap-2 md:grid-cols-2 lg:grid-cols-2">
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="description"
+            control={control}
+            label={t("fields.description.label")}
+            placeholder={t("fields.description.placeholder")}
+            description={t("fields.description.description")}
+          />
+        </FormControl>
         <FormControl>
           <SelectInput
             name="hazardClass"
@@ -134,16 +118,16 @@ export function HazardousMaterialForm({
             description={t("fields.additionalCost.description")}
           />
         </FormControl>
+        <FormControl className="col-span-full">
+          <TextareaField
+            name="properShippingName"
+            control={control}
+            label={t("fields.properShippingName.label")}
+            placeholder={t("fields.properShippingName.placeholder")}
+            description={t("fields.properShippingName.description")}
+          />
+        </FormControl>
       </FormGroup>
-      <div className="my-2 grid w-full items-center gap-0.5">
-        <TextareaField
-          name="properShippingName"
-          control={control}
-          label={t("fields.properShippingName.label")}
-          placeholder={t("fields.properShippingName.placeholder")}
-          description={t("fields.properShippingName.description")}
-        />
-      </div>
     </Form>
   );
 }
@@ -190,21 +174,28 @@ export function HazardousMaterialDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>{t("description")}</DialogDescription>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <HazardousMaterialForm control={control} />
-          <DialogFooter className="mt-6">
-            <Button type="submit" isLoading={isSubmitting}>
-              {t("buttons.save", { ns: "common" })}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>{t("title")}</CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>{t("description")}</CredenzaDescription>
+        <CredenzaBody>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <HazardousMaterialForm control={control} />
+            <CredenzaFooter>
+              <CredenzaClose asChild>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </CredenzaClose>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Changes
+              </Button>
+            </CredenzaFooter>
+          </form>
+        </CredenzaBody>
+      </CredenzaContent>
+    </Credenza>
   );
 }

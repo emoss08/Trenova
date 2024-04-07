@@ -1,31 +1,6 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { emailProtocolChoices } from "@/lib/choices";
@@ -37,6 +12,16 @@ import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { CheckboxInput } from "./common/fields/checkbox";
+import {
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
+} from "./ui/credenza";
 
 export function EmailProfileForm({
   control,
@@ -179,21 +164,28 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>{t("subTitle")}</DialogDescription>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <EmailProfileForm control={control} />
-          <DialogFooter className="mt-6">
-            <Button type="submit" isLoading={isSubmitting}>
-              {t("buttons.save", { ns: "common" })}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent>
+        <CredenzaHeader>
+          <CredenzaTitle>{t("title")}</CredenzaTitle>
+        </CredenzaHeader>
+        <CredenzaDescription>{t("subTitle")} </CredenzaDescription>
+        <CredenzaBody>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <EmailProfileForm control={control} />
+            <CredenzaFooter>
+              <CredenzaClose asChild>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              </CredenzaClose>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Changes
+              </Button>
+            </CredenzaFooter>
+          </form>
+        </CredenzaBody>
+      </CredenzaContent>
+    </Credenza>
   );
 }
