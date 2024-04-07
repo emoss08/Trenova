@@ -49392,6 +49392,8 @@ type WorkerMutation struct {
 	worker_type              *worker.WorkerType
 	first_name               *string
 	last_name                *string
+	address_line_1           *string
+	address_line_2           *string
 	city                     *string
 	postal_code              *string
 	clearedFields            map[string]struct{}
@@ -49953,6 +49955,104 @@ func (m *WorkerMutation) OldLastName(ctx context.Context) (v string, err error) 
 // ResetLastName resets all changes to the "last_name" field.
 func (m *WorkerMutation) ResetLastName() {
 	m.last_name = nil
+}
+
+// SetAddressLine1 sets the "address_line_1" field.
+func (m *WorkerMutation) SetAddressLine1(s string) {
+	m.address_line_1 = &s
+}
+
+// AddressLine1 returns the value of the "address_line_1" field in the mutation.
+func (m *WorkerMutation) AddressLine1() (r string, exists bool) {
+	v := m.address_line_1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddressLine1 returns the old "address_line_1" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldAddressLine1(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddressLine1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddressLine1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddressLine1: %w", err)
+	}
+	return oldValue.AddressLine1, nil
+}
+
+// ClearAddressLine1 clears the value of the "address_line_1" field.
+func (m *WorkerMutation) ClearAddressLine1() {
+	m.address_line_1 = nil
+	m.clearedFields[worker.FieldAddressLine1] = struct{}{}
+}
+
+// AddressLine1Cleared returns if the "address_line_1" field was cleared in this mutation.
+func (m *WorkerMutation) AddressLine1Cleared() bool {
+	_, ok := m.clearedFields[worker.FieldAddressLine1]
+	return ok
+}
+
+// ResetAddressLine1 resets all changes to the "address_line_1" field.
+func (m *WorkerMutation) ResetAddressLine1() {
+	m.address_line_1 = nil
+	delete(m.clearedFields, worker.FieldAddressLine1)
+}
+
+// SetAddressLine2 sets the "address_line_2" field.
+func (m *WorkerMutation) SetAddressLine2(s string) {
+	m.address_line_2 = &s
+}
+
+// AddressLine2 returns the value of the "address_line_2" field in the mutation.
+func (m *WorkerMutation) AddressLine2() (r string, exists bool) {
+	v := m.address_line_2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddressLine2 returns the old "address_line_2" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldAddressLine2(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddressLine2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddressLine2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddressLine2: %w", err)
+	}
+	return oldValue.AddressLine2, nil
+}
+
+// ClearAddressLine2 clears the value of the "address_line_2" field.
+func (m *WorkerMutation) ClearAddressLine2() {
+	m.address_line_2 = nil
+	m.clearedFields[worker.FieldAddressLine2] = struct{}{}
+}
+
+// AddressLine2Cleared returns if the "address_line_2" field was cleared in this mutation.
+func (m *WorkerMutation) AddressLine2Cleared() bool {
+	_, ok := m.clearedFields[worker.FieldAddressLine2]
+	return ok
+}
+
+// ResetAddressLine2 resets all changes to the "address_line_2" field.
+func (m *WorkerMutation) ResetAddressLine2() {
+	m.address_line_2 = nil
+	delete(m.clearedFields, worker.FieldAddressLine2)
 }
 
 // SetCity sets the "city" field.
@@ -50594,7 +50694,7 @@ func (m *WorkerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 18)
 	if m.business_unit != nil {
 		fields = append(fields, worker.FieldBusinessUnitID)
 	}
@@ -50627,6 +50727,12 @@ func (m *WorkerMutation) Fields() []string {
 	}
 	if m.last_name != nil {
 		fields = append(fields, worker.FieldLastName)
+	}
+	if m.address_line_1 != nil {
+		fields = append(fields, worker.FieldAddressLine1)
+	}
+	if m.address_line_2 != nil {
+		fields = append(fields, worker.FieldAddressLine2)
 	}
 	if m.city != nil {
 		fields = append(fields, worker.FieldCity)
@@ -50673,6 +50779,10 @@ func (m *WorkerMutation) Field(name string) (ent.Value, bool) {
 		return m.FirstName()
 	case worker.FieldLastName:
 		return m.LastName()
+	case worker.FieldAddressLine1:
+		return m.AddressLine1()
+	case worker.FieldAddressLine2:
+		return m.AddressLine2()
 	case worker.FieldCity:
 		return m.City()
 	case worker.FieldPostalCode:
@@ -50714,6 +50824,10 @@ func (m *WorkerMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldFirstName(ctx)
 	case worker.FieldLastName:
 		return m.OldLastName(ctx)
+	case worker.FieldAddressLine1:
+		return m.OldAddressLine1(ctx)
+	case worker.FieldAddressLine2:
+		return m.OldAddressLine2(ctx)
 	case worker.FieldCity:
 		return m.OldCity(ctx)
 	case worker.FieldPostalCode:
@@ -50810,6 +50924,20 @@ func (m *WorkerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLastName(v)
 		return nil
+	case worker.FieldAddressLine1:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddressLine1(v)
+		return nil
+	case worker.FieldAddressLine2:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddressLine2(v)
+		return nil
 	case worker.FieldCity:
 		v, ok := value.(string)
 		if !ok {
@@ -50893,6 +51021,12 @@ func (m *WorkerMutation) ClearedFields() []string {
 	if m.FieldCleared(worker.FieldProfilePictureURL) {
 		fields = append(fields, worker.FieldProfilePictureURL)
 	}
+	if m.FieldCleared(worker.FieldAddressLine1) {
+		fields = append(fields, worker.FieldAddressLine1)
+	}
+	if m.FieldCleared(worker.FieldAddressLine2) {
+		fields = append(fields, worker.FieldAddressLine2)
+	}
 	if m.FieldCleared(worker.FieldCity) {
 		fields = append(fields, worker.FieldCity)
 	}
@@ -50924,6 +51058,12 @@ func (m *WorkerMutation) ClearField(name string) error {
 	switch name {
 	case worker.FieldProfilePictureURL:
 		m.ClearProfilePictureURL()
+		return nil
+	case worker.FieldAddressLine1:
+		m.ClearAddressLine1()
+		return nil
+	case worker.FieldAddressLine2:
+		m.ClearAddressLine2()
 		return nil
 	case worker.FieldCity:
 		m.ClearCity()
@@ -50980,6 +51120,12 @@ func (m *WorkerMutation) ResetField(name string) error {
 		return nil
 	case worker.FieldLastName:
 		m.ResetLastName()
+		return nil
+	case worker.FieldAddressLine1:
+		m.ResetAddressLine1()
+		return nil
+	case worker.FieldAddressLine2:
+		m.ResetAddressLine2()
 		return nil
 	case worker.FieldCity:
 		m.ResetCity()

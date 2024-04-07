@@ -1124,6 +1124,8 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldWorkerType:        {Type: field.TypeEnum, Column: worker.FieldWorkerType},
 			worker.FieldFirstName:         {Type: field.TypeString, Column: worker.FieldFirstName},
 			worker.FieldLastName:          {Type: field.TypeString, Column: worker.FieldLastName},
+			worker.FieldAddressLine1:      {Type: field.TypeString, Column: worker.FieldAddressLine1},
+			worker.FieldAddressLine2:      {Type: field.TypeString, Column: worker.FieldAddressLine2},
 			worker.FieldCity:              {Type: field.TypeString, Column: worker.FieldCity},
 			worker.FieldPostalCode:        {Type: field.TypeString, Column: worker.FieldPostalCode},
 			worker.FieldStateID:           {Type: field.TypeUUID, Column: worker.FieldStateID},
@@ -8981,6 +8983,16 @@ func (f *WorkerFilter) WhereFirstName(p entql.StringP) {
 // WhereLastName applies the entql string predicate on the last_name field.
 func (f *WorkerFilter) WhereLastName(p entql.StringP) {
 	f.Where(p.Field(worker.FieldLastName))
+}
+
+// WhereAddressLine1 applies the entql string predicate on the address_line_1 field.
+func (f *WorkerFilter) WhereAddressLine1(p entql.StringP) {
+	f.Where(p.Field(worker.FieldAddressLine1))
+}
+
+// WhereAddressLine2 applies the entql string predicate on the address_line_2 field.
+func (f *WorkerFilter) WhereAddressLine2(p entql.StringP) {
+	f.Where(p.Field(worker.FieldAddressLine2))
 }
 
 // WhereCity applies the entql string predicate on the city field.

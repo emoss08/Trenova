@@ -43,9 +43,30 @@ func (Worker) Fields() []ent.Field {
 		field.String("last_name").
 			NotEmpty().
 			StructTag(`json:"lastName" validate:"required,max=255"`),
+		field.String("address_line_1").
+			Optional().
+			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
+			StructTag(`json:"addressLine1" validate:"required,max=150"`),
+		field.String("address_line_2").
+			Optional().
+			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
+			StructTag(`json:"addressLine2" validate:"omitempty,max=150"`),
 		field.String("city").
 			Optional().
-			StructTag(`json:"city" validate:"omitempty,max=255"`),
+			MaxLen(150).
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(150)",
+				dialect.SQLite:   "VARCHAR(150)",
+			}).
+			StructTag(`json:"city" validate:"required,max=150"`),
 		field.String("postal_code").
 			Optional().
 			MaxLen(10).

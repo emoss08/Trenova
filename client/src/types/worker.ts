@@ -16,11 +16,12 @@
  */
 
 import { BaseModel } from "@/types/organization";
+import { StatusChoiceProps } from ".";
 
 export interface Worker extends BaseModel {
   id: string;
   code: string;
-  isActive: boolean;
+  status: StatusChoiceProps;
   workerType: string;
   firstName: string;
   lastName: string;

@@ -2017,8 +2017,20 @@ func init() {
 	workerDescLastName := workerFields[5].Descriptor()
 	// worker.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	worker.LastNameValidator = workerDescLastName.Validators[0].(func(string) error)
+	// workerDescAddressLine1 is the schema descriptor for address_line_1 field.
+	workerDescAddressLine1 := workerFields[6].Descriptor()
+	// worker.AddressLine1Validator is a validator for the "address_line_1" field. It is called by the builders before save.
+	worker.AddressLine1Validator = workerDescAddressLine1.Validators[0].(func(string) error)
+	// workerDescAddressLine2 is the schema descriptor for address_line_2 field.
+	workerDescAddressLine2 := workerFields[7].Descriptor()
+	// worker.AddressLine2Validator is a validator for the "address_line_2" field. It is called by the builders before save.
+	worker.AddressLine2Validator = workerDescAddressLine2.Validators[0].(func(string) error)
+	// workerDescCity is the schema descriptor for city field.
+	workerDescCity := workerFields[8].Descriptor()
+	// worker.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	worker.CityValidator = workerDescCity.Validators[0].(func(string) error)
 	// workerDescPostalCode is the schema descriptor for postal_code field.
-	workerDescPostalCode := workerFields[7].Descriptor()
+	workerDescPostalCode := workerFields[9].Descriptor()
 	// worker.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
 	worker.PostalCodeValidator = workerDescPostalCode.Validators[0].(func(string) error)
 	// workerDescID is the schema descriptor for id field.

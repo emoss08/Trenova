@@ -169,12 +169,20 @@ export const dispatchNavLinks = [
               "Define and categorize various transportation routes. Supports strategic route planning and optimization for enhanced delivery efficiency.",
           },
           {
-            key: "routeTypes",
+            key: "locationCategories",
             label: "Location Categories",
             link: "/dispatch/location-categories/",
             permission: "view_locationcategory",
             description:
               "Segment locations into distinct categories for better logistical planning. Helps in tailoring operations to specific location characteristics and requirements.",
+          },
+          {
+            key: "workers",
+            label: "Workers",
+            link: "/dispatch/workers/",
+            permission: "view_worker",
+            description:
+              "Manage and categorize workers involved in dispatch operations. This includes drivers, dispatchers, and other operational staff.",
           },
         ],
       },
