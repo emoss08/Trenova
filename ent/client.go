@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
@@ -44,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcomment"
 	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
@@ -106,6 +108,8 @@ type Client struct {
 	EquipmentType *EquipmentTypeClient
 	// FeasibilityToolControl is the client for interacting with the FeasibilityToolControl builders.
 	FeasibilityToolControl *FeasibilityToolControlClient
+	// FeatureFlag is the client for interacting with the FeatureFlag builders.
+	FeatureFlag *FeatureFlagClient
 	// FleetCode is the client for interacting with the FleetCode builders.
 	FleetCode *FleetCodeClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
@@ -128,6 +132,8 @@ type Client struct {
 	LocationContact *LocationContactClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
+	// OrganizationFeatureFlag is the client for interacting with the OrganizationFeatureFlag builders.
+	OrganizationFeatureFlag *OrganizationFeatureFlagClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
 	// ReasonCode is the client for interacting with the ReasonCode builders.
@@ -194,6 +200,7 @@ func (c *Client) init() {
 	c.EquipmentManufactuer = NewEquipmentManufactuerClient(c.config)
 	c.EquipmentType = NewEquipmentTypeClient(c.config)
 	c.FeasibilityToolControl = NewFeasibilityToolControlClient(c.config)
+	c.FeatureFlag = NewFeatureFlagClient(c.config)
 	c.FleetCode = NewFleetCodeClient(c.config)
 	c.GeneralLedgerAccount = NewGeneralLedgerAccountClient(c.config)
 	c.GoogleApi = NewGoogleApiClient(c.config)
@@ -205,6 +212,7 @@ func (c *Client) init() {
 	c.LocationComment = NewLocationCommentClient(c.config)
 	c.LocationContact = NewLocationContactClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
+	c.OrganizationFeatureFlag = NewOrganizationFeatureFlagClient(c.config)
 	c.QualifierCode = NewQualifierCodeClient(c.config)
 	c.ReasonCode = NewReasonCodeClient(c.config)
 	c.RevenueCode = NewRevenueCodeClient(c.config)
@@ -333,6 +341,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		EquipmentManufactuer:         NewEquipmentManufactuerClient(cfg),
 		EquipmentType:                NewEquipmentTypeClient(cfg),
 		FeasibilityToolControl:       NewFeasibilityToolControlClient(cfg),
+		FeatureFlag:                  NewFeatureFlagClient(cfg),
 		FleetCode:                    NewFleetCodeClient(cfg),
 		GeneralLedgerAccount:         NewGeneralLedgerAccountClient(cfg),
 		GoogleApi:                    NewGoogleApiClient(cfg),
@@ -344,6 +353,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		LocationComment:              NewLocationCommentClient(cfg),
 		LocationContact:              NewLocationContactClient(cfg),
 		Organization:                 NewOrganizationClient(cfg),
+		OrganizationFeatureFlag:      NewOrganizationFeatureFlagClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
 		RevenueCode:                  NewRevenueCodeClient(cfg),
@@ -399,6 +409,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		EquipmentManufactuer:         NewEquipmentManufactuerClient(cfg),
 		EquipmentType:                NewEquipmentTypeClient(cfg),
 		FeasibilityToolControl:       NewFeasibilityToolControlClient(cfg),
+		FeatureFlag:                  NewFeatureFlagClient(cfg),
 		FleetCode:                    NewFleetCodeClient(cfg),
 		GeneralLedgerAccount:         NewGeneralLedgerAccountClient(cfg),
 		GoogleApi:                    NewGoogleApiClient(cfg),
@@ -410,6 +421,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		LocationComment:              NewLocationCommentClient(cfg),
 		LocationContact:              NewLocationContactClient(cfg),
 		Organization:                 NewOrganizationClient(cfg),
+		OrganizationFeatureFlag:      NewOrganizationFeatureFlagClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
 		RevenueCode:                  NewRevenueCodeClient(cfg),
@@ -462,13 +474,14 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
 		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
-		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
-		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
-		c.Location, c.LocationCategory, c.LocationComment, c.LocationContact,
-		c.Organization, c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl,
-		c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
-		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.FeasibilityToolControl, c.FeatureFlag, c.FleetCode, c.GeneralLedgerAccount,
+		c.GoogleApi, c.HazardousMaterial, c.HazardousMaterialSegregation,
+		c.InvoiceControl, c.Location, c.LocationCategory, c.LocationComment,
+		c.LocationContact, c.Organization, c.OrganizationFeatureFlag, c.QualifierCode,
+		c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
+		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor,
+		c.Trailer, c.UsState, c.User, c.UserFavorite, c.Worker, c.WorkerComment,
+		c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -482,13 +495,14 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
 		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
 		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
-		c.FeasibilityToolControl, c.FleetCode, c.GeneralLedgerAccount, c.GoogleApi,
-		c.HazardousMaterial, c.HazardousMaterialSegregation, c.InvoiceControl,
-		c.Location, c.LocationCategory, c.LocationComment, c.LocationContact,
-		c.Organization, c.QualifierCode, c.ReasonCode, c.RevenueCode, c.RouteControl,
-		c.ServiceType, c.Session, c.ShipmentControl, c.ShipmentType,
-		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.FeasibilityToolControl, c.FeatureFlag, c.FleetCode, c.GeneralLedgerAccount,
+		c.GoogleApi, c.HazardousMaterial, c.HazardousMaterialSegregation,
+		c.InvoiceControl, c.Location, c.LocationCategory, c.LocationComment,
+		c.LocationContact, c.Organization, c.OrganizationFeatureFlag, c.QualifierCode,
+		c.ReasonCode, c.RevenueCode, c.RouteControl, c.ServiceType, c.Session,
+		c.ShipmentControl, c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor,
+		c.Trailer, c.UsState, c.User, c.UserFavorite, c.Worker, c.WorkerComment,
+		c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -531,6 +545,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.EquipmentType.mutate(ctx, m)
 	case *FeasibilityToolControlMutation:
 		return c.FeasibilityToolControl.mutate(ctx, m)
+	case *FeatureFlagMutation:
+		return c.FeatureFlag.mutate(ctx, m)
 	case *FleetCodeMutation:
 		return c.FleetCode.mutate(ctx, m)
 	case *GeneralLedgerAccountMutation:
@@ -553,6 +569,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.LocationContact.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
+	case *OrganizationFeatureFlagMutation:
+		return c.OrganizationFeatureFlag.mutate(ctx, m)
 	case *QualifierCodeMutation:
 		return c.QualifierCode.mutate(ctx, m)
 	case *ReasonCodeMutation:
@@ -3564,6 +3582,155 @@ func (c *FeasibilityToolControlClient) mutate(ctx context.Context, m *Feasibilit
 	}
 }
 
+// FeatureFlagClient is a client for the FeatureFlag schema.
+type FeatureFlagClient struct {
+	config
+}
+
+// NewFeatureFlagClient returns a client for the FeatureFlag from the given config.
+func NewFeatureFlagClient(c config) *FeatureFlagClient {
+	return &FeatureFlagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `featureflag.Hooks(f(g(h())))`.
+func (c *FeatureFlagClient) Use(hooks ...Hook) {
+	c.hooks.FeatureFlag = append(c.hooks.FeatureFlag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `featureflag.Intercept(f(g(h())))`.
+func (c *FeatureFlagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.FeatureFlag = append(c.inters.FeatureFlag, interceptors...)
+}
+
+// Create returns a builder for creating a FeatureFlag entity.
+func (c *FeatureFlagClient) Create() *FeatureFlagCreate {
+	mutation := newFeatureFlagMutation(c.config, OpCreate)
+	return &FeatureFlagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of FeatureFlag entities.
+func (c *FeatureFlagClient) CreateBulk(builders ...*FeatureFlagCreate) *FeatureFlagCreateBulk {
+	return &FeatureFlagCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *FeatureFlagClient) MapCreateBulk(slice any, setFunc func(*FeatureFlagCreate, int)) *FeatureFlagCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &FeatureFlagCreateBulk{err: fmt.Errorf("calling to FeatureFlagClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*FeatureFlagCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &FeatureFlagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for FeatureFlag.
+func (c *FeatureFlagClient) Update() *FeatureFlagUpdate {
+	mutation := newFeatureFlagMutation(c.config, OpUpdate)
+	return &FeatureFlagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FeatureFlagClient) UpdateOne(ff *FeatureFlag) *FeatureFlagUpdateOne {
+	mutation := newFeatureFlagMutation(c.config, OpUpdateOne, withFeatureFlag(ff))
+	return &FeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FeatureFlagClient) UpdateOneID(id uuid.UUID) *FeatureFlagUpdateOne {
+	mutation := newFeatureFlagMutation(c.config, OpUpdateOne, withFeatureFlagID(id))
+	return &FeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for FeatureFlag.
+func (c *FeatureFlagClient) Delete() *FeatureFlagDelete {
+	mutation := newFeatureFlagMutation(c.config, OpDelete)
+	return &FeatureFlagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *FeatureFlagClient) DeleteOne(ff *FeatureFlag) *FeatureFlagDeleteOne {
+	return c.DeleteOneID(ff.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *FeatureFlagClient) DeleteOneID(id uuid.UUID) *FeatureFlagDeleteOne {
+	builder := c.Delete().Where(featureflag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &FeatureFlagDeleteOne{builder}
+}
+
+// Query returns a query builder for FeatureFlag.
+func (c *FeatureFlagClient) Query() *FeatureFlagQuery {
+	return &FeatureFlagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeFeatureFlag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a FeatureFlag entity by its id.
+func (c *FeatureFlagClient) Get(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
+	return c.Query().Where(featureflag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FeatureFlagClient) GetX(ctx context.Context, id uuid.UUID) *FeatureFlag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrganizationFeatureFlag queries the organization_feature_flag edge of a FeatureFlag.
+func (c *FeatureFlagClient) QueryOrganizationFeatureFlag(ff *FeatureFlag) *OrganizationFeatureFlagQuery {
+	query := (&OrganizationFeatureFlagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ff.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(featureflag.Table, featureflag.FieldID, id),
+			sqlgraph.To(organizationfeatureflag.Table, organizationfeatureflag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, featureflag.OrganizationFeatureFlagTable, featureflag.OrganizationFeatureFlagColumn),
+		)
+		fromV = sqlgraph.Neighbors(ff.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *FeatureFlagClient) Hooks() []Hook {
+	return c.hooks.FeatureFlag
+}
+
+// Interceptors returns the client interceptors.
+func (c *FeatureFlagClient) Interceptors() []Interceptor {
+	return c.inters.FeatureFlag
+}
+
+func (c *FeatureFlagClient) mutate(ctx context.Context, m *FeatureFlagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&FeatureFlagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&FeatureFlagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&FeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&FeatureFlagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown FeatureFlag mutation op: %q", m.Op())
+	}
+}
+
 // FleetCodeClient is a client for the FleetCode schema.
 type FleetCodeClient struct {
 	config
@@ -5498,6 +5665,22 @@ func (c *OrganizationClient) QueryBusinessUnit(o *Organization) *BusinessUnitQue
 	return query
 }
 
+// QueryOrganizationFeatureFlag queries the organization_feature_flag edge of a Organization.
+func (c *OrganizationClient) QueryOrganizationFeatureFlag(o *Organization) *OrganizationFeatureFlagQuery {
+	query := (&OrganizationFeatureFlagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(organizationfeatureflag.Table, organizationfeatureflag.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, organization.OrganizationFeatureFlagTable, organization.OrganizationFeatureFlagColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAccountingControl queries the accounting_control edge of a Organization.
 func (c *OrganizationClient) QueryAccountingControl(o *Organization) *AccountingControlQuery {
 	query := (&AccountingControlClient{config: c.config}).Query()
@@ -5664,6 +5847,171 @@ func (c *OrganizationClient) mutate(ctx context.Context, m *OrganizationMutation
 		return (&OrganizationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Organization mutation op: %q", m.Op())
+	}
+}
+
+// OrganizationFeatureFlagClient is a client for the OrganizationFeatureFlag schema.
+type OrganizationFeatureFlagClient struct {
+	config
+}
+
+// NewOrganizationFeatureFlagClient returns a client for the OrganizationFeatureFlag from the given config.
+func NewOrganizationFeatureFlagClient(c config) *OrganizationFeatureFlagClient {
+	return &OrganizationFeatureFlagClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `organizationfeatureflag.Hooks(f(g(h())))`.
+func (c *OrganizationFeatureFlagClient) Use(hooks ...Hook) {
+	c.hooks.OrganizationFeatureFlag = append(c.hooks.OrganizationFeatureFlag, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `organizationfeatureflag.Intercept(f(g(h())))`.
+func (c *OrganizationFeatureFlagClient) Intercept(interceptors ...Interceptor) {
+	c.inters.OrganizationFeatureFlag = append(c.inters.OrganizationFeatureFlag, interceptors...)
+}
+
+// Create returns a builder for creating a OrganizationFeatureFlag entity.
+func (c *OrganizationFeatureFlagClient) Create() *OrganizationFeatureFlagCreate {
+	mutation := newOrganizationFeatureFlagMutation(c.config, OpCreate)
+	return &OrganizationFeatureFlagCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of OrganizationFeatureFlag entities.
+func (c *OrganizationFeatureFlagClient) CreateBulk(builders ...*OrganizationFeatureFlagCreate) *OrganizationFeatureFlagCreateBulk {
+	return &OrganizationFeatureFlagCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OrganizationFeatureFlagClient) MapCreateBulk(slice any, setFunc func(*OrganizationFeatureFlagCreate, int)) *OrganizationFeatureFlagCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OrganizationFeatureFlagCreateBulk{err: fmt.Errorf("calling to OrganizationFeatureFlagClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OrganizationFeatureFlagCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OrganizationFeatureFlagCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for OrganizationFeatureFlag.
+func (c *OrganizationFeatureFlagClient) Update() *OrganizationFeatureFlagUpdate {
+	mutation := newOrganizationFeatureFlagMutation(c.config, OpUpdate)
+	return &OrganizationFeatureFlagUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OrganizationFeatureFlagClient) UpdateOne(off *OrganizationFeatureFlag) *OrganizationFeatureFlagUpdateOne {
+	mutation := newOrganizationFeatureFlagMutation(c.config, OpUpdateOne, withOrganizationFeatureFlag(off))
+	return &OrganizationFeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OrganizationFeatureFlagClient) UpdateOneID(id uuid.UUID) *OrganizationFeatureFlagUpdateOne {
+	mutation := newOrganizationFeatureFlagMutation(c.config, OpUpdateOne, withOrganizationFeatureFlagID(id))
+	return &OrganizationFeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for OrganizationFeatureFlag.
+func (c *OrganizationFeatureFlagClient) Delete() *OrganizationFeatureFlagDelete {
+	mutation := newOrganizationFeatureFlagMutation(c.config, OpDelete)
+	return &OrganizationFeatureFlagDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OrganizationFeatureFlagClient) DeleteOne(off *OrganizationFeatureFlag) *OrganizationFeatureFlagDeleteOne {
+	return c.DeleteOneID(off.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OrganizationFeatureFlagClient) DeleteOneID(id uuid.UUID) *OrganizationFeatureFlagDeleteOne {
+	builder := c.Delete().Where(organizationfeatureflag.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OrganizationFeatureFlagDeleteOne{builder}
+}
+
+// Query returns a query builder for OrganizationFeatureFlag.
+func (c *OrganizationFeatureFlagClient) Query() *OrganizationFeatureFlagQuery {
+	return &OrganizationFeatureFlagQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOrganizationFeatureFlag},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a OrganizationFeatureFlag entity by its id.
+func (c *OrganizationFeatureFlagClient) Get(ctx context.Context, id uuid.UUID) (*OrganizationFeatureFlag, error) {
+	return c.Query().Where(organizationfeatureflag.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OrganizationFeatureFlagClient) GetX(ctx context.Context, id uuid.UUID) *OrganizationFeatureFlag {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryFeatureFlag queries the feature_flag edge of a OrganizationFeatureFlag.
+func (c *OrganizationFeatureFlagClient) QueryFeatureFlag(off *OrganizationFeatureFlag) *FeatureFlagQuery {
+	query := (&FeatureFlagClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := off.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organizationfeatureflag.Table, organizationfeatureflag.FieldID, id),
+			sqlgraph.To(featureflag.Table, featureflag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organizationfeatureflag.FeatureFlagTable, organizationfeatureflag.FeatureFlagColumn),
+		)
+		fromV = sqlgraph.Neighbors(off.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a OrganizationFeatureFlag.
+func (c *OrganizationFeatureFlagClient) QueryOrganization(off *OrganizationFeatureFlag) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := off.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organizationfeatureflag.Table, organizationfeatureflag.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, organizationfeatureflag.OrganizationTable, organizationfeatureflag.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(off.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *OrganizationFeatureFlagClient) Hooks() []Hook {
+	return c.hooks.OrganizationFeatureFlag
+}
+
+// Interceptors returns the client interceptors.
+func (c *OrganizationFeatureFlagClient) Interceptors() []Interceptor {
+	return c.inters.OrganizationFeatureFlag
+}
+
+func (c *OrganizationFeatureFlagClient) mutate(ctx context.Context, m *OrganizationFeatureFlagMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OrganizationFeatureFlagCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OrganizationFeatureFlagUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OrganizationFeatureFlagUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OrganizationFeatureFlagDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown OrganizationFeatureFlag mutation op: %q", m.Op())
 	}
 }
 
@@ -9229,9 +9577,10 @@ type (
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
-		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
-		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
-		Location, LocationCategory, LocationComment, LocationContact, Organization,
+		EquipmentType, FeasibilityToolControl, FeatureFlag, FleetCode,
+		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
+		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
+		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		ShipmentControl, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
 		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,
@@ -9241,9 +9590,10 @@ type (
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
 		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
 		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
-		EquipmentType, FeasibilityToolControl, FleetCode, GeneralLedgerAccount,
-		GoogleApi, HazardousMaterial, HazardousMaterialSegregation, InvoiceControl,
-		Location, LocationCategory, LocationComment, LocationContact, Organization,
+		EquipmentType, FeasibilityToolControl, FeatureFlag, FleetCode,
+		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
+		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
+		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		ShipmentControl, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
 		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,

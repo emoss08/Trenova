@@ -163,6 +163,9 @@ func InitializeRouter() *chi.Mux {
 
 			// Register Location Routes
 			registerLocationRouter(r)
+
+			// Register Organization Feature Flag Routes
+			registerOrganizationFeatureFlagRoutes(r)
 		})
 	})
 

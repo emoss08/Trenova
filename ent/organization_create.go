@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/invoicecontrol"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
@@ -142,6 +143,21 @@ func (oc *OrganizationCreate) SetNillableID(u *uuid.UUID) *OrganizationCreate {
 // SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
 func (oc *OrganizationCreate) SetBusinessUnit(b *BusinessUnit) *OrganizationCreate {
 	return oc.SetBusinessUnitID(b.ID)
+}
+
+// AddOrganizationFeatureFlagIDs adds the "organization_feature_flag" edge to the OrganizationFeatureFlag entity by IDs.
+func (oc *OrganizationCreate) AddOrganizationFeatureFlagIDs(ids ...uuid.UUID) *OrganizationCreate {
+	oc.mutation.AddOrganizationFeatureFlagIDs(ids...)
+	return oc
+}
+
+// AddOrganizationFeatureFlag adds the "organization_feature_flag" edges to the OrganizationFeatureFlag entity.
+func (oc *OrganizationCreate) AddOrganizationFeatureFlag(o ...*OrganizationFeatureFlag) *OrganizationCreate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return oc.AddOrganizationFeatureFlagIDs(ids...)
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
@@ -508,6 +524,22 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.BusinessUnitID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.OrganizationFeatureFlagIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.OrganizationFeatureFlagTable,
+			Columns: []string{organization.OrganizationFeatureFlagColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := oc.mutation.AccountingControlIDs(); len(nodes) > 0 {

@@ -36,6 +36,8 @@ const (
 	FieldTimezone = "timezone"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
+	// EdgeOrganizationFeatureFlag holds the string denoting the organization_feature_flag edge name in mutations.
+	EdgeOrganizationFeatureFlag = "organization_feature_flag"
 	// EdgeAccountingControl holds the string denoting the accounting_control edge name in mutations.
 	EdgeAccountingControl = "accounting_control"
 	// EdgeBillingControl holds the string denoting the billing_control edge name in mutations.
@@ -63,6 +65,13 @@ const (
 	BusinessUnitInverseTable = "business_units"
 	// BusinessUnitColumn is the table column denoting the business_unit relation/edge.
 	BusinessUnitColumn = "business_unit_id"
+	// OrganizationFeatureFlagTable is the table that holds the organization_feature_flag relation/edge.
+	OrganizationFeatureFlagTable = "organization_feature_flags"
+	// OrganizationFeatureFlagInverseTable is the table name for the OrganizationFeatureFlag entity.
+	// It exists in this package in order to avoid circular dependency with the "organizationfeatureflag" package.
+	OrganizationFeatureFlagInverseTable = "organization_feature_flags"
+	// OrganizationFeatureFlagColumn is the table column denoting the organization_feature_flag relation/edge.
+	OrganizationFeatureFlagColumn = "organization_id"
 	// AccountingControlTable is the table that holds the accounting_control relation/edge.
 	AccountingControlTable = "accounting_controls"
 	// AccountingControlInverseTable is the table name for the AccountingControl entity.
@@ -284,6 +293,20 @@ func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption 
 	}
 }
 
+// ByOrganizationFeatureFlagCount orders the results by organization_feature_flag count.
+func ByOrganizationFeatureFlagCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOrganizationFeatureFlagStep(), opts...)
+	}
+}
+
+// ByOrganizationFeatureFlag orders the results by organization_feature_flag terms.
+func ByOrganizationFeatureFlag(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOrganizationFeatureFlagStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByAccountingControlField orders the results by accounting_control field.
 func ByAccountingControlField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -351,6 +374,13 @@ func newBusinessUnitStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BusinessUnitInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, BusinessUnitTable, BusinessUnitColumn),
+	)
+}
+func newOrganizationFeatureFlagStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OrganizationFeatureFlagInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, OrganizationFeatureFlagTable, OrganizationFeatureFlagColumn),
 	)
 }
 func newAccountingControlStep() *sqlgraph.Step {

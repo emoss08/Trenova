@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
@@ -40,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcomment"
 	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
@@ -136,6 +138,7 @@ func checkColumn(table, column string) error {
 			equipmentmanufactuer.Table:         equipmentmanufactuer.ValidColumn,
 			equipmenttype.Table:                equipmenttype.ValidColumn,
 			feasibilitytoolcontrol.Table:       feasibilitytoolcontrol.ValidColumn,
+			featureflag.Table:                  featureflag.ValidColumn,
 			fleetcode.Table:                    fleetcode.ValidColumn,
 			generalledgeraccount.Table:         generalledgeraccount.ValidColumn,
 			googleapi.Table:                    googleapi.ValidColumn,
@@ -147,6 +150,7 @@ func checkColumn(table, column string) error {
 			locationcomment.Table:              locationcomment.ValidColumn,
 			locationcontact.Table:              locationcontact.ValidColumn,
 			organization.Table:                 organization.ValidColumn,
+			organizationfeatureflag.Table:      organizationfeatureflag.ValidColumn,
 			qualifiercode.Table:                qualifiercode.ValidColumn,
 			reasoncode.Table:                   reasoncode.ValidColumn,
 			revenuecode.Table:                  revenuecode.ValidColumn,

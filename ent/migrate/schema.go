@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -745,6 +746,24 @@ var (
 			},
 		},
 	}
+	// FeatureFlagsColumns holds the columns for the "feature_flags" table.
+	FeatureFlagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "code", Type: field.TypeString, Unique: true, Size: 30, SchemaType: map[string]string{"postgres": "VARCHAR(30)", "sqlite3": "VARCHAR(30)"}},
+		{Name: "beta", Type: field.TypeBool, Default: false},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
+		{Name: "preview_picture_url", Type: field.TypeString, Nullable: true},
+	}
+	// FeatureFlagsTable holds the schema information for the "feature_flags" table.
+	FeatureFlagsTable = &schema.Table{
+		Name:       "feature_flags",
+		Comment:    "Internal table for storing the feature flags available for Trenova",
+		Columns:    FeatureFlagsColumns,
+		PrimaryKey: []*schema.Column{FeatureFlagsColumns[0]},
+	}
 	// FleetCodesColumns holds the columns for the "fleet_codes" table.
 	FleetCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1206,6 +1225,42 @@ var (
 				Columns:    []*schema.Column{OrganizationsColumns[9]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// OrganizationFeatureFlagsColumns holds the columns for the "organization_feature_flags" table.
+	OrganizationFeatureFlagsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "is_enabled", Type: field.TypeBool, Default: true},
+		{Name: "feature_flag_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// OrganizationFeatureFlagsTable holds the schema information for the "organization_feature_flags" table.
+	OrganizationFeatureFlagsTable = &schema.Table{
+		Name:       "organization_feature_flags",
+		Columns:    OrganizationFeatureFlagsColumns,
+		PrimaryKey: []*schema.Column{OrganizationFeatureFlagsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "organization_feature_flags_feature_flags_feature_flag",
+				Columns:    []*schema.Column{OrganizationFeatureFlagsColumns[4]},
+				RefColumns: []*schema.Column{FeatureFlagsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "organization_feature_flags_organizations_organization",
+				Columns:    []*schema.Column{OrganizationFeatureFlagsColumns[5]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "organizationfeatureflag_organization_id_feature_flag_id",
+				Unique:  true,
+				Columns: []*schema.Column{OrganizationFeatureFlagsColumns[5], OrganizationFeatureFlagsColumns[4]},
 			},
 		},
 	}
@@ -2116,6 +2171,7 @@ var (
 		EquipmentManufactuersTable,
 		EquipmentTypesTable,
 		FeasibilityToolControlsTable,
+		FeatureFlagsTable,
 		FleetCodesTable,
 		GeneralLedgerAccountsTable,
 		GoogleApisTable,
@@ -2127,6 +2183,7 @@ var (
 		LocationCommentsTable,
 		LocationContactsTable,
 		OrganizationsTable,
+		OrganizationFeatureFlagsTable,
 		QualifierCodesTable,
 		ReasonCodesTable,
 		RevenueCodesTable,
@@ -2193,6 +2250,7 @@ func init() {
 	EquipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FeasibilityToolControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FeasibilityToolControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	FeatureFlagsTable.Annotation = &entsql.Annotation{}
 	FleetCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FleetCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FleetCodesTable.ForeignKeys[2].RefTable = UsersTable
@@ -2221,6 +2279,8 @@ func init() {
 	LocationContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	LocationContactsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	OrganizationFeatureFlagsTable.ForeignKeys[0].RefTable = FeatureFlagsTable
+	OrganizationFeatureFlagsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	ReasonCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable

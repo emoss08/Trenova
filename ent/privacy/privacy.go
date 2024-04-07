@@ -519,6 +519,30 @@ func (f FeasibilityToolControlMutationRuleFunc) EvalMutation(ctx context.Context
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.FeasibilityToolControlMutation", m)
 }
 
+// The FeatureFlagQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type FeatureFlagQueryRuleFunc func(context.Context, *ent.FeatureFlagQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f FeatureFlagQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.FeatureFlagQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.FeatureFlagQuery", q)
+}
+
+// The FeatureFlagMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type FeatureFlagMutationRuleFunc func(context.Context, *ent.FeatureFlagMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f FeatureFlagMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.FeatureFlagMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.FeatureFlagMutation", m)
+}
+
 // The FleetCodeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type FleetCodeQueryRuleFunc func(context.Context, *ent.FleetCodeQuery) error
@@ -781,6 +805,30 @@ func (f OrganizationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.OrganizationMutation", m)
+}
+
+// The OrganizationFeatureFlagQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type OrganizationFeatureFlagQueryRuleFunc func(context.Context, *ent.OrganizationFeatureFlagQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f OrganizationFeatureFlagQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.OrganizationFeatureFlagQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.OrganizationFeatureFlagQuery", q)
+}
+
+// The OrganizationFeatureFlagMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type OrganizationFeatureFlagMutationRuleFunc func(context.Context, *ent.OrganizationFeatureFlagMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f OrganizationFeatureFlagMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.OrganizationFeatureFlagMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.OrganizationFeatureFlagMutation", m)
 }
 
 // The QualifierCodeQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -1308,6 +1356,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.FeasibilityToolControlQuery:
 		return q.Filter(), nil
+	case *ent.FeatureFlagQuery:
+		return q.Filter(), nil
 	case *ent.FleetCodeQuery:
 		return q.Filter(), nil
 	case *ent.GeneralLedgerAccountQuery:
@@ -1329,6 +1379,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 	case *ent.LocationContactQuery:
 		return q.Filter(), nil
 	case *ent.OrganizationQuery:
+		return q.Filter(), nil
+	case *ent.OrganizationFeatureFlagQuery:
 		return q.Filter(), nil
 	case *ent.QualifierCodeQuery:
 		return q.Filter(), nil
@@ -1409,6 +1461,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.FeasibilityToolControlMutation:
 		return m.Filter(), nil
+	case *ent.FeatureFlagMutation:
+		return m.Filter(), nil
 	case *ent.FleetCodeMutation:
 		return m.Filter(), nil
 	case *ent.GeneralLedgerAccountMutation:
@@ -1430,6 +1484,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.LocationContactMutation:
 		return m.Filter(), nil
 	case *ent.OrganizationMutation:
+		return m.Filter(), nil
+	case *ent.OrganizationFeatureFlagMutation:
 		return m.Filter(), nil
 	case *ent.QualifierCodeMutation:
 		return m.Filter(), nil

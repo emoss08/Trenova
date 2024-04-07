@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/ent/equipmenttype"
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
+	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
@@ -33,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/ent/locationcomment"
 	"github.com/emoss08/trenova/ent/locationcontact"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/qualifiercode"
 	"github.com/emoss08/trenova/ent/reasoncode"
 	"github.com/emoss08/trenova/ent/revenuecode"
@@ -874,6 +876,55 @@ func init() {
 	feasibilitytoolcontrolDescID := feasibilitytoolcontrolMixinFields0[0].Descriptor()
 	// feasibilitytoolcontrol.DefaultID holds the default value on creation for the id field.
 	feasibilitytoolcontrol.DefaultID = feasibilitytoolcontrolDescID.Default.(func() uuid.UUID)
+	featureflagMixin := schema.FeatureFlag{}.Mixin()
+	featureflagMixinFields0 := featureflagMixin[0].Fields()
+	_ = featureflagMixinFields0
+	featureflagFields := schema.FeatureFlag{}.Fields()
+	_ = featureflagFields
+	// featureflagDescCreatedAt is the schema descriptor for created_at field.
+	featureflagDescCreatedAt := featureflagMixinFields0[1].Descriptor()
+	// featureflag.DefaultCreatedAt holds the default value on creation for the created_at field.
+	featureflag.DefaultCreatedAt = featureflagDescCreatedAt.Default.(func() time.Time)
+	// featureflagDescUpdatedAt is the schema descriptor for updated_at field.
+	featureflagDescUpdatedAt := featureflagMixinFields0[2].Descriptor()
+	// featureflag.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	featureflag.DefaultUpdatedAt = featureflagDescUpdatedAt.Default.(func() time.Time)
+	// featureflag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	featureflag.UpdateDefaultUpdatedAt = featureflagDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// featureflagDescName is the schema descriptor for name field.
+	featureflagDescName := featureflagFields[0].Descriptor()
+	// featureflag.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	featureflag.NameValidator = featureflagDescName.Validators[0].(func(string) error)
+	// featureflagDescCode is the schema descriptor for code field.
+	featureflagDescCode := featureflagFields[1].Descriptor()
+	// featureflag.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	featureflag.CodeValidator = func() func(string) error {
+		validators := featureflagDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// featureflagDescBeta is the schema descriptor for beta field.
+	featureflagDescBeta := featureflagFields[2].Descriptor()
+	// featureflag.DefaultBeta holds the default value on creation for the beta field.
+	featureflag.DefaultBeta = featureflagDescBeta.Default.(bool)
+	// featureflagDescDescription is the schema descriptor for description field.
+	featureflagDescDescription := featureflagFields[3].Descriptor()
+	// featureflag.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	featureflag.DescriptionValidator = featureflagDescDescription.Validators[0].(func(string) error)
+	// featureflagDescID is the schema descriptor for id field.
+	featureflagDescID := featureflagMixinFields0[0].Descriptor()
+	// featureflag.DefaultID holds the default value on creation for the id field.
+	featureflag.DefaultID = featureflagDescID.Default.(func() uuid.UUID)
 	fleetcodeMixin := schema.FleetCode{}.Mixin()
 	fleetcodeMixinFields0 := fleetcodeMixin[0].Fields()
 	_ = fleetcodeMixinFields0
@@ -1363,6 +1414,29 @@ func init() {
 	organizationDescID := organizationMixinFields0[0].Descriptor()
 	// organization.DefaultID holds the default value on creation for the id field.
 	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
+	organizationfeatureflagMixin := schema.OrganizationFeatureFlag{}.Mixin()
+	organizationfeatureflagMixinFields0 := organizationfeatureflagMixin[0].Fields()
+	_ = organizationfeatureflagMixinFields0
+	organizationfeatureflagFields := schema.OrganizationFeatureFlag{}.Fields()
+	_ = organizationfeatureflagFields
+	// organizationfeatureflagDescCreatedAt is the schema descriptor for created_at field.
+	organizationfeatureflagDescCreatedAt := organizationfeatureflagMixinFields0[1].Descriptor()
+	// organizationfeatureflag.DefaultCreatedAt holds the default value on creation for the created_at field.
+	organizationfeatureflag.DefaultCreatedAt = organizationfeatureflagDescCreatedAt.Default.(func() time.Time)
+	// organizationfeatureflagDescUpdatedAt is the schema descriptor for updated_at field.
+	organizationfeatureflagDescUpdatedAt := organizationfeatureflagMixinFields0[2].Descriptor()
+	// organizationfeatureflag.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	organizationfeatureflag.DefaultUpdatedAt = organizationfeatureflagDescUpdatedAt.Default.(func() time.Time)
+	// organizationfeatureflag.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	organizationfeatureflag.UpdateDefaultUpdatedAt = organizationfeatureflagDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationfeatureflagDescIsEnabled is the schema descriptor for is_enabled field.
+	organizationfeatureflagDescIsEnabled := organizationfeatureflagFields[2].Descriptor()
+	// organizationfeatureflag.DefaultIsEnabled holds the default value on creation for the is_enabled field.
+	organizationfeatureflag.DefaultIsEnabled = organizationfeatureflagDescIsEnabled.Default.(bool)
+	// organizationfeatureflagDescID is the schema descriptor for id field.
+	organizationfeatureflagDescID := organizationfeatureflagMixinFields0[0].Descriptor()
+	// organizationfeatureflag.DefaultID holds the default value on creation for the id field.
+	organizationfeatureflag.DefaultID = organizationfeatureflagDescID.Default.(func() uuid.UUID)
 	qualifiercodeMixin := schema.QualifierCode{}.Mixin()
 	qualifiercodeMixinFields0 := qualifiercodeMixin[0].Fields()
 	_ = qualifiercodeMixinFields0

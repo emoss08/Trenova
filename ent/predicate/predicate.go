@@ -57,6 +57,9 @@ type EquipmentType func(*sql.Selector)
 // FeasibilityToolControl is the predicate function for feasibilitytoolcontrol builders.
 type FeasibilityToolControl func(*sql.Selector)
 
+// FeatureFlag is the predicate function for featureflag builders.
+type FeatureFlag func(*sql.Selector)
+
 // FleetCode is the predicate function for fleetcode builders.
 type FleetCode func(*sql.Selector)
 
@@ -89,6 +92,9 @@ type LocationContact func(*sql.Selector)
 
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
+
+// OrganizationFeatureFlag is the predicate function for organizationfeatureflag builders.
+type OrganizationFeatureFlag func(*sql.Selector)
 
 // QualifierCode is the predicate function for qualifiercode builders.
 type QualifierCode func(*sql.Selector)

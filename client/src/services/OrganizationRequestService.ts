@@ -23,9 +23,9 @@ import {
   Depot,
   EmailControl,
   EmailProfile,
-  FeatureFlag,
   GoogleAPI,
   Organization,
+  OrganizationFeatureFlag,
   Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
@@ -123,9 +123,9 @@ export async function getDepots(): Promise<Depot[]> {
  * Fetches feature flags for the organization from the server.
  * @returns A promise that resolves to an array of feature flags.
  */
-export async function getFeatureFlags(): Promise<FeatureFlag[]> {
-  const response = await axios.get("/organization_feature_flags/");
-  return response.data;
+export async function getFeatureFlags(): Promise<OrganizationFeatureFlag[]> {
+  const response = await axios.get("/organization-feature-flags/");
+  return response.data.results;
 }
 
 /**
