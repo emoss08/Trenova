@@ -32,7 +32,7 @@ func GetInvoiceControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoiceControl, err := services.NewInvoiceControlOps(r.Context()).GetInvoiceControlByOrgID(orgID, buID)
+	invoiceControl, err := services.NewInvoiceControlOps().GetInvoiceControlByOrgID(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -58,7 +58,7 @@ func UpdateInvoiceControl(w http.ResponseWriter, r *http.Request) {
 
 	iControlData.ID = uuid.MustParse(invoiceControlID)
 
-	invoiceControl, err := services.NewInvoiceControlOps(r.Context()).UpdateInvoiceControl(iControlData)
+	invoiceControl, err := services.NewInvoiceControlOps().UpdateInvoiceControl(r.Context(), iControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

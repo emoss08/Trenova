@@ -32,7 +32,7 @@ func GetShipmentControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shipmentControl, err := services.NewShipmentControlOps(r.Context()).GetShipmentControl(orgID, buID)
+	shipmentControl, err := services.NewShipmentControlOps().GetShipmentControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -58,7 +58,7 @@ func UpdateShipmentControl(w http.ResponseWriter, r *http.Request) {
 
 	sControlData.ID = uuid.MustParse(shipmentControlID)
 
-	invoiceControl, err := services.NewShipmentControlOps(r.Context()).UpdateShipmentControl(sControlData)
+	invoiceControl, err := services.NewShipmentControlOps().UpdateShipmentControl(r.Context(), sControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

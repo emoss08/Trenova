@@ -30,7 +30,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := services.NewLoginOps(r.Context()).AuthenticateUser(loginRequest.Username, loginRequest.Password)
+	user, err := services.NewLoginOps().AuthenticateUser(r.Context(), loginRequest.Username, loginRequest.Password)
 	if err != nil {
 		tools.ResponseWithError(w, http.StatusUnauthorized, types.ValidationErrorResponse{
 			Type: "validationError",

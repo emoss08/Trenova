@@ -11,24 +11,22 @@ import (
 
 // LoginOps is the service for login.
 type LoginOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewLoginOps returns a new instance of LoginOps.
-func NewLoginOps(ctx context.Context) *LoginOps {
+func NewLoginOps() *LoginOps {
 	return &LoginOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // AuthenticateUser returns back the user if the username and password are correct.
-func (r *LoginOps) AuthenticateUser(username, password string) (*ent.User, error) {
+func (r *LoginOps) AuthenticateUser(ctx context.Context, username, password string) (*ent.User, error) {
 	u, err := r.client.User.
 		Query().
 		Where(user.UsernameEQ(username)).
-		Only(r.ctx)
+		Only(ctx)
 	if err != nil {
 		return nil, err
 	}

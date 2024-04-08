@@ -32,7 +32,8 @@ func GetFeasibilityToolControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feasibilityToolControl, err := services.NewFeasibilityControlOps(r.Context()).GetFeasibilityToolControl(orgID, buID)
+	feasibilityToolControl, err := services.NewFeasibilityControlOps().
+		GetFeasibilityToolControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -57,7 +58,8 @@ func UpdateFeasibilityToolControl(w http.ResponseWriter, r *http.Request) {
 
 	ftControlData.ID = uuid.MustParse(feasibilityToolControlID)
 
-	feasibilityToolControl, err := services.NewFeasibilityControlOps(r.Context()).UpdateFeasibilityToolControl(ftControlData)
+	feasibilityToolControl, err := services.NewFeasibilityControlOps().
+		UpdateFeasibilityToolControl(r.Context(), ftControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

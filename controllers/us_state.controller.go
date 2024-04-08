@@ -10,7 +10,7 @@ import (
 
 // GetUsStates gets the us states.
 func GetUsStates(w http.ResponseWriter, r *http.Request) {
-	usStates, err := services.NewUsStateOps(r.Context()).GetUsStates()
+	usStates, err := services.NewUsStateOps().GetUsStates(r.Context())
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

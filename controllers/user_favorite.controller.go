@@ -25,7 +25,7 @@ func GetUserFavorites(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	favorites, favCount, err := services.NewUserFavoriteOps(r.Context()).GetUserFavorites(userID)
+	favorites, favCount, err := services.NewUserFavoriteOps().GetUserFavorites(r.Context(), userID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -62,7 +62,7 @@ func CreateUserFavorite(w http.ResponseWriter, r *http.Request) {
 	userFavorite.OrganizationID = orgID
 	userFavorite.BusinessUnitID = buID
 
-	createdFavorite, createErr := services.NewUserFavoriteOps(r.Context()).UserFavoriteCreate(userFavorite)
+	createdFavorite, createErr := services.NewUserFavoriteOps().UserFavoriteCreate(r.Context(), userFavorite)
 	if createErr != nil {
 		errorResponse := tools.CreateDBErrorResponse(createErr)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -81,7 +81,8 @@ func DeleteUserFavorite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if deleteErr := services.NewUserFavoriteOps(r.Context()).UserFavoriteDelete(userFavorite.UserID, userFavorite.PageLink); deleteErr != nil {
+	if deleteErr := services.NewUserFavoriteOps().
+		UserFavoriteDelete(r.Context(), userFavorite.UserID, userFavorite.PageLink); deleteErr != nil {
 		errorResponse := tools.CreateDBErrorResponse(deleteErr)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
 	}

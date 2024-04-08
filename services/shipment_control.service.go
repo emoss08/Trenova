@@ -12,26 +12,24 @@ import (
 
 // ShipmentControlOps is the service for shipment control settings.
 type ShipmentControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewShipmentControlOps creates a new shipment control service.
-func NewShipmentControlOps(ctx context.Context) *ShipmentControlOps {
+func NewShipmentControlOps() *ShipmentControlOps {
 	return &ShipmentControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetShipmentControl creates a new shipment control settings for an organization.
-func (r *ShipmentControlOps) GetShipmentControl(orgID, buID uuid.UUID) (*ent.ShipmentControl, error) {
+func (r *ShipmentControlOps) GetShipmentControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.ShipmentControl, error) {
 	shipmentControl, err := r.client.ShipmentControl.Query().Where(
 		shipmentcontrol.HasOrganizationWith(
 			organization.ID(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *ShipmentControlOps) GetShipmentControl(orgID, buID uuid.UUID) (*ent.Shi
 }
 
 // UpdateShipmentControl updates the shipment control settings for an organization.
-func (r *ShipmentControlOps) UpdateShipmentControl(sc ent.ShipmentControl) (*ent.ShipmentControl, error) {
+func (r *ShipmentControlOps) UpdateShipmentControl(ctx context.Context, sc ent.ShipmentControl) (*ent.ShipmentControl, error) {
 	updatedSC, err := r.client.ShipmentControl.
 		UpdateOneID(sc.ID).
 		SetAutoRateShipment(sc.AutoRateShipment).
@@ -55,7 +53,7 @@ func (r *ShipmentControlOps) UpdateShipmentControl(sc ent.ShipmentControl) (*ent
 		SetCheckForDuplicateBol(sc.CheckForDuplicateBol).
 		SetSendPlacardInfo(sc.SendPlacardInfo).
 		SetEnforceHazmatSegRules(sc.EnforceHazmatSegRules).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}

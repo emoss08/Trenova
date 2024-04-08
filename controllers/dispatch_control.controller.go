@@ -32,7 +32,7 @@ func GetDispatchControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accountingControl, err := services.NewDispatchControlOps(r.Context()).GetDispatchControl(orgID, buID)
+	accountingControl, err := services.NewDispatchControlOps().GetDispatchControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -57,7 +57,7 @@ func UpdateDispatchControl(w http.ResponseWriter, r *http.Request) {
 
 	dControlData.ID = uuid.MustParse(dispatchControlID)
 
-	dispatchControl, err := services.NewDispatchControlOps(r.Context()).UpdateDispatchControl(dControlData)
+	dispatchControl, err := services.NewDispatchControlOps().UpdateDispatchControl(r.Context(), dControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

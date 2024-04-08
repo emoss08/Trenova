@@ -11,24 +11,22 @@ import (
 
 // UserOps is the service for user.
 type UserOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewUserOps creates a new user service.
-func NewUserOps(ctx context.Context) *UserOps {
+func NewUserOps() *UserOps {
 	return &UserOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetAuthenticatedUser returns the user if the user ID is correct.
-func (r *UserOps) GetAuthenticatedUser(userID uuid.UUID) (*ent.User, error) {
+func (r *UserOps) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID) (*ent.User, error) {
 	u, err := r.client.User.
 		Query().
 		Where(user.IDEQ(userID)).
-		Only(r.ctx)
+		Only(ctx)
 	if err != nil {
 		return nil, err
 	}

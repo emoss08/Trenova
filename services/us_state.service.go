@@ -8,22 +8,20 @@ import (
 )
 
 type UsStateOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewUsStateOps creates a new US State service.
-func NewUsStateOps(ctx context.Context) *UsStateOps {
+func NewUsStateOps() *UsStateOps {
 	return &UsStateOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetUsStates gets the accessorial charges for an organization.
-func (r *UsStateOps) GetUsStates() ([]*ent.UsState, error) {
+func (r *UsStateOps) GetUsStates(ctx context.Context) ([]*ent.UsState, error) {
 	usStates, err := r.client.UsState.Query().
-		All(r.ctx)
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
