@@ -32,7 +32,7 @@ func GetEmailControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	emailControl, err := services.NewEmailControlOps(r.Context()).GetEmailControl(orgID, buID)
+	emailControl, err := services.NewEmailControlOps().GetEmailControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -58,7 +58,7 @@ func UpdateEmailControl(w http.ResponseWriter, r *http.Request) {
 
 	emailControlData.ID = uuid.MustParse(emailControlID)
 
-	emailControl, err := services.NewEmailControlOps(r.Context()).UpdateEmailControl(emailControlData)
+	emailControl, err := services.NewEmailControlOps().UpdateEmailControl(r.Context(), emailControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

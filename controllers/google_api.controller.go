@@ -32,7 +32,8 @@ func GetGoogleAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	googleAPI, err := services.NewGoogleAPIOps(r.Context()).GetGoogleAPI(orgID, buID)
+	googleAPI, err := services.NewGoogleAPIOps().
+		GetGoogleAPI(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -57,7 +58,8 @@ func UpdateGoogleAPI(w http.ResponseWriter, r *http.Request) {
 
 	googleAPIData.ID = uuid.MustParse(googleAPIID)
 
-	googleAPI, err := services.NewGoogleAPIOps(r.Context()).UpdateGoogleAPI(googleAPIData)
+	googleAPI, err := services.NewGoogleAPIOps().
+		UpdateGoogleAPI(r.Context(), googleAPIData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

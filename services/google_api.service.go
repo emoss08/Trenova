@@ -12,26 +12,24 @@ import (
 
 // GoogleAPIOps is the service for google api settings.
 type GoogleAPIOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewGoogleAPIOps creates a new google api service.
-func NewGoogleAPIOps(ctx context.Context) *GoogleAPIOps {
+func NewGoogleAPIOps() *GoogleAPIOps {
 	return &GoogleAPIOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetGoogleAPI gets the google api settings for an organization.
-func (r *GoogleAPIOps) GetGoogleAPI(orgID, buID uuid.UUID) (*ent.GoogleApi, error) {
+func (r *GoogleAPIOps) GetGoogleAPI(ctx context.Context, orgID, buID uuid.UUID) (*ent.GoogleApi, error) {
 	googleAPI, err := r.client.GoogleApi.Query().Where(
 		googleapi.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *GoogleAPIOps) GetGoogleAPI(orgID, buID uuid.UUID) (*ent.GoogleApi, erro
 }
 
 // UpdateGoogleAPI updates the google api settings for an organization.
-func (r *GoogleAPIOps) UpdateGoogleAPI(googleAPI ent.GoogleApi) (*ent.GoogleApi, error) {
+func (r *GoogleAPIOps) UpdateGoogleAPI(ctx context.Context, googleAPI ent.GoogleApi) (*ent.GoogleApi, error) {
 	updatedGoogleAPI, err := r.client.GoogleApi.
 		UpdateOneID(googleAPI.ID).
 		SetAPIKey(googleAPI.APIKey).
@@ -49,7 +47,7 @@ func (r *GoogleAPIOps) UpdateGoogleAPI(googleAPI ent.GoogleApi) (*ent.GoogleApi,
 		SetAutoGeocode(googleAPI.AutoGeocode).
 		SetAddLocation(googleAPI.AddLocation).
 		SetTrafficModel(googleAPI.TrafficModel).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}

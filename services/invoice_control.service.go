@@ -12,26 +12,24 @@ import (
 
 // InvoiceControlOps is the service for invoice control settings.
 type InvoiceControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewInvoiceControlOps creates a new invoice control service.
-func NewInvoiceControlOps(ctx context.Context) *InvoiceControlOps {
+func NewInvoiceControlOps() *InvoiceControlOps {
 	return &InvoiceControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetInvoiceControlByOrgID creates a new invoice control settings for an organization.
-func (r *InvoiceControlOps) GetInvoiceControlByOrgID(orgID, buID uuid.UUID) (*ent.InvoiceControl, error) {
+func (r *InvoiceControlOps) GetInvoiceControlByOrgID(ctx context.Context, orgID, buID uuid.UUID) (*ent.InvoiceControl, error) {
 	invoiceControl, err := r.client.InvoiceControl.Query().Where(
 		invoicecontrol.HasOrganizationWith(
 			organization.ID(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *InvoiceControlOps) GetInvoiceControlByOrgID(orgID, buID uuid.UUID) (*en
 }
 
 // UpdateInvoiceControl updates the invoice control settings for an organization.
-func (r *InvoiceControlOps) UpdateInvoiceControl(ic ent.InvoiceControl) (*ent.InvoiceControl, error) {
+func (r *InvoiceControlOps) UpdateInvoiceControl(ctx context.Context, ic ent.InvoiceControl) (*ent.InvoiceControl, error) {
 	updateIC, err := r.client.InvoiceControl.
 		UpdateOneID(ic.ID).
 		SetInvoiceNumberPrefix(ic.InvoiceNumberPrefix).
@@ -54,7 +52,7 @@ func (r *InvoiceControlOps) UpdateInvoiceControl(ic ent.InvoiceControl) (*ent.In
 		SetShowAmountDue(ic.ShowAmountDue).
 		SetAttachPdf(ic.AttachPdf).
 		SetShowInvoiceDueDate(ic.ShowInvoiceDueDate).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}

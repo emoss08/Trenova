@@ -24,7 +24,7 @@ func GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := services.NewUserOps(r.Context()).GetAuthenticatedUser(userID)
+	user, err := services.NewUserOps().GetAuthenticatedUser(r.Context(), userID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

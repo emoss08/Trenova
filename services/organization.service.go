@@ -12,20 +12,18 @@ import (
 
 // OrganizationOps is the service for organization.
 type OrganizatinOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewOrganizationOps creates a new organization service.
-func NewOrganizationOps(ctx context.Context) *OrganizatinOps {
+func NewOrganizationOps() *OrganizatinOps {
 	return &OrganizatinOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetUserOrganization returns the organization of the user.
-func (r *OrganizatinOps) GetUserOrganization(buID, orgID uuid.UUID) (*ent.Organization, error) {
+func (r *OrganizatinOps) GetUserOrganization(ctx context.Context, buID, orgID uuid.UUID) (*ent.Organization, error) {
 	org, err := r.client.Organization.
 		Query().
 		Where(
@@ -36,7 +34,7 @@ func (r *OrganizatinOps) GetUserOrganization(buID, orgID uuid.UUID) (*ent.Organi
 				),
 			),
 		).
-		Only(r.ctx)
+		Only(ctx)
 	if err != nil {
 		return nil, err
 	}

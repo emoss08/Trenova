@@ -32,7 +32,7 @@ func GetRouteControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	routeControl, err := services.NewRouteControlOps(r.Context()).GetRouteControl(orgID, buID)
+	routeControl, err := services.NewRouteControlOps().GetRouteControl(r.Context(), orgID, buID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)
@@ -58,7 +58,7 @@ func UpdateRouteControl(w http.ResponseWriter, r *http.Request) {
 
 	rControlData.ID = uuid.MustParse(routeControlID)
 
-	invoiceControl, err := services.NewRouteControlOps(r.Context()).UpdateRouteControl(rControlData)
+	invoiceControl, err := services.NewRouteControlOps().UpdateRouteControl(r.Context(), rControlData)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

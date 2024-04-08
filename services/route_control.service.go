@@ -12,26 +12,24 @@ import (
 
 // RouteControlOps is the service for route control settings.
 type RouteControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewRouteControlOps creates a new route control service.
-func NewRouteControlOps(ctx context.Context) *RouteControlOps {
+func NewRouteControlOps() *RouteControlOps {
 	return &RouteControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetRouteControl creates a new route control settings for an organization.
-func (r *RouteControlOps) GetRouteControl(orgID, buID uuid.UUID) (*ent.RouteControl, error) {
+func (r *RouteControlOps) GetRouteControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.RouteControl, error) {
 	routeControl, err := r.client.RouteControl.Query().Where(
 		routecontrol.HasOrganizationWith(
 			organization.ID(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,13 +38,13 @@ func (r *RouteControlOps) GetRouteControl(orgID, buID uuid.UUID) (*ent.RouteCont
 }
 
 // UpdateRouteControl updates the route control settings for an organization.
-func (r *RouteControlOps) UpdateRouteControl(rc ent.RouteControl) (*ent.RouteControl, error) {
+func (r *RouteControlOps) UpdateRouteControl(ctx context.Context, rc ent.RouteControl) (*ent.RouteControl, error) {
 	updatedRC, err := r.client.RouteControl.
 		UpdateOneID(rc.ID).
 		SetDistanceMethod(rc.DistanceMethod).
 		SetMileageUnit(rc.MileageUnit).
 		SetGenerateRoutes(rc.GenerateRoutes).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}

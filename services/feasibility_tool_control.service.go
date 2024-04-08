@@ -12,26 +12,24 @@ import (
 
 // FeasibilityControlOps is the service for feasibility tool control settings.
 type FeasibilityControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewFeasibilityControlOps creates a new feasibility tool control service.
-func NewFeasibilityControlOps(ctx context.Context) *FeasibilityControlOps {
+func NewFeasibilityControlOps() *FeasibilityControlOps {
 	return &FeasibilityControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetFeasibilityToolControl gets the feasibility tool control settings for an organization.
-func (r *FeasibilityControlOps) GetFeasibilityToolControl(orgID, buID uuid.UUID) (*ent.FeasibilityToolControl, error) {
+func (r *FeasibilityControlOps) GetFeasibilityToolControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.FeasibilityToolControl, error) {
 	feasibilityToolControl, err := r.client.FeasibilityToolControl.Query().Where(
 		feasibilitytoolcontrol.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *FeasibilityControlOps) GetFeasibilityToolControl(orgID, buID uuid.UUID)
 }
 
 // UpdateFeasibilityToolControl updates the feasibility tool control settings for an organization.
-func (r *FeasibilityControlOps) UpdateFeasibilityToolControl(ftc ent.FeasibilityToolControl) (*ent.FeasibilityToolControl, error) {
+func (r *FeasibilityControlOps) UpdateFeasibilityToolControl(ctx context.Context, ftc ent.FeasibilityToolControl) (*ent.FeasibilityToolControl, error) {
 	updatedFTC, err := r.client.FeasibilityToolControl.
 		UpdateOneID(ftc.ID).
 		SetOtpOperator(ftc.OtpOperator).
@@ -51,7 +49,7 @@ func (r *FeasibilityControlOps) UpdateFeasibilityToolControl(ftc ent.Feasibility
 		SetMpdValue(ftc.MpdValue).
 		SetMpgOperator(ftc.MpgOperator).
 		SetMpgValue(ftc.MpgValue).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}

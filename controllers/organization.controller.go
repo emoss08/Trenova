@@ -30,7 +30,7 @@ func GetUserOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := services.NewOrganizationOps(r.Context()).GetUserOrganization(buID, orgID)
+	user, err := services.NewOrganizationOps().GetUserOrganization(r.Context(), buID, orgID)
 	if err != nil {
 		errorResponse := tools.CreateDBErrorResponse(err)
 		tools.ResponseWithError(w, http.StatusInternalServerError, errorResponse)

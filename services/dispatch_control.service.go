@@ -12,26 +12,24 @@ import (
 
 // DispatchControlOps is the service for dispatch control settings.
 type DispatchControlOps struct {
-	ctx    context.Context
 	client *ent.Client
 }
 
 // NewDispatchControlOps creates a new dispatch control service.
-func NewDispatchControlOps(ctx context.Context) *DispatchControlOps {
+func NewDispatchControlOps() *DispatchControlOps {
 	return &DispatchControlOps{
-		ctx:    ctx,
 		client: database.GetClient(),
 	}
 }
 
 // GetDispatchControl gets the dispatch control settings for an organization.
-func (r *DispatchControlOps) GetDispatchControl(orgID, buID uuid.UUID) (*ent.DispatchControl, error) {
+func (r *DispatchControlOps) GetDispatchControl(ctx context.Context, orgID, buID uuid.UUID) (*ent.DispatchControl, error) {
 	dispatchControl, err := r.client.DispatchControl.Query().Where(
 		dispatchcontrol.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),
 		),
-	).Only(r.ctx)
+	).Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +38,7 @@ func (r *DispatchControlOps) GetDispatchControl(orgID, buID uuid.UUID) (*ent.Dis
 }
 
 // UpdateDispatchControl updates the dispatch control settings for an organization.
-func (r *DispatchControlOps) UpdateDispatchControl(dc ent.DispatchControl) (*ent.DispatchControl, error) {
+func (r *DispatchControlOps) UpdateDispatchControl(ctx context.Context, dc ent.DispatchControl) (*ent.DispatchControl, error) {
 	updatedDC, err := r.client.DispatchControl.
 		UpdateOneID(dc.ID).
 		SetRecordServiceIncident(dc.RecordServiceIncident).
@@ -55,7 +53,7 @@ func (r *DispatchControlOps) UpdateDispatchControl(dc ent.DispatchControl) (*ent
 		SetPrevShipmentOnHold(dc.PrevShipmentOnHold).
 		SetWorkerTimeAwayRestriction(dc.WorkerTimeAwayRestriction).
 		SetTractorWorkerFleetConstraint(dc.TractorWorkerFleetConstraint).
-		Save(r.ctx)
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
