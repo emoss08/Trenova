@@ -72,7 +72,7 @@ func SetupAndRun() {
 }
 
 func printStartupMessage(addr string) {
-	version := os.Getenv("TRENOVA_VERSION")
+	version := tools.GetEnv("TRENOVA_VERSION", "v0.0.0")
 
 	color.Cyan(trenovaText, version)
 	color.Cyan("-----------------------------------------------------\n")

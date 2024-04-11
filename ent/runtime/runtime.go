@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/ent/schema"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
@@ -1627,6 +1628,101 @@ func init() {
 	sessionDescData := sessionFields[1].Descriptor()
 	// session.DataValidator is a validator for the "data" field. It is called by the builders before save.
 	session.DataValidator = sessionDescData.Validators[0].(func(string) error)
+	shipmentMixin := schema.Shipment{}.Mixin()
+	shipmentMixinFields0 := shipmentMixin[0].Fields()
+	_ = shipmentMixinFields0
+	shipmentFields := schema.Shipment{}.Fields()
+	_ = shipmentFields
+	// shipmentDescCreatedAt is the schema descriptor for created_at field.
+	shipmentDescCreatedAt := shipmentMixinFields0[3].Descriptor()
+	// shipment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipment.DefaultCreatedAt = shipmentDescCreatedAt.Default.(func() time.Time)
+	// shipmentDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentDescUpdatedAt := shipmentMixinFields0[4].Descriptor()
+	// shipment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipment.DefaultUpdatedAt = shipmentDescUpdatedAt.Default.(func() time.Time)
+	// shipment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipment.UpdateDefaultUpdatedAt = shipmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentDescVersion is the schema descriptor for version field.
+	shipmentDescVersion := shipmentMixinFields0[5].Descriptor()
+	// shipment.DefaultVersion holds the default value on creation for the version field.
+	shipment.DefaultVersion = shipmentDescVersion.Default.(int)
+	// shipmentDescProNumber is the schema descriptor for pro_number field.
+	shipmentDescProNumber := shipmentFields[0].Descriptor()
+	// shipment.ProNumberValidator is a validator for the "pro_number" field. It is called by the builders before save.
+	shipment.ProNumberValidator = func() func(string) error {
+		validators := shipmentDescProNumber.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(pro_number string) error {
+			for _, fn := range fns {
+				if err := fn(pro_number); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// shipmentDescRatingUnit is the schema descriptor for rating_unit field.
+	shipmentDescRatingUnit := shipmentFields[13].Descriptor()
+	// shipment.DefaultRatingUnit holds the default value on creation for the rating_unit field.
+	shipment.DefaultRatingUnit = shipmentDescRatingUnit.Default.(int)
+	// shipment.RatingUnitValidator is a validator for the "rating_unit" field. It is called by the builders before save.
+	shipment.RatingUnitValidator = shipmentDescRatingUnit.Validators[0].(func(int) error)
+	// shipmentDescMileage is the schema descriptor for mileage field.
+	shipmentDescMileage := shipmentFields[14].Descriptor()
+	// shipment.MileageValidator is a validator for the "mileage" field. It is called by the builders before save.
+	shipment.MileageValidator = shipmentDescMileage.Validators[0].(func(float64) error)
+	// shipmentDescOtherChargeAmount is the schema descriptor for other_charge_amount field.
+	shipmentDescOtherChargeAmount := shipmentFields[15].Descriptor()
+	// shipment.OtherChargeAmountValidator is a validator for the "other_charge_amount" field. It is called by the builders before save.
+	shipment.OtherChargeAmountValidator = shipmentDescOtherChargeAmount.Validators[0].(func(float64) error)
+	// shipmentDescFreightChargeAmount is the schema descriptor for freight_charge_amount field.
+	shipmentDescFreightChargeAmount := shipmentFields[16].Descriptor()
+	// shipment.FreightChargeAmountValidator is a validator for the "freight_charge_amount" field. It is called by the builders before save.
+	shipment.FreightChargeAmountValidator = shipmentDescFreightChargeAmount.Validators[0].(func(float64) error)
+	// shipmentDescPieces is the schema descriptor for pieces field.
+	shipmentDescPieces := shipmentFields[19].Descriptor()
+	// shipment.PiecesValidator is a validator for the "pieces" field. It is called by the builders before save.
+	shipment.PiecesValidator = shipmentDescPieces.Validators[0].(func(float64) error)
+	// shipmentDescWeight is the schema descriptor for weight field.
+	shipmentDescWeight := shipmentFields[20].Descriptor()
+	// shipment.WeightValidator is a validator for the "weight" field. It is called by the builders before save.
+	shipment.WeightValidator = shipmentDescWeight.Validators[0].(func(float64) error)
+	// shipmentDescReadyToBill is the schema descriptor for ready_to_bill field.
+	shipmentDescReadyToBill := shipmentFields[21].Descriptor()
+	// shipment.DefaultReadyToBill holds the default value on creation for the ready_to_bill field.
+	shipment.DefaultReadyToBill = shipmentDescReadyToBill.Default.(bool)
+	// shipmentDescBilled is the schema descriptor for billed field.
+	shipmentDescBilled := shipmentFields[24].Descriptor()
+	// shipment.DefaultBilled holds the default value on creation for the billed field.
+	shipment.DefaultBilled = shipmentDescBilled.Default.(bool)
+	// shipmentDescTransferredToBilling is the schema descriptor for transferred_to_billing field.
+	shipmentDescTransferredToBilling := shipmentFields[25].Descriptor()
+	// shipment.DefaultTransferredToBilling holds the default value on creation for the transferred_to_billing field.
+	shipment.DefaultTransferredToBilling = shipmentDescTransferredToBilling.Default.(bool)
+	// shipmentDescTotalChargeAmount is the schema descriptor for total_charge_amount field.
+	shipmentDescTotalChargeAmount := shipmentFields[27].Descriptor()
+	// shipment.TotalChargeAmountValidator is a validator for the "total_charge_amount" field. It is called by the builders before save.
+	shipment.TotalChargeAmountValidator = shipmentDescTotalChargeAmount.Validators[0].(func(float64) error)
+	// shipmentDescVoidedComment is the schema descriptor for voided_comment field.
+	shipmentDescVoidedComment := shipmentFields[35].Descriptor()
+	// shipment.VoidedCommentValidator is a validator for the "voided_comment" field. It is called by the builders before save.
+	shipment.VoidedCommentValidator = shipmentDescVoidedComment.Validators[0].(func(string) error)
+	// shipmentDescAutoRated is the schema descriptor for auto_rated field.
+	shipmentDescAutoRated := shipmentFields[36].Descriptor()
+	// shipment.DefaultAutoRated holds the default value on creation for the auto_rated field.
+	shipment.DefaultAutoRated = shipmentDescAutoRated.Default.(bool)
+	// shipmentDescIsHazardous is the schema descriptor for is_hazardous field.
+	shipmentDescIsHazardous := shipmentFields[40].Descriptor()
+	// shipment.DefaultIsHazardous holds the default value on creation for the is_hazardous field.
+	shipment.DefaultIsHazardous = shipmentDescIsHazardous.Default.(bool)
+	// shipmentDescID is the schema descriptor for id field.
+	shipmentDescID := shipmentMixinFields0[0].Descriptor()
+	// shipment.DefaultID holds the default value on creation for the id field.
+	shipment.DefaultID = shipmentDescID.Default.(func() uuid.UUID)
 	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
 	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
 	_ = shipmentcontrolMixinFields0

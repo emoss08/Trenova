@@ -115,8 +115,8 @@ export interface AccountingControl extends BaseModel {
   journalEntryCriteria: AutomaticJournalEntryChoiceType;
   restrictManualJournalEntries: boolean;
   requireJournalEntryApproval: boolean;
-  defaultRevenueAccountId?: string | null;
-  defaultExpenseAccountId?: string | null;
+  defaultRevAccountId?: string | null;
+  defaultExpAccountId?: string | null;
   enableRecNotifications: boolean;
   reconciliationNotificationRecipients?: string[] | null;
   recThreshold: number;

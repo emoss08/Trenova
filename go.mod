@@ -83,6 +83,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.0.69
+	github.com/rs/zerolog v1.32.0
 	golang.org/x/crypto v0.21.0
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0

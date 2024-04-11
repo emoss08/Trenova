@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
@@ -157,6 +158,7 @@ func checkColumn(table, column string) error {
 			routecontrol.Table:                 routecontrol.ValidColumn,
 			servicetype.Table:                  servicetype.ValidColumn,
 			session.Table:                      session.ValidColumn,
+			shipment.Table:                     shipment.ValidColumn,
 			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
 			shipmenttype.Table:                 shipmenttype.ValidColumn,
 			tablechangealert.Table:             tablechangealert.ValidColumn,

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/ent/user"
+	"github.com/emoss08/trenova/tools"
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	// Initialize the database
-	client := database.NewEntClient(os.Getenv("DB_DSN"))
+	client := database.NewEntClient(tools.GetEnv("SERVER_DB_DSN", "host=localhost port=5432 user=postgres password=postgres dbname=trenova sslmode=disable"))
 
 	defer client.Close()
 
