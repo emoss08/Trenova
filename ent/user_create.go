@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
@@ -267,6 +268,21 @@ func (uc *UserCreate) AddShipments(s ...*Shipment) *UserCreate {
 		ids[i] = s[i].ID
 	}
 	return uc.AddShipmentIDs(ids...)
+}
+
+// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
+func (uc *UserCreate) AddShipmentCommentIDs(ids ...int) *UserCreate {
+	uc.mutation.AddShipmentCommentIDs(ids...)
+	return uc
+}
+
+// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
+func (uc *UserCreate) AddShipmentComments(s ...*ShipmentComment) *UserCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uc.AddShipmentCommentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -569,6 +585,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentCommentsTable,
+			Columns: []string{user.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

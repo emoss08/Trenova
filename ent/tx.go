@@ -88,8 +88,12 @@ type Tx struct {
 	Session *SessionClient
 	// Shipment is the client for interacting with the Shipment builders.
 	Shipment *ShipmentClient
+	// ShipmentComment is the client for interacting with the ShipmentComment builders.
+	ShipmentComment *ShipmentCommentClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
+	// ShipmentDocumentation is the client for interacting with the ShipmentDocumentation builders.
+	ShipmentDocumentation *ShipmentDocumentationClient
 	// ShipmentType is the client for interacting with the ShipmentType builders.
 	ShipmentType *ShipmentTypeClient
 	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
@@ -282,7 +286,9 @@ func (tx *Tx) init() {
 	tx.ServiceType = NewServiceTypeClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
 	tx.Shipment = NewShipmentClient(tx.config)
+	tx.ShipmentComment = NewShipmentCommentClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
+	tx.ShipmentDocumentation = NewShipmentDocumentationClient(tx.config)
 	tx.ShipmentType = NewShipmentTypeClient(tx.config)
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)

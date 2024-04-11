@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/google/uuid"
 )
 
 // DocumentClassificationUpdate is the builder for updating DocumentClassification entities.
@@ -124,9 +126,45 @@ func (dcu *DocumentClassificationUpdate) ClearColor() *DocumentClassificationUpd
 	return dcu
 }
 
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (dcu *DocumentClassificationUpdate) AddShipmentDocumentationIDs(ids ...uuid.UUID) *DocumentClassificationUpdate {
+	dcu.mutation.AddShipmentDocumentationIDs(ids...)
+	return dcu
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (dcu *DocumentClassificationUpdate) AddShipmentDocumentation(s ...*ShipmentDocumentation) *DocumentClassificationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dcu.AddShipmentDocumentationIDs(ids...)
+}
+
 // Mutation returns the DocumentClassificationMutation object of the builder.
 func (dcu *DocumentClassificationUpdate) Mutation() *DocumentClassificationMutation {
 	return dcu.mutation
+}
+
+// ClearShipmentDocumentation clears all "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (dcu *DocumentClassificationUpdate) ClearShipmentDocumentation() *DocumentClassificationUpdate {
+	dcu.mutation.ClearShipmentDocumentation()
+	return dcu
+}
+
+// RemoveShipmentDocumentationIDs removes the "shipment_documentation" edge to ShipmentDocumentation entities by IDs.
+func (dcu *DocumentClassificationUpdate) RemoveShipmentDocumentationIDs(ids ...uuid.UUID) *DocumentClassificationUpdate {
+	dcu.mutation.RemoveShipmentDocumentationIDs(ids...)
+	return dcu
+}
+
+// RemoveShipmentDocumentation removes "shipment_documentation" edges to ShipmentDocumentation entities.
+func (dcu *DocumentClassificationUpdate) RemoveShipmentDocumentation(s ...*ShipmentDocumentation) *DocumentClassificationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dcu.RemoveShipmentDocumentationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -236,6 +274,51 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 	}
 	if dcu.mutation.ColorCleared() {
 		_spec.ClearField(documentclassification.FieldColor, field.TypeString)
+	}
+	if dcu.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcu.mutation.RemovedShipmentDocumentationIDs(); len(nodes) > 0 && !dcu.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcu.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
@@ -354,9 +437,45 @@ func (dcuo *DocumentClassificationUpdateOne) ClearColor() *DocumentClassificatio
 	return dcuo
 }
 
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (dcuo *DocumentClassificationUpdateOne) AddShipmentDocumentationIDs(ids ...uuid.UUID) *DocumentClassificationUpdateOne {
+	dcuo.mutation.AddShipmentDocumentationIDs(ids...)
+	return dcuo
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (dcuo *DocumentClassificationUpdateOne) AddShipmentDocumentation(s ...*ShipmentDocumentation) *DocumentClassificationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dcuo.AddShipmentDocumentationIDs(ids...)
+}
+
 // Mutation returns the DocumentClassificationMutation object of the builder.
 func (dcuo *DocumentClassificationUpdateOne) Mutation() *DocumentClassificationMutation {
 	return dcuo.mutation
+}
+
+// ClearShipmentDocumentation clears all "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (dcuo *DocumentClassificationUpdateOne) ClearShipmentDocumentation() *DocumentClassificationUpdateOne {
+	dcuo.mutation.ClearShipmentDocumentation()
+	return dcuo
+}
+
+// RemoveShipmentDocumentationIDs removes the "shipment_documentation" edge to ShipmentDocumentation entities by IDs.
+func (dcuo *DocumentClassificationUpdateOne) RemoveShipmentDocumentationIDs(ids ...uuid.UUID) *DocumentClassificationUpdateOne {
+	dcuo.mutation.RemoveShipmentDocumentationIDs(ids...)
+	return dcuo
+}
+
+// RemoveShipmentDocumentation removes "shipment_documentation" edges to ShipmentDocumentation entities.
+func (dcuo *DocumentClassificationUpdateOne) RemoveShipmentDocumentation(s ...*ShipmentDocumentation) *DocumentClassificationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dcuo.RemoveShipmentDocumentationIDs(ids...)
 }
 
 // Where appends a list predicates to the DocumentClassificationUpdate builder.
@@ -496,6 +615,51 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 	}
 	if dcuo.mutation.ColorCleared() {
 		_spec.ClearField(documentclassification.FieldColor, field.TypeString)
+	}
+	if dcuo.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcuo.mutation.RemovedShipmentDocumentationIDs(); len(nodes) > 0 && !dcuo.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcuo.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DocumentClassification{config: dcuo.config}

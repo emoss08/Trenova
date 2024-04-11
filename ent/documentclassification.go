@@ -50,9 +50,12 @@ type DocumentClassificationEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// ShipmentDocumentation holds the value of the shipment_documentation edge.
+	ShipmentDocumentation []*ShipmentDocumentation `json:"shipmentDocumentation,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes                [3]bool
+	namedShipmentDocumentation map[string][]*ShipmentDocumentation
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -75,6 +78,15 @@ func (e DocumentClassificationEdges) OrganizationOrErr() (*Organization, error) 
 		return nil, &NotFoundError{label: organization.Label}
 	}
 	return nil, &NotLoadedError{edge: "organization"}
+}
+
+// ShipmentDocumentationOrErr returns the ShipmentDocumentation value or an error if the edge
+// was not loaded in eager-loading.
+func (e DocumentClassificationEdges) ShipmentDocumentationOrErr() ([]*ShipmentDocumentation, error) {
+	if e.loadedTypes[2] {
+		return e.ShipmentDocumentation, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_documentation"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -188,6 +200,11 @@ func (dc *DocumentClassification) QueryOrganization() *OrganizationQuery {
 	return NewDocumentClassificationClient(dc.config).QueryOrganization(dc)
 }
 
+// QueryShipmentDocumentation queries the "shipment_documentation" edge of the DocumentClassification entity.
+func (dc *DocumentClassification) QueryShipmentDocumentation() *ShipmentDocumentationQuery {
+	return NewDocumentClassificationClient(dc.config).QueryShipmentDocumentation(dc)
+}
+
 // Update returns a builder for updating this DocumentClassification.
 // Note that you need to call DocumentClassification.Unwrap() before calling this method if this DocumentClassification
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -239,6 +256,30 @@ func (dc *DocumentClassification) String() string {
 	builder.WriteString(dc.Color)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedShipmentDocumentation returns the ShipmentDocumentation named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (dc *DocumentClassification) NamedShipmentDocumentation(name string) ([]*ShipmentDocumentation, error) {
+	if dc.Edges.namedShipmentDocumentation == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := dc.Edges.namedShipmentDocumentation[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (dc *DocumentClassification) appendNamedShipmentDocumentation(name string, edges ...*ShipmentDocumentation) {
+	if dc.Edges.namedShipmentDocumentation == nil {
+		dc.Edges.namedShipmentDocumentation = make(map[string][]*ShipmentDocumentation)
+	}
+	if len(edges) == 0 {
+		dc.Edges.namedShipmentDocumentation[name] = []*ShipmentDocumentation{}
+	} else {
+		dc.Edges.namedShipmentDocumentation[name] = append(dc.Edges.namedShipmentDocumentation[name], edges...)
+	}
 }
 
 // DocumentClassifications is a parsable slice of DocumentClassification.

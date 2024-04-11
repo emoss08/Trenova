@@ -49,7 +49,9 @@ import (
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -159,7 +161,9 @@ func checkColumn(table, column string) error {
 			servicetype.Table:                  servicetype.ValidColumn,
 			session.Table:                      session.ValidColumn,
 			shipment.Table:                     shipment.ValidColumn,
+			shipmentcomment.Table:              shipmentcomment.ValidColumn,
 			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
+			shipmentdocumentation.Table:        shipmentdocumentation.ValidColumn,
 			shipmenttype.Table:                 shipmenttype.ValidColumn,
 			tablechangealert.Table:             tablechangealert.ValidColumn,
 			tag.Table:                          tag.ValidColumn,

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
@@ -23,17 +24,19 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                    *QueryContext
-	order                  []user.OrderOption
-	inters                 []Interceptor
-	predicates             []predicate.User
-	withBusinessUnit       *BusinessUnitQuery
-	withOrganization       *OrganizationQuery
-	withUserFavorites      *UserFavoriteQuery
-	withShipments          *ShipmentQuery
-	modifiers              []func(*sql.Selector)
-	withNamedUserFavorites map[string]*UserFavoriteQuery
-	withNamedShipments     map[string]*ShipmentQuery
+	ctx                       *QueryContext
+	order                     []user.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.User
+	withBusinessUnit          *BusinessUnitQuery
+	withOrganization          *OrganizationQuery
+	withUserFavorites         *UserFavoriteQuery
+	withShipments             *ShipmentQuery
+	withShipmentComments      *ShipmentCommentQuery
+	modifiers                 []func(*sql.Selector)
+	withNamedUserFavorites    map[string]*UserFavoriteQuery
+	withNamedShipments        map[string]*ShipmentQuery
+	withNamedShipmentComments map[string]*ShipmentCommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -151,6 +154,28 @@ func (uq *UserQuery) QueryShipments() *ShipmentQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(shipment.Table, shipment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.ShipmentsTable, user.ShipmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentComments chains the current query on the "shipment_comments" edge.
+func (uq *UserQuery) QueryShipmentComments() *ShipmentCommentQuery {
+	query := (&ShipmentCommentClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(shipmentcomment.Table, shipmentcomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ShipmentCommentsTable, user.ShipmentCommentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -345,15 +370,16 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:            uq.config,
-		ctx:               uq.ctx.Clone(),
-		order:             append([]user.OrderOption{}, uq.order...),
-		inters:            append([]Interceptor{}, uq.inters...),
-		predicates:        append([]predicate.User{}, uq.predicates...),
-		withBusinessUnit:  uq.withBusinessUnit.Clone(),
-		withOrganization:  uq.withOrganization.Clone(),
-		withUserFavorites: uq.withUserFavorites.Clone(),
-		withShipments:     uq.withShipments.Clone(),
+		config:               uq.config,
+		ctx:                  uq.ctx.Clone(),
+		order:                append([]user.OrderOption{}, uq.order...),
+		inters:               append([]Interceptor{}, uq.inters...),
+		predicates:           append([]predicate.User{}, uq.predicates...),
+		withBusinessUnit:     uq.withBusinessUnit.Clone(),
+		withOrganization:     uq.withOrganization.Clone(),
+		withUserFavorites:    uq.withUserFavorites.Clone(),
+		withShipments:        uq.withShipments.Clone(),
+		withShipmentComments: uq.withShipmentComments.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -401,6 +427,17 @@ func (uq *UserQuery) WithShipments(opts ...func(*ShipmentQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withShipments = query
+	return uq
+}
+
+// WithShipmentComments tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithShipmentComments(opts ...func(*ShipmentCommentQuery)) *UserQuery {
+	query := (&ShipmentCommentClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withShipmentComments = query
 	return uq
 }
 
@@ -482,11 +519,12 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			uq.withBusinessUnit != nil,
 			uq.withOrganization != nil,
 			uq.withUserFavorites != nil,
 			uq.withShipments != nil,
+			uq.withShipmentComments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -536,6 +574,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withShipmentComments; query != nil {
+		if err := uq.loadShipmentComments(ctx, query, nodes,
+			func(n *User) { n.Edges.ShipmentComments = []*ShipmentComment{} },
+			func(n *User, e *ShipmentComment) { n.Edges.ShipmentComments = append(n.Edges.ShipmentComments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range uq.withNamedUserFavorites {
 		if err := uq.loadUserFavorites(ctx, query, nodes,
 			func(n *User) { n.appendNamedUserFavorites(name) },
@@ -547,6 +592,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadShipments(ctx, query, nodes,
 			func(n *User) { n.appendNamedShipments(name) },
 			func(n *User, e *Shipment) { n.appendNamedShipments(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedShipmentComments {
+		if err := uq.loadShipmentComments(ctx, query, nodes,
+			func(n *User) { n.appendNamedShipmentComments(name) },
+			func(n *User, e *ShipmentComment) { n.appendNamedShipmentComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -669,6 +721,36 @@ func (uq *UserQuery) loadShipments(ctx context.Context, query *ShipmentQuery, no
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadShipmentComments(ctx context.Context, query *ShipmentCommentQuery, nodes []*User, init func(*User), assign func(*User, *ShipmentComment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentcomment.FieldCreatedBy)
+	}
+	query.Where(predicate.ShipmentComment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ShipmentCommentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CreatedBy
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -799,6 +881,20 @@ func (uq *UserQuery) WithNamedShipments(name string, opts ...func(*ShipmentQuery
 		uq.withNamedShipments = make(map[string]*ShipmentQuery)
 	}
 	uq.withNamedShipments[name] = query
+	return uq
+}
+
+// WithNamedShipmentComments tells the query-builder to eager-load the nodes that are connected to the "shipment_comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedShipmentComments(name string, opts ...func(*ShipmentCommentQuery)) *UserQuery {
+	query := (&ShipmentCommentClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedShipmentComments == nil {
+		uq.withNamedShipmentComments = make(map[string]*ShipmentCommentQuery)
+	}
+	uq.withNamedShipmentComments[name] = query
 	return uq
 }
 

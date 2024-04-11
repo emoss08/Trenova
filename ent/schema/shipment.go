@@ -277,6 +277,12 @@ func (Shipment) Edges() []ent.Edge {
 			Required().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"customer"`),
+		edge.To("shipment_documentation", ShipmentDocumentation.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentDocumentation"`),
+		edge.To("shipment_comments", ShipmentComment.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentComments"`),
 	}
 }
 

@@ -38,6 +38,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
+	// EdgeShipmentComments holds the string denoting the shipment_comments edge name in mutations.
+	EdgeShipmentComments = "shipment_comments"
 	// Table holds the table name of the commenttype in the database.
 	Table = "comment_types"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -54,6 +56,13 @@ const (
 	OrganizationInverseTable = "organizations"
 	// OrganizationColumn is the table column denoting the organization relation/edge.
 	OrganizationColumn = "organization_id"
+	// ShipmentCommentsTable is the table that holds the shipment_comments relation/edge.
+	ShipmentCommentsTable = "shipment_comments"
+	// ShipmentCommentsInverseTable is the table name for the ShipmentComment entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcomment" package.
+	ShipmentCommentsInverseTable = "shipment_comments"
+	// ShipmentCommentsColumn is the table column denoting the shipment_comments relation/edge.
+	ShipmentCommentsColumn = "comment_type_id"
 )
 
 // Columns holds all SQL columns for commenttype fields.
@@ -214,6 +223,20 @@ func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByShipmentCommentsCount orders the results by shipment_comments count.
+func ByShipmentCommentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentCommentsStep(), opts...)
+	}
+}
+
+// ByShipmentComments orders the results by shipment_comments terms.
+func ByShipmentComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -226,5 +249,12 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
+}
+func newShipmentCommentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentCommentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommentsTable, ShipmentCommentsColumn),
 	)
 }

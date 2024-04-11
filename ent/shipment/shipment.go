@@ -131,6 +131,10 @@ const (
 	EdgeCreatedByUser = "created_by_user"
 	// EdgeCustomer holds the string denoting the customer edge name in mutations.
 	EdgeCustomer = "customer"
+	// EdgeShipmentDocumentation holds the string denoting the shipment_documentation edge name in mutations.
+	EdgeShipmentDocumentation = "shipment_documentation"
+	// EdgeShipmentComments holds the string denoting the shipment_comments edge name in mutations.
+	EdgeShipmentComments = "shipment_comments"
 	// Table holds the table name of the shipment in the database.
 	Table = "shipments"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -210,6 +214,20 @@ const (
 	CustomerInverseTable = "customers"
 	// CustomerColumn is the table column denoting the customer relation/edge.
 	CustomerColumn = "customer_id"
+	// ShipmentDocumentationTable is the table that holds the shipment_documentation relation/edge.
+	ShipmentDocumentationTable = "shipment_documentations"
+	// ShipmentDocumentationInverseTable is the table name for the ShipmentDocumentation entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentdocumentation" package.
+	ShipmentDocumentationInverseTable = "shipment_documentations"
+	// ShipmentDocumentationColumn is the table column denoting the shipment_documentation relation/edge.
+	ShipmentDocumentationColumn = "shipment_id"
+	// ShipmentCommentsTable is the table that holds the shipment_comments relation/edge.
+	ShipmentCommentsTable = "shipment_comments"
+	// ShipmentCommentsInverseTable is the table name for the ShipmentComment entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcomment" package.
+	ShipmentCommentsInverseTable = "shipment_comments"
+	// ShipmentCommentsColumn is the table column denoting the shipment_comments relation/edge.
+	ShipmentCommentsColumn = "shipment_id"
 )
 
 // Columns holds all SQL columns for shipment fields.
@@ -722,6 +740,34 @@ func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByShipmentDocumentationCount orders the results by shipment_documentation count.
+func ByShipmentDocumentationCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentDocumentationStep(), opts...)
+	}
+}
+
+// ByShipmentDocumentation orders the results by shipment_documentation terms.
+func ByShipmentDocumentation(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentDocumentationStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByShipmentCommentsCount orders the results by shipment_comments count.
+func ByShipmentCommentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentCommentsStep(), opts...)
+	}
+}
+
+// ByShipmentComments orders the results by shipment_comments terms.
+func ByShipmentComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -797,5 +843,19 @@ func newCustomerStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CustomerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
+	)
+}
+func newShipmentDocumentationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentDocumentationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentDocumentationTable, ShipmentDocumentationColumn),
+	)
+}
+func newShipmentCommentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentCommentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommentsTable, ShipmentCommentsColumn),
 	)
 }

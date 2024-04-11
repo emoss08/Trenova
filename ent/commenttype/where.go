@@ -477,6 +477,29 @@ func HasOrganizationWith(preds ...predicate.Organization) predicate.CommentType 
 	})
 }
 
+// HasShipmentComments applies the HasEdge predicate on the "shipment_comments" edge.
+func HasShipmentComments() predicate.CommentType {
+	return predicate.CommentType(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommentsTable, ShipmentCommentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentCommentsWith applies the HasEdge predicate on the "shipment_comments" edge with a given conditions (other predicates).
+func HasShipmentCommentsWith(preds ...predicate.ShipmentComment) predicate.CommentType {
+	return predicate.CommentType(func(s *sql.Selector) {
+		step := newShipmentCommentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.CommentType) predicate.CommentType {
 	return predicate.CommentType(sql.AndPredicates(predicates...))

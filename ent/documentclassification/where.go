@@ -537,6 +537,29 @@ func HasOrganizationWith(preds ...predicate.Organization) predicate.DocumentClas
 	})
 }
 
+// HasShipmentDocumentation applies the HasEdge predicate on the "shipment_documentation" edge.
+func HasShipmentDocumentation() predicate.DocumentClassification {
+	return predicate.DocumentClassification(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentDocumentationTable, ShipmentDocumentationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentDocumentationWith applies the HasEdge predicate on the "shipment_documentation" edge with a given conditions (other predicates).
+func HasShipmentDocumentationWith(preds ...predicate.ShipmentDocumentation) predicate.DocumentClassification {
+	return predicate.DocumentClassification(func(s *sql.Selector) {
+		step := newShipmentDocumentationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.DocumentClassification) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.AndPredicates(predicates...))

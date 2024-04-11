@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -46,7 +47,10 @@ func (CommentType) Fields() []ent.Field {
 
 // Edges of the CommentType.
 func (CommentType) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("shipment_comments", ShipmentComment.Type).
+			StructTag(`json:"shipmentComments"`),
+	}
 }
 
 // Mixin of the CommentType.

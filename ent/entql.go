@@ -41,7 +41,9 @@ import (
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -63,7 +65,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 50)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 52)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   accessorialcharge.Table,
@@ -970,6 +972,23 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[37] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   shipmentcomment.Table,
+			Columns: shipmentcomment.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: shipmentcomment.FieldID,
+			},
+		},
+		Type: "ShipmentComment",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			shipmentcomment.FieldShipmentID:    {Type: field.TypeUUID, Column: shipmentcomment.FieldShipmentID},
+			shipmentcomment.FieldCommentTypeID: {Type: field.TypeUUID, Column: shipmentcomment.FieldCommentTypeID},
+			shipmentcomment.FieldComment:       {Type: field.TypeString, Column: shipmentcomment.FieldComment},
+			shipmentcomment.FieldCreatedBy:     {Type: field.TypeUUID, Column: shipmentcomment.FieldCreatedBy},
+		},
+	}
+	graph.Nodes[38] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   shipmentcontrol.Table,
 			Columns: shipmentcontrol.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -995,7 +1014,28 @@ var schemaGraph = func() *sqlgraph.Schema {
 			shipmentcontrol.FieldEnforceHazmatSegRules:    {Type: field.TypeBool, Column: shipmentcontrol.FieldEnforceHazmatSegRules},
 		},
 	}
-	graph.Nodes[38] = &sqlgraph.Node{
+	graph.Nodes[39] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   shipmentdocumentation.Table,
+			Columns: shipmentdocumentation.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: shipmentdocumentation.FieldID,
+			},
+		},
+		Type: "ShipmentDocumentation",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			shipmentdocumentation.FieldBusinessUnitID:           {Type: field.TypeUUID, Column: shipmentdocumentation.FieldBusinessUnitID},
+			shipmentdocumentation.FieldOrganizationID:           {Type: field.TypeUUID, Column: shipmentdocumentation.FieldOrganizationID},
+			shipmentdocumentation.FieldCreatedAt:                {Type: field.TypeTime, Column: shipmentdocumentation.FieldCreatedAt},
+			shipmentdocumentation.FieldUpdatedAt:                {Type: field.TypeTime, Column: shipmentdocumentation.FieldUpdatedAt},
+			shipmentdocumentation.FieldVersion:                  {Type: field.TypeInt, Column: shipmentdocumentation.FieldVersion},
+			shipmentdocumentation.FieldShipmentID:               {Type: field.TypeUUID, Column: shipmentdocumentation.FieldShipmentID},
+			shipmentdocumentation.FieldDocumentURL:              {Type: field.TypeString, Column: shipmentdocumentation.FieldDocumentURL},
+			shipmentdocumentation.FieldDocumentClassificationID: {Type: field.TypeUUID, Column: shipmentdocumentation.FieldDocumentClassificationID},
+		},
+	}
+	graph.Nodes[40] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   shipmenttype.Table,
 			Columns: shipmenttype.Columns,
@@ -1016,7 +1056,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			shipmenttype.FieldDescription:    {Type: field.TypeString, Column: shipmenttype.FieldDescription},
 		},
 	}
-	graph.Nodes[39] = &sqlgraph.Node{
+	graph.Nodes[41] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tablechangealert.Table,
 			Columns: tablechangealert.Columns,
@@ -1048,7 +1088,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldExpirationDate:  {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
 		},
 	}
-	graph.Nodes[40] = &sqlgraph.Node{
+	graph.Nodes[42] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tag.Table,
 			Columns: tag.Columns,
@@ -1069,7 +1109,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tag.FieldColor:          {Type: field.TypeString, Column: tag.FieldColor},
 		},
 	}
-	graph.Nodes[41] = &sqlgraph.Node{
+	graph.Nodes[43] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   tractor.Table,
 			Columns: tractor.Columns,
@@ -1101,7 +1141,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tractor.FieldFleetCodeID:             {Type: field.TypeUUID, Column: tractor.FieldFleetCodeID},
 		},
 	}
-	graph.Nodes[42] = &sqlgraph.Node{
+	graph.Nodes[44] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   trailer.Table,
 			Columns: trailer.Columns,
@@ -1133,7 +1173,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			trailer.FieldRegistrationExpirationDate: {Type: field.TypeOther, Column: trailer.FieldRegistrationExpirationDate},
 		},
 	}
-	graph.Nodes[43] = &sqlgraph.Node{
+	graph.Nodes[45] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   usstate.Table,
 			Columns: usstate.Columns,
@@ -1152,7 +1192,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			usstate.FieldCountryIso3:  {Type: field.TypeString, Column: usstate.FieldCountryIso3},
 		},
 	}
-	graph.Nodes[44] = &sqlgraph.Node{
+	graph.Nodes[46] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -1182,7 +1222,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldLastLogin:      {Type: field.TypeTime, Column: user.FieldLastLogin},
 		},
 	}
-	graph.Nodes[45] = &sqlgraph.Node{
+	graph.Nodes[47] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   userfavorite.Table,
 			Columns: userfavorite.Columns,
@@ -1202,7 +1242,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			userfavorite.FieldUserID:         {Type: field.TypeUUID, Column: userfavorite.FieldUserID},
 		},
 	}
-	graph.Nodes[46] = &sqlgraph.Node{
+	graph.Nodes[48] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   worker.Table,
 			Columns: worker.Columns,
@@ -1233,7 +1273,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldManagerID:         {Type: field.TypeUUID, Column: worker.FieldManagerID},
 		},
 	}
-	graph.Nodes[47] = &sqlgraph.Node{
+	graph.Nodes[49] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercomment.Table,
 			Columns: workercomment.Columns,
@@ -1255,7 +1295,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercomment.FieldComment:        {Type: field.TypeString, Column: workercomment.FieldComment},
 		},
 	}
-	graph.Nodes[48] = &sqlgraph.Node{
+	graph.Nodes[50] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workercontact.Table,
 			Columns: workercontact.Columns,
@@ -1279,7 +1319,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			workercontact.FieldIsPrimary:      {Type: field.TypeBool, Column: workercontact.FieldIsPrimary},
 		},
 	}
-	graph.Nodes[49] = &sqlgraph.Node{
+	graph.Nodes[51] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   workerprofile.Table,
 			Columns: workerprofile.Columns,
@@ -1490,6 +1530,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"CommentType",
 		"Organization",
+	)
+	graph.MustAddE(
+		"shipment_comments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commenttype.ShipmentCommentsTable,
+			Columns: []string{commenttype.ShipmentCommentsColumn},
+			Bidi:    false,
+		},
+		"CommentType",
+		"ShipmentComment",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -1706,6 +1758,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"DocumentClassification",
 		"Organization",
+	)
+	graph.MustAddE(
+		"shipment_documentation",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+		},
+		"DocumentClassification",
+		"ShipmentDocumentation",
 	)
 	graph.MustAddE(
 		"organization",
@@ -2668,6 +2732,66 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"Customer",
 	)
 	graph.MustAddE(
+		"shipment_documentation",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+		},
+		"Shipment",
+		"ShipmentDocumentation",
+	)
+	graph.MustAddE(
+		"shipment_comments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+		},
+		"Shipment",
+		"ShipmentComment",
+	)
+	graph.MustAddE(
+		"shipment",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipmentcomment.ShipmentTable,
+			Columns: []string{shipmentcomment.ShipmentColumn},
+			Bidi:    false,
+		},
+		"ShipmentComment",
+		"Shipment",
+	)
+	graph.MustAddE(
+		"comment_type",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipmentcomment.CommentTypeTable,
+			Columns: []string{shipmentcomment.CommentTypeColumn},
+			Bidi:    false,
+		},
+		"ShipmentComment",
+		"CommentType",
+	)
+	graph.MustAddE(
+		"created_by_user",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipmentcomment.CreatedByUserTable,
+			Columns: []string{shipmentcomment.CreatedByUserColumn},
+			Bidi:    false,
+		},
+		"ShipmentComment",
+		"User",
+	)
+	graph.MustAddE(
 		"organization",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -2690,6 +2814,54 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"ShipmentControl",
 		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"business_unit",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.BusinessUnitTable,
+			Columns: []string{shipmentdocumentation.BusinessUnitColumn},
+			Bidi:    false,
+		},
+		"ShipmentDocumentation",
+		"BusinessUnit",
+	)
+	graph.MustAddE(
+		"organization",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.OrganizationTable,
+			Columns: []string{shipmentdocumentation.OrganizationColumn},
+			Bidi:    false,
+		},
+		"ShipmentDocumentation",
+		"Organization",
+	)
+	graph.MustAddE(
+		"shipment",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipmentdocumentation.ShipmentTable,
+			Columns: []string{shipmentdocumentation.ShipmentColumn},
+			Bidi:    false,
+		},
+		"ShipmentDocumentation",
+		"Shipment",
+	)
+	graph.MustAddE(
+		"document_classification",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipmentdocumentation.DocumentClassificationTable,
+			Columns: []string{shipmentdocumentation.DocumentClassificationColumn},
+			Bidi:    false,
+		},
+		"ShipmentDocumentation",
+		"DocumentClassification",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -3002,6 +3174,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"User",
 		"Shipment",
+	)
+	graph.MustAddE(
+		"shipment_comments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentCommentsTable,
+			Columns: []string{user.ShipmentCommentsColumn},
+			Bidi:    false,
+		},
+		"User",
+		"ShipmentComment",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -4117,6 +4301,20 @@ func (f *CommentTypeFilter) WhereHasOrganizationWith(preds ...predicate.Organiza
 	})))
 }
 
+// WhereHasShipmentComments applies a predicate to check if query has an edge shipment_comments.
+func (f *CommentTypeFilter) WhereHasShipmentComments() {
+	f.Where(entql.HasEdge("shipment_comments"))
+}
+
+// WhereHasShipmentCommentsWith applies a predicate to check if query has an edge shipment_comments with a given conditions (other predicates).
+func (f *CommentTypeFilter) WhereHasShipmentCommentsWith(preds ...predicate.ShipmentComment) {
+	f.Where(entql.HasEdgeWith("shipment_comments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // addPredicate implements the predicateAdder interface.
 func (cq *CommodityQuery) addPredicate(pred func(s *sql.Selector)) {
 	cq.predicates = append(cq.predicates, pred)
@@ -4958,6 +5156,20 @@ func (f *DocumentClassificationFilter) WhereHasOrganization() {
 // WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
 func (f *DocumentClassificationFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
 	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasShipmentDocumentation applies a predicate to check if query has an edge shipment_documentation.
+func (f *DocumentClassificationFilter) WhereHasShipmentDocumentation() {
+	f.Where(entql.HasEdge("shipment_documentation"))
+}
+
+// WhereHasShipmentDocumentationWith applies a predicate to check if query has an edge shipment_documentation with a given conditions (other predicates).
+func (f *DocumentClassificationFilter) WhereHasShipmentDocumentationWith(preds ...predicate.ShipmentDocumentation) {
+	f.Where(entql.HasEdgeWith("shipment_documentation", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -8489,6 +8701,136 @@ func (f *ShipmentFilter) WhereHasCustomerWith(preds ...predicate.Customer) {
 	})))
 }
 
+// WhereHasShipmentDocumentation applies a predicate to check if query has an edge shipment_documentation.
+func (f *ShipmentFilter) WhereHasShipmentDocumentation() {
+	f.Where(entql.HasEdge("shipment_documentation"))
+}
+
+// WhereHasShipmentDocumentationWith applies a predicate to check if query has an edge shipment_documentation with a given conditions (other predicates).
+func (f *ShipmentFilter) WhereHasShipmentDocumentationWith(preds ...predicate.ShipmentDocumentation) {
+	f.Where(entql.HasEdgeWith("shipment_documentation", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasShipmentComments applies a predicate to check if query has an edge shipment_comments.
+func (f *ShipmentFilter) WhereHasShipmentComments() {
+	f.Where(entql.HasEdge("shipment_comments"))
+}
+
+// WhereHasShipmentCommentsWith applies a predicate to check if query has an edge shipment_comments with a given conditions (other predicates).
+func (f *ShipmentFilter) WhereHasShipmentCommentsWith(preds ...predicate.ShipmentComment) {
+	f.Where(entql.HasEdgeWith("shipment_comments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
+func (scq *ShipmentCommentQuery) addPredicate(pred func(s *sql.Selector)) {
+	scq.predicates = append(scq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the ShipmentCommentQuery builder.
+func (scq *ShipmentCommentQuery) Filter() *ShipmentCommentFilter {
+	return &ShipmentCommentFilter{config: scq.config, predicateAdder: scq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *ShipmentCommentMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the ShipmentCommentMutation builder.
+func (m *ShipmentCommentMutation) Filter() *ShipmentCommentFilter {
+	return &ShipmentCommentFilter{config: m.config, predicateAdder: m}
+}
+
+// ShipmentCommentFilter provides a generic filtering capability at runtime for ShipmentCommentQuery.
+type ShipmentCommentFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *ShipmentCommentFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql int predicate on the id field.
+func (f *ShipmentCommentFilter) WhereID(p entql.IntP) {
+	f.Where(p.Field(shipmentcomment.FieldID))
+}
+
+// WhereShipmentID applies the entql [16]byte predicate on the shipment_id field.
+func (f *ShipmentCommentFilter) WhereShipmentID(p entql.ValueP) {
+	f.Where(p.Field(shipmentcomment.FieldShipmentID))
+}
+
+// WhereCommentTypeID applies the entql [16]byte predicate on the comment_type_id field.
+func (f *ShipmentCommentFilter) WhereCommentTypeID(p entql.ValueP) {
+	f.Where(p.Field(shipmentcomment.FieldCommentTypeID))
+}
+
+// WhereComment applies the entql string predicate on the comment field.
+func (f *ShipmentCommentFilter) WhereComment(p entql.StringP) {
+	f.Where(p.Field(shipmentcomment.FieldComment))
+}
+
+// WhereCreatedBy applies the entql [16]byte predicate on the created_by field.
+func (f *ShipmentCommentFilter) WhereCreatedBy(p entql.ValueP) {
+	f.Where(p.Field(shipmentcomment.FieldCreatedBy))
+}
+
+// WhereHasShipment applies a predicate to check if query has an edge shipment.
+func (f *ShipmentCommentFilter) WhereHasShipment() {
+	f.Where(entql.HasEdge("shipment"))
+}
+
+// WhereHasShipmentWith applies a predicate to check if query has an edge shipment with a given conditions (other predicates).
+func (f *ShipmentCommentFilter) WhereHasShipmentWith(preds ...predicate.Shipment) {
+	f.Where(entql.HasEdgeWith("shipment", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasCommentType applies a predicate to check if query has an edge comment_type.
+func (f *ShipmentCommentFilter) WhereHasCommentType() {
+	f.Where(entql.HasEdge("comment_type"))
+}
+
+// WhereHasCommentTypeWith applies a predicate to check if query has an edge comment_type with a given conditions (other predicates).
+func (f *ShipmentCommentFilter) WhereHasCommentTypeWith(preds ...predicate.CommentType) {
+	f.Where(entql.HasEdgeWith("comment_type", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasCreatedByUser applies a predicate to check if query has an edge created_by_user.
+func (f *ShipmentCommentFilter) WhereHasCreatedByUser() {
+	f.Where(entql.HasEdge("created_by_user"))
+}
+
+// WhereHasCreatedByUserWith applies a predicate to check if query has an edge created_by_user with a given conditions (other predicates).
+func (f *ShipmentCommentFilter) WhereHasCreatedByUserWith(preds ...predicate.User) {
+	f.Where(entql.HasEdgeWith("created_by_user", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // addPredicate implements the predicateAdder interface.
 func (scq *ShipmentControlQuery) addPredicate(pred func(s *sql.Selector)) {
 	scq.predicates = append(scq.predicates, pred)
@@ -8518,7 +8860,7 @@ type ShipmentControlFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ShipmentControlFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[37].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8628,6 +8970,142 @@ func (f *ShipmentControlFilter) WhereHasBusinessUnitWith(preds ...predicate.Busi
 }
 
 // addPredicate implements the predicateAdder interface.
+func (sdq *ShipmentDocumentationQuery) addPredicate(pred func(s *sql.Selector)) {
+	sdq.predicates = append(sdq.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the ShipmentDocumentationQuery builder.
+func (sdq *ShipmentDocumentationQuery) Filter() *ShipmentDocumentationFilter {
+	return &ShipmentDocumentationFilter{config: sdq.config, predicateAdder: sdq}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *ShipmentDocumentationMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the ShipmentDocumentationMutation builder.
+func (m *ShipmentDocumentationMutation) Filter() *ShipmentDocumentationFilter {
+	return &ShipmentDocumentationFilter{config: m.config, predicateAdder: m}
+}
+
+// ShipmentDocumentationFilter provides a generic filtering capability at runtime for ShipmentDocumentationQuery.
+type ShipmentDocumentationFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *ShipmentDocumentationFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *ShipmentDocumentationFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(shipmentdocumentation.FieldID))
+}
+
+// WhereBusinessUnitID applies the entql [16]byte predicate on the business_unit_id field.
+func (f *ShipmentDocumentationFilter) WhereBusinessUnitID(p entql.ValueP) {
+	f.Where(p.Field(shipmentdocumentation.FieldBusinessUnitID))
+}
+
+// WhereOrganizationID applies the entql [16]byte predicate on the organization_id field.
+func (f *ShipmentDocumentationFilter) WhereOrganizationID(p entql.ValueP) {
+	f.Where(p.Field(shipmentdocumentation.FieldOrganizationID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *ShipmentDocumentationFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(shipmentdocumentation.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *ShipmentDocumentationFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(shipmentdocumentation.FieldUpdatedAt))
+}
+
+// WhereVersion applies the entql int predicate on the version field.
+func (f *ShipmentDocumentationFilter) WhereVersion(p entql.IntP) {
+	f.Where(p.Field(shipmentdocumentation.FieldVersion))
+}
+
+// WhereShipmentID applies the entql [16]byte predicate on the shipment_id field.
+func (f *ShipmentDocumentationFilter) WhereShipmentID(p entql.ValueP) {
+	f.Where(p.Field(shipmentdocumentation.FieldShipmentID))
+}
+
+// WhereDocumentURL applies the entql string predicate on the document_url field.
+func (f *ShipmentDocumentationFilter) WhereDocumentURL(p entql.StringP) {
+	f.Where(p.Field(shipmentdocumentation.FieldDocumentURL))
+}
+
+// WhereDocumentClassificationID applies the entql [16]byte predicate on the document_classification_id field.
+func (f *ShipmentDocumentationFilter) WhereDocumentClassificationID(p entql.ValueP) {
+	f.Where(p.Field(shipmentdocumentation.FieldDocumentClassificationID))
+}
+
+// WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
+func (f *ShipmentDocumentationFilter) WhereHasBusinessUnit() {
+	f.Where(entql.HasEdge("business_unit"))
+}
+
+// WhereHasBusinessUnitWith applies a predicate to check if query has an edge business_unit with a given conditions (other predicates).
+func (f *ShipmentDocumentationFilter) WhereHasBusinessUnitWith(preds ...predicate.BusinessUnit) {
+	f.Where(entql.HasEdgeWith("business_unit", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasOrganization applies a predicate to check if query has an edge organization.
+func (f *ShipmentDocumentationFilter) WhereHasOrganization() {
+	f.Where(entql.HasEdge("organization"))
+}
+
+// WhereHasOrganizationWith applies a predicate to check if query has an edge organization with a given conditions (other predicates).
+func (f *ShipmentDocumentationFilter) WhereHasOrganizationWith(preds ...predicate.Organization) {
+	f.Where(entql.HasEdgeWith("organization", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasShipment applies a predicate to check if query has an edge shipment.
+func (f *ShipmentDocumentationFilter) WhereHasShipment() {
+	f.Where(entql.HasEdge("shipment"))
+}
+
+// WhereHasShipmentWith applies a predicate to check if query has an edge shipment with a given conditions (other predicates).
+func (f *ShipmentDocumentationFilter) WhereHasShipmentWith(preds ...predicate.Shipment) {
+	f.Where(entql.HasEdgeWith("shipment", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasDocumentClassification applies a predicate to check if query has an edge document_classification.
+func (f *ShipmentDocumentationFilter) WhereHasDocumentClassification() {
+	f.Where(entql.HasEdge("document_classification"))
+}
+
+// WhereHasDocumentClassificationWith applies a predicate to check if query has an edge document_classification with a given conditions (other predicates).
+func (f *ShipmentDocumentationFilter) WhereHasDocumentClassificationWith(preds ...predicate.DocumentClassification) {
+	f.Where(entql.HasEdgeWith("document_classification", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (stq *ShipmentTypeQuery) addPredicate(pred func(s *sql.Selector)) {
 	stq.predicates = append(stq.predicates, pred)
 }
@@ -8656,7 +9134,7 @@ type ShipmentTypeFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *ShipmentTypeFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[38].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8764,7 +9242,7 @@ type TableChangeAlertFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TableChangeAlertFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[39].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -8927,7 +9405,7 @@ type TagFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TagFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[40].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9049,7 +9527,7 @@ type TractorFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TractorFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[41].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[43].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9296,7 +9774,7 @@ type TrailerFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *TrailerFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[42].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[44].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9529,7 +10007,7 @@ type UsStateFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UsStateFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[43].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[45].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9599,7 +10077,7 @@ type UserFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[44].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[46].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9751,6 +10229,20 @@ func (f *UserFilter) WhereHasShipmentsWith(preds ...predicate.Shipment) {
 	})))
 }
 
+// WhereHasShipmentComments applies a predicate to check if query has an edge shipment_comments.
+func (f *UserFilter) WhereHasShipmentComments() {
+	f.Where(entql.HasEdge("shipment_comments"))
+}
+
+// WhereHasShipmentCommentsWith applies a predicate to check if query has an edge shipment_comments with a given conditions (other predicates).
+func (f *UserFilter) WhereHasShipmentCommentsWith(preds ...predicate.ShipmentComment) {
+	f.Where(entql.HasEdgeWith("shipment_comments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // addPredicate implements the predicateAdder interface.
 func (ufq *UserFavoriteQuery) addPredicate(pred func(s *sql.Selector)) {
 	ufq.predicates = append(ufq.predicates, pred)
@@ -9780,7 +10272,7 @@ type UserFavoriteFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFavoriteFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[45].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[47].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -9897,7 +10389,7 @@ type WorkerFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[46].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[48].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -10167,7 +10659,7 @@ type WorkerCommentFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerCommentFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[47].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[49].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -10322,7 +10814,7 @@ type WorkerContactFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerContactFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[48].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[50].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -10459,7 +10951,7 @@ type WorkerProfileFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WorkerProfileFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[49].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[51].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

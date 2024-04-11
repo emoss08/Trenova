@@ -999,6 +999,30 @@ func (f ShipmentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutati
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentMutation", m)
 }
 
+// The ShipmentCommentQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ShipmentCommentQueryRuleFunc func(context.Context, *ent.ShipmentCommentQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ShipmentCommentQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ShipmentCommentQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ShipmentCommentQuery", q)
+}
+
+// The ShipmentCommentMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ShipmentCommentMutationRuleFunc func(context.Context, *ent.ShipmentCommentMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ShipmentCommentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ShipmentCommentMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentCommentMutation", m)
+}
+
 // The ShipmentControlQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ShipmentControlQueryRuleFunc func(context.Context, *ent.ShipmentControlQuery) error
@@ -1021,6 +1045,30 @@ func (f ShipmentControlMutationRuleFunc) EvalMutation(ctx context.Context, m ent
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentControlMutation", m)
+}
+
+// The ShipmentDocumentationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ShipmentDocumentationQueryRuleFunc func(context.Context, *ent.ShipmentDocumentationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ShipmentDocumentationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ShipmentDocumentationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ShipmentDocumentationQuery", q)
+}
+
+// The ShipmentDocumentationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ShipmentDocumentationMutationRuleFunc func(context.Context, *ent.ShipmentDocumentationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ShipmentDocumentationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ShipmentDocumentationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentDocumentationMutation", m)
 }
 
 // The ShipmentTypeQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -1420,7 +1468,11 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ShipmentQuery:
 		return q.Filter(), nil
+	case *ent.ShipmentCommentQuery:
+		return q.Filter(), nil
 	case *ent.ShipmentControlQuery:
+		return q.Filter(), nil
+	case *ent.ShipmentDocumentationQuery:
 		return q.Filter(), nil
 	case *ent.ShipmentTypeQuery:
 		return q.Filter(), nil
@@ -1527,7 +1579,11 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.ShipmentMutation:
 		return m.Filter(), nil
+	case *ent.ShipmentCommentMutation:
+		return m.Filter(), nil
 	case *ent.ShipmentControlMutation:
+		return m.Filter(), nil
+	case *ent.ShipmentDocumentationMutation:
 		return m.Filter(), nil
 	case *ent.ShipmentTypeMutation:
 		return m.Filter(), nil

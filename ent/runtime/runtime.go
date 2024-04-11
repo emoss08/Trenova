@@ -43,7 +43,9 @@ import (
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
@@ -1725,6 +1727,12 @@ func init() {
 	shipmentDescID := shipmentMixinFields0[0].Descriptor()
 	// shipment.DefaultID holds the default value on creation for the id field.
 	shipment.DefaultID = shipmentDescID.Default.(func() uuid.UUID)
+	shipmentcommentFields := schema.ShipmentComment{}.Fields()
+	_ = shipmentcommentFields
+	// shipmentcommentDescComment is the schema descriptor for comment field.
+	shipmentcommentDescComment := shipmentcommentFields[2].Descriptor()
+	// shipmentcomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
+	shipmentcomment.CommentValidator = shipmentcommentDescComment.Validators[0].(func(string) error)
 	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
 	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
 	_ = shipmentcontrolMixinFields0
@@ -1792,6 +1800,33 @@ func init() {
 	shipmentcontrolDescID := shipmentcontrolMixinFields0[0].Descriptor()
 	// shipmentcontrol.DefaultID holds the default value on creation for the id field.
 	shipmentcontrol.DefaultID = shipmentcontrolDescID.Default.(func() uuid.UUID)
+	shipmentdocumentationMixin := schema.ShipmentDocumentation{}.Mixin()
+	shipmentdocumentationMixinFields0 := shipmentdocumentationMixin[0].Fields()
+	_ = shipmentdocumentationMixinFields0
+	shipmentdocumentationFields := schema.ShipmentDocumentation{}.Fields()
+	_ = shipmentdocumentationFields
+	// shipmentdocumentationDescCreatedAt is the schema descriptor for created_at field.
+	shipmentdocumentationDescCreatedAt := shipmentdocumentationMixinFields0[3].Descriptor()
+	// shipmentdocumentation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentdocumentation.DefaultCreatedAt = shipmentdocumentationDescCreatedAt.Default.(func() time.Time)
+	// shipmentdocumentationDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentdocumentationDescUpdatedAt := shipmentdocumentationMixinFields0[4].Descriptor()
+	// shipmentdocumentation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentdocumentation.DefaultUpdatedAt = shipmentdocumentationDescUpdatedAt.Default.(func() time.Time)
+	// shipmentdocumentation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentdocumentation.UpdateDefaultUpdatedAt = shipmentdocumentationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentdocumentationDescVersion is the schema descriptor for version field.
+	shipmentdocumentationDescVersion := shipmentdocumentationMixinFields0[5].Descriptor()
+	// shipmentdocumentation.DefaultVersion holds the default value on creation for the version field.
+	shipmentdocumentation.DefaultVersion = shipmentdocumentationDescVersion.Default.(int)
+	// shipmentdocumentationDescDocumentURL is the schema descriptor for document_url field.
+	shipmentdocumentationDescDocumentURL := shipmentdocumentationFields[1].Descriptor()
+	// shipmentdocumentation.DocumentURLValidator is a validator for the "document_url" field. It is called by the builders before save.
+	shipmentdocumentation.DocumentURLValidator = shipmentdocumentationDescDocumentURL.Validators[0].(func(string) error)
+	// shipmentdocumentationDescID is the schema descriptor for id field.
+	shipmentdocumentationDescID := shipmentdocumentationMixinFields0[0].Descriptor()
+	// shipmentdocumentation.DefaultID holds the default value on creation for the id field.
+	shipmentdocumentation.DefaultID = shipmentdocumentationDescID.Default.(func() uuid.UUID)
 	shipmenttypeMixin := schema.ShipmentType{}.Mixin()
 	shipmenttypeMixinFields0 := shipmenttypeMixin[0].Fields()
 	_ = shipmenttypeMixinFields0
