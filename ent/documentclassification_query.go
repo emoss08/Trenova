@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,19 +15,22 @@ import (
 	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/google/uuid"
 )
 
 // DocumentClassificationQuery is the builder for querying DocumentClassification entities.
 type DocumentClassificationQuery struct {
 	config
-	ctx              *QueryContext
-	order            []documentclassification.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.DocumentClassification
-	withBusinessUnit *BusinessUnitQuery
-	withOrganization *OrganizationQuery
-	modifiers        []func(*sql.Selector)
+	ctx                            *QueryContext
+	order                          []documentclassification.OrderOption
+	inters                         []Interceptor
+	predicates                     []predicate.DocumentClassification
+	withBusinessUnit               *BusinessUnitQuery
+	withOrganization               *OrganizationQuery
+	withShipmentDocumentation      *ShipmentDocumentationQuery
+	modifiers                      []func(*sql.Selector)
+	withNamedShipmentDocumentation map[string]*ShipmentDocumentationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +104,28 @@ func (dcq *DocumentClassificationQuery) QueryOrganization() *OrganizationQuery {
 			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, documentclassification.OrganizationTable, documentclassification.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentDocumentation chains the current query on the "shipment_documentation" edge.
+func (dcq *DocumentClassificationQuery) QueryShipmentDocumentation() *ShipmentDocumentationQuery {
+	query := (&ShipmentDocumentationClient{config: dcq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dcq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dcq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
+			sqlgraph.To(shipmentdocumentation.Table, shipmentdocumentation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, documentclassification.ShipmentDocumentationTable, documentclassification.ShipmentDocumentationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +320,14 @@ func (dcq *DocumentClassificationQuery) Clone() *DocumentClassificationQuery {
 		return nil
 	}
 	return &DocumentClassificationQuery{
-		config:           dcq.config,
-		ctx:              dcq.ctx.Clone(),
-		order:            append([]documentclassification.OrderOption{}, dcq.order...),
-		inters:           append([]Interceptor{}, dcq.inters...),
-		predicates:       append([]predicate.DocumentClassification{}, dcq.predicates...),
-		withBusinessUnit: dcq.withBusinessUnit.Clone(),
-		withOrganization: dcq.withOrganization.Clone(),
+		config:                    dcq.config,
+		ctx:                       dcq.ctx.Clone(),
+		order:                     append([]documentclassification.OrderOption{}, dcq.order...),
+		inters:                    append([]Interceptor{}, dcq.inters...),
+		predicates:                append([]predicate.DocumentClassification{}, dcq.predicates...),
+		withBusinessUnit:          dcq.withBusinessUnit.Clone(),
+		withOrganization:          dcq.withOrganization.Clone(),
+		withShipmentDocumentation: dcq.withShipmentDocumentation.Clone(),
 		// clone intermediate query.
 		sql:  dcq.sql.Clone(),
 		path: dcq.path,
@@ -326,6 +353,17 @@ func (dcq *DocumentClassificationQuery) WithOrganization(opts ...func(*Organizat
 		opt(query)
 	}
 	dcq.withOrganization = query
+	return dcq
+}
+
+// WithShipmentDocumentation tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_documentation" edge. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithShipmentDocumentation(opts ...func(*ShipmentDocumentationQuery)) *DocumentClassificationQuery {
+	query := (&ShipmentDocumentationClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	dcq.withShipmentDocumentation = query
 	return dcq
 }
 
@@ -407,9 +445,10 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 	var (
 		nodes       = []*DocumentClassification{}
 		_spec       = dcq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			dcq.withBusinessUnit != nil,
 			dcq.withOrganization != nil,
+			dcq.withShipmentDocumentation != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +481,22 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 	if query := dcq.withOrganization; query != nil {
 		if err := dcq.loadOrganization(ctx, query, nodes, nil,
 			func(n *DocumentClassification, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := dcq.withShipmentDocumentation; query != nil {
+		if err := dcq.loadShipmentDocumentation(ctx, query, nodes,
+			func(n *DocumentClassification) { n.Edges.ShipmentDocumentation = []*ShipmentDocumentation{} },
+			func(n *DocumentClassification, e *ShipmentDocumentation) {
+				n.Edges.ShipmentDocumentation = append(n.Edges.ShipmentDocumentation, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range dcq.withNamedShipmentDocumentation {
+		if err := dcq.loadShipmentDocumentation(ctx, query, nodes,
+			func(n *DocumentClassification) { n.appendNamedShipmentDocumentation(name) },
+			func(n *DocumentClassification, e *ShipmentDocumentation) { n.appendNamedShipmentDocumentation(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -503,6 +558,36 @@ func (dcq *DocumentClassificationQuery) loadOrganization(ctx context.Context, qu
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (dcq *DocumentClassificationQuery) loadShipmentDocumentation(ctx context.Context, query *ShipmentDocumentationQuery, nodes []*DocumentClassification, init func(*DocumentClassification), assign func(*DocumentClassification, *ShipmentDocumentation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*DocumentClassification)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentdocumentation.FieldDocumentClassificationID)
+	}
+	query.Where(predicate.ShipmentDocumentation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(documentclassification.ShipmentDocumentationColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.DocumentClassificationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "document_classification_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -604,6 +689,20 @@ func (dcq *DocumentClassificationQuery) sqlQuery(ctx context.Context) *sql.Selec
 func (dcq *DocumentClassificationQuery) Modify(modifiers ...func(s *sql.Selector)) *DocumentClassificationSelect {
 	dcq.modifiers = append(dcq.modifiers, modifiers...)
 	return dcq.Select()
+}
+
+// WithNamedShipmentDocumentation tells the query-builder to eager-load the nodes that are connected to the "shipment_documentation"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithNamedShipmentDocumentation(name string, opts ...func(*ShipmentDocumentationQuery)) *DocumentClassificationQuery {
+	query := (&ShipmentDocumentationClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if dcq.withNamedShipmentDocumentation == nil {
+		dcq.withNamedShipmentDocumentation = make(map[string]*ShipmentDocumentationQuery)
+	}
+	dcq.withNamedShipmentDocumentation[name] = query
+	return dcq
 }
 
 // DocumentClassificationGroupBy is the group-by builder for DocumentClassification entities.

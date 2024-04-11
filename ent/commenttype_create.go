@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/google/uuid"
 )
 
@@ -147,6 +148,21 @@ func (ctc *CommentTypeCreate) SetBusinessUnit(b *BusinessUnit) *CommentTypeCreat
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (ctc *CommentTypeCreate) SetOrganization(o *Organization) *CommentTypeCreate {
 	return ctc.SetOrganizationID(o.ID)
+}
+
+// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
+func (ctc *CommentTypeCreate) AddShipmentCommentIDs(ids ...int) *CommentTypeCreate {
+	ctc.mutation.AddShipmentCommentIDs(ids...)
+	return ctc
+}
+
+// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
+func (ctc *CommentTypeCreate) AddShipmentComments(s ...*ShipmentComment) *CommentTypeCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ctc.AddShipmentCommentIDs(ids...)
 }
 
 // Mutation returns the CommentTypeMutation object of the builder.
@@ -352,6 +368,22 @@ func (ctc *CommentTypeCreate) createSpec() (*CommentType, *sqlgraph.CreateSpec) 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ctc.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commenttype.ShipmentCommentsTable,
+			Columns: []string{commenttype.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

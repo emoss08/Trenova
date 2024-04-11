@@ -6,6 +6,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
@@ -52,7 +53,10 @@ func (DocumentClassification) Mixin() []ent.Mixin {
 
 // Edges of the DocumentClassification.
 func (DocumentClassification) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("shipment_documentation", ShipmentDocumentation.Type).
+			StructTag(`json:"shipmentDocumentation,omitempty"`),
+	}
 }
 
 // Hooks for the DocumentClassification.

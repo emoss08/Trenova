@@ -50,9 +50,12 @@ type CommentTypeEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// ShipmentComments holds the value of the shipment_comments edge.
+	ShipmentComments []*ShipmentComment `json:"shipmentComments"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes           [3]bool
+	namedShipmentComments map[string][]*ShipmentComment
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -75,6 +78,15 @@ func (e CommentTypeEdges) OrganizationOrErr() (*Organization, error) {
 		return nil, &NotFoundError{label: organization.Label}
 	}
 	return nil, &NotLoadedError{edge: "organization"}
+}
+
+// ShipmentCommentsOrErr returns the ShipmentComments value or an error if the edge
+// was not loaded in eager-loading.
+func (e CommentTypeEdges) ShipmentCommentsOrErr() ([]*ShipmentComment, error) {
+	if e.loadedTypes[2] {
+		return e.ShipmentComments, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -188,6 +200,11 @@ func (ct *CommentType) QueryOrganization() *OrganizationQuery {
 	return NewCommentTypeClient(ct.config).QueryOrganization(ct)
 }
 
+// QueryShipmentComments queries the "shipment_comments" edge of the CommentType entity.
+func (ct *CommentType) QueryShipmentComments() *ShipmentCommentQuery {
+	return NewCommentTypeClient(ct.config).QueryShipmentComments(ct)
+}
+
 // Update returns a builder for updating this CommentType.
 // Note that you need to call CommentType.Unwrap() before calling this method if this CommentType
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -239,6 +256,30 @@ func (ct *CommentType) String() string {
 	builder.WriteString(ct.Description)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedShipmentComments returns the ShipmentComments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (ct *CommentType) NamedShipmentComments(name string) ([]*ShipmentComment, error) {
+	if ct.Edges.namedShipmentComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := ct.Edges.namedShipmentComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (ct *CommentType) appendNamedShipmentComments(name string, edges ...*ShipmentComment) {
+	if ct.Edges.namedShipmentComments == nil {
+		ct.Edges.namedShipmentComments = make(map[string][]*ShipmentComment)
+	}
+	if len(edges) == 0 {
+		ct.Edges.namedShipmentComments[name] = []*ShipmentComment{}
+	} else {
+		ct.Edges.namedShipmentComments[name] = append(ct.Edges.namedShipmentComments[name], edges...)
+	}
 }
 
 // CommentTypes is a parsable slice of CommentType.

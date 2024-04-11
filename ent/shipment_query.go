@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -18,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -26,22 +29,26 @@ import (
 // ShipmentQuery is the builder for querying Shipment entities.
 type ShipmentQuery struct {
 	config
-	ctx                     *QueryContext
-	order                   []shipment.OrderOption
-	inters                  []Interceptor
-	predicates              []predicate.Shipment
-	withBusinessUnit        *BusinessUnitQuery
-	withOrganization        *OrganizationQuery
-	withShipmentType        *ShipmentTypeQuery
-	withServiceType         *ServiceTypeQuery
-	withRevenueCode         *ServiceTypeQuery
-	withOriginLocation      *LocationQuery
-	withDestinationLocation *LocationQuery
-	withTrailerType         *EquipmentTypeQuery
-	withTractorType         *EquipmentTypeQuery
-	withCreatedByUser       *UserQuery
-	withCustomer            *CustomerQuery
-	modifiers               []func(*sql.Selector)
+	ctx                            *QueryContext
+	order                          []shipment.OrderOption
+	inters                         []Interceptor
+	predicates                     []predicate.Shipment
+	withBusinessUnit               *BusinessUnitQuery
+	withOrganization               *OrganizationQuery
+	withShipmentType               *ShipmentTypeQuery
+	withServiceType                *ServiceTypeQuery
+	withRevenueCode                *ServiceTypeQuery
+	withOriginLocation             *LocationQuery
+	withDestinationLocation        *LocationQuery
+	withTrailerType                *EquipmentTypeQuery
+	withTractorType                *EquipmentTypeQuery
+	withCreatedByUser              *UserQuery
+	withCustomer                   *CustomerQuery
+	withShipmentDocumentation      *ShipmentDocumentationQuery
+	withShipmentComments           *ShipmentCommentQuery
+	modifiers                      []func(*sql.Selector)
+	withNamedShipmentDocumentation map[string]*ShipmentDocumentationQuery
+	withNamedShipmentComments      map[string]*ShipmentCommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -320,6 +327,50 @@ func (sq *ShipmentQuery) QueryCustomer() *CustomerQuery {
 	return query
 }
 
+// QueryShipmentDocumentation chains the current query on the "shipment_documentation" edge.
+func (sq *ShipmentQuery) QueryShipmentDocumentation() *ShipmentDocumentationQuery {
+	query := (&ShipmentDocumentationClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipment.Table, shipment.FieldID, selector),
+			sqlgraph.To(shipmentdocumentation.Table, shipmentdocumentation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipment.ShipmentDocumentationTable, shipment.ShipmentDocumentationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentComments chains the current query on the "shipment_comments" edge.
+func (sq *ShipmentQuery) QueryShipmentComments() *ShipmentCommentQuery {
+	query := (&ShipmentCommentClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipment.Table, shipment.FieldID, selector),
+			sqlgraph.To(shipmentcomment.Table, shipmentcomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipment.ShipmentCommentsTable, shipment.ShipmentCommentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Shipment entity from the query.
 // Returns a *NotFoundError when no Shipment was found.
 func (sq *ShipmentQuery) First(ctx context.Context) (*Shipment, error) {
@@ -507,22 +558,24 @@ func (sq *ShipmentQuery) Clone() *ShipmentQuery {
 		return nil
 	}
 	return &ShipmentQuery{
-		config:                  sq.config,
-		ctx:                     sq.ctx.Clone(),
-		order:                   append([]shipment.OrderOption{}, sq.order...),
-		inters:                  append([]Interceptor{}, sq.inters...),
-		predicates:              append([]predicate.Shipment{}, sq.predicates...),
-		withBusinessUnit:        sq.withBusinessUnit.Clone(),
-		withOrganization:        sq.withOrganization.Clone(),
-		withShipmentType:        sq.withShipmentType.Clone(),
-		withServiceType:         sq.withServiceType.Clone(),
-		withRevenueCode:         sq.withRevenueCode.Clone(),
-		withOriginLocation:      sq.withOriginLocation.Clone(),
-		withDestinationLocation: sq.withDestinationLocation.Clone(),
-		withTrailerType:         sq.withTrailerType.Clone(),
-		withTractorType:         sq.withTractorType.Clone(),
-		withCreatedByUser:       sq.withCreatedByUser.Clone(),
-		withCustomer:            sq.withCustomer.Clone(),
+		config:                    sq.config,
+		ctx:                       sq.ctx.Clone(),
+		order:                     append([]shipment.OrderOption{}, sq.order...),
+		inters:                    append([]Interceptor{}, sq.inters...),
+		predicates:                append([]predicate.Shipment{}, sq.predicates...),
+		withBusinessUnit:          sq.withBusinessUnit.Clone(),
+		withOrganization:          sq.withOrganization.Clone(),
+		withShipmentType:          sq.withShipmentType.Clone(),
+		withServiceType:           sq.withServiceType.Clone(),
+		withRevenueCode:           sq.withRevenueCode.Clone(),
+		withOriginLocation:        sq.withOriginLocation.Clone(),
+		withDestinationLocation:   sq.withDestinationLocation.Clone(),
+		withTrailerType:           sq.withTrailerType.Clone(),
+		withTractorType:           sq.withTractorType.Clone(),
+		withCreatedByUser:         sq.withCreatedByUser.Clone(),
+		withCustomer:              sq.withCustomer.Clone(),
+		withShipmentDocumentation: sq.withShipmentDocumentation.Clone(),
+		withShipmentComments:      sq.withShipmentComments.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -650,6 +703,28 @@ func (sq *ShipmentQuery) WithCustomer(opts ...func(*CustomerQuery)) *ShipmentQue
 	return sq
 }
 
+// WithShipmentDocumentation tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_documentation" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ShipmentQuery) WithShipmentDocumentation(opts ...func(*ShipmentDocumentationQuery)) *ShipmentQuery {
+	query := (&ShipmentDocumentationClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withShipmentDocumentation = query
+	return sq
+}
+
+// WithShipmentComments tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ShipmentQuery) WithShipmentComments(opts ...func(*ShipmentCommentQuery)) *ShipmentQuery {
+	query := (&ShipmentCommentClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withShipmentComments = query
+	return sq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -728,7 +803,7 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 	var (
 		nodes       = []*Shipment{}
 		_spec       = sq.querySpec()
-		loadedTypes = [11]bool{
+		loadedTypes = [13]bool{
 			sq.withBusinessUnit != nil,
 			sq.withOrganization != nil,
 			sq.withShipmentType != nil,
@@ -740,6 +815,8 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 			sq.withTractorType != nil,
 			sq.withCreatedByUser != nil,
 			sq.withCustomer != nil,
+			sq.withShipmentDocumentation != nil,
+			sq.withShipmentComments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -826,6 +903,36 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 	if query := sq.withCustomer; query != nil {
 		if err := sq.loadCustomer(ctx, query, nodes, nil,
 			func(n *Shipment, e *Customer) { n.Edges.Customer = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withShipmentDocumentation; query != nil {
+		if err := sq.loadShipmentDocumentation(ctx, query, nodes,
+			func(n *Shipment) { n.Edges.ShipmentDocumentation = []*ShipmentDocumentation{} },
+			func(n *Shipment, e *ShipmentDocumentation) {
+				n.Edges.ShipmentDocumentation = append(n.Edges.ShipmentDocumentation, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withShipmentComments; query != nil {
+		if err := sq.loadShipmentComments(ctx, query, nodes,
+			func(n *Shipment) { n.Edges.ShipmentComments = []*ShipmentComment{} },
+			func(n *Shipment, e *ShipmentComment) { n.Edges.ShipmentComments = append(n.Edges.ShipmentComments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range sq.withNamedShipmentDocumentation {
+		if err := sq.loadShipmentDocumentation(ctx, query, nodes,
+			func(n *Shipment) { n.appendNamedShipmentDocumentation(name) },
+			func(n *Shipment, e *ShipmentDocumentation) { n.appendNamedShipmentDocumentation(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range sq.withNamedShipmentComments {
+		if err := sq.loadShipmentComments(ctx, query, nodes,
+			func(n *Shipment) { n.appendNamedShipmentComments(name) },
+			func(n *Shipment, e *ShipmentComment) { n.appendNamedShipmentComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1172,6 +1279,66 @@ func (sq *ShipmentQuery) loadCustomer(ctx context.Context, query *CustomerQuery,
 	}
 	return nil
 }
+func (sq *ShipmentQuery) loadShipmentDocumentation(ctx context.Context, query *ShipmentDocumentationQuery, nodes []*Shipment, init func(*Shipment), assign func(*Shipment, *ShipmentDocumentation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Shipment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentdocumentation.FieldShipmentID)
+	}
+	query.Where(predicate.ShipmentDocumentation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(shipment.ShipmentDocumentationColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ShipmentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "shipment_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (sq *ShipmentQuery) loadShipmentComments(ctx context.Context, query *ShipmentCommentQuery, nodes []*Shipment, init func(*Shipment), assign func(*Shipment, *ShipmentComment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Shipment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentcomment.FieldShipmentID)
+	}
+	query.Where(predicate.ShipmentComment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(shipment.ShipmentCommentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ShipmentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "shipment_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (sq *ShipmentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
@@ -1297,6 +1464,34 @@ func (sq *ShipmentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (sq *ShipmentQuery) Modify(modifiers ...func(s *sql.Selector)) *ShipmentSelect {
 	sq.modifiers = append(sq.modifiers, modifiers...)
 	return sq.Select()
+}
+
+// WithNamedShipmentDocumentation tells the query-builder to eager-load the nodes that are connected to the "shipment_documentation"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (sq *ShipmentQuery) WithNamedShipmentDocumentation(name string, opts ...func(*ShipmentDocumentationQuery)) *ShipmentQuery {
+	query := (&ShipmentDocumentationClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if sq.withNamedShipmentDocumentation == nil {
+		sq.withNamedShipmentDocumentation = make(map[string]*ShipmentDocumentationQuery)
+	}
+	sq.withNamedShipmentDocumentation[name] = query
+	return sq
+}
+
+// WithNamedShipmentComments tells the query-builder to eager-load the nodes that are connected to the "shipment_comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (sq *ShipmentQuery) WithNamedShipmentComments(name string, opts ...func(*ShipmentCommentQuery)) *ShipmentQuery {
+	query := (&ShipmentCommentClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if sq.withNamedShipmentComments == nil {
+		sq.withNamedShipmentComments = make(map[string]*ShipmentCommentQuery)
+	}
+	sq.withNamedShipmentComments[name] = query
+	return sq
 }
 
 // ShipmentGroupBy is the group-by builder for Shipment entities.

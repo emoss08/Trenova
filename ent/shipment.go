@@ -149,9 +149,15 @@ type ShipmentEdges struct {
 	CreatedByUser *User `json:"createdByUser"`
 	// Customer holds the value of the customer edge.
 	Customer *Customer `json:"customer"`
+	// ShipmentDocumentation holds the value of the shipment_documentation edge.
+	ShipmentDocumentation []*ShipmentDocumentation `json:"shipmentDocumentation"`
+	// ShipmentComments holds the value of the shipment_comments edge.
+	ShipmentComments []*ShipmentComment `json:"shipmentComments"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [11]bool
+	loadedTypes                [13]bool
+	namedShipmentDocumentation map[string][]*ShipmentDocumentation
+	namedShipmentComments      map[string][]*ShipmentComment
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -273,6 +279,24 @@ func (e ShipmentEdges) CustomerOrErr() (*Customer, error) {
 		return nil, &NotFoundError{label: customer.Label}
 	}
 	return nil, &NotLoadedError{edge: "customer"}
+}
+
+// ShipmentDocumentationOrErr returns the ShipmentDocumentation value or an error if the edge
+// was not loaded in eager-loading.
+func (e ShipmentEdges) ShipmentDocumentationOrErr() ([]*ShipmentDocumentation, error) {
+	if e.loadedTypes[11] {
+		return e.ShipmentDocumentation, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_documentation"}
+}
+
+// ShipmentCommentsOrErr returns the ShipmentComments value or an error if the edge
+// was not loaded in eager-loading.
+func (e ShipmentEdges) ShipmentCommentsOrErr() ([]*ShipmentComment, error) {
+	if e.loadedTypes[12] {
+		return e.ShipmentComments, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_comments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -672,6 +696,16 @@ func (s *Shipment) QueryCustomer() *CustomerQuery {
 	return NewShipmentClient(s.config).QueryCustomer(s)
 }
 
+// QueryShipmentDocumentation queries the "shipment_documentation" edge of the Shipment entity.
+func (s *Shipment) QueryShipmentDocumentation() *ShipmentDocumentationQuery {
+	return NewShipmentClient(s.config).QueryShipmentDocumentation(s)
+}
+
+// QueryShipmentComments queries the "shipment_comments" edge of the Shipment entity.
+func (s *Shipment) QueryShipmentComments() *ShipmentCommentQuery {
+	return NewShipmentClient(s.config).QueryShipmentComments(s)
+}
+
 // Update returns a builder for updating this Shipment.
 // Note that you need to call Shipment.Unwrap() before calling this method if this Shipment
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -856,6 +890,54 @@ func (s *Shipment) String() string {
 	builder.WriteString(fmt.Sprintf("%v", s.IsHazardous))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedShipmentDocumentation returns the ShipmentDocumentation named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (s *Shipment) NamedShipmentDocumentation(name string) ([]*ShipmentDocumentation, error) {
+	if s.Edges.namedShipmentDocumentation == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := s.Edges.namedShipmentDocumentation[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (s *Shipment) appendNamedShipmentDocumentation(name string, edges ...*ShipmentDocumentation) {
+	if s.Edges.namedShipmentDocumentation == nil {
+		s.Edges.namedShipmentDocumentation = make(map[string][]*ShipmentDocumentation)
+	}
+	if len(edges) == 0 {
+		s.Edges.namedShipmentDocumentation[name] = []*ShipmentDocumentation{}
+	} else {
+		s.Edges.namedShipmentDocumentation[name] = append(s.Edges.namedShipmentDocumentation[name], edges...)
+	}
+}
+
+// NamedShipmentComments returns the ShipmentComments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (s *Shipment) NamedShipmentComments(name string) ([]*ShipmentComment, error) {
+	if s.Edges.namedShipmentComments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := s.Edges.namedShipmentComments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (s *Shipment) appendNamedShipmentComments(name string, edges ...*ShipmentComment) {
+	if s.Edges.namedShipmentComments == nil {
+		s.Edges.namedShipmentComments = make(map[string][]*ShipmentComment)
+	}
+	if len(edges) == 0 {
+		s.Edges.namedShipmentComments[name] = []*ShipmentComment{}
+	} else {
+		s.Edges.namedShipmentComments[name] = append(s.Edges.namedShipmentComments[name], edges...)
+	}
 }
 
 // Shipments is a parsable slice of Shipment.

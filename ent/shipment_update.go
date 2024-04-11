@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -910,6 +912,36 @@ func (su *ShipmentUpdate) SetCustomer(c *Customer) *ShipmentUpdate {
 	return su.SetCustomerID(c.ID)
 }
 
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (su *ShipmentUpdate) AddShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentUpdate {
+	su.mutation.AddShipmentDocumentationIDs(ids...)
+	return su
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (su *ShipmentUpdate) AddShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.AddShipmentDocumentationIDs(ids...)
+}
+
+// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
+func (su *ShipmentUpdate) AddShipmentCommentIDs(ids ...int) *ShipmentUpdate {
+	su.mutation.AddShipmentCommentIDs(ids...)
+	return su
+}
+
+// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
+func (su *ShipmentUpdate) AddShipmentComments(s ...*ShipmentComment) *ShipmentUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.AddShipmentCommentIDs(ids...)
+}
+
 // Mutation returns the ShipmentMutation object of the builder.
 func (su *ShipmentUpdate) Mutation() *ShipmentMutation {
 	return su.mutation
@@ -967,6 +999,48 @@ func (su *ShipmentUpdate) ClearCreatedByUser() *ShipmentUpdate {
 func (su *ShipmentUpdate) ClearCustomer() *ShipmentUpdate {
 	su.mutation.ClearCustomer()
 	return su
+}
+
+// ClearShipmentDocumentation clears all "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (su *ShipmentUpdate) ClearShipmentDocumentation() *ShipmentUpdate {
+	su.mutation.ClearShipmentDocumentation()
+	return su
+}
+
+// RemoveShipmentDocumentationIDs removes the "shipment_documentation" edge to ShipmentDocumentation entities by IDs.
+func (su *ShipmentUpdate) RemoveShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentUpdate {
+	su.mutation.RemoveShipmentDocumentationIDs(ids...)
+	return su
+}
+
+// RemoveShipmentDocumentation removes "shipment_documentation" edges to ShipmentDocumentation entities.
+func (su *ShipmentUpdate) RemoveShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.RemoveShipmentDocumentationIDs(ids...)
+}
+
+// ClearShipmentComments clears all "shipment_comments" edges to the ShipmentComment entity.
+func (su *ShipmentUpdate) ClearShipmentComments() *ShipmentUpdate {
+	su.mutation.ClearShipmentComments()
+	return su
+}
+
+// RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
+func (su *ShipmentUpdate) RemoveShipmentCommentIDs(ids ...int) *ShipmentUpdate {
+	su.mutation.RemoveShipmentCommentIDs(ids...)
+	return su
+}
+
+// RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
+func (su *ShipmentUpdate) RemoveShipmentComments(s ...*ShipmentComment) *ShipmentUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.RemoveShipmentCommentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1558,6 +1632,96 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedShipmentDocumentationIDs(); len(nodes) > 0 && !su.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.ShipmentCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedShipmentCommentsIDs(); len(nodes) > 0 && !su.mutation.ShipmentCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2460,6 +2624,36 @@ func (suo *ShipmentUpdateOne) SetCustomer(c *Customer) *ShipmentUpdateOne {
 	return suo.SetCustomerID(c.ID)
 }
 
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (suo *ShipmentUpdateOne) AddShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentUpdateOne {
+	suo.mutation.AddShipmentDocumentationIDs(ids...)
+	return suo
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (suo *ShipmentUpdateOne) AddShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.AddShipmentDocumentationIDs(ids...)
+}
+
+// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
+func (suo *ShipmentUpdateOne) AddShipmentCommentIDs(ids ...int) *ShipmentUpdateOne {
+	suo.mutation.AddShipmentCommentIDs(ids...)
+	return suo
+}
+
+// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
+func (suo *ShipmentUpdateOne) AddShipmentComments(s ...*ShipmentComment) *ShipmentUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.AddShipmentCommentIDs(ids...)
+}
+
 // Mutation returns the ShipmentMutation object of the builder.
 func (suo *ShipmentUpdateOne) Mutation() *ShipmentMutation {
 	return suo.mutation
@@ -2517,6 +2711,48 @@ func (suo *ShipmentUpdateOne) ClearCreatedByUser() *ShipmentUpdateOne {
 func (suo *ShipmentUpdateOne) ClearCustomer() *ShipmentUpdateOne {
 	suo.mutation.ClearCustomer()
 	return suo
+}
+
+// ClearShipmentDocumentation clears all "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (suo *ShipmentUpdateOne) ClearShipmentDocumentation() *ShipmentUpdateOne {
+	suo.mutation.ClearShipmentDocumentation()
+	return suo
+}
+
+// RemoveShipmentDocumentationIDs removes the "shipment_documentation" edge to ShipmentDocumentation entities by IDs.
+func (suo *ShipmentUpdateOne) RemoveShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentUpdateOne {
+	suo.mutation.RemoveShipmentDocumentationIDs(ids...)
+	return suo
+}
+
+// RemoveShipmentDocumentation removes "shipment_documentation" edges to ShipmentDocumentation entities.
+func (suo *ShipmentUpdateOne) RemoveShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.RemoveShipmentDocumentationIDs(ids...)
+}
+
+// ClearShipmentComments clears all "shipment_comments" edges to the ShipmentComment entity.
+func (suo *ShipmentUpdateOne) ClearShipmentComments() *ShipmentUpdateOne {
+	suo.mutation.ClearShipmentComments()
+	return suo
+}
+
+// RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
+func (suo *ShipmentUpdateOne) RemoveShipmentCommentIDs(ids ...int) *ShipmentUpdateOne {
+	suo.mutation.RemoveShipmentCommentIDs(ids...)
+	return suo
+}
+
+// RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
+func (suo *ShipmentUpdateOne) RemoveShipmentComments(s ...*ShipmentComment) *ShipmentUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.RemoveShipmentCommentIDs(ids...)
 }
 
 // Where appends a list predicates to the ShipmentUpdate builder.
@@ -3138,6 +3374,96 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedShipmentDocumentationIDs(); len(nodes) > 0 && !suo.mutation.ShipmentDocumentationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.ShipmentCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedShipmentCommentsIDs(); len(nodes) > 0 && !suo.mutation.ShipmentCommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

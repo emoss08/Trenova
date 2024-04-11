@@ -2425,6 +2425,52 @@ func HasCustomerWith(preds ...predicate.Customer) predicate.Shipment {
 	})
 }
 
+// HasShipmentDocumentation applies the HasEdge predicate on the "shipment_documentation" edge.
+func HasShipmentDocumentation() predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentDocumentationTable, ShipmentDocumentationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentDocumentationWith applies the HasEdge predicate on the "shipment_documentation" edge with a given conditions (other predicates).
+func HasShipmentDocumentationWith(preds ...predicate.ShipmentDocumentation) predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := newShipmentDocumentationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasShipmentComments applies the HasEdge predicate on the "shipment_comments" edge.
+func HasShipmentComments() predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommentsTable, ShipmentCommentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentCommentsWith applies the HasEdge predicate on the "shipment_comments" edge with a given conditions (other predicates).
+func HasShipmentCommentsWith(preds ...predicate.ShipmentComment) predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := newShipmentCommentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Shipment) predicate.Shipment {
 	return predicate.Shipment(sql.AndPredicates(predicates...))

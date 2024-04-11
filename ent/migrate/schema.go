@@ -1508,6 +1508,40 @@ var (
 			},
 		},
 	}
+	// ShipmentCommentsColumns holds the columns for the "shipment_comments" table.
+	ShipmentCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "comment", Type: field.TypeString, Size: 2147483647},
+		{Name: "comment_type_id", Type: field.TypeUUID},
+		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "created_by", Type: field.TypeUUID},
+	}
+	// ShipmentCommentsTable holds the schema information for the "shipment_comments" table.
+	ShipmentCommentsTable = &schema.Table{
+		Name:       "shipment_comments",
+		Columns:    ShipmentCommentsColumns,
+		PrimaryKey: []*schema.Column{ShipmentCommentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_comments_comment_types_shipment_comments",
+				Columns:    []*schema.Column{ShipmentCommentsColumns[2]},
+				RefColumns: []*schema.Column{CommentTypesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipment_comments_shipments_shipment_comments",
+				Columns:    []*schema.Column{ShipmentCommentsColumns[3]},
+				RefColumns: []*schema.Column{ShipmentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_comments_users_shipment_comments",
+				Columns:    []*schema.Column{ShipmentCommentsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// ShipmentControlsColumns holds the columns for the "shipment_controls" table.
 	ShipmentControlsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1544,6 +1578,50 @@ var (
 				Symbol:     "shipment_controls_business_units_business_unit",
 				Columns:    []*schema.Column{ShipmentControlsColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ShipmentDocumentationsColumns holds the columns for the "shipment_documentations" table.
+	ShipmentDocumentationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "document_url", Type: field.TypeString},
+		{Name: "document_classification_id", Type: field.TypeUUID},
+		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// ShipmentDocumentationsTable holds the schema information for the "shipment_documentations" table.
+	ShipmentDocumentationsTable = &schema.Table{
+		Name:       "shipment_documentations",
+		Columns:    ShipmentDocumentationsColumns,
+		PrimaryKey: []*schema.Column{ShipmentDocumentationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_documentations_document_classifications_shipment_documentation",
+				Columns:    []*schema.Column{ShipmentDocumentationsColumns[5]},
+				RefColumns: []*schema.Column{DocumentClassificationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipment_documentations_shipments_shipment_documentation",
+				Columns:    []*schema.Column{ShipmentDocumentationsColumns[6]},
+				RefColumns: []*schema.Column{ShipmentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_documentations_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentDocumentationsColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_documentations_organizations_organization",
+				Columns:    []*schema.Column{ShipmentDocumentationsColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -2186,7 +2264,9 @@ var (
 		ServiceTypesTable,
 		SessionsTable,
 		ShipmentsTable,
+		ShipmentCommentsTable,
 		ShipmentControlsTable,
+		ShipmentDocumentationsTable,
 		ShipmentTypesTable,
 		TableChangeAlertsTable,
 		TagsTable,
@@ -2301,8 +2381,15 @@ func init() {
 	ShipmentsTable.ForeignKeys[9].RefTable = EquipmentTypesTable
 	ShipmentsTable.ForeignKeys[10].RefTable = UsersTable
 	ShipmentsTable.Annotation = &entsql.Annotation{}
+	ShipmentCommentsTable.ForeignKeys[0].RefTable = CommentTypesTable
+	ShipmentCommentsTable.ForeignKeys[1].RefTable = ShipmentsTable
+	ShipmentCommentsTable.ForeignKeys[2].RefTable = UsersTable
 	ShipmentControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ShipmentControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	ShipmentDocumentationsTable.ForeignKeys[0].RefTable = DocumentClassificationsTable
+	ShipmentDocumentationsTable.ForeignKeys[1].RefTable = ShipmentsTable
+	ShipmentDocumentationsTable.ForeignKeys[2].RefTable = BusinessUnitsTable
+	ShipmentDocumentationsTable.ForeignKeys[3].RefTable = OrganizationsTable
 	ShipmentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ShipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TableChangeAlertsTable.ForeignKeys[0].RefTable = BusinessUnitsTable

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,19 +15,22 @@ import (
 	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/google/uuid"
 )
 
 // CommentTypeQuery is the builder for querying CommentType entities.
 type CommentTypeQuery struct {
 	config
-	ctx              *QueryContext
-	order            []commenttype.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.CommentType
-	withBusinessUnit *BusinessUnitQuery
-	withOrganization *OrganizationQuery
-	modifiers        []func(*sql.Selector)
+	ctx                       *QueryContext
+	order                     []commenttype.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.CommentType
+	withBusinessUnit          *BusinessUnitQuery
+	withOrganization          *OrganizationQuery
+	withShipmentComments      *ShipmentCommentQuery
+	modifiers                 []func(*sql.Selector)
+	withNamedShipmentComments map[string]*ShipmentCommentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +104,28 @@ func (ctq *CommentTypeQuery) QueryOrganization() *OrganizationQuery {
 			sqlgraph.From(commenttype.Table, commenttype.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, commenttype.OrganizationTable, commenttype.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(ctq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentComments chains the current query on the "shipment_comments" edge.
+func (ctq *CommentTypeQuery) QueryShipmentComments() *ShipmentCommentQuery {
+	query := (&ShipmentCommentClient{config: ctq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := ctq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := ctq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commenttype.Table, commenttype.FieldID, selector),
+			sqlgraph.To(shipmentcomment.Table, shipmentcomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, commenttype.ShipmentCommentsTable, commenttype.ShipmentCommentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(ctq.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +320,14 @@ func (ctq *CommentTypeQuery) Clone() *CommentTypeQuery {
 		return nil
 	}
 	return &CommentTypeQuery{
-		config:           ctq.config,
-		ctx:              ctq.ctx.Clone(),
-		order:            append([]commenttype.OrderOption{}, ctq.order...),
-		inters:           append([]Interceptor{}, ctq.inters...),
-		predicates:       append([]predicate.CommentType{}, ctq.predicates...),
-		withBusinessUnit: ctq.withBusinessUnit.Clone(),
-		withOrganization: ctq.withOrganization.Clone(),
+		config:               ctq.config,
+		ctx:                  ctq.ctx.Clone(),
+		order:                append([]commenttype.OrderOption{}, ctq.order...),
+		inters:               append([]Interceptor{}, ctq.inters...),
+		predicates:           append([]predicate.CommentType{}, ctq.predicates...),
+		withBusinessUnit:     ctq.withBusinessUnit.Clone(),
+		withOrganization:     ctq.withOrganization.Clone(),
+		withShipmentComments: ctq.withShipmentComments.Clone(),
 		// clone intermediate query.
 		sql:  ctq.sql.Clone(),
 		path: ctq.path,
@@ -326,6 +353,17 @@ func (ctq *CommentTypeQuery) WithOrganization(opts ...func(*OrganizationQuery)) 
 		opt(query)
 	}
 	ctq.withOrganization = query
+	return ctq
+}
+
+// WithShipmentComments tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (ctq *CommentTypeQuery) WithShipmentComments(opts ...func(*ShipmentCommentQuery)) *CommentTypeQuery {
+	query := (&ShipmentCommentClient{config: ctq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	ctq.withShipmentComments = query
 	return ctq
 }
 
@@ -407,9 +445,10 @@ func (ctq *CommentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*CommentType{}
 		_spec       = ctq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			ctq.withBusinessUnit != nil,
 			ctq.withOrganization != nil,
+			ctq.withShipmentComments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +481,22 @@ func (ctq *CommentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := ctq.withOrganization; query != nil {
 		if err := ctq.loadOrganization(ctx, query, nodes, nil,
 			func(n *CommentType, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := ctq.withShipmentComments; query != nil {
+		if err := ctq.loadShipmentComments(ctx, query, nodes,
+			func(n *CommentType) { n.Edges.ShipmentComments = []*ShipmentComment{} },
+			func(n *CommentType, e *ShipmentComment) {
+				n.Edges.ShipmentComments = append(n.Edges.ShipmentComments, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range ctq.withNamedShipmentComments {
+		if err := ctq.loadShipmentComments(ctx, query, nodes,
+			func(n *CommentType) { n.appendNamedShipmentComments(name) },
+			func(n *CommentType, e *ShipmentComment) { n.appendNamedShipmentComments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -503,6 +558,36 @@ func (ctq *CommentTypeQuery) loadOrganization(ctx context.Context, query *Organi
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (ctq *CommentTypeQuery) loadShipmentComments(ctx context.Context, query *ShipmentCommentQuery, nodes []*CommentType, init func(*CommentType), assign func(*CommentType, *ShipmentComment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*CommentType)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentcomment.FieldCommentTypeID)
+	}
+	query.Where(predicate.ShipmentComment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(commenttype.ShipmentCommentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CommentTypeID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "comment_type_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -604,6 +689,20 @@ func (ctq *CommentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (ctq *CommentTypeQuery) Modify(modifiers ...func(s *sql.Selector)) *CommentTypeSelect {
 	ctq.modifiers = append(ctq.modifiers, modifiers...)
 	return ctq.Select()
+}
+
+// WithNamedShipmentComments tells the query-builder to eager-load the nodes that are connected to the "shipment_comments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (ctq *CommentTypeQuery) WithNamedShipmentComments(name string, opts ...func(*ShipmentCommentQuery)) *CommentTypeQuery {
+	query := (&ShipmentCommentClient{config: ctq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if ctq.withNamedShipmentComments == nil {
+		ctq.withNamedShipmentComments = make(map[string]*ShipmentCommentQuery)
+	}
+	ctq.withNamedShipmentComments[name] = query
+	return ctq
 }
 
 // CommentTypeGroupBy is the group-by builder for CommentType entities.

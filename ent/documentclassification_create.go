@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/documentclassification"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/google/uuid"
 )
 
@@ -147,6 +148,21 @@ func (dcc *DocumentClassificationCreate) SetBusinessUnit(b *BusinessUnit) *Docum
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (dcc *DocumentClassificationCreate) SetOrganization(o *Organization) *DocumentClassificationCreate {
 	return dcc.SetOrganizationID(o.ID)
+}
+
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (dcc *DocumentClassificationCreate) AddShipmentDocumentationIDs(ids ...uuid.UUID) *DocumentClassificationCreate {
+	dcc.mutation.AddShipmentDocumentationIDs(ids...)
+	return dcc
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (dcc *DocumentClassificationCreate) AddShipmentDocumentation(s ...*ShipmentDocumentation) *DocumentClassificationCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dcc.AddShipmentDocumentationIDs(ids...)
 }
 
 // Mutation returns the DocumentClassificationMutation object of the builder.
@@ -352,6 +368,22 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dcc.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   documentclassification.ShipmentDocumentationTable,
+			Columns: []string{documentclassification.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
