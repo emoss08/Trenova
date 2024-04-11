@@ -1629,6 +1629,8 @@ func init() {
 	// session.DataValidator is a validator for the "data" field. It is called by the builders before save.
 	session.DataValidator = sessionDescData.Validators[0].(func(string) error)
 	shipmentMixin := schema.Shipment{}.Mixin()
+	shipmentHooks := schema.Shipment{}.Hooks()
+	shipment.Hooks[0] = shipmentHooks[0]
 	shipmentMixinFields0 := shipmentMixin[0].Fields()
 	_ = shipmentMixinFields0
 	shipmentFields := schema.Shipment{}.Fields()

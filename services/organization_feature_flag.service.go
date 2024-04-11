@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/organizationfeatureflag"
-	"github.com/emoss08/trenova/tools/logger"
+	"github.com/emoss08/trenova/util/logger"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )

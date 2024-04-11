@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/types"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/types"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/emoss08/trenova/middleware"

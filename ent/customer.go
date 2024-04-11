@@ -65,9 +65,12 @@ type CustomerEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// State holds the value of the state edge.
 	State *UsState `json:"state"`
+	// Shipments holds the value of the shipments edge.
+	Shipments []*Shipment `json:"shipments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes    [4]bool
+	namedShipments map[string][]*Shipment
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -101,6 +104,15 @@ func (e CustomerEdges) StateOrErr() (*UsState, error) {
 		return nil, &NotFoundError{label: usstate.Label}
 	}
 	return nil, &NotLoadedError{edge: "state"}
+}
+
+// ShipmentsOrErr returns the Shipments value or an error if the edge
+// was not loaded in eager-loading.
+func (e CustomerEdges) ShipmentsOrErr() ([]*Shipment, error) {
+	if e.loadedTypes[3] {
+		return e.Shipments, nil
+	}
+	return nil, &NotLoadedError{edge: "shipments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -257,6 +269,11 @@ func (c *Customer) QueryState() *UsStateQuery {
 	return NewCustomerClient(c.config).QueryState(c)
 }
 
+// QueryShipments queries the "shipments" edge of the Customer entity.
+func (c *Customer) QueryShipments() *ShipmentQuery {
+	return NewCustomerClient(c.config).QueryShipments(c)
+}
+
 // Update returns a builder for updating this Customer.
 // Note that you need to call Customer.Unwrap() before calling this method if this Customer
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -326,6 +343,30 @@ func (c *Customer) String() string {
 	builder.WriteString(fmt.Sprintf("%v", c.AutoMarkReadyToBill))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedShipments returns the Shipments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Customer) NamedShipments(name string) ([]*Shipment, error) {
+	if c.Edges.namedShipments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedShipments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Customer) appendNamedShipments(name string, edges ...*Shipment) {
+	if c.Edges.namedShipments == nil {
+		c.Edges.namedShipments = make(map[string][]*Shipment)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedShipments[name] = []*Shipment{}
+	} else {
+		c.Edges.namedShipments[name] = append(c.Edges.namedShipments[name], edges...)
+	}
 }
 
 // Customers is a parsable slice of Customer.

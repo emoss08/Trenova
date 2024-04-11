@@ -69,6 +69,8 @@ func (Organization) Edges() []ent.Edge {
 			Unique(),
 		edge.From("organization_feature_flag", OrganizationFeatureFlag.Type).
 			Ref("organization"),
+		edge.From("shipments", Shipment.Type).
+			Ref("organization"),
 		edge.To("accounting_control", AccountingControl.Type).
 			StorageKey(edge.Column("organization_id")).
 			Unique(),

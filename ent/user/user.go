@@ -56,6 +56,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeUserFavorites holds the string denoting the user_favorites edge name in mutations.
 	EdgeUserFavorites = "user_favorites"
+	// EdgeShipments holds the string denoting the shipments edge name in mutations.
+	EdgeShipments = "shipments"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -79,6 +81,13 @@ const (
 	UserFavoritesInverseTable = "user_favorites"
 	// UserFavoritesColumn is the table column denoting the user_favorites relation/edge.
 	UserFavoritesColumn = "user_id"
+	// ShipmentsTable is the table that holds the shipments relation/edge.
+	ShipmentsTable = "shipments"
+	// ShipmentsInverseTable is the table name for the Shipment entity.
+	// It exists in this package in order to avoid circular dependency with the "shipment" package.
+	ShipmentsInverseTable = "shipments"
+	// ShipmentsColumn is the table column denoting the shipments relation/edge.
+	ShipmentsColumn = "created_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -312,6 +321,20 @@ func ByUserFavorites(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newUserFavoritesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByShipmentsCount orders the results by shipments count.
+func ByShipmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentsStep(), opts...)
+	}
+}
+
+// ByShipments orders the results by shipments terms.
+func ByShipments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -331,5 +354,12 @@ func newUserFavoritesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserFavoritesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UserFavoritesTable, UserFavoritesColumn),
+	)
+}
+func newShipmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentsTable, ShipmentsColumn),
 	)
 }

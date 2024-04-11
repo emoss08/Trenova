@@ -54,7 +54,7 @@ type Shipment struct {
 	// DestinationAddressLine holds the value of the "destination_address_line" field.
 	DestinationAddressLine string `json:"destinationAddressLine" validate:"omitempty"`
 	// DestinationAppointmentStart holds the value of the "destination_appointment_start" field.
-	DestinationAppointmentStart *time.Time `json:"originAppointmentStart" validate:"required"`
+	DestinationAppointmentStart *time.Time `json:"destinationAppointmentStart" validate:"required"`
 	// DestinationAppointmentEnd holds the value of the "destination_appointment_end" field.
 	DestinationAppointmentEnd *time.Time `json:"destinationAppointmentEnd" validate:"required"`
 	// ShipmentTypeID holds the value of the "shipment_type_id" field.
@@ -141,14 +141,14 @@ type ShipmentEdges struct {
 	OriginLocation *Location `json:"originLocation"`
 	// DestinationLocation holds the value of the destination_location edge.
 	DestinationLocation *Location `json:"destinationLocation"`
-	// Customer holds the value of the customer edge.
-	Customer *Customer `json:"customer"`
 	// TrailerType holds the value of the trailer_type edge.
 	TrailerType *EquipmentType `json:"trailerType"`
 	// TractorType holds the value of the tractor_type edge.
 	TractorType *EquipmentType `json:"tractorType"`
 	// CreatedByUser holds the value of the created_by_user edge.
 	CreatedByUser *User `json:"createdByUser"`
+	// Customer holds the value of the customer edge.
+	Customer *Customer `json:"customer"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [11]bool
@@ -231,23 +231,12 @@ func (e ShipmentEdges) DestinationLocationOrErr() (*Location, error) {
 	return nil, &NotLoadedError{edge: "destination_location"}
 }
 
-// CustomerOrErr returns the Customer value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ShipmentEdges) CustomerOrErr() (*Customer, error) {
-	if e.Customer != nil {
-		return e.Customer, nil
-	} else if e.loadedTypes[7] {
-		return nil, &NotFoundError{label: customer.Label}
-	}
-	return nil, &NotLoadedError{edge: "customer"}
-}
-
 // TrailerTypeOrErr returns the TrailerType value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e ShipmentEdges) TrailerTypeOrErr() (*EquipmentType, error) {
 	if e.TrailerType != nil {
 		return e.TrailerType, nil
-	} else if e.loadedTypes[8] {
+	} else if e.loadedTypes[7] {
 		return nil, &NotFoundError{label: equipmenttype.Label}
 	}
 	return nil, &NotLoadedError{edge: "trailer_type"}
@@ -258,7 +247,7 @@ func (e ShipmentEdges) TrailerTypeOrErr() (*EquipmentType, error) {
 func (e ShipmentEdges) TractorTypeOrErr() (*EquipmentType, error) {
 	if e.TractorType != nil {
 		return e.TractorType, nil
-	} else if e.loadedTypes[9] {
+	} else if e.loadedTypes[8] {
 		return nil, &NotFoundError{label: equipmenttype.Label}
 	}
 	return nil, &NotLoadedError{edge: "tractor_type"}
@@ -269,10 +258,21 @@ func (e ShipmentEdges) TractorTypeOrErr() (*EquipmentType, error) {
 func (e ShipmentEdges) CreatedByUserOrErr() (*User, error) {
 	if e.CreatedByUser != nil {
 		return e.CreatedByUser, nil
-	} else if e.loadedTypes[10] {
+	} else if e.loadedTypes[9] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "created_by_user"}
+}
+
+// CustomerOrErr returns the Customer value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ShipmentEdges) CustomerOrErr() (*Customer, error) {
+	if e.Customer != nil {
+		return e.Customer, nil
+	} else if e.loadedTypes[10] {
+		return nil, &NotFoundError{label: customer.Label}
+	}
+	return nil, &NotLoadedError{edge: "customer"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -652,11 +652,6 @@ func (s *Shipment) QueryDestinationLocation() *LocationQuery {
 	return NewShipmentClient(s.config).QueryDestinationLocation(s)
 }
 
-// QueryCustomer queries the "customer" edge of the Shipment entity.
-func (s *Shipment) QueryCustomer() *CustomerQuery {
-	return NewShipmentClient(s.config).QueryCustomer(s)
-}
-
 // QueryTrailerType queries the "trailer_type" edge of the Shipment entity.
 func (s *Shipment) QueryTrailerType() *EquipmentTypeQuery {
 	return NewShipmentClient(s.config).QueryTrailerType(s)
@@ -670,6 +665,11 @@ func (s *Shipment) QueryTractorType() *EquipmentTypeQuery {
 // QueryCreatedByUser queries the "created_by_user" edge of the Shipment entity.
 func (s *Shipment) QueryCreatedByUser() *UserQuery {
 	return NewShipmentClient(s.config).QueryCreatedByUser(s)
+}
+
+// QueryCustomer queries the "customer" edge of the Shipment entity.
+func (s *Shipment) QueryCustomer() *CustomerQuery {
+	return NewShipmentClient(s.config).QueryCustomer(s)
 }
 
 // Update returns a builder for updating this Shipment.

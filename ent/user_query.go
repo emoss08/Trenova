@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
@@ -29,8 +30,10 @@ type UserQuery struct {
 	withBusinessUnit       *BusinessUnitQuery
 	withOrganization       *OrganizationQuery
 	withUserFavorites      *UserFavoriteQuery
+	withShipments          *ShipmentQuery
 	modifiers              []func(*sql.Selector)
 	withNamedUserFavorites map[string]*UserFavoriteQuery
+	withNamedShipments     map[string]*ShipmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -126,6 +129,28 @@ func (uq *UserQuery) QueryUserFavorites() *UserFavoriteQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(userfavorite.Table, userfavorite.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.UserFavoritesTable, user.UserFavoritesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipments chains the current query on the "shipments" edge.
+func (uq *UserQuery) QueryShipments() *ShipmentQuery {
+	query := (&ShipmentClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ShipmentsTable, user.ShipmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,6 +353,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withBusinessUnit:  uq.withBusinessUnit.Clone(),
 		withOrganization:  uq.withOrganization.Clone(),
 		withUserFavorites: uq.withUserFavorites.Clone(),
+		withShipments:     uq.withShipments.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -364,6 +390,17 @@ func (uq *UserQuery) WithUserFavorites(opts ...func(*UserFavoriteQuery)) *UserQu
 		opt(query)
 	}
 	uq.withUserFavorites = query
+	return uq
+}
+
+// WithShipments tells the query-builder to eager-load the nodes that are connected to
+// the "shipments" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithShipments(opts ...func(*ShipmentQuery)) *UserQuery {
+	query := (&ShipmentClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withShipments = query
 	return uq
 }
 
@@ -445,10 +482,11 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			uq.withBusinessUnit != nil,
 			uq.withOrganization != nil,
 			uq.withUserFavorites != nil,
+			uq.withShipments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -491,10 +529,24 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withShipments; query != nil {
+		if err := uq.loadShipments(ctx, query, nodes,
+			func(n *User) { n.Edges.Shipments = []*Shipment{} },
+			func(n *User, e *Shipment) { n.Edges.Shipments = append(n.Edges.Shipments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range uq.withNamedUserFavorites {
 		if err := uq.loadUserFavorites(ctx, query, nodes,
 			func(n *User) { n.appendNamedUserFavorites(name) },
 			func(n *User, e *UserFavorite) { n.appendNamedUserFavorites(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedShipments {
+		if err := uq.loadShipments(ctx, query, nodes,
+			func(n *User) { n.appendNamedShipments(name) },
+			func(n *User, e *Shipment) { n.appendNamedShipments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -584,6 +636,39 @@ func (uq *UserQuery) loadUserFavorites(ctx context.Context, query *UserFavoriteQ
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadShipments(ctx context.Context, query *ShipmentQuery, nodes []*User, init func(*User), assign func(*User, *Shipment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipment.FieldCreatedBy)
+	}
+	query.Where(predicate.Shipment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ShipmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CreatedBy
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "created_by" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -700,6 +785,20 @@ func (uq *UserQuery) WithNamedUserFavorites(name string, opts ...func(*UserFavor
 		uq.withNamedUserFavorites = make(map[string]*UserFavoriteQuery)
 	}
 	uq.withNamedUserFavorites[name] = query
+	return uq
+}
+
+// WithNamedShipments tells the query-builder to eager-load the nodes that are connected to the "shipments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedShipments(name string, opts ...func(*ShipmentQuery)) *UserQuery {
+	query := (&ShipmentClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedShipments == nil {
+		uq.withNamedShipments = make(map[string]*ShipmentQuery)
+	}
+	uq.withNamedShipments[name] = query
 	return uq
 }
 

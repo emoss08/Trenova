@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/tablechangealert"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/kafka"
-	"github.com/emoss08/trenova/tools/logger"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/kafka"
+	"github.com/emoss08/trenova/util/logger"
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 

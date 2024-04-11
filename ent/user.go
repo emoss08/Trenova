@@ -68,10 +68,13 @@ type UserEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// UserFavorites holds the value of the user_favorites edge.
 	UserFavorites []*UserFavorite `json:"user_favorites,omitempty"`
+	// Shipments holds the value of the shipments edge.
+	Shipments []*Shipment `json:"shipments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes        [3]bool
+	loadedTypes        [4]bool
 	namedUserFavorites map[string][]*UserFavorite
+	namedShipments     map[string][]*Shipment
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -103,6 +106,15 @@ func (e UserEdges) UserFavoritesOrErr() ([]*UserFavorite, error) {
 		return e.UserFavorites, nil
 	}
 	return nil, &NotLoadedError{edge: "user_favorites"}
+}
+
+// ShipmentsOrErr returns the Shipments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ShipmentsOrErr() ([]*Shipment, error) {
+	if e.loadedTypes[3] {
+		return e.Shipments, nil
+	}
+	return nil, &NotLoadedError{edge: "shipments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -273,6 +285,11 @@ func (u *User) QueryUserFavorites() *UserFavoriteQuery {
 	return NewUserClient(u.config).QueryUserFavorites(u)
 }
 
+// QueryShipments queries the "shipments" edge of the User entity.
+func (u *User) QueryShipments() *ShipmentQuery {
+	return NewUserClient(u.config).QueryShipments(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -374,6 +391,30 @@ func (u *User) appendNamedUserFavorites(name string, edges ...*UserFavorite) {
 		u.Edges.namedUserFavorites[name] = []*UserFavorite{}
 	} else {
 		u.Edges.namedUserFavorites[name] = append(u.Edges.namedUserFavorites[name], edges...)
+	}
+}
+
+// NamedShipments returns the Shipments named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedShipments(name string) ([]*Shipment, error) {
+	if u.Edges.namedShipments == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedShipments[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedShipments(name string, edges ...*Shipment) {
+	if u.Edges.namedShipments == nil {
+		u.Edges.namedShipments = make(map[string][]*Shipment)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedShipments[name] = []*Shipment{}
+	} else {
+		u.Edges.namedShipments[name] = append(u.Edges.namedShipments[name], edges...)
 	}
 }
 

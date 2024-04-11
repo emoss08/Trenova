@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/middleware"
 	"github.com/emoss08/trenova/services"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/types"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/types"
 	"github.com/google/uuid"
 )
 

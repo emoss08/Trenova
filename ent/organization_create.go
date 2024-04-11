@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
@@ -158,6 +159,21 @@ func (oc *OrganizationCreate) AddOrganizationFeatureFlag(o ...*OrganizationFeatu
 		ids[i] = o[i].ID
 	}
 	return oc.AddOrganizationFeatureFlagIDs(ids...)
+}
+
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
+func (oc *OrganizationCreate) AddShipmentIDs(ids ...uuid.UUID) *OrganizationCreate {
+	oc.mutation.AddShipmentIDs(ids...)
+	return oc
+}
+
+// AddShipments adds the "shipments" edges to the Shipment entity.
+func (oc *OrganizationCreate) AddShipments(s ...*Shipment) *OrganizationCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return oc.AddShipmentIDs(ids...)
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
@@ -535,6 +551,22 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.ShipmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

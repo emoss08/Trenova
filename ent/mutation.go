@@ -8410,6 +8410,9 @@ type CustomerMutation struct {
 	clearedorganization     bool
 	state                   *uuid.UUID
 	clearedstate            bool
+	shipments               map[uuid.UUID]struct{}
+	removedshipments        map[uuid.UUID]struct{}
+	clearedshipments        bool
 	done                    bool
 	oldValue                func(context.Context) (*Customer, error)
 	predicates              []predicate.Customer
@@ -9173,6 +9176,60 @@ func (m *CustomerMutation) ResetState() {
 	m.clearedstate = false
 }
 
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by ids.
+func (m *CustomerMutation) AddShipmentIDs(ids ...uuid.UUID) {
+	if m.shipments == nil {
+		m.shipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.shipments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearShipments clears the "shipments" edge to the Shipment entity.
+func (m *CustomerMutation) ClearShipments() {
+	m.clearedshipments = true
+}
+
+// ShipmentsCleared reports if the "shipments" edge to the Shipment entity was cleared.
+func (m *CustomerMutation) ShipmentsCleared() bool {
+	return m.clearedshipments
+}
+
+// RemoveShipmentIDs removes the "shipments" edge to the Shipment entity by IDs.
+func (m *CustomerMutation) RemoveShipmentIDs(ids ...uuid.UUID) {
+	if m.removedshipments == nil {
+		m.removedshipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.shipments, ids[i])
+		m.removedshipments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedShipments returns the removed IDs of the "shipments" edge to the Shipment entity.
+func (m *CustomerMutation) RemovedShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.removedshipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ShipmentsIDs returns the "shipments" edge IDs in the mutation.
+func (m *CustomerMutation) ShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.shipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetShipments resets all changes to the "shipments" edge.
+func (m *CustomerMutation) ResetShipments() {
+	m.shipments = nil
+	m.clearedshipments = false
+	m.removedshipments = nil
+}
+
 // Where appends a list predicates to the CustomerMutation builder.
 func (m *CustomerMutation) Where(ps ...predicate.Customer) {
 	m.predicates = append(m.predicates, ps...)
@@ -9568,7 +9625,7 @@ func (m *CustomerMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CustomerMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.business_unit != nil {
 		edges = append(edges, customer.EdgeBusinessUnit)
 	}
@@ -9577,6 +9634,9 @@ func (m *CustomerMutation) AddedEdges() []string {
 	}
 	if m.state != nil {
 		edges = append(edges, customer.EdgeState)
+	}
+	if m.shipments != nil {
+		edges = append(edges, customer.EdgeShipments)
 	}
 	return edges
 }
@@ -9597,25 +9657,42 @@ func (m *CustomerMutation) AddedIDs(name string) []ent.Value {
 		if id := m.state; id != nil {
 			return []ent.Value{*id}
 		}
+	case customer.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.shipments))
+		for id := range m.shipments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CustomerMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
+	if m.removedshipments != nil {
+		edges = append(edges, customer.EdgeShipments)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *CustomerMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case customer.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.removedshipments))
+		for id := range m.removedshipments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CustomerMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedbusiness_unit {
 		edges = append(edges, customer.EdgeBusinessUnit)
 	}
@@ -9624,6 +9701,9 @@ func (m *CustomerMutation) ClearedEdges() []string {
 	}
 	if m.clearedstate {
 		edges = append(edges, customer.EdgeState)
+	}
+	if m.clearedshipments {
+		edges = append(edges, customer.EdgeShipments)
 	}
 	return edges
 }
@@ -9638,6 +9718,8 @@ func (m *CustomerMutation) EdgeCleared(name string) bool {
 		return m.clearedorganization
 	case customer.EdgeState:
 		return m.clearedstate
+	case customer.EdgeShipments:
+		return m.clearedshipments
 	}
 	return false
 }
@@ -9671,6 +9753,9 @@ func (m *CustomerMutation) ResetEdge(name string) error {
 		return nil
 	case customer.EdgeState:
 		m.ResetState()
+		return nil
+	case customer.EdgeShipments:
+		m.ResetShipments()
 		return nil
 	}
 	return fmt.Errorf("unknown Customer edge %s", name)
@@ -32521,6 +32606,9 @@ type OrganizationMutation struct {
 	organization_feature_flag        map[uuid.UUID]struct{}
 	removedorganization_feature_flag map[uuid.UUID]struct{}
 	clearedorganization_feature_flag bool
+	shipments                        map[uuid.UUID]struct{}
+	removedshipments                 map[uuid.UUID]struct{}
+	clearedshipments                 bool
 	accounting_control               *uuid.UUID
 	clearedaccounting_control        bool
 	billing_control                  *uuid.UUID
@@ -33064,6 +33152,60 @@ func (m *OrganizationMutation) ResetOrganizationFeatureFlag() {
 	m.organization_feature_flag = nil
 	m.clearedorganization_feature_flag = false
 	m.removedorganization_feature_flag = nil
+}
+
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by ids.
+func (m *OrganizationMutation) AddShipmentIDs(ids ...uuid.UUID) {
+	if m.shipments == nil {
+		m.shipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.shipments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearShipments clears the "shipments" edge to the Shipment entity.
+func (m *OrganizationMutation) ClearShipments() {
+	m.clearedshipments = true
+}
+
+// ShipmentsCleared reports if the "shipments" edge to the Shipment entity was cleared.
+func (m *OrganizationMutation) ShipmentsCleared() bool {
+	return m.clearedshipments
+}
+
+// RemoveShipmentIDs removes the "shipments" edge to the Shipment entity by IDs.
+func (m *OrganizationMutation) RemoveShipmentIDs(ids ...uuid.UUID) {
+	if m.removedshipments == nil {
+		m.removedshipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.shipments, ids[i])
+		m.removedshipments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedShipments returns the removed IDs of the "shipments" edge to the Shipment entity.
+func (m *OrganizationMutation) RemovedShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.removedshipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ShipmentsIDs returns the "shipments" edge IDs in the mutation.
+func (m *OrganizationMutation) ShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.shipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetShipments resets all changes to the "shipments" edge.
+func (m *OrganizationMutation) ResetShipments() {
+	m.shipments = nil
+	m.clearedshipments = false
+	m.removedshipments = nil
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by id.
@@ -33695,12 +33837,15 @@ func (m *OrganizationMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *OrganizationMutation) AddedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 12)
 	if m.business_unit != nil {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
 	if m.organization_feature_flag != nil {
 		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
+	}
+	if m.shipments != nil {
+		edges = append(edges, organization.EdgeShipments)
 	}
 	if m.accounting_control != nil {
 		edges = append(edges, organization.EdgeAccountingControl)
@@ -33746,6 +33891,12 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case organization.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.shipments))
+		for id := range m.shipments {
+			ids = append(ids, id)
+		}
+		return ids
 	case organization.EdgeAccountingControl:
 		if id := m.accounting_control; id != nil {
 			return []ent.Value{*id}
@@ -33788,9 +33939,12 @@ func (m *OrganizationMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *OrganizationMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 12)
 	if m.removedorganization_feature_flag != nil {
 		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
+	}
+	if m.removedshipments != nil {
+		edges = append(edges, organization.EdgeShipments)
 	}
 	return edges
 }
@@ -33805,18 +33959,27 @@ func (m *OrganizationMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case organization.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.removedshipments))
+		for id := range m.removedshipments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *OrganizationMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 12)
 	if m.clearedbusiness_unit {
 		edges = append(edges, organization.EdgeBusinessUnit)
 	}
 	if m.clearedorganization_feature_flag {
 		edges = append(edges, organization.EdgeOrganizationFeatureFlag)
+	}
+	if m.clearedshipments {
+		edges = append(edges, organization.EdgeShipments)
 	}
 	if m.clearedaccounting_control {
 		edges = append(edges, organization.EdgeAccountingControl)
@@ -33856,6 +34019,8 @@ func (m *OrganizationMutation) EdgeCleared(name string) bool {
 		return m.clearedbusiness_unit
 	case organization.EdgeOrganizationFeatureFlag:
 		return m.clearedorganization_feature_flag
+	case organization.EdgeShipments:
+		return m.clearedshipments
 	case organization.EdgeAccountingControl:
 		return m.clearedaccounting_control
 	case organization.EdgeBillingControl:
@@ -33925,6 +34090,9 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 		return nil
 	case organization.EdgeOrganizationFeatureFlag:
 		m.ResetOrganizationFeatureFlag()
+		return nil
+	case organization.EdgeShipments:
+		m.ResetShipments()
 		return nil
 	case organization.EdgeAccountingControl:
 		m.ResetAccountingControl()
@@ -39562,14 +39730,14 @@ type ShipmentMutation struct {
 	clearedorigin_location        bool
 	destination_location          *uuid.UUID
 	cleareddestination_location   bool
-	customer                      *uuid.UUID
-	clearedcustomer               bool
 	trailer_type                  *uuid.UUID
 	clearedtrailer_type           bool
 	tractor_type                  *uuid.UUID
 	clearedtractor_type           bool
 	created_by_user               *uuid.UUID
 	clearedcreated_by_user        bool
+	customer                      *uuid.UUID
+	clearedcustomer               bool
 	done                          bool
 	oldValue                      func(context.Context) (*Shipment, error)
 	predicates                    []predicate.Shipment
@@ -42109,33 +42277,6 @@ func (m *ShipmentMutation) ResetDestinationLocation() {
 	m.cleareddestination_location = false
 }
 
-// ClearCustomer clears the "customer" edge to the Customer entity.
-func (m *ShipmentMutation) ClearCustomer() {
-	m.clearedcustomer = true
-	m.clearedFields[shipment.FieldCustomerID] = struct{}{}
-}
-
-// CustomerCleared reports if the "customer" edge to the Customer entity was cleared.
-func (m *ShipmentMutation) CustomerCleared() bool {
-	return m.clearedcustomer
-}
-
-// CustomerIDs returns the "customer" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// CustomerID instead. It exists only for internal usage by the builders.
-func (m *ShipmentMutation) CustomerIDs() (ids []uuid.UUID) {
-	if id := m.customer; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetCustomer resets all changes to the "customer" edge.
-func (m *ShipmentMutation) ResetCustomer() {
-	m.customer = nil
-	m.clearedcustomer = false
-}
-
 // ClearTrailerType clears the "trailer_type" edge to the EquipmentType entity.
 func (m *ShipmentMutation) ClearTrailerType() {
 	m.clearedtrailer_type = true
@@ -42228,6 +42369,33 @@ func (m *ShipmentMutation) CreatedByUserIDs() (ids []uuid.UUID) {
 func (m *ShipmentMutation) ResetCreatedByUser() {
 	m.created_by_user = nil
 	m.clearedcreated_by_user = false
+}
+
+// ClearCustomer clears the "customer" edge to the Customer entity.
+func (m *ShipmentMutation) ClearCustomer() {
+	m.clearedcustomer = true
+	m.clearedFields[shipment.FieldCustomerID] = struct{}{}
+}
+
+// CustomerCleared reports if the "customer" edge to the Customer entity was cleared.
+func (m *ShipmentMutation) CustomerCleared() bool {
+	return m.clearedcustomer
+}
+
+// CustomerIDs returns the "customer" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CustomerID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) CustomerIDs() (ids []uuid.UUID) {
+	if id := m.customer; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCustomer resets all changes to the "customer" edge.
+func (m *ShipmentMutation) ResetCustomer() {
+	m.customer = nil
+	m.clearedcustomer = false
 }
 
 // Where appends a list predicates to the ShipmentMutation builder.
@@ -43450,9 +43618,6 @@ func (m *ShipmentMutation) AddedEdges() []string {
 	if m.destination_location != nil {
 		edges = append(edges, shipment.EdgeDestinationLocation)
 	}
-	if m.customer != nil {
-		edges = append(edges, shipment.EdgeCustomer)
-	}
 	if m.trailer_type != nil {
 		edges = append(edges, shipment.EdgeTrailerType)
 	}
@@ -43461,6 +43626,9 @@ func (m *ShipmentMutation) AddedEdges() []string {
 	}
 	if m.created_by_user != nil {
 		edges = append(edges, shipment.EdgeCreatedByUser)
+	}
+	if m.customer != nil {
+		edges = append(edges, shipment.EdgeCustomer)
 	}
 	return edges
 }
@@ -43497,10 +43665,6 @@ func (m *ShipmentMutation) AddedIDs(name string) []ent.Value {
 		if id := m.destination_location; id != nil {
 			return []ent.Value{*id}
 		}
-	case shipment.EdgeCustomer:
-		if id := m.customer; id != nil {
-			return []ent.Value{*id}
-		}
 	case shipment.EdgeTrailerType:
 		if id := m.trailer_type; id != nil {
 			return []ent.Value{*id}
@@ -43511,6 +43675,10 @@ func (m *ShipmentMutation) AddedIDs(name string) []ent.Value {
 		}
 	case shipment.EdgeCreatedByUser:
 		if id := m.created_by_user; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeCustomer:
+		if id := m.customer; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -43553,9 +43721,6 @@ func (m *ShipmentMutation) ClearedEdges() []string {
 	if m.cleareddestination_location {
 		edges = append(edges, shipment.EdgeDestinationLocation)
 	}
-	if m.clearedcustomer {
-		edges = append(edges, shipment.EdgeCustomer)
-	}
 	if m.clearedtrailer_type {
 		edges = append(edges, shipment.EdgeTrailerType)
 	}
@@ -43564,6 +43729,9 @@ func (m *ShipmentMutation) ClearedEdges() []string {
 	}
 	if m.clearedcreated_by_user {
 		edges = append(edges, shipment.EdgeCreatedByUser)
+	}
+	if m.clearedcustomer {
+		edges = append(edges, shipment.EdgeCustomer)
 	}
 	return edges
 }
@@ -43586,14 +43754,14 @@ func (m *ShipmentMutation) EdgeCleared(name string) bool {
 		return m.clearedorigin_location
 	case shipment.EdgeDestinationLocation:
 		return m.cleareddestination_location
-	case shipment.EdgeCustomer:
-		return m.clearedcustomer
 	case shipment.EdgeTrailerType:
 		return m.clearedtrailer_type
 	case shipment.EdgeTractorType:
 		return m.clearedtractor_type
 	case shipment.EdgeCreatedByUser:
 		return m.clearedcreated_by_user
+	case shipment.EdgeCustomer:
+		return m.clearedcustomer
 	}
 	return false
 }
@@ -43623,9 +43791,6 @@ func (m *ShipmentMutation) ClearEdge(name string) error {
 	case shipment.EdgeDestinationLocation:
 		m.ClearDestinationLocation()
 		return nil
-	case shipment.EdgeCustomer:
-		m.ClearCustomer()
-		return nil
 	case shipment.EdgeTrailerType:
 		m.ClearTrailerType()
 		return nil
@@ -43634,6 +43799,9 @@ func (m *ShipmentMutation) ClearEdge(name string) error {
 		return nil
 	case shipment.EdgeCreatedByUser:
 		m.ClearCreatedByUser()
+		return nil
+	case shipment.EdgeCustomer:
+		m.ClearCustomer()
 		return nil
 	}
 	return fmt.Errorf("unknown Shipment unique edge %s", name)
@@ -43664,9 +43832,6 @@ func (m *ShipmentMutation) ResetEdge(name string) error {
 	case shipment.EdgeDestinationLocation:
 		m.ResetDestinationLocation()
 		return nil
-	case shipment.EdgeCustomer:
-		m.ResetCustomer()
-		return nil
 	case shipment.EdgeTrailerType:
 		m.ResetTrailerType()
 		return nil
@@ -43675,6 +43840,9 @@ func (m *ShipmentMutation) ResetEdge(name string) error {
 		return nil
 	case shipment.EdgeCreatedByUser:
 		m.ResetCreatedByUser()
+		return nil
+	case shipment.EdgeCustomer:
+		m.ResetCustomer()
 		return nil
 	}
 	return fmt.Errorf("unknown Shipment edge %s", name)
@@ -52766,6 +52934,9 @@ type UserMutation struct {
 	user_favorites        map[uuid.UUID]struct{}
 	removeduser_favorites map[uuid.UUID]struct{}
 	cleareduser_favorites bool
+	shipments             map[uuid.UUID]struct{}
+	removedshipments      map[uuid.UUID]struct{}
+	clearedshipments      bool
 	done                  bool
 	oldValue              func(context.Context) (*User, error)
 	predicates            []predicate.User
@@ -53667,6 +53838,60 @@ func (m *UserMutation) ResetUserFavorites() {
 	m.removeduser_favorites = nil
 }
 
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by ids.
+func (m *UserMutation) AddShipmentIDs(ids ...uuid.UUID) {
+	if m.shipments == nil {
+		m.shipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.shipments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearShipments clears the "shipments" edge to the Shipment entity.
+func (m *UserMutation) ClearShipments() {
+	m.clearedshipments = true
+}
+
+// ShipmentsCleared reports if the "shipments" edge to the Shipment entity was cleared.
+func (m *UserMutation) ShipmentsCleared() bool {
+	return m.clearedshipments
+}
+
+// RemoveShipmentIDs removes the "shipments" edge to the Shipment entity by IDs.
+func (m *UserMutation) RemoveShipmentIDs(ids ...uuid.UUID) {
+	if m.removedshipments == nil {
+		m.removedshipments = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.shipments, ids[i])
+		m.removedshipments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedShipments returns the removed IDs of the "shipments" edge to the Shipment entity.
+func (m *UserMutation) RemovedShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.removedshipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ShipmentsIDs returns the "shipments" edge IDs in the mutation.
+func (m *UserMutation) ShipmentsIDs() (ids []uuid.UUID) {
+	for id := range m.shipments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetShipments resets all changes to the "shipments" edge.
+func (m *UserMutation) ResetShipments() {
+	m.shipments = nil
+	m.clearedshipments = false
+	m.removedshipments = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -54114,7 +54339,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.business_unit != nil {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
@@ -54123,6 +54348,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.user_favorites != nil {
 		edges = append(edges, user.EdgeUserFavorites)
+	}
+	if m.shipments != nil {
+		edges = append(edges, user.EdgeShipments)
 	}
 	return edges
 }
@@ -54145,15 +54373,24 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.shipments))
+		for id := range m.shipments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removeduser_favorites != nil {
 		edges = append(edges, user.EdgeUserFavorites)
+	}
+	if m.removedshipments != nil {
+		edges = append(edges, user.EdgeShipments)
 	}
 	return edges
 }
@@ -54168,13 +54405,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeShipments:
+		ids := make([]ent.Value, 0, len(m.removedshipments))
+		for id := range m.removedshipments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedbusiness_unit {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
@@ -54183,6 +54426,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.cleareduser_favorites {
 		edges = append(edges, user.EdgeUserFavorites)
+	}
+	if m.clearedshipments {
+		edges = append(edges, user.EdgeShipments)
 	}
 	return edges
 }
@@ -54197,6 +54443,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedorganization
 	case user.EdgeUserFavorites:
 		return m.cleareduser_favorites
+	case user.EdgeShipments:
+		return m.clearedshipments
 	}
 	return false
 }
@@ -54227,6 +54475,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeUserFavorites:
 		m.ResetUserFavorites()
+		return nil
+	case user.EdgeShipments:
+		m.ResetShipments()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

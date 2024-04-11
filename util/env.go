@@ -5,19 +5,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
-)
-
-const (
-	mgmtSecretLen = 16
-)
-
-var (
-	mgmtSecret     string
-	mgmtSecretOnce sync.Once
 )
 
 func GetEnv(key string, defaultVal string) string {
@@ -172,29 +162,4 @@ func GetEnvAsLanguageTagArr(key string, defaultVal []language.Tag, separator ...
 	}
 
 	return res
-}
-
-// GetMgmtSecret returns the management secret for the app server, mainly used by health check and readiness endpoints.
-// It first attempts to retrieve a value from the given environment variable and generates a cryptographically secure random string
-// should no env var have been set.
-// Failure to generate a random string will cause a panic as secret security cannot be guaranteed otherwise.
-// Subsequent calls to GetMgmtSecret during the server's runtime will always return the same randomly generated secret for consistency.
-func GetMgmtSecret(envKey string) string {
-	val := GetEnv(envKey, "")
-
-	if len(val) > 0 {
-		return val
-	}
-
-	mgmtSecretOnce.Do(func() {
-		var err error
-		mgmtSecret, err = GenerateRandomHexString(mgmtSecretLen)
-		if err != nil {
-			log.Panic().Err(err).Msg("Failed to generate random management secret")
-		}
-
-		log.Warn().Str("envKey", envKey).Str("mgmtSecret", mgmtSecret).Msg("Could not retrieve management secret from env key, using randomly generated one")
-	})
-
-	return mgmtSecret
 }

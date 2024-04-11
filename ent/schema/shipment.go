@@ -1,6 +1,10 @@
 package schema
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
@@ -8,6 +12,12 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	gen "github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/ent/hook"
+	"github.com/emoss08/trenova/ent/shipment"
+	cf "github.com/emoss08/trenova/util/control"
+	su "github.com/emoss08/trenova/util/shipment"
+	"github.com/emoss08/trenova/util/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -55,7 +65,7 @@ func (Shipment) Fields() []ent.Field {
 		field.Time("destination_appointment_start").
 			Optional().
 			Nillable().
-			StructTag(`json:"originAppointmentStart" validate:"required"`),
+			StructTag(`json:"destinationAppointmentStart" validate:"required"`),
 		field.Time("destination_appointment_end").
 			Optional().
 			Nillable().
@@ -244,12 +254,6 @@ func (Shipment) Edges() []ent.Edge {
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"destinationLocation"`),
-		edge.To("customer", Customer.Type).
-			Field("customer_id").
-			Unique().
-			Required().
-			Annotations(entsql.OnDelete(entsql.Cascade)).
-			StructTag(`json:"customer"`),
 		edge.To("trailer_type", EquipmentType.Type).
 			Field("trailer_type_id").
 			Unique().
@@ -260,10 +264,109 @@ func (Shipment) Edges() []ent.Edge {
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"tractorType"`),
-		edge.To("created_by_user", User.Type).
+		edge.From("created_by_user", User.Type).
+			Ref("shipments").
 			Field("created_by").
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"createdByUser"`),
+		edge.From("customer", Customer.Type).
+			Ref("shipments").
+			Field("customer_id").
+			Unique().
+			Required().
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"customer"`),
 	}
+}
+
+// Hooks of the Shipment.
+func (Shipment) Hooks() []ent.Hook {
+	return []ent.Hook{
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.ShipmentFunc(func(ctx context.Context, m *gen.ShipmentMutation) (ent.Value, error) {
+					if m.Op().Is(ent.OpCreate) {
+						// Generate the pro number.
+						proNumber, err := generateProNumber(ctx, m, m.Client())
+						if err != nil {
+							return nil, err
+						}
+						m.SetProNumber(proNumber)
+					}
+
+					if m.Op().Is(ent.OpUpdate) {
+						// Handle voided shipment.
+						if err := su.HandleVoidedShipment(ctx, m, m.Client()); err != nil {
+							return nil, err
+						}
+					}
+
+					// Get shipment control.
+					orgID, _ := m.OrganizationID()
+					buID, _ := m.BusinessUnitID()
+
+					// Get the client.
+					client := m.Client()
+
+					// Get shipment control.
+					shipmentControl, err := cf.GetShipmentControlByOrganization(ctx, client, orgID, buID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Get billing control.
+					billingControl, err := cf.GetBillingControlByOrganization(ctx, client, orgID, buID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Get the dispatch control.
+					dispatchControl, err := cf.GetDispatchControlByOrganization(ctx, client, orgID, buID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Validate the shipment.
+					validationErrs, err := su.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
+					if err != nil {
+						return nil, err
+					}
+
+					if len(validationErrs) > 0 {
+						return nil, &types.ValidationErrorResponse{
+							Type:   "validationError",
+							Errors: validationErrs,
+						}
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+	}
+}
+
+// generateProNumber facilitates the generation of a pro number for a shipment.
+func generateProNumber(
+	ctx context.Context, m *gen.ShipmentMutation, client *gen.Client,
+) (string, error) {
+	today := time.Now().Format("060102") // YYMMDD
+	organizationID, _ := m.OrganizationID()
+
+	// Count the number shipments for today and the same organization.
+	countForToday, err := client.Shipment.Query().
+		Where(
+			shipment.ProNumberHasPrefix(today),
+			shipment.OrganizationIDEQ(organizationID),
+		).
+		Count(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	countForToday++ // Increment the count by 1 to get the next number.
+
+	// Generate the pronumber with zero-padded count.
+	proNumber := today + fmt.Sprintf("%s-%04d", today, countForToday)
+	return proNumber, nil
 }

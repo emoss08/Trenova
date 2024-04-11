@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
 )
@@ -197,6 +198,21 @@ func (cc *CustomerCreate) SetOrganization(o *Organization) *CustomerCreate {
 // SetState sets the "state" edge to the UsState entity.
 func (cc *CustomerCreate) SetState(u *UsState) *CustomerCreate {
 	return cc.SetStateID(u.ID)
+}
+
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
+func (cc *CustomerCreate) AddShipmentIDs(ids ...uuid.UUID) *CustomerCreate {
+	cc.mutation.AddShipmentIDs(ids...)
+	return cc
+}
+
+// AddShipments adds the "shipments" edges to the Shipment entity.
+func (cc *CustomerCreate) AddShipments(s ...*Shipment) *CustomerCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return cc.AddShipmentIDs(ids...)
 }
 
 // Mutation returns the CustomerMutation object of the builder.
@@ -496,6 +512,22 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.StateID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.ShipmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ShipmentsTable,
+			Columns: []string{customer.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

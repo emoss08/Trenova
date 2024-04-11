@@ -1997,6 +1997,22 @@ func (c *CustomerClient) QueryState(cu *Customer) *UsStateQuery {
 	return query
 }
 
+// QueryShipments queries the shipments edge of a Customer.
+func (c *CustomerClient) QueryShipments(cu *Customer) *ShipmentQuery {
+	query := (&ShipmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, id),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.ShipmentsTable, customer.ShipmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CustomerClient) Hooks() []Hook {
 	hooks := c.hooks.Customer
@@ -5689,6 +5705,22 @@ func (c *OrganizationClient) QueryOrganizationFeatureFlag(o *Organization) *Orga
 	return query
 }
 
+// QueryShipments queries the shipments edge of a Organization.
+func (c *OrganizationClient) QueryShipments(o *Organization) *ShipmentQuery {
+	query := (&ShipmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, id),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, organization.ShipmentsTable, organization.ShipmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAccountingControl queries the accounting_control edge of a Organization.
 func (c *OrganizationClient) QueryAccountingControl(o *Organization) *AccountingControlQuery {
 	query := (&AccountingControlClient{config: c.config}).Query()
@@ -7234,22 +7266,6 @@ func (c *ShipmentClient) QueryDestinationLocation(s *Shipment) *LocationQuery {
 	return query
 }
 
-// QueryCustomer queries the customer edge of a Shipment.
-func (c *ShipmentClient) QueryCustomer(s *Shipment) *CustomerQuery {
-	query := (&CustomerClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := s.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(shipment.Table, shipment.FieldID, id),
-			sqlgraph.To(customer.Table, customer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, shipment.CustomerTable, shipment.CustomerColumn),
-		)
-		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryTrailerType queries the trailer_type edge of a Shipment.
 func (c *ShipmentClient) QueryTrailerType(s *Shipment) *EquipmentTypeQuery {
 	query := (&EquipmentTypeClient{config: c.config}).Query()
@@ -7290,7 +7306,23 @@ func (c *ShipmentClient) QueryCreatedByUser(s *Shipment) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(shipment.Table, shipment.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, shipment.CreatedByUserTable, shipment.CreatedByUserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipment.CreatedByUserTable, shipment.CreatedByUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCustomer queries the customer edge of a Shipment.
+func (c *ShipmentClient) QueryCustomer(s *Shipment) *CustomerQuery {
+	query := (&CustomerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipment.Table, shipment.FieldID, id),
+			sqlgraph.To(customer.Table, customer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipment.CustomerTable, shipment.CustomerColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -7300,7 +7332,8 @@ func (c *ShipmentClient) QueryCreatedByUser(s *Shipment) *UserQuery {
 
 // Hooks returns the client hooks.
 func (c *ShipmentClient) Hooks() []Hook {
-	return c.hooks.Shipment
+	hooks := c.hooks.Shipment
+	return append(hooks[:len(hooks):len(hooks)], shipment.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -8790,6 +8823,22 @@ func (c *UserClient) QueryUserFavorites(u *User) *UserFavoriteQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(userfavorite.Table, userfavorite.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.UserFavoritesTable, user.UserFavoritesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryShipments queries the shipments edge of a User.
+func (c *UserClient) QueryShipments(u *User) *ShipmentQuery {
+	query := (&ShipmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ShipmentsTable, user.ShipmentsColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

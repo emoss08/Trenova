@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/tools/logger"
-	"github.com/emoss08/trenova/tools/session"
+	"github.com/emoss08/trenova/util/logger"
+	"github.com/emoss08/trenova/util/session"
 	"github.com/goccy/go-json"
 	"github.com/rotisserie/eris"
 

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/ent/user"
-	"github.com/emoss08/trenova/tools"
+	tools "github.com/emoss08/trenova/util"
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"

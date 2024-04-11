@@ -2333,29 +2333,6 @@ func HasDestinationLocationWith(preds ...predicate.Location) predicate.Shipment 
 	})
 }
 
-// HasCustomer applies the HasEdge predicate on the "customer" edge.
-func HasCustomer() predicate.Shipment {
-	return predicate.Shipment(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, CustomerTable, CustomerColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasCustomerWith applies the HasEdge predicate on the "customer" edge with a given conditions (other predicates).
-func HasCustomerWith(preds ...predicate.Customer) predicate.Shipment {
-	return predicate.Shipment(func(s *sql.Selector) {
-		step := newCustomerStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasTrailerType applies the HasEdge predicate on the "trailer_type" edge.
 func HasTrailerType() predicate.Shipment {
 	return predicate.Shipment(func(s *sql.Selector) {
@@ -2407,7 +2384,7 @@ func HasCreatedByUser() predicate.Shipment {
 	return predicate.Shipment(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, CreatedByUserTable, CreatedByUserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, CreatedByUserTable, CreatedByUserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -2417,6 +2394,29 @@ func HasCreatedByUser() predicate.Shipment {
 func HasCreatedByUserWith(preds ...predicate.User) predicate.Shipment {
 	return predicate.Shipment(func(s *sql.Selector) {
 		step := newCreatedByUserStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCustomer applies the HasEdge predicate on the "customer" edge.
+func HasCustomer() predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCustomerWith applies the HasEdge predicate on the "customer" edge with a given conditions (other predicates).
+func HasCustomerWith(preds ...predicate.Customer) predicate.Shipment {
+	return predicate.Shipment(func(s *sql.Selector) {
+		step := newCustomerStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -53,6 +53,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeState holds the string denoting the state edge name in mutations.
 	EdgeState = "state"
+	// EdgeShipments holds the string denoting the shipments edge name in mutations.
+	EdgeShipments = "shipments"
 	// Table holds the table name of the customer in the database.
 	Table = "customers"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -76,6 +78,13 @@ const (
 	StateInverseTable = "us_states"
 	// StateColumn is the table column denoting the state relation/edge.
 	StateColumn = "state_id"
+	// ShipmentsTable is the table that holds the shipments relation/edge.
+	ShipmentsTable = "shipments"
+	// ShipmentsInverseTable is the table name for the Shipment entity.
+	// It exists in this package in order to avoid circular dependency with the "shipment" package.
+	ShipmentsInverseTable = "shipments"
+	// ShipmentsColumn is the table column denoting the shipments relation/edge.
+	ShipmentsColumn = "customer_id"
 )
 
 // Columns holds all SQL columns for customer fields.
@@ -272,6 +281,20 @@ func ByStateField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newStateStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByShipmentsCount orders the results by shipments count.
+func ByShipmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentsStep(), opts...)
+	}
+}
+
+// ByShipments orders the results by shipments terms.
+func ByShipments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -291,5 +314,12 @@ func newStateStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(StateInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, StateTable, StateColumn),
+	)
+}
+func newShipmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentsTable, ShipmentsColumn),
 	)
 }

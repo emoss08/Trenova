@@ -10,7 +10,7 @@ import (
 
 	"github.com/goccy/go-json"
 
-	redisstore "github.com/emoss08/trenova/tools/redis"
+	redisstore "github.com/emoss08/trenova/util/redis"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"

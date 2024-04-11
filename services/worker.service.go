@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/ent/worker"
 	"github.com/emoss08/trenova/ent/workercomment"
 	"github.com/emoss08/trenova/ent/workercontact"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/logger"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/logger"
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 

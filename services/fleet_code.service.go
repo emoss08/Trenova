@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/ent/fleetcode"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/logger"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/logger"
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 

@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type HTTPResponse struct {
 	Count    int    `json:"count"`
 	Next     string `json:"next"`
@@ -16,4 +18,9 @@ type ValidationErrorDetail struct {
 type ValidationErrorResponse struct {
 	Type   string                  `json:"type"`
 	Errors []ValidationErrorDetail `json:"errors"`
+}
+
+// Error implements error.
+func (v *ValidationErrorResponse) Error() string {
+	return fmt.Sprintf("validation error: %s", v.Errors)
 }

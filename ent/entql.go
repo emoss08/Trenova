@@ -1564,6 +1564,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"UsState",
 	)
 	graph.MustAddE(
+		"shipments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ShipmentsTable,
+			Columns: []string{customer.ShipmentsColumn},
+			Bidi:    false,
+		},
+		"Customer",
+		"Shipment",
+	)
+	graph.MustAddE(
 		"business_unit",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -2236,6 +2248,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"OrganizationFeatureFlag",
 	)
 	graph.MustAddE(
+		"shipments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+		},
+		"Organization",
+		"Shipment",
+	)
+	graph.MustAddE(
 		"accounting_control",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -2596,18 +2620,6 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"Location",
 	)
 	graph.MustAddE(
-		"customer",
-		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-		},
-		"Shipment",
-		"Customer",
-	)
-	graph.MustAddE(
 		"trailer_type",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -2635,13 +2647,25 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"created_by_user",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
 		},
 		"Shipment",
 		"User",
+	)
+	graph.MustAddE(
+		"customer",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+		},
+		"Shipment",
+		"Customer",
 	)
 	graph.MustAddE(
 		"organization",
@@ -2966,6 +2990,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"User",
 		"UserFavorite",
+	)
+	graph.MustAddE(
+		"shipments",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentsTable,
+			Columns: []string{user.ShipmentsColumn},
+			Bidi:    false,
+		},
+		"User",
+		"Shipment",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -4379,6 +4415,20 @@ func (f *CustomerFilter) WhereHasState() {
 // WhereHasStateWith applies a predicate to check if query has an edge state with a given conditions (other predicates).
 func (f *CustomerFilter) WhereHasStateWith(preds ...predicate.UsState) {
 	f.Where(entql.HasEdgeWith("state", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasShipments applies a predicate to check if query has an edge shipments.
+func (f *CustomerFilter) WhereHasShipments() {
+	f.Where(entql.HasEdge("shipments"))
+}
+
+// WhereHasShipmentsWith applies a predicate to check if query has an edge shipments with a given conditions (other predicates).
+func (f *CustomerFilter) WhereHasShipmentsWith(preds ...predicate.Shipment) {
+	f.Where(entql.HasEdgeWith("shipments", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -7154,6 +7204,20 @@ func (f *OrganizationFilter) WhereHasOrganizationFeatureFlagWith(preds ...predic
 	})))
 }
 
+// WhereHasShipments applies a predicate to check if query has an edge shipments.
+func (f *OrganizationFilter) WhereHasShipments() {
+	f.Where(entql.HasEdge("shipments"))
+}
+
+// WhereHasShipmentsWith applies a predicate to check if query has an edge shipments with a given conditions (other predicates).
+func (f *OrganizationFilter) WhereHasShipmentsWith(preds ...predicate.Shipment) {
+	f.Where(entql.HasEdgeWith("shipments", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
 // WhereHasAccountingControl applies a predicate to check if query has an edge accounting_control.
 func (f *OrganizationFilter) WhereHasAccountingControl() {
 	f.Where(entql.HasEdge("accounting_control"))
@@ -8369,20 +8433,6 @@ func (f *ShipmentFilter) WhereHasDestinationLocationWith(preds ...predicate.Loca
 	})))
 }
 
-// WhereHasCustomer applies a predicate to check if query has an edge customer.
-func (f *ShipmentFilter) WhereHasCustomer() {
-	f.Where(entql.HasEdge("customer"))
-}
-
-// WhereHasCustomerWith applies a predicate to check if query has an edge customer with a given conditions (other predicates).
-func (f *ShipmentFilter) WhereHasCustomerWith(preds ...predicate.Customer) {
-	f.Where(entql.HasEdgeWith("customer", sqlgraph.WrapFunc(func(s *sql.Selector) {
-		for _, p := range preds {
-			p(s)
-		}
-	})))
-}
-
 // WhereHasTrailerType applies a predicate to check if query has an edge trailer_type.
 func (f *ShipmentFilter) WhereHasTrailerType() {
 	f.Where(entql.HasEdge("trailer_type"))
@@ -8419,6 +8469,20 @@ func (f *ShipmentFilter) WhereHasCreatedByUser() {
 // WhereHasCreatedByUserWith applies a predicate to check if query has an edge created_by_user with a given conditions (other predicates).
 func (f *ShipmentFilter) WhereHasCreatedByUserWith(preds ...predicate.User) {
 	f.Where(entql.HasEdgeWith("created_by_user", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasCustomer applies a predicate to check if query has an edge customer.
+func (f *ShipmentFilter) WhereHasCustomer() {
+	f.Where(entql.HasEdge("customer"))
+}
+
+// WhereHasCustomerWith applies a predicate to check if query has an edge customer with a given conditions (other predicates).
+func (f *ShipmentFilter) WhereHasCustomerWith(preds ...predicate.Customer) {
+	f.Where(entql.HasEdgeWith("customer", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -9667,6 +9731,20 @@ func (f *UserFilter) WhereHasUserFavorites() {
 // WhereHasUserFavoritesWith applies a predicate to check if query has an edge user_favorites with a given conditions (other predicates).
 func (f *UserFilter) WhereHasUserFavoritesWith(preds ...predicate.UserFavorite) {
 	f.Where(entql.HasEdgeWith("user_favorites", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasShipments applies a predicate to check if query has an edge shipments.
+func (f *UserFilter) WhereHasShipments() {
+	f.Where(entql.HasEdge("shipments"))
+}
+
+// WhereHasShipmentsWith applies a predicate to check if query has an edge shipments with a given conditions (other predicates).
+func (f *UserFilter) WhereHasShipmentsWith(preds ...predicate.Shipment) {
+	f.Where(entql.HasEdgeWith("shipments", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}

@@ -876,11 +876,6 @@ func (su *ShipmentUpdate) SetDestinationLocation(l *Location) *ShipmentUpdate {
 	return su.SetDestinationLocationID(l.ID)
 }
 
-// SetCustomer sets the "customer" edge to the Customer entity.
-func (su *ShipmentUpdate) SetCustomer(c *Customer) *ShipmentUpdate {
-	return su.SetCustomerID(c.ID)
-}
-
 // SetTrailerType sets the "trailer_type" edge to the EquipmentType entity.
 func (su *ShipmentUpdate) SetTrailerType(e *EquipmentType) *ShipmentUpdate {
 	return su.SetTrailerTypeID(e.ID)
@@ -908,6 +903,11 @@ func (su *ShipmentUpdate) SetNillableCreatedByUserID(id *uuid.UUID) *ShipmentUpd
 // SetCreatedByUser sets the "created_by_user" edge to the User entity.
 func (su *ShipmentUpdate) SetCreatedByUser(u *User) *ShipmentUpdate {
 	return su.SetCreatedByUserID(u.ID)
+}
+
+// SetCustomer sets the "customer" edge to the Customer entity.
+func (su *ShipmentUpdate) SetCustomer(c *Customer) *ShipmentUpdate {
+	return su.SetCustomerID(c.ID)
 }
 
 // Mutation returns the ShipmentMutation object of the builder.
@@ -945,12 +945,6 @@ func (su *ShipmentUpdate) ClearDestinationLocation() *ShipmentUpdate {
 	return su
 }
 
-// ClearCustomer clears the "customer" edge to the Customer entity.
-func (su *ShipmentUpdate) ClearCustomer() *ShipmentUpdate {
-	su.mutation.ClearCustomer()
-	return su
-}
-
 // ClearTrailerType clears the "trailer_type" edge to the EquipmentType entity.
 func (su *ShipmentUpdate) ClearTrailerType() *ShipmentUpdate {
 	su.mutation.ClearTrailerType()
@@ -969,9 +963,17 @@ func (su *ShipmentUpdate) ClearCreatedByUser() *ShipmentUpdate {
 	return su
 }
 
+// ClearCustomer clears the "customer" edge to the Customer entity.
+func (su *ShipmentUpdate) ClearCustomer() *ShipmentUpdate {
+	su.mutation.ClearCustomer()
+	return su
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (su *ShipmentUpdate) Save(ctx context.Context) (int, error) {
-	su.defaults()
+	if err := su.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, su.sqlSave, su.mutation, su.hooks)
 }
 
@@ -998,11 +1000,15 @@ func (su *ShipmentUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (su *ShipmentUpdate) defaults() {
+func (su *ShipmentUpdate) defaults() error {
 	if _, ok := su.mutation.UpdatedAt(); !ok {
+		if shipment.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized shipment.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := shipment.UpdateDefaultUpdatedAt()
 		su.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1443,35 +1449,6 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if su.mutation.CustomerCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := su.mutation.CustomerIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if su.mutation.TrailerTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1533,7 +1510,7 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if su.mutation.CreatedByUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
@@ -1546,12 +1523,41 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := su.mutation.CreatedByUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.CustomerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.CustomerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2420,11 +2426,6 @@ func (suo *ShipmentUpdateOne) SetDestinationLocation(l *Location) *ShipmentUpdat
 	return suo.SetDestinationLocationID(l.ID)
 }
 
-// SetCustomer sets the "customer" edge to the Customer entity.
-func (suo *ShipmentUpdateOne) SetCustomer(c *Customer) *ShipmentUpdateOne {
-	return suo.SetCustomerID(c.ID)
-}
-
 // SetTrailerType sets the "trailer_type" edge to the EquipmentType entity.
 func (suo *ShipmentUpdateOne) SetTrailerType(e *EquipmentType) *ShipmentUpdateOne {
 	return suo.SetTrailerTypeID(e.ID)
@@ -2452,6 +2453,11 @@ func (suo *ShipmentUpdateOne) SetNillableCreatedByUserID(id *uuid.UUID) *Shipmen
 // SetCreatedByUser sets the "created_by_user" edge to the User entity.
 func (suo *ShipmentUpdateOne) SetCreatedByUser(u *User) *ShipmentUpdateOne {
 	return suo.SetCreatedByUserID(u.ID)
+}
+
+// SetCustomer sets the "customer" edge to the Customer entity.
+func (suo *ShipmentUpdateOne) SetCustomer(c *Customer) *ShipmentUpdateOne {
+	return suo.SetCustomerID(c.ID)
 }
 
 // Mutation returns the ShipmentMutation object of the builder.
@@ -2489,12 +2495,6 @@ func (suo *ShipmentUpdateOne) ClearDestinationLocation() *ShipmentUpdateOne {
 	return suo
 }
 
-// ClearCustomer clears the "customer" edge to the Customer entity.
-func (suo *ShipmentUpdateOne) ClearCustomer() *ShipmentUpdateOne {
-	suo.mutation.ClearCustomer()
-	return suo
-}
-
 // ClearTrailerType clears the "trailer_type" edge to the EquipmentType entity.
 func (suo *ShipmentUpdateOne) ClearTrailerType() *ShipmentUpdateOne {
 	suo.mutation.ClearTrailerType()
@@ -2513,6 +2513,12 @@ func (suo *ShipmentUpdateOne) ClearCreatedByUser() *ShipmentUpdateOne {
 	return suo
 }
 
+// ClearCustomer clears the "customer" edge to the Customer entity.
+func (suo *ShipmentUpdateOne) ClearCustomer() *ShipmentUpdateOne {
+	suo.mutation.ClearCustomer()
+	return suo
+}
+
 // Where appends a list predicates to the ShipmentUpdate builder.
 func (suo *ShipmentUpdateOne) Where(ps ...predicate.Shipment) *ShipmentUpdateOne {
 	suo.mutation.Where(ps...)
@@ -2528,7 +2534,9 @@ func (suo *ShipmentUpdateOne) Select(field string, fields ...string) *ShipmentUp
 
 // Save executes the query and returns the updated Shipment entity.
 func (suo *ShipmentUpdateOne) Save(ctx context.Context) (*Shipment, error) {
-	suo.defaults()
+	if err := suo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, suo.sqlSave, suo.mutation, suo.hooks)
 }
 
@@ -2555,11 +2563,15 @@ func (suo *ShipmentUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (suo *ShipmentUpdateOne) defaults() {
+func (suo *ShipmentUpdateOne) defaults() error {
 	if _, ok := suo.mutation.UpdatedAt(); !ok {
+		if shipment.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized shipment.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := shipment.UpdateDefaultUpdatedAt()
 		suo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -3017,35 +3029,6 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if suo.mutation.CustomerCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := suo.mutation.CustomerIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if suo.mutation.TrailerTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -3107,7 +3090,7 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 	if suo.mutation.CreatedByUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
@@ -3120,12 +3103,41 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 	if nodes := suo.mutation.CreatedByUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.CustomerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.CustomerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
