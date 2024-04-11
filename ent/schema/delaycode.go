@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // DelayCode holds the schema definition for the DelayCode entity.
@@ -43,15 +42,6 @@ func (DelayCode) Fields() []ent.Field {
 // Edges of the DelayCode.
 func (DelayCode) Edges() []ent.Edge {
 	return nil
-}
-
-// Indexes of the DelayCode.
-func (DelayCode) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
-	}
 }
 
 // Mixin of the DelayCode.

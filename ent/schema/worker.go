@@ -101,8 +101,6 @@ func (Worker) Mixin() []ent.Mixin {
 func (Worker) Indexes() []ent.Index {
 	return []ent.Index{
 		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 		index.Fields("first_name", "last_name"),
 	}
 }

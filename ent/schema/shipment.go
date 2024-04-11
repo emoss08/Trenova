@@ -200,8 +200,6 @@ func (Shipment) Mixin() []ent.Mixin {
 // Indexes of the Shipment.
 func (Shipment) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("pro_number", "organization_id").
-			Unique(),
 		index.Fields("status"),
 		index.Fields("bill_date", "organization_id"),
 		index.Fields("ship_date", "organization_id"),

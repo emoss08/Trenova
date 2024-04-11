@@ -8,7 +8,6 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -106,13 +105,5 @@ func (GeneralLedgerAccount) Edges() []ent.Edge {
 func (GeneralLedgerAccount) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the GeneralLedgerAccount.
-func (GeneralLedgerAccount) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("account_number", "organization_id").
-			Unique(),
 	}
 }

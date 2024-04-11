@@ -8,7 +8,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
 	"github.com/emoss08/trenova/tools"
@@ -113,15 +112,6 @@ func (Trailer) Fields() []ent.Field {
 func (Trailer) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the Trailer.
-func (Trailer) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 

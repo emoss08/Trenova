@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
 )
@@ -48,15 +47,6 @@ func (DocumentClassification) Fields() []ent.Field {
 func (DocumentClassification) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the DocumentClassification.
-func (DocumentClassification) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 
