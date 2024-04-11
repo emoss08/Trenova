@@ -12,7 +12,7 @@ import (
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/hook"
-	"github.com/emoss08/trenova/tools"
+	ut "github.com/emoss08/trenova/util"
 	"github.com/google/uuid"
 )
 
@@ -101,7 +101,7 @@ func (RevenueCode) Hooks() []ent.Hook {
 
 						// Ensure the expense account is an expense account.
 						if expenseAccount.AccountType != generalledgeraccount.AccountTypeExpense {
-							return nil, tools.NewValidationError("The expense account must be an expense account",
+							return nil, ut.NewValidationError("The expense account must be an expense account",
 								"invalidExpenseAccount",
 								"expenseAccountId")
 						}
@@ -131,7 +131,7 @@ func (RevenueCode) Hooks() []ent.Hook {
 
 						// Ensure the revenue account is a revenue account.
 						if revenueAccount.AccountType != generalledgeraccount.AccountTypeRevenue {
-							return nil, tools.NewValidationError("The revenue account must be a revenue account",
+							return nil, ut.NewValidationError("The revenue account must be a revenue account",
 								"invalidRevenueAccount",
 								"revenueAccountId")
 						}

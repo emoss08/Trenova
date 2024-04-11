@@ -9,7 +9,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/tools/types"
+	"github.com/emoss08/trenova/util/types"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"

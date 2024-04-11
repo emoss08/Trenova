@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
@@ -36,6 +37,7 @@ type OrganizationQuery struct {
 	predicates                       []predicate.Organization
 	withBusinessUnit                 *BusinessUnitQuery
 	withOrganizationFeatureFlag      *OrganizationFeatureFlagQuery
+	withShipments                    *ShipmentQuery
 	withAccountingControl            *AccountingControlQuery
 	withBillingControl               *BillingControlQuery
 	withDispatchControl              *DispatchControlQuery
@@ -47,6 +49,7 @@ type OrganizationQuery struct {
 	withGoogleAPI                    *GoogleApiQuery
 	modifiers                        []func(*sql.Selector)
 	withNamedOrganizationFeatureFlag map[string]*OrganizationFeatureFlagQuery
+	withNamedShipments               map[string]*ShipmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -120,6 +123,28 @@ func (oq *OrganizationQuery) QueryOrganizationFeatureFlag() *OrganizationFeature
 			sqlgraph.From(organization.Table, organization.FieldID, selector),
 			sqlgraph.To(organizationfeatureflag.Table, organizationfeatureflag.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, organization.OrganizationFeatureFlagTable, organization.OrganizationFeatureFlagColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipments chains the current query on the "shipments" edge.
+func (oq *OrganizationQuery) QueryShipments() *ShipmentQuery {
+	query := (&ShipmentClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(organization.Table, organization.FieldID, selector),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, organization.ShipmentsTable, organization.ShipmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -519,6 +544,7 @@ func (oq *OrganizationQuery) Clone() *OrganizationQuery {
 		predicates:                  append([]predicate.Organization{}, oq.predicates...),
 		withBusinessUnit:            oq.withBusinessUnit.Clone(),
 		withOrganizationFeatureFlag: oq.withOrganizationFeatureFlag.Clone(),
+		withShipments:               oq.withShipments.Clone(),
 		withAccountingControl:       oq.withAccountingControl.Clone(),
 		withBillingControl:          oq.withBillingControl.Clone(),
 		withDispatchControl:         oq.withDispatchControl.Clone(),
@@ -553,6 +579,17 @@ func (oq *OrganizationQuery) WithOrganizationFeatureFlag(opts ...func(*Organizat
 		opt(query)
 	}
 	oq.withOrganizationFeatureFlag = query
+	return oq
+}
+
+// WithShipments tells the query-builder to eager-load the nodes that are connected to
+// the "shipments" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithShipments(opts ...func(*ShipmentQuery)) *OrganizationQuery {
+	query := (&ShipmentClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withShipments = query
 	return oq
 }
 
@@ -733,9 +770,10 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*Organization{}
 		_spec       = oq.querySpec()
-		loadedTypes = [11]bool{
+		loadedTypes = [12]bool{
 			oq.withBusinessUnit != nil,
 			oq.withOrganizationFeatureFlag != nil,
+			oq.withShipments != nil,
 			oq.withAccountingControl != nil,
 			oq.withBillingControl != nil,
 			oq.withDispatchControl != nil,
@@ -780,6 +818,13 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			func(n *Organization, e *OrganizationFeatureFlag) {
 				n.Edges.OrganizationFeatureFlag = append(n.Edges.OrganizationFeatureFlag, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withShipments; query != nil {
+		if err := oq.loadShipments(ctx, query, nodes,
+			func(n *Organization) { n.Edges.Shipments = []*Shipment{} },
+			func(n *Organization, e *Shipment) { n.Edges.Shipments = append(n.Edges.Shipments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -844,6 +889,13 @@ func (oq *OrganizationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	for name, query := range oq.withNamedShipments {
+		if err := oq.loadShipments(ctx, query, nodes,
+			func(n *Organization) { n.appendNamedShipments(name) },
+			func(n *Organization, e *Shipment) { n.appendNamedShipments(name, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -891,6 +943,36 @@ func (oq *OrganizationQuery) loadOrganizationFeatureFlag(ctx context.Context, qu
 	}
 	query.Where(predicate.OrganizationFeatureFlag(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(organization.OrganizationFeatureFlagColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.OrganizationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "organization_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (oq *OrganizationQuery) loadShipments(ctx context.Context, query *ShipmentQuery, nodes []*Organization, init func(*Organization), assign func(*Organization, *Shipment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Organization)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipment.FieldOrganizationID)
+	}
+	query.Where(predicate.Shipment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(organization.ShipmentsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -1266,6 +1348,20 @@ func (oq *OrganizationQuery) WithNamedOrganizationFeatureFlag(name string, opts 
 		oq.withNamedOrganizationFeatureFlag = make(map[string]*OrganizationFeatureFlagQuery)
 	}
 	oq.withNamedOrganizationFeatureFlag[name] = query
+	return oq
+}
+
+// WithNamedShipments tells the query-builder to eager-load the nodes that are connected to the "shipments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrganizationQuery) WithNamedShipments(name string, opts ...func(*ShipmentQuery)) *OrganizationQuery {
+	query := (&ShipmentClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if oq.withNamedShipments == nil {
+		oq.withNamedShipments = make(map[string]*ShipmentQuery)
+	}
+	oq.withNamedShipments[name] = query
 	return oq
 }
 

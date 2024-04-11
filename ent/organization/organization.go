@@ -38,6 +38,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganizationFeatureFlag holds the string denoting the organization_feature_flag edge name in mutations.
 	EdgeOrganizationFeatureFlag = "organization_feature_flag"
+	// EdgeShipments holds the string denoting the shipments edge name in mutations.
+	EdgeShipments = "shipments"
 	// EdgeAccountingControl holds the string denoting the accounting_control edge name in mutations.
 	EdgeAccountingControl = "accounting_control"
 	// EdgeBillingControl holds the string denoting the billing_control edge name in mutations.
@@ -72,6 +74,13 @@ const (
 	OrganizationFeatureFlagInverseTable = "organization_feature_flags"
 	// OrganizationFeatureFlagColumn is the table column denoting the organization_feature_flag relation/edge.
 	OrganizationFeatureFlagColumn = "organization_id"
+	// ShipmentsTable is the table that holds the shipments relation/edge.
+	ShipmentsTable = "shipments"
+	// ShipmentsInverseTable is the table name for the Shipment entity.
+	// It exists in this package in order to avoid circular dependency with the "shipment" package.
+	ShipmentsInverseTable = "shipments"
+	// ShipmentsColumn is the table column denoting the shipments relation/edge.
+	ShipmentsColumn = "organization_id"
 	// AccountingControlTable is the table that holds the accounting_control relation/edge.
 	AccountingControlTable = "accounting_controls"
 	// AccountingControlInverseTable is the table name for the AccountingControl entity.
@@ -307,6 +316,20 @@ func ByOrganizationFeatureFlag(term sql.OrderTerm, terms ...sql.OrderTerm) Order
 	}
 }
 
+// ByShipmentsCount orders the results by shipments count.
+func ByShipmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentsStep(), opts...)
+	}
+}
+
+// ByShipments orders the results by shipments terms.
+func ByShipments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByAccountingControlField orders the results by accounting_control field.
 func ByAccountingControlField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -381,6 +404,13 @@ func newOrganizationFeatureFlagStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationFeatureFlagInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, true, OrganizationFeatureFlagTable, OrganizationFeatureFlagColumn),
+	)
+}
+func newShipmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ShipmentsTable, ShipmentsColumn),
 	)
 }
 func newAccountingControlStep() *sqlgraph.Step {

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/ent/location"
 	"github.com/emoss08/trenova/ent/locationcomment"
 	"github.com/emoss08/trenova/ent/locationcontact"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/logger"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/logger"
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 

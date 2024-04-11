@@ -43,13 +43,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "accessorialcharge_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{AccessorialChargesColumns[5], AccessorialChargesColumns[11]},
-			},
-		},
 	}
 	// AccountingControlsColumns holds the columns for the "accounting_controls" table.
 	AccountingControlsColumns = []*schema.Column{
@@ -219,13 +212,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "chargetype_name_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{ChargeTypesColumns[5], ChargeTypesColumns[8]},
-			},
-		},
 	}
 	// CommentTypesColumns holds the columns for the "comment_types" table.
 	CommentTypesColumns = []*schema.Column{
@@ -257,13 +243,6 @@ var (
 				Columns:    []*schema.Column{CommentTypesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "commenttype_name_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{CommentTypesColumns[5], CommentTypesColumns[9]},
 			},
 		},
 	}
@@ -354,13 +333,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "customer_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{CustomersColumns[5], CustomersColumns[14]},
-			},
-		},
 	}
 	// DelayCodesColumns holds the columns for the "delay_codes" table.
 	DelayCodesColumns = []*schema.Column{
@@ -392,13 +364,6 @@ var (
 				Columns:    []*schema.Column{DelayCodesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "delaycode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{DelayCodesColumns[5], DelayCodesColumns[9]},
 			},
 		},
 	}
@@ -494,13 +459,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "divisioncode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{DivisionCodesColumns[5], DivisionCodesColumns[8]},
-			},
-		},
 	}
 	// DocumentClassificationsColumns holds the columns for the "document_classifications" table.
 	DocumentClassificationsColumns = []*schema.Column{
@@ -532,13 +490,6 @@ var (
 				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "documentclassification_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{DocumentClassificationsColumns[5], DocumentClassificationsColumns[9]},
 			},
 		},
 	}
@@ -652,13 +603,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "equipmentmanufactuer_name_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{EquipmentManufactuersColumns[5], EquipmentManufactuersColumns[8]},
-			},
-		},
 	}
 	// EquipmentTypesColumns holds the columns for the "equipment_types" table.
 	EquipmentTypesColumns = []*schema.Column{
@@ -700,13 +644,6 @@ var (
 				Columns:    []*schema.Column{EquipmentTypesColumns[19]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "equipmenttype_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{EquipmentTypesColumns[5], EquipmentTypesColumns[19]},
 			},
 		},
 	}
@@ -805,13 +742,6 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "fleetcode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{FleetCodesColumns[5], FleetCodesColumns[11]},
-			},
-		},
 	}
 	// GeneralLedgerAccountsColumns holds the columns for the "general_ledger_accounts" table.
 	GeneralLedgerAccountsColumns = []*schema.Column{
@@ -852,13 +782,6 @@ var (
 				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[18]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "generalledgeraccount_account_number_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{GeneralLedgerAccountsColumns[5], GeneralLedgerAccountsColumns[18]},
 			},
 		},
 	}
@@ -1064,13 +987,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "location_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{LocationsColumns[5], LocationsColumns[17]},
-			},
-		},
 	}
 	// LocationCategoriesColumns holds the columns for the "location_categories" table.
 	LocationCategoriesColumns = []*schema.Column{
@@ -1101,13 +1017,6 @@ var (
 				Columns:    []*schema.Column{LocationCategoriesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "locationcategory_name_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{LocationCategoriesColumns[4], LocationCategoriesColumns[8]},
 			},
 		},
 	}
@@ -1295,13 +1204,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "qualifiercode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{QualifierCodesColumns[5], QualifierCodesColumns[8]},
-			},
-		},
 	}
 	// ReasonCodesColumns holds the columns for the "reason_codes" table.
 	ReasonCodesColumns = []*schema.Column{
@@ -1333,13 +1235,6 @@ var (
 				Columns:    []*schema.Column{ReasonCodesColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "reasoncode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{ReasonCodesColumns[5], ReasonCodesColumns[9]},
 			},
 		},
 	}
@@ -1386,13 +1281,6 @@ var (
 				Columns:    []*schema.Column{RevenueCodesColumns[10]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "revenuecode_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{RevenueCodesColumns[5], RevenueCodesColumns[8]},
 			},
 		},
 	}
@@ -1458,13 +1346,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "servicetype_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{ServiceTypesColumns[5], ServiceTypesColumns[8]},
-			},
-		},
 	}
 	// SessionsColumns holds the columns for the "sessions" table.
 	SessionsColumns = []*schema.Column{
@@ -1518,6 +1399,7 @@ var (
 		{Name: "current_suffix", Type: field.TypeString, Nullable: true},
 		{Name: "entry_method", Type: field.TypeEnum, Enums: []string{"Manual", "EDI", "Web", "Mobile", "API"}, Default: "Manual"},
 		{Name: "is_hazardous", Type: field.TypeBool, Comment: "Indicates if the shipment is hazardous.", Default: false},
+		{Name: "customer_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "shipment_type_id", Type: field.TypeUUID},
@@ -1525,7 +1407,6 @@ var (
 		{Name: "revenue_code_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "origin_location_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "destination_location_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "customer_id", Type: field.TypeUUID},
 		{Name: "trailer_type_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "tractor_type_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "created_by", Type: field.TypeUUID, Nullable: true},
@@ -1538,51 +1419,51 @@ var (
 		PrimaryKey: []*schema.Column{ShipmentsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "shipments_business_units_business_unit",
+				Symbol:     "shipments_customers_shipments",
 				Columns:    []*schema.Column{ShipmentsColumns[36]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipments_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentsColumns[37]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "shipments_organizations_organization",
-				Columns:    []*schema.Column{ShipmentsColumns[37]},
+				Columns:    []*schema.Column{ShipmentsColumns[38]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "shipments_shipment_types_shipment_type",
-				Columns:    []*schema.Column{ShipmentsColumns[38]},
+				Columns:    []*schema.Column{ShipmentsColumns[39]},
 				RefColumns: []*schema.Column{ShipmentTypesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "shipments_service_types_service_type",
-				Columns:    []*schema.Column{ShipmentsColumns[39]},
-				RefColumns: []*schema.Column{ServiceTypesColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "shipments_service_types_revenue_code",
 				Columns:    []*schema.Column{ShipmentsColumns[40]},
 				RefColumns: []*schema.Column{ServiceTypesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "shipments_locations_origin_location",
+				Symbol:     "shipments_service_types_revenue_code",
 				Columns:    []*schema.Column{ShipmentsColumns[41]},
-				RefColumns: []*schema.Column{LocationsColumns[0]},
+				RefColumns: []*schema.Column{ServiceTypesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "shipments_locations_destination_location",
+				Symbol:     "shipments_locations_origin_location",
 				Columns:    []*schema.Column{ShipmentsColumns[42]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "shipments_customers_customer",
+				Symbol:     "shipments_locations_destination_location",
 				Columns:    []*schema.Column{ShipmentsColumns[43]},
-				RefColumns: []*schema.Column{CustomersColumns[0]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
@@ -1598,18 +1479,13 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "shipments_users_created_by_user",
+				Symbol:     "shipments_users_shipments",
 				Columns:    []*schema.Column{ShipmentsColumns[46]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.Cascade,
+				OnDelete:   schema.SetNull,
 			},
 		},
 		Indexes: []*schema.Index{
-			{
-				Name:    "shipment_pro_number_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{ShipmentsColumns[4], ShipmentsColumns[37]},
-			},
 			{
 				Name:    "shipment_status",
 				Unique:  false,
@@ -1618,17 +1494,17 @@ var (
 			{
 				Name:    "shipment_bill_date_organization_id",
 				Unique:  false,
-				Columns: []*schema.Column{ShipmentsColumns[20], ShipmentsColumns[37]},
+				Columns: []*schema.Column{ShipmentsColumns[20], ShipmentsColumns[38]},
 			},
 			{
 				Name:    "shipment_ship_date_organization_id",
 				Unique:  false,
-				Columns: []*schema.Column{ShipmentsColumns[21], ShipmentsColumns[37]},
+				Columns: []*schema.Column{ShipmentsColumns[21], ShipmentsColumns[38]},
 			},
 			{
 				Name:    "shipment_bill_of_lading_number_organization_id",
 				Unique:  false,
-				Columns: []*schema.Column{ShipmentsColumns[28], ShipmentsColumns[37]},
+				Columns: []*schema.Column{ShipmentsColumns[28], ShipmentsColumns[38]},
 			},
 		},
 	}
@@ -1701,13 +1577,6 @@ var (
 				Columns:    []*schema.Column{ShipmentTypesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "shipmenttype_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{ShipmentTypesColumns[5], ShipmentTypesColumns[8]},
 			},
 		},
 	}
@@ -1783,13 +1652,6 @@ var (
 				Columns:    []*schema.Column{TagsColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "tag_name_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{TagsColumns[4], TagsColumns[8]},
 			},
 		},
 	}
@@ -1871,13 +1733,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "tractor_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{TractorsColumns[4], TractorsColumns[13]},
-			},
-		},
 	}
 	// TrailersColumns holds the columns for the "trailers" table.
 	TrailersColumns = []*schema.Column{
@@ -1949,13 +1804,6 @@ var (
 				Columns:    []*schema.Column{TrailersColumns[19]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "trailer_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{TrailersColumns[4], TrailersColumns[14]},
 			},
 		},
 	}
@@ -2120,11 +1968,6 @@ var (
 			},
 		},
 		Indexes: []*schema.Index{
-			{
-				Name:    "worker_code_organization_id",
-				Unique:  true,
-				Columns: []*schema.Column{WorkersColumns[5], WorkersColumns[15]},
-			},
 			{
 				Name:    "worker_first_name_last_name",
 				Unique:  false,
@@ -2446,14 +2289,14 @@ func init() {
 	RouteControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ServiceTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ServiceTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
-	ShipmentsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	ShipmentsTable.ForeignKeys[1].RefTable = OrganizationsTable
-	ShipmentsTable.ForeignKeys[2].RefTable = ShipmentTypesTable
-	ShipmentsTable.ForeignKeys[3].RefTable = ServiceTypesTable
+	ShipmentsTable.ForeignKeys[0].RefTable = CustomersTable
+	ShipmentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	ShipmentsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	ShipmentsTable.ForeignKeys[3].RefTable = ShipmentTypesTable
 	ShipmentsTable.ForeignKeys[4].RefTable = ServiceTypesTable
-	ShipmentsTable.ForeignKeys[5].RefTable = LocationsTable
+	ShipmentsTable.ForeignKeys[5].RefTable = ServiceTypesTable
 	ShipmentsTable.ForeignKeys[6].RefTable = LocationsTable
-	ShipmentsTable.ForeignKeys[7].RefTable = CustomersTable
+	ShipmentsTable.ForeignKeys[7].RefTable = LocationsTable
 	ShipmentsTable.ForeignKeys[8].RefTable = EquipmentTypesTable
 	ShipmentsTable.ForeignKeys[9].RefTable = EquipmentTypesTable
 	ShipmentsTable.ForeignKeys[10].RefTable = UsersTable

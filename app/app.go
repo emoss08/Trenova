@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/server"
-	"github.com/emoss08/trenova/tools"
-	trenova_kafka "github.com/emoss08/trenova/tools/kafka"
-	"github.com/emoss08/trenova/tools/logger"
-	"github.com/emoss08/trenova/tools/minio"
-	"github.com/emoss08/trenova/tools/redis"
-	"github.com/emoss08/trenova/tools/session"
+	tools "github.com/emoss08/trenova/util"
+	trenova_kafka "github.com/emoss08/trenova/util/kafka"
+	"github.com/emoss08/trenova/util/logger"
+	"github.com/emoss08/trenova/util/minio"
+	"github.com/emoss08/trenova/util/redis"
+	"github.com/emoss08/trenova/util/session"
 
 	_ "github.com/lib/pq"
 )

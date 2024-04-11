@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/accountingcontrol"
 	"github.com/emoss08/trenova/ent/organization"
-	"github.com/emoss08/trenova/tools"
+	tools "github.com/emoss08/trenova/util"
 	"github.com/google/uuid"
 )
 

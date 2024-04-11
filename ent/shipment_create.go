@@ -651,11 +651,6 @@ func (sc *ShipmentCreate) SetDestinationLocation(l *Location) *ShipmentCreate {
 	return sc.SetDestinationLocationID(l.ID)
 }
 
-// SetCustomer sets the "customer" edge to the Customer entity.
-func (sc *ShipmentCreate) SetCustomer(c *Customer) *ShipmentCreate {
-	return sc.SetCustomerID(c.ID)
-}
-
 // SetTrailerType sets the "trailer_type" edge to the EquipmentType entity.
 func (sc *ShipmentCreate) SetTrailerType(e *EquipmentType) *ShipmentCreate {
 	return sc.SetTrailerTypeID(e.ID)
@@ -685,6 +680,11 @@ func (sc *ShipmentCreate) SetCreatedByUser(u *User) *ShipmentCreate {
 	return sc.SetCreatedByUserID(u.ID)
 }
 
+// SetCustomer sets the "customer" edge to the Customer entity.
+func (sc *ShipmentCreate) SetCustomer(c *Customer) *ShipmentCreate {
+	return sc.SetCustomerID(c.ID)
+}
+
 // Mutation returns the ShipmentMutation object of the builder.
 func (sc *ShipmentCreate) Mutation() *ShipmentMutation {
 	return sc.mutation
@@ -692,7 +692,9 @@ func (sc *ShipmentCreate) Mutation() *ShipmentMutation {
 
 // Save creates the Shipment in the database.
 func (sc *ShipmentCreate) Save(ctx context.Context) (*Shipment, error) {
-	sc.defaults()
+	if err := sc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, sc.sqlSave, sc.mutation, sc.hooks)
 }
 
@@ -719,12 +721,18 @@ func (sc *ShipmentCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (sc *ShipmentCreate) defaults() {
+func (sc *ShipmentCreate) defaults() error {
 	if _, ok := sc.mutation.CreatedAt(); !ok {
+		if shipment.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized shipment.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := shipment.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
+		if shipment.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized shipment.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := shipment.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
 	}
@@ -765,9 +773,13 @@ func (sc *ShipmentCreate) defaults() {
 		sc.mutation.SetIsHazardous(v)
 	}
 	if _, ok := sc.mutation.ID(); !ok {
+		if shipment.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized shipment.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := shipment.DefaultID()
 		sc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1189,23 +1201,6 @@ func (sc *ShipmentCreate) createSpec() (*Shipment, *sqlgraph.CreateSpec) {
 		_node.DestinationLocationID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := sc.mutation.CustomerIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   shipment.CustomerTable,
-			Columns: []string{shipment.CustomerColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.CustomerID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := sc.mutation.TrailerTypeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1243,7 +1238,7 @@ func (sc *ShipmentCreate) createSpec() (*Shipment, *sqlgraph.CreateSpec) {
 	if nodes := sc.mutation.CreatedByUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   shipment.CreatedByUserTable,
 			Columns: []string{shipment.CreatedByUserColumn},
 			Bidi:    false,
@@ -1255,6 +1250,23 @@ func (sc *ShipmentCreate) createSpec() (*Shipment, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.CreatedBy = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.CustomerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   shipment.CustomerTable,
+			Columns: []string{shipment.CustomerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.CustomerID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

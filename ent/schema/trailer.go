@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
-	"github.com/emoss08/trenova/tools"
+	tools "github.com/emoss08/trenova/util"
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 

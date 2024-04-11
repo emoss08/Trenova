@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/services"
-	"github.com/emoss08/trenova/tools"
-	"github.com/emoss08/trenova/tools/types"
+	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/util/types"
 )
 
 // GetUsStates gets the us states.

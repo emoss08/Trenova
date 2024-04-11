@@ -547,6 +547,29 @@ func HasOrganizationFeatureFlagWith(preds ...predicate.OrganizationFeatureFlag) 
 	})
 }
 
+// HasShipments applies the HasEdge predicate on the "shipments" edge.
+func HasShipments() predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ShipmentsTable, ShipmentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentsWith applies the HasEdge predicate on the "shipments" edge with a given conditions (other predicates).
+func HasShipmentsWith(preds ...predicate.Shipment) predicate.Organization {
+	return predicate.Organization(func(s *sql.Selector) {
+		step := newShipmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasAccountingControl applies the HasEdge predicate on the "accounting_control" edge.
 func HasAccountingControl() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {

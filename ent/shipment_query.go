@@ -37,10 +37,10 @@ type ShipmentQuery struct {
 	withRevenueCode         *ServiceTypeQuery
 	withOriginLocation      *LocationQuery
 	withDestinationLocation *LocationQuery
-	withCustomer            *CustomerQuery
 	withTrailerType         *EquipmentTypeQuery
 	withTractorType         *EquipmentTypeQuery
 	withCreatedByUser       *UserQuery
+	withCustomer            *CustomerQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -232,28 +232,6 @@ func (sq *ShipmentQuery) QueryDestinationLocation() *LocationQuery {
 	return query
 }
 
-// QueryCustomer chains the current query on the "customer" edge.
-func (sq *ShipmentQuery) QueryCustomer() *CustomerQuery {
-	query := (&CustomerClient{config: sq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := sq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := sq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(shipment.Table, shipment.FieldID, selector),
-			sqlgraph.To(customer.Table, customer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, shipment.CustomerTable, shipment.CustomerColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryTrailerType chains the current query on the "trailer_type" edge.
 func (sq *ShipmentQuery) QueryTrailerType() *EquipmentTypeQuery {
 	query := (&EquipmentTypeClient{config: sq.config}).Query()
@@ -312,7 +290,29 @@ func (sq *ShipmentQuery) QueryCreatedByUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(shipment.Table, shipment.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, shipment.CreatedByUserTable, shipment.CreatedByUserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipment.CreatedByUserTable, shipment.CreatedByUserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCustomer chains the current query on the "customer" edge.
+func (sq *ShipmentQuery) QueryCustomer() *CustomerQuery {
+	query := (&CustomerClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipment.Table, shipment.FieldID, selector),
+			sqlgraph.To(customer.Table, customer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipment.CustomerTable, shipment.CustomerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -519,10 +519,10 @@ func (sq *ShipmentQuery) Clone() *ShipmentQuery {
 		withRevenueCode:         sq.withRevenueCode.Clone(),
 		withOriginLocation:      sq.withOriginLocation.Clone(),
 		withDestinationLocation: sq.withDestinationLocation.Clone(),
-		withCustomer:            sq.withCustomer.Clone(),
 		withTrailerType:         sq.withTrailerType.Clone(),
 		withTractorType:         sq.withTractorType.Clone(),
 		withCreatedByUser:       sq.withCreatedByUser.Clone(),
+		withCustomer:            sq.withCustomer.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -606,17 +606,6 @@ func (sq *ShipmentQuery) WithDestinationLocation(opts ...func(*LocationQuery)) *
 	return sq
 }
 
-// WithCustomer tells the query-builder to eager-load the nodes that are connected to
-// the "customer" edge. The optional arguments are used to configure the query builder of the edge.
-func (sq *ShipmentQuery) WithCustomer(opts ...func(*CustomerQuery)) *ShipmentQuery {
-	query := (&CustomerClient{config: sq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	sq.withCustomer = query
-	return sq
-}
-
 // WithTrailerType tells the query-builder to eager-load the nodes that are connected to
 // the "trailer_type" edge. The optional arguments are used to configure the query builder of the edge.
 func (sq *ShipmentQuery) WithTrailerType(opts ...func(*EquipmentTypeQuery)) *ShipmentQuery {
@@ -647,6 +636,17 @@ func (sq *ShipmentQuery) WithCreatedByUser(opts ...func(*UserQuery)) *ShipmentQu
 		opt(query)
 	}
 	sq.withCreatedByUser = query
+	return sq
+}
+
+// WithCustomer tells the query-builder to eager-load the nodes that are connected to
+// the "customer" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ShipmentQuery) WithCustomer(opts ...func(*CustomerQuery)) *ShipmentQuery {
+	query := (&CustomerClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withCustomer = query
 	return sq
 }
 
@@ -736,10 +736,10 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 			sq.withRevenueCode != nil,
 			sq.withOriginLocation != nil,
 			sq.withDestinationLocation != nil,
-			sq.withCustomer != nil,
 			sq.withTrailerType != nil,
 			sq.withTractorType != nil,
 			sq.withCreatedByUser != nil,
+			sq.withCustomer != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -805,12 +805,6 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 			return nil, err
 		}
 	}
-	if query := sq.withCustomer; query != nil {
-		if err := sq.loadCustomer(ctx, query, nodes, nil,
-			func(n *Shipment, e *Customer) { n.Edges.Customer = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := sq.withTrailerType; query != nil {
 		if err := sq.loadTrailerType(ctx, query, nodes, nil,
 			func(n *Shipment, e *EquipmentType) { n.Edges.TrailerType = e }); err != nil {
@@ -826,6 +820,12 @@ func (sq *ShipmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Shi
 	if query := sq.withCreatedByUser; query != nil {
 		if err := sq.loadCreatedByUser(ctx, query, nodes, nil,
 			func(n *Shipment, e *User) { n.Edges.CreatedByUser = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withCustomer; query != nil {
+		if err := sq.loadCustomer(ctx, query, nodes, nil,
+			func(n *Shipment, e *Customer) { n.Edges.Customer = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -1047,35 +1047,6 @@ func (sq *ShipmentQuery) loadDestinationLocation(ctx context.Context, query *Loc
 	}
 	return nil
 }
-func (sq *ShipmentQuery) loadCustomer(ctx context.Context, query *CustomerQuery, nodes []*Shipment, init func(*Shipment), assign func(*Shipment, *Customer)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Shipment)
-	for i := range nodes {
-		fk := nodes[i].CustomerID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(customer.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "customer_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 func (sq *ShipmentQuery) loadTrailerType(ctx context.Context, query *EquipmentTypeQuery, nodes []*Shipment, init func(*Shipment), assign func(*Shipment, *EquipmentType)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Shipment)
@@ -1172,6 +1143,35 @@ func (sq *ShipmentQuery) loadCreatedByUser(ctx context.Context, query *UserQuery
 	}
 	return nil
 }
+func (sq *ShipmentQuery) loadCustomer(ctx context.Context, query *CustomerQuery, nodes []*Shipment, init func(*Shipment), assign func(*Shipment, *Customer)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Shipment)
+	for i := range nodes {
+		fk := nodes[i].CustomerID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(customer.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "customer_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (sq *ShipmentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
@@ -1222,9 +1222,6 @@ func (sq *ShipmentQuery) querySpec() *sqlgraph.QuerySpec {
 		if sq.withDestinationLocation != nil {
 			_spec.Node.AddColumnOnce(shipment.FieldDestinationLocationID)
 		}
-		if sq.withCustomer != nil {
-			_spec.Node.AddColumnOnce(shipment.FieldCustomerID)
-		}
 		if sq.withTrailerType != nil {
 			_spec.Node.AddColumnOnce(shipment.FieldTrailerTypeID)
 		}
@@ -1233,6 +1230,9 @@ func (sq *ShipmentQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if sq.withCreatedByUser != nil {
 			_spec.Node.AddColumnOnce(shipment.FieldCreatedBy)
+		}
+		if sq.withCustomer != nil {
+			_spec.Node.AddColumnOnce(shipment.FieldCustomerID)
 		}
 	}
 	if ps := sq.predicates; len(ps) > 0 {

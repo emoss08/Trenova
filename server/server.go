@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/emoss08/trenova/tools"
+	tools "github.com/emoss08/trenova/util"
 	"github.com/fatih/color"
 
 	"github.com/emoss08/trenova/routes"

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
 	"github.com/google/uuid"
@@ -251,6 +252,21 @@ func (uc *UserCreate) AddUserFavorites(u ...*UserFavorite) *UserCreate {
 		ids[i] = u[i].ID
 	}
 	return uc.AddUserFavoriteIDs(ids...)
+}
+
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
+func (uc *UserCreate) AddShipmentIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddShipmentIDs(ids...)
+	return uc
+}
+
+// AddShipments adds the "shipments" edges to the Shipment entity.
+func (uc *UserCreate) AddShipments(s ...*Shipment) *UserCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uc.AddShipmentIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -537,6 +553,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ShipmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentsTable,
+			Columns: []string{user.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

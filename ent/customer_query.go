@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/ent/customer"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/usstate"
 	"github.com/google/uuid"
 )
@@ -21,14 +23,16 @@ import (
 // CustomerQuery is the builder for querying Customer entities.
 type CustomerQuery struct {
 	config
-	ctx              *QueryContext
-	order            []customer.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Customer
-	withBusinessUnit *BusinessUnitQuery
-	withOrganization *OrganizationQuery
-	withState        *UsStateQuery
-	modifiers        []func(*sql.Selector)
+	ctx                *QueryContext
+	order              []customer.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.Customer
+	withBusinessUnit   *BusinessUnitQuery
+	withOrganization   *OrganizationQuery
+	withState          *UsStateQuery
+	withShipments      *ShipmentQuery
+	modifiers          []func(*sql.Selector)
+	withNamedShipments map[string]*ShipmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -124,6 +128,28 @@ func (cq *CustomerQuery) QueryState() *UsStateQuery {
 			sqlgraph.From(customer.Table, customer.FieldID, selector),
 			sqlgraph.To(usstate.Table, usstate.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, customer.StateTable, customer.StateColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipments chains the current query on the "shipments" edge.
+func (cq *CustomerQuery) QueryShipments() *ShipmentQuery {
+	query := (&ShipmentClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.ShipmentsTable, customer.ShipmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +352,7 @@ func (cq *CustomerQuery) Clone() *CustomerQuery {
 		withBusinessUnit: cq.withBusinessUnit.Clone(),
 		withOrganization: cq.withOrganization.Clone(),
 		withState:        cq.withState.Clone(),
+		withShipments:    cq.withShipments.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -362,6 +389,17 @@ func (cq *CustomerQuery) WithState(opts ...func(*UsStateQuery)) *CustomerQuery {
 		opt(query)
 	}
 	cq.withState = query
+	return cq
+}
+
+// WithShipments tells the query-builder to eager-load the nodes that are connected to
+// the "shipments" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithShipments(opts ...func(*ShipmentQuery)) *CustomerQuery {
+	query := (&ShipmentClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withShipments = query
 	return cq
 }
 
@@ -443,10 +481,11 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	var (
 		nodes       = []*Customer{}
 		_spec       = cq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			cq.withBusinessUnit != nil,
 			cq.withOrganization != nil,
 			cq.withState != nil,
+			cq.withShipments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +524,20 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	if query := cq.withState; query != nil {
 		if err := cq.loadState(ctx, query, nodes, nil,
 			func(n *Customer, e *UsState) { n.Edges.State = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withShipments; query != nil {
+		if err := cq.loadShipments(ctx, query, nodes,
+			func(n *Customer) { n.Edges.Shipments = []*Shipment{} },
+			func(n *Customer, e *Shipment) { n.Edges.Shipments = append(n.Edges.Shipments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedShipments {
+		if err := cq.loadShipments(ctx, query, nodes,
+			func(n *Customer) { n.appendNamedShipments(name) },
+			func(n *Customer, e *Shipment) { n.appendNamedShipments(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -575,6 +628,36 @@ func (cq *CustomerQuery) loadState(ctx context.Context, query *UsStateQuery, nod
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadShipments(ctx context.Context, query *ShipmentQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *Shipment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipment.FieldCustomerID)
+	}
+	query.Where(predicate.Shipment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.ShipmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -679,6 +762,20 @@ func (cq *CustomerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (cq *CustomerQuery) Modify(modifiers ...func(s *sql.Selector)) *CustomerSelect {
 	cq.modifiers = append(cq.modifiers, modifiers...)
 	return cq.Select()
+}
+
+// WithNamedShipments tells the query-builder to eager-load the nodes that are connected to the "shipments"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithNamedShipments(name string, opts ...func(*ShipmentQuery)) *CustomerQuery {
+	query := (&ShipmentClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedShipments == nil {
+		cq.withNamedShipments = make(map[string]*ShipmentQuery)
+	}
+	cq.withNamedShipments[name] = query
+	return cq
 }
 
 // CustomerGroupBy is the group-by builder for Customer entities.

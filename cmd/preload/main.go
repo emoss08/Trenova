@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/database"
 	_ "github.com/emoss08/trenova/ent/runtime"
 	"github.com/emoss08/trenova/ent/usstate"
-	"github.com/emoss08/trenova/tools"
+	tools "github.com/emoss08/trenova/util"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )

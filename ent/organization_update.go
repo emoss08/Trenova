@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/routecontrol"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
@@ -169,6 +170,21 @@ func (ou *OrganizationUpdate) AddOrganizationFeatureFlag(o ...*OrganizationFeatu
 		ids[i] = o[i].ID
 	}
 	return ou.AddOrganizationFeatureFlagIDs(ids...)
+}
+
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
+func (ou *OrganizationUpdate) AddShipmentIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.AddShipmentIDs(ids...)
+	return ou
+}
+
+// AddShipments adds the "shipments" edges to the Shipment entity.
+func (ou *OrganizationUpdate) AddShipments(s ...*Shipment) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ou.AddShipmentIDs(ids...)
 }
 
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
@@ -372,6 +388,27 @@ func (ou *OrganizationUpdate) RemoveOrganizationFeatureFlag(o ...*OrganizationFe
 		ids[i] = o[i].ID
 	}
 	return ou.RemoveOrganizationFeatureFlagIDs(ids...)
+}
+
+// ClearShipments clears all "shipments" edges to the Shipment entity.
+func (ou *OrganizationUpdate) ClearShipments() *OrganizationUpdate {
+	ou.mutation.ClearShipments()
+	return ou
+}
+
+// RemoveShipmentIDs removes the "shipments" edge to Shipment entities by IDs.
+func (ou *OrganizationUpdate) RemoveShipmentIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.RemoveShipmentIDs(ids...)
+	return ou
+}
+
+// RemoveShipments removes "shipments" edges to Shipment entities.
+func (ou *OrganizationUpdate) RemoveShipments(s ...*Shipment) *OrganizationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ou.RemoveShipmentIDs(ids...)
 }
 
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
@@ -606,6 +643,51 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ou.mutation.ShipmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.RemovedShipmentsIDs(); len(nodes) > 0 && !ou.mutation.ShipmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.ShipmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1026,6 +1108,21 @@ func (ouo *OrganizationUpdateOne) AddOrganizationFeatureFlag(o ...*OrganizationF
 	return ouo.AddOrganizationFeatureFlagIDs(ids...)
 }
 
+// AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
+func (ouo *OrganizationUpdateOne) AddShipmentIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.AddShipmentIDs(ids...)
+	return ouo
+}
+
+// AddShipments adds the "shipments" edges to the Shipment entity.
+func (ouo *OrganizationUpdateOne) AddShipments(s ...*Shipment) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ouo.AddShipmentIDs(ids...)
+}
+
 // SetAccountingControlID sets the "accounting_control" edge to the AccountingControl entity by ID.
 func (ouo *OrganizationUpdateOne) SetAccountingControlID(id uuid.UUID) *OrganizationUpdateOne {
 	ouo.mutation.SetAccountingControlID(id)
@@ -1227,6 +1324,27 @@ func (ouo *OrganizationUpdateOne) RemoveOrganizationFeatureFlag(o ...*Organizati
 		ids[i] = o[i].ID
 	}
 	return ouo.RemoveOrganizationFeatureFlagIDs(ids...)
+}
+
+// ClearShipments clears all "shipments" edges to the Shipment entity.
+func (ouo *OrganizationUpdateOne) ClearShipments() *OrganizationUpdateOne {
+	ouo.mutation.ClearShipments()
+	return ouo
+}
+
+// RemoveShipmentIDs removes the "shipments" edge to Shipment entities by IDs.
+func (ouo *OrganizationUpdateOne) RemoveShipmentIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.RemoveShipmentIDs(ids...)
+	return ouo
+}
+
+// RemoveShipments removes "shipments" edges to Shipment entities.
+func (ouo *OrganizationUpdateOne) RemoveShipments(s ...*Shipment) *OrganizationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ouo.RemoveShipmentIDs(ids...)
 }
 
 // ClearAccountingControl clears the "accounting_control" edge to the AccountingControl entity.
@@ -1491,6 +1609,51 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organizationfeatureflag.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.ShipmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.RemovedShipmentsIDs(); len(nodes) > 0 && !ouo.mutation.ShipmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.ShipmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   organization.ShipmentsTable,
+			Columns: []string{organization.ShipmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

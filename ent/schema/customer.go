@@ -111,6 +111,7 @@ func (Customer) Edges() []ent.Edge {
 			StructTag(`json:"state"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique(),
+		edge.To("shipments", Shipment.Type),
 	}
 }
 

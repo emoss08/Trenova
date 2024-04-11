@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -122,14 +123,14 @@ const (
 	EdgeOriginLocation = "origin_location"
 	// EdgeDestinationLocation holds the string denoting the destination_location edge name in mutations.
 	EdgeDestinationLocation = "destination_location"
-	// EdgeCustomer holds the string denoting the customer edge name in mutations.
-	EdgeCustomer = "customer"
 	// EdgeTrailerType holds the string denoting the trailer_type edge name in mutations.
 	EdgeTrailerType = "trailer_type"
 	// EdgeTractorType holds the string denoting the tractor_type edge name in mutations.
 	EdgeTractorType = "tractor_type"
 	// EdgeCreatedByUser holds the string denoting the created_by_user edge name in mutations.
 	EdgeCreatedByUser = "created_by_user"
+	// EdgeCustomer holds the string denoting the customer edge name in mutations.
+	EdgeCustomer = "customer"
 	// Table holds the table name of the shipment in the database.
 	Table = "shipments"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -181,13 +182,6 @@ const (
 	DestinationLocationInverseTable = "locations"
 	// DestinationLocationColumn is the table column denoting the destination_location relation/edge.
 	DestinationLocationColumn = "destination_location_id"
-	// CustomerTable is the table that holds the customer relation/edge.
-	CustomerTable = "shipments"
-	// CustomerInverseTable is the table name for the Customer entity.
-	// It exists in this package in order to avoid circular dependency with the "customer" package.
-	CustomerInverseTable = "customers"
-	// CustomerColumn is the table column denoting the customer relation/edge.
-	CustomerColumn = "customer_id"
 	// TrailerTypeTable is the table that holds the trailer_type relation/edge.
 	TrailerTypeTable = "shipments"
 	// TrailerTypeInverseTable is the table name for the EquipmentType entity.
@@ -209,6 +203,13 @@ const (
 	CreatedByUserInverseTable = "users"
 	// CreatedByUserColumn is the table column denoting the created_by_user relation/edge.
 	CreatedByUserColumn = "created_by"
+	// CustomerTable is the table that holds the customer relation/edge.
+	CustomerTable = "shipments"
+	// CustomerInverseTable is the table name for the Customer entity.
+	// It exists in this package in order to avoid circular dependency with the "customer" package.
+	CustomerInverseTable = "customers"
+	// CustomerColumn is the table column denoting the customer relation/edge.
+	CustomerColumn = "customer_id"
 )
 
 // Columns holds all SQL columns for shipment fields.
@@ -272,7 +273,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/emoss08/trenova/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -688,13 +695,6 @@ func ByDestinationLocationField(field string, opts ...sql.OrderTermOption) Order
 	}
 }
 
-// ByCustomerField orders the results by customer field.
-func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByTrailerTypeField orders the results by trailer_type field.
 func ByTrailerTypeField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -713,6 +713,13 @@ func ByTractorTypeField(field string, opts ...sql.OrderTermOption) OrderOption {
 func ByCreatedByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newCreatedByUserStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByCustomerField orders the results by customer field.
+func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -764,13 +771,6 @@ func newDestinationLocationStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, false, DestinationLocationTable, DestinationLocationColumn),
 	)
 }
-func newCustomerStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(CustomerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, CustomerTable, CustomerColumn),
-	)
-}
 func newTrailerTypeStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -789,6 +789,13 @@ func newCreatedByUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CreatedByUserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, CreatedByUserTable, CreatedByUserColumn),
+		sqlgraph.Edge(sqlgraph.M2O, true, CreatedByUserTable, CreatedByUserColumn),
+	)
+}
+func newCustomerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CustomerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
 	)
 }
