@@ -71,8 +71,8 @@ function AccountingControlForm({
           accountingControl.restrictManualJournalEntries,
         requireJournalEntryApproval:
           accountingControl.requireJournalEntryApproval,
-        defaultExpenseAccountId: accountingControl.defaultExpenseAccountId,
-        defaultRevenueAccountId: accountingControl.defaultRevenueAccountId,
+        defaultExpAccountId: accountingControl.defaultExpAccountId,
+        defaultRevAccountId: accountingControl.defaultRevAccountId,
         enableRecNotifications: accountingControl.enableRecNotifications,
         reconciliationNotificationRecipients:
           accountingControl.reconciliationNotificationRecipients,
@@ -124,7 +124,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="defaultRevenueAccountId"
+              name="defaultRevAccountId"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}
@@ -140,7 +140,7 @@ function AccountingControlForm({
           </div>
           <div className="col-span-3">
             <SelectInput
-              name="defaultExpenseAccountId"
+              name="defaultExpAccountId"
               control={control}
               options={selectGLAccounts}
               isLoading={isGLAccountsLoading}

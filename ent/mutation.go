@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/ent/routecontrol"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
+	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/tablechangealert"
@@ -110,6 +111,7 @@ const (
 	TypeRouteControl                 = "RouteControl"
 	TypeServiceType                  = "ServiceType"
 	TypeSession                      = "Session"
+	TypeShipment                     = "Shipment"
 	TypeShipmentControl              = "ShipmentControl"
 	TypeShipmentType                 = "ShipmentType"
 	TypeTableChangeAlert             = "TableChangeAlert"
@@ -39492,6 +39494,4190 @@ func (m *SessionMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *SessionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Session edge %s", name)
+}
+
+// ShipmentMutation represents an operation that mutates the Shipment nodes in the graph.
+type ShipmentMutation struct {
+	config
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	version                       *int
+	addversion                    *int
+	pro_number                    *string
+	status                        *shipment.Status
+	origin_address_line           *string
+	origin_appointment_start      *time.Time
+	origin_appointment_end        *time.Time
+	destination_address_line      *string
+	destination_appointment_start *time.Time
+	destination_appointment_end   *time.Time
+	rating_unit                   *int
+	addrating_unit                *int
+	mileage                       *float64
+	addmileage                    *float64
+	other_charge_amount           *float64
+	addother_charge_amount        *float64
+	freight_charge_amount         *float64
+	addfreight_charge_amount      *float64
+	rating_method                 *shipment.RatingMethod
+	pieces                        *float64
+	addpieces                     *float64
+	weight                        *float64
+	addweight                     *float64
+	ready_to_bill                 *bool
+	bill_date                     **pgtype.Date
+	ship_date                     **pgtype.Date
+	billed                        *bool
+	transferred_to_billing        *bool
+	transferred_to_billing_date   **pgtype.Date
+	total_charge_amount           *float64
+	addtotal_charge_amount        *float64
+	temperature_min               *int
+	addtemperature_min            *int
+	temperature_max               *int
+	addtemperature_max            *int
+	bill_of_lading_number         *string
+	consignee_reference_number    *string
+	comment                       *string
+	voided_comment                *string
+	auto_rated                    *bool
+	current_suffix                *string
+	entry_method                  *shipment.EntryMethod
+	is_hazardous                  *bool
+	clearedFields                 map[string]struct{}
+	business_unit                 *uuid.UUID
+	clearedbusiness_unit          bool
+	organization                  *uuid.UUID
+	clearedorganization           bool
+	shipment_type                 *uuid.UUID
+	clearedshipment_type          bool
+	service_type                  *uuid.UUID
+	clearedservice_type           bool
+	revenue_code                  *uuid.UUID
+	clearedrevenue_code           bool
+	origin_location               *uuid.UUID
+	clearedorigin_location        bool
+	destination_location          *uuid.UUID
+	cleareddestination_location   bool
+	customer                      *uuid.UUID
+	clearedcustomer               bool
+	trailer_type                  *uuid.UUID
+	clearedtrailer_type           bool
+	tractor_type                  *uuid.UUID
+	clearedtractor_type           bool
+	created_by_user               *uuid.UUID
+	clearedcreated_by_user        bool
+	done                          bool
+	oldValue                      func(context.Context) (*Shipment, error)
+	predicates                    []predicate.Shipment
+}
+
+var _ ent.Mutation = (*ShipmentMutation)(nil)
+
+// shipmentOption allows management of the mutation configuration using functional options.
+type shipmentOption func(*ShipmentMutation)
+
+// newShipmentMutation creates new mutation for the Shipment entity.
+func newShipmentMutation(c config, op Op, opts ...shipmentOption) *ShipmentMutation {
+	m := &ShipmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeShipment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withShipmentID sets the ID field of the mutation.
+func withShipmentID(id uuid.UUID) shipmentOption {
+	return func(m *ShipmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Shipment
+		)
+		m.oldValue = func(ctx context.Context) (*Shipment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Shipment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withShipment sets the old Shipment of the mutation.
+func withShipment(node *Shipment) shipmentOption {
+	return func(m *ShipmentMutation) {
+		m.oldValue = func(context.Context) (*Shipment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ShipmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ShipmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Shipment entities.
+func (m *ShipmentMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ShipmentMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ShipmentMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Shipment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *ShipmentMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *ShipmentMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *ShipmentMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *ShipmentMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *ShipmentMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *ShipmentMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ShipmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ShipmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ShipmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ShipmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ShipmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ShipmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *ShipmentMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ShipmentMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ShipmentMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ShipmentMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ShipmentMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetProNumber sets the "pro_number" field.
+func (m *ShipmentMutation) SetProNumber(s string) {
+	m.pro_number = &s
+}
+
+// ProNumber returns the value of the "pro_number" field in the mutation.
+func (m *ShipmentMutation) ProNumber() (r string, exists bool) {
+	v := m.pro_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProNumber returns the old "pro_number" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldProNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProNumber: %w", err)
+	}
+	return oldValue.ProNumber, nil
+}
+
+// ResetProNumber resets all changes to the "pro_number" field.
+func (m *ShipmentMutation) ResetProNumber() {
+	m.pro_number = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *ShipmentMutation) SetStatus(s shipment.Status) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ShipmentMutation) Status() (r shipment.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldStatus(ctx context.Context) (v shipment.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ShipmentMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetOriginLocationID sets the "origin_location_id" field.
+func (m *ShipmentMutation) SetOriginLocationID(u uuid.UUID) {
+	m.origin_location = &u
+}
+
+// OriginLocationID returns the value of the "origin_location_id" field in the mutation.
+func (m *ShipmentMutation) OriginLocationID() (r uuid.UUID, exists bool) {
+	v := m.origin_location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginLocationID returns the old "origin_location_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOriginLocationID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginLocationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginLocationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginLocationID: %w", err)
+	}
+	return oldValue.OriginLocationID, nil
+}
+
+// ClearOriginLocationID clears the value of the "origin_location_id" field.
+func (m *ShipmentMutation) ClearOriginLocationID() {
+	m.origin_location = nil
+	m.clearedFields[shipment.FieldOriginLocationID] = struct{}{}
+}
+
+// OriginLocationIDCleared returns if the "origin_location_id" field was cleared in this mutation.
+func (m *ShipmentMutation) OriginLocationIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldOriginLocationID]
+	return ok
+}
+
+// ResetOriginLocationID resets all changes to the "origin_location_id" field.
+func (m *ShipmentMutation) ResetOriginLocationID() {
+	m.origin_location = nil
+	delete(m.clearedFields, shipment.FieldOriginLocationID)
+}
+
+// SetOriginAddressLine sets the "origin_address_line" field.
+func (m *ShipmentMutation) SetOriginAddressLine(s string) {
+	m.origin_address_line = &s
+}
+
+// OriginAddressLine returns the value of the "origin_address_line" field in the mutation.
+func (m *ShipmentMutation) OriginAddressLine() (r string, exists bool) {
+	v := m.origin_address_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginAddressLine returns the old "origin_address_line" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOriginAddressLine(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginAddressLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginAddressLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginAddressLine: %w", err)
+	}
+	return oldValue.OriginAddressLine, nil
+}
+
+// ClearOriginAddressLine clears the value of the "origin_address_line" field.
+func (m *ShipmentMutation) ClearOriginAddressLine() {
+	m.origin_address_line = nil
+	m.clearedFields[shipment.FieldOriginAddressLine] = struct{}{}
+}
+
+// OriginAddressLineCleared returns if the "origin_address_line" field was cleared in this mutation.
+func (m *ShipmentMutation) OriginAddressLineCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldOriginAddressLine]
+	return ok
+}
+
+// ResetOriginAddressLine resets all changes to the "origin_address_line" field.
+func (m *ShipmentMutation) ResetOriginAddressLine() {
+	m.origin_address_line = nil
+	delete(m.clearedFields, shipment.FieldOriginAddressLine)
+}
+
+// SetOriginAppointmentStart sets the "origin_appointment_start" field.
+func (m *ShipmentMutation) SetOriginAppointmentStart(t time.Time) {
+	m.origin_appointment_start = &t
+}
+
+// OriginAppointmentStart returns the value of the "origin_appointment_start" field in the mutation.
+func (m *ShipmentMutation) OriginAppointmentStart() (r time.Time, exists bool) {
+	v := m.origin_appointment_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginAppointmentStart returns the old "origin_appointment_start" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOriginAppointmentStart(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginAppointmentStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginAppointmentStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginAppointmentStart: %w", err)
+	}
+	return oldValue.OriginAppointmentStart, nil
+}
+
+// ClearOriginAppointmentStart clears the value of the "origin_appointment_start" field.
+func (m *ShipmentMutation) ClearOriginAppointmentStart() {
+	m.origin_appointment_start = nil
+	m.clearedFields[shipment.FieldOriginAppointmentStart] = struct{}{}
+}
+
+// OriginAppointmentStartCleared returns if the "origin_appointment_start" field was cleared in this mutation.
+func (m *ShipmentMutation) OriginAppointmentStartCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldOriginAppointmentStart]
+	return ok
+}
+
+// ResetOriginAppointmentStart resets all changes to the "origin_appointment_start" field.
+func (m *ShipmentMutation) ResetOriginAppointmentStart() {
+	m.origin_appointment_start = nil
+	delete(m.clearedFields, shipment.FieldOriginAppointmentStart)
+}
+
+// SetOriginAppointmentEnd sets the "origin_appointment_end" field.
+func (m *ShipmentMutation) SetOriginAppointmentEnd(t time.Time) {
+	m.origin_appointment_end = &t
+}
+
+// OriginAppointmentEnd returns the value of the "origin_appointment_end" field in the mutation.
+func (m *ShipmentMutation) OriginAppointmentEnd() (r time.Time, exists bool) {
+	v := m.origin_appointment_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginAppointmentEnd returns the old "origin_appointment_end" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOriginAppointmentEnd(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginAppointmentEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginAppointmentEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginAppointmentEnd: %w", err)
+	}
+	return oldValue.OriginAppointmentEnd, nil
+}
+
+// ClearOriginAppointmentEnd clears the value of the "origin_appointment_end" field.
+func (m *ShipmentMutation) ClearOriginAppointmentEnd() {
+	m.origin_appointment_end = nil
+	m.clearedFields[shipment.FieldOriginAppointmentEnd] = struct{}{}
+}
+
+// OriginAppointmentEndCleared returns if the "origin_appointment_end" field was cleared in this mutation.
+func (m *ShipmentMutation) OriginAppointmentEndCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldOriginAppointmentEnd]
+	return ok
+}
+
+// ResetOriginAppointmentEnd resets all changes to the "origin_appointment_end" field.
+func (m *ShipmentMutation) ResetOriginAppointmentEnd() {
+	m.origin_appointment_end = nil
+	delete(m.clearedFields, shipment.FieldOriginAppointmentEnd)
+}
+
+// SetDestinationLocationID sets the "destination_location_id" field.
+func (m *ShipmentMutation) SetDestinationLocationID(u uuid.UUID) {
+	m.destination_location = &u
+}
+
+// DestinationLocationID returns the value of the "destination_location_id" field in the mutation.
+func (m *ShipmentMutation) DestinationLocationID() (r uuid.UUID, exists bool) {
+	v := m.destination_location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestinationLocationID returns the old "destination_location_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldDestinationLocationID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestinationLocationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestinationLocationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestinationLocationID: %w", err)
+	}
+	return oldValue.DestinationLocationID, nil
+}
+
+// ClearDestinationLocationID clears the value of the "destination_location_id" field.
+func (m *ShipmentMutation) ClearDestinationLocationID() {
+	m.destination_location = nil
+	m.clearedFields[shipment.FieldDestinationLocationID] = struct{}{}
+}
+
+// DestinationLocationIDCleared returns if the "destination_location_id" field was cleared in this mutation.
+func (m *ShipmentMutation) DestinationLocationIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldDestinationLocationID]
+	return ok
+}
+
+// ResetDestinationLocationID resets all changes to the "destination_location_id" field.
+func (m *ShipmentMutation) ResetDestinationLocationID() {
+	m.destination_location = nil
+	delete(m.clearedFields, shipment.FieldDestinationLocationID)
+}
+
+// SetDestinationAddressLine sets the "destination_address_line" field.
+func (m *ShipmentMutation) SetDestinationAddressLine(s string) {
+	m.destination_address_line = &s
+}
+
+// DestinationAddressLine returns the value of the "destination_address_line" field in the mutation.
+func (m *ShipmentMutation) DestinationAddressLine() (r string, exists bool) {
+	v := m.destination_address_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestinationAddressLine returns the old "destination_address_line" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldDestinationAddressLine(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestinationAddressLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestinationAddressLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestinationAddressLine: %w", err)
+	}
+	return oldValue.DestinationAddressLine, nil
+}
+
+// ClearDestinationAddressLine clears the value of the "destination_address_line" field.
+func (m *ShipmentMutation) ClearDestinationAddressLine() {
+	m.destination_address_line = nil
+	m.clearedFields[shipment.FieldDestinationAddressLine] = struct{}{}
+}
+
+// DestinationAddressLineCleared returns if the "destination_address_line" field was cleared in this mutation.
+func (m *ShipmentMutation) DestinationAddressLineCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldDestinationAddressLine]
+	return ok
+}
+
+// ResetDestinationAddressLine resets all changes to the "destination_address_line" field.
+func (m *ShipmentMutation) ResetDestinationAddressLine() {
+	m.destination_address_line = nil
+	delete(m.clearedFields, shipment.FieldDestinationAddressLine)
+}
+
+// SetDestinationAppointmentStart sets the "destination_appointment_start" field.
+func (m *ShipmentMutation) SetDestinationAppointmentStart(t time.Time) {
+	m.destination_appointment_start = &t
+}
+
+// DestinationAppointmentStart returns the value of the "destination_appointment_start" field in the mutation.
+func (m *ShipmentMutation) DestinationAppointmentStart() (r time.Time, exists bool) {
+	v := m.destination_appointment_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestinationAppointmentStart returns the old "destination_appointment_start" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldDestinationAppointmentStart(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestinationAppointmentStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestinationAppointmentStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestinationAppointmentStart: %w", err)
+	}
+	return oldValue.DestinationAppointmentStart, nil
+}
+
+// ClearDestinationAppointmentStart clears the value of the "destination_appointment_start" field.
+func (m *ShipmentMutation) ClearDestinationAppointmentStart() {
+	m.destination_appointment_start = nil
+	m.clearedFields[shipment.FieldDestinationAppointmentStart] = struct{}{}
+}
+
+// DestinationAppointmentStartCleared returns if the "destination_appointment_start" field was cleared in this mutation.
+func (m *ShipmentMutation) DestinationAppointmentStartCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldDestinationAppointmentStart]
+	return ok
+}
+
+// ResetDestinationAppointmentStart resets all changes to the "destination_appointment_start" field.
+func (m *ShipmentMutation) ResetDestinationAppointmentStart() {
+	m.destination_appointment_start = nil
+	delete(m.clearedFields, shipment.FieldDestinationAppointmentStart)
+}
+
+// SetDestinationAppointmentEnd sets the "destination_appointment_end" field.
+func (m *ShipmentMutation) SetDestinationAppointmentEnd(t time.Time) {
+	m.destination_appointment_end = &t
+}
+
+// DestinationAppointmentEnd returns the value of the "destination_appointment_end" field in the mutation.
+func (m *ShipmentMutation) DestinationAppointmentEnd() (r time.Time, exists bool) {
+	v := m.destination_appointment_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDestinationAppointmentEnd returns the old "destination_appointment_end" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldDestinationAppointmentEnd(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDestinationAppointmentEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDestinationAppointmentEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDestinationAppointmentEnd: %w", err)
+	}
+	return oldValue.DestinationAppointmentEnd, nil
+}
+
+// ClearDestinationAppointmentEnd clears the value of the "destination_appointment_end" field.
+func (m *ShipmentMutation) ClearDestinationAppointmentEnd() {
+	m.destination_appointment_end = nil
+	m.clearedFields[shipment.FieldDestinationAppointmentEnd] = struct{}{}
+}
+
+// DestinationAppointmentEndCleared returns if the "destination_appointment_end" field was cleared in this mutation.
+func (m *ShipmentMutation) DestinationAppointmentEndCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldDestinationAppointmentEnd]
+	return ok
+}
+
+// ResetDestinationAppointmentEnd resets all changes to the "destination_appointment_end" field.
+func (m *ShipmentMutation) ResetDestinationAppointmentEnd() {
+	m.destination_appointment_end = nil
+	delete(m.clearedFields, shipment.FieldDestinationAppointmentEnd)
+}
+
+// SetShipmentTypeID sets the "shipment_type_id" field.
+func (m *ShipmentMutation) SetShipmentTypeID(u uuid.UUID) {
+	m.shipment_type = &u
+}
+
+// ShipmentTypeID returns the value of the "shipment_type_id" field in the mutation.
+func (m *ShipmentMutation) ShipmentTypeID() (r uuid.UUID, exists bool) {
+	v := m.shipment_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShipmentTypeID returns the old "shipment_type_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldShipmentTypeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShipmentTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShipmentTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShipmentTypeID: %w", err)
+	}
+	return oldValue.ShipmentTypeID, nil
+}
+
+// ResetShipmentTypeID resets all changes to the "shipment_type_id" field.
+func (m *ShipmentMutation) ResetShipmentTypeID() {
+	m.shipment_type = nil
+}
+
+// SetRevenueCodeID sets the "revenue_code_id" field.
+func (m *ShipmentMutation) SetRevenueCodeID(u uuid.UUID) {
+	m.revenue_code = &u
+}
+
+// RevenueCodeID returns the value of the "revenue_code_id" field in the mutation.
+func (m *ShipmentMutation) RevenueCodeID() (r uuid.UUID, exists bool) {
+	v := m.revenue_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRevenueCodeID returns the old "revenue_code_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldRevenueCodeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRevenueCodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRevenueCodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRevenueCodeID: %w", err)
+	}
+	return oldValue.RevenueCodeID, nil
+}
+
+// ClearRevenueCodeID clears the value of the "revenue_code_id" field.
+func (m *ShipmentMutation) ClearRevenueCodeID() {
+	m.revenue_code = nil
+	m.clearedFields[shipment.FieldRevenueCodeID] = struct{}{}
+}
+
+// RevenueCodeIDCleared returns if the "revenue_code_id" field was cleared in this mutation.
+func (m *ShipmentMutation) RevenueCodeIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldRevenueCodeID]
+	return ok
+}
+
+// ResetRevenueCodeID resets all changes to the "revenue_code_id" field.
+func (m *ShipmentMutation) ResetRevenueCodeID() {
+	m.revenue_code = nil
+	delete(m.clearedFields, shipment.FieldRevenueCodeID)
+}
+
+// SetServiceTypeID sets the "service_type_id" field.
+func (m *ShipmentMutation) SetServiceTypeID(u uuid.UUID) {
+	m.service_type = &u
+}
+
+// ServiceTypeID returns the value of the "service_type_id" field in the mutation.
+func (m *ShipmentMutation) ServiceTypeID() (r uuid.UUID, exists bool) {
+	v := m.service_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServiceTypeID returns the old "service_type_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldServiceTypeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServiceTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServiceTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServiceTypeID: %w", err)
+	}
+	return oldValue.ServiceTypeID, nil
+}
+
+// ClearServiceTypeID clears the value of the "service_type_id" field.
+func (m *ShipmentMutation) ClearServiceTypeID() {
+	m.service_type = nil
+	m.clearedFields[shipment.FieldServiceTypeID] = struct{}{}
+}
+
+// ServiceTypeIDCleared returns if the "service_type_id" field was cleared in this mutation.
+func (m *ShipmentMutation) ServiceTypeIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldServiceTypeID]
+	return ok
+}
+
+// ResetServiceTypeID resets all changes to the "service_type_id" field.
+func (m *ShipmentMutation) ResetServiceTypeID() {
+	m.service_type = nil
+	delete(m.clearedFields, shipment.FieldServiceTypeID)
+}
+
+// SetRatingUnit sets the "rating_unit" field.
+func (m *ShipmentMutation) SetRatingUnit(i int) {
+	m.rating_unit = &i
+	m.addrating_unit = nil
+}
+
+// RatingUnit returns the value of the "rating_unit" field in the mutation.
+func (m *ShipmentMutation) RatingUnit() (r int, exists bool) {
+	v := m.rating_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRatingUnit returns the old "rating_unit" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldRatingUnit(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRatingUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRatingUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRatingUnit: %w", err)
+	}
+	return oldValue.RatingUnit, nil
+}
+
+// AddRatingUnit adds i to the "rating_unit" field.
+func (m *ShipmentMutation) AddRatingUnit(i int) {
+	if m.addrating_unit != nil {
+		*m.addrating_unit += i
+	} else {
+		m.addrating_unit = &i
+	}
+}
+
+// AddedRatingUnit returns the value that was added to the "rating_unit" field in this mutation.
+func (m *ShipmentMutation) AddedRatingUnit() (r int, exists bool) {
+	v := m.addrating_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRatingUnit resets all changes to the "rating_unit" field.
+func (m *ShipmentMutation) ResetRatingUnit() {
+	m.rating_unit = nil
+	m.addrating_unit = nil
+}
+
+// SetMileage sets the "mileage" field.
+func (m *ShipmentMutation) SetMileage(f float64) {
+	m.mileage = &f
+	m.addmileage = nil
+}
+
+// Mileage returns the value of the "mileage" field in the mutation.
+func (m *ShipmentMutation) Mileage() (r float64, exists bool) {
+	v := m.mileage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMileage returns the old "mileage" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldMileage(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMileage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMileage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMileage: %w", err)
+	}
+	return oldValue.Mileage, nil
+}
+
+// AddMileage adds f to the "mileage" field.
+func (m *ShipmentMutation) AddMileage(f float64) {
+	if m.addmileage != nil {
+		*m.addmileage += f
+	} else {
+		m.addmileage = &f
+	}
+}
+
+// AddedMileage returns the value that was added to the "mileage" field in this mutation.
+func (m *ShipmentMutation) AddedMileage() (r float64, exists bool) {
+	v := m.addmileage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMileage clears the value of the "mileage" field.
+func (m *ShipmentMutation) ClearMileage() {
+	m.mileage = nil
+	m.addmileage = nil
+	m.clearedFields[shipment.FieldMileage] = struct{}{}
+}
+
+// MileageCleared returns if the "mileage" field was cleared in this mutation.
+func (m *ShipmentMutation) MileageCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldMileage]
+	return ok
+}
+
+// ResetMileage resets all changes to the "mileage" field.
+func (m *ShipmentMutation) ResetMileage() {
+	m.mileage = nil
+	m.addmileage = nil
+	delete(m.clearedFields, shipment.FieldMileage)
+}
+
+// SetOtherChargeAmount sets the "other_charge_amount" field.
+func (m *ShipmentMutation) SetOtherChargeAmount(f float64) {
+	m.other_charge_amount = &f
+	m.addother_charge_amount = nil
+}
+
+// OtherChargeAmount returns the value of the "other_charge_amount" field in the mutation.
+func (m *ShipmentMutation) OtherChargeAmount() (r float64, exists bool) {
+	v := m.other_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOtherChargeAmount returns the old "other_charge_amount" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldOtherChargeAmount(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOtherChargeAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOtherChargeAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOtherChargeAmount: %w", err)
+	}
+	return oldValue.OtherChargeAmount, nil
+}
+
+// AddOtherChargeAmount adds f to the "other_charge_amount" field.
+func (m *ShipmentMutation) AddOtherChargeAmount(f float64) {
+	if m.addother_charge_amount != nil {
+		*m.addother_charge_amount += f
+	} else {
+		m.addother_charge_amount = &f
+	}
+}
+
+// AddedOtherChargeAmount returns the value that was added to the "other_charge_amount" field in this mutation.
+func (m *ShipmentMutation) AddedOtherChargeAmount() (r float64, exists bool) {
+	v := m.addother_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOtherChargeAmount clears the value of the "other_charge_amount" field.
+func (m *ShipmentMutation) ClearOtherChargeAmount() {
+	m.other_charge_amount = nil
+	m.addother_charge_amount = nil
+	m.clearedFields[shipment.FieldOtherChargeAmount] = struct{}{}
+}
+
+// OtherChargeAmountCleared returns if the "other_charge_amount" field was cleared in this mutation.
+func (m *ShipmentMutation) OtherChargeAmountCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldOtherChargeAmount]
+	return ok
+}
+
+// ResetOtherChargeAmount resets all changes to the "other_charge_amount" field.
+func (m *ShipmentMutation) ResetOtherChargeAmount() {
+	m.other_charge_amount = nil
+	m.addother_charge_amount = nil
+	delete(m.clearedFields, shipment.FieldOtherChargeAmount)
+}
+
+// SetFreightChargeAmount sets the "freight_charge_amount" field.
+func (m *ShipmentMutation) SetFreightChargeAmount(f float64) {
+	m.freight_charge_amount = &f
+	m.addfreight_charge_amount = nil
+}
+
+// FreightChargeAmount returns the value of the "freight_charge_amount" field in the mutation.
+func (m *ShipmentMutation) FreightChargeAmount() (r float64, exists bool) {
+	v := m.freight_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreightChargeAmount returns the old "freight_charge_amount" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldFreightChargeAmount(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreightChargeAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreightChargeAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreightChargeAmount: %w", err)
+	}
+	return oldValue.FreightChargeAmount, nil
+}
+
+// AddFreightChargeAmount adds f to the "freight_charge_amount" field.
+func (m *ShipmentMutation) AddFreightChargeAmount(f float64) {
+	if m.addfreight_charge_amount != nil {
+		*m.addfreight_charge_amount += f
+	} else {
+		m.addfreight_charge_amount = &f
+	}
+}
+
+// AddedFreightChargeAmount returns the value that was added to the "freight_charge_amount" field in this mutation.
+func (m *ShipmentMutation) AddedFreightChargeAmount() (r float64, exists bool) {
+	v := m.addfreight_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearFreightChargeAmount clears the value of the "freight_charge_amount" field.
+func (m *ShipmentMutation) ClearFreightChargeAmount() {
+	m.freight_charge_amount = nil
+	m.addfreight_charge_amount = nil
+	m.clearedFields[shipment.FieldFreightChargeAmount] = struct{}{}
+}
+
+// FreightChargeAmountCleared returns if the "freight_charge_amount" field was cleared in this mutation.
+func (m *ShipmentMutation) FreightChargeAmountCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldFreightChargeAmount]
+	return ok
+}
+
+// ResetFreightChargeAmount resets all changes to the "freight_charge_amount" field.
+func (m *ShipmentMutation) ResetFreightChargeAmount() {
+	m.freight_charge_amount = nil
+	m.addfreight_charge_amount = nil
+	delete(m.clearedFields, shipment.FieldFreightChargeAmount)
+}
+
+// SetRatingMethod sets the "rating_method" field.
+func (m *ShipmentMutation) SetRatingMethod(sm shipment.RatingMethod) {
+	m.rating_method = &sm
+}
+
+// RatingMethod returns the value of the "rating_method" field in the mutation.
+func (m *ShipmentMutation) RatingMethod() (r shipment.RatingMethod, exists bool) {
+	v := m.rating_method
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRatingMethod returns the old "rating_method" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldRatingMethod(ctx context.Context) (v shipment.RatingMethod, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRatingMethod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRatingMethod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRatingMethod: %w", err)
+	}
+	return oldValue.RatingMethod, nil
+}
+
+// ResetRatingMethod resets all changes to the "rating_method" field.
+func (m *ShipmentMutation) ResetRatingMethod() {
+	m.rating_method = nil
+}
+
+// SetCustomerID sets the "customer_id" field.
+func (m *ShipmentMutation) SetCustomerID(u uuid.UUID) {
+	m.customer = &u
+}
+
+// CustomerID returns the value of the "customer_id" field in the mutation.
+func (m *ShipmentMutation) CustomerID() (r uuid.UUID, exists bool) {
+	v := m.customer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomerID returns the old "customer_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldCustomerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomerID: %w", err)
+	}
+	return oldValue.CustomerID, nil
+}
+
+// ResetCustomerID resets all changes to the "customer_id" field.
+func (m *ShipmentMutation) ResetCustomerID() {
+	m.customer = nil
+}
+
+// SetPieces sets the "pieces" field.
+func (m *ShipmentMutation) SetPieces(f float64) {
+	m.pieces = &f
+	m.addpieces = nil
+}
+
+// Pieces returns the value of the "pieces" field in the mutation.
+func (m *ShipmentMutation) Pieces() (r float64, exists bool) {
+	v := m.pieces
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPieces returns the old "pieces" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldPieces(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPieces is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPieces requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPieces: %w", err)
+	}
+	return oldValue.Pieces, nil
+}
+
+// AddPieces adds f to the "pieces" field.
+func (m *ShipmentMutation) AddPieces(f float64) {
+	if m.addpieces != nil {
+		*m.addpieces += f
+	} else {
+		m.addpieces = &f
+	}
+}
+
+// AddedPieces returns the value that was added to the "pieces" field in this mutation.
+func (m *ShipmentMutation) AddedPieces() (r float64, exists bool) {
+	v := m.addpieces
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPieces clears the value of the "pieces" field.
+func (m *ShipmentMutation) ClearPieces() {
+	m.pieces = nil
+	m.addpieces = nil
+	m.clearedFields[shipment.FieldPieces] = struct{}{}
+}
+
+// PiecesCleared returns if the "pieces" field was cleared in this mutation.
+func (m *ShipmentMutation) PiecesCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldPieces]
+	return ok
+}
+
+// ResetPieces resets all changes to the "pieces" field.
+func (m *ShipmentMutation) ResetPieces() {
+	m.pieces = nil
+	m.addpieces = nil
+	delete(m.clearedFields, shipment.FieldPieces)
+}
+
+// SetWeight sets the "weight" field.
+func (m *ShipmentMutation) SetWeight(f float64) {
+	m.weight = &f
+	m.addweight = nil
+}
+
+// Weight returns the value of the "weight" field in the mutation.
+func (m *ShipmentMutation) Weight() (r float64, exists bool) {
+	v := m.weight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeight returns the old "weight" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldWeight(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeight is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeight requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeight: %w", err)
+	}
+	return oldValue.Weight, nil
+}
+
+// AddWeight adds f to the "weight" field.
+func (m *ShipmentMutation) AddWeight(f float64) {
+	if m.addweight != nil {
+		*m.addweight += f
+	} else {
+		m.addweight = &f
+	}
+}
+
+// AddedWeight returns the value that was added to the "weight" field in this mutation.
+func (m *ShipmentMutation) AddedWeight() (r float64, exists bool) {
+	v := m.addweight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearWeight clears the value of the "weight" field.
+func (m *ShipmentMutation) ClearWeight() {
+	m.weight = nil
+	m.addweight = nil
+	m.clearedFields[shipment.FieldWeight] = struct{}{}
+}
+
+// WeightCleared returns if the "weight" field was cleared in this mutation.
+func (m *ShipmentMutation) WeightCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldWeight]
+	return ok
+}
+
+// ResetWeight resets all changes to the "weight" field.
+func (m *ShipmentMutation) ResetWeight() {
+	m.weight = nil
+	m.addweight = nil
+	delete(m.clearedFields, shipment.FieldWeight)
+}
+
+// SetReadyToBill sets the "ready_to_bill" field.
+func (m *ShipmentMutation) SetReadyToBill(b bool) {
+	m.ready_to_bill = &b
+}
+
+// ReadyToBill returns the value of the "ready_to_bill" field in the mutation.
+func (m *ShipmentMutation) ReadyToBill() (r bool, exists bool) {
+	v := m.ready_to_bill
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReadyToBill returns the old "ready_to_bill" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldReadyToBill(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReadyToBill is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReadyToBill requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReadyToBill: %w", err)
+	}
+	return oldValue.ReadyToBill, nil
+}
+
+// ResetReadyToBill resets all changes to the "ready_to_bill" field.
+func (m *ShipmentMutation) ResetReadyToBill() {
+	m.ready_to_bill = nil
+}
+
+// SetBillDate sets the "bill_date" field.
+func (m *ShipmentMutation) SetBillDate(pg *pgtype.Date) {
+	m.bill_date = &pg
+}
+
+// BillDate returns the value of the "bill_date" field in the mutation.
+func (m *ShipmentMutation) BillDate() (r *pgtype.Date, exists bool) {
+	v := m.bill_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBillDate returns the old "bill_date" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldBillDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBillDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBillDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBillDate: %w", err)
+	}
+	return oldValue.BillDate, nil
+}
+
+// ClearBillDate clears the value of the "bill_date" field.
+func (m *ShipmentMutation) ClearBillDate() {
+	m.bill_date = nil
+	m.clearedFields[shipment.FieldBillDate] = struct{}{}
+}
+
+// BillDateCleared returns if the "bill_date" field was cleared in this mutation.
+func (m *ShipmentMutation) BillDateCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldBillDate]
+	return ok
+}
+
+// ResetBillDate resets all changes to the "bill_date" field.
+func (m *ShipmentMutation) ResetBillDate() {
+	m.bill_date = nil
+	delete(m.clearedFields, shipment.FieldBillDate)
+}
+
+// SetShipDate sets the "ship_date" field.
+func (m *ShipmentMutation) SetShipDate(pg *pgtype.Date) {
+	m.ship_date = &pg
+}
+
+// ShipDate returns the value of the "ship_date" field in the mutation.
+func (m *ShipmentMutation) ShipDate() (r *pgtype.Date, exists bool) {
+	v := m.ship_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShipDate returns the old "ship_date" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldShipDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShipDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShipDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShipDate: %w", err)
+	}
+	return oldValue.ShipDate, nil
+}
+
+// ClearShipDate clears the value of the "ship_date" field.
+func (m *ShipmentMutation) ClearShipDate() {
+	m.ship_date = nil
+	m.clearedFields[shipment.FieldShipDate] = struct{}{}
+}
+
+// ShipDateCleared returns if the "ship_date" field was cleared in this mutation.
+func (m *ShipmentMutation) ShipDateCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldShipDate]
+	return ok
+}
+
+// ResetShipDate resets all changes to the "ship_date" field.
+func (m *ShipmentMutation) ResetShipDate() {
+	m.ship_date = nil
+	delete(m.clearedFields, shipment.FieldShipDate)
+}
+
+// SetBilled sets the "billed" field.
+func (m *ShipmentMutation) SetBilled(b bool) {
+	m.billed = &b
+}
+
+// Billed returns the value of the "billed" field in the mutation.
+func (m *ShipmentMutation) Billed() (r bool, exists bool) {
+	v := m.billed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBilled returns the old "billed" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldBilled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBilled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBilled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBilled: %w", err)
+	}
+	return oldValue.Billed, nil
+}
+
+// ResetBilled resets all changes to the "billed" field.
+func (m *ShipmentMutation) ResetBilled() {
+	m.billed = nil
+}
+
+// SetTransferredToBilling sets the "transferred_to_billing" field.
+func (m *ShipmentMutation) SetTransferredToBilling(b bool) {
+	m.transferred_to_billing = &b
+}
+
+// TransferredToBilling returns the value of the "transferred_to_billing" field in the mutation.
+func (m *ShipmentMutation) TransferredToBilling() (r bool, exists bool) {
+	v := m.transferred_to_billing
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTransferredToBilling returns the old "transferred_to_billing" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTransferredToBilling(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTransferredToBilling is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTransferredToBilling requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTransferredToBilling: %w", err)
+	}
+	return oldValue.TransferredToBilling, nil
+}
+
+// ResetTransferredToBilling resets all changes to the "transferred_to_billing" field.
+func (m *ShipmentMutation) ResetTransferredToBilling() {
+	m.transferred_to_billing = nil
+}
+
+// SetTransferredToBillingDate sets the "transferred_to_billing_date" field.
+func (m *ShipmentMutation) SetTransferredToBillingDate(pg *pgtype.Date) {
+	m.transferred_to_billing_date = &pg
+}
+
+// TransferredToBillingDate returns the value of the "transferred_to_billing_date" field in the mutation.
+func (m *ShipmentMutation) TransferredToBillingDate() (r *pgtype.Date, exists bool) {
+	v := m.transferred_to_billing_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTransferredToBillingDate returns the old "transferred_to_billing_date" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTransferredToBillingDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTransferredToBillingDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTransferredToBillingDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTransferredToBillingDate: %w", err)
+	}
+	return oldValue.TransferredToBillingDate, nil
+}
+
+// ClearTransferredToBillingDate clears the value of the "transferred_to_billing_date" field.
+func (m *ShipmentMutation) ClearTransferredToBillingDate() {
+	m.transferred_to_billing_date = nil
+	m.clearedFields[shipment.FieldTransferredToBillingDate] = struct{}{}
+}
+
+// TransferredToBillingDateCleared returns if the "transferred_to_billing_date" field was cleared in this mutation.
+func (m *ShipmentMutation) TransferredToBillingDateCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTransferredToBillingDate]
+	return ok
+}
+
+// ResetTransferredToBillingDate resets all changes to the "transferred_to_billing_date" field.
+func (m *ShipmentMutation) ResetTransferredToBillingDate() {
+	m.transferred_to_billing_date = nil
+	delete(m.clearedFields, shipment.FieldTransferredToBillingDate)
+}
+
+// SetTotalChargeAmount sets the "total_charge_amount" field.
+func (m *ShipmentMutation) SetTotalChargeAmount(f float64) {
+	m.total_charge_amount = &f
+	m.addtotal_charge_amount = nil
+}
+
+// TotalChargeAmount returns the value of the "total_charge_amount" field in the mutation.
+func (m *ShipmentMutation) TotalChargeAmount() (r float64, exists bool) {
+	v := m.total_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotalChargeAmount returns the old "total_charge_amount" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTotalChargeAmount(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotalChargeAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotalChargeAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotalChargeAmount: %w", err)
+	}
+	return oldValue.TotalChargeAmount, nil
+}
+
+// AddTotalChargeAmount adds f to the "total_charge_amount" field.
+func (m *ShipmentMutation) AddTotalChargeAmount(f float64) {
+	if m.addtotal_charge_amount != nil {
+		*m.addtotal_charge_amount += f
+	} else {
+		m.addtotal_charge_amount = &f
+	}
+}
+
+// AddedTotalChargeAmount returns the value that was added to the "total_charge_amount" field in this mutation.
+func (m *ShipmentMutation) AddedTotalChargeAmount() (r float64, exists bool) {
+	v := m.addtotal_charge_amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTotalChargeAmount clears the value of the "total_charge_amount" field.
+func (m *ShipmentMutation) ClearTotalChargeAmount() {
+	m.total_charge_amount = nil
+	m.addtotal_charge_amount = nil
+	m.clearedFields[shipment.FieldTotalChargeAmount] = struct{}{}
+}
+
+// TotalChargeAmountCleared returns if the "total_charge_amount" field was cleared in this mutation.
+func (m *ShipmentMutation) TotalChargeAmountCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTotalChargeAmount]
+	return ok
+}
+
+// ResetTotalChargeAmount resets all changes to the "total_charge_amount" field.
+func (m *ShipmentMutation) ResetTotalChargeAmount() {
+	m.total_charge_amount = nil
+	m.addtotal_charge_amount = nil
+	delete(m.clearedFields, shipment.FieldTotalChargeAmount)
+}
+
+// SetTrailerTypeID sets the "trailer_type_id" field.
+func (m *ShipmentMutation) SetTrailerTypeID(u uuid.UUID) {
+	m.trailer_type = &u
+}
+
+// TrailerTypeID returns the value of the "trailer_type_id" field in the mutation.
+func (m *ShipmentMutation) TrailerTypeID() (r uuid.UUID, exists bool) {
+	v := m.trailer_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrailerTypeID returns the old "trailer_type_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTrailerTypeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrailerTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrailerTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrailerTypeID: %w", err)
+	}
+	return oldValue.TrailerTypeID, nil
+}
+
+// ClearTrailerTypeID clears the value of the "trailer_type_id" field.
+func (m *ShipmentMutation) ClearTrailerTypeID() {
+	m.trailer_type = nil
+	m.clearedFields[shipment.FieldTrailerTypeID] = struct{}{}
+}
+
+// TrailerTypeIDCleared returns if the "trailer_type_id" field was cleared in this mutation.
+func (m *ShipmentMutation) TrailerTypeIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTrailerTypeID]
+	return ok
+}
+
+// ResetTrailerTypeID resets all changes to the "trailer_type_id" field.
+func (m *ShipmentMutation) ResetTrailerTypeID() {
+	m.trailer_type = nil
+	delete(m.clearedFields, shipment.FieldTrailerTypeID)
+}
+
+// SetTractorTypeID sets the "tractor_type_id" field.
+func (m *ShipmentMutation) SetTractorTypeID(u uuid.UUID) {
+	m.tractor_type = &u
+}
+
+// TractorTypeID returns the value of the "tractor_type_id" field in the mutation.
+func (m *ShipmentMutation) TractorTypeID() (r uuid.UUID, exists bool) {
+	v := m.tractor_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTractorTypeID returns the old "tractor_type_id" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTractorTypeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTractorTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTractorTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTractorTypeID: %w", err)
+	}
+	return oldValue.TractorTypeID, nil
+}
+
+// ClearTractorTypeID clears the value of the "tractor_type_id" field.
+func (m *ShipmentMutation) ClearTractorTypeID() {
+	m.tractor_type = nil
+	m.clearedFields[shipment.FieldTractorTypeID] = struct{}{}
+}
+
+// TractorTypeIDCleared returns if the "tractor_type_id" field was cleared in this mutation.
+func (m *ShipmentMutation) TractorTypeIDCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTractorTypeID]
+	return ok
+}
+
+// ResetTractorTypeID resets all changes to the "tractor_type_id" field.
+func (m *ShipmentMutation) ResetTractorTypeID() {
+	m.tractor_type = nil
+	delete(m.clearedFields, shipment.FieldTractorTypeID)
+}
+
+// SetTemperatureMin sets the "temperature_min" field.
+func (m *ShipmentMutation) SetTemperatureMin(i int) {
+	m.temperature_min = &i
+	m.addtemperature_min = nil
+}
+
+// TemperatureMin returns the value of the "temperature_min" field in the mutation.
+func (m *ShipmentMutation) TemperatureMin() (r int, exists bool) {
+	v := m.temperature_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemperatureMin returns the old "temperature_min" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTemperatureMin(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemperatureMin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemperatureMin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemperatureMin: %w", err)
+	}
+	return oldValue.TemperatureMin, nil
+}
+
+// AddTemperatureMin adds i to the "temperature_min" field.
+func (m *ShipmentMutation) AddTemperatureMin(i int) {
+	if m.addtemperature_min != nil {
+		*m.addtemperature_min += i
+	} else {
+		m.addtemperature_min = &i
+	}
+}
+
+// AddedTemperatureMin returns the value that was added to the "temperature_min" field in this mutation.
+func (m *ShipmentMutation) AddedTemperatureMin() (r int, exists bool) {
+	v := m.addtemperature_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTemperatureMin clears the value of the "temperature_min" field.
+func (m *ShipmentMutation) ClearTemperatureMin() {
+	m.temperature_min = nil
+	m.addtemperature_min = nil
+	m.clearedFields[shipment.FieldTemperatureMin] = struct{}{}
+}
+
+// TemperatureMinCleared returns if the "temperature_min" field was cleared in this mutation.
+func (m *ShipmentMutation) TemperatureMinCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTemperatureMin]
+	return ok
+}
+
+// ResetTemperatureMin resets all changes to the "temperature_min" field.
+func (m *ShipmentMutation) ResetTemperatureMin() {
+	m.temperature_min = nil
+	m.addtemperature_min = nil
+	delete(m.clearedFields, shipment.FieldTemperatureMin)
+}
+
+// SetTemperatureMax sets the "temperature_max" field.
+func (m *ShipmentMutation) SetTemperatureMax(i int) {
+	m.temperature_max = &i
+	m.addtemperature_max = nil
+}
+
+// TemperatureMax returns the value of the "temperature_max" field in the mutation.
+func (m *ShipmentMutation) TemperatureMax() (r int, exists bool) {
+	v := m.temperature_max
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemperatureMax returns the old "temperature_max" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldTemperatureMax(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemperatureMax is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemperatureMax requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemperatureMax: %w", err)
+	}
+	return oldValue.TemperatureMax, nil
+}
+
+// AddTemperatureMax adds i to the "temperature_max" field.
+func (m *ShipmentMutation) AddTemperatureMax(i int) {
+	if m.addtemperature_max != nil {
+		*m.addtemperature_max += i
+	} else {
+		m.addtemperature_max = &i
+	}
+}
+
+// AddedTemperatureMax returns the value that was added to the "temperature_max" field in this mutation.
+func (m *ShipmentMutation) AddedTemperatureMax() (r int, exists bool) {
+	v := m.addtemperature_max
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTemperatureMax clears the value of the "temperature_max" field.
+func (m *ShipmentMutation) ClearTemperatureMax() {
+	m.temperature_max = nil
+	m.addtemperature_max = nil
+	m.clearedFields[shipment.FieldTemperatureMax] = struct{}{}
+}
+
+// TemperatureMaxCleared returns if the "temperature_max" field was cleared in this mutation.
+func (m *ShipmentMutation) TemperatureMaxCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldTemperatureMax]
+	return ok
+}
+
+// ResetTemperatureMax resets all changes to the "temperature_max" field.
+func (m *ShipmentMutation) ResetTemperatureMax() {
+	m.temperature_max = nil
+	m.addtemperature_max = nil
+	delete(m.clearedFields, shipment.FieldTemperatureMax)
+}
+
+// SetBillOfLadingNumber sets the "bill_of_lading_number" field.
+func (m *ShipmentMutation) SetBillOfLadingNumber(s string) {
+	m.bill_of_lading_number = &s
+}
+
+// BillOfLadingNumber returns the value of the "bill_of_lading_number" field in the mutation.
+func (m *ShipmentMutation) BillOfLadingNumber() (r string, exists bool) {
+	v := m.bill_of_lading_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBillOfLadingNumber returns the old "bill_of_lading_number" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldBillOfLadingNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBillOfLadingNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBillOfLadingNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBillOfLadingNumber: %w", err)
+	}
+	return oldValue.BillOfLadingNumber, nil
+}
+
+// ClearBillOfLadingNumber clears the value of the "bill_of_lading_number" field.
+func (m *ShipmentMutation) ClearBillOfLadingNumber() {
+	m.bill_of_lading_number = nil
+	m.clearedFields[shipment.FieldBillOfLadingNumber] = struct{}{}
+}
+
+// BillOfLadingNumberCleared returns if the "bill_of_lading_number" field was cleared in this mutation.
+func (m *ShipmentMutation) BillOfLadingNumberCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldBillOfLadingNumber]
+	return ok
+}
+
+// ResetBillOfLadingNumber resets all changes to the "bill_of_lading_number" field.
+func (m *ShipmentMutation) ResetBillOfLadingNumber() {
+	m.bill_of_lading_number = nil
+	delete(m.clearedFields, shipment.FieldBillOfLadingNumber)
+}
+
+// SetConsigneeReferenceNumber sets the "consignee_reference_number" field.
+func (m *ShipmentMutation) SetConsigneeReferenceNumber(s string) {
+	m.consignee_reference_number = &s
+}
+
+// ConsigneeReferenceNumber returns the value of the "consignee_reference_number" field in the mutation.
+func (m *ShipmentMutation) ConsigneeReferenceNumber() (r string, exists bool) {
+	v := m.consignee_reference_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConsigneeReferenceNumber returns the old "consignee_reference_number" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldConsigneeReferenceNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConsigneeReferenceNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConsigneeReferenceNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConsigneeReferenceNumber: %w", err)
+	}
+	return oldValue.ConsigneeReferenceNumber, nil
+}
+
+// ClearConsigneeReferenceNumber clears the value of the "consignee_reference_number" field.
+func (m *ShipmentMutation) ClearConsigneeReferenceNumber() {
+	m.consignee_reference_number = nil
+	m.clearedFields[shipment.FieldConsigneeReferenceNumber] = struct{}{}
+}
+
+// ConsigneeReferenceNumberCleared returns if the "consignee_reference_number" field was cleared in this mutation.
+func (m *ShipmentMutation) ConsigneeReferenceNumberCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldConsigneeReferenceNumber]
+	return ok
+}
+
+// ResetConsigneeReferenceNumber resets all changes to the "consignee_reference_number" field.
+func (m *ShipmentMutation) ResetConsigneeReferenceNumber() {
+	m.consignee_reference_number = nil
+	delete(m.clearedFields, shipment.FieldConsigneeReferenceNumber)
+}
+
+// SetComment sets the "comment" field.
+func (m *ShipmentMutation) SetComment(s string) {
+	m.comment = &s
+}
+
+// Comment returns the value of the "comment" field in the mutation.
+func (m *ShipmentMutation) Comment() (r string, exists bool) {
+	v := m.comment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldComment returns the old "comment" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldComment(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldComment is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldComment requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldComment: %w", err)
+	}
+	return oldValue.Comment, nil
+}
+
+// ClearComment clears the value of the "comment" field.
+func (m *ShipmentMutation) ClearComment() {
+	m.comment = nil
+	m.clearedFields[shipment.FieldComment] = struct{}{}
+}
+
+// CommentCleared returns if the "comment" field was cleared in this mutation.
+func (m *ShipmentMutation) CommentCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldComment]
+	return ok
+}
+
+// ResetComment resets all changes to the "comment" field.
+func (m *ShipmentMutation) ResetComment() {
+	m.comment = nil
+	delete(m.clearedFields, shipment.FieldComment)
+}
+
+// SetVoidedComment sets the "voided_comment" field.
+func (m *ShipmentMutation) SetVoidedComment(s string) {
+	m.voided_comment = &s
+}
+
+// VoidedComment returns the value of the "voided_comment" field in the mutation.
+func (m *ShipmentMutation) VoidedComment() (r string, exists bool) {
+	v := m.voided_comment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVoidedComment returns the old "voided_comment" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldVoidedComment(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVoidedComment is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVoidedComment requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVoidedComment: %w", err)
+	}
+	return oldValue.VoidedComment, nil
+}
+
+// ClearVoidedComment clears the value of the "voided_comment" field.
+func (m *ShipmentMutation) ClearVoidedComment() {
+	m.voided_comment = nil
+	m.clearedFields[shipment.FieldVoidedComment] = struct{}{}
+}
+
+// VoidedCommentCleared returns if the "voided_comment" field was cleared in this mutation.
+func (m *ShipmentMutation) VoidedCommentCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldVoidedComment]
+	return ok
+}
+
+// ResetVoidedComment resets all changes to the "voided_comment" field.
+func (m *ShipmentMutation) ResetVoidedComment() {
+	m.voided_comment = nil
+	delete(m.clearedFields, shipment.FieldVoidedComment)
+}
+
+// SetAutoRated sets the "auto_rated" field.
+func (m *ShipmentMutation) SetAutoRated(b bool) {
+	m.auto_rated = &b
+}
+
+// AutoRated returns the value of the "auto_rated" field in the mutation.
+func (m *ShipmentMutation) AutoRated() (r bool, exists bool) {
+	v := m.auto_rated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoRated returns the old "auto_rated" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldAutoRated(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoRated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoRated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoRated: %w", err)
+	}
+	return oldValue.AutoRated, nil
+}
+
+// ResetAutoRated resets all changes to the "auto_rated" field.
+func (m *ShipmentMutation) ResetAutoRated() {
+	m.auto_rated = nil
+}
+
+// SetCurrentSuffix sets the "current_suffix" field.
+func (m *ShipmentMutation) SetCurrentSuffix(s string) {
+	m.current_suffix = &s
+}
+
+// CurrentSuffix returns the value of the "current_suffix" field in the mutation.
+func (m *ShipmentMutation) CurrentSuffix() (r string, exists bool) {
+	v := m.current_suffix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrentSuffix returns the old "current_suffix" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldCurrentSuffix(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrentSuffix is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrentSuffix requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrentSuffix: %w", err)
+	}
+	return oldValue.CurrentSuffix, nil
+}
+
+// ClearCurrentSuffix clears the value of the "current_suffix" field.
+func (m *ShipmentMutation) ClearCurrentSuffix() {
+	m.current_suffix = nil
+	m.clearedFields[shipment.FieldCurrentSuffix] = struct{}{}
+}
+
+// CurrentSuffixCleared returns if the "current_suffix" field was cleared in this mutation.
+func (m *ShipmentMutation) CurrentSuffixCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldCurrentSuffix]
+	return ok
+}
+
+// ResetCurrentSuffix resets all changes to the "current_suffix" field.
+func (m *ShipmentMutation) ResetCurrentSuffix() {
+	m.current_suffix = nil
+	delete(m.clearedFields, shipment.FieldCurrentSuffix)
+}
+
+// SetEntryMethod sets the "entry_method" field.
+func (m *ShipmentMutation) SetEntryMethod(sm shipment.EntryMethod) {
+	m.entry_method = &sm
+}
+
+// EntryMethod returns the value of the "entry_method" field in the mutation.
+func (m *ShipmentMutation) EntryMethod() (r shipment.EntryMethod, exists bool) {
+	v := m.entry_method
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEntryMethod returns the old "entry_method" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldEntryMethod(ctx context.Context) (v shipment.EntryMethod, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEntryMethod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEntryMethod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEntryMethod: %w", err)
+	}
+	return oldValue.EntryMethod, nil
+}
+
+// ResetEntryMethod resets all changes to the "entry_method" field.
+func (m *ShipmentMutation) ResetEntryMethod() {
+	m.entry_method = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *ShipmentMutation) SetCreatedBy(u uuid.UUID) {
+	m.created_by_user = &u
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *ShipmentMutation) CreatedBy() (r uuid.UUID, exists bool) {
+	v := m.created_by_user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldCreatedBy(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (m *ShipmentMutation) ClearCreatedBy() {
+	m.created_by_user = nil
+	m.clearedFields[shipment.FieldCreatedBy] = struct{}{}
+}
+
+// CreatedByCleared returns if the "created_by" field was cleared in this mutation.
+func (m *ShipmentMutation) CreatedByCleared() bool {
+	_, ok := m.clearedFields[shipment.FieldCreatedBy]
+	return ok
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *ShipmentMutation) ResetCreatedBy() {
+	m.created_by_user = nil
+	delete(m.clearedFields, shipment.FieldCreatedBy)
+}
+
+// SetIsHazardous sets the "is_hazardous" field.
+func (m *ShipmentMutation) SetIsHazardous(b bool) {
+	m.is_hazardous = &b
+}
+
+// IsHazardous returns the value of the "is_hazardous" field in the mutation.
+func (m *ShipmentMutation) IsHazardous() (r bool, exists bool) {
+	v := m.is_hazardous
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsHazardous returns the old "is_hazardous" field's value of the Shipment entity.
+// If the Shipment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMutation) OldIsHazardous(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsHazardous is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsHazardous requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsHazardous: %w", err)
+	}
+	return oldValue.IsHazardous, nil
+}
+
+// ResetIsHazardous resets all changes to the "is_hazardous" field.
+func (m *ShipmentMutation) ResetIsHazardous() {
+	m.is_hazardous = nil
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *ShipmentMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[shipment.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *ShipmentMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *ShipmentMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *ShipmentMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[shipment.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *ShipmentMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *ShipmentMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearShipmentType clears the "shipment_type" edge to the ShipmentType entity.
+func (m *ShipmentMutation) ClearShipmentType() {
+	m.clearedshipment_type = true
+	m.clearedFields[shipment.FieldShipmentTypeID] = struct{}{}
+}
+
+// ShipmentTypeCleared reports if the "shipment_type" edge to the ShipmentType entity was cleared.
+func (m *ShipmentMutation) ShipmentTypeCleared() bool {
+	return m.clearedshipment_type
+}
+
+// ShipmentTypeIDs returns the "shipment_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ShipmentTypeID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) ShipmentTypeIDs() (ids []uuid.UUID) {
+	if id := m.shipment_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetShipmentType resets all changes to the "shipment_type" edge.
+func (m *ShipmentMutation) ResetShipmentType() {
+	m.shipment_type = nil
+	m.clearedshipment_type = false
+}
+
+// ClearServiceType clears the "service_type" edge to the ServiceType entity.
+func (m *ShipmentMutation) ClearServiceType() {
+	m.clearedservice_type = true
+	m.clearedFields[shipment.FieldServiceTypeID] = struct{}{}
+}
+
+// ServiceTypeCleared reports if the "service_type" edge to the ServiceType entity was cleared.
+func (m *ShipmentMutation) ServiceTypeCleared() bool {
+	return m.ServiceTypeIDCleared() || m.clearedservice_type
+}
+
+// ServiceTypeIDs returns the "service_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ServiceTypeID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) ServiceTypeIDs() (ids []uuid.UUID) {
+	if id := m.service_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetServiceType resets all changes to the "service_type" edge.
+func (m *ShipmentMutation) ResetServiceType() {
+	m.service_type = nil
+	m.clearedservice_type = false
+}
+
+// ClearRevenueCode clears the "revenue_code" edge to the ServiceType entity.
+func (m *ShipmentMutation) ClearRevenueCode() {
+	m.clearedrevenue_code = true
+	m.clearedFields[shipment.FieldRevenueCodeID] = struct{}{}
+}
+
+// RevenueCodeCleared reports if the "revenue_code" edge to the ServiceType entity was cleared.
+func (m *ShipmentMutation) RevenueCodeCleared() bool {
+	return m.RevenueCodeIDCleared() || m.clearedrevenue_code
+}
+
+// RevenueCodeIDs returns the "revenue_code" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RevenueCodeID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) RevenueCodeIDs() (ids []uuid.UUID) {
+	if id := m.revenue_code; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRevenueCode resets all changes to the "revenue_code" edge.
+func (m *ShipmentMutation) ResetRevenueCode() {
+	m.revenue_code = nil
+	m.clearedrevenue_code = false
+}
+
+// ClearOriginLocation clears the "origin_location" edge to the Location entity.
+func (m *ShipmentMutation) ClearOriginLocation() {
+	m.clearedorigin_location = true
+	m.clearedFields[shipment.FieldOriginLocationID] = struct{}{}
+}
+
+// OriginLocationCleared reports if the "origin_location" edge to the Location entity was cleared.
+func (m *ShipmentMutation) OriginLocationCleared() bool {
+	return m.OriginLocationIDCleared() || m.clearedorigin_location
+}
+
+// OriginLocationIDs returns the "origin_location" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OriginLocationID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) OriginLocationIDs() (ids []uuid.UUID) {
+	if id := m.origin_location; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOriginLocation resets all changes to the "origin_location" edge.
+func (m *ShipmentMutation) ResetOriginLocation() {
+	m.origin_location = nil
+	m.clearedorigin_location = false
+}
+
+// ClearDestinationLocation clears the "destination_location" edge to the Location entity.
+func (m *ShipmentMutation) ClearDestinationLocation() {
+	m.cleareddestination_location = true
+	m.clearedFields[shipment.FieldDestinationLocationID] = struct{}{}
+}
+
+// DestinationLocationCleared reports if the "destination_location" edge to the Location entity was cleared.
+func (m *ShipmentMutation) DestinationLocationCleared() bool {
+	return m.DestinationLocationIDCleared() || m.cleareddestination_location
+}
+
+// DestinationLocationIDs returns the "destination_location" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DestinationLocationID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) DestinationLocationIDs() (ids []uuid.UUID) {
+	if id := m.destination_location; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDestinationLocation resets all changes to the "destination_location" edge.
+func (m *ShipmentMutation) ResetDestinationLocation() {
+	m.destination_location = nil
+	m.cleareddestination_location = false
+}
+
+// ClearCustomer clears the "customer" edge to the Customer entity.
+func (m *ShipmentMutation) ClearCustomer() {
+	m.clearedcustomer = true
+	m.clearedFields[shipment.FieldCustomerID] = struct{}{}
+}
+
+// CustomerCleared reports if the "customer" edge to the Customer entity was cleared.
+func (m *ShipmentMutation) CustomerCleared() bool {
+	return m.clearedcustomer
+}
+
+// CustomerIDs returns the "customer" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CustomerID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) CustomerIDs() (ids []uuid.UUID) {
+	if id := m.customer; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCustomer resets all changes to the "customer" edge.
+func (m *ShipmentMutation) ResetCustomer() {
+	m.customer = nil
+	m.clearedcustomer = false
+}
+
+// ClearTrailerType clears the "trailer_type" edge to the EquipmentType entity.
+func (m *ShipmentMutation) ClearTrailerType() {
+	m.clearedtrailer_type = true
+	m.clearedFields[shipment.FieldTrailerTypeID] = struct{}{}
+}
+
+// TrailerTypeCleared reports if the "trailer_type" edge to the EquipmentType entity was cleared.
+func (m *ShipmentMutation) TrailerTypeCleared() bool {
+	return m.TrailerTypeIDCleared() || m.clearedtrailer_type
+}
+
+// TrailerTypeIDs returns the "trailer_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TrailerTypeID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) TrailerTypeIDs() (ids []uuid.UUID) {
+	if id := m.trailer_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTrailerType resets all changes to the "trailer_type" edge.
+func (m *ShipmentMutation) ResetTrailerType() {
+	m.trailer_type = nil
+	m.clearedtrailer_type = false
+}
+
+// ClearTractorType clears the "tractor_type" edge to the EquipmentType entity.
+func (m *ShipmentMutation) ClearTractorType() {
+	m.clearedtractor_type = true
+	m.clearedFields[shipment.FieldTractorTypeID] = struct{}{}
+}
+
+// TractorTypeCleared reports if the "tractor_type" edge to the EquipmentType entity was cleared.
+func (m *ShipmentMutation) TractorTypeCleared() bool {
+	return m.TractorTypeIDCleared() || m.clearedtractor_type
+}
+
+// TractorTypeIDs returns the "tractor_type" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TractorTypeID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) TractorTypeIDs() (ids []uuid.UUID) {
+	if id := m.tractor_type; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTractorType resets all changes to the "tractor_type" edge.
+func (m *ShipmentMutation) ResetTractorType() {
+	m.tractor_type = nil
+	m.clearedtractor_type = false
+}
+
+// SetCreatedByUserID sets the "created_by_user" edge to the User entity by id.
+func (m *ShipmentMutation) SetCreatedByUserID(id uuid.UUID) {
+	m.created_by_user = &id
+}
+
+// ClearCreatedByUser clears the "created_by_user" edge to the User entity.
+func (m *ShipmentMutation) ClearCreatedByUser() {
+	m.clearedcreated_by_user = true
+	m.clearedFields[shipment.FieldCreatedBy] = struct{}{}
+}
+
+// CreatedByUserCleared reports if the "created_by_user" edge to the User entity was cleared.
+func (m *ShipmentMutation) CreatedByUserCleared() bool {
+	return m.CreatedByCleared() || m.clearedcreated_by_user
+}
+
+// CreatedByUserID returns the "created_by_user" edge ID in the mutation.
+func (m *ShipmentMutation) CreatedByUserID() (id uuid.UUID, exists bool) {
+	if m.created_by_user != nil {
+		return *m.created_by_user, true
+	}
+	return
+}
+
+// CreatedByUserIDs returns the "created_by_user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CreatedByUserID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMutation) CreatedByUserIDs() (ids []uuid.UUID) {
+	if id := m.created_by_user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCreatedByUser resets all changes to the "created_by_user" edge.
+func (m *ShipmentMutation) ResetCreatedByUser() {
+	m.created_by_user = nil
+	m.clearedcreated_by_user = false
+}
+
+// Where appends a list predicates to the ShipmentMutation builder.
+func (m *ShipmentMutation) Where(ps ...predicate.Shipment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ShipmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ShipmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Shipment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ShipmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ShipmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Shipment).
+func (m *ShipmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ShipmentMutation) Fields() []string {
+	fields := make([]string, 0, 46)
+	if m.business_unit != nil {
+		fields = append(fields, shipment.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, shipment.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, shipment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, shipment.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, shipment.FieldVersion)
+	}
+	if m.pro_number != nil {
+		fields = append(fields, shipment.FieldProNumber)
+	}
+	if m.status != nil {
+		fields = append(fields, shipment.FieldStatus)
+	}
+	if m.origin_location != nil {
+		fields = append(fields, shipment.FieldOriginLocationID)
+	}
+	if m.origin_address_line != nil {
+		fields = append(fields, shipment.FieldOriginAddressLine)
+	}
+	if m.origin_appointment_start != nil {
+		fields = append(fields, shipment.FieldOriginAppointmentStart)
+	}
+	if m.origin_appointment_end != nil {
+		fields = append(fields, shipment.FieldOriginAppointmentEnd)
+	}
+	if m.destination_location != nil {
+		fields = append(fields, shipment.FieldDestinationLocationID)
+	}
+	if m.destination_address_line != nil {
+		fields = append(fields, shipment.FieldDestinationAddressLine)
+	}
+	if m.destination_appointment_start != nil {
+		fields = append(fields, shipment.FieldDestinationAppointmentStart)
+	}
+	if m.destination_appointment_end != nil {
+		fields = append(fields, shipment.FieldDestinationAppointmentEnd)
+	}
+	if m.shipment_type != nil {
+		fields = append(fields, shipment.FieldShipmentTypeID)
+	}
+	if m.revenue_code != nil {
+		fields = append(fields, shipment.FieldRevenueCodeID)
+	}
+	if m.service_type != nil {
+		fields = append(fields, shipment.FieldServiceTypeID)
+	}
+	if m.rating_unit != nil {
+		fields = append(fields, shipment.FieldRatingUnit)
+	}
+	if m.mileage != nil {
+		fields = append(fields, shipment.FieldMileage)
+	}
+	if m.other_charge_amount != nil {
+		fields = append(fields, shipment.FieldOtherChargeAmount)
+	}
+	if m.freight_charge_amount != nil {
+		fields = append(fields, shipment.FieldFreightChargeAmount)
+	}
+	if m.rating_method != nil {
+		fields = append(fields, shipment.FieldRatingMethod)
+	}
+	if m.customer != nil {
+		fields = append(fields, shipment.FieldCustomerID)
+	}
+	if m.pieces != nil {
+		fields = append(fields, shipment.FieldPieces)
+	}
+	if m.weight != nil {
+		fields = append(fields, shipment.FieldWeight)
+	}
+	if m.ready_to_bill != nil {
+		fields = append(fields, shipment.FieldReadyToBill)
+	}
+	if m.bill_date != nil {
+		fields = append(fields, shipment.FieldBillDate)
+	}
+	if m.ship_date != nil {
+		fields = append(fields, shipment.FieldShipDate)
+	}
+	if m.billed != nil {
+		fields = append(fields, shipment.FieldBilled)
+	}
+	if m.transferred_to_billing != nil {
+		fields = append(fields, shipment.FieldTransferredToBilling)
+	}
+	if m.transferred_to_billing_date != nil {
+		fields = append(fields, shipment.FieldTransferredToBillingDate)
+	}
+	if m.total_charge_amount != nil {
+		fields = append(fields, shipment.FieldTotalChargeAmount)
+	}
+	if m.trailer_type != nil {
+		fields = append(fields, shipment.FieldTrailerTypeID)
+	}
+	if m.tractor_type != nil {
+		fields = append(fields, shipment.FieldTractorTypeID)
+	}
+	if m.temperature_min != nil {
+		fields = append(fields, shipment.FieldTemperatureMin)
+	}
+	if m.temperature_max != nil {
+		fields = append(fields, shipment.FieldTemperatureMax)
+	}
+	if m.bill_of_lading_number != nil {
+		fields = append(fields, shipment.FieldBillOfLadingNumber)
+	}
+	if m.consignee_reference_number != nil {
+		fields = append(fields, shipment.FieldConsigneeReferenceNumber)
+	}
+	if m.comment != nil {
+		fields = append(fields, shipment.FieldComment)
+	}
+	if m.voided_comment != nil {
+		fields = append(fields, shipment.FieldVoidedComment)
+	}
+	if m.auto_rated != nil {
+		fields = append(fields, shipment.FieldAutoRated)
+	}
+	if m.current_suffix != nil {
+		fields = append(fields, shipment.FieldCurrentSuffix)
+	}
+	if m.entry_method != nil {
+		fields = append(fields, shipment.FieldEntryMethod)
+	}
+	if m.created_by_user != nil {
+		fields = append(fields, shipment.FieldCreatedBy)
+	}
+	if m.is_hazardous != nil {
+		fields = append(fields, shipment.FieldIsHazardous)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ShipmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case shipment.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case shipment.FieldOrganizationID:
+		return m.OrganizationID()
+	case shipment.FieldCreatedAt:
+		return m.CreatedAt()
+	case shipment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case shipment.FieldVersion:
+		return m.Version()
+	case shipment.FieldProNumber:
+		return m.ProNumber()
+	case shipment.FieldStatus:
+		return m.Status()
+	case shipment.FieldOriginLocationID:
+		return m.OriginLocationID()
+	case shipment.FieldOriginAddressLine:
+		return m.OriginAddressLine()
+	case shipment.FieldOriginAppointmentStart:
+		return m.OriginAppointmentStart()
+	case shipment.FieldOriginAppointmentEnd:
+		return m.OriginAppointmentEnd()
+	case shipment.FieldDestinationLocationID:
+		return m.DestinationLocationID()
+	case shipment.FieldDestinationAddressLine:
+		return m.DestinationAddressLine()
+	case shipment.FieldDestinationAppointmentStart:
+		return m.DestinationAppointmentStart()
+	case shipment.FieldDestinationAppointmentEnd:
+		return m.DestinationAppointmentEnd()
+	case shipment.FieldShipmentTypeID:
+		return m.ShipmentTypeID()
+	case shipment.FieldRevenueCodeID:
+		return m.RevenueCodeID()
+	case shipment.FieldServiceTypeID:
+		return m.ServiceTypeID()
+	case shipment.FieldRatingUnit:
+		return m.RatingUnit()
+	case shipment.FieldMileage:
+		return m.Mileage()
+	case shipment.FieldOtherChargeAmount:
+		return m.OtherChargeAmount()
+	case shipment.FieldFreightChargeAmount:
+		return m.FreightChargeAmount()
+	case shipment.FieldRatingMethod:
+		return m.RatingMethod()
+	case shipment.FieldCustomerID:
+		return m.CustomerID()
+	case shipment.FieldPieces:
+		return m.Pieces()
+	case shipment.FieldWeight:
+		return m.Weight()
+	case shipment.FieldReadyToBill:
+		return m.ReadyToBill()
+	case shipment.FieldBillDate:
+		return m.BillDate()
+	case shipment.FieldShipDate:
+		return m.ShipDate()
+	case shipment.FieldBilled:
+		return m.Billed()
+	case shipment.FieldTransferredToBilling:
+		return m.TransferredToBilling()
+	case shipment.FieldTransferredToBillingDate:
+		return m.TransferredToBillingDate()
+	case shipment.FieldTotalChargeAmount:
+		return m.TotalChargeAmount()
+	case shipment.FieldTrailerTypeID:
+		return m.TrailerTypeID()
+	case shipment.FieldTractorTypeID:
+		return m.TractorTypeID()
+	case shipment.FieldTemperatureMin:
+		return m.TemperatureMin()
+	case shipment.FieldTemperatureMax:
+		return m.TemperatureMax()
+	case shipment.FieldBillOfLadingNumber:
+		return m.BillOfLadingNumber()
+	case shipment.FieldConsigneeReferenceNumber:
+		return m.ConsigneeReferenceNumber()
+	case shipment.FieldComment:
+		return m.Comment()
+	case shipment.FieldVoidedComment:
+		return m.VoidedComment()
+	case shipment.FieldAutoRated:
+		return m.AutoRated()
+	case shipment.FieldCurrentSuffix:
+		return m.CurrentSuffix()
+	case shipment.FieldEntryMethod:
+		return m.EntryMethod()
+	case shipment.FieldCreatedBy:
+		return m.CreatedBy()
+	case shipment.FieldIsHazardous:
+		return m.IsHazardous()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ShipmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case shipment.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case shipment.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case shipment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case shipment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case shipment.FieldVersion:
+		return m.OldVersion(ctx)
+	case shipment.FieldProNumber:
+		return m.OldProNumber(ctx)
+	case shipment.FieldStatus:
+		return m.OldStatus(ctx)
+	case shipment.FieldOriginLocationID:
+		return m.OldOriginLocationID(ctx)
+	case shipment.FieldOriginAddressLine:
+		return m.OldOriginAddressLine(ctx)
+	case shipment.FieldOriginAppointmentStart:
+		return m.OldOriginAppointmentStart(ctx)
+	case shipment.FieldOriginAppointmentEnd:
+		return m.OldOriginAppointmentEnd(ctx)
+	case shipment.FieldDestinationLocationID:
+		return m.OldDestinationLocationID(ctx)
+	case shipment.FieldDestinationAddressLine:
+		return m.OldDestinationAddressLine(ctx)
+	case shipment.FieldDestinationAppointmentStart:
+		return m.OldDestinationAppointmentStart(ctx)
+	case shipment.FieldDestinationAppointmentEnd:
+		return m.OldDestinationAppointmentEnd(ctx)
+	case shipment.FieldShipmentTypeID:
+		return m.OldShipmentTypeID(ctx)
+	case shipment.FieldRevenueCodeID:
+		return m.OldRevenueCodeID(ctx)
+	case shipment.FieldServiceTypeID:
+		return m.OldServiceTypeID(ctx)
+	case shipment.FieldRatingUnit:
+		return m.OldRatingUnit(ctx)
+	case shipment.FieldMileage:
+		return m.OldMileage(ctx)
+	case shipment.FieldOtherChargeAmount:
+		return m.OldOtherChargeAmount(ctx)
+	case shipment.FieldFreightChargeAmount:
+		return m.OldFreightChargeAmount(ctx)
+	case shipment.FieldRatingMethod:
+		return m.OldRatingMethod(ctx)
+	case shipment.FieldCustomerID:
+		return m.OldCustomerID(ctx)
+	case shipment.FieldPieces:
+		return m.OldPieces(ctx)
+	case shipment.FieldWeight:
+		return m.OldWeight(ctx)
+	case shipment.FieldReadyToBill:
+		return m.OldReadyToBill(ctx)
+	case shipment.FieldBillDate:
+		return m.OldBillDate(ctx)
+	case shipment.FieldShipDate:
+		return m.OldShipDate(ctx)
+	case shipment.FieldBilled:
+		return m.OldBilled(ctx)
+	case shipment.FieldTransferredToBilling:
+		return m.OldTransferredToBilling(ctx)
+	case shipment.FieldTransferredToBillingDate:
+		return m.OldTransferredToBillingDate(ctx)
+	case shipment.FieldTotalChargeAmount:
+		return m.OldTotalChargeAmount(ctx)
+	case shipment.FieldTrailerTypeID:
+		return m.OldTrailerTypeID(ctx)
+	case shipment.FieldTractorTypeID:
+		return m.OldTractorTypeID(ctx)
+	case shipment.FieldTemperatureMin:
+		return m.OldTemperatureMin(ctx)
+	case shipment.FieldTemperatureMax:
+		return m.OldTemperatureMax(ctx)
+	case shipment.FieldBillOfLadingNumber:
+		return m.OldBillOfLadingNumber(ctx)
+	case shipment.FieldConsigneeReferenceNumber:
+		return m.OldConsigneeReferenceNumber(ctx)
+	case shipment.FieldComment:
+		return m.OldComment(ctx)
+	case shipment.FieldVoidedComment:
+		return m.OldVoidedComment(ctx)
+	case shipment.FieldAutoRated:
+		return m.OldAutoRated(ctx)
+	case shipment.FieldCurrentSuffix:
+		return m.OldCurrentSuffix(ctx)
+	case shipment.FieldEntryMethod:
+		return m.OldEntryMethod(ctx)
+	case shipment.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
+	case shipment.FieldIsHazardous:
+		return m.OldIsHazardous(ctx)
+	}
+	return nil, fmt.Errorf("unknown Shipment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case shipment.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case shipment.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case shipment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case shipment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case shipment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case shipment.FieldProNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProNumber(v)
+		return nil
+	case shipment.FieldStatus:
+		v, ok := value.(shipment.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case shipment.FieldOriginLocationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginLocationID(v)
+		return nil
+	case shipment.FieldOriginAddressLine:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginAddressLine(v)
+		return nil
+	case shipment.FieldOriginAppointmentStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginAppointmentStart(v)
+		return nil
+	case shipment.FieldOriginAppointmentEnd:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginAppointmentEnd(v)
+		return nil
+	case shipment.FieldDestinationLocationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestinationLocationID(v)
+		return nil
+	case shipment.FieldDestinationAddressLine:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestinationAddressLine(v)
+		return nil
+	case shipment.FieldDestinationAppointmentStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestinationAppointmentStart(v)
+		return nil
+	case shipment.FieldDestinationAppointmentEnd:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDestinationAppointmentEnd(v)
+		return nil
+	case shipment.FieldShipmentTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShipmentTypeID(v)
+		return nil
+	case shipment.FieldRevenueCodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRevenueCodeID(v)
+		return nil
+	case shipment.FieldServiceTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServiceTypeID(v)
+		return nil
+	case shipment.FieldRatingUnit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRatingUnit(v)
+		return nil
+	case shipment.FieldMileage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMileage(v)
+		return nil
+	case shipment.FieldOtherChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOtherChargeAmount(v)
+		return nil
+	case shipment.FieldFreightChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreightChargeAmount(v)
+		return nil
+	case shipment.FieldRatingMethod:
+		v, ok := value.(shipment.RatingMethod)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRatingMethod(v)
+		return nil
+	case shipment.FieldCustomerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomerID(v)
+		return nil
+	case shipment.FieldPieces:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPieces(v)
+		return nil
+	case shipment.FieldWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeight(v)
+		return nil
+	case shipment.FieldReadyToBill:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReadyToBill(v)
+		return nil
+	case shipment.FieldBillDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBillDate(v)
+		return nil
+	case shipment.FieldShipDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShipDate(v)
+		return nil
+	case shipment.FieldBilled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBilled(v)
+		return nil
+	case shipment.FieldTransferredToBilling:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTransferredToBilling(v)
+		return nil
+	case shipment.FieldTransferredToBillingDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTransferredToBillingDate(v)
+		return nil
+	case shipment.FieldTotalChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotalChargeAmount(v)
+		return nil
+	case shipment.FieldTrailerTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrailerTypeID(v)
+		return nil
+	case shipment.FieldTractorTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTractorTypeID(v)
+		return nil
+	case shipment.FieldTemperatureMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemperatureMin(v)
+		return nil
+	case shipment.FieldTemperatureMax:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemperatureMax(v)
+		return nil
+	case shipment.FieldBillOfLadingNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBillOfLadingNumber(v)
+		return nil
+	case shipment.FieldConsigneeReferenceNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConsigneeReferenceNumber(v)
+		return nil
+	case shipment.FieldComment:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetComment(v)
+		return nil
+	case shipment.FieldVoidedComment:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVoidedComment(v)
+		return nil
+	case shipment.FieldAutoRated:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoRated(v)
+		return nil
+	case shipment.FieldCurrentSuffix:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrentSuffix(v)
+		return nil
+	case shipment.FieldEntryMethod:
+		v, ok := value.(shipment.EntryMethod)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEntryMethod(v)
+		return nil
+	case shipment.FieldCreatedBy:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
+		return nil
+	case shipment.FieldIsHazardous:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsHazardous(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ShipmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, shipment.FieldVersion)
+	}
+	if m.addrating_unit != nil {
+		fields = append(fields, shipment.FieldRatingUnit)
+	}
+	if m.addmileage != nil {
+		fields = append(fields, shipment.FieldMileage)
+	}
+	if m.addother_charge_amount != nil {
+		fields = append(fields, shipment.FieldOtherChargeAmount)
+	}
+	if m.addfreight_charge_amount != nil {
+		fields = append(fields, shipment.FieldFreightChargeAmount)
+	}
+	if m.addpieces != nil {
+		fields = append(fields, shipment.FieldPieces)
+	}
+	if m.addweight != nil {
+		fields = append(fields, shipment.FieldWeight)
+	}
+	if m.addtotal_charge_amount != nil {
+		fields = append(fields, shipment.FieldTotalChargeAmount)
+	}
+	if m.addtemperature_min != nil {
+		fields = append(fields, shipment.FieldTemperatureMin)
+	}
+	if m.addtemperature_max != nil {
+		fields = append(fields, shipment.FieldTemperatureMax)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ShipmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case shipment.FieldVersion:
+		return m.AddedVersion()
+	case shipment.FieldRatingUnit:
+		return m.AddedRatingUnit()
+	case shipment.FieldMileage:
+		return m.AddedMileage()
+	case shipment.FieldOtherChargeAmount:
+		return m.AddedOtherChargeAmount()
+	case shipment.FieldFreightChargeAmount:
+		return m.AddedFreightChargeAmount()
+	case shipment.FieldPieces:
+		return m.AddedPieces()
+	case shipment.FieldWeight:
+		return m.AddedWeight()
+	case shipment.FieldTotalChargeAmount:
+		return m.AddedTotalChargeAmount()
+	case shipment.FieldTemperatureMin:
+		return m.AddedTemperatureMin()
+	case shipment.FieldTemperatureMax:
+		return m.AddedTemperatureMax()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case shipment.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	case shipment.FieldRatingUnit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRatingUnit(v)
+		return nil
+	case shipment.FieldMileage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMileage(v)
+		return nil
+	case shipment.FieldOtherChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOtherChargeAmount(v)
+		return nil
+	case shipment.FieldFreightChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFreightChargeAmount(v)
+		return nil
+	case shipment.FieldPieces:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPieces(v)
+		return nil
+	case shipment.FieldWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWeight(v)
+		return nil
+	case shipment.FieldTotalChargeAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTotalChargeAmount(v)
+		return nil
+	case shipment.FieldTemperatureMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTemperatureMin(v)
+		return nil
+	case shipment.FieldTemperatureMax:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTemperatureMax(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ShipmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(shipment.FieldOriginLocationID) {
+		fields = append(fields, shipment.FieldOriginLocationID)
+	}
+	if m.FieldCleared(shipment.FieldOriginAddressLine) {
+		fields = append(fields, shipment.FieldOriginAddressLine)
+	}
+	if m.FieldCleared(shipment.FieldOriginAppointmentStart) {
+		fields = append(fields, shipment.FieldOriginAppointmentStart)
+	}
+	if m.FieldCleared(shipment.FieldOriginAppointmentEnd) {
+		fields = append(fields, shipment.FieldOriginAppointmentEnd)
+	}
+	if m.FieldCleared(shipment.FieldDestinationLocationID) {
+		fields = append(fields, shipment.FieldDestinationLocationID)
+	}
+	if m.FieldCleared(shipment.FieldDestinationAddressLine) {
+		fields = append(fields, shipment.FieldDestinationAddressLine)
+	}
+	if m.FieldCleared(shipment.FieldDestinationAppointmentStart) {
+		fields = append(fields, shipment.FieldDestinationAppointmentStart)
+	}
+	if m.FieldCleared(shipment.FieldDestinationAppointmentEnd) {
+		fields = append(fields, shipment.FieldDestinationAppointmentEnd)
+	}
+	if m.FieldCleared(shipment.FieldRevenueCodeID) {
+		fields = append(fields, shipment.FieldRevenueCodeID)
+	}
+	if m.FieldCleared(shipment.FieldServiceTypeID) {
+		fields = append(fields, shipment.FieldServiceTypeID)
+	}
+	if m.FieldCleared(shipment.FieldMileage) {
+		fields = append(fields, shipment.FieldMileage)
+	}
+	if m.FieldCleared(shipment.FieldOtherChargeAmount) {
+		fields = append(fields, shipment.FieldOtherChargeAmount)
+	}
+	if m.FieldCleared(shipment.FieldFreightChargeAmount) {
+		fields = append(fields, shipment.FieldFreightChargeAmount)
+	}
+	if m.FieldCleared(shipment.FieldPieces) {
+		fields = append(fields, shipment.FieldPieces)
+	}
+	if m.FieldCleared(shipment.FieldWeight) {
+		fields = append(fields, shipment.FieldWeight)
+	}
+	if m.FieldCleared(shipment.FieldBillDate) {
+		fields = append(fields, shipment.FieldBillDate)
+	}
+	if m.FieldCleared(shipment.FieldShipDate) {
+		fields = append(fields, shipment.FieldShipDate)
+	}
+	if m.FieldCleared(shipment.FieldTransferredToBillingDate) {
+		fields = append(fields, shipment.FieldTransferredToBillingDate)
+	}
+	if m.FieldCleared(shipment.FieldTotalChargeAmount) {
+		fields = append(fields, shipment.FieldTotalChargeAmount)
+	}
+	if m.FieldCleared(shipment.FieldTrailerTypeID) {
+		fields = append(fields, shipment.FieldTrailerTypeID)
+	}
+	if m.FieldCleared(shipment.FieldTractorTypeID) {
+		fields = append(fields, shipment.FieldTractorTypeID)
+	}
+	if m.FieldCleared(shipment.FieldTemperatureMin) {
+		fields = append(fields, shipment.FieldTemperatureMin)
+	}
+	if m.FieldCleared(shipment.FieldTemperatureMax) {
+		fields = append(fields, shipment.FieldTemperatureMax)
+	}
+	if m.FieldCleared(shipment.FieldBillOfLadingNumber) {
+		fields = append(fields, shipment.FieldBillOfLadingNumber)
+	}
+	if m.FieldCleared(shipment.FieldConsigneeReferenceNumber) {
+		fields = append(fields, shipment.FieldConsigneeReferenceNumber)
+	}
+	if m.FieldCleared(shipment.FieldComment) {
+		fields = append(fields, shipment.FieldComment)
+	}
+	if m.FieldCleared(shipment.FieldVoidedComment) {
+		fields = append(fields, shipment.FieldVoidedComment)
+	}
+	if m.FieldCleared(shipment.FieldCurrentSuffix) {
+		fields = append(fields, shipment.FieldCurrentSuffix)
+	}
+	if m.FieldCleared(shipment.FieldCreatedBy) {
+		fields = append(fields, shipment.FieldCreatedBy)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ShipmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ShipmentMutation) ClearField(name string) error {
+	switch name {
+	case shipment.FieldOriginLocationID:
+		m.ClearOriginLocationID()
+		return nil
+	case shipment.FieldOriginAddressLine:
+		m.ClearOriginAddressLine()
+		return nil
+	case shipment.FieldOriginAppointmentStart:
+		m.ClearOriginAppointmentStart()
+		return nil
+	case shipment.FieldOriginAppointmentEnd:
+		m.ClearOriginAppointmentEnd()
+		return nil
+	case shipment.FieldDestinationLocationID:
+		m.ClearDestinationLocationID()
+		return nil
+	case shipment.FieldDestinationAddressLine:
+		m.ClearDestinationAddressLine()
+		return nil
+	case shipment.FieldDestinationAppointmentStart:
+		m.ClearDestinationAppointmentStart()
+		return nil
+	case shipment.FieldDestinationAppointmentEnd:
+		m.ClearDestinationAppointmentEnd()
+		return nil
+	case shipment.FieldRevenueCodeID:
+		m.ClearRevenueCodeID()
+		return nil
+	case shipment.FieldServiceTypeID:
+		m.ClearServiceTypeID()
+		return nil
+	case shipment.FieldMileage:
+		m.ClearMileage()
+		return nil
+	case shipment.FieldOtherChargeAmount:
+		m.ClearOtherChargeAmount()
+		return nil
+	case shipment.FieldFreightChargeAmount:
+		m.ClearFreightChargeAmount()
+		return nil
+	case shipment.FieldPieces:
+		m.ClearPieces()
+		return nil
+	case shipment.FieldWeight:
+		m.ClearWeight()
+		return nil
+	case shipment.FieldBillDate:
+		m.ClearBillDate()
+		return nil
+	case shipment.FieldShipDate:
+		m.ClearShipDate()
+		return nil
+	case shipment.FieldTransferredToBillingDate:
+		m.ClearTransferredToBillingDate()
+		return nil
+	case shipment.FieldTotalChargeAmount:
+		m.ClearTotalChargeAmount()
+		return nil
+	case shipment.FieldTrailerTypeID:
+		m.ClearTrailerTypeID()
+		return nil
+	case shipment.FieldTractorTypeID:
+		m.ClearTractorTypeID()
+		return nil
+	case shipment.FieldTemperatureMin:
+		m.ClearTemperatureMin()
+		return nil
+	case shipment.FieldTemperatureMax:
+		m.ClearTemperatureMax()
+		return nil
+	case shipment.FieldBillOfLadingNumber:
+		m.ClearBillOfLadingNumber()
+		return nil
+	case shipment.FieldConsigneeReferenceNumber:
+		m.ClearConsigneeReferenceNumber()
+		return nil
+	case shipment.FieldComment:
+		m.ClearComment()
+		return nil
+	case shipment.FieldVoidedComment:
+		m.ClearVoidedComment()
+		return nil
+	case shipment.FieldCurrentSuffix:
+		m.ClearCurrentSuffix()
+		return nil
+	case shipment.FieldCreatedBy:
+		m.ClearCreatedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ShipmentMutation) ResetField(name string) error {
+	switch name {
+	case shipment.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case shipment.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case shipment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case shipment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case shipment.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case shipment.FieldProNumber:
+		m.ResetProNumber()
+		return nil
+	case shipment.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case shipment.FieldOriginLocationID:
+		m.ResetOriginLocationID()
+		return nil
+	case shipment.FieldOriginAddressLine:
+		m.ResetOriginAddressLine()
+		return nil
+	case shipment.FieldOriginAppointmentStart:
+		m.ResetOriginAppointmentStart()
+		return nil
+	case shipment.FieldOriginAppointmentEnd:
+		m.ResetOriginAppointmentEnd()
+		return nil
+	case shipment.FieldDestinationLocationID:
+		m.ResetDestinationLocationID()
+		return nil
+	case shipment.FieldDestinationAddressLine:
+		m.ResetDestinationAddressLine()
+		return nil
+	case shipment.FieldDestinationAppointmentStart:
+		m.ResetDestinationAppointmentStart()
+		return nil
+	case shipment.FieldDestinationAppointmentEnd:
+		m.ResetDestinationAppointmentEnd()
+		return nil
+	case shipment.FieldShipmentTypeID:
+		m.ResetShipmentTypeID()
+		return nil
+	case shipment.FieldRevenueCodeID:
+		m.ResetRevenueCodeID()
+		return nil
+	case shipment.FieldServiceTypeID:
+		m.ResetServiceTypeID()
+		return nil
+	case shipment.FieldRatingUnit:
+		m.ResetRatingUnit()
+		return nil
+	case shipment.FieldMileage:
+		m.ResetMileage()
+		return nil
+	case shipment.FieldOtherChargeAmount:
+		m.ResetOtherChargeAmount()
+		return nil
+	case shipment.FieldFreightChargeAmount:
+		m.ResetFreightChargeAmount()
+		return nil
+	case shipment.FieldRatingMethod:
+		m.ResetRatingMethod()
+		return nil
+	case shipment.FieldCustomerID:
+		m.ResetCustomerID()
+		return nil
+	case shipment.FieldPieces:
+		m.ResetPieces()
+		return nil
+	case shipment.FieldWeight:
+		m.ResetWeight()
+		return nil
+	case shipment.FieldReadyToBill:
+		m.ResetReadyToBill()
+		return nil
+	case shipment.FieldBillDate:
+		m.ResetBillDate()
+		return nil
+	case shipment.FieldShipDate:
+		m.ResetShipDate()
+		return nil
+	case shipment.FieldBilled:
+		m.ResetBilled()
+		return nil
+	case shipment.FieldTransferredToBilling:
+		m.ResetTransferredToBilling()
+		return nil
+	case shipment.FieldTransferredToBillingDate:
+		m.ResetTransferredToBillingDate()
+		return nil
+	case shipment.FieldTotalChargeAmount:
+		m.ResetTotalChargeAmount()
+		return nil
+	case shipment.FieldTrailerTypeID:
+		m.ResetTrailerTypeID()
+		return nil
+	case shipment.FieldTractorTypeID:
+		m.ResetTractorTypeID()
+		return nil
+	case shipment.FieldTemperatureMin:
+		m.ResetTemperatureMin()
+		return nil
+	case shipment.FieldTemperatureMax:
+		m.ResetTemperatureMax()
+		return nil
+	case shipment.FieldBillOfLadingNumber:
+		m.ResetBillOfLadingNumber()
+		return nil
+	case shipment.FieldConsigneeReferenceNumber:
+		m.ResetConsigneeReferenceNumber()
+		return nil
+	case shipment.FieldComment:
+		m.ResetComment()
+		return nil
+	case shipment.FieldVoidedComment:
+		m.ResetVoidedComment()
+		return nil
+	case shipment.FieldAutoRated:
+		m.ResetAutoRated()
+		return nil
+	case shipment.FieldCurrentSuffix:
+		m.ResetCurrentSuffix()
+		return nil
+	case shipment.FieldEntryMethod:
+		m.ResetEntryMethod()
+		return nil
+	case shipment.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case shipment.FieldIsHazardous:
+		m.ResetIsHazardous()
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ShipmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 11)
+	if m.business_unit != nil {
+		edges = append(edges, shipment.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, shipment.EdgeOrganization)
+	}
+	if m.shipment_type != nil {
+		edges = append(edges, shipment.EdgeShipmentType)
+	}
+	if m.service_type != nil {
+		edges = append(edges, shipment.EdgeServiceType)
+	}
+	if m.revenue_code != nil {
+		edges = append(edges, shipment.EdgeRevenueCode)
+	}
+	if m.origin_location != nil {
+		edges = append(edges, shipment.EdgeOriginLocation)
+	}
+	if m.destination_location != nil {
+		edges = append(edges, shipment.EdgeDestinationLocation)
+	}
+	if m.customer != nil {
+		edges = append(edges, shipment.EdgeCustomer)
+	}
+	if m.trailer_type != nil {
+		edges = append(edges, shipment.EdgeTrailerType)
+	}
+	if m.tractor_type != nil {
+		edges = append(edges, shipment.EdgeTractorType)
+	}
+	if m.created_by_user != nil {
+		edges = append(edges, shipment.EdgeCreatedByUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ShipmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case shipment.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeShipmentType:
+		if id := m.shipment_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeServiceType:
+		if id := m.service_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeRevenueCode:
+		if id := m.revenue_code; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeOriginLocation:
+		if id := m.origin_location; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeDestinationLocation:
+		if id := m.destination_location; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeCustomer:
+		if id := m.customer; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeTrailerType:
+		if id := m.trailer_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeTractorType:
+		if id := m.tractor_type; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipment.EdgeCreatedByUser:
+		if id := m.created_by_user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ShipmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 11)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ShipmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ShipmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 11)
+	if m.clearedbusiness_unit {
+		edges = append(edges, shipment.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, shipment.EdgeOrganization)
+	}
+	if m.clearedshipment_type {
+		edges = append(edges, shipment.EdgeShipmentType)
+	}
+	if m.clearedservice_type {
+		edges = append(edges, shipment.EdgeServiceType)
+	}
+	if m.clearedrevenue_code {
+		edges = append(edges, shipment.EdgeRevenueCode)
+	}
+	if m.clearedorigin_location {
+		edges = append(edges, shipment.EdgeOriginLocation)
+	}
+	if m.cleareddestination_location {
+		edges = append(edges, shipment.EdgeDestinationLocation)
+	}
+	if m.clearedcustomer {
+		edges = append(edges, shipment.EdgeCustomer)
+	}
+	if m.clearedtrailer_type {
+		edges = append(edges, shipment.EdgeTrailerType)
+	}
+	if m.clearedtractor_type {
+		edges = append(edges, shipment.EdgeTractorType)
+	}
+	if m.clearedcreated_by_user {
+		edges = append(edges, shipment.EdgeCreatedByUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ShipmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case shipment.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case shipment.EdgeOrganization:
+		return m.clearedorganization
+	case shipment.EdgeShipmentType:
+		return m.clearedshipment_type
+	case shipment.EdgeServiceType:
+		return m.clearedservice_type
+	case shipment.EdgeRevenueCode:
+		return m.clearedrevenue_code
+	case shipment.EdgeOriginLocation:
+		return m.clearedorigin_location
+	case shipment.EdgeDestinationLocation:
+		return m.cleareddestination_location
+	case shipment.EdgeCustomer:
+		return m.clearedcustomer
+	case shipment.EdgeTrailerType:
+		return m.clearedtrailer_type
+	case shipment.EdgeTractorType:
+		return m.clearedtractor_type
+	case shipment.EdgeCreatedByUser:
+		return m.clearedcreated_by_user
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ShipmentMutation) ClearEdge(name string) error {
+	switch name {
+	case shipment.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case shipment.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case shipment.EdgeShipmentType:
+		m.ClearShipmentType()
+		return nil
+	case shipment.EdgeServiceType:
+		m.ClearServiceType()
+		return nil
+	case shipment.EdgeRevenueCode:
+		m.ClearRevenueCode()
+		return nil
+	case shipment.EdgeOriginLocation:
+		m.ClearOriginLocation()
+		return nil
+	case shipment.EdgeDestinationLocation:
+		m.ClearDestinationLocation()
+		return nil
+	case shipment.EdgeCustomer:
+		m.ClearCustomer()
+		return nil
+	case shipment.EdgeTrailerType:
+		m.ClearTrailerType()
+		return nil
+	case shipment.EdgeTractorType:
+		m.ClearTractorType()
+		return nil
+	case shipment.EdgeCreatedByUser:
+		m.ClearCreatedByUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ShipmentMutation) ResetEdge(name string) error {
+	switch name {
+	case shipment.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case shipment.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case shipment.EdgeShipmentType:
+		m.ResetShipmentType()
+		return nil
+	case shipment.EdgeServiceType:
+		m.ResetServiceType()
+		return nil
+	case shipment.EdgeRevenueCode:
+		m.ResetRevenueCode()
+		return nil
+	case shipment.EdgeOriginLocation:
+		m.ResetOriginLocation()
+		return nil
+	case shipment.EdgeDestinationLocation:
+		m.ResetDestinationLocation()
+		return nil
+	case shipment.EdgeCustomer:
+		m.ResetCustomer()
+		return nil
+	case shipment.EdgeTrailerType:
+		m.ResetTrailerType()
+		return nil
+	case shipment.EdgeTractorType:
+		m.ResetTractorType()
+		return nil
+	case shipment.EdgeCreatedByUser:
+		m.ResetCreatedByUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Shipment edge %s", name)
 }
 
 // ShipmentControlMutation represents an operation that mutates the ShipmentControl nodes in the graph.

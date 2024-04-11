@@ -86,6 +86,8 @@ type Tx struct {
 	ServiceType *ServiceTypeClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
+	// Shipment is the client for interacting with the Shipment builders.
+	Shipment *ShipmentClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
 	// ShipmentType is the client for interacting with the ShipmentType builders.
@@ -279,6 +281,7 @@ func (tx *Tx) init() {
 	tx.RouteControl = NewRouteControlClient(tx.config)
 	tx.ServiceType = NewServiceTypeClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
+	tx.Shipment = NewShipmentClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
 	tx.ShipmentType = NewShipmentTypeClient(tx.config)
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)

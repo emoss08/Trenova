@@ -114,6 +114,9 @@ type ServiceType func(*sql.Selector)
 // Session is the predicate function for session builders.
 type Session func(*sql.Selector)
 
+// Shipment is the predicate function for shipment builders.
+type Shipment func(*sql.Selector)
+
 // ShipmentControl is the predicate function for shipmentcontrol builders.
 type ShipmentControl func(*sql.Selector)
 

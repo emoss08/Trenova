@@ -441,6 +441,18 @@ func (f SessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SessionMutation", m)
 }
 
+// The ShipmentFunc type is an adapter to allow the use of ordinary
+// function as Shipment mutator.
+type ShipmentFunc func(context.Context, *ent.ShipmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ShipmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ShipmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentMutation", m)
+}
+
 // The ShipmentControlFunc type is an adapter to allow the use of ordinary
 // function as ShipmentControl mutator.
 type ShipmentControlFunc func(context.Context, *ent.ShipmentControlMutation) (ent.Value, error)
