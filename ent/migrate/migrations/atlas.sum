@@ -1,4 +1,4 @@
-h1:Vdc60EGLyKzS3u6GtnmCxuc2IddT4BF6xh1jhU4H6VM=
+h1:IEOZviXxSBiDLErQQrja+es8N3He6jYQVbpUVjJf3wE=
 20240313025838_initial.sql h1:SSNxk2S6/jOkJPvNSMuniM60rS7ovtA3hVx4E6t5r9o=
 20240313035153_initial.sql h1:fmVZMKlxZURxbdxkbDVS1d1tyGuaTrlnZKbBKIeddWI=
 20240313040335_organization_business_unit.sql h1:ewjrrJStfCT9dWsamZIDKp8HJW03WzpmOsvcNGe7Gvk=
@@ -108,3 +108,6 @@ h1:Vdc60EGLyKzS3u6GtnmCxuc2IddT4BF6xh1jhU4H6VM=
 20240406062717_alter_worker.sql h1:kAFkDQiabahx6SC+hwOhw0MGjyEkcSqJrPkCbf+3SN4=
 20240407214918_create_organization_feature_flag.sql h1:fuj1VAtYV4/DHrQu+frGF/fDhzxeM+XYB32TYSUB0Wk=
 20240411001350_create_shipment.sql h1:HdIa1eff7+SmQpqbGGGgQTZr2xO+WeZBMGN1P2bMThk=
+20240411001711_add_unique_indexes.sql h1:ZJ18O/y0MHnbutVxzYInKvpsIaWcLi/nx3RTsQqNLpI=
+20240411002940_update_indexes.sql h1:gCEZXFULsPu0PR6f4ZPkydbhrolVdrNdwPM3ZQFQLIc=
+20240411003343_update_indexes.sql h1:9lhd8YvMom7EWaHrIhJFPb1Y3DNHB6fYndSn2Z3ZTGE=

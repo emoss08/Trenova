@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // CommentType holds the schema definition for the CommentType entity.
@@ -48,15 +47,6 @@ func (CommentType) Fields() []ent.Field {
 // Edges of the CommentType.
 func (CommentType) Edges() []ent.Edge {
 	return nil
-}
-
-// Indexes of the CommentType.
-func (CommentType) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("name", "organization_id").
-			Unique(),
-	}
 }
 
 // Mixin of the CommentType.

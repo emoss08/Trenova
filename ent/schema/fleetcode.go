@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
@@ -53,15 +52,6 @@ func (FleetCode) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			StructTag(`json:"managerId" validate:"omitempty"`),
-	}
-}
-
-// Indexes of the FleetCode.
-func (FleetCode) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
 )
 
@@ -56,15 +55,6 @@ func (DivisionCode) Fields() []ent.Field {
 func (DivisionCode) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the DivisionCode.
-func (DivisionCode) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 

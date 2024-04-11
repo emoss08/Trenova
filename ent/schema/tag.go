@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // Tag holds the schema definition for the Tag entity.
@@ -42,13 +41,5 @@ func (Tag) Edges() []ent.Edge {
 func (Tag) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the Tag.
-func (Tag) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("name", "organization_id").
-			Unique(),
 	}
 }

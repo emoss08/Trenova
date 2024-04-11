@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // ShipmentType holds the schema definition for the ShipmentType entity.
@@ -46,14 +45,5 @@ func (ShipmentType) Edges() []ent.Edge {
 func (ShipmentType) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the ShipmentType.
-func (ShipmentType) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }

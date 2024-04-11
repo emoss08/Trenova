@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // QualifierCode holds the schema definition for the QualifierCode entity.
@@ -41,15 +40,6 @@ func (QualifierCode) Fields() []ent.Field {
 func (QualifierCode) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the QualifierCode.
-func (QualifierCode) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 

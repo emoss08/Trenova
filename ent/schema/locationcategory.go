@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // LocationCategory holds the schema definition for the LocationCategory entity.
@@ -35,15 +34,6 @@ func (LocationCategory) Fields() []ent.Field {
 // Edges of the LocationCategory.
 func (LocationCategory) Edges() []ent.Edge {
 	return nil
-}
-
-// Indexes of the LocationCategory.
-func (LocationCategory) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("name", "organization_id").
-			Unique(),
-	}
 }
 
 // Mixin of the LocationCategory.

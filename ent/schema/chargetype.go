@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // ChargeType holds the schema definition for the ChargeType entity.
@@ -46,13 +45,5 @@ func (ChargeType) Edges() []ent.Edge {
 func (ChargeType) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the ChargeType.
-func (ChargeType) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("name", "organization_id").
-			Unique(),
 	}
 }

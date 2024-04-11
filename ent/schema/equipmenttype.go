@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // EquipmentType holds the schema definition for the EquipmentType entity.
@@ -116,15 +115,6 @@ func (EquipmentType) Fields() []ent.Field {
 func (EquipmentType) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the EquipmentType.
-func (EquipmentType) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 

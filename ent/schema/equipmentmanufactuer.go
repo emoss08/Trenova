@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // EquipmentManufactuer holds the schema definition for the EquipmentManufactuer entity.
@@ -29,14 +28,6 @@ func (EquipmentManufactuer) Fields() []ent.Field {
 		field.Text("description").
 			Optional().
 			StructTag(`json:"description" validate:"omitempty"`),
-	}
-}
-
-// Indexes of the EquipmentManufactuer.
-func (EquipmentManufactuer) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("name", "organization_id").
-			Unique(),
 	}
 }
 

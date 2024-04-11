@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 )
 
 // AccessorialCharge holds the schema definition for the AccessorialCharge entity.
@@ -60,15 +59,6 @@ func (AccessorialCharge) Fields() []ent.Field {
 func (AccessorialCharge) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
-	}
-}
-
-// Indexes of the AccessorialCharge.
-func (AccessorialCharge) Indexes() []ent.Index {
-	return []ent.Index{
-		// Ensure the code is unique for the organization.
-		index.Fields("code", "organization_id").
-			Unique(),
 	}
 }
 
