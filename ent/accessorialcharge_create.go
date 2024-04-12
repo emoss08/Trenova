@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/accessorialcharge"
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/google/uuid"
 )
 
@@ -167,6 +168,21 @@ func (acc *AccessorialChargeCreate) SetBusinessUnit(b *BusinessUnit) *Accessoria
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (acc *AccessorialChargeCreate) SetOrganization(o *Organization) *AccessorialChargeCreate {
 	return acc.SetOrganizationID(o.ID)
+}
+
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (acc *AccessorialChargeCreate) AddShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeCreate {
+	acc.mutation.AddShipmentChargeIDs(ids...)
+	return acc
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (acc *AccessorialChargeCreate) AddShipmentCharges(s ...*ShipmentCharges) *AccessorialChargeCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return acc.AddShipmentChargeIDs(ids...)
 }
 
 // Mutation returns the AccessorialChargeMutation object of the builder.
@@ -390,6 +406,22 @@ func (acc *AccessorialChargeCreate) createSpec() (*AccessorialCharge, *sqlgraph.
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := acc.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

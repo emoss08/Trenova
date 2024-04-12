@@ -10,7 +10,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/commenttype"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
@@ -25,6 +27,8 @@ type ShipmentCommentQuery struct {
 	order             []shipmentcomment.OrderOption
 	inters            []Interceptor
 	predicates        []predicate.ShipmentComment
+	withBusinessUnit  *BusinessUnitQuery
+	withOrganization  *OrganizationQuery
 	withShipment      *ShipmentQuery
 	withCommentType   *CommentTypeQuery
 	withCreatedByUser *UserQuery
@@ -63,6 +67,50 @@ func (scq *ShipmentCommentQuery) Unique(unique bool) *ShipmentCommentQuery {
 func (scq *ShipmentCommentQuery) Order(o ...shipmentcomment.OrderOption) *ShipmentCommentQuery {
 	scq.order = append(scq.order, o...)
 	return scq
+}
+
+// QueryBusinessUnit chains the current query on the "business_unit" edge.
+func (scq *ShipmentCommentQuery) QueryBusinessUnit() *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: scq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := scq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := scq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentcomment.Table, shipmentcomment.FieldID, selector),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentcomment.BusinessUnitTable, shipmentcomment.BusinessUnitColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(scq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOrganization chains the current query on the "organization" edge.
+func (scq *ShipmentCommentQuery) QueryOrganization() *OrganizationQuery {
+	query := (&OrganizationClient{config: scq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := scq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := scq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentcomment.Table, shipmentcomment.FieldID, selector),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentcomment.OrganizationTable, shipmentcomment.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(scq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryShipment chains the current query on the "shipment" edge.
@@ -155,8 +203,8 @@ func (scq *ShipmentCommentQuery) FirstX(ctx context.Context) *ShipmentComment {
 
 // FirstID returns the first ShipmentComment ID from the query.
 // Returns a *NotFoundError when no ShipmentComment ID was found.
-func (scq *ShipmentCommentQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (scq *ShipmentCommentQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = scq.Limit(1).IDs(setContextOp(ctx, scq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -168,7 +216,7 @@ func (scq *ShipmentCommentQuery) FirstID(ctx context.Context) (id int, err error
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (scq *ShipmentCommentQuery) FirstIDX(ctx context.Context) int {
+func (scq *ShipmentCommentQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := scq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -206,8 +254,8 @@ func (scq *ShipmentCommentQuery) OnlyX(ctx context.Context) *ShipmentComment {
 // OnlyID is like Only, but returns the only ShipmentComment ID in the query.
 // Returns a *NotSingularError when more than one ShipmentComment ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (scq *ShipmentCommentQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (scq *ShipmentCommentQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = scq.Limit(2).IDs(setContextOp(ctx, scq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -223,7 +271,7 @@ func (scq *ShipmentCommentQuery) OnlyID(ctx context.Context) (id int, err error)
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (scq *ShipmentCommentQuery) OnlyIDX(ctx context.Context) int {
+func (scq *ShipmentCommentQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := scq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -251,7 +299,7 @@ func (scq *ShipmentCommentQuery) AllX(ctx context.Context) []*ShipmentComment {
 }
 
 // IDs executes the query and returns a list of ShipmentComment IDs.
-func (scq *ShipmentCommentQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (scq *ShipmentCommentQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if scq.ctx.Unique == nil && scq.path != nil {
 		scq.Unique(true)
 	}
@@ -263,7 +311,7 @@ func (scq *ShipmentCommentQuery) IDs(ctx context.Context) (ids []int, err error)
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (scq *ShipmentCommentQuery) IDsX(ctx context.Context) []int {
+func (scq *ShipmentCommentQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := scq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -323,6 +371,8 @@ func (scq *ShipmentCommentQuery) Clone() *ShipmentCommentQuery {
 		order:             append([]shipmentcomment.OrderOption{}, scq.order...),
 		inters:            append([]Interceptor{}, scq.inters...),
 		predicates:        append([]predicate.ShipmentComment{}, scq.predicates...),
+		withBusinessUnit:  scq.withBusinessUnit.Clone(),
+		withOrganization:  scq.withOrganization.Clone(),
 		withShipment:      scq.withShipment.Clone(),
 		withCommentType:   scq.withCommentType.Clone(),
 		withCreatedByUser: scq.withCreatedByUser.Clone(),
@@ -330,6 +380,28 @@ func (scq *ShipmentCommentQuery) Clone() *ShipmentCommentQuery {
 		sql:  scq.sql.Clone(),
 		path: scq.path,
 	}
+}
+
+// WithBusinessUnit tells the query-builder to eager-load the nodes that are connected to
+// the "business_unit" edge. The optional arguments are used to configure the query builder of the edge.
+func (scq *ShipmentCommentQuery) WithBusinessUnit(opts ...func(*BusinessUnitQuery)) *ShipmentCommentQuery {
+	query := (&BusinessUnitClient{config: scq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	scq.withBusinessUnit = query
+	return scq
+}
+
+// WithOrganization tells the query-builder to eager-load the nodes that are connected to
+// the "organization" edge. The optional arguments are used to configure the query builder of the edge.
+func (scq *ShipmentCommentQuery) WithOrganization(opts ...func(*OrganizationQuery)) *ShipmentCommentQuery {
+	query := (&OrganizationClient{config: scq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	scq.withOrganization = query
+	return scq
 }
 
 // WithShipment tells the query-builder to eager-load the nodes that are connected to
@@ -371,12 +443,12 @@ func (scq *ShipmentCommentQuery) WithCreatedByUser(opts ...func(*UserQuery)) *Sh
 // Example:
 //
 //	var v []struct {
-//		ShipmentID uuid.UUID `json:"shipmentId" validate:"omitempty"`
+//		BusinessUnitID uuid.UUID `json:"businessUnitId"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ShipmentComment.Query().
-//		GroupBy(shipmentcomment.FieldShipmentID).
+//		GroupBy(shipmentcomment.FieldBusinessUnitID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (scq *ShipmentCommentQuery) GroupBy(field string, fields ...string) *ShipmentCommentGroupBy {
@@ -394,11 +466,11 @@ func (scq *ShipmentCommentQuery) GroupBy(field string, fields ...string) *Shipme
 // Example:
 //
 //	var v []struct {
-//		ShipmentID uuid.UUID `json:"shipmentId" validate:"omitempty"`
+//		BusinessUnitID uuid.UUID `json:"businessUnitId"`
 //	}
 //
 //	client.ShipmentComment.Query().
-//		Select(shipmentcomment.FieldShipmentID).
+//		Select(shipmentcomment.FieldBusinessUnitID).
 //		Scan(ctx, &v)
 func (scq *ShipmentCommentQuery) Select(fields ...string) *ShipmentCommentSelect {
 	scq.ctx.Fields = append(scq.ctx.Fields, fields...)
@@ -443,7 +515,9 @@ func (scq *ShipmentCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	var (
 		nodes       = []*ShipmentComment{}
 		_spec       = scq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [5]bool{
+			scq.withBusinessUnit != nil,
+			scq.withOrganization != nil,
 			scq.withShipment != nil,
 			scq.withCommentType != nil,
 			scq.withCreatedByUser != nil,
@@ -470,6 +544,18 @@ func (scq *ShipmentCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := scq.withBusinessUnit; query != nil {
+		if err := scq.loadBusinessUnit(ctx, query, nodes, nil,
+			func(n *ShipmentComment, e *BusinessUnit) { n.Edges.BusinessUnit = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := scq.withOrganization; query != nil {
+		if err := scq.loadOrganization(ctx, query, nodes, nil,
+			func(n *ShipmentComment, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := scq.withShipment; query != nil {
 		if err := scq.loadShipment(ctx, query, nodes, nil,
 			func(n *ShipmentComment, e *Shipment) { n.Edges.Shipment = e }); err != nil {
@@ -491,6 +577,64 @@ func (scq *ShipmentCommentQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	return nodes, nil
 }
 
+func (scq *ShipmentCommentQuery) loadBusinessUnit(ctx context.Context, query *BusinessUnitQuery, nodes []*ShipmentComment, init func(*ShipmentComment), assign func(*ShipmentComment, *BusinessUnit)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*ShipmentComment)
+	for i := range nodes {
+		fk := nodes[i].BusinessUnitID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(businessunit.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "business_unit_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (scq *ShipmentCommentQuery) loadOrganization(ctx context.Context, query *OrganizationQuery, nodes []*ShipmentComment, init func(*ShipmentComment), assign func(*ShipmentComment, *Organization)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*ShipmentComment)
+	for i := range nodes {
+		fk := nodes[i].OrganizationID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(organization.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "organization_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (scq *ShipmentCommentQuery) loadShipment(ctx context.Context, query *ShipmentQuery, nodes []*ShipmentComment, init func(*ShipmentComment), assign func(*ShipmentComment, *Shipment)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*ShipmentComment)
@@ -592,7 +736,7 @@ func (scq *ShipmentCommentQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (scq *ShipmentCommentQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID))
 	_spec.From = scq.sql
 	if unique := scq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -606,6 +750,12 @@ func (scq *ShipmentCommentQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != shipmentcomment.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if scq.withBusinessUnit != nil {
+			_spec.Node.AddColumnOnce(shipmentcomment.FieldBusinessUnitID)
+		}
+		if scq.withOrganization != nil {
+			_spec.Node.AddColumnOnce(shipmentcomment.FieldOrganizationID)
 		}
 		if scq.withShipment != nil {
 			_spec.Node.AddColumnOnce(shipmentcomment.FieldShipmentID)

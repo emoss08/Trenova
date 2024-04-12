@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/ent/commenttype"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/google/uuid"
 )
 
 // CommentTypeUpdate is the builder for updating CommentType entities.
@@ -120,14 +121,14 @@ func (ctu *CommentTypeUpdate) ClearDescription() *CommentTypeUpdate {
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (ctu *CommentTypeUpdate) AddShipmentCommentIDs(ids ...int) *CommentTypeUpdate {
+func (ctu *CommentTypeUpdate) AddShipmentCommentIDs(ids ...uuid.UUID) *CommentTypeUpdate {
 	ctu.mutation.AddShipmentCommentIDs(ids...)
 	return ctu
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (ctu *CommentTypeUpdate) AddShipmentComments(s ...*ShipmentComment) *CommentTypeUpdate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -146,14 +147,14 @@ func (ctu *CommentTypeUpdate) ClearShipmentComments() *CommentTypeUpdate {
 }
 
 // RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
-func (ctu *CommentTypeUpdate) RemoveShipmentCommentIDs(ids ...int) *CommentTypeUpdate {
+func (ctu *CommentTypeUpdate) RemoveShipmentCommentIDs(ids ...uuid.UUID) *CommentTypeUpdate {
 	ctu.mutation.RemoveShipmentCommentIDs(ids...)
 	return ctu
 }
 
 // RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
 func (ctu *CommentTypeUpdate) RemoveShipmentComments(s ...*ShipmentComment) *CommentTypeUpdate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -272,7 +273,7 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -285,7 +286,7 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -301,7 +302,7 @@ func (ctu *CommentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -421,14 +422,14 @@ func (ctuo *CommentTypeUpdateOne) ClearDescription() *CommentTypeUpdateOne {
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (ctuo *CommentTypeUpdateOne) AddShipmentCommentIDs(ids ...int) *CommentTypeUpdateOne {
+func (ctuo *CommentTypeUpdateOne) AddShipmentCommentIDs(ids ...uuid.UUID) *CommentTypeUpdateOne {
 	ctuo.mutation.AddShipmentCommentIDs(ids...)
 	return ctuo
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (ctuo *CommentTypeUpdateOne) AddShipmentComments(s ...*ShipmentComment) *CommentTypeUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -447,14 +448,14 @@ func (ctuo *CommentTypeUpdateOne) ClearShipmentComments() *CommentTypeUpdateOne 
 }
 
 // RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
-func (ctuo *CommentTypeUpdateOne) RemoveShipmentCommentIDs(ids ...int) *CommentTypeUpdateOne {
+func (ctuo *CommentTypeUpdateOne) RemoveShipmentCommentIDs(ids ...uuid.UUID) *CommentTypeUpdateOne {
 	ctuo.mutation.RemoveShipmentCommentIDs(ids...)
 	return ctuo
 }
 
 // RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
 func (ctuo *CommentTypeUpdateOne) RemoveShipmentComments(s ...*ShipmentComment) *CommentTypeUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -603,7 +604,7 @@ func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentTy
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -616,7 +617,7 @@ func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentTy
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -632,7 +633,7 @@ func (ctuo *CommentTypeUpdateOne) sqlSave(ctx context.Context) (_node *CommentTy
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

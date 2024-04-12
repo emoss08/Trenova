@@ -1001,6 +1001,29 @@ func HasShipmentCommentsWith(preds ...predicate.ShipmentComment) predicate.User 
 	})
 }
 
+// HasShipmentCharges applies the HasEdge predicate on the "shipment_charges" edge.
+func HasShipmentCharges() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentChargesTable, ShipmentChargesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentChargesWith applies the HasEdge predicate on the "shipment_charges" edge with a given conditions (other predicates).
+func HasShipmentChargesWith(preds ...predicate.ShipmentCharges) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newShipmentChargesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

@@ -54,9 +54,12 @@ type AccessorialChargeEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// ShipmentCharges holds the value of the shipment_charges edge.
+	ShipmentCharges []*ShipmentCharges `json:"shipmentCharges,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes          [3]bool
+	namedShipmentCharges map[string][]*ShipmentCharges
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -79,6 +82,15 @@ func (e AccessorialChargeEdges) OrganizationOrErr() (*Organization, error) {
 		return nil, &NotFoundError{label: organization.Label}
 	}
 	return nil, &NotLoadedError{edge: "organization"}
+}
+
+// ShipmentChargesOrErr returns the ShipmentCharges value or an error if the edge
+// was not loaded in eager-loading.
+func (e AccessorialChargeEdges) ShipmentChargesOrErr() ([]*ShipmentCharges, error) {
+	if e.loadedTypes[2] {
+		return e.ShipmentCharges, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_charges"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -208,6 +220,11 @@ func (ac *AccessorialCharge) QueryOrganization() *OrganizationQuery {
 	return NewAccessorialChargeClient(ac.config).QueryOrganization(ac)
 }
 
+// QueryShipmentCharges queries the "shipment_charges" edge of the AccessorialCharge entity.
+func (ac *AccessorialCharge) QueryShipmentCharges() *ShipmentChargesQuery {
+	return NewAccessorialChargeClient(ac.config).QueryShipmentCharges(ac)
+}
+
 // Update returns a builder for updating this AccessorialCharge.
 // Note that you need to call AccessorialCharge.Unwrap() before calling this method if this AccessorialCharge
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -265,6 +282,30 @@ func (ac *AccessorialCharge) String() string {
 	builder.WriteString(fmt.Sprintf("%v", ac.Amount))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedShipmentCharges returns the ShipmentCharges named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (ac *AccessorialCharge) NamedShipmentCharges(name string) ([]*ShipmentCharges, error) {
+	if ac.Edges.namedShipmentCharges == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := ac.Edges.namedShipmentCharges[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (ac *AccessorialCharge) appendNamedShipmentCharges(name string, edges ...*ShipmentCharges) {
+	if ac.Edges.namedShipmentCharges == nil {
+		ac.Edges.namedShipmentCharges = make(map[string][]*ShipmentCharges)
+	}
+	if len(edges) == 0 {
+		ac.Edges.namedShipmentCharges[name] = []*ShipmentCharges{}
+	} else {
+		ac.Edges.namedShipmentCharges[name] = append(ac.Edges.namedShipmentCharges[name], edges...)
+	}
 }
 
 // AccessorialCharges is a parsable slice of AccessorialCharge.

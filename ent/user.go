@@ -72,12 +72,15 @@ type UserEdges struct {
 	Shipments []*Shipment `json:"shipments,omitempty"`
 	// ShipmentComments holds the value of the shipment_comments edge.
 	ShipmentComments []*ShipmentComment `json:"shipment_comments,omitempty"`
+	// ShipmentCharges holds the value of the shipment_charges edge.
+	ShipmentCharges []*ShipmentCharges `json:"shipment_charges,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes           [5]bool
+	loadedTypes           [6]bool
 	namedUserFavorites    map[string][]*UserFavorite
 	namedShipments        map[string][]*Shipment
 	namedShipmentComments map[string][]*ShipmentComment
+	namedShipmentCharges  map[string][]*ShipmentCharges
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -127,6 +130,15 @@ func (e UserEdges) ShipmentCommentsOrErr() ([]*ShipmentComment, error) {
 		return e.ShipmentComments, nil
 	}
 	return nil, &NotLoadedError{edge: "shipment_comments"}
+}
+
+// ShipmentChargesOrErr returns the ShipmentCharges value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ShipmentChargesOrErr() ([]*ShipmentCharges, error) {
+	if e.loadedTypes[5] {
+		return e.ShipmentCharges, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_charges"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -307,6 +319,11 @@ func (u *User) QueryShipmentComments() *ShipmentCommentQuery {
 	return NewUserClient(u.config).QueryShipmentComments(u)
 }
 
+// QueryShipmentCharges queries the "shipment_charges" edge of the User entity.
+func (u *User) QueryShipmentCharges() *ShipmentChargesQuery {
+	return NewUserClient(u.config).QueryShipmentCharges(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -456,6 +473,30 @@ func (u *User) appendNamedShipmentComments(name string, edges ...*ShipmentCommen
 		u.Edges.namedShipmentComments[name] = []*ShipmentComment{}
 	} else {
 		u.Edges.namedShipmentComments[name] = append(u.Edges.namedShipmentComments[name], edges...)
+	}
+}
+
+// NamedShipmentCharges returns the ShipmentCharges named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedShipmentCharges(name string) ([]*ShipmentCharges, error) {
+	if u.Edges.namedShipmentCharges == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedShipmentCharges[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedShipmentCharges(name string, edges ...*ShipmentCharges) {
+	if u.Edges.namedShipmentCharges == nil {
+		u.Edges.namedShipmentCharges = make(map[string][]*ShipmentCharges)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedShipmentCharges[name] = []*ShipmentCharges{}
+	} else {
+		u.Edges.namedShipmentCharges[name] = append(u.Edges.namedShipmentCharges[name], edges...)
 	}
 }
 

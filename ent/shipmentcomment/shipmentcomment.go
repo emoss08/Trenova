@@ -3,8 +3,11 @@
 package shipmentcomment
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 const (
@@ -12,6 +15,16 @@ const (
 	Label = "shipment_comment"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldBusinessUnitID holds the string denoting the business_unit_id field in the database.
+	FieldBusinessUnitID = "business_unit_id"
+	// FieldOrganizationID holds the string denoting the organization_id field in the database.
+	FieldOrganizationID = "organization_id"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// FieldShipmentID holds the string denoting the shipment_id field in the database.
 	FieldShipmentID = "shipment_id"
 	// FieldCommentTypeID holds the string denoting the comment_type_id field in the database.
@@ -20,6 +33,10 @@ const (
 	FieldComment = "comment"
 	// FieldCreatedBy holds the string denoting the created_by field in the database.
 	FieldCreatedBy = "created_by"
+	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
+	EdgeBusinessUnit = "business_unit"
+	// EdgeOrganization holds the string denoting the organization edge name in mutations.
+	EdgeOrganization = "organization"
 	// EdgeShipment holds the string denoting the shipment edge name in mutations.
 	EdgeShipment = "shipment"
 	// EdgeCommentType holds the string denoting the comment_type edge name in mutations.
@@ -28,6 +45,20 @@ const (
 	EdgeCreatedByUser = "created_by_user"
 	// Table holds the table name of the shipmentcomment in the database.
 	Table = "shipment_comments"
+	// BusinessUnitTable is the table that holds the business_unit relation/edge.
+	BusinessUnitTable = "shipment_comments"
+	// BusinessUnitInverseTable is the table name for the BusinessUnit entity.
+	// It exists in this package in order to avoid circular dependency with the "businessunit" package.
+	BusinessUnitInverseTable = "business_units"
+	// BusinessUnitColumn is the table column denoting the business_unit relation/edge.
+	BusinessUnitColumn = "business_unit_id"
+	// OrganizationTable is the table that holds the organization relation/edge.
+	OrganizationTable = "shipment_comments"
+	// OrganizationInverseTable is the table name for the Organization entity.
+	// It exists in this package in order to avoid circular dependency with the "organization" package.
+	OrganizationInverseTable = "organizations"
+	// OrganizationColumn is the table column denoting the organization relation/edge.
+	OrganizationColumn = "organization_id"
 	// ShipmentTable is the table that holds the shipment relation/edge.
 	ShipmentTable = "shipment_comments"
 	// ShipmentInverseTable is the table name for the Shipment entity.
@@ -54,6 +85,11 @@ const (
 // Columns holds all SQL columns for shipmentcomment fields.
 var Columns = []string{
 	FieldID,
+	FieldBusinessUnitID,
+	FieldOrganizationID,
+	FieldCreatedAt,
+	FieldUpdatedAt,
+	FieldVersion,
 	FieldShipmentID,
 	FieldCommentTypeID,
 	FieldComment,
@@ -71,8 +107,18 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
+	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion int
 	// CommentValidator is a validator for the "comment" field. It is called by the builders before save.
 	CommentValidator func(string) error
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )
 
 // OrderOption defines the ordering options for the ShipmentComment queries.
@@ -81,6 +127,31 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByBusinessUnitID orders the results by the business_unit_id field.
+func ByBusinessUnitID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBusinessUnitID, opts...).ToFunc()
+}
+
+// ByOrganizationID orders the results by the organization_id field.
+func ByOrganizationID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOrganizationID, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
 // ByShipmentID orders the results by the shipment_id field.
@@ -103,6 +174,20 @@ func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
 }
 
+// ByBusinessUnitField orders the results by business_unit field.
+func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBusinessUnitStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByOrganizationField orders the results by organization field.
+func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByShipmentField orders the results by shipment field.
 func ByShipmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -122,6 +207,20 @@ func ByCreatedByUserField(field string, opts ...sql.OrderTermOption) OrderOption
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newCreatedByUserStep(), sql.OrderByField(field, opts...))
 	}
+}
+func newBusinessUnitStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BusinessUnitInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, BusinessUnitTable, BusinessUnitColumn),
+	)
+}
+func newOrganizationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OrganizationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
 }
 func newShipmentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

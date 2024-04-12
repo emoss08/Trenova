@@ -151,14 +151,14 @@ func (ctc *CommentTypeCreate) SetOrganization(o *Organization) *CommentTypeCreat
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (ctc *CommentTypeCreate) AddShipmentCommentIDs(ids ...int) *CommentTypeCreate {
+func (ctc *CommentTypeCreate) AddShipmentCommentIDs(ids ...uuid.UUID) *CommentTypeCreate {
 	ctc.mutation.AddShipmentCommentIDs(ids...)
 	return ctc
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (ctc *CommentTypeCreate) AddShipmentComments(s ...*ShipmentComment) *CommentTypeCreate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -378,7 +378,7 @@ func (ctc *CommentTypeCreate) createSpec() (*CommentType, *sqlgraph.CreateSpec) 
 			Columns: []string{commenttype.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

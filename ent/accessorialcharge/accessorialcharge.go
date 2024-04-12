@@ -42,6 +42,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
+	// EdgeShipmentCharges holds the string denoting the shipment_charges edge name in mutations.
+	EdgeShipmentCharges = "shipment_charges"
 	// Table holds the table name of the accessorialcharge in the database.
 	Table = "accessorial_charges"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -58,6 +60,13 @@ const (
 	OrganizationInverseTable = "organizations"
 	// OrganizationColumn is the table column denoting the organization relation/edge.
 	OrganizationColumn = "organization_id"
+	// ShipmentChargesTable is the table that holds the shipment_charges relation/edge.
+	ShipmentChargesTable = "shipment_charges"
+	// ShipmentChargesInverseTable is the table name for the ShipmentCharges entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcharges" package.
+	ShipmentChargesInverseTable = "shipment_charges"
+	// ShipmentChargesColumn is the table column denoting the shipment_charges relation/edge.
+	ShipmentChargesColumn = "accessorial_charge_id"
 )
 
 // Columns holds all SQL columns for accessorialcharge fields.
@@ -231,6 +240,20 @@ func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByShipmentChargesCount orders the results by shipment_charges count.
+func ByShipmentChargesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentChargesStep(), opts...)
+	}
+}
+
+// ByShipmentCharges orders the results by shipment_charges terms.
+func ByShipmentCharges(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentChargesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -243,5 +266,12 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
+}
+func newShipmentChargesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentChargesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentChargesTable, ShipmentChargesColumn),
 	)
 }

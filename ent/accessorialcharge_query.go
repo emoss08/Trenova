@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,19 +15,22 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/google/uuid"
 )
 
 // AccessorialChargeQuery is the builder for querying AccessorialCharge entities.
 type AccessorialChargeQuery struct {
 	config
-	ctx              *QueryContext
-	order            []accessorialcharge.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.AccessorialCharge
-	withBusinessUnit *BusinessUnitQuery
-	withOrganization *OrganizationQuery
-	modifiers        []func(*sql.Selector)
+	ctx                      *QueryContext
+	order                    []accessorialcharge.OrderOption
+	inters                   []Interceptor
+	predicates               []predicate.AccessorialCharge
+	withBusinessUnit         *BusinessUnitQuery
+	withOrganization         *OrganizationQuery
+	withShipmentCharges      *ShipmentChargesQuery
+	modifiers                []func(*sql.Selector)
+	withNamedShipmentCharges map[string]*ShipmentChargesQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +104,28 @@ func (acq *AccessorialChargeQuery) QueryOrganization() *OrganizationQuery {
 			sqlgraph.From(accessorialcharge.Table, accessorialcharge.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, accessorialcharge.OrganizationTable, accessorialcharge.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(acq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryShipmentCharges chains the current query on the "shipment_charges" edge.
+func (acq *AccessorialChargeQuery) QueryShipmentCharges() *ShipmentChargesQuery {
+	query := (&ShipmentChargesClient{config: acq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := acq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := acq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(accessorialcharge.Table, accessorialcharge.FieldID, selector),
+			sqlgraph.To(shipmentcharges.Table, shipmentcharges.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, accessorialcharge.ShipmentChargesTable, accessorialcharge.ShipmentChargesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(acq.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +320,14 @@ func (acq *AccessorialChargeQuery) Clone() *AccessorialChargeQuery {
 		return nil
 	}
 	return &AccessorialChargeQuery{
-		config:           acq.config,
-		ctx:              acq.ctx.Clone(),
-		order:            append([]accessorialcharge.OrderOption{}, acq.order...),
-		inters:           append([]Interceptor{}, acq.inters...),
-		predicates:       append([]predicate.AccessorialCharge{}, acq.predicates...),
-		withBusinessUnit: acq.withBusinessUnit.Clone(),
-		withOrganization: acq.withOrganization.Clone(),
+		config:              acq.config,
+		ctx:                 acq.ctx.Clone(),
+		order:               append([]accessorialcharge.OrderOption{}, acq.order...),
+		inters:              append([]Interceptor{}, acq.inters...),
+		predicates:          append([]predicate.AccessorialCharge{}, acq.predicates...),
+		withBusinessUnit:    acq.withBusinessUnit.Clone(),
+		withOrganization:    acq.withOrganization.Clone(),
+		withShipmentCharges: acq.withShipmentCharges.Clone(),
 		// clone intermediate query.
 		sql:  acq.sql.Clone(),
 		path: acq.path,
@@ -326,6 +353,17 @@ func (acq *AccessorialChargeQuery) WithOrganization(opts ...func(*OrganizationQu
 		opt(query)
 	}
 	acq.withOrganization = query
+	return acq
+}
+
+// WithShipmentCharges tells the query-builder to eager-load the nodes that are connected to
+// the "shipment_charges" edge. The optional arguments are used to configure the query builder of the edge.
+func (acq *AccessorialChargeQuery) WithShipmentCharges(opts ...func(*ShipmentChargesQuery)) *AccessorialChargeQuery {
+	query := (&ShipmentChargesClient{config: acq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	acq.withShipmentCharges = query
 	return acq
 }
 
@@ -407,9 +445,10 @@ func (acq *AccessorialChargeQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	var (
 		nodes       = []*AccessorialCharge{}
 		_spec       = acq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			acq.withBusinessUnit != nil,
 			acq.withOrganization != nil,
+			acq.withShipmentCharges != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +481,22 @@ func (acq *AccessorialChargeQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := acq.withOrganization; query != nil {
 		if err := acq.loadOrganization(ctx, query, nodes, nil,
 			func(n *AccessorialCharge, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := acq.withShipmentCharges; query != nil {
+		if err := acq.loadShipmentCharges(ctx, query, nodes,
+			func(n *AccessorialCharge) { n.Edges.ShipmentCharges = []*ShipmentCharges{} },
+			func(n *AccessorialCharge, e *ShipmentCharges) {
+				n.Edges.ShipmentCharges = append(n.Edges.ShipmentCharges, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range acq.withNamedShipmentCharges {
+		if err := acq.loadShipmentCharges(ctx, query, nodes,
+			func(n *AccessorialCharge) { n.appendNamedShipmentCharges(name) },
+			func(n *AccessorialCharge, e *ShipmentCharges) { n.appendNamedShipmentCharges(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -503,6 +558,36 @@ func (acq *AccessorialChargeQuery) loadOrganization(ctx context.Context, query *
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (acq *AccessorialChargeQuery) loadShipmentCharges(ctx context.Context, query *ShipmentChargesQuery, nodes []*AccessorialCharge, init func(*AccessorialCharge), assign func(*AccessorialCharge, *ShipmentCharges)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*AccessorialCharge)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentcharges.FieldAccessorialChargeID)
+	}
+	query.Where(predicate.ShipmentCharges(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(accessorialcharge.ShipmentChargesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AccessorialChargeID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "accessorial_charge_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -604,6 +689,20 @@ func (acq *AccessorialChargeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (acq *AccessorialChargeQuery) Modify(modifiers ...func(s *sql.Selector)) *AccessorialChargeSelect {
 	acq.modifiers = append(acq.modifiers, modifiers...)
 	return acq.Select()
+}
+
+// WithNamedShipmentCharges tells the query-builder to eager-load the nodes that are connected to the "shipment_charges"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (acq *AccessorialChargeQuery) WithNamedShipmentCharges(name string, opts ...func(*ShipmentChargesQuery)) *AccessorialChargeQuery {
+	query := (&ShipmentChargesClient{config: acq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if acq.withNamedShipmentCharges == nil {
+		acq.withNamedShipmentCharges = make(map[string]*ShipmentChargesQuery)
+	}
+	acq.withNamedShipmentCharges[name] = query
+	return acq
 }
 
 // AccessorialChargeGroupBy is the group-by builder for AccessorialCharge entities.

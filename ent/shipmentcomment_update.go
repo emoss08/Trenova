@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -28,6 +29,33 @@ type ShipmentCommentUpdate struct {
 // Where appends a list predicates to the ShipmentCommentUpdate builder.
 func (scu *ShipmentCommentUpdate) Where(ps ...predicate.ShipmentComment) *ShipmentCommentUpdate {
 	scu.mutation.Where(ps...)
+	return scu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (scu *ShipmentCommentUpdate) SetUpdatedAt(t time.Time) *ShipmentCommentUpdate {
+	scu.mutation.SetUpdatedAt(t)
+	return scu
+}
+
+// SetVersion sets the "version" field.
+func (scu *ShipmentCommentUpdate) SetVersion(i int) *ShipmentCommentUpdate {
+	scu.mutation.ResetVersion()
+	scu.mutation.SetVersion(i)
+	return scu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (scu *ShipmentCommentUpdate) SetNillableVersion(i *int) *ShipmentCommentUpdate {
+	if i != nil {
+		scu.SetVersion(*i)
+	}
+	return scu
+}
+
+// AddVersion adds i to the "version" field.
+func (scu *ShipmentCommentUpdate) AddVersion(i int) *ShipmentCommentUpdate {
+	scu.mutation.AddVersion(i)
 	return scu
 }
 
@@ -108,6 +136,7 @@ func (scu *ShipmentCommentUpdate) ClearCreatedByUser() *ShipmentCommentUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (scu *ShipmentCommentUpdate) Save(ctx context.Context) (int, error) {
+	scu.defaults()
 	return withHooks(ctx, scu.sqlSave, scu.mutation, scu.hooks)
 }
 
@@ -133,12 +162,26 @@ func (scu *ShipmentCommentUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (scu *ShipmentCommentUpdate) defaults() {
+	if _, ok := scu.mutation.UpdatedAt(); !ok {
+		v := shipmentcomment.UpdateDefaultUpdatedAt()
+		scu.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (scu *ShipmentCommentUpdate) check() error {
 	if v, ok := scu.mutation.Comment(); ok {
 		if err := shipmentcomment.CommentValidator(v); err != nil {
 			return &ValidationError{Name: "comment", err: fmt.Errorf(`ent: validator failed for field "ShipmentComment.comment": %w`, err)}
 		}
+	}
+	if _, ok := scu.mutation.BusinessUnitID(); scu.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ShipmentComment.business_unit"`)
+	}
+	if _, ok := scu.mutation.OrganizationID(); scu.mutation.OrganizationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ShipmentComment.organization"`)
 	}
 	if _, ok := scu.mutation.ShipmentID(); scu.mutation.ShipmentCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "ShipmentComment.shipment"`)
@@ -162,13 +205,22 @@ func (scu *ShipmentCommentUpdate) sqlSave(ctx context.Context) (n int, err error
 	if err := scu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID))
 	if ps := scu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := scu.mutation.UpdatedAt(); ok {
+		_spec.SetField(shipmentcomment.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := scu.mutation.Version(); ok {
+		_spec.SetField(shipmentcomment.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := scu.mutation.AddedVersion(); ok {
+		_spec.AddField(shipmentcomment.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := scu.mutation.Comment(); ok {
 		_spec.SetField(shipmentcomment.FieldComment, field.TypeString, value)
@@ -251,6 +303,33 @@ type ShipmentCommentUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentCommentMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (scuo *ShipmentCommentUpdateOne) SetUpdatedAt(t time.Time) *ShipmentCommentUpdateOne {
+	scuo.mutation.SetUpdatedAt(t)
+	return scuo
+}
+
+// SetVersion sets the "version" field.
+func (scuo *ShipmentCommentUpdateOne) SetVersion(i int) *ShipmentCommentUpdateOne {
+	scuo.mutation.ResetVersion()
+	scuo.mutation.SetVersion(i)
+	return scuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (scuo *ShipmentCommentUpdateOne) SetNillableVersion(i *int) *ShipmentCommentUpdateOne {
+	if i != nil {
+		scuo.SetVersion(*i)
+	}
+	return scuo
+}
+
+// AddVersion adds i to the "version" field.
+func (scuo *ShipmentCommentUpdateOne) AddVersion(i int) *ShipmentCommentUpdateOne {
+	scuo.mutation.AddVersion(i)
+	return scuo
 }
 
 // SetCommentTypeID sets the "comment_type_id" field.
@@ -343,6 +422,7 @@ func (scuo *ShipmentCommentUpdateOne) Select(field string, fields ...string) *Sh
 
 // Save executes the query and returns the updated ShipmentComment entity.
 func (scuo *ShipmentCommentUpdateOne) Save(ctx context.Context) (*ShipmentComment, error) {
+	scuo.defaults()
 	return withHooks(ctx, scuo.sqlSave, scuo.mutation, scuo.hooks)
 }
 
@@ -368,12 +448,26 @@ func (scuo *ShipmentCommentUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (scuo *ShipmentCommentUpdateOne) defaults() {
+	if _, ok := scuo.mutation.UpdatedAt(); !ok {
+		v := shipmentcomment.UpdateDefaultUpdatedAt()
+		scuo.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (scuo *ShipmentCommentUpdateOne) check() error {
 	if v, ok := scuo.mutation.Comment(); ok {
 		if err := shipmentcomment.CommentValidator(v); err != nil {
 			return &ValidationError{Name: "comment", err: fmt.Errorf(`ent: validator failed for field "ShipmentComment.comment": %w`, err)}
 		}
+	}
+	if _, ok := scuo.mutation.BusinessUnitID(); scuo.mutation.BusinessUnitCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ShipmentComment.business_unit"`)
+	}
+	if _, ok := scuo.mutation.OrganizationID(); scuo.mutation.OrganizationCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ShipmentComment.organization"`)
 	}
 	if _, ok := scuo.mutation.ShipmentID(); scuo.mutation.ShipmentCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "ShipmentComment.shipment"`)
@@ -397,7 +491,7 @@ func (scuo *ShipmentCommentUpdateOne) sqlSave(ctx context.Context) (_node *Shipm
 	if err := scuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(shipmentcomment.Table, shipmentcomment.Columns, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID))
 	id, ok := scuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ShipmentComment.id" for update`)}
@@ -421,6 +515,15 @@ func (scuo *ShipmentCommentUpdateOne) sqlSave(ctx context.Context) (_node *Shipm
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := scuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(shipmentcomment.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := scuo.mutation.Version(); ok {
+		_spec.SetField(shipmentcomment.FieldVersion, field.TypeInt, value)
+	}
+	if value, ok := scuo.mutation.AddedVersion(); ok {
+		_spec.AddField(shipmentcomment.FieldVersion, field.TypeInt, value)
 	}
 	if value, ok := scuo.mutation.Comment(); ok {
 		_spec.SetField(shipmentcomment.FieldComment, field.TypeString, value)

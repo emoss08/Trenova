@@ -36,14 +36,14 @@ func (ShipmentType) Fields() []ent.Field {
 	}
 }
 
-// Edges of the ShipmentType.
-func (ShipmentType) Edges() []ent.Edge {
-	return nil
-}
-
 // Mixin of the ShipmentType.
 func (ShipmentType) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
 	}
+}
+
+// Edges of the ShipmentType.
+func (ShipmentType) Edges() []ent.Edge {
+	return nil
 }

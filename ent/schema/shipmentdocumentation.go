@@ -22,7 +22,7 @@ func (ShipmentDocumentation) Fields() []ent.Field {
 			NotEmpty().
 			StructTag(`json:"documentUrl" validate:"required"`),
 		field.UUID("document_classification_id", uuid.UUID{}).
-			StructTag(`json:"documentClassificationId" validate:"omitempty"`), // Document Classification ID will be set by the system.
+			StructTag(`json:"documentClassificationId" validate:"omitempty"`),
 	}
 }
 

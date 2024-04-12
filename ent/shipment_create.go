@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/user"
@@ -663,6 +665,66 @@ func (sc *ShipmentCreate) SetTractorType(e *EquipmentType) *ShipmentCreate {
 	return sc.SetTractorTypeID(e.ID)
 }
 
+// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
+func (sc *ShipmentCreate) AddShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentCreate {
+	sc.mutation.AddShipmentDocumentationIDs(ids...)
+	return sc
+}
+
+// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
+func (sc *ShipmentCreate) AddShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sc.AddShipmentDocumentationIDs(ids...)
+}
+
+// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
+func (sc *ShipmentCreate) AddShipmentCommentIDs(ids ...uuid.UUID) *ShipmentCreate {
+	sc.mutation.AddShipmentCommentIDs(ids...)
+	return sc
+}
+
+// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
+func (sc *ShipmentCreate) AddShipmentComments(s ...*ShipmentComment) *ShipmentCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sc.AddShipmentCommentIDs(ids...)
+}
+
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (sc *ShipmentCreate) AddShipmentChargeIDs(ids ...uuid.UUID) *ShipmentCreate {
+	sc.mutation.AddShipmentChargeIDs(ids...)
+	return sc
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (sc *ShipmentCreate) AddShipmentCharges(s ...*ShipmentCharges) *ShipmentCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sc.AddShipmentChargeIDs(ids...)
+}
+
+// AddShipmentCommodityIDs adds the "shipment_commodities" edge to the ShipmentCommodity entity by IDs.
+func (sc *ShipmentCreate) AddShipmentCommodityIDs(ids ...uuid.UUID) *ShipmentCreate {
+	sc.mutation.AddShipmentCommodityIDs(ids...)
+	return sc
+}
+
+// AddShipmentCommodities adds the "shipment_commodities" edges to the ShipmentCommodity entity.
+func (sc *ShipmentCreate) AddShipmentCommodities(s ...*ShipmentCommodity) *ShipmentCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sc.AddShipmentCommodityIDs(ids...)
+}
+
 // SetCreatedByUserID sets the "created_by_user" edge to the User entity by ID.
 func (sc *ShipmentCreate) SetCreatedByUserID(id uuid.UUID) *ShipmentCreate {
 	sc.mutation.SetCreatedByUserID(id)
@@ -685,36 +747,6 @@ func (sc *ShipmentCreate) SetCreatedByUser(u *User) *ShipmentCreate {
 // SetCustomer sets the "customer" edge to the Customer entity.
 func (sc *ShipmentCreate) SetCustomer(c *Customer) *ShipmentCreate {
 	return sc.SetCustomerID(c.ID)
-}
-
-// AddShipmentDocumentationIDs adds the "shipment_documentation" edge to the ShipmentDocumentation entity by IDs.
-func (sc *ShipmentCreate) AddShipmentDocumentationIDs(ids ...uuid.UUID) *ShipmentCreate {
-	sc.mutation.AddShipmentDocumentationIDs(ids...)
-	return sc
-}
-
-// AddShipmentDocumentation adds the "shipment_documentation" edges to the ShipmentDocumentation entity.
-func (sc *ShipmentCreate) AddShipmentDocumentation(s ...*ShipmentDocumentation) *ShipmentCreate {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
-	}
-	return sc.AddShipmentDocumentationIDs(ids...)
-}
-
-// AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (sc *ShipmentCreate) AddShipmentCommentIDs(ids ...int) *ShipmentCreate {
-	sc.mutation.AddShipmentCommentIDs(ids...)
-	return sc
-}
-
-// AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
-func (sc *ShipmentCreate) AddShipmentComments(s ...*ShipmentComment) *ShipmentCreate {
-	ids := make([]int, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
-	}
-	return sc.AddShipmentCommentIDs(ids...)
 }
 
 // Mutation returns the ShipmentMutation object of the builder.
@@ -1267,6 +1299,70 @@ func (sc *ShipmentCreate) createSpec() (*Shipment, *sqlgraph.CreateSpec) {
 		_node.TractorTypeID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := sc.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentDocumentationTable,
+			Columns: []string{shipment.ShipmentDocumentationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommentsTable,
+			Columns: []string{shipment.ShipmentCommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentChargesTable,
+			Columns: []string{shipment.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.ShipmentCommoditiesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentCommoditiesTable,
+			Columns: []string{shipment.ShipmentCommoditiesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcommodity.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := sc.mutation.CreatedByUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1299,38 +1395,6 @@ func (sc *ShipmentCreate) createSpec() (*Shipment, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.CustomerID = nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := sc.mutation.ShipmentDocumentationIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   shipment.ShipmentDocumentationTable,
-			Columns: []string{shipment.ShipmentDocumentationColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := sc.mutation.ShipmentCommentsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   shipment.ShipmentCommentsTable,
-			Columns: []string{shipment.ShipmentCommentsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
