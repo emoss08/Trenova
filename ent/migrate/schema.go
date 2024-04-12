@@ -1416,7 +1416,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "pro_number", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Hold", "Billed", "Voided"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Hold", "Billed", "Voided"}, Default: "New"},
 		{Name: "origin_address_line", Type: field.TypeString, Nullable: true},
 		{Name: "origin_appointment_start", Type: field.TypeTime, Nullable: true},
 		{Name: "origin_appointment_end", Type: field.TypeTime, Nullable: true},
@@ -1785,6 +1785,73 @@ var (
 			},
 		},
 	}
+	// ShipmentMovesColumns holds the columns for the "shipment_moves" table.
+	ShipmentMovesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "reference_number", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Voided"}, Default: "New"},
+		{Name: "is_loaded", Type: field.TypeBool, Default: false},
+		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "tractor_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "trailer_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "primary_worker_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "secondary_worker_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// ShipmentMovesTable holds the schema information for the "shipment_moves" table.
+	ShipmentMovesTable = &schema.Table{
+		Name:       "shipment_moves",
+		Columns:    ShipmentMovesColumns,
+		PrimaryKey: []*schema.Column{ShipmentMovesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_moves_shipments_shipment_moves",
+				Columns:    []*schema.Column{ShipmentMovesColumns[7]},
+				RefColumns: []*schema.Column{ShipmentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipment_moves_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentMovesColumns[8]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_moves_organizations_organization",
+				Columns:    []*schema.Column{ShipmentMovesColumns[9]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_moves_tractors_tractor",
+				Columns:    []*schema.Column{ShipmentMovesColumns[10]},
+				RefColumns: []*schema.Column{TractorsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_moves_tractors_trailer",
+				Columns:    []*schema.Column{ShipmentMovesColumns[11]},
+				RefColumns: []*schema.Column{TractorsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_moves_workers_primary_worker",
+				Columns:    []*schema.Column{ShipmentMovesColumns[12]},
+				RefColumns: []*schema.Column{WorkersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_moves_workers_secondary_worker",
+				Columns:    []*schema.Column{ShipmentMovesColumns[13]},
+				RefColumns: []*schema.Column{WorkersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// ShipmentTypesColumns holds the columns for the "shipment_types" table.
 	ShipmentTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1812,6 +1879,53 @@ var (
 			{
 				Symbol:     "shipment_types_organizations_organization",
 				Columns:    []*schema.Column{ShipmentTypesColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// StopsColumns holds the columns for the "stops" table.
+	StopsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Voided"}, Default: "New"},
+		{Name: "stop_type", Type: field.TypeEnum, Enums: []string{"Pickup", "SplitPickup", "SplitDrop", "Delivery", "DropOff"}},
+		{Name: "sequence", Type: field.TypeInt, Default: 1},
+		{Name: "location_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "pieces", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
+		{Name: "weight", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
+		{Name: "address_line", Type: field.TypeString, Nullable: true},
+		{Name: "appointment_start", Type: field.TypeTime, Nullable: true},
+		{Name: "appointment_end", Type: field.TypeTime, Nullable: true},
+		{Name: "arrival_time", Type: field.TypeTime, Nullable: true},
+		{Name: "departure_time", Type: field.TypeTime, Nullable: true},
+		{Name: "shipment_move_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// StopsTable holds the schema information for the "stops" table.
+	StopsTable = &schema.Table{
+		Name:       "stops",
+		Columns:    StopsColumns,
+		PrimaryKey: []*schema.Column{StopsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "stops_shipment_moves_move_stops",
+				Columns:    []*schema.Column{StopsColumns[15]},
+				RefColumns: []*schema.Column{ShipmentMovesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "stops_business_units_business_unit",
+				Columns:    []*schema.Column{StopsColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "stops_organizations_organization",
+				Columns:    []*schema.Column{StopsColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -2429,7 +2543,9 @@ var (
 		ShipmentCommoditiesTable,
 		ShipmentControlsTable,
 		ShipmentDocumentationsTable,
+		ShipmentMovesTable,
 		ShipmentTypesTable,
+		StopsTable,
 		TableChangeAlertsTable,
 		TagsTable,
 		TractorsTable,
@@ -2566,8 +2682,18 @@ func init() {
 	ShipmentDocumentationsTable.ForeignKeys[1].RefTable = ShipmentsTable
 	ShipmentDocumentationsTable.ForeignKeys[2].RefTable = BusinessUnitsTable
 	ShipmentDocumentationsTable.ForeignKeys[3].RefTable = OrganizationsTable
+	ShipmentMovesTable.ForeignKeys[0].RefTable = ShipmentsTable
+	ShipmentMovesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	ShipmentMovesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	ShipmentMovesTable.ForeignKeys[3].RefTable = TractorsTable
+	ShipmentMovesTable.ForeignKeys[4].RefTable = TractorsTable
+	ShipmentMovesTable.ForeignKeys[5].RefTable = WorkersTable
+	ShipmentMovesTable.ForeignKeys[6].RefTable = WorkersTable
 	ShipmentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ShipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	StopsTable.ForeignKeys[0].RefTable = ShipmentMovesTable
+	StopsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	StopsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	TableChangeAlertsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TableChangeAlertsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TagsTable.ForeignKeys[0].RefTable = BusinessUnitsTable

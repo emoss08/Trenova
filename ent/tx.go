@@ -100,8 +100,12 @@ type Tx struct {
 	ShipmentControl *ShipmentControlClient
 	// ShipmentDocumentation is the client for interacting with the ShipmentDocumentation builders.
 	ShipmentDocumentation *ShipmentDocumentationClient
+	// ShipmentMove is the client for interacting with the ShipmentMove builders.
+	ShipmentMove *ShipmentMoveClient
 	// ShipmentType is the client for interacting with the ShipmentType builders.
 	ShipmentType *ShipmentTypeClient
+	// Stop is the client for interacting with the Stop builders.
+	Stop *StopClient
 	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
 	TableChangeAlert *TableChangeAlertClient
 	// Tag is the client for interacting with the Tag builders.
@@ -298,7 +302,9 @@ func (tx *Tx) init() {
 	tx.ShipmentCommodity = NewShipmentCommodityClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
 	tx.ShipmentDocumentation = NewShipmentDocumentationClient(tx.config)
+	tx.ShipmentMove = NewShipmentMoveClient(tx.config)
 	tx.ShipmentType = NewShipmentTypeClient(tx.config)
+	tx.Stop = NewStopClient(tx.config)
 	tx.TableChangeAlert = NewTableChangeAlertClient(tx.config)
 	tx.Tag = NewTagClient(tx.config)
 	tx.Tractor = NewTractorClient(tx.config)

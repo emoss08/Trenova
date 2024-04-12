@@ -49,7 +49,9 @@ import (
 	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/emoss08/trenova/ent/shipmentmove"
 	"github.com/emoss08/trenova/ent/shipmenttype"
+	"github.com/emoss08/trenova/ent/stop"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
@@ -1952,6 +1954,37 @@ func init() {
 	shipmentdocumentationDescID := shipmentdocumentationMixinFields0[0].Descriptor()
 	// shipmentdocumentation.DefaultID holds the default value on creation for the id field.
 	shipmentdocumentation.DefaultID = shipmentdocumentationDescID.Default.(func() uuid.UUID)
+	shipmentmoveMixin := schema.ShipmentMove{}.Mixin()
+	shipmentmoveMixinFields0 := shipmentmoveMixin[0].Fields()
+	_ = shipmentmoveMixinFields0
+	shipmentmoveFields := schema.ShipmentMove{}.Fields()
+	_ = shipmentmoveFields
+	// shipmentmoveDescCreatedAt is the schema descriptor for created_at field.
+	shipmentmoveDescCreatedAt := shipmentmoveMixinFields0[3].Descriptor()
+	// shipmentmove.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentmove.DefaultCreatedAt = shipmentmoveDescCreatedAt.Default.(func() time.Time)
+	// shipmentmoveDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentmoveDescUpdatedAt := shipmentmoveMixinFields0[4].Descriptor()
+	// shipmentmove.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentmove.DefaultUpdatedAt = shipmentmoveDescUpdatedAt.Default.(func() time.Time)
+	// shipmentmove.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentmove.UpdateDefaultUpdatedAt = shipmentmoveDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentmoveDescVersion is the schema descriptor for version field.
+	shipmentmoveDescVersion := shipmentmoveMixinFields0[5].Descriptor()
+	// shipmentmove.DefaultVersion holds the default value on creation for the version field.
+	shipmentmove.DefaultVersion = shipmentmoveDescVersion.Default.(int)
+	// shipmentmoveDescReferenceNumber is the schema descriptor for reference_number field.
+	shipmentmoveDescReferenceNumber := shipmentmoveFields[0].Descriptor()
+	// shipmentmove.ReferenceNumberValidator is a validator for the "reference_number" field. It is called by the builders before save.
+	shipmentmove.ReferenceNumberValidator = shipmentmoveDescReferenceNumber.Validators[0].(func(string) error)
+	// shipmentmoveDescIsLoaded is the schema descriptor for is_loaded field.
+	shipmentmoveDescIsLoaded := shipmentmoveFields[2].Descriptor()
+	// shipmentmove.DefaultIsLoaded holds the default value on creation for the is_loaded field.
+	shipmentmove.DefaultIsLoaded = shipmentmoveDescIsLoaded.Default.(bool)
+	// shipmentmoveDescID is the schema descriptor for id field.
+	shipmentmoveDescID := shipmentmoveMixinFields0[0].Descriptor()
+	// shipmentmove.DefaultID holds the default value on creation for the id field.
+	shipmentmove.DefaultID = shipmentmoveDescID.Default.(func() uuid.UUID)
 	shipmenttypeMixin := schema.ShipmentType{}.Mixin()
 	shipmenttypeMixinFields0 := shipmenttypeMixin[0].Fields()
 	_ = shipmenttypeMixinFields0
@@ -1993,6 +2026,43 @@ func init() {
 	shipmenttypeDescID := shipmenttypeMixinFields0[0].Descriptor()
 	// shipmenttype.DefaultID holds the default value on creation for the id field.
 	shipmenttype.DefaultID = shipmenttypeDescID.Default.(func() uuid.UUID)
+	stopMixin := schema.Stop{}.Mixin()
+	stopMixinFields0 := stopMixin[0].Fields()
+	_ = stopMixinFields0
+	stopFields := schema.Stop{}.Fields()
+	_ = stopFields
+	// stopDescCreatedAt is the schema descriptor for created_at field.
+	stopDescCreatedAt := stopMixinFields0[3].Descriptor()
+	// stop.DefaultCreatedAt holds the default value on creation for the created_at field.
+	stop.DefaultCreatedAt = stopDescCreatedAt.Default.(func() time.Time)
+	// stopDescUpdatedAt is the schema descriptor for updated_at field.
+	stopDescUpdatedAt := stopMixinFields0[4].Descriptor()
+	// stop.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	stop.DefaultUpdatedAt = stopDescUpdatedAt.Default.(func() time.Time)
+	// stop.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	stop.UpdateDefaultUpdatedAt = stopDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// stopDescVersion is the schema descriptor for version field.
+	stopDescVersion := stopMixinFields0[5].Descriptor()
+	// stop.DefaultVersion holds the default value on creation for the version field.
+	stop.DefaultVersion = stopDescVersion.Default.(int)
+	// stopDescSequence is the schema descriptor for sequence field.
+	stopDescSequence := stopFields[3].Descriptor()
+	// stop.DefaultSequence holds the default value on creation for the sequence field.
+	stop.DefaultSequence = stopDescSequence.Default.(int)
+	// stop.SequenceValidator is a validator for the "sequence" field. It is called by the builders before save.
+	stop.SequenceValidator = stopDescSequence.Validators[0].(func(int) error)
+	// stopDescPieces is the schema descriptor for pieces field.
+	stopDescPieces := stopFields[5].Descriptor()
+	// stop.PiecesValidator is a validator for the "pieces" field. It is called by the builders before save.
+	stop.PiecesValidator = stopDescPieces.Validators[0].(func(float64) error)
+	// stopDescWeight is the schema descriptor for weight field.
+	stopDescWeight := stopFields[6].Descriptor()
+	// stop.WeightValidator is a validator for the "weight" field. It is called by the builders before save.
+	stop.WeightValidator = stopDescWeight.Validators[0].(func(float64) error)
+	// stopDescID is the schema descriptor for id field.
+	stopDescID := stopMixinFields0[0].Descriptor()
+	// stop.DefaultID holds the default value on creation for the id field.
+	stop.DefaultID = stopDescID.Default.(func() uuid.UUID)
 	tablechangealertMixin := schema.TableChangeAlert{}.Mixin()
 	tablechangealertHooks := schema.TableChangeAlert{}.Hooks()
 	tablechangealert.Hooks[0] = tablechangealertHooks[0]

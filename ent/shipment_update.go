@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/emoss08/trenova/ent/shipmentmove"
 	"github.com/emoss08/trenova/ent/shipmenttype"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/google/uuid"
@@ -974,6 +975,21 @@ func (su *ShipmentUpdate) SetCustomer(c *Customer) *ShipmentUpdate {
 	return su.SetCustomerID(c.ID)
 }
 
+// AddShipmentMoveIDs adds the "shipment_moves" edge to the ShipmentMove entity by IDs.
+func (su *ShipmentUpdate) AddShipmentMoveIDs(ids ...uuid.UUID) *ShipmentUpdate {
+	su.mutation.AddShipmentMoveIDs(ids...)
+	return su
+}
+
+// AddShipmentMoves adds the "shipment_moves" edges to the ShipmentMove entity.
+func (su *ShipmentUpdate) AddShipmentMoves(s ...*ShipmentMove) *ShipmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.AddShipmentMoveIDs(ids...)
+}
+
 // Mutation returns the ShipmentMutation object of the builder.
 func (su *ShipmentUpdate) Mutation() *ShipmentMutation {
 	return su.mutation
@@ -1115,6 +1131,27 @@ func (su *ShipmentUpdate) ClearCreatedByUser() *ShipmentUpdate {
 func (su *ShipmentUpdate) ClearCustomer() *ShipmentUpdate {
 	su.mutation.ClearCustomer()
 	return su
+}
+
+// ClearShipmentMoves clears all "shipment_moves" edges to the ShipmentMove entity.
+func (su *ShipmentUpdate) ClearShipmentMoves() *ShipmentUpdate {
+	su.mutation.ClearShipmentMoves()
+	return su
+}
+
+// RemoveShipmentMoveIDs removes the "shipment_moves" edge to ShipmentMove entities by IDs.
+func (su *ShipmentUpdate) RemoveShipmentMoveIDs(ids ...uuid.UUID) *ShipmentUpdate {
+	su.mutation.RemoveShipmentMoveIDs(ids...)
+	return su
+}
+
+// RemoveShipmentMoves removes "shipment_moves" edges to ShipmentMove entities.
+func (su *ShipmentUpdate) RemoveShipmentMoves(s ...*ShipmentMove) *ShipmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.RemoveShipmentMoveIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1886,6 +1923,51 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.ShipmentMovesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedShipmentMovesIDs(); len(nodes) > 0 && !su.mutation.ShipmentMovesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.ShipmentMovesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2848,6 +2930,21 @@ func (suo *ShipmentUpdateOne) SetCustomer(c *Customer) *ShipmentUpdateOne {
 	return suo.SetCustomerID(c.ID)
 }
 
+// AddShipmentMoveIDs adds the "shipment_moves" edge to the ShipmentMove entity by IDs.
+func (suo *ShipmentUpdateOne) AddShipmentMoveIDs(ids ...uuid.UUID) *ShipmentUpdateOne {
+	suo.mutation.AddShipmentMoveIDs(ids...)
+	return suo
+}
+
+// AddShipmentMoves adds the "shipment_moves" edges to the ShipmentMove entity.
+func (suo *ShipmentUpdateOne) AddShipmentMoves(s ...*ShipmentMove) *ShipmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.AddShipmentMoveIDs(ids...)
+}
+
 // Mutation returns the ShipmentMutation object of the builder.
 func (suo *ShipmentUpdateOne) Mutation() *ShipmentMutation {
 	return suo.mutation
@@ -2989,6 +3086,27 @@ func (suo *ShipmentUpdateOne) ClearCreatedByUser() *ShipmentUpdateOne {
 func (suo *ShipmentUpdateOne) ClearCustomer() *ShipmentUpdateOne {
 	suo.mutation.ClearCustomer()
 	return suo
+}
+
+// ClearShipmentMoves clears all "shipment_moves" edges to the ShipmentMove entity.
+func (suo *ShipmentUpdateOne) ClearShipmentMoves() *ShipmentUpdateOne {
+	suo.mutation.ClearShipmentMoves()
+	return suo
+}
+
+// RemoveShipmentMoveIDs removes the "shipment_moves" edge to ShipmentMove entities by IDs.
+func (suo *ShipmentUpdateOne) RemoveShipmentMoveIDs(ids ...uuid.UUID) *ShipmentUpdateOne {
+	suo.mutation.RemoveShipmentMoveIDs(ids...)
+	return suo
+}
+
+// RemoveShipmentMoves removes "shipment_moves" edges to ShipmentMove entities.
+func (suo *ShipmentUpdateOne) RemoveShipmentMoves(s ...*ShipmentMove) *ShipmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.RemoveShipmentMoveIDs(ids...)
 }
 
 // Where appends a list predicates to the ShipmentUpdate builder.
@@ -3790,6 +3908,51 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.ShipmentMovesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedShipmentMovesIDs(); len(nodes) > 0 && !suo.mutation.ShipmentMovesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.ShipmentMovesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipment.ShipmentMovesTable,
+			Columns: []string{shipment.ShipmentMovesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
