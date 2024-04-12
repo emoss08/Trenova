@@ -139,6 +139,8 @@ const (
 	EdgeCreatedByUser = "created_by_user"
 	// EdgeCustomer holds the string denoting the customer edge name in mutations.
 	EdgeCustomer = "customer"
+	// EdgeShipmentMoves holds the string denoting the shipment_moves edge name in mutations.
+	EdgeShipmentMoves = "shipment_moves"
 	// Table holds the table name of the shipment in the database.
 	Table = "shipments"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -246,6 +248,13 @@ const (
 	CustomerInverseTable = "customers"
 	// CustomerColumn is the table column denoting the customer relation/edge.
 	CustomerColumn = "customer_id"
+	// ShipmentMovesTable is the table that holds the shipment_moves relation/edge.
+	ShipmentMovesTable = "shipment_moves"
+	// ShipmentMovesInverseTable is the table name for the ShipmentMove entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentmove" package.
+	ShipmentMovesInverseTable = "shipment_moves"
+	// ShipmentMovesColumn is the table column denoting the shipment_moves relation/edge.
+	ShipmentMovesColumn = "shipment_id"
 )
 
 // Columns holds all SQL columns for shipment fields.
@@ -360,6 +369,9 @@ var (
 
 // Status defines the type for the "status" enum field.
 type Status string
+
+// StatusNew is the default value of the Status enum.
+const DefaultStatus = StatusNew
 
 // Status values.
 const (
@@ -814,6 +826,20 @@ func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByShipmentMovesCount orders the results by shipment_moves count.
+func ByShipmentMovesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentMovesStep(), opts...)
+	}
+}
+
+// ByShipmentMoves orders the results by shipment_moves terms.
+func ByShipmentMoves(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentMovesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -917,5 +943,12 @@ func newCustomerStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CustomerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
+	)
+}
+func newShipmentMovesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentMovesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentMovesTable, ShipmentMovesColumn),
 	)
 }

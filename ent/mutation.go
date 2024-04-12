@@ -55,7 +55,9 @@ import (
 	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/emoss08/trenova/ent/shipmentmove"
 	"github.com/emoss08/trenova/ent/shipmenttype"
+	"github.com/emoss08/trenova/ent/stop"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
@@ -123,7 +125,9 @@ const (
 	TypeShipmentCommodity            = "ShipmentCommodity"
 	TypeShipmentControl              = "ShipmentControl"
 	TypeShipmentDocumentation        = "ShipmentDocumentation"
+	TypeShipmentMove                 = "ShipmentMove"
 	TypeShipmentType                 = "ShipmentType"
+	TypeStop                         = "Stop"
 	TypeTableChangeAlert             = "TableChangeAlert"
 	TypeTag                          = "Tag"
 	TypeTractor                      = "Tractor"
@@ -41229,6 +41233,9 @@ type ShipmentMutation struct {
 	clearedcreated_by_user        bool
 	customer                      *uuid.UUID
 	clearedcustomer               bool
+	shipment_moves                map[uuid.UUID]struct{}
+	removedshipment_moves         map[uuid.UUID]struct{}
+	clearedshipment_moves         bool
 	done                          bool
 	oldValue                      func(context.Context) (*Shipment, error)
 	predicates                    []predicate.Shipment
@@ -44105,6 +44112,60 @@ func (m *ShipmentMutation) ResetCustomer() {
 	m.clearedcustomer = false
 }
 
+// AddShipmentMoveIDs adds the "shipment_moves" edge to the ShipmentMove entity by ids.
+func (m *ShipmentMutation) AddShipmentMoveIDs(ids ...uuid.UUID) {
+	if m.shipment_moves == nil {
+		m.shipment_moves = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.shipment_moves[ids[i]] = struct{}{}
+	}
+}
+
+// ClearShipmentMoves clears the "shipment_moves" edge to the ShipmentMove entity.
+func (m *ShipmentMutation) ClearShipmentMoves() {
+	m.clearedshipment_moves = true
+}
+
+// ShipmentMovesCleared reports if the "shipment_moves" edge to the ShipmentMove entity was cleared.
+func (m *ShipmentMutation) ShipmentMovesCleared() bool {
+	return m.clearedshipment_moves
+}
+
+// RemoveShipmentMoveIDs removes the "shipment_moves" edge to the ShipmentMove entity by IDs.
+func (m *ShipmentMutation) RemoveShipmentMoveIDs(ids ...uuid.UUID) {
+	if m.removedshipment_moves == nil {
+		m.removedshipment_moves = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.shipment_moves, ids[i])
+		m.removedshipment_moves[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedShipmentMoves returns the removed IDs of the "shipment_moves" edge to the ShipmentMove entity.
+func (m *ShipmentMutation) RemovedShipmentMovesIDs() (ids []uuid.UUID) {
+	for id := range m.removedshipment_moves {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ShipmentMovesIDs returns the "shipment_moves" edge IDs in the mutation.
+func (m *ShipmentMutation) ShipmentMovesIDs() (ids []uuid.UUID) {
+	for id := range m.shipment_moves {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetShipmentMoves resets all changes to the "shipment_moves" edge.
+func (m *ShipmentMutation) ResetShipmentMoves() {
+	m.shipment_moves = nil
+	m.clearedshipment_moves = false
+	m.removedshipment_moves = nil
+}
+
 // Where appends a list predicates to the ShipmentMutation builder.
 func (m *ShipmentMutation) Where(ps ...predicate.Shipment) {
 	m.predicates = append(m.predicates, ps...)
@@ -45303,7 +45364,7 @@ func (m *ShipmentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ShipmentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.business_unit != nil {
 		edges = append(edges, shipment.EdgeBusinessUnit)
 	}
@@ -45348,6 +45409,9 @@ func (m *ShipmentMutation) AddedEdges() []string {
 	}
 	if m.customer != nil {
 		edges = append(edges, shipment.EdgeCustomer)
+	}
+	if m.shipment_moves != nil {
+		edges = append(edges, shipment.EdgeShipmentMoves)
 	}
 	return edges
 }
@@ -45424,13 +45488,19 @@ func (m *ShipmentMutation) AddedIDs(name string) []ent.Value {
 		if id := m.customer; id != nil {
 			return []ent.Value{*id}
 		}
+	case shipment.EdgeShipmentMoves:
+		ids := make([]ent.Value, 0, len(m.shipment_moves))
+		for id := range m.shipment_moves {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ShipmentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.removedshipment_documentation != nil {
 		edges = append(edges, shipment.EdgeShipmentDocumentation)
 	}
@@ -45442,6 +45512,9 @@ func (m *ShipmentMutation) RemovedEdges() []string {
 	}
 	if m.removedshipment_commodities != nil {
 		edges = append(edges, shipment.EdgeShipmentCommodities)
+	}
+	if m.removedshipment_moves != nil {
+		edges = append(edges, shipment.EdgeShipmentMoves)
 	}
 	return edges
 }
@@ -45474,13 +45547,19 @@ func (m *ShipmentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case shipment.EdgeShipmentMoves:
+		ids := make([]ent.Value, 0, len(m.removedshipment_moves))
+		for id := range m.removedshipment_moves {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ShipmentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 16)
 	if m.clearedbusiness_unit {
 		edges = append(edges, shipment.EdgeBusinessUnit)
 	}
@@ -45526,6 +45605,9 @@ func (m *ShipmentMutation) ClearedEdges() []string {
 	if m.clearedcustomer {
 		edges = append(edges, shipment.EdgeCustomer)
 	}
+	if m.clearedshipment_moves {
+		edges = append(edges, shipment.EdgeShipmentMoves)
+	}
 	return edges
 }
 
@@ -45563,6 +45645,8 @@ func (m *ShipmentMutation) EdgeCleared(name string) bool {
 		return m.clearedcreated_by_user
 	case shipment.EdgeCustomer:
 		return m.clearedcustomer
+	case shipment.EdgeShipmentMoves:
+		return m.clearedshipment_moves
 	}
 	return false
 }
@@ -45656,6 +45740,9 @@ func (m *ShipmentMutation) ResetEdge(name string) error {
 		return nil
 	case shipment.EdgeCustomer:
 		m.ResetCustomer()
+		return nil
+	case shipment.EdgeShipmentMoves:
+		m.ResetShipmentMoves()
 		return nil
 	}
 	return fmt.Errorf("unknown Shipment edge %s", name)
@@ -51155,6 +51242,1516 @@ func (m *ShipmentDocumentationMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ShipmentDocumentation edge %s", name)
 }
 
+// ShipmentMoveMutation represents an operation that mutates the ShipmentMove nodes in the graph.
+type ShipmentMoveMutation struct {
+	config
+	op                      Op
+	typ                     string
+	id                      *uuid.UUID
+	created_at              *time.Time
+	updated_at              *time.Time
+	version                 *int
+	addversion              *int
+	reference_number        *string
+	status                  *shipmentmove.Status
+	is_loaded               *bool
+	clearedFields           map[string]struct{}
+	business_unit           *uuid.UUID
+	clearedbusiness_unit    bool
+	organization            *uuid.UUID
+	clearedorganization     bool
+	shipment                *uuid.UUID
+	clearedshipment         bool
+	tractor                 *uuid.UUID
+	clearedtractor          bool
+	trailer                 *uuid.UUID
+	clearedtrailer          bool
+	primary_worker          *uuid.UUID
+	clearedprimary_worker   bool
+	secondary_worker        *uuid.UUID
+	clearedsecondary_worker bool
+	move_stops              map[uuid.UUID]struct{}
+	removedmove_stops       map[uuid.UUID]struct{}
+	clearedmove_stops       bool
+	done                    bool
+	oldValue                func(context.Context) (*ShipmentMove, error)
+	predicates              []predicate.ShipmentMove
+}
+
+var _ ent.Mutation = (*ShipmentMoveMutation)(nil)
+
+// shipmentmoveOption allows management of the mutation configuration using functional options.
+type shipmentmoveOption func(*ShipmentMoveMutation)
+
+// newShipmentMoveMutation creates new mutation for the ShipmentMove entity.
+func newShipmentMoveMutation(c config, op Op, opts ...shipmentmoveOption) *ShipmentMoveMutation {
+	m := &ShipmentMoveMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeShipmentMove,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withShipmentMoveID sets the ID field of the mutation.
+func withShipmentMoveID(id uuid.UUID) shipmentmoveOption {
+	return func(m *ShipmentMoveMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ShipmentMove
+		)
+		m.oldValue = func(ctx context.Context) (*ShipmentMove, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ShipmentMove.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withShipmentMove sets the old ShipmentMove of the mutation.
+func withShipmentMove(node *ShipmentMove) shipmentmoveOption {
+	return func(m *ShipmentMoveMutation) {
+		m.oldValue = func(context.Context) (*ShipmentMove, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ShipmentMoveMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ShipmentMoveMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ShipmentMove entities.
+func (m *ShipmentMoveMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ShipmentMoveMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ShipmentMoveMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ShipmentMove.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *ShipmentMoveMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *ShipmentMoveMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *ShipmentMoveMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *ShipmentMoveMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *ShipmentMoveMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *ShipmentMoveMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ShipmentMoveMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ShipmentMoveMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ShipmentMoveMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ShipmentMoveMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ShipmentMoveMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ShipmentMoveMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *ShipmentMoveMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *ShipmentMoveMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *ShipmentMoveMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *ShipmentMoveMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *ShipmentMoveMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetReferenceNumber sets the "reference_number" field.
+func (m *ShipmentMoveMutation) SetReferenceNumber(s string) {
+	m.reference_number = &s
+}
+
+// ReferenceNumber returns the value of the "reference_number" field in the mutation.
+func (m *ShipmentMoveMutation) ReferenceNumber() (r string, exists bool) {
+	v := m.reference_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReferenceNumber returns the old "reference_number" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldReferenceNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReferenceNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReferenceNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReferenceNumber: %w", err)
+	}
+	return oldValue.ReferenceNumber, nil
+}
+
+// ResetReferenceNumber resets all changes to the "reference_number" field.
+func (m *ShipmentMoveMutation) ResetReferenceNumber() {
+	m.reference_number = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *ShipmentMoveMutation) SetStatus(s shipmentmove.Status) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ShipmentMoveMutation) Status() (r shipmentmove.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldStatus(ctx context.Context) (v shipmentmove.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ShipmentMoveMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetIsLoaded sets the "is_loaded" field.
+func (m *ShipmentMoveMutation) SetIsLoaded(b bool) {
+	m.is_loaded = &b
+}
+
+// IsLoaded returns the value of the "is_loaded" field in the mutation.
+func (m *ShipmentMoveMutation) IsLoaded() (r bool, exists bool) {
+	v := m.is_loaded
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsLoaded returns the old "is_loaded" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldIsLoaded(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsLoaded is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsLoaded requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsLoaded: %w", err)
+	}
+	return oldValue.IsLoaded, nil
+}
+
+// ResetIsLoaded resets all changes to the "is_loaded" field.
+func (m *ShipmentMoveMutation) ResetIsLoaded() {
+	m.is_loaded = nil
+}
+
+// SetShipmentID sets the "shipment_id" field.
+func (m *ShipmentMoveMutation) SetShipmentID(u uuid.UUID) {
+	m.shipment = &u
+}
+
+// ShipmentID returns the value of the "shipment_id" field in the mutation.
+func (m *ShipmentMoveMutation) ShipmentID() (r uuid.UUID, exists bool) {
+	v := m.shipment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShipmentID returns the old "shipment_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldShipmentID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShipmentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShipmentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShipmentID: %w", err)
+	}
+	return oldValue.ShipmentID, nil
+}
+
+// ResetShipmentID resets all changes to the "shipment_id" field.
+func (m *ShipmentMoveMutation) ResetShipmentID() {
+	m.shipment = nil
+}
+
+// SetTractorID sets the "tractor_id" field.
+func (m *ShipmentMoveMutation) SetTractorID(u uuid.UUID) {
+	m.tractor = &u
+}
+
+// TractorID returns the value of the "tractor_id" field in the mutation.
+func (m *ShipmentMoveMutation) TractorID() (r uuid.UUID, exists bool) {
+	v := m.tractor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTractorID returns the old "tractor_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldTractorID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTractorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTractorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTractorID: %w", err)
+	}
+	return oldValue.TractorID, nil
+}
+
+// ClearTractorID clears the value of the "tractor_id" field.
+func (m *ShipmentMoveMutation) ClearTractorID() {
+	m.tractor = nil
+	m.clearedFields[shipmentmove.FieldTractorID] = struct{}{}
+}
+
+// TractorIDCleared returns if the "tractor_id" field was cleared in this mutation.
+func (m *ShipmentMoveMutation) TractorIDCleared() bool {
+	_, ok := m.clearedFields[shipmentmove.FieldTractorID]
+	return ok
+}
+
+// ResetTractorID resets all changes to the "tractor_id" field.
+func (m *ShipmentMoveMutation) ResetTractorID() {
+	m.tractor = nil
+	delete(m.clearedFields, shipmentmove.FieldTractorID)
+}
+
+// SetTrailerID sets the "trailer_id" field.
+func (m *ShipmentMoveMutation) SetTrailerID(u uuid.UUID) {
+	m.trailer = &u
+}
+
+// TrailerID returns the value of the "trailer_id" field in the mutation.
+func (m *ShipmentMoveMutation) TrailerID() (r uuid.UUID, exists bool) {
+	v := m.trailer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrailerID returns the old "trailer_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldTrailerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrailerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrailerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrailerID: %w", err)
+	}
+	return oldValue.TrailerID, nil
+}
+
+// ClearTrailerID clears the value of the "trailer_id" field.
+func (m *ShipmentMoveMutation) ClearTrailerID() {
+	m.trailer = nil
+	m.clearedFields[shipmentmove.FieldTrailerID] = struct{}{}
+}
+
+// TrailerIDCleared returns if the "trailer_id" field was cleared in this mutation.
+func (m *ShipmentMoveMutation) TrailerIDCleared() bool {
+	_, ok := m.clearedFields[shipmentmove.FieldTrailerID]
+	return ok
+}
+
+// ResetTrailerID resets all changes to the "trailer_id" field.
+func (m *ShipmentMoveMutation) ResetTrailerID() {
+	m.trailer = nil
+	delete(m.clearedFields, shipmentmove.FieldTrailerID)
+}
+
+// SetPrimaryWorkerID sets the "primary_worker_id" field.
+func (m *ShipmentMoveMutation) SetPrimaryWorkerID(u uuid.UUID) {
+	m.primary_worker = &u
+}
+
+// PrimaryWorkerID returns the value of the "primary_worker_id" field in the mutation.
+func (m *ShipmentMoveMutation) PrimaryWorkerID() (r uuid.UUID, exists bool) {
+	v := m.primary_worker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPrimaryWorkerID returns the old "primary_worker_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldPrimaryWorkerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPrimaryWorkerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPrimaryWorkerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPrimaryWorkerID: %w", err)
+	}
+	return oldValue.PrimaryWorkerID, nil
+}
+
+// ClearPrimaryWorkerID clears the value of the "primary_worker_id" field.
+func (m *ShipmentMoveMutation) ClearPrimaryWorkerID() {
+	m.primary_worker = nil
+	m.clearedFields[shipmentmove.FieldPrimaryWorkerID] = struct{}{}
+}
+
+// PrimaryWorkerIDCleared returns if the "primary_worker_id" field was cleared in this mutation.
+func (m *ShipmentMoveMutation) PrimaryWorkerIDCleared() bool {
+	_, ok := m.clearedFields[shipmentmove.FieldPrimaryWorkerID]
+	return ok
+}
+
+// ResetPrimaryWorkerID resets all changes to the "primary_worker_id" field.
+func (m *ShipmentMoveMutation) ResetPrimaryWorkerID() {
+	m.primary_worker = nil
+	delete(m.clearedFields, shipmentmove.FieldPrimaryWorkerID)
+}
+
+// SetSecondaryWorkerID sets the "secondary_worker_id" field.
+func (m *ShipmentMoveMutation) SetSecondaryWorkerID(u uuid.UUID) {
+	m.secondary_worker = &u
+}
+
+// SecondaryWorkerID returns the value of the "secondary_worker_id" field in the mutation.
+func (m *ShipmentMoveMutation) SecondaryWorkerID() (r uuid.UUID, exists bool) {
+	v := m.secondary_worker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecondaryWorkerID returns the old "secondary_worker_id" field's value of the ShipmentMove entity.
+// If the ShipmentMove object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ShipmentMoveMutation) OldSecondaryWorkerID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecondaryWorkerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecondaryWorkerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecondaryWorkerID: %w", err)
+	}
+	return oldValue.SecondaryWorkerID, nil
+}
+
+// ClearSecondaryWorkerID clears the value of the "secondary_worker_id" field.
+func (m *ShipmentMoveMutation) ClearSecondaryWorkerID() {
+	m.secondary_worker = nil
+	m.clearedFields[shipmentmove.FieldSecondaryWorkerID] = struct{}{}
+}
+
+// SecondaryWorkerIDCleared returns if the "secondary_worker_id" field was cleared in this mutation.
+func (m *ShipmentMoveMutation) SecondaryWorkerIDCleared() bool {
+	_, ok := m.clearedFields[shipmentmove.FieldSecondaryWorkerID]
+	return ok
+}
+
+// ResetSecondaryWorkerID resets all changes to the "secondary_worker_id" field.
+func (m *ShipmentMoveMutation) ResetSecondaryWorkerID() {
+	m.secondary_worker = nil
+	delete(m.clearedFields, shipmentmove.FieldSecondaryWorkerID)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *ShipmentMoveMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[shipmentmove.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *ShipmentMoveMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *ShipmentMoveMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *ShipmentMoveMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[shipmentmove.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *ShipmentMoveMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *ShipmentMoveMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearShipment clears the "shipment" edge to the Shipment entity.
+func (m *ShipmentMoveMutation) ClearShipment() {
+	m.clearedshipment = true
+	m.clearedFields[shipmentmove.FieldShipmentID] = struct{}{}
+}
+
+// ShipmentCleared reports if the "shipment" edge to the Shipment entity was cleared.
+func (m *ShipmentMoveMutation) ShipmentCleared() bool {
+	return m.clearedshipment
+}
+
+// ShipmentIDs returns the "shipment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ShipmentID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) ShipmentIDs() (ids []uuid.UUID) {
+	if id := m.shipment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetShipment resets all changes to the "shipment" edge.
+func (m *ShipmentMoveMutation) ResetShipment() {
+	m.shipment = nil
+	m.clearedshipment = false
+}
+
+// ClearTractor clears the "tractor" edge to the Tractor entity.
+func (m *ShipmentMoveMutation) ClearTractor() {
+	m.clearedtractor = true
+	m.clearedFields[shipmentmove.FieldTractorID] = struct{}{}
+}
+
+// TractorCleared reports if the "tractor" edge to the Tractor entity was cleared.
+func (m *ShipmentMoveMutation) TractorCleared() bool {
+	return m.TractorIDCleared() || m.clearedtractor
+}
+
+// TractorIDs returns the "tractor" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TractorID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) TractorIDs() (ids []uuid.UUID) {
+	if id := m.tractor; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTractor resets all changes to the "tractor" edge.
+func (m *ShipmentMoveMutation) ResetTractor() {
+	m.tractor = nil
+	m.clearedtractor = false
+}
+
+// ClearTrailer clears the "trailer" edge to the Tractor entity.
+func (m *ShipmentMoveMutation) ClearTrailer() {
+	m.clearedtrailer = true
+	m.clearedFields[shipmentmove.FieldTrailerID] = struct{}{}
+}
+
+// TrailerCleared reports if the "trailer" edge to the Tractor entity was cleared.
+func (m *ShipmentMoveMutation) TrailerCleared() bool {
+	return m.TrailerIDCleared() || m.clearedtrailer
+}
+
+// TrailerIDs returns the "trailer" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TrailerID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) TrailerIDs() (ids []uuid.UUID) {
+	if id := m.trailer; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTrailer resets all changes to the "trailer" edge.
+func (m *ShipmentMoveMutation) ResetTrailer() {
+	m.trailer = nil
+	m.clearedtrailer = false
+}
+
+// ClearPrimaryWorker clears the "primary_worker" edge to the Worker entity.
+func (m *ShipmentMoveMutation) ClearPrimaryWorker() {
+	m.clearedprimary_worker = true
+	m.clearedFields[shipmentmove.FieldPrimaryWorkerID] = struct{}{}
+}
+
+// PrimaryWorkerCleared reports if the "primary_worker" edge to the Worker entity was cleared.
+func (m *ShipmentMoveMutation) PrimaryWorkerCleared() bool {
+	return m.PrimaryWorkerIDCleared() || m.clearedprimary_worker
+}
+
+// PrimaryWorkerIDs returns the "primary_worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PrimaryWorkerID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) PrimaryWorkerIDs() (ids []uuid.UUID) {
+	if id := m.primary_worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPrimaryWorker resets all changes to the "primary_worker" edge.
+func (m *ShipmentMoveMutation) ResetPrimaryWorker() {
+	m.primary_worker = nil
+	m.clearedprimary_worker = false
+}
+
+// ClearSecondaryWorker clears the "secondary_worker" edge to the Worker entity.
+func (m *ShipmentMoveMutation) ClearSecondaryWorker() {
+	m.clearedsecondary_worker = true
+	m.clearedFields[shipmentmove.FieldSecondaryWorkerID] = struct{}{}
+}
+
+// SecondaryWorkerCleared reports if the "secondary_worker" edge to the Worker entity was cleared.
+func (m *ShipmentMoveMutation) SecondaryWorkerCleared() bool {
+	return m.SecondaryWorkerIDCleared() || m.clearedsecondary_worker
+}
+
+// SecondaryWorkerIDs returns the "secondary_worker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SecondaryWorkerID instead. It exists only for internal usage by the builders.
+func (m *ShipmentMoveMutation) SecondaryWorkerIDs() (ids []uuid.UUID) {
+	if id := m.secondary_worker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSecondaryWorker resets all changes to the "secondary_worker" edge.
+func (m *ShipmentMoveMutation) ResetSecondaryWorker() {
+	m.secondary_worker = nil
+	m.clearedsecondary_worker = false
+}
+
+// AddMoveStopIDs adds the "move_stops" edge to the Stop entity by ids.
+func (m *ShipmentMoveMutation) AddMoveStopIDs(ids ...uuid.UUID) {
+	if m.move_stops == nil {
+		m.move_stops = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.move_stops[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMoveStops clears the "move_stops" edge to the Stop entity.
+func (m *ShipmentMoveMutation) ClearMoveStops() {
+	m.clearedmove_stops = true
+}
+
+// MoveStopsCleared reports if the "move_stops" edge to the Stop entity was cleared.
+func (m *ShipmentMoveMutation) MoveStopsCleared() bool {
+	return m.clearedmove_stops
+}
+
+// RemoveMoveStopIDs removes the "move_stops" edge to the Stop entity by IDs.
+func (m *ShipmentMoveMutation) RemoveMoveStopIDs(ids ...uuid.UUID) {
+	if m.removedmove_stops == nil {
+		m.removedmove_stops = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.move_stops, ids[i])
+		m.removedmove_stops[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMoveStops returns the removed IDs of the "move_stops" edge to the Stop entity.
+func (m *ShipmentMoveMutation) RemovedMoveStopsIDs() (ids []uuid.UUID) {
+	for id := range m.removedmove_stops {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MoveStopsIDs returns the "move_stops" edge IDs in the mutation.
+func (m *ShipmentMoveMutation) MoveStopsIDs() (ids []uuid.UUID) {
+	for id := range m.move_stops {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMoveStops resets all changes to the "move_stops" edge.
+func (m *ShipmentMoveMutation) ResetMoveStops() {
+	m.move_stops = nil
+	m.clearedmove_stops = false
+	m.removedmove_stops = nil
+}
+
+// Where appends a list predicates to the ShipmentMoveMutation builder.
+func (m *ShipmentMoveMutation) Where(ps ...predicate.ShipmentMove) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ShipmentMoveMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ShipmentMoveMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ShipmentMove, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ShipmentMoveMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ShipmentMoveMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ShipmentMove).
+func (m *ShipmentMoveMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ShipmentMoveMutation) Fields() []string {
+	fields := make([]string, 0, 13)
+	if m.business_unit != nil {
+		fields = append(fields, shipmentmove.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, shipmentmove.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, shipmentmove.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, shipmentmove.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, shipmentmove.FieldVersion)
+	}
+	if m.reference_number != nil {
+		fields = append(fields, shipmentmove.FieldReferenceNumber)
+	}
+	if m.status != nil {
+		fields = append(fields, shipmentmove.FieldStatus)
+	}
+	if m.is_loaded != nil {
+		fields = append(fields, shipmentmove.FieldIsLoaded)
+	}
+	if m.shipment != nil {
+		fields = append(fields, shipmentmove.FieldShipmentID)
+	}
+	if m.tractor != nil {
+		fields = append(fields, shipmentmove.FieldTractorID)
+	}
+	if m.trailer != nil {
+		fields = append(fields, shipmentmove.FieldTrailerID)
+	}
+	if m.primary_worker != nil {
+		fields = append(fields, shipmentmove.FieldPrimaryWorkerID)
+	}
+	if m.secondary_worker != nil {
+		fields = append(fields, shipmentmove.FieldSecondaryWorkerID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ShipmentMoveMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case shipmentmove.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case shipmentmove.FieldOrganizationID:
+		return m.OrganizationID()
+	case shipmentmove.FieldCreatedAt:
+		return m.CreatedAt()
+	case shipmentmove.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case shipmentmove.FieldVersion:
+		return m.Version()
+	case shipmentmove.FieldReferenceNumber:
+		return m.ReferenceNumber()
+	case shipmentmove.FieldStatus:
+		return m.Status()
+	case shipmentmove.FieldIsLoaded:
+		return m.IsLoaded()
+	case shipmentmove.FieldShipmentID:
+		return m.ShipmentID()
+	case shipmentmove.FieldTractorID:
+		return m.TractorID()
+	case shipmentmove.FieldTrailerID:
+		return m.TrailerID()
+	case shipmentmove.FieldPrimaryWorkerID:
+		return m.PrimaryWorkerID()
+	case shipmentmove.FieldSecondaryWorkerID:
+		return m.SecondaryWorkerID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ShipmentMoveMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case shipmentmove.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case shipmentmove.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case shipmentmove.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case shipmentmove.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case shipmentmove.FieldVersion:
+		return m.OldVersion(ctx)
+	case shipmentmove.FieldReferenceNumber:
+		return m.OldReferenceNumber(ctx)
+	case shipmentmove.FieldStatus:
+		return m.OldStatus(ctx)
+	case shipmentmove.FieldIsLoaded:
+		return m.OldIsLoaded(ctx)
+	case shipmentmove.FieldShipmentID:
+		return m.OldShipmentID(ctx)
+	case shipmentmove.FieldTractorID:
+		return m.OldTractorID(ctx)
+	case shipmentmove.FieldTrailerID:
+		return m.OldTrailerID(ctx)
+	case shipmentmove.FieldPrimaryWorkerID:
+		return m.OldPrimaryWorkerID(ctx)
+	case shipmentmove.FieldSecondaryWorkerID:
+		return m.OldSecondaryWorkerID(ctx)
+	}
+	return nil, fmt.Errorf("unknown ShipmentMove field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentMoveMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case shipmentmove.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case shipmentmove.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case shipmentmove.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case shipmentmove.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case shipmentmove.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case shipmentmove.FieldReferenceNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReferenceNumber(v)
+		return nil
+	case shipmentmove.FieldStatus:
+		v, ok := value.(shipmentmove.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case shipmentmove.FieldIsLoaded:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsLoaded(v)
+		return nil
+	case shipmentmove.FieldShipmentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShipmentID(v)
+		return nil
+	case shipmentmove.FieldTractorID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTractorID(v)
+		return nil
+	case shipmentmove.FieldTrailerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrailerID(v)
+		return nil
+	case shipmentmove.FieldPrimaryWorkerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPrimaryWorkerID(v)
+		return nil
+	case shipmentmove.FieldSecondaryWorkerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecondaryWorkerID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ShipmentMoveMutation) AddedFields() []string {
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, shipmentmove.FieldVersion)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ShipmentMoveMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case shipmentmove.FieldVersion:
+		return m.AddedVersion()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ShipmentMoveMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case shipmentmove.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ShipmentMoveMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(shipmentmove.FieldTractorID) {
+		fields = append(fields, shipmentmove.FieldTractorID)
+	}
+	if m.FieldCleared(shipmentmove.FieldTrailerID) {
+		fields = append(fields, shipmentmove.FieldTrailerID)
+	}
+	if m.FieldCleared(shipmentmove.FieldPrimaryWorkerID) {
+		fields = append(fields, shipmentmove.FieldPrimaryWorkerID)
+	}
+	if m.FieldCleared(shipmentmove.FieldSecondaryWorkerID) {
+		fields = append(fields, shipmentmove.FieldSecondaryWorkerID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ShipmentMoveMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ShipmentMoveMutation) ClearField(name string) error {
+	switch name {
+	case shipmentmove.FieldTractorID:
+		m.ClearTractorID()
+		return nil
+	case shipmentmove.FieldTrailerID:
+		m.ClearTrailerID()
+		return nil
+	case shipmentmove.FieldPrimaryWorkerID:
+		m.ClearPrimaryWorkerID()
+		return nil
+	case shipmentmove.FieldSecondaryWorkerID:
+		m.ClearSecondaryWorkerID()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ShipmentMoveMutation) ResetField(name string) error {
+	switch name {
+	case shipmentmove.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case shipmentmove.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case shipmentmove.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case shipmentmove.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case shipmentmove.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case shipmentmove.FieldReferenceNumber:
+		m.ResetReferenceNumber()
+		return nil
+	case shipmentmove.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case shipmentmove.FieldIsLoaded:
+		m.ResetIsLoaded()
+		return nil
+	case shipmentmove.FieldShipmentID:
+		m.ResetShipmentID()
+		return nil
+	case shipmentmove.FieldTractorID:
+		m.ResetTractorID()
+		return nil
+	case shipmentmove.FieldTrailerID:
+		m.ResetTrailerID()
+		return nil
+	case shipmentmove.FieldPrimaryWorkerID:
+		m.ResetPrimaryWorkerID()
+		return nil
+	case shipmentmove.FieldSecondaryWorkerID:
+		m.ResetSecondaryWorkerID()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ShipmentMoveMutation) AddedEdges() []string {
+	edges := make([]string, 0, 8)
+	if m.business_unit != nil {
+		edges = append(edges, shipmentmove.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, shipmentmove.EdgeOrganization)
+	}
+	if m.shipment != nil {
+		edges = append(edges, shipmentmove.EdgeShipment)
+	}
+	if m.tractor != nil {
+		edges = append(edges, shipmentmove.EdgeTractor)
+	}
+	if m.trailer != nil {
+		edges = append(edges, shipmentmove.EdgeTrailer)
+	}
+	if m.primary_worker != nil {
+		edges = append(edges, shipmentmove.EdgePrimaryWorker)
+	}
+	if m.secondary_worker != nil {
+		edges = append(edges, shipmentmove.EdgeSecondaryWorker)
+	}
+	if m.move_stops != nil {
+		edges = append(edges, shipmentmove.EdgeMoveStops)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ShipmentMoveMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case shipmentmove.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeShipment:
+		if id := m.shipment; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeTractor:
+		if id := m.tractor; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeTrailer:
+		if id := m.trailer; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgePrimaryWorker:
+		if id := m.primary_worker; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeSecondaryWorker:
+		if id := m.secondary_worker; id != nil {
+			return []ent.Value{*id}
+		}
+	case shipmentmove.EdgeMoveStops:
+		ids := make([]ent.Value, 0, len(m.move_stops))
+		for id := range m.move_stops {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ShipmentMoveMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 8)
+	if m.removedmove_stops != nil {
+		edges = append(edges, shipmentmove.EdgeMoveStops)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ShipmentMoveMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case shipmentmove.EdgeMoveStops:
+		ids := make([]ent.Value, 0, len(m.removedmove_stops))
+		for id := range m.removedmove_stops {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ShipmentMoveMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 8)
+	if m.clearedbusiness_unit {
+		edges = append(edges, shipmentmove.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, shipmentmove.EdgeOrganization)
+	}
+	if m.clearedshipment {
+		edges = append(edges, shipmentmove.EdgeShipment)
+	}
+	if m.clearedtractor {
+		edges = append(edges, shipmentmove.EdgeTractor)
+	}
+	if m.clearedtrailer {
+		edges = append(edges, shipmentmove.EdgeTrailer)
+	}
+	if m.clearedprimary_worker {
+		edges = append(edges, shipmentmove.EdgePrimaryWorker)
+	}
+	if m.clearedsecondary_worker {
+		edges = append(edges, shipmentmove.EdgeSecondaryWorker)
+	}
+	if m.clearedmove_stops {
+		edges = append(edges, shipmentmove.EdgeMoveStops)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ShipmentMoveMutation) EdgeCleared(name string) bool {
+	switch name {
+	case shipmentmove.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case shipmentmove.EdgeOrganization:
+		return m.clearedorganization
+	case shipmentmove.EdgeShipment:
+		return m.clearedshipment
+	case shipmentmove.EdgeTractor:
+		return m.clearedtractor
+	case shipmentmove.EdgeTrailer:
+		return m.clearedtrailer
+	case shipmentmove.EdgePrimaryWorker:
+		return m.clearedprimary_worker
+	case shipmentmove.EdgeSecondaryWorker:
+		return m.clearedsecondary_worker
+	case shipmentmove.EdgeMoveStops:
+		return m.clearedmove_stops
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ShipmentMoveMutation) ClearEdge(name string) error {
+	switch name {
+	case shipmentmove.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case shipmentmove.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case shipmentmove.EdgeShipment:
+		m.ClearShipment()
+		return nil
+	case shipmentmove.EdgeTractor:
+		m.ClearTractor()
+		return nil
+	case shipmentmove.EdgeTrailer:
+		m.ClearTrailer()
+		return nil
+	case shipmentmove.EdgePrimaryWorker:
+		m.ClearPrimaryWorker()
+		return nil
+	case shipmentmove.EdgeSecondaryWorker:
+		m.ClearSecondaryWorker()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ShipmentMoveMutation) ResetEdge(name string) error {
+	switch name {
+	case shipmentmove.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case shipmentmove.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case shipmentmove.EdgeShipment:
+		m.ResetShipment()
+		return nil
+	case shipmentmove.EdgeTractor:
+		m.ResetTractor()
+		return nil
+	case shipmentmove.EdgeTrailer:
+		m.ResetTrailer()
+		return nil
+	case shipmentmove.EdgePrimaryWorker:
+		m.ResetPrimaryWorker()
+		return nil
+	case shipmentmove.EdgeSecondaryWorker:
+		m.ResetSecondaryWorker()
+		return nil
+	case shipmentmove.EdgeMoveStops:
+		m.ResetMoveStops()
+		return nil
+	}
+	return fmt.Errorf("unknown ShipmentMove edge %s", name)
+}
+
 // ShipmentTypeMutation represents an operation that mutates the ShipmentType nodes in the graph.
 type ShipmentTypeMutation struct {
 	config
@@ -52021,6 +53618,1640 @@ func (m *ShipmentTypeMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ShipmentType edge %s", name)
+}
+
+// StopMutation represents an operation that mutates the Stop nodes in the graph.
+type StopMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	version              *int
+	addversion           *int
+	status               *stop.Status
+	stop_type            *stop.StopType
+	sequence             *int
+	addsequence          *int
+	location_id          *uuid.UUID
+	pieces               *float64
+	addpieces            *float64
+	weight               *float64
+	addweight            *float64
+	address_line         *string
+	appointment_start    *time.Time
+	appointment_end      *time.Time
+	arrival_time         *time.Time
+	departure_time       *time.Time
+	clearedFields        map[string]struct{}
+	business_unit        *uuid.UUID
+	clearedbusiness_unit bool
+	organization         *uuid.UUID
+	clearedorganization  bool
+	shipment_move        *uuid.UUID
+	clearedshipment_move bool
+	done                 bool
+	oldValue             func(context.Context) (*Stop, error)
+	predicates           []predicate.Stop
+}
+
+var _ ent.Mutation = (*StopMutation)(nil)
+
+// stopOption allows management of the mutation configuration using functional options.
+type stopOption func(*StopMutation)
+
+// newStopMutation creates new mutation for the Stop entity.
+func newStopMutation(c config, op Op, opts ...stopOption) *StopMutation {
+	m := &StopMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeStop,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withStopID sets the ID field of the mutation.
+func withStopID(id uuid.UUID) stopOption {
+	return func(m *StopMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Stop
+		)
+		m.oldValue = func(ctx context.Context) (*Stop, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Stop.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withStop sets the old Stop of the mutation.
+func withStop(node *Stop) stopOption {
+	return func(m *StopMutation) {
+		m.oldValue = func(context.Context) (*Stop, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m StopMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m StopMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Stop entities.
+func (m *StopMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *StopMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *StopMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Stop.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (m *StopMutation) SetBusinessUnitID(u uuid.UUID) {
+	m.business_unit = &u
+}
+
+// BusinessUnitID returns the value of the "business_unit_id" field in the mutation.
+func (m *StopMutation) BusinessUnitID() (r uuid.UUID, exists bool) {
+	v := m.business_unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBusinessUnitID returns the old "business_unit_id" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldBusinessUnitID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBusinessUnitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBusinessUnitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBusinessUnitID: %w", err)
+	}
+	return oldValue.BusinessUnitID, nil
+}
+
+// ResetBusinessUnitID resets all changes to the "business_unit_id" field.
+func (m *StopMutation) ResetBusinessUnitID() {
+	m.business_unit = nil
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (m *StopMutation) SetOrganizationID(u uuid.UUID) {
+	m.organization = &u
+}
+
+// OrganizationID returns the value of the "organization_id" field in the mutation.
+func (m *StopMutation) OrganizationID() (r uuid.UUID, exists bool) {
+	v := m.organization
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrganizationID returns the old "organization_id" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldOrganizationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrganizationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrganizationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrganizationID: %w", err)
+	}
+	return oldValue.OrganizationID, nil
+}
+
+// ResetOrganizationID resets all changes to the "organization_id" field.
+func (m *StopMutation) ResetOrganizationID() {
+	m.organization = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *StopMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *StopMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *StopMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *StopMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *StopMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *StopMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *StopMutation) SetVersion(i int) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *StopMutation) Version() (r int, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldVersion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *StopMutation) AddVersion(i int) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *StopMutation) AddedVersion() (r int, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *StopMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *StopMutation) SetStatus(s stop.Status) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *StopMutation) Status() (r stop.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldStatus(ctx context.Context) (v stop.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *StopMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetShipmentMoveID sets the "shipment_move_id" field.
+func (m *StopMutation) SetShipmentMoveID(u uuid.UUID) {
+	m.shipment_move = &u
+}
+
+// ShipmentMoveID returns the value of the "shipment_move_id" field in the mutation.
+func (m *StopMutation) ShipmentMoveID() (r uuid.UUID, exists bool) {
+	v := m.shipment_move
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShipmentMoveID returns the old "shipment_move_id" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldShipmentMoveID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShipmentMoveID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShipmentMoveID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShipmentMoveID: %w", err)
+	}
+	return oldValue.ShipmentMoveID, nil
+}
+
+// ResetShipmentMoveID resets all changes to the "shipment_move_id" field.
+func (m *StopMutation) ResetShipmentMoveID() {
+	m.shipment_move = nil
+}
+
+// SetStopType sets the "stop_type" field.
+func (m *StopMutation) SetStopType(st stop.StopType) {
+	m.stop_type = &st
+}
+
+// StopType returns the value of the "stop_type" field in the mutation.
+func (m *StopMutation) StopType() (r stop.StopType, exists bool) {
+	v := m.stop_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStopType returns the old "stop_type" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldStopType(ctx context.Context) (v stop.StopType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStopType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStopType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStopType: %w", err)
+	}
+	return oldValue.StopType, nil
+}
+
+// ResetStopType resets all changes to the "stop_type" field.
+func (m *StopMutation) ResetStopType() {
+	m.stop_type = nil
+}
+
+// SetSequence sets the "sequence" field.
+func (m *StopMutation) SetSequence(i int) {
+	m.sequence = &i
+	m.addsequence = nil
+}
+
+// Sequence returns the value of the "sequence" field in the mutation.
+func (m *StopMutation) Sequence() (r int, exists bool) {
+	v := m.sequence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSequence returns the old "sequence" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldSequence(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSequence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSequence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSequence: %w", err)
+	}
+	return oldValue.Sequence, nil
+}
+
+// AddSequence adds i to the "sequence" field.
+func (m *StopMutation) AddSequence(i int) {
+	if m.addsequence != nil {
+		*m.addsequence += i
+	} else {
+		m.addsequence = &i
+	}
+}
+
+// AddedSequence returns the value that was added to the "sequence" field in this mutation.
+func (m *StopMutation) AddedSequence() (r int, exists bool) {
+	v := m.addsequence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSequence resets all changes to the "sequence" field.
+func (m *StopMutation) ResetSequence() {
+	m.sequence = nil
+	m.addsequence = nil
+}
+
+// SetLocationID sets the "location_id" field.
+func (m *StopMutation) SetLocationID(u uuid.UUID) {
+	m.location_id = &u
+}
+
+// LocationID returns the value of the "location_id" field in the mutation.
+func (m *StopMutation) LocationID() (r uuid.UUID, exists bool) {
+	v := m.location_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocationID returns the old "location_id" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldLocationID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocationID: %w", err)
+	}
+	return oldValue.LocationID, nil
+}
+
+// ClearLocationID clears the value of the "location_id" field.
+func (m *StopMutation) ClearLocationID() {
+	m.location_id = nil
+	m.clearedFields[stop.FieldLocationID] = struct{}{}
+}
+
+// LocationIDCleared returns if the "location_id" field was cleared in this mutation.
+func (m *StopMutation) LocationIDCleared() bool {
+	_, ok := m.clearedFields[stop.FieldLocationID]
+	return ok
+}
+
+// ResetLocationID resets all changes to the "location_id" field.
+func (m *StopMutation) ResetLocationID() {
+	m.location_id = nil
+	delete(m.clearedFields, stop.FieldLocationID)
+}
+
+// SetPieces sets the "pieces" field.
+func (m *StopMutation) SetPieces(f float64) {
+	m.pieces = &f
+	m.addpieces = nil
+}
+
+// Pieces returns the value of the "pieces" field in the mutation.
+func (m *StopMutation) Pieces() (r float64, exists bool) {
+	v := m.pieces
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPieces returns the old "pieces" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldPieces(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPieces is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPieces requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPieces: %w", err)
+	}
+	return oldValue.Pieces, nil
+}
+
+// AddPieces adds f to the "pieces" field.
+func (m *StopMutation) AddPieces(f float64) {
+	if m.addpieces != nil {
+		*m.addpieces += f
+	} else {
+		m.addpieces = &f
+	}
+}
+
+// AddedPieces returns the value that was added to the "pieces" field in this mutation.
+func (m *StopMutation) AddedPieces() (r float64, exists bool) {
+	v := m.addpieces
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPieces clears the value of the "pieces" field.
+func (m *StopMutation) ClearPieces() {
+	m.pieces = nil
+	m.addpieces = nil
+	m.clearedFields[stop.FieldPieces] = struct{}{}
+}
+
+// PiecesCleared returns if the "pieces" field was cleared in this mutation.
+func (m *StopMutation) PiecesCleared() bool {
+	_, ok := m.clearedFields[stop.FieldPieces]
+	return ok
+}
+
+// ResetPieces resets all changes to the "pieces" field.
+func (m *StopMutation) ResetPieces() {
+	m.pieces = nil
+	m.addpieces = nil
+	delete(m.clearedFields, stop.FieldPieces)
+}
+
+// SetWeight sets the "weight" field.
+func (m *StopMutation) SetWeight(f float64) {
+	m.weight = &f
+	m.addweight = nil
+}
+
+// Weight returns the value of the "weight" field in the mutation.
+func (m *StopMutation) Weight() (r float64, exists bool) {
+	v := m.weight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeight returns the old "weight" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldWeight(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeight is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeight requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeight: %w", err)
+	}
+	return oldValue.Weight, nil
+}
+
+// AddWeight adds f to the "weight" field.
+func (m *StopMutation) AddWeight(f float64) {
+	if m.addweight != nil {
+		*m.addweight += f
+	} else {
+		m.addweight = &f
+	}
+}
+
+// AddedWeight returns the value that was added to the "weight" field in this mutation.
+func (m *StopMutation) AddedWeight() (r float64, exists bool) {
+	v := m.addweight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearWeight clears the value of the "weight" field.
+func (m *StopMutation) ClearWeight() {
+	m.weight = nil
+	m.addweight = nil
+	m.clearedFields[stop.FieldWeight] = struct{}{}
+}
+
+// WeightCleared returns if the "weight" field was cleared in this mutation.
+func (m *StopMutation) WeightCleared() bool {
+	_, ok := m.clearedFields[stop.FieldWeight]
+	return ok
+}
+
+// ResetWeight resets all changes to the "weight" field.
+func (m *StopMutation) ResetWeight() {
+	m.weight = nil
+	m.addweight = nil
+	delete(m.clearedFields, stop.FieldWeight)
+}
+
+// SetAddressLine sets the "address_line" field.
+func (m *StopMutation) SetAddressLine(s string) {
+	m.address_line = &s
+}
+
+// AddressLine returns the value of the "address_line" field in the mutation.
+func (m *StopMutation) AddressLine() (r string, exists bool) {
+	v := m.address_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddressLine returns the old "address_line" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldAddressLine(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddressLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddressLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddressLine: %w", err)
+	}
+	return oldValue.AddressLine, nil
+}
+
+// ClearAddressLine clears the value of the "address_line" field.
+func (m *StopMutation) ClearAddressLine() {
+	m.address_line = nil
+	m.clearedFields[stop.FieldAddressLine] = struct{}{}
+}
+
+// AddressLineCleared returns if the "address_line" field was cleared in this mutation.
+func (m *StopMutation) AddressLineCleared() bool {
+	_, ok := m.clearedFields[stop.FieldAddressLine]
+	return ok
+}
+
+// ResetAddressLine resets all changes to the "address_line" field.
+func (m *StopMutation) ResetAddressLine() {
+	m.address_line = nil
+	delete(m.clearedFields, stop.FieldAddressLine)
+}
+
+// SetAppointmentStart sets the "appointment_start" field.
+func (m *StopMutation) SetAppointmentStart(t time.Time) {
+	m.appointment_start = &t
+}
+
+// AppointmentStart returns the value of the "appointment_start" field in the mutation.
+func (m *StopMutation) AppointmentStart() (r time.Time, exists bool) {
+	v := m.appointment_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAppointmentStart returns the old "appointment_start" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldAppointmentStart(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAppointmentStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAppointmentStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAppointmentStart: %w", err)
+	}
+	return oldValue.AppointmentStart, nil
+}
+
+// ClearAppointmentStart clears the value of the "appointment_start" field.
+func (m *StopMutation) ClearAppointmentStart() {
+	m.appointment_start = nil
+	m.clearedFields[stop.FieldAppointmentStart] = struct{}{}
+}
+
+// AppointmentStartCleared returns if the "appointment_start" field was cleared in this mutation.
+func (m *StopMutation) AppointmentStartCleared() bool {
+	_, ok := m.clearedFields[stop.FieldAppointmentStart]
+	return ok
+}
+
+// ResetAppointmentStart resets all changes to the "appointment_start" field.
+func (m *StopMutation) ResetAppointmentStart() {
+	m.appointment_start = nil
+	delete(m.clearedFields, stop.FieldAppointmentStart)
+}
+
+// SetAppointmentEnd sets the "appointment_end" field.
+func (m *StopMutation) SetAppointmentEnd(t time.Time) {
+	m.appointment_end = &t
+}
+
+// AppointmentEnd returns the value of the "appointment_end" field in the mutation.
+func (m *StopMutation) AppointmentEnd() (r time.Time, exists bool) {
+	v := m.appointment_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAppointmentEnd returns the old "appointment_end" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldAppointmentEnd(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAppointmentEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAppointmentEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAppointmentEnd: %w", err)
+	}
+	return oldValue.AppointmentEnd, nil
+}
+
+// ClearAppointmentEnd clears the value of the "appointment_end" field.
+func (m *StopMutation) ClearAppointmentEnd() {
+	m.appointment_end = nil
+	m.clearedFields[stop.FieldAppointmentEnd] = struct{}{}
+}
+
+// AppointmentEndCleared returns if the "appointment_end" field was cleared in this mutation.
+func (m *StopMutation) AppointmentEndCleared() bool {
+	_, ok := m.clearedFields[stop.FieldAppointmentEnd]
+	return ok
+}
+
+// ResetAppointmentEnd resets all changes to the "appointment_end" field.
+func (m *StopMutation) ResetAppointmentEnd() {
+	m.appointment_end = nil
+	delete(m.clearedFields, stop.FieldAppointmentEnd)
+}
+
+// SetArrivalTime sets the "arrival_time" field.
+func (m *StopMutation) SetArrivalTime(t time.Time) {
+	m.arrival_time = &t
+}
+
+// ArrivalTime returns the value of the "arrival_time" field in the mutation.
+func (m *StopMutation) ArrivalTime() (r time.Time, exists bool) {
+	v := m.arrival_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldArrivalTime returns the old "arrival_time" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldArrivalTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldArrivalTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldArrivalTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldArrivalTime: %w", err)
+	}
+	return oldValue.ArrivalTime, nil
+}
+
+// ClearArrivalTime clears the value of the "arrival_time" field.
+func (m *StopMutation) ClearArrivalTime() {
+	m.arrival_time = nil
+	m.clearedFields[stop.FieldArrivalTime] = struct{}{}
+}
+
+// ArrivalTimeCleared returns if the "arrival_time" field was cleared in this mutation.
+func (m *StopMutation) ArrivalTimeCleared() bool {
+	_, ok := m.clearedFields[stop.FieldArrivalTime]
+	return ok
+}
+
+// ResetArrivalTime resets all changes to the "arrival_time" field.
+func (m *StopMutation) ResetArrivalTime() {
+	m.arrival_time = nil
+	delete(m.clearedFields, stop.FieldArrivalTime)
+}
+
+// SetDepartureTime sets the "departure_time" field.
+func (m *StopMutation) SetDepartureTime(t time.Time) {
+	m.departure_time = &t
+}
+
+// DepartureTime returns the value of the "departure_time" field in the mutation.
+func (m *StopMutation) DepartureTime() (r time.Time, exists bool) {
+	v := m.departure_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDepartureTime returns the old "departure_time" field's value of the Stop entity.
+// If the Stop object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StopMutation) OldDepartureTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDepartureTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDepartureTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDepartureTime: %w", err)
+	}
+	return oldValue.DepartureTime, nil
+}
+
+// ClearDepartureTime clears the value of the "departure_time" field.
+func (m *StopMutation) ClearDepartureTime() {
+	m.departure_time = nil
+	m.clearedFields[stop.FieldDepartureTime] = struct{}{}
+}
+
+// DepartureTimeCleared returns if the "departure_time" field was cleared in this mutation.
+func (m *StopMutation) DepartureTimeCleared() bool {
+	_, ok := m.clearedFields[stop.FieldDepartureTime]
+	return ok
+}
+
+// ResetDepartureTime resets all changes to the "departure_time" field.
+func (m *StopMutation) ResetDepartureTime() {
+	m.departure_time = nil
+	delete(m.clearedFields, stop.FieldDepartureTime)
+}
+
+// ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
+func (m *StopMutation) ClearBusinessUnit() {
+	m.clearedbusiness_unit = true
+	m.clearedFields[stop.FieldBusinessUnitID] = struct{}{}
+}
+
+// BusinessUnitCleared reports if the "business_unit" edge to the BusinessUnit entity was cleared.
+func (m *StopMutation) BusinessUnitCleared() bool {
+	return m.clearedbusiness_unit
+}
+
+// BusinessUnitIDs returns the "business_unit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BusinessUnitID instead. It exists only for internal usage by the builders.
+func (m *StopMutation) BusinessUnitIDs() (ids []uuid.UUID) {
+	if id := m.business_unit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBusinessUnit resets all changes to the "business_unit" edge.
+func (m *StopMutation) ResetBusinessUnit() {
+	m.business_unit = nil
+	m.clearedbusiness_unit = false
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (m *StopMutation) ClearOrganization() {
+	m.clearedorganization = true
+	m.clearedFields[stop.FieldOrganizationID] = struct{}{}
+}
+
+// OrganizationCleared reports if the "organization" edge to the Organization entity was cleared.
+func (m *StopMutation) OrganizationCleared() bool {
+	return m.clearedorganization
+}
+
+// OrganizationIDs returns the "organization" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OrganizationID instead. It exists only for internal usage by the builders.
+func (m *StopMutation) OrganizationIDs() (ids []uuid.UUID) {
+	if id := m.organization; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOrganization resets all changes to the "organization" edge.
+func (m *StopMutation) ResetOrganization() {
+	m.organization = nil
+	m.clearedorganization = false
+}
+
+// ClearShipmentMove clears the "shipment_move" edge to the ShipmentMove entity.
+func (m *StopMutation) ClearShipmentMove() {
+	m.clearedshipment_move = true
+	m.clearedFields[stop.FieldShipmentMoveID] = struct{}{}
+}
+
+// ShipmentMoveCleared reports if the "shipment_move" edge to the ShipmentMove entity was cleared.
+func (m *StopMutation) ShipmentMoveCleared() bool {
+	return m.clearedshipment_move
+}
+
+// ShipmentMoveIDs returns the "shipment_move" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ShipmentMoveID instead. It exists only for internal usage by the builders.
+func (m *StopMutation) ShipmentMoveIDs() (ids []uuid.UUID) {
+	if id := m.shipment_move; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetShipmentMove resets all changes to the "shipment_move" edge.
+func (m *StopMutation) ResetShipmentMove() {
+	m.shipment_move = nil
+	m.clearedshipment_move = false
+}
+
+// Where appends a list predicates to the StopMutation builder.
+func (m *StopMutation) Where(ps ...predicate.Stop) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the StopMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *StopMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Stop, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *StopMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *StopMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Stop).
+func (m *StopMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *StopMutation) Fields() []string {
+	fields := make([]string, 0, 17)
+	if m.business_unit != nil {
+		fields = append(fields, stop.FieldBusinessUnitID)
+	}
+	if m.organization != nil {
+		fields = append(fields, stop.FieldOrganizationID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, stop.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, stop.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, stop.FieldVersion)
+	}
+	if m.status != nil {
+		fields = append(fields, stop.FieldStatus)
+	}
+	if m.shipment_move != nil {
+		fields = append(fields, stop.FieldShipmentMoveID)
+	}
+	if m.stop_type != nil {
+		fields = append(fields, stop.FieldStopType)
+	}
+	if m.sequence != nil {
+		fields = append(fields, stop.FieldSequence)
+	}
+	if m.location_id != nil {
+		fields = append(fields, stop.FieldLocationID)
+	}
+	if m.pieces != nil {
+		fields = append(fields, stop.FieldPieces)
+	}
+	if m.weight != nil {
+		fields = append(fields, stop.FieldWeight)
+	}
+	if m.address_line != nil {
+		fields = append(fields, stop.FieldAddressLine)
+	}
+	if m.appointment_start != nil {
+		fields = append(fields, stop.FieldAppointmentStart)
+	}
+	if m.appointment_end != nil {
+		fields = append(fields, stop.FieldAppointmentEnd)
+	}
+	if m.arrival_time != nil {
+		fields = append(fields, stop.FieldArrivalTime)
+	}
+	if m.departure_time != nil {
+		fields = append(fields, stop.FieldDepartureTime)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *StopMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case stop.FieldBusinessUnitID:
+		return m.BusinessUnitID()
+	case stop.FieldOrganizationID:
+		return m.OrganizationID()
+	case stop.FieldCreatedAt:
+		return m.CreatedAt()
+	case stop.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case stop.FieldVersion:
+		return m.Version()
+	case stop.FieldStatus:
+		return m.Status()
+	case stop.FieldShipmentMoveID:
+		return m.ShipmentMoveID()
+	case stop.FieldStopType:
+		return m.StopType()
+	case stop.FieldSequence:
+		return m.Sequence()
+	case stop.FieldLocationID:
+		return m.LocationID()
+	case stop.FieldPieces:
+		return m.Pieces()
+	case stop.FieldWeight:
+		return m.Weight()
+	case stop.FieldAddressLine:
+		return m.AddressLine()
+	case stop.FieldAppointmentStart:
+		return m.AppointmentStart()
+	case stop.FieldAppointmentEnd:
+		return m.AppointmentEnd()
+	case stop.FieldArrivalTime:
+		return m.ArrivalTime()
+	case stop.FieldDepartureTime:
+		return m.DepartureTime()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *StopMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case stop.FieldBusinessUnitID:
+		return m.OldBusinessUnitID(ctx)
+	case stop.FieldOrganizationID:
+		return m.OldOrganizationID(ctx)
+	case stop.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case stop.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case stop.FieldVersion:
+		return m.OldVersion(ctx)
+	case stop.FieldStatus:
+		return m.OldStatus(ctx)
+	case stop.FieldShipmentMoveID:
+		return m.OldShipmentMoveID(ctx)
+	case stop.FieldStopType:
+		return m.OldStopType(ctx)
+	case stop.FieldSequence:
+		return m.OldSequence(ctx)
+	case stop.FieldLocationID:
+		return m.OldLocationID(ctx)
+	case stop.FieldPieces:
+		return m.OldPieces(ctx)
+	case stop.FieldWeight:
+		return m.OldWeight(ctx)
+	case stop.FieldAddressLine:
+		return m.OldAddressLine(ctx)
+	case stop.FieldAppointmentStart:
+		return m.OldAppointmentStart(ctx)
+	case stop.FieldAppointmentEnd:
+		return m.OldAppointmentEnd(ctx)
+	case stop.FieldArrivalTime:
+		return m.OldArrivalTime(ctx)
+	case stop.FieldDepartureTime:
+		return m.OldDepartureTime(ctx)
+	}
+	return nil, fmt.Errorf("unknown Stop field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StopMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case stop.FieldBusinessUnitID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBusinessUnitID(v)
+		return nil
+	case stop.FieldOrganizationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrganizationID(v)
+		return nil
+	case stop.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case stop.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case stop.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case stop.FieldStatus:
+		v, ok := value.(stop.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case stop.FieldShipmentMoveID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShipmentMoveID(v)
+		return nil
+	case stop.FieldStopType:
+		v, ok := value.(stop.StopType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStopType(v)
+		return nil
+	case stop.FieldSequence:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSequence(v)
+		return nil
+	case stop.FieldLocationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocationID(v)
+		return nil
+	case stop.FieldPieces:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPieces(v)
+		return nil
+	case stop.FieldWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeight(v)
+		return nil
+	case stop.FieldAddressLine:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddressLine(v)
+		return nil
+	case stop.FieldAppointmentStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAppointmentStart(v)
+		return nil
+	case stop.FieldAppointmentEnd:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAppointmentEnd(v)
+		return nil
+	case stop.FieldArrivalTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetArrivalTime(v)
+		return nil
+	case stop.FieldDepartureTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDepartureTime(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Stop field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *StopMutation) AddedFields() []string {
+	var fields []string
+	if m.addversion != nil {
+		fields = append(fields, stop.FieldVersion)
+	}
+	if m.addsequence != nil {
+		fields = append(fields, stop.FieldSequence)
+	}
+	if m.addpieces != nil {
+		fields = append(fields, stop.FieldPieces)
+	}
+	if m.addweight != nil {
+		fields = append(fields, stop.FieldWeight)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *StopMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case stop.FieldVersion:
+		return m.AddedVersion()
+	case stop.FieldSequence:
+		return m.AddedSequence()
+	case stop.FieldPieces:
+		return m.AddedPieces()
+	case stop.FieldWeight:
+		return m.AddedWeight()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StopMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case stop.FieldVersion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	case stop.FieldSequence:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSequence(v)
+		return nil
+	case stop.FieldPieces:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPieces(v)
+		return nil
+	case stop.FieldWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWeight(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Stop numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *StopMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(stop.FieldLocationID) {
+		fields = append(fields, stop.FieldLocationID)
+	}
+	if m.FieldCleared(stop.FieldPieces) {
+		fields = append(fields, stop.FieldPieces)
+	}
+	if m.FieldCleared(stop.FieldWeight) {
+		fields = append(fields, stop.FieldWeight)
+	}
+	if m.FieldCleared(stop.FieldAddressLine) {
+		fields = append(fields, stop.FieldAddressLine)
+	}
+	if m.FieldCleared(stop.FieldAppointmentStart) {
+		fields = append(fields, stop.FieldAppointmentStart)
+	}
+	if m.FieldCleared(stop.FieldAppointmentEnd) {
+		fields = append(fields, stop.FieldAppointmentEnd)
+	}
+	if m.FieldCleared(stop.FieldArrivalTime) {
+		fields = append(fields, stop.FieldArrivalTime)
+	}
+	if m.FieldCleared(stop.FieldDepartureTime) {
+		fields = append(fields, stop.FieldDepartureTime)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *StopMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *StopMutation) ClearField(name string) error {
+	switch name {
+	case stop.FieldLocationID:
+		m.ClearLocationID()
+		return nil
+	case stop.FieldPieces:
+		m.ClearPieces()
+		return nil
+	case stop.FieldWeight:
+		m.ClearWeight()
+		return nil
+	case stop.FieldAddressLine:
+		m.ClearAddressLine()
+		return nil
+	case stop.FieldAppointmentStart:
+		m.ClearAppointmentStart()
+		return nil
+	case stop.FieldAppointmentEnd:
+		m.ClearAppointmentEnd()
+		return nil
+	case stop.FieldArrivalTime:
+		m.ClearArrivalTime()
+		return nil
+	case stop.FieldDepartureTime:
+		m.ClearDepartureTime()
+		return nil
+	}
+	return fmt.Errorf("unknown Stop nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *StopMutation) ResetField(name string) error {
+	switch name {
+	case stop.FieldBusinessUnitID:
+		m.ResetBusinessUnitID()
+		return nil
+	case stop.FieldOrganizationID:
+		m.ResetOrganizationID()
+		return nil
+	case stop.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case stop.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case stop.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case stop.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case stop.FieldShipmentMoveID:
+		m.ResetShipmentMoveID()
+		return nil
+	case stop.FieldStopType:
+		m.ResetStopType()
+		return nil
+	case stop.FieldSequence:
+		m.ResetSequence()
+		return nil
+	case stop.FieldLocationID:
+		m.ResetLocationID()
+		return nil
+	case stop.FieldPieces:
+		m.ResetPieces()
+		return nil
+	case stop.FieldWeight:
+		m.ResetWeight()
+		return nil
+	case stop.FieldAddressLine:
+		m.ResetAddressLine()
+		return nil
+	case stop.FieldAppointmentStart:
+		m.ResetAppointmentStart()
+		return nil
+	case stop.FieldAppointmentEnd:
+		m.ResetAppointmentEnd()
+		return nil
+	case stop.FieldArrivalTime:
+		m.ResetArrivalTime()
+		return nil
+	case stop.FieldDepartureTime:
+		m.ResetDepartureTime()
+		return nil
+	}
+	return fmt.Errorf("unknown Stop field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *StopMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.business_unit != nil {
+		edges = append(edges, stop.EdgeBusinessUnit)
+	}
+	if m.organization != nil {
+		edges = append(edges, stop.EdgeOrganization)
+	}
+	if m.shipment_move != nil {
+		edges = append(edges, stop.EdgeShipmentMove)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *StopMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case stop.EdgeBusinessUnit:
+		if id := m.business_unit; id != nil {
+			return []ent.Value{*id}
+		}
+	case stop.EdgeOrganization:
+		if id := m.organization; id != nil {
+			return []ent.Value{*id}
+		}
+	case stop.EdgeShipmentMove:
+		if id := m.shipment_move; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *StopMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *StopMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *StopMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedbusiness_unit {
+		edges = append(edges, stop.EdgeBusinessUnit)
+	}
+	if m.clearedorganization {
+		edges = append(edges, stop.EdgeOrganization)
+	}
+	if m.clearedshipment_move {
+		edges = append(edges, stop.EdgeShipmentMove)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *StopMutation) EdgeCleared(name string) bool {
+	switch name {
+	case stop.EdgeBusinessUnit:
+		return m.clearedbusiness_unit
+	case stop.EdgeOrganization:
+		return m.clearedorganization
+	case stop.EdgeShipmentMove:
+		return m.clearedshipment_move
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *StopMutation) ClearEdge(name string) error {
+	switch name {
+	case stop.EdgeBusinessUnit:
+		m.ClearBusinessUnit()
+		return nil
+	case stop.EdgeOrganization:
+		m.ClearOrganization()
+		return nil
+	case stop.EdgeShipmentMove:
+		m.ClearShipmentMove()
+		return nil
+	}
+	return fmt.Errorf("unknown Stop unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *StopMutation) ResetEdge(name string) error {
+	switch name {
+	case stop.EdgeBusinessUnit:
+		m.ResetBusinessUnit()
+		return nil
+	case stop.EdgeOrganization:
+		m.ResetOrganization()
+		return nil
+	case stop.EdgeShipmentMove:
+		m.ResetShipmentMove()
+		return nil
+	}
+	return fmt.Errorf("unknown Stop edge %s", name)
 }
 
 // TableChangeAlertMutation represents an operation that mutates the TableChangeAlert nodes in the graph.

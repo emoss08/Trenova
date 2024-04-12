@@ -525,6 +525,18 @@ func (f ShipmentDocumentationFunc) Mutate(ctx context.Context, m ent.Mutation) (
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentDocumentationMutation", m)
 }
 
+// The ShipmentMoveFunc type is an adapter to allow the use of ordinary
+// function as ShipmentMove mutator.
+type ShipmentMoveFunc func(context.Context, *ent.ShipmentMoveMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ShipmentMoveFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ShipmentMoveMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentMoveMutation", m)
+}
+
 // The ShipmentTypeFunc type is an adapter to allow the use of ordinary
 // function as ShipmentType mutator.
 type ShipmentTypeFunc func(context.Context, *ent.ShipmentTypeMutation) (ent.Value, error)
@@ -535,6 +547,18 @@ func (f ShipmentTypeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentTypeMutation", m)
+}
+
+// The StopFunc type is an adapter to allow the use of ordinary
+// function as Stop mutator.
+type StopFunc func(context.Context, *ent.StopMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StopFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StopMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StopMutation", m)
 }
 
 // The TableChangeAlertFunc type is an adapter to allow the use of ordinary

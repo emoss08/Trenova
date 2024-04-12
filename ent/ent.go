@@ -55,7 +55,9 @@ import (
 	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/emoss08/trenova/ent/shipmentmove"
 	"github.com/emoss08/trenova/ent/shipmenttype"
+	"github.com/emoss08/trenova/ent/stop"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
@@ -170,7 +172,9 @@ func checkColumn(table, column string) error {
 			shipmentcommodity.Table:            shipmentcommodity.ValidColumn,
 			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
 			shipmentdocumentation.Table:        shipmentdocumentation.ValidColumn,
+			shipmentmove.Table:                 shipmentmove.ValidColumn,
 			shipmenttype.Table:                 shipmenttype.ValidColumn,
+			stop.Table:                         stop.ValidColumn,
 			tablechangealert.Table:             tablechangealert.ValidColumn,
 			tag.Table:                          tag.ValidColumn,
 			tractor.Table:                      tractor.ValidColumn,

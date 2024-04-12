@@ -40,7 +40,7 @@ type Shipment struct {
 	// ProNumber holds the value of the "pro_number" field.
 	ProNumber string `json:"pro_number" validate:"required,max=20"`
 	// Status holds the value of the "status" field.
-	Status shipment.Status `json:"status,omitempty"`
+	Status shipment.Status `json:"status" validate:"required"`
 	// OriginLocationID holds the value of the "origin_location_id" field.
 	OriginLocationID *uuid.UUID `json:"originLocationId" validate:"required"`
 	// OriginAddressLine holds the value of the "origin_address_line" field.
@@ -157,13 +157,16 @@ type ShipmentEdges struct {
 	CreatedByUser *User `json:"createdByUser"`
 	// Customer holds the value of the customer edge.
 	Customer *Customer `json:"customer"`
+	// ShipmentMoves holds the value of the shipment_moves edge.
+	ShipmentMoves []*ShipmentMove `json:"shipment_moves,omitempty" json:"shipmentMoves`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes                [15]bool
+	loadedTypes                [16]bool
 	namedShipmentDocumentation map[string][]*ShipmentDocumentation
 	namedShipmentComments      map[string][]*ShipmentComment
 	namedShipmentCharges       map[string][]*ShipmentCharges
 	namedShipmentCommodities   map[string][]*ShipmentCommodity
+	namedShipmentMoves         map[string][]*ShipmentMove
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -321,6 +324,15 @@ func (e ShipmentEdges) CustomerOrErr() (*Customer, error) {
 		return nil, &NotFoundError{label: customer.Label}
 	}
 	return nil, &NotLoadedError{edge: "customer"}
+}
+
+// ShipmentMovesOrErr returns the ShipmentMoves value or an error if the edge
+// was not loaded in eager-loading.
+func (e ShipmentEdges) ShipmentMovesOrErr() ([]*ShipmentMove, error) {
+	if e.loadedTypes[15] {
+		return e.ShipmentMoves, nil
+	}
+	return nil, &NotLoadedError{edge: "shipment_moves"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -740,6 +752,11 @@ func (s *Shipment) QueryCustomer() *CustomerQuery {
 	return NewShipmentClient(s.config).QueryCustomer(s)
 }
 
+// QueryShipmentMoves queries the "shipment_moves" edge of the Shipment entity.
+func (s *Shipment) QueryShipmentMoves() *ShipmentMoveQuery {
+	return NewShipmentClient(s.config).QueryShipmentMoves(s)
+}
+
 // Update returns a builder for updating this Shipment.
 // Note that you need to call Shipment.Unwrap() before calling this method if this Shipment
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -1019,6 +1036,30 @@ func (s *Shipment) appendNamedShipmentCommodities(name string, edges ...*Shipmen
 		s.Edges.namedShipmentCommodities[name] = []*ShipmentCommodity{}
 	} else {
 		s.Edges.namedShipmentCommodities[name] = append(s.Edges.namedShipmentCommodities[name], edges...)
+	}
+}
+
+// NamedShipmentMoves returns the ShipmentMoves named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (s *Shipment) NamedShipmentMoves(name string) ([]*ShipmentMove, error) {
+	if s.Edges.namedShipmentMoves == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := s.Edges.namedShipmentMoves[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (s *Shipment) appendNamedShipmentMoves(name string, edges ...*ShipmentMove) {
+	if s.Edges.namedShipmentMoves == nil {
+		s.Edges.namedShipmentMoves = make(map[string][]*ShipmentMove)
+	}
+	if len(edges) == 0 {
+		s.Edges.namedShipmentMoves[name] = []*ShipmentMove{}
+	} else {
+		s.Edges.namedShipmentMoves[name] = append(s.Edges.namedShipmentMoves[name], edges...)
 	}
 }
 

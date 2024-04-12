@@ -39,7 +39,14 @@ func (Shipment) Fields() []ent.Field {
 			}).
 			StructTag(`json:"pro_number" validate:"required,max=20"`),
 		field.Enum("status").
-			Values("New", "InProgress", "Completed", "Hold", "Billed", "Voided"),
+			Values("New",
+				"InProgress",
+				"Completed",
+				"Hold",
+				"Billed",
+				"Voided").
+			Default("New").
+			StructTag(`json:"status" validate:"required"`),
 		field.UUID("origin_location_id", uuid.UUID{}).
 			Optional().
 			Nillable().
@@ -313,6 +320,8 @@ func (Shipment) Edges() []ent.Edge {
 			Required().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"customer"`),
+		edge.To("shipment_moves", ShipmentMove.Type).
+			StructTag(`json:"shipmentMoves`),
 	}
 }
 

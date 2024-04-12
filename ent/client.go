@@ -59,7 +59,9 @@ import (
 	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
+	"github.com/emoss08/trenova/ent/shipmentmove"
 	"github.com/emoss08/trenova/ent/shipmenttype"
+	"github.com/emoss08/trenova/ent/stop"
 	"github.com/emoss08/trenova/ent/tablechangealert"
 	"github.com/emoss08/trenova/ent/tag"
 	"github.com/emoss08/trenova/ent/tractor"
@@ -166,8 +168,12 @@ type Client struct {
 	ShipmentControl *ShipmentControlClient
 	// ShipmentDocumentation is the client for interacting with the ShipmentDocumentation builders.
 	ShipmentDocumentation *ShipmentDocumentationClient
+	// ShipmentMove is the client for interacting with the ShipmentMove builders.
+	ShipmentMove *ShipmentMoveClient
 	// ShipmentType is the client for interacting with the ShipmentType builders.
 	ShipmentType *ShipmentTypeClient
+	// Stop is the client for interacting with the Stop builders.
+	Stop *StopClient
 	// TableChangeAlert is the client for interacting with the TableChangeAlert builders.
 	TableChangeAlert *TableChangeAlertClient
 	// Tag is the client for interacting with the Tag builders.
@@ -244,7 +250,9 @@ func (c *Client) init() {
 	c.ShipmentCommodity = NewShipmentCommodityClient(c.config)
 	c.ShipmentControl = NewShipmentControlClient(c.config)
 	c.ShipmentDocumentation = NewShipmentDocumentationClient(c.config)
+	c.ShipmentMove = NewShipmentMoveClient(c.config)
 	c.ShipmentType = NewShipmentTypeClient(c.config)
+	c.Stop = NewStopClient(c.config)
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
 	c.Tag = NewTagClient(c.config)
 	c.Tractor = NewTractorClient(c.config)
@@ -391,7 +399,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ShipmentCommodity:            NewShipmentCommodityClient(cfg),
 		ShipmentControl:              NewShipmentControlClient(cfg),
 		ShipmentDocumentation:        NewShipmentDocumentationClient(cfg),
+		ShipmentMove:                 NewShipmentMoveClient(cfg),
 		ShipmentType:                 NewShipmentTypeClient(cfg),
+		Stop:                         NewStopClient(cfg),
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
 		Tag:                          NewTagClient(cfg),
 		Tractor:                      NewTractorClient(cfg),
@@ -465,7 +475,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ShipmentCommodity:            NewShipmentCommodityClient(cfg),
 		ShipmentControl:              NewShipmentControlClient(cfg),
 		ShipmentDocumentation:        NewShipmentDocumentationClient(cfg),
+		ShipmentMove:                 NewShipmentMoveClient(cfg),
 		ShipmentType:                 NewShipmentTypeClient(cfg),
+		Stop:                         NewStopClient(cfg),
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
 		Tag:                          NewTagClient(cfg),
 		Tractor:                      NewTractorClient(cfg),
@@ -517,9 +529,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.OrganizationFeatureFlag, c.QualifierCode, c.ReasonCode, c.RevenueCode,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
-		c.ShipmentDocumentation, c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor,
-		c.Trailer, c.UsState, c.User, c.UserFavorite, c.Worker, c.WorkerComment,
-		c.WorkerContact, c.WorkerProfile,
+		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
+		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -540,9 +552,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.OrganizationFeatureFlag, c.QualifierCode, c.ReasonCode, c.RevenueCode,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
-		c.ShipmentDocumentation, c.ShipmentType, c.TableChangeAlert, c.Tag, c.Tractor,
-		c.Trailer, c.UsState, c.User, c.UserFavorite, c.Worker, c.WorkerComment,
-		c.WorkerContact, c.WorkerProfile,
+		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
+		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -637,8 +649,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ShipmentControl.mutate(ctx, m)
 	case *ShipmentDocumentationMutation:
 		return c.ShipmentDocumentation.mutate(ctx, m)
+	case *ShipmentMoveMutation:
+		return c.ShipmentMove.mutate(ctx, m)
 	case *ShipmentTypeMutation:
 		return c.ShipmentType.mutate(ctx, m)
+	case *StopMutation:
+		return c.Stop.mutate(ctx, m)
 	case *TableChangeAlertMutation:
 		return c.TableChangeAlert.mutate(ctx, m)
 	case *TagMutation:
@@ -7683,6 +7699,22 @@ func (c *ShipmentClient) QueryCustomer(s *Shipment) *CustomerQuery {
 	return query
 }
 
+// QueryShipmentMoves queries the shipment_moves edge of a Shipment.
+func (c *ShipmentClient) QueryShipmentMoves(s *Shipment) *ShipmentMoveQuery {
+	query := (&ShipmentMoveClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipment.Table, shipment.FieldID, id),
+			sqlgraph.To(shipmentmove.Table, shipmentmove.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipment.ShipmentMovesTable, shipment.ShipmentMovesColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ShipmentClient) Hooks() []Hook {
 	hooks := c.hooks.Shipment
@@ -8678,6 +8710,267 @@ func (c *ShipmentDocumentationClient) mutate(ctx context.Context, m *ShipmentDoc
 	}
 }
 
+// ShipmentMoveClient is a client for the ShipmentMove schema.
+type ShipmentMoveClient struct {
+	config
+}
+
+// NewShipmentMoveClient returns a client for the ShipmentMove from the given config.
+func NewShipmentMoveClient(c config) *ShipmentMoveClient {
+	return &ShipmentMoveClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `shipmentmove.Hooks(f(g(h())))`.
+func (c *ShipmentMoveClient) Use(hooks ...Hook) {
+	c.hooks.ShipmentMove = append(c.hooks.ShipmentMove, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `shipmentmove.Intercept(f(g(h())))`.
+func (c *ShipmentMoveClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ShipmentMove = append(c.inters.ShipmentMove, interceptors...)
+}
+
+// Create returns a builder for creating a ShipmentMove entity.
+func (c *ShipmentMoveClient) Create() *ShipmentMoveCreate {
+	mutation := newShipmentMoveMutation(c.config, OpCreate)
+	return &ShipmentMoveCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ShipmentMove entities.
+func (c *ShipmentMoveClient) CreateBulk(builders ...*ShipmentMoveCreate) *ShipmentMoveCreateBulk {
+	return &ShipmentMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ShipmentMoveClient) MapCreateBulk(slice any, setFunc func(*ShipmentMoveCreate, int)) *ShipmentMoveCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ShipmentMoveCreateBulk{err: fmt.Errorf("calling to ShipmentMoveClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ShipmentMoveCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ShipmentMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ShipmentMove.
+func (c *ShipmentMoveClient) Update() *ShipmentMoveUpdate {
+	mutation := newShipmentMoveMutation(c.config, OpUpdate)
+	return &ShipmentMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ShipmentMoveClient) UpdateOne(sm *ShipmentMove) *ShipmentMoveUpdateOne {
+	mutation := newShipmentMoveMutation(c.config, OpUpdateOne, withShipmentMove(sm))
+	return &ShipmentMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ShipmentMoveClient) UpdateOneID(id uuid.UUID) *ShipmentMoveUpdateOne {
+	mutation := newShipmentMoveMutation(c.config, OpUpdateOne, withShipmentMoveID(id))
+	return &ShipmentMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ShipmentMove.
+func (c *ShipmentMoveClient) Delete() *ShipmentMoveDelete {
+	mutation := newShipmentMoveMutation(c.config, OpDelete)
+	return &ShipmentMoveDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ShipmentMoveClient) DeleteOne(sm *ShipmentMove) *ShipmentMoveDeleteOne {
+	return c.DeleteOneID(sm.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ShipmentMoveClient) DeleteOneID(id uuid.UUID) *ShipmentMoveDeleteOne {
+	builder := c.Delete().Where(shipmentmove.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ShipmentMoveDeleteOne{builder}
+}
+
+// Query returns a query builder for ShipmentMove.
+func (c *ShipmentMoveClient) Query() *ShipmentMoveQuery {
+	return &ShipmentMoveQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeShipmentMove},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ShipmentMove entity by its id.
+func (c *ShipmentMoveClient) Get(ctx context.Context, id uuid.UUID) (*ShipmentMove, error) {
+	return c.Query().Where(shipmentmove.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ShipmentMoveClient) GetX(ctx context.Context, id uuid.UUID) *ShipmentMove {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryBusinessUnit(sm *ShipmentMove) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.BusinessUnitTable, shipmentmove.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryOrganization(sm *ShipmentMove) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.OrganizationTable, shipmentmove.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryShipment queries the shipment edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryShipment(sm *ShipmentMove) *ShipmentQuery {
+	query := (&ShipmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(shipment.Table, shipment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipmentmove.ShipmentTable, shipmentmove.ShipmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTractor queries the tractor edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryTractor(sm *ShipmentMove) *TractorQuery {
+	query := (&TractorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(tractor.Table, tractor.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.TractorTable, shipmentmove.TractorColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTrailer queries the trailer edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryTrailer(sm *ShipmentMove) *TractorQuery {
+	query := (&TractorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(tractor.Table, tractor.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.TrailerTable, shipmentmove.TrailerColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPrimaryWorker queries the primary_worker edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryPrimaryWorker(sm *ShipmentMove) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.PrimaryWorkerTable, shipmentmove.PrimaryWorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySecondaryWorker queries the secondary_worker edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QuerySecondaryWorker(sm *ShipmentMove) *WorkerQuery {
+	query := (&WorkerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(worker.Table, worker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentmove.SecondaryWorkerTable, shipmentmove.SecondaryWorkerColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMoveStops queries the move_stops edge of a ShipmentMove.
+func (c *ShipmentMoveClient) QueryMoveStops(sm *ShipmentMove) *StopQuery {
+	query := (&StopClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sm.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentmove.Table, shipmentmove.FieldID, id),
+			sqlgraph.To(stop.Table, stop.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipmentmove.MoveStopsTable, shipmentmove.MoveStopsColumn),
+		)
+		fromV = sqlgraph.Neighbors(sm.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ShipmentMoveClient) Hooks() []Hook {
+	return c.hooks.ShipmentMove
+}
+
+// Interceptors returns the client interceptors.
+func (c *ShipmentMoveClient) Interceptors() []Interceptor {
+	return c.inters.ShipmentMove
+}
+
+func (c *ShipmentMoveClient) mutate(ctx context.Context, m *ShipmentMoveMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ShipmentMoveCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ShipmentMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ShipmentMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ShipmentMoveDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ShipmentMove mutation op: %q", m.Op())
+	}
+}
+
 // ShipmentTypeClient is a client for the ShipmentType schema.
 type ShipmentTypeClient struct {
 	config
@@ -8840,6 +9133,187 @@ func (c *ShipmentTypeClient) mutate(ctx context.Context, m *ShipmentTypeMutation
 		return (&ShipmentTypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ShipmentType mutation op: %q", m.Op())
+	}
+}
+
+// StopClient is a client for the Stop schema.
+type StopClient struct {
+	config
+}
+
+// NewStopClient returns a client for the Stop from the given config.
+func NewStopClient(c config) *StopClient {
+	return &StopClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `stop.Hooks(f(g(h())))`.
+func (c *StopClient) Use(hooks ...Hook) {
+	c.hooks.Stop = append(c.hooks.Stop, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `stop.Intercept(f(g(h())))`.
+func (c *StopClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Stop = append(c.inters.Stop, interceptors...)
+}
+
+// Create returns a builder for creating a Stop entity.
+func (c *StopClient) Create() *StopCreate {
+	mutation := newStopMutation(c.config, OpCreate)
+	return &StopCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Stop entities.
+func (c *StopClient) CreateBulk(builders ...*StopCreate) *StopCreateBulk {
+	return &StopCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StopClient) MapCreateBulk(slice any, setFunc func(*StopCreate, int)) *StopCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StopCreateBulk{err: fmt.Errorf("calling to StopClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StopCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StopCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Stop.
+func (c *StopClient) Update() *StopUpdate {
+	mutation := newStopMutation(c.config, OpUpdate)
+	return &StopUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StopClient) UpdateOne(s *Stop) *StopUpdateOne {
+	mutation := newStopMutation(c.config, OpUpdateOne, withStop(s))
+	return &StopUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StopClient) UpdateOneID(id uuid.UUID) *StopUpdateOne {
+	mutation := newStopMutation(c.config, OpUpdateOne, withStopID(id))
+	return &StopUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Stop.
+func (c *StopClient) Delete() *StopDelete {
+	mutation := newStopMutation(c.config, OpDelete)
+	return &StopDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StopClient) DeleteOne(s *Stop) *StopDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StopClient) DeleteOneID(id uuid.UUID) *StopDeleteOne {
+	builder := c.Delete().Where(stop.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StopDeleteOne{builder}
+}
+
+// Query returns a query builder for Stop.
+func (c *StopClient) Query() *StopQuery {
+	return &StopQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStop},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Stop entity by its id.
+func (c *StopClient) Get(ctx context.Context, id uuid.UUID) (*Stop, error) {
+	return c.Query().Where(stop.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StopClient) GetX(ctx context.Context, id uuid.UUID) *Stop {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Stop.
+func (c *StopClient) QueryBusinessUnit(s *Stop) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(stop.Table, stop.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, stop.BusinessUnitTable, stop.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Stop.
+func (c *StopClient) QueryOrganization(s *Stop) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(stop.Table, stop.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, stop.OrganizationTable, stop.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryShipmentMove queries the shipment_move edge of a Stop.
+func (c *StopClient) QueryShipmentMove(s *Stop) *ShipmentMoveQuery {
+	query := (&ShipmentMoveClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(stop.Table, stop.FieldID, id),
+			sqlgraph.To(shipmentmove.Table, shipmentmove.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, stop.ShipmentMoveTable, stop.ShipmentMoveColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *StopClient) Hooks() []Hook {
+	return c.hooks.Stop
+}
+
+// Interceptors returns the client interceptors.
+func (c *StopClient) Interceptors() []Interceptor {
+	return c.inters.Stop
+}
+
+func (c *StopClient) mutate(ctx context.Context, m *StopMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StopCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StopUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StopUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StopDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Stop mutation op: %q", m.Op())
 	}
 }
 
@@ -11138,9 +11612,9 @@ type (
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
-		ShipmentDocumentation, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
-		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,
-		WorkerProfile []ent.Hook
+		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
+		Tractor, Trailer, UsState, User, UserFavorite, Worker, WorkerComment,
+		WorkerContact, WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
@@ -11152,9 +11626,9 @@ type (
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
-		ShipmentDocumentation, ShipmentType, TableChangeAlert, Tag, Tractor, Trailer,
-		UsState, User, UserFavorite, Worker, WorkerComment, WorkerContact,
-		WorkerProfile []ent.Interceptor
+		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
+		Tractor, Trailer, UsState, User, UserFavorite, Worker, WorkerComment,
+		WorkerContact, WorkerProfile []ent.Interceptor
 	}
 )
 

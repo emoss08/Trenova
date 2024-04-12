@@ -1143,6 +1143,30 @@ func (f ShipmentDocumentationMutationRuleFunc) EvalMutation(ctx context.Context,
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentDocumentationMutation", m)
 }
 
+// The ShipmentMoveQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ShipmentMoveQueryRuleFunc func(context.Context, *ent.ShipmentMoveQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ShipmentMoveQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ShipmentMoveQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ShipmentMoveQuery", q)
+}
+
+// The ShipmentMoveMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ShipmentMoveMutationRuleFunc func(context.Context, *ent.ShipmentMoveMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ShipmentMoveMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ShipmentMoveMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentMoveMutation", m)
+}
+
 // The ShipmentTypeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ShipmentTypeQueryRuleFunc func(context.Context, *ent.ShipmentTypeQuery) error
@@ -1165,6 +1189,30 @@ func (f ShipmentTypeMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentTypeMutation", m)
+}
+
+// The StopQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type StopQueryRuleFunc func(context.Context, *ent.StopQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f StopQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.StopQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.StopQuery", q)
+}
+
+// The StopMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type StopMutationRuleFunc func(context.Context, *ent.StopMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f StopMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.StopMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.StopMutation", m)
 }
 
 // The TableChangeAlertQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -1552,7 +1600,11 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ShipmentDocumentationQuery:
 		return q.Filter(), nil
+	case *ent.ShipmentMoveQuery:
+		return q.Filter(), nil
 	case *ent.ShipmentTypeQuery:
+		return q.Filter(), nil
+	case *ent.StopQuery:
 		return q.Filter(), nil
 	case *ent.TableChangeAlertQuery:
 		return q.Filter(), nil
@@ -1669,7 +1721,11 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.ShipmentDocumentationMutation:
 		return m.Filter(), nil
+	case *ent.ShipmentMoveMutation:
+		return m.Filter(), nil
 	case *ent.ShipmentTypeMutation:
+		return m.Filter(), nil
+	case *ent.StopMutation:
 		return m.Filter(), nil
 	case *ent.TableChangeAlertMutation:
 		return m.Filter(), nil

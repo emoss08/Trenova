@@ -1,4 +1,4 @@
-h1:LbcW8u/DYzL5K7C29yEnbwW894KcTkAtW4paHnB7C5Y=
+h1:D54pXKSX2Nw5K8XyKzPJatPNt/9Tubjd0nmOCc9Kd7Y=
 20240313025838_initial.sql h1:SSNxk2S6/jOkJPvNSMuniM60rS7ovtA3hVx4E6t5r9o=
 20240313035153_initial.sql h1:fmVZMKlxZURxbdxkbDVS1d1tyGuaTrlnZKbBKIeddWI=
 20240313040335_organization_business_unit.sql h1:ewjrrJStfCT9dWsamZIDKp8HJW03WzpmOsvcNGe7Gvk=
@@ -119,3 +119,4 @@ h1:LbcW8u/DYzL5K7C29yEnbwW894KcTkAtW4paHnB7C5Y=
 20240411210022_alter_shipment_shipment_charges.sql h1:i6tlsy94BpxQNHYYRIaUPXVRFn5Sr6C6XgDt8yS10lQ=
 20240411221218_add_formula_template.sql h1:haYNB9sjlgWE6kwben4+eaR2eYqEyjshqlaHaOpefHY=
 20240412001304_add_shipment_shipment_commodity.sql h1:r5xa4YQCE4eL/ZkbbU9dV/kntahKy3AWWs2ebkwJxRY=
+20240412034249_add_shipment_move_move_stop.sql h1:yRVq3Q1fy24Hqw2reyRj3Kiq2/UnL5y2A1OoxFgpmwA=

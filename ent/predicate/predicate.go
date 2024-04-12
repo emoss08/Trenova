@@ -135,8 +135,14 @@ type ShipmentControl func(*sql.Selector)
 // ShipmentDocumentation is the predicate function for shipmentdocumentation builders.
 type ShipmentDocumentation func(*sql.Selector)
 
+// ShipmentMove is the predicate function for shipmentmove builders.
+type ShipmentMove func(*sql.Selector)
+
 // ShipmentType is the predicate function for shipmenttype builders.
 type ShipmentType func(*sql.Selector)
+
+// Stop is the predicate function for stop builders.
+type Stop func(*sql.Selector)
 
 // TableChangeAlert is the predicate function for tablechangealert builders.
 type TableChangeAlert func(*sql.Selector)
